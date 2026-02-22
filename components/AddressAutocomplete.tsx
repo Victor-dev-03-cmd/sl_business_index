@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import usePlacesAutocomplete, {
   getGeocode,
   getLatLng,
@@ -12,7 +12,10 @@ import {
   CommandItem,
   CommandEmpty,
   CommandGroup,
-} from "@/components/ui/command"; // Assuming you have shadcn command components
+} from "@/components/ui/command";
+import { Map, AdvancedMarker } from '@vis.gl/react-google-maps';
+
+const defaultCenter = { lat: 6.9271, lng: 79.8612 };
 
 export default function AddressAutocomplete({ onLocationSelect }: { onLocationSelect: (lat: number, lng: number, address: string) => void }) {
   const {
@@ -23,10 +26,20 @@ export default function AddressAutocomplete({ onLocationSelect }: { onLocationSe
     clearSuggestions,
   } = usePlacesAutocomplete({
     requestOptions: {
-      componentRestrictions: { country: "lk" }, // Restrict to Sri Lanka
+      componentRestrictions: { country: "lk" },
     },
     debounce: 300,
   });
+
+  const [markerPosition, setMarkerPosition] = useState<{ lat: number; lng: number } | null>(null);
+  const [mapCenter, setMapCenter] = useState(defaultCenter);
+  const [zoom, setZoom] = useState(10);
+
+  useEffect(() => {
+    if (markerPosition) {
+      onLocationSelect(markerPosition.lat, markerPosition.lng, value);
+    }
+  }, [markerPosition, value]);
 
   const handleSelect = async (address: string) => {
     setValue(address, false);
@@ -36,41 +49,85 @@ export default function AddressAutocomplete({ onLocationSelect }: { onLocationSe
       const results = await getGeocode({ address });
       const { lat, lng } = await getLatLng(results[0]);
       
-      onLocationSelect(lat, lng, address);
-      console.log("📍 Selected Location:", { lat, lng, address });
+      setMapCenter({ lat, lng });
+      setMarkerPosition({ lat, lng });
+      setZoom(15);
     } catch (error) {
       console.error("Error fetching location data:", error);
     }
   };
 
+  const handleMapClick = async (event: google.maps.MapMouseEvent) => {
+    if (event.latLng) {
+      const lat = event.latLng.lat();
+      const lng = event.latLng.lng();
+      setMarkerPosition({ lat, lng });
+
+      try {
+        const results = await getGeocode({ location: { lat, lng } });
+        if (results[0]) {
+          setValue(results[0].formatted_address, false);
+        }
+      } catch (error) {
+        console.error("Error during reverse geocoding:", error);
+      }
+    }
+  };
+
   return (
-    <div className="w-full">
-      <label className="block text-sm font-medium text-gray-700 mb-2">Business Address</label>
-      <Command className="border rounded-md">
-        <CommandInput
-          placeholder="Type your shop address..."
-          value={value}
-          onValueChange={setValue}
-          disabled={!ready}
-          className="text-base"
-        />
-        <CommandList>
-          {status === "OK" && (
-            <CommandGroup>
-              {data.map(({ place_id, description }) => (
-                <CommandItem
-                  key={place_id}
-                  onSelect={() => handleSelect(description)}
-                  className="cursor-pointer"
-                >
-                  {description}
-                </CommandItem>
-              ))}
-            </CommandGroup>
+    <div className="w-full space-y-4">
+      <div>
+        <label className="block text-sm font-normal text-gray-600 mb-2">Business Address</label>
+        <Command className="border rounded-md">
+          <CommandInput
+            placeholder="Type your shop address..."
+            value={value}
+            onValueChange={setValue}
+            // Temporarily removed disabled={!ready} for testing
+            className="text-base"
+          />
+          <CommandList>
+            {status === "OK" && (
+              <CommandGroup>
+                {data.map(({ place_id, description }) => (
+                  <CommandItem
+                    key={place_id}
+                    onSelect={() => handleSelect(description)}
+                    className="cursor-pointer"
+                  >
+                    {description}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
+            {value.length > 2 && status !== "OK" && <CommandEmpty>No address found.</CommandEmpty>}
+          </CommandList>
+        </Command>
+        <p className="mt-2 text-[11px] text-gray-400 font-normal italic">* Select from the dropdown for accurate map pinning.</p>
+      </div>
+
+      <div className="h-64 w-full rounded-lg overflow-hidden border">
+        <Map
+          center={mapCenter}
+          zoom={zoom}
+          onZoomChanged={(e) => setZoom(e.detail.zoom)}
+          mapId="BUSINESS_REGISTRATION_MAP"
+          onClick={handleMapClick}
+          gestureHandling={'greedy'}
+        >
+          {markerPosition && (
+            <AdvancedMarker
+              position={markerPosition}
+              draggable={true}
+              onDragEnd={(e) => {
+                if (e.latLng) {
+                  handleMapClick(e);
+                }
+              }}
+            />
           )}
-          {value.length > 2 && status !== "OK" && <CommandEmpty>No address found.</CommandEmpty>}
-        </CommandList>
-      </Command>
+        </Map>
+      </div>
     </div>
   );
 }

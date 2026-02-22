@@ -88,7 +88,6 @@ export default function RegisterBusinessPage() {
 
   return (
       <div className="min-h-screen bg-gray-50/50 py-12 px-6">
-        {/* Container widened to max-w-6xl for a more spacious feel */}
         <div className="max-w-6xl mx-auto bg-white p-8 md:p-12 rounded-3xl border border-gray-100 shadow-sm">
 
           <div className="mb-12 border-b border-gray-50 pb-8 text-center md:text-left">
@@ -98,7 +97,6 @@ export default function RegisterBusinessPage() {
 
           <form onSubmit={handleSubmit} className="space-y-12">
 
-            {/* --- Section: Basic Information --- */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
               <div className="lg:col-span-1">
                 <h2 className="text-xl font-normal text-green-900">Basic Information</h2>
@@ -127,7 +125,6 @@ export default function RegisterBusinessPage() {
               </div>
             </div>
 
-            {/* --- Section: Contact & Location --- */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 border-t border-gray-50 pt-12">
               <div className="lg:col-span-1">
                 <h2 className="text-xl font-normal text-green-900">Contact & Location</h2>
@@ -148,16 +145,13 @@ export default function RegisterBusinessPage() {
                   <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full px-4 py-3.5 rounded-xl border border-gray-100 bg-gray-50/50 focus:bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all" />
                 </div>
 
-                {/* Fixing Address Autocomplete accessibility with relative/z-index */}
                 <div className="md:col-span-2 relative z-[50]">
-                  <label className="block text-sm font-normal text-gray-600 mb-2">Business Address</label>
                   <AddressAutocomplete onLocationSelect={handleLocationSelect} />
                   <p className="mt-2 text-[11px] text-gray-400 font-normal italic">* Select from the dropdown for accurate map pinning.</p>
                 </div>
               </div>
             </div>
 
-            {/* --- Section: Verification --- */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 border-t border-gray-50 pt-12">
               <div className="lg:col-span-1">
                 <h2 className="text-xl font-normal text-green-900">Legal Verification</h2>
