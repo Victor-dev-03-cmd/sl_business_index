@@ -145,7 +145,7 @@ export default function RegisterBusinessPage() {
                   <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full px-4 py-3.5 rounded-xl border border-gray-100 bg-gray-50/50 focus:bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all" />
                 </div>
 
-                <div className="md:col-span-2 relative z-[50]">
+                <div className="md:col-span-2">
                   <AddressAutocomplete onLocationSelect={handleLocationSelect} />
                   <p className="mt-2 text-[11px] text-gray-400 font-normal italic">* Select from the dropdown for accurate map pinning.</p>
                 </div>

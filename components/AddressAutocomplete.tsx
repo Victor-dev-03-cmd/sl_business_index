@@ -13,7 +13,7 @@ import {
   CommandEmpty,
   CommandGroup,
 } from "@/components/ui/command";
-import { Map, AdvancedMarker } from '@vis.gl/react-google-maps';
+import { Map, AdvancedMarker, MapMouseEvent } from '@vis.gl/react-google-maps';
 
 const defaultCenter = { lat: 6.9271, lng: 79.8612 };
 
@@ -57,10 +57,9 @@ export default function AddressAutocomplete({ onLocationSelect }: { onLocationSe
     }
   };
 
-  const handleMapClick = async (event: google.maps.MapMouseEvent) => {
-    if (event.latLng) {
-      const lat = event.latLng.lat();
-      const lng = event.latLng.lng();
+  const handleMapClick = async (event: MapMouseEvent) => {
+    if (event.detail.latLng) {
+      const { lat, lng } = event.detail.latLng;
       setMarkerPosition({ lat, lng });
 
       try {
@@ -83,7 +82,6 @@ export default function AddressAutocomplete({ onLocationSelect }: { onLocationSe
             placeholder="Type your shop address..."
             value={value}
             onValueChange={setValue}
-            // Temporarily removed disabled={!ready} for testing
             className="text-base"
           />
           <CommandList>
@@ -120,8 +118,9 @@ export default function AddressAutocomplete({ onLocationSelect }: { onLocationSe
               position={markerPosition}
               draggable={true}
               onDragEnd={(e) => {
-                if (e.latLng) {
-                  handleMapClick(e);
+                if (e.detail.latLng) {
+                    const { lat, lng } = e.detail.latLng;
+                    setMarkerPosition({ lat, lng });
                 }
               }}
             />
