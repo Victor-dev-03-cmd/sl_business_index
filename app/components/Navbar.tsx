@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { createClient } from '../../lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import CategoriesMenu from './CategoriesMenu';
 import { Bell, Menu } from 'lucide-react';
 

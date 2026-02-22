@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { supabase } from '../../lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Chrome } from 'lucide-react'; // Example icon for Google
+import { Chrome, ArrowLeft } from 'lucide-react';
 
 export default function LogIn() {
   const [email, setEmail] = useState('');
@@ -33,7 +33,6 @@ export default function LogIn() {
     setLoading(false);
   };
 
-  // Example function for social login
   const handleSocialLogin = async (provider: 'google' | 'github') => {
     await supabase.auth.signInWithOAuth({
       provider,
@@ -44,80 +43,137 @@ export default function LogIn() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50 px-4">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg">
-        <div className="flex justify-center">
-          <Link href="/">
-            <Image src="/logo.svg" alt="Logo" width={150} height={50} />
-          </Link>
+      <div className="flex min-h-screen bg-white">
+        {/* Left Side: Branding Panel (English & Optimized Spacing) */}
+        <div className="hidden lg:flex lg:w-1/2 bg-green-900 relative overflow-hidden items-start justify-center pt-24 p-12">
+          {/* Decorative background elements */}
+          <div className="absolute top-0 left-0 w-64 h-64 bg-green-800 rounded-full -ml-32 -mt-32 opacity-30"></div>
+
+          <div className="relative z-10 max-w-md">
+            <Link href="/" className="inline-flex items-center text-green-200 hover:text-white mb-6 transition-colors text-sm font-medium">
+              <ArrowLeft className="mr-2" size={16} /> Back to Home
+            </Link>
+
+            <div className="mb-4">
+              <Image
+                  src="/logo.svg"
+                  alt="Logo"
+                  width={160}
+                  height={50}
+                  className="brightness-0 invert opacity-90"
+              />
+            </div>
+
+            <h1 className="text-3xl font-bold text-white mb-3 leading-tight">
+              Digitalizing Sri Lankan <br /> Businesses.
+            </h1>
+            <p className="text-green-100 text-base leading-relaxed opacity-80">
+              Join SL Business Index to scale your reach. Connect with thousands of customers across the island effortlessly.
+            </p>
+
+            <div className="mt-8 flex gap-8 text-white border-t border-green-800 pt-8">
+              <div>
+                <p className="font-bold text-xl">1000+</p>
+                <p className="text-green-300 text-xs uppercase tracking-wider">Registered</p>
+              </div>
+              <div>
+                <p className="font-bold text-xl">25+</p>
+                <p className="text-green-300 text-xs uppercase tracking-wider">Districts</p>
+              </div>
+            </div>
+          </div>
         </div>
-        <h1 className="text-2xl text-center text-gray-700">Welcome Back!</h1>
-        
-        <form onSubmit={handleLogIn} className="space-y-4">
-          <div>
-            <label htmlFor="email" className="text-sm font-medium text-gray-600 sr-only">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              placeholder="Email address"
-              className="w-full px-4 py-3 text-gray-700 bg-gray-100 border-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-          <div>
-            <label htmlFor="password" className="text-sm font-medium text-gray-700 sr-only">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              placeholder="Password"
-              className="w-full px-4 py-3 text-gray-700 bg-gray-100 border-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-          {error && <p className="text-sm text-center text-red-600">{error}</p>}
-          <div>
+
+        {/* Right Side: Login Form */}
+        <div className="w-full lg:w-1/2 flex items-center justify-center bg-gray-50 px-6 py-12 md:px-12">
+          <div className="w-full max-w-md bg-white p-8 md:p-10 rounded-2xl shadow-xl border border-gray-100">
+
+            {/* Mobile Logo */}
+            <div className="lg:hidden flex justify-center mb-6">
+              <Link href="/">
+                <Image src="/logo.svg" alt="Logo" width={140} height={45} />
+              </Link>
+            </div>
+
+            <div className="mb-8 text-center lg:text-left">
+              <h2 className="text-2xl font-bold text-gray-900 mb-1">Welcome Back</h2>
+              <p className="text-gray-500 text-sm">Please enter your details to sign in.</p>
+            </div>
+
+            <form onSubmit={handleLogIn} className="space-y-4">
+              <div>
+                <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1.5 ml-1">Email Address</label>
+                <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    placeholder="e.g. victor@example.com"
+                    className="w-full px-4 py-3 text-gray-800 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-700 focus:bg-white transition-all text-sm"
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between mb-1.5 ml-1">
+                  <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">Password</label>
+                  <Link href="#" className="text-xs text-green-700 hover:underline font-bold">
+                    Forgot?
+                  </Link>
+                </div>
+                <input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    placeholder="••••••••"
+                    className="w-full px-4 py-3 text-gray-800 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-700 focus:bg-white transition-all text-sm"
+                />
+              </div>
+
+              {error && (
+                  <div className="bg-red-50 text-red-600 text-xs p-3 rounded-lg border border-red-100 text-center">
+                    {error}
+                  </div>
+              )}
+
+              <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-3.5 px-4 bg-green-700 text-white font-bold rounded-xl hover:bg-green-800 focus:ring-4 focus:ring-green-100 transition-all transform active:scale-[0.99] disabled:opacity-50"
+              >
+                {loading ? 'Processing...' : 'Sign In'}
+              </button>
+            </form>
+
+            <div className="relative flex items-center justify-center my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200"></div>
+              </div>
+              <div className="relative px-4 text-[10px] font-bold uppercase text-gray-400 bg-white tracking-[0.2em]">
+                OR
+              </div>
+            </div>
+
             <button
-              type="submit"
-              disabled={loading}
-              className="w-full px-4 py-3 text-sm text-white bg-green-700 rounded-lg hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
+                onClick={() => handleSocialLogin('google')}
+                className="flex items-center justify-center w-full py-3 px-4 bg-white border border-gray-200 rounded-xl text-gray-700 font-bold hover:bg-gray-50 transition-all shadow-sm text-sm"
             >
-              {loading ? 'Signing In...' : 'Sign In'}
+              <Chrome size={18} className="mr-3 text-red-500" />
+              Continue with Google
             </button>
+
+            <div className="mt-8 text-center">
+              <p className="text-sm text-gray-500">
+                Don't have an account?{' '}
+                <Link href="/signup" className="text-green-700 font-bold hover:underline ml-1">
+                  Sign Up
+                </Link>
+              </p>
+            </div>
           </div>
-        </form>
-
-        <div className="relative flex items-center justify-center my-6">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300"></div>
-          </div>
-          <div className="relative px-2 text-sm text-gray-500 bg-white">Or continue with</div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4">
-          <button
-            onClick={() => handleSocialLogin('google')}
-            className="flex items-center justify-center w-full px-4 py-3 space-x-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400"
-          >
-            <Chrome size={20} />
-            <span className="font-medium">Google</span>
-          </button>
-        </div>
-
-        <div className="text-sm text-center text-gray-600">
-          Don't have an account?{' '}
-          <Link href="/signup" className="text-green-700 hover:underline">
-            Sign Up
-          </Link>
         </div>
       </div>
-    </div>
   );
 }
