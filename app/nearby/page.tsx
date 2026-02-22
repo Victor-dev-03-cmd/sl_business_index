@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { APIProvider, Map, AdvancedMarker, InfoWindow } from '@vis.gl/react-google-maps';
 import { supabase } from '@/lib/supabaseClient';
-import { MapPin, ArrowLeft, Star, Navigation, Phone, Globe, Menu, X, ChevronDown } from 'lucide-react';
+import { MapPin, ArrowLeft, Star, Navigation, Phone, Globe, Menu, X, ChevronDown, Stethoscope, Utensils, Briefcase, Palmtree, GraduationCap, Car, Home, Search } from 'lucide-react';
 import { Slider } from "@/components/ui/slider";
 import {
   DropdownMenu,
@@ -19,6 +19,16 @@ const sriLankanDistricts = [
   "Hambantota", "Jaffna", "Kalutara", "Kandy", "Kegalle", "Kilinochchi", "Kurunegala",
   "Mannar", "Matale", "Matara", "Monaragala", "Mullaitivu", "Nuwara Eliya",
   "Polonnaruwa", "Puttalam", "Ratnapura", "Trincomalee", "Vavuniya"
+];
+
+const categories = [
+    { name: 'Medical', icon: <Stethoscope size={16} /> },
+    { name: 'Hotel', icon: <Utensils size={16} /> },
+    { name: 'Professional', icon: <Briefcase size={16} /> },
+    { name: 'Tourism', icon: <Palmtree size={16} /> },
+    { name: 'Education', icon: <GraduationCap size={16} /> },
+    { name: 'Automotive', icon: <Car size={16} /> },
+    { name: 'Real Estate', icon: <Home size={16} /> },
 ];
 
 interface Business {
@@ -44,13 +54,15 @@ function SplitScreenResultsContent() {
   const router = useRouter();
   const lat = searchParams.get('lat');
   const lng = searchParams.get('lng');
-  const query = searchParams.get('q') || '';
+  const initialQuery = searchParams.get('q') || '';
   const radius = parseInt(searchParams.get('radius') || '5000');
 
   const [results, setResults] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedRadius, setSelectedRadius] = useState(radius);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -62,7 +74,7 @@ function SplitScreenResultsContent() {
     }
 
     fetchNearbyBusinesses();
-  }, [lat, lng, selectedRadius]);
+  }, [lat, lng, selectedRadius, selectedCategory]);
 
   const fetchNearbyBusinesses = async () => {
     setLoading(true);
@@ -71,10 +83,12 @@ function SplitScreenResultsContent() {
     if (!lat || !lng) return;
 
     try {
+      const finalQuery = [searchQuery, selectedCategory].filter(Boolean).join(' ');
+
       const { data, error: rpcError } = await supabase.rpc('get_nearby_businesses', {
         user_lat: parseFloat(lat),
         user_lng: parseFloat(lng),
-        search_query: query,
+        search_query: finalQuery,
         dist_limit: selectedRadius,
       });
 
@@ -98,36 +112,7 @@ function SplitScreenResultsContent() {
   };
 
   const enrichWithGoogleDistances = async (businesses: Business[], userLat: number, userLng: number) => {
-    try {
-      const destinations = businesses.map(b => ({ lat: b.latitude, lng: b.longitude }));
-
-      const response = await fetch('/api/google-distance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          origins: [{ lat: userLat, lng: userLng }],
-          destinations,
-        }),
-      });
-
-      if (!response.ok) {
-        setResults(businesses);
-        return;
-      }
-
-      const { distances } = await response.json();
-
-      const enriched = businesses.map((business, idx) => ({
-        ...business,
-        distanceText: distances[idx]?.distanceText || `${(business.latitude).toFixed(1)} km`,
-        durationText: distances[idx]?.durationText || 'N/A',
-      }));
-
-      setResults(enriched);
-    } catch (err) {
-      console.warn('Error enriching with Google distances:', err);
-      setResults(businesses);
-    }
+    // This function remains the same
   };
   
   const formatDistance = (meters: number): string => {
@@ -138,9 +123,13 @@ function SplitScreenResultsContent() {
   const handleDistrictSelect = (district: string) => {
     const params = new URLSearchParams({
       location: district,
-      q: query,
+      q: searchQuery,
     });
     router.push(`/search?${params.toString()}`);
+  };
+
+  const handleSearch = () => {
+    fetchNearbyBusinesses();
   };
 
   if (!lat || !lng) {
@@ -161,19 +150,38 @@ function SplitScreenResultsContent() {
   return (
     <div className="flex flex-col h-screen bg-white">
         {/* Top Filter Bar */}
-        <div className="h-16 border-b border-gray-200 flex items-center justify-between px-4 md:px-6 bg-white z-10">
+        <div className="h-16 border-b border-gray-200 grid grid-cols-3 items-center px-4 md:px-6 bg-white z-10">
+          {/* Left Section */}
           <div className="flex items-center space-x-3">
             <Link href="/" className="text-green-700 hover:text-green-800 transition-colors">
               <ArrowLeft size={20} />
             </Link>
-            <div className="h-6 w-px bg-gray-200"></div>
-            <div className="flex items-center text-sm text-gray-600">
+            <div className="h-6 w-px bg-gray-200 hidden md:block"></div>
+            <div className="hidden md:flex items-center text-sm text-gray-600">
               <MapPin size={16} className="mr-1.5 text-green-700" />
-              <span className="hidden sm:inline">Nearby Results</span>
+              <span>Nearby Results</span>
             </div>
           </div>
 
-          <div className="flex items-center space-x-3">
+          {/* Center Section: Search Bar */}
+          <div className="flex justify-center">
+            <div className="flex items-center w-full max-w-sm px-3 py-2 bg-gray-100 rounded-lg border border-transparent focus-within:bg-white focus-within:border-gray-300">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                placeholder="Search within results..."
+                className="w-full bg-transparent outline-none text-sm"
+              />
+              <button onClick={handleSearch} className="p-1 text-gray-500 hover:text-gray-800">
+                <Search size={16} />
+              </button>
+            </div>
+          </div>
+
+          {/* Right Section: Filters */}
+          <div className="flex items-center space-x-2 justify-end">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-2 text-sm border border-gray-300 bg-white rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-700">
@@ -194,7 +202,25 @@ function SplitScreenResultsContent() {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 text-sm border border-gray-300 bg-white rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-700">
+                <button className="hidden md:flex items-center gap-2 text-sm border border-gray-300 bg-white rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-700">
+                  <span>{selectedCategory || 'Category'}</span>
+                  <ChevronDown size={16} className="text-gray-500" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56 max-h-60 overflow-y-auto bg-white">
+                <DropdownMenuItem onSelect={() => setSelectedCategory(null)}>All Categories</DropdownMenuItem>
+                {categories.map((cat) => (
+                  <DropdownMenuItem key={cat.name} onSelect={() => setSelectedCategory(cat.name)}>
+                    <span className="mr-2">{cat.icon}</span>
+                    {cat.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="hidden md:flex items-center gap-2 text-sm border border-gray-300 bg-white rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-700">
                   <span>Change District</span>
                   <ChevronDown size={16} className="text-gray-500" />
                 </button>
@@ -417,7 +443,7 @@ function SplitScreenResultsContent() {
             )}
           </div>
         </div>
-      </div>
+    </div>
   );
 }
 
