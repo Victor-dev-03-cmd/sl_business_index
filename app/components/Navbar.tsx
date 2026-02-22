@@ -2,12 +2,29 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import CategoriesMenu from './CategoriesMenu';
-import AuthButton from './AuthButton'; // Import the new client component
+import AuthButton from './AuthButton'; // Import the client component
 import { Bell, Menu } from 'lucide-react';
 
 export default async function Navbar() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+
+  let userProfile = null;
+  if (user) {
+    // If the user is logged in, fetch their profile from the 'profiles' table
+    const { data: profileData, error } = await supabase
+      .from('profiles')
+      .select('username, first_name')
+      .eq('id', user.id)
+      .single();
+
+    if (profileData) {
+      userProfile = profileData;
+    }
+  }
+
+  // Combine the user auth data with the profile data
+  const fullUserData = user ? { ...user, ...userProfile } : null;
 
   return (
     <header className="sticky top-0 z-50 bg-white shadow-md">
@@ -47,7 +64,8 @@ export default async function Navbar() {
             <span className="absolute top-2 right-2.5 h-2 w-2 bg-red-500 rounded-full border-2 border-white"></span>
           </button>
 
-          <AuthButton user={user} />
+          {/* Pass the combined user data to the client component */}
+          <AuthButton user={fullUserData} />
 
           <button className="md:hidden p-2">
             <Menu className="h-6 w-6 text-gray-700" />

@@ -42,7 +42,7 @@ function OTPConfirmPage() {
       setError(error.message);
     } else {
       router.push('/');
-      router.refresh(); 
+      router.refresh(); // This is the crucial line to refresh the server components
     }
   };
 

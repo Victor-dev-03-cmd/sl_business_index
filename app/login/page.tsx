@@ -24,13 +24,13 @@ export default function LogIn() {
       password,
     });
 
+    setLoading(false);
     if (error) {
       setError(error.message);
     } else {
       router.push('/');
-      router.refresh();
+      router.refresh(); // This is the crucial line to refresh the server components
     }
-    setLoading(false);
   };
 
   const handleSocialLogin = async (provider: 'google' | 'github') => {

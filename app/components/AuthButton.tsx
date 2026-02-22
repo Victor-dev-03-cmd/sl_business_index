@@ -14,7 +14,6 @@ import { User as UserIcon, LogOut } from 'lucide-react';
 export default function AuthButton({ user }: { user: any | null }) {
   const getInitials = (name: string) => {
     if (!name) return '?';
-    // Use email to get initials if username is not available
     const nameParts = name.split(' ');
     if (nameParts.length > 1) {
       return nameParts[0][0] + nameParts[1][0];
@@ -22,14 +21,21 @@ export default function AuthButton({ user }: { user: any | null }) {
     return name[0];
   };
 
-  const displayName = user?.user_metadata?.username || user?.email;
+  // Use first_name if available, otherwise fall back to username, then email
+  const firstName = user?.first_name || user?.username?.split(' ')[0] || user?.email?.split('@')[0] || '';
+  const displayName = user?.username || user?.email;
 
   if (user) {
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className="flex items-center justify-center h-10 w-10 bg-green-700 text-white rounded-full font-bold text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
-            {getInitials(displayName).toUpperCase()}
+          <button className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+            <div className="flex items-center justify-center h-8 w-8 bg-green-700 text-white rounded-full font-bold text-xs">
+              {getInitials(firstName || displayName).toUpperCase()}
+            </div>
+            <span className="text-sm font-medium text-gray-700 hidden sm:inline">
+              {firstName}
+            </span>
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56 bg-white" align="end">

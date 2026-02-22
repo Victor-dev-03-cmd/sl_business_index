@@ -26,6 +26,7 @@ export default function SignUp() {
       options: {
         data: {
           username: username,
+          first_name: username.split(' ')[0],
         },
       },
     });
@@ -34,6 +35,20 @@ export default function SignUp() {
     if (error) {
       setError(error.message);
     } else {
+      // Save first_name to profiles table
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: data.user.id,
+            username: username,
+            first_name: username.split(' ')[0],
+          });
+        
+        if (profileError) {
+          console.error('Error saving profile:', profileError);
+        }
+      }
       // Redirect to the OTP confirmation page with the email as a query param
       router.push(`/auth/confirm-otp?email=${encodeURIComponent(email)}`);
     }

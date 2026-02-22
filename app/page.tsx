@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import {
   Search,
   MapPin,
@@ -23,7 +24,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { supabase } from '@/lib/supabaseClient'; // Supabase client for frontend
 
 const sriLankanDistricts = [
   "Ampara", "Anuradhapura", "Badulla", "Batticaloa", "Colombo", "Galle", "Gampaha",
@@ -33,115 +33,125 @@ const sriLankanDistricts = [
 ];
 
 export default function HomePage() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedLocation, setSelectedLocation] = useState('Location');
+  const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
+  const [searchMode, setSearchMode] = useState<'location' | 'nearby' | null>(null);
   const [isFetchingLocation, setIsFetchingLocation] = useState(false);
 
   const categories = [
-    { name: 'Medical', icon: <Stethoscope size={22} strokeWidth={1.5} />, color: 'bg-emerald-50 text-emerald-700' },
-    { name: 'Dining', icon: <Utensils size={22} strokeWidth={1.5} />, color: 'bg-orange-50 text-orange-700' },
-    { name: 'Professional', icon: <Briefcase size={22} strokeWidth={1.5} />, color: 'bg-blue-50 text-blue-700' },
-    { name: 'Tourism', icon: <Palmtree size={22} strokeWidth={1.5} />, color: 'bg-cyan-50 text-cyan-700' },
-    { name: 'Education', icon: <GraduationCap size={22} strokeWidth={1.5} />, color: 'bg-purple-50 text-purple-700' },
-    { name: 'Automotive', icon: <Car size={22} strokeWidth={1.5} />, color: 'bg-red-50 text-red-700' },
-    { name: 'Real Estate', icon: <Home size={22} strokeWidth={1.5} />, color: 'bg-amber-50 text-amber-700' },
+    { name: 'Medical', icon: <Stethoscope size={40} strokeWidth={1.5} />, color: 'bg-emerald-50 text-emerald-700' },
+    { name: 'Hotel', icon: <Utensils size={40} strokeWidth={1.5} />, color: 'bg-orange-50 text-orange-700' },
+    { name: 'Professional', icon: <Briefcase size={40} strokeWidth={1.5} />, color: 'bg-blue-50 text-blue-700' },
+    { name: 'Tourism', icon: <Palmtree size={40} strokeWidth={1.5} />, color: 'bg-cyan-50 text-cyan-700' },
+    { name: 'Education', icon: <GraduationCap size={40} strokeWidth={1.5} />, color: 'bg-purple-50 text-purple-700' },
+    { name: 'Automotive', icon: <Car size={40} strokeWidth={1.5} />, color: 'bg-red-50 text-red-700' },
+    { name: 'Real Estate', icon: <Home size={40} strokeWidth={1.5} />, color: 'bg-amber-50 text-amber-700' },
   ];
 
-  const handleNearbySearch = () => {
-    if (!navigator.geolocation) {
-      alert("Your browser does not support geolocation.");
+  const handleUseCurrentLocation = () => {
+    setSearchMode('nearby');
+    setSelectedLocation('Current Location');
+  };
+
+  const handleSearch = () => {
+    if (!searchMode) {
+      alert("Please select a location or use your current location.");
       return;
     }
 
-    setIsFetchingLocation(true);
-    navigator.geolocation.getCurrentPosition(async (position) => {
-      const { latitude, longitude } = position.coords;
-      setSelectedLocation("Near Me");
-
-      // Call the Supabase RPC function
-      const { data, error } = await supabase.rpc('get_nearby_businesses', {
-        user_lat: latitude,
-        user_lng: longitude,
-        search_query: searchQuery, // The text from the search input
-        dist_limit: 5000         // 5 km radius
+    if (searchMode === 'nearby') {
+      setIsFetchingLocation(true);
+      navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            setIsFetchingLocation(false);
+            const params = new URLSearchParams({
+              lat: latitude.toString(),
+              lng: longitude.toString(),
+              q: searchQuery,
+              radius: '5000',
+            });
+            router.push(`/nearby?${params.toString()}`);
+          },
+          (err) => {
+            setIsFetchingLocation(false);
+            alert("Could not get your location. Please grant permission.");
+          }
+      );
+    } else if (searchMode === 'location' && selectedLocation) {
+      const params = new URLSearchParams({
+        location: selectedLocation,
+        q: searchQuery,
       });
-
-      setIsFetchingLocation(false);
-
-      if (error) {
-        console.error("Error fetching nearby businesses:", error);
-        alert("Could not fetch nearby businesses. Please try again.");
-      } else {
-        console.log("Nearby Businesses Found:", data);
-        // Here you would typically set the results to a state and display them
-        alert(`Found ${data.length} nearby businesses! Check the console for details.`);
-      }
-      
-    }, (err) => {
-      setIsFetchingLocation(false);
-      alert("Could not get your location. Please grant location permission and try again.");
-      console.error("Geolocation error:", err);
-    });
+      router.push(`/search?${params.toString()}`);
+    }
   };
 
   return (
       <div className="min-h-screen bg-white font-normal">
-        {/* --- HERO SECTION (Balanced Height) --- */}
+        {/* --- HERO SECTION --- */}
         <section className="relative h-[78vh] flex items-center justify-center overflow-hidden bg-green-950">
           <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
 
           <div className="relative z-10 max-w-5xl px-6 text-center">
-          <span className="inline-block px-4 py-1.5 mb-6 text-[11px] tracking-[0.15em] uppercase text-emerald-400 border border-emerald-400/20 rounded-md">
-            Sri Lanka Business Index
-          </span>
-
+            <span className="inline-block px-4 py-1.5 mb-6 text-[11px] tracking-[0.15em] uppercase text-emerald-400 border border-emerald-400/20 rounded-md">
+              Sri Lanka Business Index
+            </span>
             <h1 className="text-4xl md:text-6xl text-white mb-6 leading-tight tracking-tight">
               Find the best services in <br />
               <span className="text-emerald-400">Sri Lanka</span>
             </h1>
-
             <p className="text-green-100/70 text-base mb-10 max-w-xl mx-auto leading-relaxed">
               Explore verified local businesses, clinics, and luxury villas across the island.
             </p>
 
-            {/* Optimized Search Bar */}
-            <div className="relative max-w-3xl mx-auto">
-              <div className="flex flex-col md:flex-row bg-white rounded-xl shadow-md border border-white/10 p-1.5">
-                <div className="flex items-center flex-1 px-5 py-3">
-                  <Search className="text-gray-400 mr-3" size={20} strokeWidth={1.5} />
-                  <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Ex: Dentist, Restaurant..."
-                      className="w-full outline-none text-gray-700 text-base placeholder:text-gray-400"
-                  />
-                </div>
-                <div className="flex items-center border-t md:border-t-0 md:border-l border-gray-100">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button className="flex items-center justify-between w-full md:w-48 px-5 py-3 text-gray-600 text-base outline-none">
-                        <div className="flex items-center">
-                          <MapPin className="text-gray-400 mr-3" size={20} strokeWidth={1.5} />
-                          <span>{selectedLocation}</span>
-                        </div>
-                        <ChevronDown size={16} className="text-gray-400" />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56 max-h-60 overflow-y-auto bg-white">
-                      <DropdownMenuItem onSelect={handleNearbySearch}>
-                        <Navigation size={16} className="mr-2" />
-                        {isFetchingLocation ? 'Locating...' : 'Near Me'}
-                      </DropdownMenuItem>
-                      {sriLankanDistricts.map((district) => (
-                        <DropdownMenuItem key={district} onSelect={() => setSelectedLocation(district)}>
+            {/* --- New Search Bar Design --- */}
+            <div className="relative max-w-3xl mx-auto space-y-4">
+              {/* Main Search Input */}
+              <div className="flex items-center flex-1 px-5 py-4 bg-white rounded-md shadow-sm">
+                <Search className="text-gray-400 mr-3" size={20} strokeWidth={1.5} />
+                <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="What are you looking for? (e.g., Dentist, Restaurant...)"
+                    className="w-full bg-transparent outline-none text-gray-700 text-base placeholder:text-gray-400"
+                />
+              </div>
+
+              {/* Location and Action Buttons */}
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="flex items-center justify-between w-full sm:w-auto px-5 py-3 text-gray-200 text-base outline-none bg-white/5 hover:bg-white/10 transition-colors rounded">
+                      <MapPin className="text-gray-400 mr-3" size={20} strokeWidth={1.5} />
+                      <span className="whitespace-nowrap">{selectedLocation || 'Select a District'}</span>
+                      <ChevronDown size={16} className="text-gray-400 ml-2" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56 max-h-60 overflow-y-auto bg-white">
+                    {sriLankanDistricts.map((district) => (
+                        <DropdownMenuItem key={district} onSelect={() => { setSelectedLocation(district); setSearchMode('location'); }}>
                           {district}
                         </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-                <button className="bg-green-700 hover:bg-green-800 text-white text-base font-medium px-8 py-3 rounded-lg transition-all ml-1">
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <button
+                    onClick={handleUseCurrentLocation}
+                    disabled={isFetchingLocation}
+                    className="flex items-center gap-2 w-full sm:w-auto px-5 py-3 text-gray-200 bg-white/5 hover:bg-white/10 font-medium transition-all disabled:opacity-50 text-base rounded"
+                >
+                  <Navigation size={16} />
+                  {isFetchingLocation ? 'Locating...' : 'Use current location'}
+                </button>
+
+                <button
+                    onClick={handleSearch}
+                    className="w-full sm:w-auto bg-green-700 hover:bg-green-800 text-white text-base font-bold px-8 py-3 transition-all rounded"
+                >
                   Search
                 </button>
               </div>
