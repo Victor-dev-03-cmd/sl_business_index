@@ -13,11 +13,26 @@ import {
   GraduationCap,
   Car,
   Home,
-  ChevronRight
+  ChevronRight,
+  ChevronDown
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+const sriLankanDistricts = [
+  "Ampara", "Anuradhapura", "Badulla", "Batticaloa", "Colombo", "Galle", "Gampaha",
+  "Hambantota", "Jaffna", "Kalutara", "Kandy", "Kegalle", "Kilinochchi", "Kurunegala",
+  "Mannar", "Matale", "Matara", "Monaragala", "Mullaitivu", "Nuwara Eliya",
+  "Polonnaruwa", "Puttalam", "Ratnapura", "Trincomalee", "Vavuniya"
+];
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedLocation, setSelectedLocation] = useState('Location');
 
   const categories = [
     { name: 'Medical', icon: <Stethoscope size={22} strokeWidth={1.5} />, color: 'bg-emerald-50 text-emerald-700' },
@@ -60,13 +75,25 @@ export default function HomePage() {
                       className="w-full outline-none text-gray-700 text-base placeholder:text-gray-400"
                   />
                 </div>
-                <div className="flex items-center px-5 py-3 border-t md:border-t-0 md:border-l border-gray-100">
-                  <MapPin className="text-gray-400 mr-3" size={20} strokeWidth={1.5} />
-                  <select className="bg-transparent outline-none text-gray-600 text-base w-full appearance-none cursor-pointer">
-                    <option>Location</option>
-                    <option>Colombo</option>
-                    <option>Jaffna</option>
-                  </select>
+                <div className="flex items-center border-t md:border-t-0 md:border-l border-gray-100">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="flex items-center justify-between w-full md:w-48 px-5 py-3 text-gray-600 text-base outline-none">
+                        <div className="flex items-center">
+                          <MapPin className="text-gray-400 mr-3" size={20} strokeWidth={1.5} />
+                          <span>{selectedLocation}</span>
+                        </div>
+                        <ChevronDown size={16} className="text-gray-400" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-56 max-h-60 overflow-y-auto bg-white">
+                      {sriLankanDistricts.map((district) => (
+                        <DropdownMenuItem key={district} onSelect={() => setSelectedLocation(district)}>
+                          {district}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
                 <button className="bg-green-700 hover:bg-green-800 text-white text-base font-medium px-8 py-3 rounded-lg transition-all ml-1">
                   Search
