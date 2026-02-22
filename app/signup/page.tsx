@@ -27,17 +27,16 @@ export default function SignUp() {
         data: {
           username: username,
         },
-        emailRedirectTo: `${location.origin}/auth/callback`,
       },
     });
 
+    setLoading(false);
     if (error) {
       setError(error.message);
     } else {
-      alert('Sign up successful! Please check your email to confirm your account.');
-      router.push('/login');
+      // Redirect to the OTP confirmation page with the email as a query param
+      router.push(`/auth/confirm-otp?email=${encodeURIComponent(email)}`);
     }
-    setLoading(false);
   };
 
   const handleSocialLogin = async (provider: 'google' | 'github') => {

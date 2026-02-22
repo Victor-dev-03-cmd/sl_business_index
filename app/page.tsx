@@ -14,7 +14,8 @@ import {
   Car,
   Home,
   ChevronRight,
-  ChevronDown
+  ChevronDown,
+  Navigation
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -22,6 +23,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { supabase } from '@/lib/supabaseClient'; // Supabase client for frontend
 
 const sriLankanDistricts = [
   "Ampara", "Anuradhapura", "Badulla", "Batticaloa", "Colombo", "Galle", "Gampaha",
@@ -33,6 +35,7 @@ const sriLankanDistricts = [
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLocation, setSelectedLocation] = useState('Location');
+  const [isFetchingLocation, setIsFetchingLocation] = useState(false);
 
   const categories = [
     { name: 'Medical', icon: <Stethoscope size={22} strokeWidth={1.5} />, color: 'bg-emerald-50 text-emerald-700' },
@@ -43,6 +46,43 @@ export default function HomePage() {
     { name: 'Automotive', icon: <Car size={22} strokeWidth={1.5} />, color: 'bg-red-50 text-red-700' },
     { name: 'Real Estate', icon: <Home size={22} strokeWidth={1.5} />, color: 'bg-amber-50 text-amber-700' },
   ];
+
+  const handleNearbySearch = () => {
+    if (!navigator.geolocation) {
+      alert("Your browser does not support geolocation.");
+      return;
+    }
+
+    setIsFetchingLocation(true);
+    navigator.geolocation.getCurrentPosition(async (position) => {
+      const { latitude, longitude } = position.coords;
+      setSelectedLocation("Near Me");
+
+      // Call the Supabase RPC function
+      const { data, error } = await supabase.rpc('get_nearby_businesses', {
+        user_lat: latitude,
+        user_lng: longitude,
+        search_query: searchQuery, // The text from the search input
+        dist_limit: 5000         // 5 km radius
+      });
+
+      setIsFetchingLocation(false);
+
+      if (error) {
+        console.error("Error fetching nearby businesses:", error);
+        alert("Could not fetch nearby businesses. Please try again.");
+      } else {
+        console.log("Nearby Businesses Found:", data);
+        // Here you would typically set the results to a state and display them
+        alert(`Found ${data.length} nearby businesses! Check the console for details.`);
+      }
+      
+    }, (err) => {
+      setIsFetchingLocation(false);
+      alert("Could not get your location. Please grant location permission and try again.");
+      console.error("Geolocation error:", err);
+    });
+  };
 
   return (
       <div className="min-h-screen bg-white font-normal">
@@ -71,6 +111,8 @@ export default function HomePage() {
                   <Search className="text-gray-400 mr-3" size={20} strokeWidth={1.5} />
                   <input
                       type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Ex: Dentist, Restaurant..."
                       className="w-full outline-none text-gray-700 text-base placeholder:text-gray-400"
                   />
@@ -87,6 +129,10 @@ export default function HomePage() {
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="w-56 max-h-60 overflow-y-auto bg-white">
+                      <DropdownMenuItem onSelect={handleNearbySearch}>
+                        <Navigation size={16} className="mr-2" />
+                        {isFetchingLocation ? 'Locating...' : 'Near Me'}
+                      </DropdownMenuItem>
                       {sriLankanDistricts.map((district) => (
                         <DropdownMenuItem key={district} onSelect={() => setSelectedLocation(district)}>
                           {district}
