@@ -118,9 +118,9 @@ export default function AddressAutocomplete({ onLocationSelect }: { onLocationSe
               position={markerPosition}
               draggable={true}
               onDragEnd={(e) => {
-                if (e.detail.latLng) {
-                    const { lat, lng } = e.detail.latLng;
-                    setMarkerPosition({ lat, lng });
+                if (e.latLng) {
+                    const { lat, lng } = e.latLng;
+                    setMarkerPosition({ lat: lat(), lng: lng() });
                 }
               }}
             />
