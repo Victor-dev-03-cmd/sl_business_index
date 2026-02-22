@@ -14,7 +14,7 @@ export default async function Navbar() {
     // If the user is logged in, fetch their profile from the 'profiles' table
     const { data: profileData, error } = await supabase
       .from('profiles')
-      .select('username, first_name')
+      .select('username, full_name') // Correctly select 'full_name'
       .eq('id', user.id)
       .single();
 
