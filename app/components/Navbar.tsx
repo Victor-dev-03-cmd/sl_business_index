@@ -57,7 +57,7 @@ export default async function Navbar() {
           ) : (
             <>
               <Link href="/login" className="hidden sm:block px-4 py-2 text-sm text-gray-600 hover:text-green-700">
-                Authorized
+                Login/Signup
               </Link>
               <Link
                 href="/signup"
