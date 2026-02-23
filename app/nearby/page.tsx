@@ -52,8 +52,8 @@ interface Business {
 function SplitScreenResultsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const lat = searchParams.get('lat');
-  const lng = searchParams.get('lng');
+  let lat = searchParams.get('lat');
+  let lng = searchParams.get('lng');
   const district = searchParams.get('district');
   const initialQuery = searchParams.get('q') || '';
   const radius = parseInt(searchParams.get('radius') || '5000');
@@ -67,32 +67,45 @@ function SplitScreenResultsContent() {
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchType, setSearchType] = useState<'location' | 'district'>('location');
+  const [currentLat, setCurrentLat] = useState<string | null>(lat);
+  const [currentLng, setCurrentLng] = useState<string | null>(lng);
 
   useEffect(() => {
-    if (lat && lng) {
+    if (currentLat && currentLng) {
       setSearchType('location');
       fetchLocationResults();
     } else if (district) {
       setSearchType('district');
       fetchDistrictResults();
-    } else {
-      setError('No search criteria provided. Please search again from home.');
-      setLoading(false);
+    } else if (!lat && !lng && !district) {
+      // Request user's current location if no params provided
+      setLoading(true);
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setCurrentLat(latitude.toString());
+          setCurrentLng(longitude.toString());
+        },
+        () => {
+          setError('Unable to get your location. Please grant permission or search from home.');
+          setLoading(false);
+        }
+      );
     }
-  }, [lat, lng, district, searchQuery, selectedRadius, selectedCategory]);
+  }, [currentLat, currentLng, district, searchQuery, selectedRadius, selectedCategory]);
 
   const fetchLocationResults = async () => {
     setLoading(true);
     setError(null);
 
-    if (!lat || !lng) return;
+    if (!currentLat || !currentLng) return;
 
     try {
       const finalQuery = [searchQuery, selectedCategory].filter(Boolean).join(' ');
 
       const { data, error: rpcError } = await supabase.rpc('get_nearby_businesses', {
-        user_lat: parseFloat(lat),
-        user_lng: parseFloat(lng),
+        user_lat: parseFloat(currentLat),
+        user_lng: parseFloat(currentLng),
         search_query: finalQuery,
         dist_limit: selectedRadius,
       });
@@ -107,7 +120,7 @@ function SplitScreenResultsContent() {
         return;
       }
 
-      await enrichWithGoogleDistances(data, parseFloat(lat), parseFloat(lng));
+      await enrichWithGoogleDistances(data, parseFloat(currentLat), parseFloat(currentLng));
     } catch (err) {
       setError('Failed to fetch results.');
       console.error(err);
@@ -203,7 +216,7 @@ function SplitScreenResultsContent() {
     }
   };
 
-  if (!lat && !lng && !district) {
+  if (!currentLat && !currentLng && !district && error) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
@@ -211,6 +224,17 @@ function SplitScreenResultsContent() {
           <Link href="/" className="text-green-700 hover:text-green-800 font-medium">
             Back to Home
           </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentLat && !currentLng && !district && loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block h-6 w-6 border-3 border-green-700 border-t-transparent rounded-full animate-spin mb-3"></div>
+          <p className="text-gray-600">Getting your location...</p>
         </div>
       </div>
     );
@@ -417,8 +441,8 @@ function SplitScreenResultsContent() {
                   <Map
                     style={{ width: '100%', height: '100%' }}
                     defaultCenter={{
-                      lat: lat ? parseFloat(lat) : 6.9271,
-                      lng: lng ? parseFloat(lng) : 79.8612,
+                      lat: currentLat ? parseFloat(currentLat) : 6.9271,
+                      lng: currentLng ? parseFloat(currentLng) : 79.8612,
                     }}
                     defaultZoom={14}
                     gestureHandling="greedy"
@@ -426,14 +450,16 @@ function SplitScreenResultsContent() {
                     mapId={mapsMapId}
                   >
                   {/* User Location Marker */}
+                  {currentLat && currentLng && (
                   <AdvancedMarker
                     position={{
-                      lat: parseFloat(lat!),
-                      lng: parseFloat(lng!),
+                      lat: parseFloat(currentLat),
+                      lng: parseFloat(currentLng),
                     }}
                   >
                     <div className="w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg"></div>
                   </AdvancedMarker>
+                  )}
 
                   {/* Business Markers */}
                   {results.map((business) => (
