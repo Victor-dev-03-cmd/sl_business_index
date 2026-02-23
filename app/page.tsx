@@ -63,28 +63,28 @@ export default function HomePage() {
     if (searchMode === 'nearby') {
       setIsFetchingLocation(true);
       navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const { latitude, longitude } = position.coords;
-            setIsFetchingLocation(false);
-            const params = new URLSearchParams({
-              lat: latitude.toString(),
-              lng: longitude.toString(),
-              q: searchQuery,
-              radius: '5000',
-            });
-            router.push(`/nearby?${params.toString()}`);
-          },
-          (err) => {
-            setIsFetchingLocation(false);
-            alert("Could not get your location. Please grant permission.");
-          }
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setIsFetchingLocation(false);
+          const params = new URLSearchParams({
+            lat: latitude.toString(),
+            lng: longitude.toString(),
+            q: searchQuery,
+            radius: '5000',
+          });
+          router.push(`/nearby?${params.toString()}`);
+        },
+        (err) => {
+          setIsFetchingLocation(false);
+          alert("Could not get your location. Please grant permission.");
+        }
       );
     } else if (searchMode === 'location' && selectedLocation) {
       const params = new URLSearchParams({
-        location: selectedLocation,
+        district: selectedLocation,
         q: searchQuery,
       });
-      router.push(`/search?${params.toString()}`);
+      router.push(`/nearby?${params.toString()}`);
     }
   };
 
@@ -132,9 +132,9 @@ export default function HomePage() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-56 max-h-60 overflow-y-auto bg-white">
                     {sriLankanDistricts.map((district) => (
-                        <DropdownMenuItem key={district} onSelect={() => { setSelectedLocation(district); setSearchMode('location'); }}>
-                          {district}
-                        </DropdownMenuItem>
+                      <DropdownMenuItem key={district} onSelect={() => { setSelectedLocation(district); setSearchMode('location'); }}>
+                        {district}
+                      </DropdownMenuItem>
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>

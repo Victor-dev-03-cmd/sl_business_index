@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation'; // refresh செய்யத் தேவை
+import { useRouter } from 'next/navigation';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { User as UserIcon, LogOut, LayoutDashboard } from 'lucide-react';
+import { User as UserIcon, LogOut, LayoutDashboard, Briefcase } from 'lucide-react';
 
 export default function AuthButton({ user }: { user: any | null }) {
   const router = useRouter();
@@ -23,7 +23,6 @@ export default function AuthButton({ user }: { user: any | null }) {
     return name[0].toUpperCase();
   };
 
-  // Profile-ல் காட்டுவதற்கான பெயர் (முன்னுரிமை: Full Name -> Username -> Email)
   const displayName = user?.full_name || user?.username || user?.email || 'User';
 
   if (user) {
@@ -41,27 +40,39 @@ export default function AuthButton({ user }: { user: any | null }) {
               <p className="text-sm font-medium text-gray-900 truncate">
                 {displayName}
               </p>
+              <p className="text-xs text-gray-500 capitalize">{user.role}</p>
             </div>
 
             <DropdownMenuSeparator className="my-1" />
 
-            <DropdownMenuItem asChild className="cursor-pointer py-2.5 focus:bg-emerald-50 focus:text-emerald-700">
-              <Link href="/dashboard" className="flex items-center w-full">
-                <LayoutDashboard className="mr-3 h-4 w-4 opacity-70" />
-                <span className="font-normal text-[13px]">Dashboard</span>
-              </Link>
-            </DropdownMenuItem>
-
-            <DropdownMenuItem asChild className="cursor-pointer py-2.5 focus:bg-emerald-50 focus:text-emerald-700">
-              <Link href="/profile" className="flex items-center w-full">
-                <UserIcon className="mr-3 h-4 w-4 opacity-70" />
-                <span className="font-normal text-[13px]">My Profile</span>
-              </Link>
-            </DropdownMenuItem>
+            {/* Role-based Menu Items */}
+            {user.role === 'admin' && (
+              <DropdownMenuItem asChild className="cursor-pointer py-2.5 focus:bg-emerald-50 focus:text-emerald-700">
+                <Link href="/admin/dashboard" className="flex items-center w-full">
+                  <LayoutDashboard className="mr-3 h-4 w-4 opacity-70" />
+                  <span className="font-normal text-[13px]">Admin Dashboard</span>
+                </Link>
+              </DropdownMenuItem>
+            )}
+            {user.role === 'vendor' && (
+              <DropdownMenuItem asChild className="cursor-pointer py-2.5 focus:bg-emerald-50 focus:text-emerald-700">
+                <Link href="/my-business" className="flex items-center w-full">
+                  <Briefcase className="mr-3 h-4 w-4 opacity-70" />
+                  <span className="font-normal text-[13px]">My Business</span>
+                </Link>
+              </DropdownMenuItem>
+            )}
+            {user.role === 'customer' && (
+              <DropdownMenuItem asChild className="cursor-pointer py-2.5 focus:bg-emerald-50 focus:text-emerald-700">
+                <Link href="/profile" className="flex items-center w-full">
+                  <UserIcon className="mr-3 h-4 w-4 opacity-70" />
+                  <span className="font-normal text-[13px]">My Profile</span>
+                </Link>
+              </DropdownMenuItem>
+            )}
 
             <DropdownMenuSeparator className="my-1" />
 
-            {/* Sign Out Logic - Server Action-ஐ நேரடியாக அழைப்பது அல்லது Refresh செய்வது நல்லது */}
             <form action="/auth/signout" method="post" className="w-full">
               <button type="submit" className="w-full">
                 <DropdownMenuItem className="flex items-center text-red-600 focus:bg-red-50 focus:text-red-700 cursor-pointer py-2.5">
@@ -75,7 +86,6 @@ export default function AuthButton({ user }: { user: any | null }) {
     );
   }
 
-  // லாகின் செய்யாத போது பட்டன்கள்
   return (
       <div className="flex items-center space-x-2">
         <Link

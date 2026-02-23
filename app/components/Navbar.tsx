@@ -1,8 +1,8 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import CategoriesMenu from './CategoriesMenu';
-import AuthButton from './AuthButton'; // Import the client component
+import AuthButton from './AuthButton';
+import LogoLink from './LogoLink';
 import { Bell, Menu } from 'lucide-react';
 
 export default async function Navbar() {
@@ -14,7 +14,7 @@ export default async function Navbar() {
     // If the user is logged in, fetch their profile from the 'profiles' table
     const { data: profileData, error } = await supabase
       .from('profiles')
-      .select('username, full_name') // Correctly select 'full_name'
+      .select('username, full_name, role') // Fetch the user's role
       .eq('id', user.id)
       .single();
 
@@ -30,17 +30,8 @@ export default async function Navbar() {
     <header className="sticky top-0 z-50 bg-white shadow-md">
       <div className="container mx-auto flex items-center justify-between h-20 px-4">
         {/* Left: Logo Section */}
-        <div className="relative flex-shrink-0 h-full" style={{ width: '180px' }}>
-          <Link href="/" className="absolute top-[65%] -translate-y-1/2 left-0 transition-transform active:scale-95">
-            <Image
-                src="/logo.svg"
-                alt="SL Business Index Logo"
-                width={180}
-                height={60}
-                className="drop-shadow-md object-contain"
-                priority
-            />
-          </Link>
+        <div className="flex items-center justify-center flex-shrink-0">
+          <LogoLink />
         </div>
 
         {/* Center: Navigation Menus */}
@@ -64,7 +55,7 @@ export default async function Navbar() {
             <span className="absolute top-2 right-2.5 h-2 w-2 bg-red-500 rounded-full border-2 border-white"></span>
           </button>
 
-          {/* Pass the combined user data to the client component */}
+          {/* Pass the combined user data (now with role) to the client component */}
           <AuthButton user={fullUserData} />
 
           <button className="md:hidden p-2">

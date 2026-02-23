@@ -54,6 +54,7 @@ function SplitScreenResultsContent() {
   const router = useRouter();
   const lat = searchParams.get('lat');
   const lng = searchParams.get('lng');
+  const district = searchParams.get('district');
   const initialQuery = searchParams.get('q') || '';
   const radius = parseInt(searchParams.get('radius') || '5000');
 
@@ -65,18 +66,22 @@ function SplitScreenResultsContent() {
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchType, setSearchType] = useState<'location' | 'district'>('location');
 
   useEffect(() => {
-    if (!lat || !lng) {
-      setError('Location data missing. Please try again from the home page.');
+    if (lat && lng) {
+      setSearchType('location');
+      fetchLocationResults();
+    } else if (district) {
+      setSearchType('district');
+      fetchDistrictResults();
+    } else {
+      setError('No search criteria provided. Please search again from home.');
       setLoading(false);
-      return;
     }
+  }, [lat, lng, district, searchQuery, selectedRadius, selectedCategory]);
 
-    fetchNearbyBusinesses();
-  }, [lat, lng, selectedRadius, selectedCategory]);
-
-  const fetchNearbyBusinesses = async () => {
+  const fetchLocationResults = async () => {
     setLoading(true);
     setError(null);
 
@@ -93,7 +98,7 @@ function SplitScreenResultsContent() {
       });
 
       if (rpcError) {
-        setError(`Error fetching results: ${rpcError.message}`);
+        setError(`Error: ${rpcError.message}`);
         return;
       }
 
@@ -104,7 +109,41 @@ function SplitScreenResultsContent() {
 
       await enrichWithGoogleDistances(data, parseFloat(lat), parseFloat(lng));
     } catch (err) {
-      setError('Failed to fetch nearby businesses. Please try again.');
+      setError('Failed to fetch results.');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchDistrictResults = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      let query_builder = supabase
+        .from('businesses')
+        .select('*')
+        .ilike('address', `%${district}%`);
+
+      if (searchQuery) {
+        query_builder = query_builder.or(`name.ilike.%${searchQuery}%,category.ilike.%${searchQuery}%`);
+      }
+
+      if (selectedCategory) {
+        query_builder = query_builder.eq('category', selectedCategory);
+      }
+
+      const { data, error: dbError } = await query_builder;
+
+      if (dbError) {
+        setError(`Error: ${dbError.message}`);
+        return;
+      }
+
+      setResults((data as Business[]) || []);
+    } catch (err) {
+      setError('Failed to fetch results.');
       console.error(err);
     } finally {
       setLoading(false);
@@ -112,7 +151,35 @@ function SplitScreenResultsContent() {
   };
 
   const enrichWithGoogleDistances = async (businesses: Business[], userLat: number, userLng: number) => {
-    // This function remains the same
+    try {
+      const destinations = businesses.map(b => ({ lat: b.latitude, lng: b.longitude }));
+      
+      const response = await fetch('/api/google-distance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          origins: [{ lat: userLat, lng: userLng }],
+          destinations,
+        }),
+      });
+
+      if (!response.ok) {
+        setResults(businesses);
+        return;
+      }
+
+      const { distances } = await response.json();
+
+      const enriched = businesses.map((business, idx) => ({
+        ...business,
+        distanceText: distances[idx]?.distanceText || `${((business.latitude || 0) / 1000).toFixed(1)} km`,
+      }));
+
+      setResults(enriched);
+    } catch (err) {
+      console.warn('Error enriching distances:', err);
+      setResults(businesses);
+    }
   };
   
   const formatDistance = (meters: number): string => {
@@ -129,10 +196,14 @@ function SplitScreenResultsContent() {
   };
 
   const handleSearch = () => {
-    fetchNearbyBusinesses();
+    if (searchType === 'location') {
+      fetchLocationResults();
+    } else {
+      fetchDistrictResults();
+    }
   };
 
-  if (!lat || !lng) {
+  if (!lat && !lng && !district) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
@@ -182,23 +253,25 @@ function SplitScreenResultsContent() {
 
           {/* Right Section: Filters */}
           <div className="flex items-center space-x-2 justify-end">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 text-sm border border-gray-300 bg-white rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-700">
-                  <span>Radius: <span className="font-bold">{formatDistance(selectedRadius)}</span></span>
-                  <ChevronDown size={16} className="text-gray-500" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56 p-4 bg-white">
-                <Slider
-                  defaultValue={[selectedRadius]}
-                  max={50000}
-                  min={1000}
-                  step={1000}
-                  onValueCommit={(value) => setSelectedRadius(value[0])}
-                />
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {searchType === 'location' && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-2 text-sm border border-gray-300 bg-white rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-700">
+                    <span>Radius: <span className="font-bold">{formatDistance(selectedRadius)}</span></span>
+                    <ChevronDown size={16} className="text-gray-500" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56 p-4 bg-white">
+                  <Slider
+                    defaultValue={[selectedRadius]}
+                    max={50000}
+                    min={1000}
+                    step={1000}
+                    onValueCommit={(value) => setSelectedRadius(value[0])}
+                  />
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -335,25 +408,26 @@ function SplitScreenResultsContent() {
             )}
           </div>
 
-          {/* Right Side: Map or Map Fallback */}
-          <div className="hidden md:flex flex-1 relative bg-gray-100">
-            {mapsApiKey ? (
-              <APIProvider apiKey={mapsApiKey}>
-                <Map
-                  style={{ width: '100%', height: '100%' }}
-                  defaultCenter={{
-                    lat: parseFloat(lat),
-                    lng: parseFloat(lng),
-                  }}
-                  defaultZoom={14}
-                  gestureHandling="greedy"
-                  fullscreenControl={true}
-                >
+          {/* Right Side: Map or Empty State for District Search */}
+          {searchType === 'location' && (
+            <div className="hidden md:flex flex-1 relative bg-gray-100">
+              {mapsApiKey ? (
+                <APIProvider apiKey={mapsApiKey}>
+                  <Map
+                    style={{ width: '100%', height: '100%' }}
+                    defaultCenter={{
+                      lat: lat ? parseFloat(lat) : 6.9271,
+                      lng: lng ? parseFloat(lng) : 79.8612,
+                    }}
+                    defaultZoom={14}
+                    gestureHandling="greedy"
+                    fullscreenControl={true}
+                  >
                   {/* User Location Marker */}
                   <AdvancedMarker
                     position={{
-                      lat: parseFloat(lat),
-                      lng: parseFloat(lng),
+                      lat: parseFloat(lat!),
+                      lng: parseFloat(lng!),
                     }}
                   >
                     <div className="w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg"></div>
@@ -433,15 +507,16 @@ function SplitScreenResultsContent() {
                   <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse"></div>
                   Showing {results.length} business{results.length !== 1 ? 'es' : ''} within {(selectedRadius / 1000).toFixed(0)}km
                 </div>
-              </APIProvider>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full gap-3">
-                <MapPin size={32} className="text-gray-400" />
-                <p className="text-gray-600 font-medium">Map Not Available</p>
-                <p className="text-sm text-gray-500">View locations from the list on the left</p>
-              </div>
-            )}
-          </div>
+                </APIProvider>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full gap-3">
+                  <MapPin size={32} className="text-gray-400" />
+                  <p className="text-gray-600 font-medium">Map Not Available</p>
+                  <p className="text-sm text-gray-500">View locations from the list on the left</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
     </div>
   );
