@@ -21,6 +21,34 @@ const sriLankanDistricts = [
   "Polonnaruwa", "Puttalam", "Ratnapura", "Trincomalee", "Vavuniya"
 ];
 
+const districtCoordinates: Record<string, { lat: number; lng: number }> = {
+  "Ampara": { lat: 7.2906, lng: 81.6789 },
+  "Anuradhapura": { lat: 8.3114, lng: 80.4167 },
+  "Badulla": { lat: 6.9899, lng: 81.0569 },
+  "Batticaloa": { lat: 7.7097, lng: 81.7975 },
+  "Colombo": { lat: 6.9271, lng: 79.8612 },
+  "Galle": { lat: 6.0535, lng: 80.2136 },
+  "Gampaha": { lat: 7.0674, lng: 80.1481 },
+  "Hambantota": { lat: 6.1223, lng: 81.1222 },
+  "Jaffna": { lat: 9.6615, lng: 80.7821 },
+  "Kalutara": { lat: 6.5969, lng: 80.0361 },
+  "Kandy": { lat: 7.2906, lng: 80.6337 },
+  "Kegalle": { lat: 7.2569, lng: 80.3481 },
+  "Kilinochchi": { lat: 9.3872, lng: 80.3948 },
+  "Kurunegala": { lat: 7.4869, lng: 80.6347 },
+  "Mannar": { lat: 8.9832, lng: 79.9167 },
+  "Matale": { lat: 7.7674, lng: 80.7855 },
+  "Matara": { lat: 5.7496, lng: 80.5399 },
+  "Monaragala": { lat: 6.8497, lng: 81.3539 },
+  "Mullaitivu": { lat: 8.2497, lng: 81.8164 },
+  "Nuwara Eliya": { lat: 6.9497, lng: 80.7861 },
+  "Polonnaruwa": { lat: 7.9369, lng: 81.0036 },
+  "Puttalam": { lat: 8.0323, lng: 79.8289 },
+  "Ratnapura": { lat: 6.7128, lng: 80.3992 },
+  "Trincomalee": { lat: 8.5874, lng: 81.2358 },
+  "Vavuniya": { lat: 8.7554, lng: 80.8975 }
+};
+
 const categories = [
     { name: 'Medical', icon: <Stethoscope size={16} /> },
     { name: 'Hotel', icon: <Utensils size={16} /> },
@@ -71,14 +99,24 @@ function SplitScreenResultsContent() {
   const [currentLng, setCurrentLng] = useState<string | null>(lng);
   const [mapCenter, setMapCenter] = useState({ lat: lat ? parseFloat(lat) : 6.9271, lng: lng ? parseFloat(lng) : 79.8612 });
   const [mapZoom, setMapZoom] = useState(14);
+  const [selectedDistrict, setSelectedDistrict] = useState<string | null>(district);
 
   useEffect(() => {
     if (currentLat && currentLng) {
       setMapCenter({ lat: parseFloat(currentLat), lng: parseFloat(currentLng) });
       setSearchType('location');
       fetchLocationResults();
+    } else if (selectedDistrict) {
+      setSearchType('district');
+      fetchDistrictResults();
     } else if (district) {
       setSearchType('district');
+      setSelectedDistrict(district);
+      if (districtCoordinates[district]) {
+        const coords = districtCoordinates[district];
+        setMapCenter(coords);
+        setMapZoom(12);
+      }
       fetchDistrictResults();
     } else if (!lat && !lng && !district) {
       // Request user's current location if no params provided
@@ -97,7 +135,7 @@ function SplitScreenResultsContent() {
         }
       );
     }
-  }, [currentLat, currentLng, district, searchQuery, selectedRadius, selectedCategory]);
+  }, [currentLat, currentLng, selectedDistrict, district, searchQuery, selectedRadius, selectedCategory]);
 
   const fetchLocationResults = async () => {
     setLoading(true);
@@ -138,11 +176,18 @@ function SplitScreenResultsContent() {
     setLoading(true);
     setError(null);
 
+    const districtToSearch = selectedDistrict || district;
+    if (!districtToSearch) {
+      setError('Please select a district');
+      setLoading(false);
+      return;
+    }
+
     try {
       let query_builder = supabase
         .from('businesses')
         .select('*')
-        .ilike('address', `%${district}%`);
+        .ilike('address', `%${districtToSearch}%`);
 
       if (searchQuery) {
         query_builder = query_builder.or(`name.ilike.%${searchQuery}%,category.ilike.%${searchQuery}%`);
@@ -205,12 +250,14 @@ function SplitScreenResultsContent() {
     return `${(meters / 1000).toFixed(0)} km`;
   };
 
-  const handleDistrictSelect = (district: string) => {
-    const params = new URLSearchParams({
-      location: district,
-      q: searchQuery,
-    });
-    router.push(`/search?${params.toString()}`);
+  const handleDistrictSelect = (districtName: string) => {
+    setSelectedDistrict(districtName);
+    setSearchType('district');
+    if (districtCoordinates[districtName]) {
+      const coords = districtCoordinates[districtName];
+      setMapCenter(coords);
+      setMapZoom(12);
+    }
   };
 
   const handleSearch = () => {
@@ -283,25 +330,23 @@ function SplitScreenResultsContent() {
 
           {/* Right Section: Filters */}
           <div className="flex items-center space-x-2 justify-end">
-            {searchType === 'location' && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-2 text-sm border border-gray-300 bg-white rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-700">
-                    <span>Radius: <span className="font-bold">{formatDistance(selectedRadius)}</span></span>
-                    <ChevronDown size={16} className="text-gray-500" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56 p-4 bg-white">
-                  <Slider
-                    defaultValue={[selectedRadius]}
-                    max={50000}
-                    min={1000}
-                    step={1000}
-                    onValueCommit={(value) => setSelectedRadius(value[0])}
-                  />
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-2 text-sm border border-gray-300 bg-white rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-700">
+                  <span>Radius: <span className="font-bold">{formatDistance(selectedRadius)}</span></span>
+                  <ChevronDown size={16} className="text-gray-500" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56 p-4 bg-white">
+                <Slider
+                  defaultValue={[selectedRadius]}
+                  max={50000}
+                  min={1000}
+                  step={1000}
+                  onValueCommit={(value) => setSelectedRadius(value[0])}
+                />
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -438,9 +483,8 @@ function SplitScreenResultsContent() {
             )}
           </div>
 
-          {/* Right Side: Map or Empty State for District Search */}
-          {searchType === 'location' && (
-            <div className="hidden md:flex flex-1 relative bg-gray-100">
+          {/* Right Side: Map */}
+          <div className="hidden md:flex flex-1 relative bg-gray-100">
               {mapsApiKey ? (
                 <APIProvider apiKey={mapsApiKey}>
                   <Map
@@ -453,7 +497,7 @@ function SplitScreenResultsContent() {
                     mapId={mapsMapId}
                   >
                   {/* User Location Marker */}
-                  {currentLat && currentLng && (
+                  {currentLat && currentLng && searchType === 'location' && (
                   <AdvancedMarker
                     position={{
                       lat: parseFloat(currentLat),
@@ -536,7 +580,7 @@ function SplitScreenResultsContent() {
                 {/* Map Status Indicator */}
                 <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white px-4 py-2.5 rounded-full shadow-lg border border-gray-200 flex items-center gap-2 text-xs text-gray-700">
                   <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse"></div>
-                  Showing {results.length} business{results.length !== 1 ? 'es' : ''} within {(selectedRadius / 1000).toFixed(0)}km
+                  Showing {results.length} business{results.length !== 1 ? 'es' : ''} {searchType === 'location' ? `within ${(selectedRadius / 1000).toFixed(0)}km` : `in ${selectedDistrict || district}`}
                 </div>
                 </APIProvider>
               ) : (
@@ -547,7 +591,6 @@ function SplitScreenResultsContent() {
                 </div>
               )}
             </div>
-          )}
         </div>
     </div>
   );
