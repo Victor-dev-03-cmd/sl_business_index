@@ -109,7 +109,7 @@ export default function AddressAutocomplete({ onLocationSelect }: { onLocationSe
                 ))}
               </CommandGroup>
             )}
-            {value.length > 2 && status !== "OK" && status !== "LOADING" && (
+            {value.length > 2 && status !== "OK" && (
               <CommandEmpty>
                 {status === "ZERO_RESULTS" ? "No address found." : `Error: ${status}`}
               </CommandEmpty>
