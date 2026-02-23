@@ -22,15 +22,15 @@ const sriLankanDistricts = [
 ];
 
 const districtCoordinates: Record<string, { lat: number; lng: number }> = {
-  "Ampara": { lat: 7.2906, lng: 81.6789 },
-  "Anuradhapura": { lat: 8.3114, lng: 80.4167 },
+  "Ampara": { lat: 7.2912, lng: 81.6724 },
+  "Anuradhapura": { lat: 8.3151, lng: 80.4167 },
   "Badulla": { lat: 6.9899, lng: 81.0569 },
-  "Batticaloa": { lat: 7.7097, lng: 81.7975 },
+  "Batticaloa": { lat: 7.7095, lng: 81.7961 },
   "Colombo": { lat: 6.9271, lng: 79.8612 },
-  "Galle": { lat: 6.0535, lng: 80.2136 },
-  "Gampaha": { lat: 7.0674, lng: 80.1481 },
-  "Hambantota": { lat: 6.1223, lng: 81.1222 },
-  "Jaffna": { lat: 9.6615, lng: 80.7821 },
+  "Galle": { lat: 6.0535, lng: 80.2210 },
+  "Gampaha": { lat: 7.0705, lng: 80.1540 },
+  "Hambantota": { lat: 6.1241, lng: 81.1225 },
+  "Jaffna": { lat: 9.6615, lng: 80.0070 },
   "Kalutara": { lat: 6.5969, lng: 80.0361 },
   "Kandy": { lat: 7.2906, lng: 80.6337 },
   "Kegalle": { lat: 7.2569, lng: 80.3481 },
@@ -40,7 +40,7 @@ const districtCoordinates: Record<string, { lat: number; lng: number }> = {
   "Matale": { lat: 7.7674, lng: 80.7855 },
   "Matara": { lat: 5.7496, lng: 80.5399 },
   "Monaragala": { lat: 6.8497, lng: 81.3539 },
-  "Mullaitivu": { lat: 8.2497, lng: 81.8164 },
+  "Mullaitivu": { lat: 8.2541, lng: 81.8155 },
   "Nuwara Eliya": { lat: 6.9497, lng: 80.7861 },
   "Polonnaruwa": { lat: 7.9369, lng: 81.0036 },
   "Puttalam": { lat: 8.0323, lng: 79.8289 },
@@ -102,40 +102,59 @@ function SplitScreenResultsContent() {
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(district);
 
   useEffect(() => {
-    if (currentLat && currentLng) {
-      setMapCenter({ lat: parseFloat(currentLat), lng: parseFloat(currentLng) });
-      setSearchType('location');
-      fetchLocationResults();
-    } else if (selectedDistrict) {
-      setSearchType('district');
-      fetchDistrictResults();
-    } else if (district) {
-      setSearchType('district');
+    if (district && !selectedDistrict) {
       setSelectedDistrict(district);
-      if (districtCoordinates[district]) {
-        const coords = districtCoordinates[district];
+    }
+  }, [district, selectedDistrict]);
+
+  useEffect(() => {
+    if (selectedDistrict) {
+      if (districtCoordinates[selectedDistrict]) {
+        const coords = districtCoordinates[selectedDistrict];
         setMapCenter(coords);
         setMapZoom(12);
+        console.log('District selected:', selectedDistrict, coords);
       }
+      setSearchType('district');
       fetchDistrictResults();
-    } else if (!lat && !lng && !district) {
+    }
+  }, [selectedDistrict, searchQuery, selectedCategory]);
+
+  useEffect(() => {
+    if (currentLat && currentLng) {
+      const newCenter = { lat: parseFloat(currentLat), lng: parseFloat(currentLng) };
+      setMapCenter(newCenter);
+      setMapZoom(15);
+      setSearchType('location');
+      fetchLocationResults();
+      console.log('Location search:', newCenter);
+    } else if (!lat && !lng && !district && !selectedDistrict) {
       // Request user's current location if no params provided
       setLoading(true);
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setCurrentLat(latitude.toString());
-          setCurrentLng(longitude.toString());
-          setMapCenter({ lat: latitude, lng: longitude });
-          setMapZoom(15);
-        },
-        () => {
-          setError('Unable to get your location. Please grant permission or search from home.');
-          setLoading(false);
-        }
-      );
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            console.log('Geolocation success:', latitude, longitude);
+            const newCenter = { lat: latitude, lng: longitude };
+            setMapCenter(newCenter);
+            setMapZoom(15);
+            setCurrentLat(latitude.toString());
+            setCurrentLng(longitude.toString());
+            setLoading(false);
+          },
+          (error) => {
+            console.error('Geolocation error:', error);
+            setError('Unable to get your location. Please grant permission or search from home.');
+            setLoading(false);
+          }
+        );
+      } else {
+        setError('Geolocation is not supported by your browser.');
+        setLoading(false);
+      }
     }
-  }, [currentLat, currentLng, selectedDistrict, district, searchQuery, selectedRadius, selectedCategory]);
+  }, [currentLat, currentLng, district, searchQuery, selectedRadius, selectedCategory]);
 
   const fetchLocationResults = async () => {
     setLoading(true);
@@ -251,13 +270,14 @@ function SplitScreenResultsContent() {
   };
 
   const handleDistrictSelect = (districtName: string) => {
-    setSelectedDistrict(districtName);
     setSearchType('district');
     if (districtCoordinates[districtName]) {
       const coords = districtCoordinates[districtName];
       setMapCenter(coords);
       setMapZoom(12);
     }
+    setSelectedDistrict(districtName);
+    setLoading(true);
   };
 
   const handleSearch = () => {

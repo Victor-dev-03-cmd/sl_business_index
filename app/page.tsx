@@ -32,6 +32,34 @@ const sriLankanDistricts = [
   "Polonnaruwa", "Puttalam", "Ratnapura", "Trincomalee", "Vavuniya"
 ];
 
+const districtCoordinates: Record<string, { lat: number; lng: number }> = {
+  "Ampara": { lat: 7.2912, lng: 81.6724 },
+  "Anuradhapura": { lat: 8.3151, lng: 80.4167 },
+  "Badulla": { lat: 6.9899, lng: 81.0569 },
+  "Batticaloa": { lat: 7.7095, lng: 81.7961 },
+  "Colombo": { lat: 6.9271, lng: 79.8612 },
+  "Galle": { lat: 6.0535, lng: 80.2210 },
+  "Gampaha": { lat: 7.0705, lng: 80.1540 },
+  "Hambantota": { lat: 6.1241, lng: 81.1225 },
+  "Jaffna": { lat: 9.6615, lng: 80.0070 },
+  "Kalutara": { lat: 6.5969, lng: 80.0361 },
+  "Kandy": { lat: 7.2906, lng: 80.6337 },
+  "Kegalle": { lat: 7.2569, lng: 80.3481 },
+  "Kilinochchi": { lat: 9.3872, lng: 80.3948 },
+  "Kurunegala": { lat: 7.4869, lng: 80.6347 },
+  "Mannar": { lat: 8.9832, lng: 79.9167 },
+  "Matale": { lat: 7.7674, lng: 80.7855 },
+  "Matara": { lat: 5.7496, lng: 80.5399 },
+  "Monaragala": { lat: 6.8497, lng: 81.3539 },
+  "Mullaitivu": { lat: 8.2541, lng: 81.8155 },
+  "Nuwara Eliya": { lat: 6.9497, lng: 80.7861 },
+  "Polonnaruwa": { lat: 7.9369, lng: 81.0036 },
+  "Puttalam": { lat: 8.0323, lng: 79.8289 },
+  "Ratnapura": { lat: 6.7128, lng: 80.3992 },
+  "Trincomalee": { lat: 8.5874, lng: 81.2358 },
+  "Vavuniya": { lat: 8.7554, lng: 80.8975 }
+};
+
 export default function HomePage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
