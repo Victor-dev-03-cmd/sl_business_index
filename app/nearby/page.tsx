@@ -217,6 +217,7 @@ function SplitScreenResultsContent() {
   }
 
   const mapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  const mapsMapId = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID;
 
   return (
     <div className="flex flex-col h-screen bg-white">
@@ -422,6 +423,7 @@ function SplitScreenResultsContent() {
                     defaultZoom={14}
                     gestureHandling="greedy"
                     fullscreenControl={true}
+                    mapId={mapsMapId}
                   >
                   {/* User Location Marker */}
                   <AdvancedMarker

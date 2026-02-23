@@ -26,7 +26,7 @@ export default function SignUp() {
       options: {
         data: {
           username: username,
-          first_name: username.split(' ')[0],
+          full_name: username,
         },
       },
     });
@@ -35,14 +35,15 @@ export default function SignUp() {
     if (error) {
       setError(error.message);
     } else {
-      // Save first_name to profiles table
+      // Save profile data to profiles table
       if (data.user) {
         const { error: profileError } = await supabase
           .from('profiles')
           .upsert({
             id: data.user.id,
             username: username,
-            first_name: username.split(' ')[0],
+            full_name: username,
+            role: 'customer',
           });
         
         if (profileError) {

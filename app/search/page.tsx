@@ -8,6 +8,7 @@ function SearchResults() {
     const searchParams = useSearchParams();
     const location = searchParams.get('location');
     const query = searchParams.get('q');
+    const mapId = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID;
 
     // Dummy position for the map center. You'd fetch this based on the location.
     const position = { lat: 6.9271, lng: 79.8612 }; // Colombo
@@ -37,7 +38,7 @@ function SearchResults() {
                     <Map
                         defaultCenter={position}
                         defaultZoom={12}
-                        mapId="SL_BUSINESS_INDEX_MAP"
+                        mapId={mapId}
                     >
                         {/* This is where you would map over your results to show markers */}
                         <AdvancedMarker position={position} title={"Business Name"} />
