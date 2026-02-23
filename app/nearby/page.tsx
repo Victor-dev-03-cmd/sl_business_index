@@ -69,9 +69,12 @@ function SplitScreenResultsContent() {
   const [searchType, setSearchType] = useState<'location' | 'district'>('location');
   const [currentLat, setCurrentLat] = useState<string | null>(lat);
   const [currentLng, setCurrentLng] = useState<string | null>(lng);
+  const [mapCenter, setMapCenter] = useState({ lat: lat ? parseFloat(lat) : 6.9271, lng: lng ? parseFloat(lng) : 79.8612 });
+  const [mapZoom, setMapZoom] = useState(14);
 
   useEffect(() => {
     if (currentLat && currentLng) {
+      setMapCenter({ lat: parseFloat(currentLat), lng: parseFloat(currentLng) });
       setSearchType('location');
       fetchLocationResults();
     } else if (district) {
@@ -85,6 +88,8 @@ function SplitScreenResultsContent() {
           const { latitude, longitude } = position.coords;
           setCurrentLat(latitude.toString());
           setCurrentLng(longitude.toString());
+          setMapCenter({ lat: latitude, lng: longitude });
+          setMapZoom(15);
         },
         () => {
           setError('Unable to get your location. Please grant permission or search from home.');
@@ -440,11 +445,9 @@ function SplitScreenResultsContent() {
                 <APIProvider apiKey={mapsApiKey}>
                   <Map
                     style={{ width: '100%', height: '100%' }}
-                    defaultCenter={{
-                      lat: currentLat ? parseFloat(currentLat) : 6.9271,
-                      lng: currentLng ? parseFloat(currentLng) : 79.8612,
-                    }}
-                    defaultZoom={14}
+                    center={mapCenter}
+                    zoom={mapZoom}
+                    onZoomChanged={(e) => setMapZoom(e.detail.zoom)}
                     gestureHandling="greedy"
                     fullscreenControl={true}
                     mapId={mapsMapId}
