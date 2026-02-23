@@ -147,6 +147,11 @@ function SplitScreenResultsContent() {
             console.error('Geolocation error:', error);
             setError('Unable to get your location. Please grant permission or search from home.');
             setLoading(false);
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 5000,
+            maximumAge: 0
           }
         );
       } else {
@@ -280,6 +285,37 @@ function SplitScreenResultsContent() {
     setLoading(true);
   };
 
+  const findMyLocation = () => {
+    if (navigator.geolocation) {
+      setLoading(true);
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          console.log('Geolocation success:', latitude, longitude);
+          const newCenter = { lat: latitude, lng: longitude };
+          setMapCenter(newCenter);
+          setMapZoom(15);
+          setCurrentLat(latitude.toString());
+          setCurrentLng(longitude.toString());
+          setSearchType('location');
+          setLoading(false);
+        },
+        (error) => {
+          console.error('Geolocation error:', error);
+          setError('Unable to get your location. Please grant permission.');
+          setLoading(false);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 0
+        }
+      );
+    } else {
+      setError('Geolocation is not supported by your browser.');
+    }
+  };
+
   const handleSearch = () => {
     if (searchType === 'location') {
       fetchLocationResults();
@@ -318,28 +354,28 @@ function SplitScreenResultsContent() {
   return (
     <div className="flex flex-col h-screen bg-white">
         {/* Top Filter Bar */}
-        <div className="h-16 border-b border-gray-200 grid grid-cols-3 items-center px-4 md:px-6 bg-white z-10">
+        <div className="h-16 border-b border-gray-200 flex items-center justify-between px-4 md:px-6 bg-white z-10 gap-4">
           {/* Left Section */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-3 flex-shrink-0">
             <Link href="/" className="text-green-700 hover:text-green-800 transition-colors">
               <ArrowLeft size={20} />
             </Link>
             <div className="h-6 w-px bg-gray-200 hidden md:block"></div>
             <div className="hidden md:flex items-center text-sm text-gray-600">
               <MapPin size={16} className="mr-1.5 text-green-700" />
-              <span>Nearby Results</span>
+              <span>Nearby</span>
             </div>
           </div>
 
           {/* Center Section: Search Bar */}
-          <div className="flex justify-center">
-            <div className="flex items-center w-full max-w-sm px-3 py-2 bg-gray-100 rounded-lg border border-transparent focus-within:bg-white focus-within:border-gray-300">
+          <div className="flex-1 max-w-md hidden sm:block">
+            <div className="flex items-center w-full px-3 py-2 bg-gray-100 rounded-lg border border-transparent focus-within:bg-white focus-within:border-gray-300 h-10 transition-all">
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                placeholder="Search within results..."
+                placeholder="Search businesses..."
                 className="w-full bg-transparent outline-none text-sm"
               />
               <button onClick={handleSearch} className="p-1 text-gray-500 hover:text-gray-800">
@@ -349,12 +385,21 @@ function SplitScreenResultsContent() {
           </div>
 
           {/* Right Section: Filters */}
-          <div className="flex items-center space-x-2 justify-end">
+          <div className="flex items-center space-x-2 flex-shrink-0">
+            <button 
+              onClick={findMyLocation}
+              className="flex items-center gap-2 text-sm border border-gray-300 bg-white hover:bg-gray-50 rounded-lg px-3 h-10 outline-none focus:ring-2 focus:ring-green-700 transition-colors"
+              title="Find my current location"
+            >
+              <Navigation size={14} className="text-green-700" />
+              <span className="hidden lg:inline whitespace-nowrap">Find Me</span>
+            </button>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 text-sm border border-gray-300 bg-white rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-700">
-                  <span>Radius: <span className="font-bold">{formatDistance(selectedRadius)}</span></span>
-                  <ChevronDown size={16} className="text-gray-500" />
+                <button className="flex items-center gap-2 text-sm border border-gray-300 bg-white rounded-lg px-3 h-10 outline-none focus:ring-2 focus:ring-green-700 transition-colors">
+                  <span className="whitespace-nowrap">Radius: <span className="font-bold">{formatDistance(selectedRadius)}</span></span>
+                  <ChevronDown size={14} className="text-gray-500" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56 p-4 bg-white">
@@ -370,9 +415,9 @@ function SplitScreenResultsContent() {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="hidden md:flex items-center gap-2 text-sm border border-gray-300 bg-white rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-700">
-                  <span>{selectedCategory || 'Category'}</span>
-                  <ChevronDown size={16} className="text-gray-500" />
+                <button className="hidden md:flex items-center gap-2 text-sm border border-gray-300 bg-white rounded-lg px-3 h-10 outline-none focus:ring-2 focus:ring-green-700 transition-colors">
+                  <span className="whitespace-nowrap">{selectedCategory || 'Category'}</span>
+                  <ChevronDown size={14} className="text-gray-500" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56 max-h-60 overflow-y-auto bg-white">
@@ -388,9 +433,9 @@ function SplitScreenResultsContent() {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="hidden md:flex items-center gap-2 text-sm border border-gray-300 bg-white rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-700">
-                  <span>Change District</span>
-                  <ChevronDown size={16} className="text-gray-500" />
+                <button className="hidden md:flex items-center gap-2 text-sm border border-gray-300 bg-white rounded-lg px-3 h-10 outline-none focus:ring-2 focus:ring-green-700 transition-colors">
+                  <span className="whitespace-nowrap">District</span>
+                  <ChevronDown size={14} className="text-gray-500" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56 max-h-60 overflow-y-auto bg-white">
@@ -404,9 +449,9 @@ function SplitScreenResultsContent() {
             
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors h-10 w-10 flex items-center justify-center border border-gray-200"
             >
-              {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+              {mobileMenuOpen ? <X size={20} /> : <Search size={20} />}
             </button>
           </div>
         </div>

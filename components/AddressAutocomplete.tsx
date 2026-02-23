@@ -13,23 +13,33 @@ import {
   CommandEmpty,
   CommandGroup,
 } from "@/components/ui/command";
-import { Map, AdvancedMarker, MapMouseEvent } from '@vis.gl/react-google-maps';
+import { Map, AdvancedMarker, MapMouseEvent, useApiIsLoaded } from '@vis.gl/react-google-maps';
 
 const defaultCenter = { lat: 6.9271, lng: 79.8612 };
 
 export default function AddressAutocomplete({ onLocationSelect }: { onLocationSelect: (lat: number, lng: number, address: string) => void }) {
+  const apiIsLoaded = useApiIsLoaded();
+  
   const {
     ready,
     value,
     suggestions: { status, data },
     setValue,
     clearSuggestions,
+    init,
   } = usePlacesAutocomplete({
     requestOptions: {
       componentRestrictions: { country: "lk" },
     },
     debounce: 300,
+    initOnMount: false,
   });
+
+  useEffect(() => {
+    if (apiIsLoaded) {
+      init();
+    }
+  }, [apiIsLoaded, init]);
 
   const [markerPosition, setMarkerPosition] = useState<{ lat: number; lng: number } | null>(null);
   const [mapCenter, setMapCenter] = useState(defaultCenter);
@@ -77,12 +87,13 @@ export default function AddressAutocomplete({ onLocationSelect }: { onLocationSe
     <div className="w-full space-y-4">
       <div>
         <label className="block text-sm font-normal text-gray-600 mb-2">Business Address</label>
-        <Command className="border rounded-md">
+        <Command className="border rounded-md" shouldFilter={false}>
           <CommandInput
-            placeholder="Type your shop address..."
+            placeholder={ready ? "Type your shop address..." : "Loading maps..."}
             value={value}
             onValueChange={setValue}
             className="text-base"
+            disabled={!ready}
           />
           <CommandList>
             {status === "OK" && (
@@ -98,7 +109,11 @@ export default function AddressAutocomplete({ onLocationSelect }: { onLocationSe
                 ))}
               </CommandGroup>
             )}
-            {value.length > 2 && status !== "OK" && <CommandEmpty>No address found.</CommandEmpty>}
+            {value.length > 2 && status !== "OK" && status !== "LOADING" && (
+              <CommandEmpty>
+                {status === "ZERO_RESULTS" ? "No address found." : `Error: ${status}`}
+              </CommandEmpty>
+            )}
           </CommandList>
         </Command>
         <p className="mt-2 text-[11px] text-gray-400 font-normal italic">* Select from the dropdown for accurate map pinning.</p>
@@ -109,7 +124,7 @@ export default function AddressAutocomplete({ onLocationSelect }: { onLocationSe
           center={mapCenter}
           zoom={zoom}
           onZoomChanged={(e) => setZoom(e.detail.zoom)}
-          mapId="BUSINESS_REGISTRATION_MAP"
+          mapId={process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID || "BUSINESS_REGISTRATION_MAP"}
           onClick={handleMapClick}
           gestureHandling={'greedy'}
         >

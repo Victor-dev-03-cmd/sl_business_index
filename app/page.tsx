@@ -90,23 +90,34 @@ export default function HomePage() {
 
     if (searchMode === 'nearby') {
       setIsFetchingLocation(true);
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setIsFetchingLocation(false);
-          const params = new URLSearchParams({
-            lat: latitude.toString(),
-            lng: longitude.toString(),
-            q: searchQuery,
-            radius: '5000',
-          });
-          router.push(`/nearby?${params.toString()}`);
-        },
-        (err) => {
-          setIsFetchingLocation(false);
-          alert("Could not get your location. Please grant permission.");
-        }
-      );
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            setIsFetchingLocation(false);
+            const params = new URLSearchParams({
+              lat: latitude.toString(),
+              lng: longitude.toString(),
+              q: searchQuery,
+              radius: '5000',
+            });
+            router.push(`/nearby?${params.toString()}`);
+          },
+          (err) => {
+            setIsFetchingLocation(false);
+            console.error("Error getting location: ", err.message);
+            alert("Could not get your location. Please grant permission.");
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 5000,
+            maximumAge: 0
+          }
+        );
+      } else {
+        setIsFetchingLocation(false);
+        alert("Geolocation is not supported by this browser.");
+      }
     } else if (searchMode === 'location' && selectedLocation) {
       const params = new URLSearchParams({
         district: selectedLocation,

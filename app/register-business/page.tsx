@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import AddressAutocomplete from '@/components/AddressAutocomplete';
+import CategorySelector from '@/components/CategorySelector';
 
 export default function RegisterBusinessPage() {
   const router = useRouter();
@@ -109,8 +110,7 @@ export default function RegisterBusinessPage() {
                   <input type="text" value={businessName} onChange={(e) => setBusinessName(e.target.value)} required className="w-full px-4 py-3.5 rounded-xl border border-gray-100 bg-gray-50/50 focus:bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all" />
                 </div>
                 <div className="md:col-span-1">
-                  <label className="block text-sm font-normal text-gray-600 mb-2">Category</label>
-                  <input type="text" value={category} onChange={(e) => setCategory(e.target.value)} required className="w-full px-4 py-3.5 rounded-xl border border-gray-100 bg-gray-50/50 focus:bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all" />
+                  <CategorySelector value={category} onChange={setCategory} />
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm font-normal text-gray-600 mb-2">Description</label>
