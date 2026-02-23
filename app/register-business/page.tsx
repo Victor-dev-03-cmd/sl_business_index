@@ -146,7 +146,7 @@ export default function RegisterBusinessPage() {
                 </div>
 
                 <div className="md:col-span-2">
-                  <AddressAutocomplete onLocationSelect={handleLocationSelect} />
+                  <AddressAutocomplete onLocationSelectAction={handleLocationSelect} />
                   <p className="mt-2 text-[11px] text-gray-400 font-normal italic">* Select from the dropdown for accurate map pinning.</p>
                 </div>
               </div>

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import Navbar from "./components/Navbar";
-import APIProvider from "./components/APIProvider"; // Import the new provider
 import "./globals.css";
 
 const outfit = Outfit({
@@ -24,10 +23,8 @@ export default function RootLayout({
       <body
         className={`${outfit.variable} antialiased`}
       >
-        <APIProvider>
-          <Navbar />
-          <main>{children}</main>
-        </APIProvider>
+        <Navbar />
+        <main>{children}</main>
       </body>
     </html>
   );

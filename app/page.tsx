@@ -4,20 +4,25 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { categories } from '@/lib/categories';
 import {
   Search,
   MapPin,
-  Stethoscope,
-  Utensils,
-  Briefcase,
-  Palmtree,
-  GraduationCap,
-  Car,
-  Home,
   ChevronRight,
   ChevronDown,
-  Navigation
+  Navigation,
+  Check,
+  LayoutGrid
 } from 'lucide-react';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,48 +39,42 @@ const sriLankanDistricts = [
 
 const districtCoordinates: Record<string, { lat: number; lng: number }> = {
   "Ampara": { lat: 7.2912, lng: 81.6724 },
-  "Anuradhapura": { lat: 8.3151, lng: 80.4167 },
+  "Anuradhapura": { lat: 8.3122, lng: 80.4131 },
   "Badulla": { lat: 6.9899, lng: 81.0569 },
-  "Batticaloa": { lat: 7.7095, lng: 81.7961 },
+  "Batticaloa": { lat: 7.7102, lng: 81.6924 },
   "Colombo": { lat: 6.9271, lng: 79.8612 },
   "Galle": { lat: 6.0535, lng: 80.2210 },
-  "Gampaha": { lat: 7.0705, lng: 80.1540 },
-  "Hambantota": { lat: 6.1241, lng: 81.1225 },
+  "Gampaha": { lat: 7.0840, lng: 80.0098 },
+  "Hambantota": { lat: 6.1429, lng: 81.1212 },
   "Jaffna": { lat: 9.6615, lng: 80.0070 },
-  "Kalutara": { lat: 6.5969, lng: 80.0361 },
+  "Kalutara": { lat: 6.5854, lng: 79.9607 },
   "Kandy": { lat: 7.2906, lng: 80.6337 },
-  "Kegalle": { lat: 7.2569, lng: 80.3481 },
+  "Kegalle": { lat: 7.2513, lng: 80.3464 },
   "Kilinochchi": { lat: 9.3872, lng: 80.3948 },
-  "Kurunegala": { lat: 7.4869, lng: 80.6347 },
-  "Mannar": { lat: 8.9832, lng: 79.9167 },
-  "Matale": { lat: 7.7674, lng: 80.7855 },
-  "Matara": { lat: 5.7496, lng: 80.5399 },
-  "Monaragala": { lat: 6.8497, lng: 81.3539 },
-  "Mullaitivu": { lat: 8.2541, lng: 81.8155 },
-  "Nuwara Eliya": { lat: 6.9497, lng: 80.7861 },
-  "Polonnaruwa": { lat: 7.9369, lng: 81.0036 },
-  "Puttalam": { lat: 8.0323, lng: 79.8289 },
-  "Ratnapura": { lat: 6.7128, lng: 80.3992 },
+  "Kurunegala": { lat: 7.4863, lng: 80.3647 },
+  "Mannar": { lat: 8.9810, lng: 79.9044 },
+  "Matale": { lat: 7.4675, lng: 80.6234 },
+  "Matara": { lat: 5.9549, lng: 80.5550 },
+  "Monaragala": { lat: 6.8718, lng: 81.3496 },
+  "Mullaitivu": { lat: 9.2671, lng: 80.8144 },
+  "Nuwara Eliya": { lat: 6.9497, lng: 80.7891 },
+  "Polonnaruwa": { lat: 7.9403, lng: 81.0188 },
+  "Puttalam": { lat: 8.0330, lng: 79.8259 },
+  "Ratnapura": { lat: 6.6828, lng: 80.3992 },
   "Trincomalee": { lat: 8.5874, lng: 81.2358 },
-  "Vavuniya": { lat: 8.7554, lng: 80.8975 }
+  "Vavuniya": { lat: 8.7514, lng: 80.4971 }
 };
 
 export default function HomePage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [searchMode, setSearchMode] = useState<'location' | 'nearby' | null>(null);
   const [isFetchingLocation, setIsFetchingLocation] = useState(false);
 
-  const categories = [
-    { name: 'Medical', icon: <Stethoscope size={40} strokeWidth={1.5} />, color: 'bg-emerald-50 text-emerald-700' },
-    { name: 'Hotel', icon: <Utensils size={40} strokeWidth={1.5} />, color: 'bg-orange-50 text-orange-700' },
-    { name: 'Professional', icon: <Briefcase size={40} strokeWidth={1.5} />, color: 'bg-blue-50 text-blue-700' },
-    { name: 'Tourism', icon: <Palmtree size={40} strokeWidth={1.5} />, color: 'bg-cyan-50 text-cyan-700' },
-    { name: 'Education', icon: <GraduationCap size={40} strokeWidth={1.5} />, color: 'bg-purple-50 text-purple-700' },
-    { name: 'Automotive', icon: <Car size={40} strokeWidth={1.5} />, color: 'bg-red-50 text-red-700' },
-    { name: 'Real Estate', icon: <Home size={40} strokeWidth={1.5} />, color: 'bg-amber-50 text-amber-700' },
-  ];
+  const featuredCategories = categories.slice(0, 7);
 
   const handleUseCurrentLocation = () => {
     setSearchMode('nearby');
@@ -88,6 +87,8 @@ export default function HomePage() {
       return;
     }
 
+    const finalQuery = [searchQuery, selectedCategory].filter(Boolean).join(' ');
+
     if (searchMode === 'nearby') {
       setIsFetchingLocation(true);
       if (navigator.geolocation) {
@@ -98,7 +99,7 @@ export default function HomePage() {
             const params = new URLSearchParams({
               lat: latitude.toString(),
               lng: longitude.toString(),
-              q: searchQuery,
+              q: finalQuery,
               radius: '5000',
             });
             router.push(`/nearby?${params.toString()}`);
@@ -121,7 +122,7 @@ export default function HomePage() {
     } else if (searchMode === 'location' && selectedLocation) {
       const params = new URLSearchParams({
         district: selectedLocation,
-        q: searchQuery,
+        q: finalQuery,
       });
       router.push(`/nearby?${params.toString()}`);
     }
@@ -138,7 +139,7 @@ export default function HomePage() {
               Sri Lanka Business Index
             </span>
             <h1 className="text-4xl md:text-6xl text-white mb-6 leading-tight tracking-tight">
-              Find the best services in <br />
+              Find the best businesses in <br />
               <span className="text-emerald-400">Sri Lanka</span>
             </h1>
             <p className="text-green-100/70 text-base mb-10 max-w-xl mx-auto leading-relaxed">
@@ -148,30 +149,98 @@ export default function HomePage() {
             {/* --- New Search Bar Design --- */}
             <div className="relative max-w-3xl mx-auto space-y-4">
               {/* Main Search Input */}
-              <div className="flex items-center flex-1 px-5 py-4 bg-white rounded-md shadow-sm">
-                <Search className="text-gray-400 mr-3" size={20} strokeWidth={1.5} />
-                <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="What are you looking for? (e.g., Dentist, Restaurant...)"
-                    className="w-full bg-transparent outline-none text-gray-700 text-base placeholder:text-gray-400"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-gray-100 rounded-md overflow-hidden shadow-lg border border-white/10">
+                <div className="flex items-center px-5 py-4 bg-white">
+                  <Search className="text-gray-400 mr-3" size={20} strokeWidth={1.5} />
+                  <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Service or Business..."
+                      className="w-full bg-transparent outline-none text-gray-700 text-base placeholder:text-gray-400"
+                  />
+                </div>
+
+                <div className="relative flex items-center bg-white border-l border-gray-100">
+                  <div className="w-full">
+                    <button
+                      type="button"
+                      onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+                      className="w-full flex items-center justify-between px-5 py-4 text-left outline-none"
+                    >
+                      <div className="flex items-center overflow-hidden">
+                        <span className="text-emerald-600 mr-3">
+                          {selectedCategory ? categories.find(c => c.name === selectedCategory)?.icon : <ChevronDown size={20} strokeWidth={1.5} className="text-gray-400" />}
+                        </span>
+                        <span className={cn("block truncate text-base", !selectedCategory ? "text-gray-400" : "text-gray-700 font-medium")}>
+                          {selectedCategory || "All Categories"}
+                        </span>
+                      </div>
+                      <ChevronDown size={16} className={cn("ml-2 text-gray-400 transition-transform duration-200", isCategoryOpen && "rotate-180")} />
+                    </button>
+
+                    {isCategoryOpen && (
+                      <div className="absolute z-50 w-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                        <Command shouldFilter={true}>
+                          <CommandInput placeholder="Search categories..." className="h-12 border-none ring-0 focus:ring-0" />
+                          <CommandList className="max-h-[300px] overflow-y-auto custom-scrollbar">
+                            <CommandEmpty className="py-4 text-center text-gray-400 text-sm">No category found.</CommandEmpty>
+                            <CommandGroup>
+                              <CommandItem
+                                onSelect={() => {
+                                  setSelectedCategory(null);
+                                  setIsCategoryOpen(false);
+                                }}
+                                className="flex items-center px-5 py-3 hover:bg-emerald-50 cursor-pointer transition-colors"
+                              >
+                                <span className="text-gray-500 mr-3 opacity-50"><LayoutGrid size={16} /></span>
+                                <span className="text-sm font-medium text-gray-700">All Categories</span>
+                                {selectedCategory === null && <Check className="ml-auto h-4 w-4 text-emerald-600" />}
+                              </CommandItem>
+                              {categories.map((category) => (
+                                <CommandItem
+                                  key={category.name}
+                                  value={category.name}
+                                  onSelect={(currentValue) => {
+                                    setSelectedCategory(currentValue === selectedCategory ? null : currentValue);
+                                    setIsCategoryOpen(false);
+                                  }}
+                                  className="flex items-center px-5 py-3 hover:bg-emerald-50 cursor-pointer transition-colors"
+                                >
+                                  <div className="flex items-center flex-1">
+                                    <span className="text-emerald-600 mr-3">{category.icon}</span>
+                                    <span className="text-sm font-normal text-gray-700">{category.name}</span>
+                                  </div>
+                                  <Check
+                                    className={cn(
+                                      "ml-auto h-4 w-4",
+                                      selectedCategory === category.name ? "opacity-100 text-emerald-600" : "opacity-0"
+                                    )}
+                                  />
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* Location and Action Buttons */}
               <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className="flex items-center justify-between w-full sm:w-auto px-5 py-3 text-gray-200 text-base outline-none bg-white/5 hover:bg-white/10 transition-colors rounded">
+                    <button className="flex items-center justify-between w-full sm:w-auto px-5 py-3 text-gray-200 text-base outline-none bg-white/5 hover:bg-white/10 border border-white/10 transition-colors rounded">
                       <MapPin className="text-gray-400 mr-3" size={20} strokeWidth={1.5} />
                       <span className="whitespace-nowrap">{selectedLocation || 'Select a District'}</span>
                       <ChevronDown size={16} className="text-gray-400 ml-2" />
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56 max-h-60 overflow-y-auto bg-white">
+                  <DropdownMenuContent className="w-56 max-h-60 overflow-y-auto bg-white shadow-2xl border-none rounded-xl">
                     {sriLankanDistricts.map((district) => (
-                      <DropdownMenuItem key={district} onSelect={() => { setSelectedLocation(district); setSearchMode('location'); }}>
+                      <DropdownMenuItem key={district} onSelect={() => { setSelectedLocation(district); setSearchMode('location'); }} className="p-3 text-gray-600 focus:bg-emerald-50 focus:text-emerald-700 cursor-pointer">
                         {district}
                       </DropdownMenuItem>
                     ))}
@@ -181,20 +250,25 @@ export default function HomePage() {
                 <button
                     onClick={handleUseCurrentLocation}
                     disabled={isFetchingLocation}
-                    className="flex items-center gap-2 w-full sm:w-auto px-5 py-3 text-gray-200 bg-white/5 hover:bg-white/10 font-medium transition-all disabled:opacity-50 text-base rounded"
+                    className="flex items-center gap-2 w-full sm:w-auto px-5 py-3 text-gray-200 bg-white/5 hover:bg-white/10 border border-white/10 font-medium transition-all disabled:opacity-50 text-base rounded"
                 >
-                  <Navigation size={16} />
+                  <Navigation size={16} className={cn(isFetchingLocation && "animate-pulse")} />
                   {isFetchingLocation ? 'Locating...' : 'Use current location'}
                 </button>
 
                 <button
                     onClick={handleSearch}
-                    className="w-full sm:w-auto bg-green-700 hover:bg-green-800 text-white text-base font-bold px-8 py-3 transition-all rounded"
+                    className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white text-base font-bold px-10 py-3 shadow-lg shadow-emerald-900/20 transition-all rounded"
                 >
                   Search
                 </button>
               </div>
             </div>
+
+            {/* Overlay to close category dropdown */}
+            {isCategoryOpen && (
+              <div className="fixed inset-0 z-40 bg-transparent" onClick={() => setIsCategoryOpen(false)} />
+            )}
           </div>
         </section>
 
@@ -202,22 +276,23 @@ export default function HomePage() {
         <section className="py-24 px-6 max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-14 px-2">
             <h2 className="text-2xl text-gray-800 tracking-tight font-normal">Browse Categories</h2>
-            <Link href="/categories" className="text-sm text-green-700 flex items-center hover:underline">
+            <Link href="/categories" className="text-sm text-emerald-700 flex items-center hover:underline font-medium">
               View All <ChevronRight size={16} className="ml-1" />
             </Link>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-6 px-2">
-            {categories.map((cat, idx) => (
-                <div
+            {featuredCategories.map((cat, idx) => (
+                <Link
                     key={idx}
-                    className="group cursor-pointer flex flex-col items-center p-6 bg-gray-50/50 border border-transparent rounded-2xl hover:bg-white hover:border-gray-100 hover:shadow-md transition-all duration-300"
+                    href={`/categories/${cat.name.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-')}`}
+                    className="group cursor-pointer flex flex-col items-center p-6 bg-gray-50/30 border border-gray-50 rounded-2xl hover:bg-white hover:border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                 >
-                  <div className={`p-4 rounded-full mb-4 ${cat.color} opacity-90 transition-transform group-hover:scale-110`}>
+                  <div className="p-4 rounded-full mb-4 bg-emerald-50 text-emerald-700 opacity-90 transition-transform group-hover:scale-110 group-hover:bg-emerald-100">
                     {cat.icon}
                   </div>
-                  <span className="text-gray-700 text-sm font-normal text-center">{cat.name}</span>
-                </div>
+                  <span className="text-gray-700 text-sm font-medium text-center group-hover:text-emerald-700">{cat.name}</span>
+                </Link>
             ))}
           </div>
         </section>

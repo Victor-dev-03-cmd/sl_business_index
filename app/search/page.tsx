@@ -2,13 +2,17 @@
 
 import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Map, AdvancedMarker } from '@vis.gl/react-google-maps';
+import dynamic from 'next/dynamic';
+
+const LeafletMap = dynamic(() => import('@/components/LeafletMap'), { 
+    ssr: false, 
+    loading: () => <div className="h-96 md:h-full w-full bg-gray-100 animate-pulse rounded-lg flex items-center justify-center text-gray-400">Loading Map...</div>
+});
 
 function SearchResults() {
     const searchParams = useSearchParams();
     const location = searchParams.get('location');
     const query = searchParams.get('q');
-    const mapId = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID;
 
     // Dummy position for the map center. You'd fetch this based on the location.
     const position = { lat: 6.9271, lng: 79.8612 }; // Colombo
@@ -35,14 +39,12 @@ function SearchResults() {
 
                 {/* Map View */}
                 <div className="h-96 md:h-full w-full">
-                    <Map
-                        defaultCenter={position}
-                        defaultZoom={12}
-                        mapId={mapId}
-                    >
-                        {/* This is where you would map over your results to show markers */}
-                        <AdvancedMarker position={position} title={"Business Name"} />
-                    </Map>
+                    <LeafletMap
+                        userLat={position.lat}
+                        userLng={position.lng}
+                        zoom={12}
+                        height="100%"
+                    />
                 </div>
             </div>
         </div>

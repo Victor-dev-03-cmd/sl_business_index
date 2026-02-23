@@ -3,9 +3,10 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { APIProvider, Map, AdvancedMarker, InfoWindow } from '@vis.gl/react-google-maps';
+import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabaseClient';
-import { MapPin, ArrowLeft, Star, Navigation, Phone, Globe, Menu, X, ChevronDown, Stethoscope, Utensils, Briefcase, Palmtree, GraduationCap, Car, Home, Search } from 'lucide-react';
+import { categories } from '@/lib/categories';
+import { MapPin, ArrowLeft, Star, Navigation, Phone, Globe, Menu, X, ChevronDown, Search, Check } from 'lucide-react';
 import { Slider } from "@/components/ui/slider";
 import {
   DropdownMenu,
@@ -13,6 +14,20 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { cn } from "@/lib/utils";
+
+const LeafletMap = dynamic(() => import('@/components/LeafletMap'), { 
+  ssr: false, 
+  loading: () => <div className="h-full w-full bg-gray-100 animate-pulse flex items-center justify-center text-gray-400">Loading Map...</div>
+});
 
 const sriLankanDistricts = [
   "Ampara", "Anuradhapura", "Badulla", "Batticaloa", "Colombo", "Galle", "Gampaha",
@@ -49,16 +64,6 @@ const districtCoordinates: Record<string, { lat: number; lng: number }> = {
   "Vavuniya": { lat: 8.7554, lng: 80.8975 }
 };
 
-const categories = [
-    { name: 'Medical', icon: <Stethoscope size={16} /> },
-    { name: 'Hotel', icon: <Utensils size={16} /> },
-    { name: 'Professional', icon: <Briefcase size={16} /> },
-    { name: 'Tourism', icon: <Palmtree size={16} /> },
-    { name: 'Education', icon: <GraduationCap size={16} /> },
-    { name: 'Automotive', icon: <Car size={16} /> },
-    { name: 'Real Estate', icon: <Home size={16} /> },
-];
-
 interface Business {
   id: number;
   name: string;
@@ -94,6 +99,7 @@ function SplitScreenResultsContent() {
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [searchType, setSearchType] = useState<'location' | 'district'>('location');
   const [currentLat, setCurrentLat] = useState<string | null>(lat);
   const [currentLng, setCurrentLng] = useState<string | null>(lng);
@@ -187,7 +193,21 @@ function SplitScreenResultsContent() {
         return;
       }
 
-      await enrichWithGoogleDistances(data, parseFloat(currentLat), parseFloat(currentLng));
+      // Local Haversine calculation instead of Google API
+      const enriched = data.map((business: Business) => {
+        const dist = calculateHaversineDistance(
+          parseFloat(currentLat),
+          parseFloat(currentLng),
+          business.latitude,
+          business.longitude
+        );
+        return {
+          ...business,
+          distanceText: `${dist.toFixed(1)} km`,
+        };
+      });
+
+      setResults(enriched);
     } catch (err) {
       setError('Failed to fetch results.');
       console.error(err);
@@ -237,36 +257,16 @@ function SplitScreenResultsContent() {
     }
   };
 
-  const enrichWithGoogleDistances = async (businesses: Business[], userLat: number, userLng: number) => {
-    try {
-      const destinations = businesses.map(b => ({ lat: b.latitude, lng: b.longitude }));
-      
-      const response = await fetch('/api/google-distance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          origins: [{ lat: userLat, lng: userLng }],
-          destinations,
-        }),
-      });
-
-      if (!response.ok) {
-        setResults(businesses);
-        return;
-      }
-
-      const { distances } = await response.json();
-
-      const enriched = businesses.map((business, idx) => ({
-        ...business,
-        distanceText: distances[idx]?.distanceText || `${((business.latitude || 0) / 1000).toFixed(1)} km`,
-      }));
-
-      setResults(enriched);
-    } catch (err) {
-      console.warn('Error enriching distances:', err);
-      setResults(businesses);
-    }
+  const calculateHaversineDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371; // Earth's radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
   };
   
   const formatDistance = (meters: number): string => {
@@ -348,9 +348,6 @@ function SplitScreenResultsContent() {
     );
   }
 
-  const mapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-  const mapsMapId = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID;
-
   return (
     <div className="flex flex-col h-screen bg-white">
         {/* Top Filter Bar */}
@@ -369,78 +366,126 @@ function SplitScreenResultsContent() {
 
           {/* Center Section: Search Bar */}
           <div className="flex-1 max-w-md hidden sm:block">
-            <div className="flex items-center w-full px-3 py-2 bg-gray-100 rounded-lg border border-transparent focus-within:bg-white focus-within:border-gray-300 h-10 transition-all">
+            <div className="flex items-center w-full px-3 bg-gray-50 rounded-lg border border-gray-200 focus-within:bg-white focus-within:border-green-600 h-10 transition-all shadow-sm">
+              <Search size={16} className="text-gray-400 mr-2" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 placeholder="Search businesses..."
-                className="w-full bg-transparent outline-none text-sm"
+                className="w-full bg-transparent outline-none text-sm text-gray-700 placeholder:text-gray-400"
               />
-              <button onClick={handleSearch} className="p-1 text-gray-500 hover:text-gray-800">
-                <Search size={16} />
-              </button>
             </div>
           </div>
 
           {/* Right Section: Filters */}
-          <div className="flex items-center space-x-2 flex-shrink-0">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <button 
               onClick={findMyLocation}
-              className="flex items-center gap-2 text-sm border border-gray-300 bg-white hover:bg-gray-50 rounded-lg px-3 h-10 outline-none focus:ring-2 focus:ring-green-700 transition-colors"
+              className="flex items-center gap-2 text-sm border border-gray-200 bg-white hover:bg-gray-50 rounded-lg px-3 h-10 outline-none focus:ring-1 focus:ring-green-600 transition-all shadow-sm group"
               title="Find my current location"
             >
-              <Navigation size={14} className="text-green-700" />
-              <span className="hidden lg:inline whitespace-nowrap">Find Me</span>
+              <Navigation size={14} className="text-green-700 group-hover:scale-110 transition-transform" />
+              <span className="hidden lg:inline whitespace-nowrap text-gray-600 font-medium">Find Me</span>
             </button>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 text-sm border border-gray-300 bg-white rounded-lg px-3 h-10 outline-none focus:ring-2 focus:ring-green-700 transition-colors">
-                  <span className="whitespace-nowrap">Radius: <span className="font-bold">{formatDistance(selectedRadius)}</span></span>
-                  <ChevronDown size={14} className="text-gray-500" />
+                <button className="flex items-center gap-2 text-sm border border-gray-200 bg-white hover:bg-gray-50 rounded-lg px-3 h-10 outline-none focus:ring-1 focus:ring-green-600 transition-all shadow-sm">
+                  <span className="whitespace-nowrap text-gray-600 font-medium">Radius: <span className="text-green-700 font-bold">{formatDistance(selectedRadius)}</span></span>
+                  <ChevronDown size={14} className="text-gray-400" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56 p-4 bg-white">
+              <DropdownMenuContent className="p-4 w-64 bg-white shadow-xl border border-gray-100 rounded-xl">
+                <div className="mb-4 flex justify-between">
+                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Search Radius</span>
+                  <span className="text-xs font-bold text-green-700 bg-green-50 px-2 py-0.5 rounded">{formatDistance(selectedRadius)}</span>
+                </div>
                 <Slider
                   defaultValue={[selectedRadius]}
                   max={50000}
                   min={1000}
                   step={1000}
-                  onValueCommit={(value) => setSelectedRadius(value[0])}
+                  onValueChange={(value) => setSelectedRadius(value[0])}
+                  className="py-4"
                 />
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="hidden md:flex items-center gap-2 text-sm border border-gray-300 bg-white rounded-lg px-3 h-10 outline-none focus:ring-2 focus:ring-green-700 transition-colors">
-                  <span className="whitespace-nowrap">{selectedCategory || 'Category'}</span>
-                  <ChevronDown size={14} className="text-gray-500" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56 max-h-60 overflow-y-auto bg-white">
-                <DropdownMenuItem onSelect={() => setSelectedCategory(null)}>All Categories</DropdownMenuItem>
-                {categories.map((cat) => (
-                  <DropdownMenuItem key={cat.name} onSelect={() => setSelectedCategory(cat.name)}>
-                    <span className="mr-2">{cat.icon}</span>
-                    {cat.name}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="relative">
+              <button 
+                onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+                className="hidden md:flex items-center gap-2 text-sm border border-gray-200 bg-white hover:bg-gray-50 rounded-lg px-3 h-10 outline-none focus:ring-1 focus:ring-green-600 transition-all shadow-sm"
+              >
+                <span className="whitespace-nowrap text-gray-600 font-medium">
+                  {selectedCategory ? (
+                    <div className="flex items-center">
+                      <span className="text-green-600 mr-2">{categories.find(c => c.name === selectedCategory)?.icon}</span>
+                      {selectedCategory}
+                    </div>
+                  ) : 'Category'}
+                </span>
+                <ChevronDown size={14} className={cn("text-gray-400 transition-transform duration-200", isCategoryOpen && "rotate-180")} />
+              </button>
+
+              {isCategoryOpen && (
+                <div className="absolute z-50 right-0 mt-2 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                  <Command shouldFilter={true}>
+                    <CommandInput placeholder="Search categories..." className="h-10 border-none ring-0 focus:ring-0" />
+                    <CommandList className="max-h-[300px] overflow-y-auto custom-scrollbar">
+                      <CommandEmpty className="py-4 text-center text-gray-400 text-sm">No category found.</CommandEmpty>
+                      <CommandGroup>
+                        <CommandItem
+                          onSelect={() => {
+                            setSelectedCategory(null);
+                            setIsCategoryOpen(false);
+                          }}
+                          className="flex items-center px-4 py-2.5 hover:bg-green-50 cursor-pointer transition-colors"
+                        >
+                          <span className="text-gray-500 mr-3 opacity-50"><X size={14} /></span>
+                          <span className="text-sm font-medium text-gray-700">All Categories</span>
+                          {selectedCategory === null && <Check className="ml-auto h-4 w-4 text-green-600" />}
+                        </CommandItem>
+                        {categories.map((cat) => (
+                          <CommandItem
+                            key={cat.name}
+                            value={cat.name}
+                            onSelect={(currentValue) => {
+                              setSelectedCategory(currentValue === selectedCategory ? null : currentValue);
+                              setIsCategoryOpen(false);
+                            }}
+                            className="flex items-center px-4 py-2.5 hover:bg-green-50 cursor-pointer transition-colors"
+                          >
+                            <div className="flex items-center flex-1">
+                              <span className="text-green-600 mr-3">{cat.icon}</span>
+                              <span className="text-sm font-normal text-gray-700">{cat.name}</span>
+                            </div>
+                            <Check
+                              className={cn(
+                                "ml-auto h-4 w-4",
+                                selectedCategory === cat.name ? "opacity-100 text-green-600" : "opacity-0"
+                              )}
+                            />
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </div>
+              )}
+            </div>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="hidden md:flex items-center gap-2 text-sm border border-gray-300 bg-white rounded-lg px-3 h-10 outline-none focus:ring-2 focus:ring-green-700 transition-colors">
-                  <span className="whitespace-nowrap">District</span>
-                  <ChevronDown size={14} className="text-gray-500" />
+                <button className="hidden md:flex items-center gap-2 text-sm border border-gray-200 bg-white hover:bg-gray-50 rounded-lg px-3 h-10 outline-none focus:ring-1 focus:ring-green-600 transition-all shadow-sm">
+                  <span className="whitespace-nowrap text-gray-600 font-medium">{selectedDistrict || 'District'}</span>
+                  <ChevronDown size={14} className="text-gray-400" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56 max-h-60 overflow-y-auto bg-white">
+              <DropdownMenuContent className="w-56 max-h-60 overflow-y-auto bg-white shadow-xl border border-gray-100 rounded-xl">
                 {sriLankanDistricts.map((district) => (
-                  <DropdownMenuItem key={district} onSelect={() => handleDistrictSelect(district)}>
+                  <DropdownMenuItem key={district} onSelect={() => handleDistrictSelect(district)} className="text-sm text-gray-600 focus:bg-green-50 focus:text-green-700 cursor-pointer p-2.5">
                     {district}
                   </DropdownMenuItem>
                 ))}
@@ -454,6 +499,9 @@ function SplitScreenResultsContent() {
               {mobileMenuOpen ? <X size={20} /> : <Search size={20} />}
             </button>
           </div>
+          {isCategoryOpen && (
+            <div className="fixed inset-0 z-40 bg-transparent" onClick={() => setIsCategoryOpen(false)} />
+          )}
         </div>
 
         {/* Main Content */}
@@ -498,6 +546,8 @@ function SplitScreenResultsContent() {
                     onClick={() => {
                       setSelectedBusiness(business);
                       setMobileMenuOpen(false);
+                      setMapCenter({ lat: business.latitude, lng: business.longitude });
+                      setMapZoom(16);
                     }}
                     className={`p-4 rounded-xl border transition-all cursor-pointer ${
                       selectedBusiness?.id === business.id
@@ -550,112 +600,20 @@ function SplitScreenResultsContent() {
 
           {/* Right Side: Map */}
           <div className="hidden md:flex flex-1 relative bg-gray-100">
-              {mapsApiKey ? (
-                <APIProvider apiKey={mapsApiKey}>
-                  <Map
-                    style={{ width: '100%', height: '100%' }}
-                    center={mapCenter}
-                    zoom={mapZoom}
-                    onZoomChanged={(e) => setMapZoom(e.detail.zoom)}
-                    gestureHandling="greedy"
-                    fullscreenControl={true}
-                    mapId={mapsMapId}
-                  >
-                  {/* User Location Marker */}
-                  {currentLat && currentLng && searchType === 'location' && (
-                  <AdvancedMarker
-                    position={{
-                      lat: parseFloat(currentLat),
-                      lng: parseFloat(currentLng),
-                    }}
-                  >
-                    <div className="w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg"></div>
-                  </AdvancedMarker>
-                  )}
+              <LeafletMap 
+                userLat={mapCenter.lat}
+                userLng={mapCenter.lng}
+                businesses={results}
+                zoom={mapZoom}
+                height="100%"
+              />
 
-                  {/* Business Markers */}
-                  {results.map((business) => (
-                    <AdvancedMarker
-                      key={business.id}
-                      position={{
-                        lat: business.latitude,
-                        lng: business.longitude,
-                      }}
-                      onClick={() => setSelectedBusiness(business)}
-                    >
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-white text-xs cursor-pointer transition-all ${
-                          selectedBusiness?.id === business.id
-                            ? 'bg-green-700 shadow-lg scale-125'
-                            : 'bg-green-600 hover:bg-green-700 shadow-md'
-                        }`}
-                      >
-                        {results.indexOf(business) + 1}
-                      </div>
-                    </AdvancedMarker>
-                  ))}
-
-                  {/* Info Window for Selected Business */}
-                  {selectedBusiness && (
-                    <InfoWindow
-                      position={{
-                        lat: selectedBusiness.latitude,
-                        lng: selectedBusiness.longitude,
-                      }}
-                      onCloseClick={() => setSelectedBusiness(null)}
-                    >
-                      <div className="bg-white p-3 rounded-lg min-w-60 text-sm">
-                        <h4 className="font-semibold text-gray-900">{selectedBusiness.name}</h4>
-                        <p className="text-xs text-green-700 font-medium mt-1">{selectedBusiness.category}</p>
-                        <p className="text-xs text-gray-600 mt-1 flex items-center">
-                          <MapPin size={12} className="mr-1" />
-                          {selectedBusiness.address}
-                        </p>
-                        {selectedBusiness.distanceText && (
-                          <p className="text-xs text-gray-600 mt-1 flex items-center">
-                            <Navigation size={12} className="mr-1 text-green-600" />
-                            {selectedBusiness.distanceText}
-                          </p>
-                        )}
-                        <div className="flex gap-2 mt-3">
-                          {selectedBusiness.phone && (
-                            <a
-                              href={`tel:${selectedBusiness.phone}`}
-                              className="flex-1 text-xs bg-green-700 text-white rounded px-2 py-1 hover:bg-green-800 text-center transition-colors"
-                            >
-                              Call
-                            </a>
-                          )}
-                          {selectedBusiness.website && (
-                            <a
-                              href={selectedBusiness.website}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex-1 text-xs bg-gray-200 text-gray-900 rounded px-2 py-1 hover:bg-gray-300 text-center transition-colors"
-                            >
-                              Website
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                    </InfoWindow>
-                  )}
-                </Map>
-
-                {/* Map Status Indicator */}
-                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white px-4 py-2.5 rounded-full shadow-lg border border-gray-200 flex items-center gap-2 text-xs text-gray-700">
-                  <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse"></div>
-                  Showing {results.length} business{results.length !== 1 ? 'es' : ''} {searchType === 'location' ? `within ${(selectedRadius / 1000).toFixed(0)}km` : `in ${selectedDistrict || district}`}
-                </div>
-                </APIProvider>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full gap-3">
-                  <MapPin size={32} className="text-gray-400" />
-                  <p className="text-gray-600 font-medium">Map Not Available</p>
-                  <p className="text-sm text-gray-500">View locations from the list on the left</p>
-                </div>
-              )}
-            </div>
+              {/* Map Status Indicator */}
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white px-4 py-2.5 rounded-full shadow-lg border border-gray-200 flex items-center gap-2 text-xs text-gray-700 z-[1000]">
+                <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse"></div>
+                Showing {results.length} business{results.length !== 1 ? 'es' : ''} {searchType === 'location' ? `within ${(selectedRadius / 1000).toFixed(0)}km` : `in ${selectedDistrict || district}`}
+              </div>
+          </div>
         </div>
     </div>
   );
