@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import usePlacesAutocomplete, {
   getGeocode,
   getLatLng,
@@ -36,12 +36,12 @@ export default function AddressAutocomplete({ onLocationSelect }: { onLocationSe
   const [zoom, setZoom] = useState(10);
 
   useEffect(() => {
-    if (markerPosition) {
+    if (markerPosition && value) {
       onLocationSelect(markerPosition.lat, markerPosition.lng, value);
     }
-  }, [markerPosition, value]);
+  }, [markerPosition, value, onLocationSelect]);
 
-  const handleSelect = async (address: string) => {
+  const handleSelect = useCallback(async (address: string) => {
     setValue(address, false);
     clearSuggestions();
 
@@ -55,9 +55,9 @@ export default function AddressAutocomplete({ onLocationSelect }: { onLocationSe
     } catch (error) {
       console.error("Error fetching location data:", error);
     }
-  };
+  }, [setValue, clearSuggestions]);
 
-  const handleMapClick = async (event: MapMouseEvent) => {
+  const handleMapClick = useCallback(async (event: MapMouseEvent) => {
     if (event.detail.latLng) {
       const { lat, lng } = event.detail.latLng;
       setMarkerPosition({ lat, lng });
@@ -71,7 +71,7 @@ export default function AddressAutocomplete({ onLocationSelect }: { onLocationSe
         console.error("Error during reverse geocoding:", error);
       }
     }
-  };
+  }, [setValue]);
 
   return (
     <div className="w-full space-y-4">
