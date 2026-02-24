@@ -82,6 +82,9 @@ interface Business {
   durationText?: string;
 }
 
+import { SL_TOWNS, Town } from '@/lib/towns';
+import TownSelector from '@/components/TownSelector';
+
 function SplitScreenResultsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -109,7 +112,16 @@ function SplitScreenResultsContent() {
   });
   const [mapZoom, setMapZoom] = useState(14);
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(district);
+  const [selectedTown, setSelectedTown] = useState<Town | null>(null);
   const [isMapManual, setIsMapManual] = useState(false);
+
+  // Set initial town if district matches a town name (or just clear it)
+  useEffect(() => {
+    if (district) {
+      const town = SL_TOWNS.find(t => t.name === district);
+      if (town) setSelectedTown(town);
+    }
+  }, [district]);
 
   useEffect(() => {
     if (district) {
@@ -321,7 +333,65 @@ function SplitScreenResultsContent() {
 
   const handleSearch = () => {
     setIsMapManual(false);
-    if (searchType === 'location') {
+    
+    let finalQuery = searchQuery;
+    let finalCategory = selectedCategory;
+    let finalDistrict = selectedDistrict;
+    let finalLat = currentLat;
+    let finalLng = currentLng;
+    
+    const lowerQuery = searchQuery.toLowerCase();
+
+    // 1. Smart Town Detection (High Priority)
+    for (const town of SL_TOWNS) {
+      if (lowerQuery.includes(town.name.toLowerCase())) {
+        finalLat = town.lat.toString();
+        finalLng = town.lng.toString();
+        setCurrentLat(finalLat);
+        setCurrentLng(finalLng);
+        setSearchType('location');
+        setSelectedDistrict(null);
+        setMapCenter({ lat: town.lat, lng: town.lng });
+        setMapZoom(14);
+        finalQuery = finalQuery.replace(new RegExp(town.name, 'gi'), '').trim();
+        break;
+      }
+    }
+
+    // 2. Smart District Detection (if no town)
+    if (finalLat === currentLat) { // Only if we didn't just find a town
+      for (const d of sriLankanDistricts) {
+        if (lowerQuery.includes(d.toLowerCase())) {
+          finalDistrict = d;
+          setSelectedDistrict(d);
+          setSearchType('district');
+          setCurrentLat(null);
+          setCurrentLng(null);
+          finalQuery = finalQuery.replace(new RegExp(d, 'gi'), '').trim();
+          if (districtCoordinates[d]) {
+            setMapCenter(districtCoordinates[d]);
+            setMapZoom(11);
+          }
+          break;
+        }
+      }
+    }
+
+    // 3. Smart Category Detection
+    if (!finalCategory) {
+      for (const cat of categories) {
+        if (lowerQuery.includes(cat.name.toLowerCase()) || cat.keywords?.some(kw => lowerQuery.includes(kw.toLowerCase()))) {
+          finalCategory = cat.name;
+          setSelectedCategory(cat.name);
+          break;
+        }
+      }
+    }
+
+    setSearchQuery(finalQuery);
+
+    // Trigger Fetch based on updated state
+    if (finalLat || (searchType === 'location' && !finalDistrict)) {
       fetchLocationResults();
     } else {
       fetchDistrictResults();
@@ -497,21 +567,24 @@ function SplitScreenResultsContent() {
               )}
             </div>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="hidden md:flex items-center gap-2 text-sm border border-gray-200 bg-white hover:bg-gray-50 rounded-lg px-3 h-10 outline-none focus:ring-1 focus:ring-green-600 transition-all shadow-sm">
-                  <span className="whitespace-nowrap text-gray-600 font-medium">{selectedDistrict || 'District'}</span>
-                  <ChevronDown size={14} className="text-gray-400" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56 max-h-60 overflow-y-auto bg-white shadow-xl border border-gray-100 rounded-xl">
-                {sriLankanDistricts.map((district) => (
-                  <DropdownMenuItem key={district} onSelect={() => handleDistrictSelect(district)} className="text-sm text-gray-600 focus:bg-green-50 focus:text-green-700 cursor-pointer p-2.5">
-                    {district}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="hidden md:block w-56">
+              <TownSelector 
+                onSelect={(town) => {
+                  setSelectedTown(town);
+                  setSelectedDistrict(town.district);
+                  setSearchType('location');
+                  setCurrentLat(town.lat.toString());
+                  setCurrentLng(town.lng.toString());
+                  setMapCenter({ lat: town.lat, lng: town.lng });
+                  setMapZoom(14);
+                  setIsMapManual(false);
+                }} 
+                selectedTownName={selectedTown?.name || selectedDistrict || undefined}
+                placeholder="Select Town or District"
+                className="h-10 border-gray-200 text-gray-600 rounded-lg shadow-sm"
+                iconClassName="text-green-700"
+              />
+            </div>
             
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}

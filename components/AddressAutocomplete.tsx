@@ -216,6 +216,7 @@ export default function AddressAutocomplete({
               height="100%"
               draggableMarker={true}
               onMarkerDragEnd={handleMarkerDragEnd}
+              onMapClick={handleMarkerDragEnd}
           />
         </div>
       </div>

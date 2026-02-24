@@ -12,7 +12,8 @@ import {
   ChevronDown,
   Navigation,
   Check,
-  LayoutGrid
+  LayoutGrid,
+  Star
 } from 'lucide-react';
 import {
   Command,
@@ -65,10 +66,14 @@ const districtCoordinates: Record<string, { lat: number; lng: number }> = {
   "Vavuniya": { lat: 8.7514, lng: 80.4971 }
 };
 
+import { SL_TOWNS, Town } from '@/lib/towns';
+import TownSelector from '@/components/TownSelector';
+
 export default function HomePage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
+  const [selectedTown, setSelectedTown] = useState<Town | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [searchMode, setSearchMode] = useState<'location' | 'nearby' | null>(null);
@@ -117,46 +122,85 @@ export default function HomePage() {
   };
 
   const handleSearch = () => {
-    if (!searchMode) {
-      alert("Please select a location or use your current location.");
+    let finalQuery = searchQuery;
+    let finalDistrict = selectedLocation;
+    let finalCategory = selectedCategory;
+    let finalSearchMode = searchMode;
+
+    // --- SMART PARSING ---
+    const lowerQuery = searchQuery.toLowerCase();
+    let finalLat = '';
+    let finalLng = '';
+
+    // 0. Use Selected Town (Highest Priority)
+    if (selectedTown) {
+      finalLat = selectedTown.lat.toString();
+      finalLng = selectedTown.lng.toString();
+      finalSearchMode = 'nearby';
+    }
+
+    // 1. Detect Town from search string (High Priority)
+    if (!finalLat) {
+      for (const town of SL_TOWNS) {
+        if (lowerQuery.includes(town.name.toLowerCase())) {
+          finalLat = town.lat.toString();
+          finalLng = town.lng.toString();
+          finalSearchMode = 'nearby';
+          // Remove town name from query
+          finalQuery = finalQuery.replace(new RegExp(town.name, 'gi'), '').trim();
+          break;
+        }
+      }
+    }
+
+    // 2. Detect District from search string (if no town found)
+    if (!finalLat) {
+      for (const district of sriLankanDistricts) {
+        if (lowerQuery.includes(district.toLowerCase())) {
+          finalDistrict = district;
+          finalSearchMode = 'location';
+          finalQuery = finalQuery.replace(new RegExp(district, 'gi'), '').trim();
+          break;
+        }
+      }
+    }
+
+    // 3. Detect Category from search string (if not already selected)
+    if (!finalCategory) {
+      for (const cat of categories) {
+        const isNameMatch = lowerQuery.includes(cat.name.toLowerCase());
+        const isKeywordMatch = cat.keywords?.some(kw => lowerQuery.includes(kw.toLowerCase()));
+        
+        if (isNameMatch || isKeywordMatch) {
+          finalCategory = cat.name;
+          break;
+        }
+      }
+    }
+
+    // 4. Default to Current Location if no explicit location found
+    if (!finalLat && !finalDistrict && !finalSearchMode) {
+      handleUseCurrentLocation(true);
       return;
     }
 
-    let finalCategory = selectedCategory;
-    
-    // Auto-detect category from keywords if none selected
-    if (!finalCategory && searchQuery) {
-      const query = searchQuery.toLowerCase();
-      const matchedCat = categories.find(cat => 
-        cat.keywords?.some(kw => query.includes(kw.toLowerCase()))
-      );
-      if (matchedCat) {
-        finalCategory = matchedCat.name;
-      }
+    const searchParams = new URLSearchParams();
+    searchParams.set('q', finalQuery);
+    if (finalCategory) searchParams.set('category', finalCategory);
+
+    if (finalLat && finalLng) {
+      searchParams.set('lat', finalLat);
+      searchParams.set('lng', finalLng);
+      searchParams.set('radius', '3000'); // Closer radius for specific towns
+    } else if (finalSearchMode === 'nearby' && userCoords) {
+      searchParams.set('lat', userCoords.lat.toString());
+      searchParams.set('lng', userCoords.lng.toString());
+      searchParams.set('radius', '5000');
+    } else if (finalDistrict) {
+      searchParams.set('district', finalDistrict);
     }
 
-    const finalQuery = [searchQuery, finalCategory].filter(Boolean).join(' ');
-
-    if (searchMode === 'nearby') {
-      if (userCoords) {
-        const params = new URLSearchParams({
-          lat: userCoords.lat.toString(),
-          lng: userCoords.lng.toString(),
-          q: finalQuery,
-          radius: '5000',
-        });
-        router.push(`/nearby?${params.toString()}`);
-      } else {
-        // Fallback and auto-search once coords are found
-        handleUseCurrentLocation(true);
-      }
-    } else if (searchMode === 'location' && selectedLocation) {
-      const params = new URLSearchParams({
-        district: selectedLocation,
-        q: finalQuery,
-      });
-      router.push(`/nearby?${params.toString()}`);
-    }
+    router.push(`/nearby?${searchParams.toString()}`);
   };
 
   const handleCategoryClick = (categoryName: string) => {
@@ -193,123 +237,40 @@ export default function HomePage() {
             </p>
 
             {/* --- New Search Bar Design --- */}
-            <div className="relative max-w-3xl mx-auto space-y-4">
+            <div className="relative max-w-2xl mx-auto space-y-4">
               {/* Main Search Input */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-gray-100 rounded-md overflow-hidden shadow-lg border border-white/10">
+              <div className="bg-white rounded-md overflow-hidden shadow-lg border border-white/10">
                 <div className="flex items-center px-5 py-4 bg-white">
                   <Search className="text-gray-400 mr-3" size={20} strokeWidth={1.5} />
                   <input
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                       placeholder="Service or Business..."
                       className="w-full bg-transparent outline-none text-gray-700 text-base placeholder:text-gray-400"
                   />
                 </div>
-
-                <div className="relative flex items-center bg-white border-l border-gray-100">
-                  <div className="w-full">
-                    <button
-                      type="button"
-                      onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-                      className="w-full flex items-center justify-between px-5 py-4 text-left outline-none"
-                    >
-                      <div className="flex items-center overflow-hidden">
-                        <span className="text-emerald-600 mr-3">
-                          {selectedCategory ? categories.find(c => c.name === selectedCategory)?.icon : <ChevronDown size={20} strokeWidth={1.5} className="text-gray-400" />}
-                        </span>
-                        <span className={cn("block truncate text-base", !selectedCategory ? "text-gray-400" : "text-gray-700 font-medium")}>
-                          {selectedCategory || "All Categories"}
-                        </span>
-                      </div>
-                      <ChevronDown size={16} className={cn("ml-2 text-gray-400 transition-transform duration-200", isCategoryOpen && "rotate-180")} />
-                    </button>
-
-                    {isCategoryOpen && (
-                      <div className="absolute z-50 w-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                        <Command shouldFilter={true}>
-                          <CommandInput placeholder="Search categories..." className="h-12 border-none ring-0 focus:ring-0" />
-                          <CommandList className="max-h-[300px] overflow-y-auto custom-scrollbar">
-                            <CommandEmpty className="py-4 text-center text-gray-400 text-sm">No category found.</CommandEmpty>
-                            <CommandGroup>
-                              <CommandItem
-                                value="all-categories"
-                                onSelect={() => {
-                                  setSelectedCategory(null);
-                                  setIsCategoryOpen(false);
-                                }}
-                                className="flex items-center px-5 py-3 hover:bg-emerald-50 cursor-pointer transition-colors"
-                              >
-                                <span className="text-gray-500 mr-3 opacity-50"><LayoutGrid size={16} /></span>
-                                <span className="text-sm font-medium text-gray-700">All Categories</span>
-                                {selectedCategory === null && <Check className="ml-auto h-4 w-4 text-emerald-600" />}
-                              </CommandItem>
-                              {categories.map((category) => (
-                                <CommandItem
-                                  key={category.name}
-                                  value={`${category.name} ${category.keywords?.join(' ')}`}
-                                  onSelect={() => {
-                                    setSelectedCategory(category.name === selectedCategory ? null : category.name);
-                                    setIsCategoryOpen(false);
-                                  }}
-                                  className="flex items-center px-5 py-3 hover:bg-emerald-50 cursor-pointer transition-colors"
-                                >
-                                  <div className="flex items-center flex-1">
-                                    <span className="text-emerald-600 mr-3">{category.icon}</span>
-                                    <span className="text-sm font-normal text-gray-700">{category.name}</span>
-                                  </div>
-                                  <Check
-                                    className={cn(
-                                      "ml-auto h-4 w-4",
-                                      selectedCategory === category.name ? "opacity-100 text-emerald-600" : "opacity-0"
-                                    )}
-                                  />
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </div>
-                    )}
-                  </div>
-                </div>
               </div>
 
-              {/* Location and Action Buttons */}
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="flex items-center justify-between w-full sm:w-auto px-5 py-3 text-gray-200 text-base outline-none bg-white/5 hover:bg-white/10 border border-white/10 transition-colors rounded">
-                      <MapPin className="text-gray-400 mr-3" size={20} strokeWidth={1.5} />
-                      <span className="whitespace-nowrap">{selectedLocation || 'Select a District'}</span>
-                      <ChevronDown size={16} className="text-gray-400 ml-2" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56 max-h-60 overflow-y-auto bg-white shadow-2xl border-none rounded-xl">
-                    {sriLankanDistricts.map((district) => (
-                      <DropdownMenuItem key={district} onSelect={() => { setSelectedLocation(district); setSearchMode('location'); }} className="p-3 text-gray-600 focus:bg-emerald-50 focus:text-emerald-700 cursor-pointer">
-                        {district}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+            {/* Location and Action Buttons */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+              <button
+                  onClick={() => handleUseCurrentLocation(true)}
+                  disabled={isFetchingLocation}
+                  className="flex items-center gap-2 w-full sm:w-auto px-5 py-3 text-gray-200 bg-white/5 hover:bg-white/10 border border-white/10 font-medium transition-all disabled:opacity-50 text-base rounded"
+              >
+                <Navigation size={16} className={cn(isFetchingLocation && "animate-pulse")} />
+                {isFetchingLocation ? 'Locating...' : 'Search near me'}
+              </button>
 
-                <button
-                    onClick={() => handleUseCurrentLocation(false)}
-                    disabled={isFetchingLocation}
-                    className="flex items-center gap-2 w-full sm:w-auto px-5 py-3 text-gray-200 bg-white/5 hover:bg-white/10 border border-white/10 font-medium transition-all disabled:opacity-50 text-base rounded"
-                >
-                  <Navigation size={16} className={cn(isFetchingLocation && "animate-pulse")} />
-                  {isFetchingLocation ? 'Locating...' : 'Use current location'}
-                </button>
-
-                <button
-                    onClick={handleSearch}
-                    className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white text-base font-bold px-10 py-3 shadow-lg shadow-emerald-900/20 transition-all rounded"
-                >
-                  Search
-                </button>
-              </div>
+              <button
+                  onClick={handleSearch}
+                  className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white text-base font-bold px-10 py-3 shadow-lg shadow-emerald-900/20 transition-all rounded"
+              >
+                Search
+              </button>
+            </div>
             </div>
 
             {/* Overlay to close category dropdown */}
@@ -344,36 +305,72 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* --- LISTINGS (Balanced Card Sizes) --- */}
+        {/* --- LISTINGS (4-Column Modern Grid) --- */}
         <section className="py-24 bg-gray-50/50 border-t border-gray-100">
-          <div className="max-w-7xl mx-auto px-8">
-            <div className="mb-14">
-              <h2 className="text-2xl text-gray-800 tracking-tight font-normal">Featured Listings</h2>
-              <p className="text-sm text-gray-400 mt-2">Handpicked verified establishments</p>
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="flex flex-col md:flex-row md:items-end justify-between mb-14 gap-4">
+              <div>
+                <h2 className="text-2xl text-gray-900 tracking-tight font-medium">Featured Listings</h2>
+                <p className="text-sm text-gray-500 mt-2">Discover handpicked and verified establishments across Sri Lanka</p>
+              </div>
+              <Link href="/nearby" className="text-sm font-bold text-emerald-700 hover:text-emerald-800 transition-colors flex items-center gap-1 group">
+                Explore All <ChevronRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
+              </Link>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-8">
-              {[1, 2, 3].map((i) => (
-                  <div key={i} className="group bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-500">
-                    <div className="relative h-56 bg-gray-200">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="group bg-white rounded-sm overflow-hidden border border-gray-100 hover:border-emerald-600/20 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full">
+                    {/* Image Section */}
+                    <div className="relative h-48 w-full overflow-hidden bg-gray-100">
                       <Image
                           src={`/business-${i}.jpg`}
                           alt="Business"
                           fill
-                          className="object-cover opacity-95 group-hover:opacity-100 transition-opacity"
+                          className="object-cover transition-transform duration-500 group-hover:scale-105"
                       />
-                    </div>
-                    <div className="p-7">
-                      <div className="flex justify-between items-start mb-3">
-                        <h3 className="text-lg text-gray-800 font-normal">Victoria Luxury Villa</h3>
-                        <span className="text-xs text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded">4.9 ★</span>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className="absolute top-3 left-3">
+                        <span className="bg-emerald-600 text-white text-[9px] font-bold uppercase tracking-[0.1em] px-2 py-1 rounded-sm shadow-sm">
+                          Verified
+                        </span>
                       </div>
-                      <p className="text-[13px] text-gray-500 flex items-center mb-6">
-                        <MapPin size={14} className="mr-1.5 opacity-60" /> Nuwara Eliya
-                      </p>
-                      <button className="text-[13px] text-center w-full py-3 border border-gray-100 text-gray-600 rounded-xl hover:bg-green-700 hover:text-white hover:border-green-700 transition-all font-medium">
-                        View Profile
-                      </button>
+                      <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                        <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-sm shadow-lg text-gray-900">
+                          <Star size={10} className="text-amber-400 fill-amber-400" />
+                          <span className="text-[10px] font-bold">4.9</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Content Section */}
+                    <div className="p-4 flex flex-col flex-1">
+                      <div className="mb-4">
+                        <p className="text-[10px] font-medium text-emerald-600 uppercase tracking-widest mb-1.5">
+                          Hospitality & Leisure
+                        </p>
+                        <h3 className="text-sm text-gray-900 font-bold group-hover:text-emerald-700 transition-colors line-clamp-1">
+                          Victoria Luxury Villa {i}
+                        </h3>
+                      </div>
+
+                      <div className="flex items-start text-gray-500 mb-6 flex-1">
+                        <MapPin size={12} className="mr-2 mt-0.5 flex-shrink-0 text-emerald-600/70" />
+                        <p className="text-[11px] leading-relaxed line-clamp-2">
+                          No 45, Gregory Lake Road, Nuwara Eliya
+                        </p>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-4 border-t border-gray-50">
+                        <span className="text-[10px] font-bold text-gray-400">#BUSINESS-{2024 + i}</span>
+                        <button 
+                          onClick={() => router.push('/nearby')}
+                          className="text-[11px] font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 group/btn"
+                        >
+                          View Details
+                          <ChevronRight size={14} className="group-hover/btn:translate-x-0.5 transition-transform" />
+                        </button>
+                      </div>
                     </div>
                   </div>
               ))}

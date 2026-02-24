@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import Navbar from "./components/Navbar";
+import NavbarWrapper from "./components/NavbarWrapper";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -23,7 +24,9 @@ export default function RootLayout({
       <body
         className={`${outfit.variable} antialiased`}
       >
-        <Navbar />
+        <NavbarWrapper>
+          <Navbar />
+        </NavbarWrapper>
         <main>{children}</main>
       </body>
     </html>
