@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 
-const LeafletMap = dynamic(() => import('@/components/LeafletMap'), { 
+const MapboxMap = dynamic(() => import('@/components/MapboxMap'), { 
   ssr: false, 
   loading: () => <div className="h-full w-full bg-gray-100 animate-pulse flex items-center justify-center text-gray-400">Loading Map...</div>
 });
@@ -38,30 +38,30 @@ const sriLankanDistricts = [
 
 const districtCoordinates: Record<string, { lat: number; lng: number }> = {
   "Ampara": { lat: 7.2912, lng: 81.6724 },
-  "Anuradhapura": { lat: 8.3151, lng: 80.4167 },
+  "Anuradhapura": { lat: 8.3122, lng: 80.4131 },
   "Badulla": { lat: 6.9899, lng: 81.0569 },
-  "Batticaloa": { lat: 7.7095, lng: 81.7961 },
+  "Batticaloa": { lat: 7.7102, lng: 81.6924 },
   "Colombo": { lat: 6.9271, lng: 79.8612 },
   "Galle": { lat: 6.0535, lng: 80.2210 },
-  "Gampaha": { lat: 7.0705, lng: 80.1540 },
+  "Gampaha": { lat: 7.0873, lng: 79.9925 },
   "Hambantota": { lat: 6.1241, lng: 81.1225 },
   "Jaffna": { lat: 9.6615, lng: 80.0070 },
-  "Kalutara": { lat: 6.5969, lng: 80.0361 },
+  "Kalutara": { lat: 6.5854, lng: 79.9607 },
   "Kandy": { lat: 7.2906, lng: 80.6337 },
-  "Kegalle": { lat: 7.2569, lng: 80.3481 },
+  "Kegalle": { lat: 7.2513, lng: 80.3464 },
   "Kilinochchi": { lat: 9.3872, lng: 80.3948 },
-  "Kurunegala": { lat: 7.4869, lng: 80.6347 },
-  "Mannar": { lat: 8.9832, lng: 79.9167 },
-  "Matale": { lat: 7.7674, lng: 80.7855 },
-  "Matara": { lat: 5.7496, lng: 80.5399 },
-  "Monaragala": { lat: 6.8497, lng: 81.3539 },
-  "Mullaitivu": { lat: 8.2541, lng: 81.8155 },
-  "Nuwara Eliya": { lat: 6.9497, lng: 80.7861 },
-  "Polonnaruwa": { lat: 7.9369, lng: 81.0036 },
-  "Puttalam": { lat: 8.0323, lng: 79.8289 },
-  "Ratnapura": { lat: 6.7128, lng: 80.3992 },
-  "Trincomalee": { lat: 8.5874, lng: 81.2358 },
-  "Vavuniya": { lat: 8.7554, lng: 80.8975 }
+  "Kurunegala": { lat: 7.4863, lng: 80.3647 },
+  "Mannar": { lat: 8.9810, lng: 79.9044 },
+  "Matale": { lat: 7.4675, lng: 80.6234 },
+  "Matara": { lat: 5.9496, lng: 80.5469 },
+  "Monaragala": { lat: 6.8718, lng: 81.3496 },
+  "Mullaitivu": { lat: 9.2671, lng: 80.8144 },
+  "Nuwara Eliya": { lat: 6.9697, lng: 80.7672 },
+  "Polonnaruwa": { lat: 7.9403, lng: 81.0188 },
+  "Puttalam": { lat: 8.0330, lng: 79.8259 },
+  "Ratnapura": { lat: 6.6828, lng: 80.3992 },
+  "Trincomalee": { lat: 8.5874, lng: 81.2152 },
+  "Vavuniya": { lat: 8.7514, lng: 80.4971 }
 };
 
 interface Business {
@@ -100,72 +100,48 @@ function SplitScreenResultsContent() {
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
-  const [searchType, setSearchType] = useState<'location' | 'district'>('location');
+  const [searchType, setSearchType] = useState<'location' | 'district'>(district ? 'district' : 'location');
   const [currentLat, setCurrentLat] = useState<string | null>(lat);
   const [currentLng, setCurrentLng] = useState<string | null>(lng);
-  const [mapCenter, setMapCenter] = useState({ lat: lat ? parseFloat(lat) : 6.9271, lng: lng ? parseFloat(lng) : 79.8612 });
+  const [mapCenter, setMapCenter] = useState({ 
+    lat: lat ? parseFloat(lat) : (district && districtCoordinates[district] ? districtCoordinates[district].lat : 6.9271), 
+    lng: lng ? parseFloat(lng) : (district && districtCoordinates[district] ? districtCoordinates[district].lng : 79.8612) 
+  });
   const [mapZoom, setMapZoom] = useState(14);
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(district);
+  const [isMapManual, setIsMapManual] = useState(false);
 
   useEffect(() => {
-    if (district && !selectedDistrict) {
+    if (district) {
       setSelectedDistrict(district);
+      setSearchType('district');
+      setCurrentLat(null);
+      setCurrentLng(null);
+      if (districtCoordinates[district]) {
+        setMapCenter(districtCoordinates[district]);
+        setMapZoom(11);
+      }
     }
-  }, [district, selectedDistrict]);
+  }, [district]);
 
   useEffect(() => {
-    if (selectedDistrict) {
-      if (districtCoordinates[selectedDistrict]) {
-        const coords = districtCoordinates[selectedDistrict];
-        setMapCenter(coords);
-        setMapZoom(12);
-        console.log('District selected:', selectedDistrict, coords);
-      }
-      setSearchType('district');
+    if (searchType === 'district' && selectedDistrict) {
       fetchDistrictResults();
     }
-  }, [selectedDistrict, searchQuery, selectedCategory]);
+  }, [selectedDistrict, searchQuery, selectedCategory, searchType]);
 
   useEffect(() => {
-    if (currentLat && currentLng) {
-      const newCenter = { lat: parseFloat(currentLat), lng: parseFloat(currentLng) };
-      setMapCenter(newCenter);
-      setMapZoom(15);
-      setSearchType('location');
-      fetchLocationResults();
-      console.log('Location search:', newCenter);
-    } else if (!lat && !lng && !district && !selectedDistrict) {
-      // Request user's current location if no params provided
-      setLoading(true);
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const { latitude, longitude } = position.coords;
-            console.log('Geolocation success:', latitude, longitude);
-            const newCenter = { lat: latitude, lng: longitude };
-            setMapCenter(newCenter);
-            setMapZoom(15);
-            setCurrentLat(latitude.toString());
-            setCurrentLng(longitude.toString());
-            setLoading(false);
-          },
-          (error) => {
-            console.error('Geolocation error:', error);
-            setError('Unable to get your location. Please grant permission or search from home.');
-            setLoading(false);
-          },
-          {
-            enableHighAccuracy: true,
-            timeout: 5000,
-            maximumAge: 0
-          }
-        );
-      } else {
-        setError('Geolocation is not supported by your browser.');
-        setLoading(false);
+    if (searchType === 'location') {
+      if (currentLat && currentLng) {
+        const newCenter = { lat: parseFloat(currentLat), lng: parseFloat(currentLng) };
+        setMapCenter(newCenter);
+        setMapZoom(14);
+        fetchLocationResults();
+      } else if (!lat && !lng && !district) {
+        findMyLocation();
       }
     }
-  }, [currentLat, currentLng, district, searchQuery, selectedRadius, selectedCategory]);
+  }, [currentLat, currentLng, searchQuery, selectedRadius, selectedCategory, searchType]);
 
   const fetchLocationResults = async () => {
     setLoading(true);
@@ -174,7 +150,20 @@ function SplitScreenResultsContent() {
     if (!currentLat || !currentLng) return;
 
     try {
-      const finalQuery = [searchQuery, selectedCategory].filter(Boolean).join(' ');
+      let finalCategory = selectedCategory;
+      
+      // Auto-detect category from keywords if none selected
+      if (!finalCategory && searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchedCat = categories.find(cat => 
+          cat.keywords?.some(kw => query.includes(kw.toLowerCase()))
+        );
+        if (matchedCat) {
+          finalCategory = matchedCat.name;
+        }
+      }
+
+      const finalQuery = [searchQuery, finalCategory].filter(Boolean).join(' ');
 
       const { data, error: rpcError } = await supabase.rpc('get_nearby_businesses', {
         user_lat: parseFloat(currentLat),
@@ -228,6 +217,19 @@ function SplitScreenResultsContent() {
     }
 
     try {
+      let finalCategory = selectedCategory;
+      
+      // Auto-detect category from keywords if none selected
+      if (!finalCategory && searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchedCat = categories.find(cat => 
+          cat.keywords?.some(kw => query.includes(kw.toLowerCase()))
+        );
+        if (matchedCat) {
+          finalCategory = matchedCat.name;
+        }
+      }
+
       let query_builder = supabase
         .from('businesses')
         .select('*')
@@ -237,8 +239,8 @@ function SplitScreenResultsContent() {
         query_builder = query_builder.or(`name.ilike.%${searchQuery}%,category.ilike.%${searchQuery}%`);
       }
 
-      if (selectedCategory) {
-        query_builder = query_builder.eq('category', selectedCategory);
+      if (finalCategory) {
+        query_builder = query_builder.eq('category', finalCategory);
       }
 
       const { data, error: dbError } = await query_builder;
@@ -276,13 +278,14 @@ function SplitScreenResultsContent() {
 
   const handleDistrictSelect = (districtName: string) => {
     setSearchType('district');
-    if (districtCoordinates[districtName]) {
-      const coords = districtCoordinates[districtName];
-      setMapCenter(coords);
-      setMapZoom(12);
-    }
     setSelectedDistrict(districtName);
-    setLoading(true);
+    setCurrentLat(null);
+    setCurrentLng(null);
+    if (districtCoordinates[districtName]) {
+      setMapCenter(districtCoordinates[districtName]);
+      setMapZoom(11);
+    }
+    setIsMapManual(false);
   };
 
   const findMyLocation = () => {
@@ -307,7 +310,7 @@ function SplitScreenResultsContent() {
         },
         {
           enableHighAccuracy: true,
-          timeout: 5000,
+          timeout: 10000,
           maximumAge: 0
         }
       );
@@ -317,11 +320,28 @@ function SplitScreenResultsContent() {
   };
 
   const handleSearch = () => {
+    setIsMapManual(false);
     if (searchType === 'location') {
       fetchLocationResults();
     } else {
       fetchDistrictResults();
     }
+  };
+
+  const handleMapClick = (lat: number, lng: number) => {
+    setMapCenter({ lat, lng });
+    setCurrentLat(lat.toString());
+    setCurrentLng(lng.toString());
+    setSearchType('location');
+    setIsMapManual(true);
+  };
+
+  const handleMarkerDragEnd = (lat: number, lng: number) => {
+    setMapCenter({ lat, lng });
+    setCurrentLat(lat.toString());
+    setCurrentLng(lng.toString());
+    setSearchType('location');
+    setIsMapManual(true);
   };
 
   if (!currentLat && !currentLng && !district && error) {
@@ -437,6 +457,7 @@ function SplitScreenResultsContent() {
                       <CommandEmpty className="py-4 text-center text-gray-400 text-sm">No category found.</CommandEmpty>
                       <CommandGroup>
                         <CommandItem
+                          value="all-categories"
                           onSelect={() => {
                             setSelectedCategory(null);
                             setIsCategoryOpen(false);
@@ -450,9 +471,9 @@ function SplitScreenResultsContent() {
                         {categories.map((cat) => (
                           <CommandItem
                             key={cat.name}
-                            value={cat.name}
-                            onSelect={(currentValue) => {
-                              setSelectedCategory(currentValue === selectedCategory ? null : currentValue);
+                            value={`${cat.name} ${cat.keywords?.join(' ')}`}
+                            onSelect={() => {
+                              setSelectedCategory(cat.name === selectedCategory ? null : cat.name);
                               setIsCategoryOpen(false);
                             }}
                             className="flex items-center px-4 py-2.5 hover:bg-green-50 cursor-pointer transition-colors"
@@ -600,13 +621,29 @@ function SplitScreenResultsContent() {
 
           {/* Right Side: Map */}
           <div className="hidden md:flex flex-1 relative bg-gray-100">
-              <LeafletMap 
+              <MapboxMap 
                 userLat={mapCenter.lat}
                 userLng={mapCenter.lng}
                 businesses={results}
                 zoom={mapZoom}
                 height="100%"
+                onMapClick={handleMapClick}
+                onMarkerDragEnd={handleMarkerDragEnd}
+                draggableMarker={true}
               />
+
+              {/* Search this area button (only shows when map is clicked/moved manually) */}
+              {isMapManual && (
+                <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[1000]">
+                  <button 
+                    onClick={handleSearch}
+                    className="bg-green-700 text-white px-6 py-2.5 rounded-full shadow-2xl hover:bg-green-800 transition-all font-bold flex items-center gap-2 border-2 border-white animate-in zoom-in-95"
+                  >
+                    <Search size={18} />
+                    Search this area
+                  </button>
+                </div>
+              )}
 
               {/* Map Status Indicator */}
               <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white px-4 py-2.5 rounded-full shadow-lg border border-gray-200 flex items-center gap-2 text-xs text-gray-700 z-[1000]">

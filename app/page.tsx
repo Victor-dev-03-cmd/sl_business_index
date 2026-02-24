@@ -44,7 +44,7 @@ const districtCoordinates: Record<string, { lat: number; lng: number }> = {
   "Batticaloa": { lat: 7.7102, lng: 81.6924 },
   "Colombo": { lat: 6.9271, lng: 79.8612 },
   "Galle": { lat: 6.0535, lng: 80.2210 },
-  "Gampaha": { lat: 7.0840, lng: 80.0098 },
+  "Gampaha": { lat: 7.0873, lng: 79.9925 },
   "Hambantota": { lat: 6.1429, lng: 81.1212 },
   "Jaffna": { lat: 9.6615, lng: 80.0070 },
   "Kalutara": { lat: 6.5854, lng: 79.9607 },
@@ -54,14 +54,14 @@ const districtCoordinates: Record<string, { lat: number; lng: number }> = {
   "Kurunegala": { lat: 7.4863, lng: 80.3647 },
   "Mannar": { lat: 8.9810, lng: 79.9044 },
   "Matale": { lat: 7.4675, lng: 80.6234 },
-  "Matara": { lat: 5.9549, lng: 80.5550 },
+  "Matara": { lat: 5.9496, lng: 80.5469 },
   "Monaragala": { lat: 6.8718, lng: 81.3496 },
   "Mullaitivu": { lat: 9.2671, lng: 80.8144 },
-  "Nuwara Eliya": { lat: 6.9497, lng: 80.7891 },
+  "Nuwara Eliya": { lat: 6.9697, lng: 80.7672 },
   "Polonnaruwa": { lat: 7.9403, lng: 81.0188 },
   "Puttalam": { lat: 8.0330, lng: 79.8259 },
   "Ratnapura": { lat: 6.6828, lng: 80.3992 },
-  "Trincomalee": { lat: 8.5874, lng: 81.2358 },
+  "Trincomalee": { lat: 8.5874, lng: 81.2152 },
   "Vavuniya": { lat: 8.7514, lng: 80.4971 }
 };
 
@@ -72,13 +72,48 @@ export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [searchMode, setSearchMode] = useState<'location' | 'nearby' | null>(null);
+  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [isFetchingLocation, setIsFetchingLocation] = useState(false);
 
   const featuredCategories = categories.slice(0, 7);
 
-  const handleUseCurrentLocation = () => {
-    setSearchMode('nearby');
-    setSelectedLocation('Current Location');
+  const handleUseCurrentLocation = (autoSearch: boolean = false) => {
+    if (navigator.geolocation) {
+      setIsFetchingLocation(true);
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          const coords = { lat: latitude, lng: longitude };
+          setUserCoords(coords);
+          setSearchMode('nearby');
+          setSelectedLocation('Current Location');
+          setIsFetchingLocation(false);
+          
+          if (autoSearch) {
+            const finalQuery = [searchQuery, selectedCategory].filter(Boolean).join(' ');
+            const params = new URLSearchParams({
+              lat: coords.lat.toString(),
+              lng: coords.lng.toString(),
+              q: finalQuery,
+              radius: '5000',
+            });
+            router.push(`/nearby?${params.toString()}`);
+          }
+        },
+        (err) => {
+          console.error("Error getting location: ", err.message);
+          alert("Could not get your location. Please grant permission.");
+          setIsFetchingLocation(false);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
+      );
+    } else {
+      alert("Geolocation is not supported by this browser.");
+    }
   };
 
   const handleSearch = () => {
@@ -87,37 +122,33 @@ export default function HomePage() {
       return;
     }
 
-    const finalQuery = [searchQuery, selectedCategory].filter(Boolean).join(' ');
+    let finalCategory = selectedCategory;
+    
+    // Auto-detect category from keywords if none selected
+    if (!finalCategory && searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const matchedCat = categories.find(cat => 
+        cat.keywords?.some(kw => query.includes(kw.toLowerCase()))
+      );
+      if (matchedCat) {
+        finalCategory = matchedCat.name;
+      }
+    }
+
+    const finalQuery = [searchQuery, finalCategory].filter(Boolean).join(' ');
 
     if (searchMode === 'nearby') {
-      setIsFetchingLocation(true);
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const { latitude, longitude } = position.coords;
-            setIsFetchingLocation(false);
-            const params = new URLSearchParams({
-              lat: latitude.toString(),
-              lng: longitude.toString(),
-              q: finalQuery,
-              radius: '5000',
-            });
-            router.push(`/nearby?${params.toString()}`);
-          },
-          (err) => {
-            setIsFetchingLocation(false);
-            console.error("Error getting location: ", err.message);
-            alert("Could not get your location. Please grant permission.");
-          },
-          {
-            enableHighAccuracy: true,
-            timeout: 5000,
-            maximumAge: 0
-          }
-        );
+      if (userCoords) {
+        const params = new URLSearchParams({
+          lat: userCoords.lat.toString(),
+          lng: userCoords.lng.toString(),
+          q: finalQuery,
+          radius: '5000',
+        });
+        router.push(`/nearby?${params.toString()}`);
       } else {
-        setIsFetchingLocation(false);
-        alert("Geolocation is not supported by this browser.");
+        // Fallback and auto-search once coords are found
+        handleUseCurrentLocation(true);
       }
     } else if (searchMode === 'location' && selectedLocation) {
       const params = new URLSearchParams({
@@ -126,6 +157,21 @@ export default function HomePage() {
       });
       router.push(`/nearby?${params.toString()}`);
     }
+  };
+
+  const handleCategoryClick = (categoryName: string) => {
+    const params = new URLSearchParams();
+    
+    if (searchMode === 'nearby' && userCoords) {
+      params.set('lat', userCoords.lat.toString());
+      params.set('lng', userCoords.lng.toString());
+      params.set('radius', '5000');
+    } else if (searchMode === 'location' && selectedLocation) {
+      params.set('district', selectedLocation);
+    }
+    
+    params.set('q', categoryName);
+    router.push(`/nearby?${params.toString()}`);
   };
 
   return (
@@ -187,6 +233,7 @@ export default function HomePage() {
                             <CommandEmpty className="py-4 text-center text-gray-400 text-sm">No category found.</CommandEmpty>
                             <CommandGroup>
                               <CommandItem
+                                value="all-categories"
                                 onSelect={() => {
                                   setSelectedCategory(null);
                                   setIsCategoryOpen(false);
@@ -200,9 +247,9 @@ export default function HomePage() {
                               {categories.map((category) => (
                                 <CommandItem
                                   key={category.name}
-                                  value={category.name}
-                                  onSelect={(currentValue) => {
-                                    setSelectedCategory(currentValue === selectedCategory ? null : currentValue);
+                                  value={`${category.name} ${category.keywords?.join(' ')}`}
+                                  onSelect={() => {
+                                    setSelectedCategory(category.name === selectedCategory ? null : category.name);
                                     setIsCategoryOpen(false);
                                   }}
                                   className="flex items-center px-5 py-3 hover:bg-emerald-50 cursor-pointer transition-colors"
@@ -248,7 +295,7 @@ export default function HomePage() {
                 </DropdownMenu>
 
                 <button
-                    onClick={handleUseCurrentLocation}
+                    onClick={() => handleUseCurrentLocation(false)}
                     disabled={isFetchingLocation}
                     className="flex items-center gap-2 w-full sm:w-auto px-5 py-3 text-gray-200 bg-white/5 hover:bg-white/10 border border-white/10 font-medium transition-all disabled:opacity-50 text-base rounded"
                 >
@@ -283,16 +330,16 @@ export default function HomePage() {
 
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-6 px-2">
             {featuredCategories.map((cat, idx) => (
-                <Link
+                <div
                     key={idx}
-                    href={`/categories/${cat.name.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-')}`}
+                    onClick={() => handleCategoryClick(cat.name)}
                     className="group cursor-pointer flex flex-col items-center p-6 bg-gray-50/30 border border-gray-50 rounded-2xl hover:bg-white hover:border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                 >
                   <div className="p-4 rounded-full mb-4 bg-emerald-50 text-emerald-700 opacity-90 transition-transform group-hover:scale-110 group-hover:bg-emerald-100">
                     {cat.icon}
                   </div>
                   <span className="text-gray-700 text-sm font-medium text-center group-hover:text-emerald-700">{cat.name}</span>
-                </Link>
+                </div>
             ))}
           </div>
         </section>

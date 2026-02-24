@@ -10,9 +10,10 @@ import {
   CommandEmpty,
   CommandGroup,
 } from "@/components/ui/command";
+import { Navigation } from 'lucide-react';
 
-// Leaflet Map-ஐ Dynamic-ஆக இம்போர்ட் செய்கிறோம் (SSR எர்ரரைத் தவிர்க்க)
-const LeafletMap = dynamic(() => import('@/components/LeafletMap'), {
+// Mapbox Map-ஐ Dynamic-ஆக இம்போர்ட் செய்கிறோம் (SSR எர்ரரைத் தவிர்க்க)
+const MapboxMap = dynamic(() => import('@/components/MapboxMap'), {
   ssr: false,
   loading: () => (
       <div className="h-64 w-full bg-gray-100 animate-pulse rounded-lg flex items-center justify-center text-gray-400">
@@ -39,6 +40,7 @@ export default function AddressAutocomplete({
   const [value, setValue] = useState('');
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [status, setStatus] = useState<'IDLE' | 'LOADING' | 'OK' | 'ZERO_RESULTS' | 'ERROR'>('IDLE');
+  const [isLocating, setIsLocating] = useState(false);
   const [markerPosition, setMarkerPosition] = useState<{ lat: number; lng: number } | null>(null);
   const [mapCenter, setMapCenter] = useState(defaultCenter);
   const [zoom, setZoom] = useState(10);
@@ -110,10 +112,67 @@ export default function AddressAutocomplete({
     }
   };
 
+  const findMyLocation = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        const lat = latitude;
+        const lng = longitude;
+
+        setMapCenter({ lat, lng });
+        setMarkerPosition({ lat, lng });
+        setZoom(16);
+
+        // Get address via reverse geocoding
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
+          );
+          const data = await response.json();
+          if (data && data.display_name) {
+            setValue(data.display_name);
+          }
+        } catch (error) {
+          console.error("Error during reverse geocoding:", error);
+          setValue(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+        } finally {
+          setIsLocating(false);
+        }
+      },
+      (error) => {
+        console.error("Error getting location:", error);
+        alert("Unable to retrieve your location. Please ensure location services are enabled.");
+        setIsLocating(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
+    );
+  };
+
   return (
       <div className="w-full space-y-4">
         <div>
-          <label className="block text-sm font-normal text-gray-600 mb-2">Business Address</label>
+          <div className="flex justify-between items-center mb-2">
+            <label className="block text-sm font-normal text-gray-600">Business Address</label>
+            <button
+              type="button"
+              onClick={findMyLocation}
+              disabled={isLocating}
+              className="flex items-center gap-1.5 text-xs font-medium text-green-700 hover:text-green-800 transition-colors bg-green-50 px-2.5 py-1.5 rounded-lg border border-green-100 disabled:opacity-50"
+            >
+              <Navigation size={14} className={isLocating ? "animate-pulse" : ""} />
+              {isLocating ? "Locating..." : "Find My Location"}
+            </button>
+          </div>
           <Command className="border rounded-md" shouldFilter={false}>
             <CommandInput
                 placeholder="Type your shop address..."
@@ -150,7 +209,7 @@ export default function AddressAutocomplete({
         </div>
 
         <div className="h-64 w-full rounded-lg overflow-hidden border">
-          <LeafletMap
+          <MapboxMap
               userLat={mapCenter.lat}
               userLng={mapCenter.lng}
               zoom={zoom}

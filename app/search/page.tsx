@@ -4,7 +4,7 @@ import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 
-const LeafletMap = dynamic(() => import('@/components/LeafletMap'), { 
+const MapboxMap = dynamic(() => import('@/components/MapboxMap'), { 
     ssr: false, 
     loading: () => <div className="h-96 md:h-full w-full bg-gray-100 animate-pulse rounded-lg flex items-center justify-center text-gray-400">Loading Map...</div>
 });
@@ -39,7 +39,7 @@ function SearchResults() {
 
                 {/* Map View */}
                 <div className="h-96 md:h-full w-full">
-                    <LeafletMap
+                    <MapboxMap
                         userLat={position.lat}
                         userLng={position.lng}
                         zoom={12}

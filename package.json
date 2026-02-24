@@ -21,10 +21,12 @@
     "cmdk": "^1.0.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.395.0",
+    "mapbox-gl": "^3.18.1",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-leaflet": "^5.0.0",
+    "react-map-gl": "^8.1.0",
     "tailwind-merge": "^2.3.0",
     "use-places-autocomplete": "^4.0.1"
   },

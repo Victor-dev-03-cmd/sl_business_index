@@ -9,8 +9,10 @@ export default function CategoriesMenu() {
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredCategories = useMemo(() => {
+    const query = searchQuery.toLowerCase();
     return categories.filter(cat => 
-      cat.name.toLowerCase().includes(searchQuery.toLowerCase())
+      cat.name.toLowerCase().includes(query) || 
+      cat.keywords?.some(kw => kw.toLowerCase().includes(query))
     );
   }, [searchQuery]);
 
