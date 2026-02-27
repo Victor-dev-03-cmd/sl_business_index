@@ -56,22 +56,22 @@ const Footer = () => {
 
           {/* Column 2: User Links */}
           <div className="md:pt-4">
-            <h4 className="text-white mb-6 text-lg text-gray-400">User Links</h4>
-            <ul className="space-y-4">
+            <h4 className="text-gray-400 mb-6 text-lg">User Links</h4>
+            <ul className="space-y-4 text-sm">
               <li>
-                <Link href="/nearby" className="flex items-center gap-3 text-sm hover:text-emerald-400 transition-colors group">
+                <Link href="/nearby" className="flex items-center gap-3 hover:text-emerald-400 transition-colors group">
                   <Map size={16} className="text-emerald-600 transition-transform" />
                   Find Nearby
                 </Link>
               </li>
               <li>
-                <Link href="/search" className="flex items-center gap-3 text-sm hover:text-emerald-400 transition-colors group">
+                <Link href="/search" className="flex items-center gap-3 hover:text-emerald-400 transition-colors group">
                   <Search size={16} className="text-emerald-600 transition-transform" />
                   Search Map
                 </Link>
               </li>
               <li>
-                <Link href="/nearby" className="flex items-center gap-3 text-sm hover:text-emerald-400 transition-colors group">
+                <Link href="/nearby" className="flex items-center gap-3 hover:text-emerald-400 transition-colors group">
                   <Sliders size={16} className="text-emerald-600 transition-transform" />
                   Advanced Filters
                 </Link>
@@ -81,22 +81,22 @@ const Footer = () => {
 
           {/* Column 3: Business Owners */}
           <div className="md:pt-4">
-            <h4 className="text-white mb-6 text-lg text-gray-400">Business Owners</h4>
-            <ul className="space-y-4">
+            <h4 className="text-gray-400 mb-6 text-lg">Business Owners</h4>
+            <ul className="space-y-4 text-sm">
               <li>
-                <Link href="/register-business" className="flex items-center gap-3 text-sm hover:text-emerald-400 transition-colors group">
+                <Link href="/register-business" className="flex items-center gap-3 hover:text-emerald-400 transition-colors group">
                   <PlusCircle size={16} className="text-emerald-600 transition-transform" />
                   Register Your Business
                 </Link>
               </li>
               <li>
-                <Link href="/register-business" className="flex items-center gap-3 text-sm hover:text-emerald-400 transition-colors group">
+                <Link href="/register-business" className="flex items-center gap-3 hover:text-emerald-400 transition-colors group">
                   <RefreshCw size={16} className="text-emerald-600 transition-transform" />
                   Update Listing
                 </Link>
               </li>
               <li>
-                <Link href="#" className="flex items-center gap-3 text-sm hover:text-emerald-400 transition-colors group">
+                <Link href="#" className="flex items-center gap-3 hover:text-emerald-400 transition-colors group">
                   <CreditCard size={16} className="text-emerald-600 transition-transform" />
                   Pricing & Plans
                 </Link>
@@ -106,19 +106,19 @@ const Footer = () => {
 
           {/* Column 4: Contact & Legal */}
           <div className="md:pt-4">
-            <h4 className="text-white mb-6 text-lg text-gray-400">Contact & Legal</h4>
-            <ul className="space-y-4">
+            <h4 className="text-gray-400 mb-6 text-lg">Contact & Legal</h4>
+            <ul className="space-y-4 text-sm">
               <li>
-                <a href="mailto:developerconsole03@gmail.com" className="flex items-center gap-3 text-sm hover:text-emerald-400 transition-colors group">
+                <a href="mailto:developerconsole03@gmail.com" className="flex items-center gap-3 hover:text-emerald-400 transition-colors group">
                   <Mail size={16} className="text-emerald-600 transition-transform" />
                   developerconsole03@gmail.com
                 </a>
               </li>
               <li>
-                <Link href="#" className="text-sm hover:text-emerald-400 transition-colors">Privacy Policy</Link>
+                <Link href="#" className="hover:text-emerald-400 transition-colors">Privacy Policy</Link>
               </li>
               <li>
-                <Link href="#" className="text-sm hover:text-emerald-400 transition-colors">Terms of Service</Link>
+                <Link href="#" className="hover:text-emerald-400 transition-colors">Terms of Service</Link>
               </li>
               <li>
                 <div className="flex items-center gap-2 mt-4 text-xs text-gray-500 bg-gray-900/50 w-fit px-3 py-1.5 rounded-full border border-gray-800">
@@ -146,8 +146,8 @@ const Footer = () => {
           <div className="text-xs text-gray-500">
             © 2026 SL Business Index | <span className="text-gray-400">The Heart of Sri Lankan Commerce</span>
           </div>
-          
-          <div className="flex flex-col items-center md:items-end gap-3">
+
+          { /* <div className="flex flex-col items-center md:items-end gap-3">
             <div className="flex items-center gap-1.5 text-xs text-gray-400">
               Built with <Heart size={12} className="text-red-500 fill-red-500" /> in Sri Lanka by 
               <span className="text-emerald-400 hover:underline cursor-pointer">Laxsan-Victor</span>
@@ -161,7 +161,7 @@ const Footer = () => {
                 <Github size={14} />
               </a>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
 

@@ -13,7 +13,9 @@ import {
   Navigation,
   Check,
   LayoutGrid,
-  Star
+  Star,
+  Phone,
+  Clock
 } from 'lucide-react';
 import {
   Command,
@@ -302,7 +304,7 @@ export default function HomePage() {
                   <div className="p-4 rounded-full mb-4 bg-emerald-50 text-emerald-700 opacity-90 transition-transform group-hover:scale-110 group-hover:bg-emerald-100">
                     {cat.icon}
                   </div>
-                  <span className="text-gray-700 text-sm font-medium text-center group-hover:text-emerald-700">{cat.name}</span>
+                  <span className="text-gray-700 text-sm text-center group-hover:text-emerald-700">{cat.name}</span>
                 </div>
             ))}
           </div>
@@ -377,6 +379,69 @@ export default function HomePage() {
                     </div>
                   </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* --- HOW IT WORKS (Live Discovery) --- */}
+        <section className="py-24 bg-white">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="text-center mb-16">
+              <span className="text-emerald-600 text-[10px] font-bold uppercase tracking-[0.2em] mb-4 block">Process</span>
+              <h2 className="text-3xl text-gray-900 tracking-tight font-medium">How Live Discovery Works</h2>
+              <div className="w-12 h-1 bg-emerald-600 mx-auto mt-6 rounded-full"></div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+              {/* Step 1 */}
+              <div className="flex flex-col items-center text-center group">
+                <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-6 group-hover:bg-emerald-600 group-hover:text-white transition-all duration-300 shadow-sm">
+                  <Navigation size={28} />
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 mb-3">1. Automatic Detection</h3>
+                <p className="text-sm text-gray-500 leading-relaxed max-w-xs">
+                  We pinpoint your exact spot—whether you're in the heart of Jaffna or a village in Vavuniya—to give you relevant results.
+                </p>
+              </div>
+
+              {/* Step 2 */}
+              <div className="flex flex-col items-center text-center group">
+                <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-6 group-hover:bg-emerald-600 group-hover:text-white transition-all duration-300 shadow-sm">
+                  <Search size={28} />
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 mb-3">2. Intelligent Filtering</h3>
+                <p className="text-sm text-gray-500 leading-relaxed max-w-xs">
+                  Type what you need. Our system scans the local database for businesses within your chosen radius (e.g., 5km or 10km).
+                </p>
+              </div>
+
+              {/* Step 3 */}
+              <div className="flex flex-col items-center text-center group">
+                <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-6 group-hover:bg-emerald-600 group-hover:text-white transition-all duration-300 shadow-sm">
+                  <MapPin size={28} />
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 mb-3">3. Instant Connection</h3>
+                <p className="text-sm text-gray-500 leading-relaxed max-w-xs">
+                  See the shops on the live map. Check if they are 'Open Now,' view their ratings, and get one-tap directions to their doorstep.
+                </p>
+              </div>
+            </div>
+
+            {/* Final Conversion CTA */}
+            <div className="mt-20 p-10 bg-green-950 rounded-3xl relative overflow-hidden text-center">
+              <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
+              <div className="relative z-10">
+                <h3 className="text-2xl text-white mb-4">Ready to find something nearby?</h3>
+                <p className="text-green-100/70 text-sm mb-8 max-w-md mx-auto">
+                  Start your discovery journey now and support verified local businesses in your community.
+                </p>
+                <button 
+                  onClick={() => handleUseCurrentLocation(true)}
+                  className="bg-emerald-500 hover:bg-emerald-400 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-xl shadow-emerald-900/20"
+                >
+                  Start Discovery
+                </button>
+              </div>
             </div>
           </div>
         </section>
