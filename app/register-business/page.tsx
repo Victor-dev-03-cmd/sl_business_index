@@ -89,7 +89,7 @@ export default function RegisterBusinessPage() {
 
   return (
       <div className="min-h-screen bg-gray-50/50 py-12 px-6">
-        <div className="max-w-6xl mx-auto bg-white p-8 md:p-12 rounded-3xl border border-gray-100 shadow-sm">
+        <div className="max-w-6xl mx-auto bg-white p-8 md:p-12 border border-gray-100 shadow-sm">
 
           <div className="mb-12 border-b border-gray-50 pb-8 text-center md:text-left">
             <h1 className="text-4xl font-normal text-gray-900 tracking-tight">Register Your Business</h1>

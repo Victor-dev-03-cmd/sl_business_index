@@ -56,7 +56,7 @@ export default function LogIn() {
 
             <div className="mb-4">
               <Image
-                  src="/logo.svg"
+                  src="/logo.png"
                   alt="Logo"
                   width={160}
                   height={50}

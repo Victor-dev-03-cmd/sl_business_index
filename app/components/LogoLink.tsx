@@ -31,7 +31,7 @@ export default function LogoLink() {
       aria-label="Home"
     >
       <Image
-        src="/logo.svg"
+        src="/logo.png"
         alt="SL Business Index Logo"
         width={180}
         height={60}

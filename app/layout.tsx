@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import Navbar from "./components/Navbar";
 import NavbarWrapper from "./components/NavbarWrapper";
+import Footer from "./components/Footer";
+import FooterWrapper from "./components/FooterWrapper";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -28,6 +30,9 @@ export default function RootLayout({
           <Navbar />
         </NavbarWrapper>
         <main>{children}</main>
+        <FooterWrapper>
+          <Footer />
+        </FooterWrapper>
       </body>
     </html>
   );
