@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { categories } from '@/lib/categories';
 import {
   Search,
@@ -384,65 +385,189 @@ export default function HomePage() {
         </section>
 
         {/* --- HOW IT WORKS (Live Discovery) --- */}
-        <section className="py-24 bg-white">
+        <section className="py-24 bg-white overflow-hidden">
           <div className="max-w-7xl mx-auto px-6">
-            <div className="text-center mb-16">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-center mb-20"
+            >
               <span className="text-emerald-600 text-[10px] font-bold uppercase tracking-[0.2em] mb-4 block">Process</span>
               <h2 className="text-3xl text-gray-900 tracking-tight font-medium">How Live Discovery Works</h2>
               <div className="w-12 h-1 bg-emerald-600 mx-auto mt-6 rounded-full"></div>
-            </div>
+            </motion.div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-              {/* Step 1 */}
-              <div className="flex flex-col items-center text-center group">
-                <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-6 group-hover:bg-emerald-600 group-hover:text-white transition-all duration-300 shadow-sm">
-                  <Navigation size={28} />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-16 relative">
+              {/* Animated Connecting Arrows (Desktop Only) */}
+              <div className="hidden md:block absolute top-12 left-[33%] -translate-x-1/2 w-24">
+                <div className="h-[2px] w-full bg-gray-100 relative overflow-hidden">
+                  <motion.div 
+                    animate={{ 
+                      x: ['-100%', '100%'],
+                      opacity: [0, 1, 0] 
+                    }}
+                    transition={{ 
+                      duration: 2, 
+                      repeat: Infinity, 
+                      ease: "linear" 
+                    }}
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-400 to-transparent"
+                  />
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-3">1. Automatic Detection</h3>
-                <p className="text-sm text-gray-500 leading-relaxed max-w-xs">
+                <motion.div
+                  animate={{ opacity: [0.3, 1, 0.3] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2"
+                >
+                  <ChevronRight size={16} className="text-emerald-500" />
+                </motion.div>
+              </div>
+
+              <div className="hidden md:block absolute top-12 left-[66%] -translate-x-1/2 w-24">
+                <div className="h-[2px] w-full bg-gray-100 relative overflow-hidden">
+                  <motion.div 
+                    animate={{ 
+                      x: ['-100%', '100%'],
+                      opacity: [0, 1, 0] 
+                    }}
+                    transition={{ 
+                      duration: 2, 
+                      repeat: Infinity, 
+                      ease: "linear",
+                      delay: 1
+                    }}
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-400 to-transparent"
+                  />
+                </div>
+                <motion.div
+                  animate={{ opacity: [0.3, 1, 0.3] }}
+                  transition={{ duration: 2, repeat: Infinity, delay: 1 }}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2"
+                >
+                  <ChevronRight size={16} className="text-emerald-500" />
+                </motion.div>
+              </div>
+
+              {/* Step 1 */}
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.2 }}
+                className="flex flex-col items-center text-center group relative"
+              >
+                <div className="relative">
+                  <motion.div 
+                    animate={{ scale: [1, 1.15, 1], opacity: [0.1, 0.3, 0.1] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute -inset-4 bg-emerald-400 rounded-full blur-xl"
+                  />
+                  <div className="w-24 h-24 rounded-3xl bg-gray-50 border border-gray-100 text-emerald-600 flex items-center justify-center mb-8 group-hover:border-emerald-200 transition-colors relative z-10 overflow-hidden">
+                    <Navigation size={32} />
+                    <motion.div 
+                      animate={{ x: ['-100%', '200%'] }}
+                      transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-12"
+                    />
+                  </div>
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 mb-4">1. Automatic Detection</h3>
+                <p className="text-sm text-gray-500 leading-relaxed max-w-[280px]">
                   We pinpoint your exact spot—whether you're in the heart of Jaffna or a village in Vavuniya—to give you relevant results.
                 </p>
-              </div>
+              </motion.div>
 
               {/* Step 2 */}
-              <div className="flex flex-col items-center text-center group">
-                <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-6 group-hover:bg-emerald-600 group-hover:text-white transition-all duration-300 shadow-sm">
-                  <Search size={28} />
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.4 }}
+                className="flex flex-col items-center text-center group relative"
+              >
+                <div className="relative">
+                  <motion.div 
+                    animate={{ scale: [1, 1.15, 1], opacity: [0.1, 0.3, 0.1] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                    className="absolute -inset-4 bg-emerald-400 rounded-full blur-xl"
+                  />
+                  <div className="w-24 h-24 rounded-3xl bg-gray-50 border border-gray-100 text-emerald-600 flex items-center justify-center mb-8 group-hover:border-emerald-200 transition-colors relative z-10 overflow-hidden">
+                    <Search size={32} />
+                    <motion.div 
+                      animate={{ x: ['-100%', '200%'] }}
+                      transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-12"
+                    />
+                  </div>
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-3">2. Intelligent Filtering</h3>
-                <p className="text-sm text-gray-500 leading-relaxed max-w-xs">
-                  Type what you need. Our system scans the local database for businesses within your chosen radius (e.g., 5km or 10km).
+                <h3 className="text-lg font-bold text-gray-900 mb-4">2. Intelligent Filtering</h3>
+                <p className="text-sm text-gray-500 leading-relaxed max-w-[280px]">
+                  Type what you need. Our system scans the local database for businesses within your chosen radius.
                 </p>
-              </div>
+              </motion.div>
 
               {/* Step 3 */}
-              <div className="flex flex-col items-center text-center group">
-                <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-6 group-hover:bg-emerald-600 group-hover:text-white transition-all duration-300 shadow-sm">
-                  <MapPin size={28} />
+              <motion.div 
+                initial={{ opacity: 0, x: 20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.6 }}
+                className="flex flex-col items-center text-center group relative"
+              >
+                <div className="relative">
+                  <motion.div 
+                    animate={{ scale: [1, 1.15, 1], opacity: [0.1, 0.3, 0.1] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+                    className="absolute -inset-4 bg-emerald-400 rounded-full blur-xl"
+                  />
+                  <div className="w-24 h-24 rounded-3xl bg-gray-50 border border-gray-100 text-emerald-600 flex items-center justify-center mb-8 group-hover:border-emerald-200 transition-colors relative z-10 overflow-hidden">
+                    <MapPin size={32} />
+                    <motion.div 
+                      animate={{ x: ['-100%', '200%'] }}
+                      transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-12"
+                    />
+                  </div>
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-3">3. Instant Connection</h3>
-                <p className="text-sm text-gray-500 leading-relaxed max-w-xs">
-                  See the shops on the live map. Check if they are 'Open Now,' view their ratings, and get one-tap directions to their doorstep.
+                <h3 className="text-lg font-bold text-gray-900 mb-4">3. Instant Connection</h3>
+                <p className="text-sm text-gray-500 leading-relaxed max-w-[280px]">
+                  See the shops on the live map. Check if they are 'Open Now,' view their ratings, and get one-tap directions.
                 </p>
-              </div>
+              </motion.div>
             </div>
 
             {/* Final Conversion CTA */}
-            <div className="mt-20 p-10 bg-green-950 rounded-3xl relative overflow-hidden text-center">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              className="mt-24 p-12 bg-green-950 rounded-[2.5rem] relative overflow-hidden text-center shadow-2xl"
+            >
               <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
+              <motion.div 
+                animate={{ 
+                  opacity: [0.05, 0.15, 0.05],
+                  scale: [1, 1.05, 1] 
+                }}
+                transition={{ duration: 8, repeat: Infinity }}
+                className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 to-transparent"
+              />
               <div className="relative z-10">
-                <h3 className="text-2xl text-white mb-4">Ready to find something nearby?</h3>
-                <p className="text-green-100/70 text-sm mb-8 max-w-md mx-auto">
-                  Start your discovery journey now and support verified local businesses in your community.
+                <h3 className="text-3xl text-white mb-6">Ready to find something nearby?</h3>
+                <p className="text-green-100/70 text-base mb-10 max-w-xl mx-auto leading-relaxed">
+                  Start your discovery journey now and support verified local businesses in your community across Sri Lanka.
                 </p>
-                <button 
+                <motion.button 
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => handleUseCurrentLocation(true)}
-                  className="bg-emerald-500 hover:bg-emerald-400 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-xl shadow-emerald-900/20"
+                  className="bg-emerald-500 hover:bg-emerald-400 text-white px-10 py-4 rounded-2xl font-bold transition-all shadow-2xl shadow-emerald-900/40 border border-emerald-400/20"
                 >
-                  Start Discovery
-                </button>
+                  Start Discovery Now
+                </motion.button>
               </div>
-            </div>
+            </motion.div>
           </div>
         </section>
       </div>
