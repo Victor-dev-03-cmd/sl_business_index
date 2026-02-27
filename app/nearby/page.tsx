@@ -6,7 +6,7 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabaseClient';
 import { categories } from '@/lib/categories';
-import { MapPin, ArrowLeft, Star, Navigation, Phone, Globe, Menu, X, ChevronDown, Search, Check } from 'lucide-react';
+import { MapPin, ArrowLeft, Star, Navigation, Phone, Globe, Menu, X, ChevronDown, Search, Check, Clock, Zap } from 'lucide-react';
 import { Slider } from "@/components/ui/slider";
 import {
   DropdownMenu,
@@ -22,7 +22,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { cn } from "@/lib/utils";
+import { cn, expandSearchQuery } from "@/lib/utils";
 
 const MapboxMap = dynamic(() => import('@/components/MapboxMap'), { 
   ssr: false, 
@@ -383,12 +383,15 @@ function SplitScreenResultsContent() {
         if (lowerQuery.includes(cat.name.toLowerCase()) || cat.keywords?.some(kw => lowerQuery.includes(kw.toLowerCase()))) {
           finalCategory = cat.name;
           setSelectedCategory(cat.name);
-          break;
+          // Don't break if it's one of the overlapping categories, keep looking
+          if (!['Hotels & Restaurants', 'Food & Dining'].includes(cat.name)) {
+            break;
+          }
         }
       }
     }
 
-    setSearchQuery(finalQuery);
+    setSearchQuery(expandSearchQuery(finalQuery));
 
     // Trigger Fetch based on updated state
     if (finalLat || (searchType === 'location' && !finalDistrict)) {
@@ -599,12 +602,124 @@ function SplitScreenResultsContent() {
         </div>
 
         {/* Main Content */}
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 overflow-hidden relative">
+          {/* Quick Actions Sidebar (Hover to Open) */}
+          <div className="hidden md:flex absolute left-0 top-0 bottom-0 z-20 group">
+            {/* Narrow Bar (Always Visible) */}
+            <div className="w-12 bg-white border-r border-gray-200 flex flex-col items-center py-4 gap-6 h-full shadow-sm">
+              <div className="p-2 rounded-lg bg-green-50 text-green-700">
+                <Menu size={20} />
+              </div>
+              <div className="flex flex-col gap-6 mt-4">
+                <div className="p-2 text-gray-400 group-hover:text-green-600 transition-colors">
+                  <Clock size={20} />
+                </div>
+                <div className="p-2 text-gray-400 group-hover:text-green-600 transition-colors">
+                  <Navigation size={20} />
+                </div>
+                <div className="p-2 text-gray-400 group-hover:text-green-600 transition-colors">
+                  <Star size={20} />
+                </div>
+                <div className="p-2 text-gray-400 group-hover:text-green-600 transition-colors">
+                  <Zap size={20} />
+                </div>
+              </div>
+            </div>
+
+            {/* Expanded Sidebar content on hover */}
+            <div className="w-0 group-hover:w-64 overflow-hidden transition-all duration-300 bg-white border-r border-gray-200 shadow-xl flex flex-col h-full">
+              <div className="p-6 w-64">
+                <h2 className="text-lg font-bold text-gray-900 mb-6">Quick Actions</h2>
+                
+                <div className="space-y-2">
+                  <button 
+                    onClick={() => {
+                      setSearchQuery("Open Now");
+                      handleSearch();
+                    }}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-green-50 text-gray-700 hover:text-green-700 transition-all text-left group/item"
+                  >
+                    <div className="p-2 rounded-lg bg-gray-100 group-hover/item:bg-green-100 transition-colors">
+                      <Clock size={18} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold">Open Now</p>
+                      <p className="text-xs text-gray-500">Businesses open right now</p>
+                    </div>
+                  </button>
+
+                  <button 
+                    onClick={findMyLocation}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-green-50 text-gray-700 hover:text-green-700 transition-all text-left group/item"
+                  >
+                    <div className="p-2 rounded-lg bg-gray-100 group-hover/item:bg-green-100 transition-colors">
+                      <Navigation size={18} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold">Nearby Me</p>
+                      <p className="text-xs text-gray-500">Closest verified businesses</p>
+                    </div>
+                  </button>
+
+                  <button 
+                    onClick={() => {
+                      setSearchQuery("Top Rated");
+                      handleSearch();
+                    }}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-green-50 text-gray-700 hover:text-green-700 transition-all text-left group/item"
+                  >
+                    <div className="p-2 rounded-lg bg-gray-100 group-hover/item:bg-green-100 transition-colors">
+                      <Star size={18} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold">Top Rated</p>
+                      <p className="text-xs text-gray-500">Highly reviewed locations</p>
+                    </div>
+                  </button>
+
+                  <button 
+                    onClick={() => {
+                      setSearchQuery("Verified");
+                      handleSearch();
+                    }}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-green-50 text-gray-700 hover:text-green-700 transition-all text-left group/item"
+                  >
+                    <div className="p-2 rounded-lg bg-gray-100 group-hover/item:bg-green-100 transition-colors">
+                      <Zap size={18} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold">Verified Only</p>
+                      <p className="text-xs text-gray-500">Verified by our team</p>
+                    </div>
+                  </button>
+                </div>
+
+                <div className="mt-8 pt-6 border-t border-gray-100">
+                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 px-3">Recent Searches</h3>
+                  <div className="space-y-1">
+                    {['Hotels', 'Clinics', 'Restaurants'].map(item => (
+                      <button 
+                        key={item}
+                        onClick={() => {
+                          setSearchQuery(item);
+                          handleSearch();
+                        }}
+                        className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors"
+                      >
+                        {item}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Left Side: Business List */}
           <div
             className={`${
               mobileMenuOpen ? 'block' : 'hidden'
-            } md:block w-full md:w-96 lg:w-[450px] overflow-y-auto bg-gray-50 border-r border-gray-200`}
+            } md:block w-full md:w-96 lg:w-[450px] overflow-y-auto bg-gray-50 border-r border-gray-200 ml-0 md:ml-12 transition-all`}
           >
             <div className="p-4 sticky top-0 bg-gray-50 border-b border-gray-200">
               <p className="text-xs text-gray-500 uppercase tracking-widest font-semibold">

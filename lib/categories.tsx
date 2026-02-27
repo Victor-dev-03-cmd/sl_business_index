@@ -8,9 +8,9 @@ export interface Category {
 }
 
 export const categories: Category[] = [
-  { name: 'Hotels & Restaurants', icon: <Hotel size={16} />, keywords: ['hotel', 'stay', 'room', 'resort', 'resthouse'] },
+  { name: 'Hotels & Restaurants', icon: <Hotel size={16} />, keywords: ['hotel', 'stay', 'room', 'resort', 'resthouse', 'accommodation', 'villa', 'restaurant', 'dining', 'food'] },
   { name: 'Vehicles & Automative', icon: <Car size={16} />, keywords: ['car', 'bike', 'garage', 'repair', 'spare parts', 'tyre', 'wash'] },
-  { name: 'Food & Dinning', icon: <Utensils size={16} />, keywords: ['restaurant', 'cafe', 'bakery', 'kotte', 'food', 'eat'] },
+  { name: 'Food & Dining', icon: <Utensils size={16} />, keywords: ['restaurant', 'cafe', 'bakery', 'kotte', 'food', 'eat', 'dining', 'breakfast', 'lunch', 'dinner'] },
   { name: 'Home Appliances & Services', icon: <Home size={16} />, keywords: ['washing machine', 'fridge', 'ac', 'tv', 'repair', 'cleaning'] },
   { name: 'Office Equipment & Services', icon: <Briefcase size={16} />, keywords: ['printer', 'ink', 'paper', 'furniture', 'consultant'] },
   { name: 'Weddings Services', icon: <Heart size={16} />, keywords: ['hall', 'photo', 'dress', 'cake', 'jewelry', 'flowers'] },

@@ -23,7 +23,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { cn } from "@/lib/utils";
+import { cn, expandSearchQuery } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -173,7 +173,10 @@ export default function HomePage() {
         
         if (isNameMatch || isKeywordMatch) {
           finalCategory = cat.name;
-          break;
+          // Don't break if it's one of the overlapping categories, keep looking
+          if (!['Hotels & Restaurants', 'Food & Dining'].includes(cat.name)) {
+            break;
+          }
         }
       }
     }
@@ -185,7 +188,7 @@ export default function HomePage() {
     }
 
     const searchParams = new URLSearchParams();
-    searchParams.set('q', finalQuery);
+    searchParams.set('q', expandSearchQuery(finalQuery));
     if (finalCategory) searchParams.set('category', finalCategory);
 
     if (finalLat && finalLng) {
