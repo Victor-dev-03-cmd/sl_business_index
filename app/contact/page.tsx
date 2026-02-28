@@ -72,6 +72,25 @@ const publicServices = [
       { name: "Sri Lanka Railways", number: "1971", description: "Train schedules and seat booking", lat: 6.9344, lng: 79.8501 },
       { name: "Department of Immigration", number: "0112101500", description: "Passport and Visa inquiries", lat: 6.8912, lng: 79.8543 }
     ]
+  },
+  {
+    category: "Banking & Finance (Head Offices)",
+    icon: <Globe size={20} strokeWidth={1.5} />,
+    services: [
+      { name: "Bank of Ceylon (BOC)", number: "+94112446790", description: "Head Office - Colombo 01", lat: 6.9367, lng: 79.8448 },
+      { name: "People's Bank", number: "+94112481481", description: "Head Office - Colombo 02", lat: 6.9272, lng: 79.8562 },
+      { name: "Commercial Bank", number: "+94112486000", description: "Head Office - Colombo 01", lat: 6.9342, lng: 79.8431 },
+      { name: "Hatton National Bank (HNB)", number: "+94112664664", description: "Head Office - Colombo 10", lat: 6.9201, lng: 79.8702 },
+      { name: "Sampath Bank", number: "+94114730630", description: "Head Office - Colombo 02", lat: 6.9168, lng: 79.8541 },
+      { name: "Seylan Bank", number: "+94112456789", description: "Head Office - Colombo 03", lat: 6.9142, lng: 79.8512 },
+      { name: "National Development Bank (NDB)", number: "+94112448448", description: "Head Office - Colombo 02", lat: 6.9234, lng: 79.8512 },
+      { name: "Nations Trust Bank (NTB)", number: "+94114313131", description: "Head Office - Colombo 02", lat: 6.9189, lng: 79.8567 },
+      { name: "DFCC Bank", number: "+94112442442", description: "Head Office - Colombo 03", lat: 6.9172, lng: 79.8492 },
+      { name: "Pan Asia Bank (PABC)", number: "+94112565565", description: "Head Office - Colombo 03", lat: 6.9082, lng: 79.8514 },
+      { name: "Amana Bank", number: "+94117756000", description: "Head Office - Colombo 03", lat: 6.9112, lng: 79.8521 },
+      { name: "Union Bank", number: "+94112374100", description: "Head Office - Colombo 03", lat: 6.9145, lng: 79.8502 },
+      { name: "Cargills Bank", number: "+94117640640", description: "Head Office - Colombo 03", lat: 6.9156, lng: 79.8498 }
+    ]
   }
 ];
 
@@ -206,7 +225,7 @@ export default function ContactPage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
               <div>
                 <h2 className="text-2xl font-normal tracking-tight">Public Service Directory</h2>
-                <p className="text-sm text-gray-400 mt-1 font-normal">Verified emergency and utility contacts in Sri Lanka</p>
+                <p className="text-sm text-gray-400 mt-1">Verified emergency and utility contacts in Sri Lanka</p>
               </div>
               <div className="relative w-full md:w-80">
                 <Search size={18} strokeWidth={1.5} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -215,7 +234,7 @@ export default function ContactPage() {
                   placeholder="Search service, area, or dept..." 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl focus:bg-white focus:ring-1 focus:ring-emerald-600 outline-none transition-all text-sm font-normal"
+                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-[6px] focus:bg-white focus:ring-1 focus:ring-emerald-600 outline-none transition-all text-sm font-normal"
                 />
               </div>
             </div>
@@ -225,7 +244,7 @@ export default function ContactPage() {
                 filteredServices.map((cat, idx) => (
                   <div key={idx} className="animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: `${idx * 100}ms` }}>
                     <div className="flex items-center gap-3 mb-6">
-                      <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+                      <div className="p-2 bg-emerald-50 text-emerald-600 rounded-[6px]">
                         {cat.icon}
                       </div>
                       <h2 className="text-lg font-normal text-gray-800">{cat.category} Details</h2>
@@ -235,7 +254,7 @@ export default function ContactPage() {
                       {cat.services.map((service, sIdx) => (
                         <div 
                           key={sIdx}
-                          className="p-5 border border-gray-100 rounded-xl hover:border-emerald-200 hover:shadow-lg hover:shadow-emerald-900/5 transition-all group bg-white"
+                          className="p-5 border border-gray-100 rounded-[6px] hover:border-emerald-200 hover:shadow-lg hover:shadow-emerald-900/5 transition-all group bg-white"
                         >
                           <div className="flex justify-between items-start mb-2">
                             <h3 className="text-[15px] font-normal text-gray-900 group-hover:text-emerald-700 transition-colors">
@@ -277,11 +296,11 @@ export default function ContactPage() {
 
           {/* Right Column: Contact Form */}
           <div className="lg:col-span-1">
-            <div className="sticky top-28 bg-white border border-gray-100 rounded-2xl shadow-xl shadow-gray-200/50 overflow-hidden">
+            <div className="sticky top-28 bg-white border border-gray-100 rounded-[8px] shadow-xl shadow-gray-200/50 overflow-hidden">
               <div className="p-8 bg-emerald-950 text-white relative overflow-hidden">
                 <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
-                <h3 className="text-xl font-normal relative z-10 mb-2">Send us a message</h3>
-                <p className="text-emerald-100/60 text-xs font-normal relative z-10">Our team usually responds within 24 hours.</p>
+                <h3 className="text-xl relative z-10 mb-2">Send us a message</h3>
+                <p className="text-emerald-100/60 text-xs relative z-10">Our team usually responds within 24 hours.</p>
               </div>
               
               <form onSubmit={handleSubmit} className="p-8 space-y-6">
@@ -290,7 +309,7 @@ export default function ContactPage() {
                   <select 
                     value={department}
                     onChange={(e) => setDepartment(e.target.value)}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:bg-white focus:ring-1 focus:ring-emerald-600 outline-none transition-all text-sm font-normal appearance-none cursor-pointer"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-[6px] focus:bg-white focus:ring-1 focus:ring-emerald-600 outline-none transition-all text-sm font-normal appearance-none cursor-pointer"
                   >
                     <option>General Inquiry</option>
                     <option>Add My Business</option>
@@ -308,7 +327,7 @@ export default function ContactPage() {
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
                     placeholder="Laxsan Victor" 
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:bg-white focus:ring-1 focus:ring-emerald-600 outline-none transition-all text-sm font-normal"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-[6px] focus:bg-white focus:ring-1 focus:ring-emerald-600 outline-none transition-all text-sm font-normal"
                   />
                 </div>
 
@@ -320,7 +339,7 @@ export default function ContactPage() {
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
                     placeholder="laxsan@example.com" 
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:bg-white focus:ring-1 focus:ring-emerald-600 outline-none transition-all text-sm font-normal"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-[6px] focus:bg-white focus:ring-1 focus:ring-emerald-600 outline-none transition-all text-sm font-normal"
                   />
                 </div>
 
@@ -342,7 +361,7 @@ export default function ContactPage() {
                     value={formData.location}
                     onChange={(e) => setFormData({...formData, location: e.target.value})}
                     placeholder="6.9271, 79.8612" 
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:bg-white focus:ring-1 focus:ring-emerald-600 outline-none transition-all text-sm font-normal"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-[6px] focus:bg-white focus:ring-1 focus:ring-emerald-600 outline-none transition-all text-sm font-normal"
                   />
                 </div>
 
@@ -354,13 +373,13 @@ export default function ContactPage() {
                     value={formData.message}
                     onChange={(e) => setFormData({...formData, message: e.target.value})}
                     placeholder="How can we help you today?" 
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:bg-white focus:ring-1 focus:ring-emerald-600 outline-none transition-all text-sm font-normal resize-none"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-[6px] focus:bg-white focus:ring-1 focus:ring-emerald-600 outline-none transition-all text-sm font-normal resize-none"
                   ></textarea>
                 </div>
 
                 <button 
                   type="submit"
-                  className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-900/10 transition-all font-normal flex items-center justify-center gap-2 group"
+                  className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-[6px] shadow-lg shadow-emerald-900/10 transition-all font-normal flex items-center justify-center gap-2 group"
                 >
                   <MessageSquare size={18} strokeWidth={1.5} />
                   Send Message
@@ -373,13 +392,13 @@ export default function ContactPage() {
                     <a 
                       href="https://wa.me/94771234567" 
                       target="_blank"
-                      className="flex items-center justify-center gap-2 py-2.5 bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#075E54] rounded-lg transition-all text-xs font-normal"
+                      className="flex items-center justify-center gap-2 py-2.5 bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#075E54] rounded-[6px] transition-all text-xs font-normal"
                     >
                       WhatsApp
                     </a>
                     <a 
                       href="mailto:developerconsole03@gmail.com"
-                      className="flex items-center justify-center gap-2 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg transition-all text-xs font-normal"
+                      className="flex items-center justify-center gap-2 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-[6px] transition-all text-xs font-normal"
                     >
                       Email Us
                     </a>
@@ -395,20 +414,20 @@ export default function ContactPage() {
       <section className="py-24 bg-gray-50 border-t border-gray-100">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12">
           <div className="flex gap-4">
-            <div className="flex-shrink-0 w-12 h-12 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center justify-center text-emerald-600">
+            <div className="flex-shrink-0 w-12 h-12 bg-white rounded-[6px] shadow-sm border border-gray-100 flex items-center justify-center text-emerald-600">
               <Mail size={24} strokeWidth={1.5} />
             </div>
             <div>
               <h4 className="text-sm font-normal text-gray-900 mb-1">Email Support</h4>
               <p className="text-xs text-gray-500 font-normal mb-2">General inquiries & feedback</p>
-              <a href="mailto:developerconsole03@gmail.com" className="text-emerald-600 text-[13px] font-normal hover:underline underline-offset-4">
-                developerconsole03@gmail.com
+              <a href="slbusinessindex@gmail.com" className="text-emerald-600 text-[13px] font-normal hover:underline underline-offset-4">
+                slbusinessindex@gmail.com
               </a>
             </div>
           </div>
 
           <div className="flex gap-4">
-            <div className="flex-shrink-0 w-12 h-12 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center justify-center text-emerald-600">
+            <div className="flex-shrink-0 w-12 h-12 bg-white rounded-[6px] shadow-sm border border-gray-100 flex items-center justify-center text-emerald-600">
               <Phone size={24} strokeWidth={1.5} />
             </div>
             <div>
@@ -422,7 +441,7 @@ export default function ContactPage() {
           </div>
 
           <div className="flex gap-4">
-            <div className="flex-shrink-0 w-12 h-12 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center justify-center text-emerald-600">
+            <div className="flex-shrink-0 w-12 h-12 bg-white rounded-[6px] shadow-sm border border-gray-100 flex items-center justify-center text-emerald-600">
               <Globe size={24} strokeWidth={1.5} />
             </div>
             <div>
