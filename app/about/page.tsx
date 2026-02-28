@@ -66,7 +66,7 @@ export default function AboutPage() {
             </div>
             <h3 className="text-2xl font-normal text-gray-900">Our Mission</h3>
             <p className="text-gray-600 leading-relaxed font-normal">
-              Empowering local businesses in Jaffna, Vavuniya, and across Sri Lanka to reach their full digital potential. We believe every shop, no matter how small, deserves a professional presence.
+              We want to help local shops in Jaffna, Vavuniya, and all over Sri Lanka get online. We believe every store—even the smallest one—should be easy for people to find on the internet.
             </p>
           </motion.div>
 
@@ -80,9 +80,9 @@ export default function AboutPage() {
             <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600">
               <ShieldCheck size={24} strokeWidth={1.5} />
             </div>
-            <h3 className="text-2xl font-normal text-gray-900">Verified Precision</h3>
+            <h3 className="text-2xl font-normal text-gray-900">Verified Profiles</h3>
             <p className="text-gray-600 leading-relaxed font-normal">
-              Tired of outdated phone numbers or wrong locations? We solve this by providing a centralized, human-verified, and real-time index of Sri Lankan commerce.
+              Are you tired of calling phone numbers that don't work or going to locations that are wrong? We fix this by making sure every shop on our list is real, checked by humans, and kept up to date for Sri Lanka.
             </p>
           </motion.div>
 
@@ -98,7 +98,7 @@ export default function AboutPage() {
             </div>
             <h3 className="text-2xl font-normal text-gray-900">Tech Ecosystem</h3>
             <p className="text-gray-600 leading-relaxed font-normal">
-              Built with Next.js for blazing speed and Mapbox for pinpoint accuracy. Our platform is a live ecosystem that evolves with the Sri Lankan business landscape.
+              We use the best tools to make this website fast and the maps very accurate. Our system is always alive and updates whenever a new business opens in Sri Lanka.
             </p>
           </motion.div>
         </div>
@@ -118,7 +118,7 @@ export default function AboutPage() {
               initial={{ opacity: 0, scale: 0.95 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
-              className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm group hover:border-emerald-200 transition-all"
+              className="bg-white p-8 rounded-[8px] border border-gray-100 shadow-sm group hover:border-emerald-200 transition-all"
             >
               <div className="relative w-full h-48 bg-gray-50 rounded-xl mb-8 overflow-hidden flex items-center justify-center">
                 {/* Skeleton Animation */}
@@ -144,7 +144,7 @@ export default function AboutPage() {
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
-              className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm group hover:border-emerald-200 transition-all"
+              className="bg-white p-8 rounded-[8px] border border-gray-100 shadow-sm group hover:border-emerald-200 transition-all"
             >
               <div className="relative w-full h-48 bg-gray-50 rounded-xl mb-8 overflow-hidden flex flex-col items-center justify-center p-6 gap-3">
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-100/30 to-transparent animate-skeleton-shimmer" style={{ animationDelay: '0.5s' }} />
@@ -166,7 +166,7 @@ export default function AboutPage() {
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ delay: 0.2 }}
-              className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm group hover:border-emerald-200 transition-all"
+              className="bg-white p-8 rounded-[8px] border border-gray-100 shadow-sm group hover:border-emerald-200 transition-all"
             >
               <div className="relative w-full h-48 bg-gray-50 rounded-xl mb-8 overflow-hidden flex items-center justify-center">
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-100/30 to-transparent animate-skeleton-shimmer" style={{ animationDelay: '1s' }} />
@@ -199,19 +199,19 @@ export default function AboutPage() {
         <h2 className="text-2xl font-normal text-gray-900 mb-16 uppercase tracking-widest text-emerald-600/60">Our Technology Stack</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-12 grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all duration-500">
           <div className="flex flex-col items-center gap-4">
-            <Layers size={40} strokeWidth={1.5} className="text-gray-900" />
-            <span className="text-sm font-normal">Next.js 16.1.6</span>
+            <Layers size={30} strokeWidth={1.5} className="text-gray-900" />
+            <span className="text-sm font-normal">Next.js 16</span>
           </div>
           <div className="flex flex-col items-center gap-4">
-            <Globe size={40} strokeWidth={1.5} className="text-gray-900" />
+            <Globe size={30} strokeWidth={1.5} className="text-gray-900" />
             <span className="text-sm font-normal">Mapbox SDK</span>
           </div>
           <div className="flex flex-col items-center gap-4">
-            <ShieldCheck size={40} strokeWidth={1.5} className="text-gray-900" />
+            <Zap size={30} strokeWidth={1.5} className="text-gray-900" />
             <span className="text-sm font-normal">Supabase</span>
           </div>
           <div className="flex flex-col items-center gap-4">
-            <Zap size={40} strokeWidth={1.5} className="text-gray-900" />
+            <ShieldCheck size={30} strokeWidth={1.5} className="text-gray-900" />
             <span className="text-sm font-normal">Tailwind CSS</span>
           </div>
         </div>
