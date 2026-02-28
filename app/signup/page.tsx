@@ -5,7 +5,8 @@ import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Chrome, ArrowLeft } from 'lucide-react';
+import { Chrome, ArrowLeft, Check } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export default function SignUp() {
   const [username, setUsername] = useState('');
@@ -67,63 +68,91 @@ export default function SignUp() {
   return (
       <div className="flex min-h-screen bg-white">
         {/* Left Side: Branding Panel */}
-        <div className="hidden lg:flex lg:w-1/2 bg-green-900 relative overflow-hidden items-start justify-center pt-24 p-12">
-          <div className="absolute top-0 left-0 w-64 h-64 bg-green-800 rounded-full -ml-32 -mt-32 opacity-30"></div>
+        <div className="hidden lg:flex lg:w-1/2 bg-emerald-950 relative overflow-hidden items-center justify-center p-12">
+          {/* Professional Background Effects */}
+          <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[120px] -mr-64 -mt-64 animate-ambient-float"></div>
+          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-emerald-600/5 rounded-full blur-[100px] -ml-48 -mb-48 animate-ambient-float" style={{ animationDelay: '2s' }}></div>
 
-          <div className="relative z-10 max-w-md">
-            <Link href="/" className="inline-flex items-center text-green-200 hover:text-white mb-6 transition-colors text-sm font-medium">
-              <ArrowLeft className="mr-2" size={16} /> Back to Home
-            </Link>
+          <div className="relative z-10 max-w-md w-full">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <Link href="/" className="inline-flex items-center text-emerald-400 hover:text-white mb-10 transition-colors text-xs uppercase tracking-widest font-normal">
+                <ArrowLeft className="mr-2" size={14} /> Back to Home
+              </Link>
 
-            <div className="mb-4">
-              <Image
-                  src="/logo.png"
-                  alt="Logo"
-                  width={160}
-                  height={50}
-                  className="brightness-0 invert opacity-90"
-              />
-            </div>
-
-            <h1 className="text-3xl font-bold text-white mb-3 leading-tight">
-              Grow Your Business <br /> With Us.
-            </h1>
-            <p className="text-green-100 text-base leading-relaxed opacity-80">
-              Create an account to list your business, manage your profile, and generate AI-powered social media posts to attract more customers.
-            </p>
-
-            <div className="mt-8 flex gap-8 text-white border-t border-green-800 pt-8">
-              <div>
-                <p className="font-bold text-xl">Join</p>
-                <p className="text-green-300 text-xs uppercase tracking-wider">The Index</p>
+              <div className="mb-10">
+                <Image
+                    src="/logo.png"
+                    alt="Logo"
+                    width={180}
+                    height={50}
+                    className="brightness-0 invert opacity-100"
+                />
               </div>
-              <div>
-                <p className="font-bold text-xl">Get</p>
-                <p className="text-green-300 text-xs uppercase tracking-wider">Verified</p>
+
+              <h1 className="text-4xl font-normal text-white mb-6 leading-tight tracking-tight">
+                Scale Your <br />
+                <span className="text-emerald-400">Business Today.</span>
+              </h1>
+              
+              <p className="text-emerald-100/60 text-base leading-relaxed mb-10 font-normal">
+                Join the largest business ecosystem in Sri Lanka. List your service, connect with locals, and grow your brand.
+              </p>
+
+              {/* Benefits List */}
+              <div className="space-y-4 mb-12">
+                {[
+                  "Premium Business Listing Placement",
+                  "Real-time Dashboard & Analytics",
+                  "AI-Powered Social Media Tools",
+                  "Direct Customer Lead Generation"
+                ].map((benefit, i) => (
+                  <div key={i} className="flex items-center gap-3 text-emerald-100/80">
+                    <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                      <Check size={12} strokeWidth={3} />
+                    </div>
+                    <span className="text-sm font-normal">{benefit}</span>
+                  </div>
+                ))}
               </div>
-            </div>
+
+              <div className="flex gap-12 text-white border-t border-emerald-500/10 pt-10">
+                <div>
+                  <p className="text-2xl font-normal text-emerald-400">Join</p>
+                  <p className="text-emerald-100/40 text-[10px] uppercase tracking-widest mt-1">The Index</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-normal text-emerald-400">Get</p>
+                  <p className="text-emerald-100/40 text-[10px] uppercase tracking-widest mt-1">Verified</p>
+                </div>
+              </div>
+            </motion.div>
           </div>
         </div>
 
         {/* Right Side: Sign Up Form */}
-        <div className="w-full lg:w-1/2 flex items-center justify-center bg-gray-50 px-6 py-12 md:px-12">
-          <div className="w-full max-w-md bg-white p-8 md:p-10 rounded-2xl shadow-xl border border-gray-100">
+        <div className="w-full lg:w-1/2 flex items-center justify-center bg-white px-6 py-12 md:px-12">
+          <div className="w-full max-w-md bg-white p-8 md:p-10 rounded-[6px] shadow-2xl shadow-emerald-950/5 border border-gray-100">
 
             {/* Mobile Logo */}
-            <div className="lg:hidden flex justify-center mb-6">
+            <div className="lg:hidden flex justify-center mb-8">
               <Link href="/">
-                <Image src="/logo.svg" alt="Logo" width={140} height={45} />
+                <Image src="/logo.png" alt="Logo" width={140} height={45} />
               </Link>
             </div>
 
-            <div className="mb-8 text-center lg:text-left">
-              <h2 className="text-2xl font-bold text-gray-900 mb-1">Create Account</h2>
-              <p className="text-gray-500 text-sm">Join the largest business directory in Sri Lanka.</p>
+            <div className="mb-10 text-center lg:text-left">
+              <h2 className="text-2xl font-normal text-gray-900 mb-2 tracking-tight">Create Account</h2>
+              <p className="text-gray-400 text-sm font-normal">Join the most advanced business directory in Sri Lanka.</p>
             </div>
 
-            <form onSubmit={handleSignUp} className="space-y-4">
-              <div>
-                <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1.5 ml-1">Username</label>
+            <form onSubmit={handleSignUp} className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-normal text-gray-400 uppercase tracking-[0.2em] block ml-1">Username</label>
                 <input
                     id="username"
                     type="text"
@@ -131,12 +160,12 @@ export default function SignUp() {
                     onChange={(e) => setUsername(e.target.value)}
                     required
                     placeholder="e.g. victor_lxs"
-                    className="w-full px-4 py-3 text-gray-800 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-700 focus:bg-white transition-all text-sm"
+                    className="w-full px-4 py-3.5 text-gray-900 bg-gray-50 border border-gray-100 rounded-[6px] focus:outline-none focus:ring-1 focus:ring-emerald-600 focus:bg-white transition-all text-sm font-normal"
                 />
               </div>
 
-              <div>
-                <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1.5 ml-1">Email Address</label>
+              <div className="space-y-2">
+                <label className="text-[10px] font-normal text-gray-400 uppercase tracking-[0.2em] block ml-1">Email Address</label>
                 <input
                     id="email"
                     type="email"
@@ -144,12 +173,12 @@ export default function SignUp() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     placeholder="e.g. victor@example.com"
-                    className="w-full px-4 py-3 text-gray-800 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-700 focus:bg-white transition-all text-sm"
+                    className="w-full px-4 py-3.5 text-gray-900 bg-gray-50 border border-gray-100 rounded-[6px] focus:outline-none focus:ring-1 focus:ring-emerald-600 focus:bg-white transition-all text-sm font-normal"
                 />
               </div>
 
-              <div>
-                <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1.5 ml-1">Password</label>
+              <div className="space-y-2">
+                <label className="text-[10px] font-normal text-gray-400 uppercase tracking-[0.2em] block ml-1">Password</label>
                 <input
                     id="password"
                     type="password"
@@ -157,12 +186,12 @@ export default function SignUp() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     placeholder="Min. 6 characters"
-                    className="w-full px-4 py-3 text-gray-800 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-700 focus:bg-white transition-all text-sm"
+                    className="w-full px-4 py-3.5 text-gray-900 bg-gray-50 border border-gray-100 rounded-[6px] focus:outline-none focus:ring-1 focus:ring-emerald-600 focus:bg-white transition-all text-sm font-normal"
                 />
               </div>
 
               {error && (
-                  <div className="bg-red-50 text-red-600 text-xs p-3 rounded-lg border border-red-100 text-center">
+                  <div className="bg-red-50 text-red-600 text-[11px] p-3 rounded-[6px] border border-red-100 text-center font-normal">
                     {error}
                   </div>
               )}
@@ -170,33 +199,33 @@ export default function SignUp() {
               <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-3.5 px-4 bg-green-700 text-white font-bold rounded-xl hover:bg-green-800 focus:ring-4 focus:ring-green-100 transition-all transform active:scale-[0.99] disabled:opacity-50"
+                  className="w-full py-4 px-6 bg-emerald-600 text-white font-normal rounded-[6px] hover:bg-emerald-700 shadow-lg shadow-emerald-900/10 transition-all transform active:scale-[0.98] disabled:opacity-50 text-sm"
               >
                 {loading ? 'Creating Account...' : 'Get Started'}
               </button>
             </form>
 
-            <div className="relative flex items-center justify-center my-6">
+            <div className="relative flex items-center justify-center my-8">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200"></div>
+                <div className="w-full border-t border-gray-100"></div>
               </div>
-              <div className="relative px-4 text-[10px] font-bold uppercase text-gray-400 bg-white tracking-[0.2em]">
-                OR
+              <div className="relative px-4 text-[9px] font-normal uppercase text-gray-300 bg-white tracking-[0.3em]">
+                Secure OAuth
               </div>
             </div>
 
             <button
                 onClick={() => handleSocialLogin('google')}
-                className="flex items-center justify-center w-full py-3 px-4 bg-white border border-gray-200 rounded-xl text-gray-700 font-bold hover:bg-gray-50 transition-all shadow-sm text-sm"
+                className="flex items-center justify-center w-full py-4 px-6 bg-white border border-gray-100 rounded-[6px] text-gray-600 font-normal hover:bg-gray-50 transition-all shadow-sm text-sm"
             >
-              <Chrome size={18} className="mr-3 text-red-500" />
+              <Chrome size={18} className="mr-3 text-emerald-600" />
               Sign up with Google
             </button>
 
-            <div className="mt-8 text-center">
-              <p className="text-sm text-gray-500">
+            <div className="mt-10 text-center">
+              <p className="text-sm text-gray-400 font-normal">
                 Already have an account?{' '}
-                <Link href="/login" className="text-green-700 font-bold hover:underline ml-1">
+                <Link href="/login" className="text-emerald-600 font-normal hover:text-emerald-700 ml-1 transition-colors">
                   Sign In
                 </Link>
               </p>
