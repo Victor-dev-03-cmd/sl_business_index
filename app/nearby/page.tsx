@@ -64,6 +64,57 @@ const districtCoordinates: Record<string, { lat: number; lng: number }> = {
   "Vavuniya": { lat: 8.7514, lng: 80.4971 }
 };
 
+const MOCK_DEMOS: Business[] = [
+  {
+    id: -1,
+    name: "Victoria Luxury Villa (Demo)",
+    category: "Hospitality & Leisure",
+    description: "A premium luxury stay in the heart of Sri Lanka.",
+    address: "No 45, Gregory Lake Road, Nuwara Eliya",
+    phone: "+94 77 123 4567",
+    email: "stay@victoria.lk",
+    website: "https://victoria.lk",
+    rating: 4.9,
+    reviews_count: 128,
+    image_url: "/business-1.jpg",
+    latitude: 6.9697,
+    longitude: 80.7672,
+    distanceText: "2.4 km"
+  },
+  {
+    id: -2,
+    name: "The Grand Jaffna (Demo)",
+    category: "Food & Dining",
+    description: "Authentic Jaffna cuisine with a modern twist.",
+    address: "Palali Road, Jaffna",
+    phone: "+94 21 987 6543",
+    email: "dine@grandjaffna.lk",
+    website: "https://grandjaffna.lk",
+    rating: 4.7,
+    reviews_count: 85,
+    image_url: "/business-2.jpg",
+    latitude: 9.6615,
+    longitude: 80.0070,
+    distanceText: "1.1 km"
+  },
+  {
+    id: -3,
+    name: "Vavuniya Medical Center (Demo)",
+    category: "Health & Wellness",
+    description: "24/7 dedicated medical care for the local community.",
+    address: "Kandy Road, Vavuniya",
+    phone: "+94 24 555 1212",
+    email: "care@vavuniyamed.lk",
+    website: "https://vavuniyamed.lk",
+    rating: 4.8,
+    reviews_count: 210,
+    image_url: "/business-3.jpg",
+    latitude: 8.7514,
+    longitude: 80.4971,
+    distanceText: "0.5 km"
+  }
+];
+
 interface Business {
   id: number;
   name: string;
@@ -190,7 +241,7 @@ function SplitScreenResultsContent() {
       }
 
       if (!data || data.length === 0) {
-        setResults([]);
+        setResults(MOCK_DEMOS);
         return;
       }
 
@@ -262,7 +313,8 @@ function SplitScreenResultsContent() {
         return;
       }
 
-      setResults((data as Business[]) || []);
+      const foundResults = (data as Business[]) || [];
+      setResults(foundResults.length > 0 ? foundResults : MOCK_DEMOS);
     } catch (err) {
       setError('Failed to fetch results.');
       console.error(err);
@@ -719,9 +771,9 @@ function SplitScreenResultsContent() {
           <div
             className={`${
               mobileMenuOpen ? 'block' : 'hidden'
-            } md:block w-full md:w-96 lg:w-[450px] overflow-y-auto bg-gray-50 border-r border-gray-200 ml-0 md:ml-12 transition-all font-normal`}
+            } md:block w-full md:w-96 lg:w-[450px] overflow-y-auto bg-gray-50 border-r border-gray-200 ml-0 md:ml-12 transition-all font-normal h-full`}
           >
-            <div className="p-4 sticky top-0 bg-gray-50 border-b border-gray-200">
+            <div className="p-4 sticky top-0 bg-gray-50 border-b border-gray-200 z-10">
               <p className="text-xs text-gray-500 uppercase tracking-widest font-normal">
                 {results.length} Registered Business{results.length !== 1 ? 'es' : ''}
               </p>

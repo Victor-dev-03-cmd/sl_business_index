@@ -66,6 +66,9 @@ export default function MapboxMap({
         .mapboxgl-popup-tip {
           display: none !important;
         }
+        .mapboxgl-ctrl-logo, .mapboxgl-ctrl-attrib {
+          display: none !important;
+        }
       `}</style>
       <Map
         ref={mapRef}
