@@ -145,18 +145,12 @@ export default function AuthButton({ user: initialUser }: { user: any | null }) 
   }
 
   return (
-      <div className="flex items-center space-x-3">
+      <div className="flex items-center">
         <Link
             href="/login"
-            className="hidden sm:block px-4 py-2 text-sm font-normal text-gray-600 hover:text-emerald-600 transition-colors"
+            className="px-6 py-2.5 text-sm font-normal text-white bg-emerald-600 rounded-[6px] hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-900/10 active:scale-[0.98]"
         >
-          Login
-        </Link>
-        <Link
-            href="/register-business"
-            className="px-5 py-2.5 text-sm font-normal text-white bg-emerald-600 rounded-[6px] hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-900/10 active:scale-[0.98]"
-        >
-          Add Business
+          Sign In
         </Link>
       </div>
   );

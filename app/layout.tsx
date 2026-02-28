@@ -5,6 +5,7 @@ import NavbarWrapper from "./components/NavbarWrapper";
 import Footer from "./components/Footer";
 import FooterWrapper from "./components/FooterWrapper";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import AnnouncementBar from "./components/AnnouncementBar";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -28,6 +29,7 @@ export default function RootLayout({
         className={`${outfit.variable} antialiased`}
       >
         <ThemeProvider>
+          <AnnouncementBar />
           <NavbarWrapper>
             <Navbar />
           </NavbarWrapper>
