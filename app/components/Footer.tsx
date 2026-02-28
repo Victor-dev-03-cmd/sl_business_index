@@ -56,7 +56,7 @@ const Footer = () => {
 
           {/* Column 2: User Links */}
           <div className="md:pt-4">
-            <h4 className="text-gray-400 mb-6 text-lg">User Links</h4>
+            <h4 className="text-gray-200 mb-6 text-lg">User Links</h4>
             <ul className="space-y-4 text-sm">
               <li>
                 <Link href="/nearby" className="flex items-center gap-3 hover:text-emerald-400 transition-colors group">
@@ -81,7 +81,7 @@ const Footer = () => {
 
           {/* Column 3: Business Owners */}
           <div className="md:pt-4">
-            <h4 className="text-gray-400 mb-6 text-lg">Business Owners</h4>
+            <h4 className="text-gray-200 mb-6 text-lg">Business Owners</h4>
             <ul className="space-y-4 text-sm">
               <li>
                 <Link href="/register-business" className="flex items-center gap-3 hover:text-emerald-400 transition-colors group">
@@ -106,7 +106,7 @@ const Footer = () => {
 
           {/* Column 4: Contact & Legal */}
           <div className="md:pt-4">
-            <h4 className="text-gray-400 mb-6 text-lg">Contact & Legal</h4>
+            <h4 className="text-gray-200 mb-6 text-lg">Contact & Legal</h4>
             <ul className="space-y-4 text-sm">
               <li>
                 <a href="mailto:developerconsole03@gmail.com" className="flex items-center gap-3 hover:text-emerald-400 transition-colors group">

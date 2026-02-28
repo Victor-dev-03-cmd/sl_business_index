@@ -393,8 +393,8 @@ export default function HomePage() {
               viewport={{ once: true }}
               className="text-center mb-20"
             >
-              <span className="text-emerald-600 text-[10px] font-bold uppercase tracking-[0.2em] mb-4 block">Process</span>
-              <h2 className="text-3xl text-gray-900 tracking-tight font-medium">How Live Discovery Works</h2>
+              <span className="text-emerald-600 text-[10px] uppercase tracking-[0.2em] mb-4 block">Process</span>
+              <h2 className="text-3xl text-gray-900 tracking-tight">How Live Discovery Works</h2>
               <div className="w-12 h-1 bg-emerald-600 mx-auto mt-6 rounded-full"></div>
             </motion.div>
 
@@ -463,7 +463,7 @@ export default function HomePage() {
                     transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
                     className="absolute -inset-4 bg-emerald-400 rounded-full blur-xl"
                   />
-                  <div className="w-24 h-24 rounded-3xl bg-gray-50 border border-gray-100 text-emerald-600 flex items-center justify-center mb-8 group-hover:border-emerald-200 transition-colors relative z-10 overflow-hidden">
+                  <div className="w-24 h-24 rounded-[50%] bg-gray-50 border border-gray-100 text-emerald-600 flex items-center justify-center mb-8 group-hover:border-emerald-200 transition-colors relative z-10 overflow-hidden">
                     <Navigation size={32} />
                     <motion.div 
                       animate={{ x: ['-100%', '200%'] }}
@@ -492,7 +492,7 @@ export default function HomePage() {
                     transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 1 }}
                     className="absolute -inset-4 bg-emerald-400 rounded-full blur-xl"
                   />
-                  <div className="w-24 h-24 rounded-3xl bg-gray-50 border border-gray-100 text-emerald-600 flex items-center justify-center mb-8 group-hover:border-emerald-200 transition-colors relative z-10 overflow-hidden">
+                  <div className="w-24 h-24 rounded-[50%] bg-gray-50 border border-gray-100 text-emerald-600 flex items-center justify-center mb-8 group-hover:border-emerald-200 transition-colors relative z-10 overflow-hidden">
                     <Search size={32} />
                     <motion.div 
                       animate={{ x: ['-100%', '200%'] }}
@@ -521,7 +521,7 @@ export default function HomePage() {
                     transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 2 }}
                     className="absolute -inset-4 bg-emerald-400 rounded-full blur-xl"
                   />
-                  <div className="w-24 h-24 rounded-3xl bg-gray-50 border border-gray-100 text-emerald-600 flex items-center justify-center mb-8 group-hover:border-emerald-200 transition-colors relative z-10 overflow-hidden">
+                  <div className="w-24 h-24 rounded-[50%] bg-gray-50 border border-gray-100 text-emerald-600 flex items-center justify-center mb-8 group-hover:border-emerald-200 transition-colors relative z-10 overflow-hidden">
                     <MapPin size={32} />
                     <motion.div 
                       animate={{ x: ['-100%', '200%'] }}
@@ -542,7 +542,7 @@ export default function HomePage() {
               initial={{ opacity: 0, scale: 0.95 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
-              className="mt-24 p-12 bg-green-950 rounded-[2.5rem] relative overflow-hidden text-center shadow-2xl"
+              className="mt-24 p-12 bg-green-950 rounded-[6px] relative overflow-hidden text-center shadow-2xl"
             >
               <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
               <motion.div 
@@ -562,7 +562,7 @@ export default function HomePage() {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => handleUseCurrentLocation(true)}
-                  className="bg-emerald-500 hover:bg-emerald-400 text-white px-10 py-4 rounded-2xl font-bold transition-all shadow-2xl shadow-emerald-900/40 border border-emerald-400/20"
+                  className="bg-white text-black px-10 py-4 rounded-[6px] transition-all shadow-2xl shadow-emerald-900/40 border"
                 >
                   Start Discovery Now
                 </motion.button>
