@@ -3,7 +3,8 @@ import { createClient } from '@/lib/supabase/server';
 import CategoriesMenu from './CategoriesMenu';
 import AuthButton from './AuthButton';
 import LogoLink from './LogoLink';
-import { Bell, Menu } from 'lucide-react';
+import NotificationBell from './NotificationBell';
+import { Menu } from 'lucide-react';
 
 export default async function Navbar() {
   const supabase = await createClient();
@@ -50,16 +51,13 @@ export default async function Navbar() {
 
         {/* Right: Action Buttons */}
         <div className="flex items-center space-x-4">
-          <button className="p-2 rounded-full hover:bg-gray-100 transition-all relative">
-            <Bell className="h-5 w-5 text-gray-600" />
-            <span className="absolute top-2 right-2.5 h-2 w-2 bg-red-500 rounded-full border-2 border-white"></span>
-          </button>
+          <NotificationBell />
 
           {/* Pass the combined user data (now with role) to the client component */}
           <AuthButton user={fullUserData} />
 
           <button className="md:hidden p-2">
-            <Menu className="h-6 w-6 text-gray-700" />
+            <Menu className="h-6 w-6 text-gray-700" strokeWidth={1.5} />
           </button>
         </div>
       </div>

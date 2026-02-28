@@ -27,10 +27,10 @@ export default function CategoriesMenu() {
     <div className="relative h-full flex items-center">
       <button
         onClick={() => setIsMegaMenuOpen(!isMegaMenuOpen)}
-        className={`flex items-center space-x-1 text-gray-600 hover:text-green-700 transition-all font-medium focus:outline-none ${isMegaMenuOpen ? 'text-green-700 scale-105' : ''}`}
+        className={`flex items-center space-x-1 text-gray-600 hover:text-green-700 transition-all font-normal focus:outline-none ${isMegaMenuOpen ? 'text-green-700 scale-105' : ''}`}
       >
         <span>Categories</span>
-        <ChevronDown size={14} className={`transition-transform duration-300 ${isMegaMenuOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown size={14} strokeWidth={1.5} className={`transition-transform duration-300 ${isMegaMenuOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {isMegaMenuOpen && (
@@ -42,16 +42,16 @@ export default function CategoriesMenu() {
             <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-50 pb-6">
               <div>
                 <h3 className="text-xl font-normal text-gray-900">Browse by Category</h3>
-                <p className="text-sm text-gray-400 mt-1">Explore {categories.length} industry segments in Sri Lanka</p>
+                <p className="text-sm text-gray-400 mt-1 font-normal">Explore {categories.length} industry segments in Sri Lanka</p>
               </div>
               <div className="relative w-full md:w-80">
-                <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <Search size={18} strokeWidth={1.5} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input 
                   type="text" 
                   placeholder="Find a category..." 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-10 py-2.5 bg-gray-50 border border-gray-100 rounded-xl focus:bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all text-sm"
+                  className="w-full pl-10 pr-10 py-2.5 bg-gray-50 border border-gray-100 rounded-xl focus:bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all text-sm font-normal"
                   autoFocus
                 />
                 {searchQuery && (
@@ -59,7 +59,7 @@ export default function CategoriesMenu() {
                     onClick={() => setSearchQuery('')}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   >
-                    <X size={16} />
+                    <X size={16} strokeWidth={1.5} />
                   </button>
                 )}
               </div>
@@ -83,7 +83,7 @@ export default function CategoriesMenu() {
                 ))
               ) : (
                 <div className="col-span-full py-12 text-center">
-                  <p className="text-gray-400">No categories matching "<span className="text-gray-900 font-medium">{searchQuery}</span>"</p>
+                  <p className="text-gray-400 font-normal">No categories matching "<span className="text-gray-900 font-normal">{searchQuery}</span>"</p>
                 </div>
               )}
             </div>

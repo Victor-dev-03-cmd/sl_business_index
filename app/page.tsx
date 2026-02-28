@@ -234,7 +234,7 @@ export default function HomePage() {
             <span className="inline-block px-4 py-1.5 mb-6 text-[11px] tracking-[0.15em] uppercase text-emerald-400 border border-emerald-400/20 rounded-md">
               Sri Lanka Business Index
             </span>
-            <h1 className="text-4xl md:text-6xl text-white mb-6 leading-tight tracking-tight">
+            <h1 className="text-5xl md:text-6xl text-white mb-6 leading-tight tracking-tight">
               Find the best businesses in <br />
               <span className="text-emerald-400">Sri Lanka</span>
             </h1>
@@ -254,7 +254,7 @@ export default function HomePage() {
                       onChange={(e) => setSearchQuery(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                       placeholder="Service or Business..."
-                      className="w-full bg-transparent outline-none text-gray-700 text-base placeholder:text-gray-400"
+                      className="w-full bg-transparent outline-none text-gray-700 text-base placeholder:text-gray-400 font-normal"
                   />
                 </div>
               </div>
@@ -264,15 +264,15 @@ export default function HomePage() {
               <button
                   onClick={() => handleUseCurrentLocation(true)}
                   disabled={isFetchingLocation}
-                  className="flex items-center gap-2 w-full sm:w-auto px-5 py-3 text-gray-200 bg-white/5 hover:bg-white/10 border border-white/10 font-medium transition-all disabled:opacity-50 text-base rounded"
+                  className="flex items-center gap-2 w-full sm:w-auto px-5 py-3 text-gray-200 bg-white/5 hover:bg-white/10 border border-white/10 font-normal transition-all disabled:opacity-50 text-base rounded"
               >
-                <Navigation size={16} className={cn(isFetchingLocation && "animate-pulse")} />
+                <Navigation size={16} strokeWidth={1.5} className={cn(isFetchingLocation && "animate-pulse")} />
                 {isFetchingLocation ? 'Locating...' : 'Search near me'}
               </button>
 
               <button
                   onClick={handleSearch}
-                  className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white text-base font-bold px-10 py-3 shadow-lg shadow-emerald-900/20 transition-all rounded"
+                  className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white text-base font-normal px-10 py-3 shadow-lg shadow-emerald-900/20 transition-all rounded"
               >
                 Search
               </button>
@@ -290,8 +290,8 @@ export default function HomePage() {
         <section className="py-24 px-6 max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-14 px-2">
             <h2 className="text-2xl text-gray-800 tracking-tight font-normal">Browse Categories</h2>
-            <Link href="/categories" className="text-sm text-emerald-700 flex items-center hover:underline font-medium">
-              View All <ChevronRight size={16} className="ml-1" />
+            <Link href="/categories" className="text-sm text-emerald-700 flex items-center hover:underline font-normal">
+              View All <ChevronRight size={16} strokeWidth={1.5} className="ml-1" />
             </Link>
           </div>
 
@@ -302,10 +302,12 @@ export default function HomePage() {
                     onClick={() => handleCategoryClick(cat.name)}
                     className="group cursor-pointer flex flex-col items-center p-6 bg-gray-50/30 border border-gray-50 rounded-xl hover:bg-white hover:border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                 >
-                  <div className="p-4 rounded-full mb-4 bg-emerald-50 text-emerald-700 opacity-90 transition-transform group-hover:scale-110 group-hover:bg-emerald-100">
+                  <div className="p-4 rounded-full mb-4 bg-emerald-50 text-emerald-700 opacity-90 transition-transform group-hover:scale-110 group-hover:bg-emerald-100 font-normal">
+                    {/* Assuming cat.icon is a React element, we can't easily inject strokeWidth if it's already rendered, 
+                        but we'll assume the categories defined in lib use default or consistent strokes */}
                     {cat.icon}
                   </div>
-                  <span className="text-gray-700 text-sm text-center group-hover:text-emerald-700">{cat.name}</span>
+                  <span className="text-gray-700 text-sm text-center group-hover:text-emerald-700 font-normal">{cat.name}</span>
                 </div>
             ))}
           </div>
@@ -316,11 +318,11 @@ export default function HomePage() {
           <div className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-14 gap-4">
               <div>
-                <h2 className="text-2xl text-gray-900 tracking-tight font-medium">Featured Listings</h2>
-                <p className="text-sm text-gray-500 mt-2">Discover handpicked and verified establishments across Sri Lanka</p>
+                <h2 className="text-2xl text-gray-900 tracking-tight font-normal">Featured Listings</h2>
+                <p className="text-sm text-gray-500 mt-2 font-normal">Discover handpicked and verified establishments across Sri Lanka</p>
               </div>
-              <Link href="/nearby" className="text-sm font-bold text-emerald-700 hover:text-emerald-800 transition-colors flex items-center gap-1 group">
-                Explore All <ChevronRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
+              <Link href="/nearby" className="text-sm font-normal text-emerald-700 hover:text-emerald-800 transition-colors flex items-center gap-1 group">
+                Explore All <ChevronRight size={16} strokeWidth={1.5} className="group-hover:translate-x-0.5 transition-transform" />
               </Link>
             </div>
 
@@ -337,44 +339,44 @@ export default function HomePage() {
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                       <div className="absolute top-3 left-3">
-                        <span className="bg-emerald-600 text-white text-[9px] font-bold uppercase tracking-[0.1em] px-2 py-1 rounded-sm shadow-sm">
+                        <span className="bg-emerald-600 text-white text-[9px] font-normal uppercase tracking-[0.1em] px-2 py-1 rounded-sm shadow-sm">
                           Verified
                         </span>
                       </div>
                       <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
                         <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-sm shadow-lg text-gray-900">
-                          <Star size={10} className="text-amber-400 fill-amber-400" />
-                          <span className="text-[10px] font-bold">4.9</span>
+                          <Star size={10} strokeWidth={1.5} className="text-amber-400 fill-amber-400" />
+                          <span className="text-[10px] font-normal">4.9</span>
                         </div>
                       </div>
                     </div>
 
                     {/* Content Section */}
-                    <div className="p-4 flex flex-col flex-1">
+                    <div className="p-4 flex flex-col flex-1 font-normal">
                       <div className="mb-4">
-                        <p className="text-[10px] font-medium text-emerald-600 uppercase tracking-widest mb-1.5">
+                        <p className="text-[10px] font-normal text-emerald-600 uppercase tracking-widest mb-1.5">
                           Hospitality & Leisure
                         </p>
-                        <h3 className="text-sm text-gray-900 font-bold group-hover:text-emerald-700 transition-colors line-clamp-1">
+                        <h3 className="text-sm text-gray-900 font-normal group-hover:text-emerald-700 transition-colors line-clamp-1">
                           Victoria Luxury Villa {i}
                         </h3>
                       </div>
 
                       <div className="flex items-start text-gray-500 mb-6 flex-1">
-                        <MapPin size={12} className="mr-2 mt-0.5 flex-shrink-0 text-emerald-600/70" />
-                        <p className="text-[11px] leading-relaxed line-clamp-2">
+                        <MapPin size={12} strokeWidth={1.5} className="mr-2 mt-0.5 flex-shrink-0 text-emerald-600/70" />
+                        <p className="text-[11px] leading-relaxed line-clamp-2 font-normal">
                           No 45, Gregory Lake Road, Nuwara Eliya
                         </p>
                       </div>
 
                       <div className="flex items-center justify-between pt-4 border-t border-gray-50">
-                        <span className="text-[10px] font-bold text-gray-400">#BUSINESS-{2024 + i}</span>
+                        <span className="text-[10px] font-normal text-gray-400">#BUSINESS-{2024 + i}</span>
                         <button 
                           onClick={() => router.push('/nearby')}
-                          className="text-[11px] font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 group/btn"
+                          className="text-[11px] font-normal text-emerald-700 hover:text-emerald-800 flex items-center gap-1 group/btn"
                         >
                           View Details
-                          <ChevronRight size={14} className="group-hover/btn:translate-x-0.5 transition-transform" />
+                          <ChevronRight size={14} strokeWidth={1.5} className="group-hover/btn:translate-x-0.5 transition-transform" />
                         </button>
                       </div>
                     </div>
@@ -394,11 +396,11 @@ export default function HomePage() {
               className="text-center mb-20"
             >
               <span className="text-emerald-600 text-[10px] uppercase tracking-[0.2em] mb-4 block">Process</span>
-              <h2 className="text-3xl text-gray-900 tracking-tight">How Live Discovery Works</h2>
+              <h2 className="text-3xl text-gray-900 tracking-tight font-normal">How Live Discovery Works</h2>
               <div className="w-12 h-1 bg-emerald-600 mx-auto mt-6 rounded-full"></div>
             </motion.div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-16 relative">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-16 relative font-normal">
               {/* Animated Connecting Arrows (Desktop Only) */}
               <div className="hidden md:block absolute top-12 left-[33%] -translate-x-1/2 w-24">
                 <div className="h-[2px] w-full bg-gray-100 relative overflow-hidden">
@@ -420,7 +422,7 @@ export default function HomePage() {
                   transition={{ duration: 2, repeat: Infinity }}
                   className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2"
                 >
-                  <ChevronRight size={16} className="text-emerald-500" />
+                  <ChevronRight size={16} strokeWidth={1.5} className="text-emerald-500" />
                 </motion.div>
               </div>
 
@@ -445,7 +447,7 @@ export default function HomePage() {
                   transition={{ duration: 2, repeat: Infinity, delay: 1 }}
                   className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2"
                 >
-                  <ChevronRight size={16} className="text-emerald-500" />
+                  <ChevronRight size={16} strokeWidth={1.5} className="text-emerald-500" />
                 </motion.div>
               </div>
 
@@ -464,7 +466,7 @@ export default function HomePage() {
                     className="absolute -inset-4 bg-emerald-400 rounded-full blur-xl"
                   />
                   <div className="w-24 h-24 rounded-[50%] bg-gray-50 border border-gray-100 text-emerald-600 flex items-center justify-center mb-8 group-hover:border-emerald-200 transition-colors relative z-10 overflow-hidden">
-                    <Navigation size={32} />
+                    <Navigation size={32} strokeWidth={1.5} />
                     <motion.div 
                       animate={{ x: ['-100%', '200%'] }}
                       transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
@@ -472,8 +474,8 @@ export default function HomePage() {
                     />
                   </div>
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-4">1. Automatic Detection</h3>
-                <p className="text-sm text-gray-500 leading-relaxed max-w-[280px]">
+                <h3 className="text-lg font-normal text-gray-900 mb-4">1. Automatic Detection</h3>
+                <p className="text-sm text-gray-500 leading-relaxed max-w-[280px] font-normal">
                   We pinpoint your exact spot—whether you're in the heart of Jaffna or a village in Vavuniya—to give you relevant results.
                 </p>
               </motion.div>
@@ -493,7 +495,7 @@ export default function HomePage() {
                     className="absolute -inset-4 bg-emerald-400 rounded-full blur-xl"
                   />
                   <div className="w-24 h-24 rounded-[50%] bg-gray-50 border border-gray-100 text-emerald-600 flex items-center justify-center mb-8 group-hover:border-emerald-200 transition-colors relative z-10 overflow-hidden">
-                    <Search size={32} />
+                    <Search size={32} strokeWidth={1.5} />
                     <motion.div 
                       animate={{ x: ['-100%', '200%'] }}
                       transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
@@ -501,8 +503,8 @@ export default function HomePage() {
                     />
                   </div>
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-4">2. Intelligent Filtering</h3>
-                <p className="text-sm text-gray-500 leading-relaxed max-w-[280px]">
+                <h3 className="text-lg font-normal text-gray-900 mb-4">2. Intelligent Filtering</h3>
+                <p className="text-sm text-gray-500 leading-relaxed max-w-[280px] font-normal">
                   Type what you need. Our system scans the local database for businesses within your chosen radius.
                 </p>
               </motion.div>
@@ -522,7 +524,7 @@ export default function HomePage() {
                     className="absolute -inset-4 bg-emerald-400 rounded-full blur-xl"
                   />
                   <div className="w-24 h-24 rounded-[50%] bg-gray-50 border border-gray-100 text-emerald-600 flex items-center justify-center mb-8 group-hover:border-emerald-200 transition-colors relative z-10 overflow-hidden">
-                    <MapPin size={32} />
+                    <MapPin size={32} strokeWidth={1.5} />
                     <motion.div 
                       animate={{ x: ['-100%', '200%'] }}
                       transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
@@ -530,8 +532,8 @@ export default function HomePage() {
                     />
                   </div>
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-4">3. Instant Connection</h3>
-                <p className="text-sm text-gray-500 leading-relaxed max-w-[280px]">
+                <h3 className="text-lg font-normal text-gray-900 mb-4">3. Instant Connection</h3>
+                <p className="text-sm text-gray-500 leading-relaxed max-w-[280px] font-normal">
                   See the shops on the live map. Check if they are 'Open Now,' view their ratings, and get one-tap directions.
                 </p>
               </motion.div>
@@ -553,16 +555,16 @@ export default function HomePage() {
                 transition={{ duration: 8, repeat: Infinity }}
                 className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 to-transparent"
               />
-              <div className="relative z-10">
-                <h3 className="text-3xl text-white mb-6">Ready to find something nearby?</h3>
-                <p className="text-green-100/70 text-base mb-10 max-w-xl mx-auto leading-relaxed">
+              <div className="relative z-10 font-normal">
+                <h3 className="text-3xl text-white mb-6 font-normal">Ready to find something nearby?</h3>
+                <p className="text-green-100/70 text-base mb-10 max-w-xl mx-auto leading-relaxed font-normal">
                   Start your discovery journey now and support verified local businesses in your community across Sri Lanka.
                 </p>
                 <motion.button 
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => handleUseCurrentLocation(true)}
-                  className="bg-white text-black px-10 py-4 rounded-[6px] transition-all shadow-2xl shadow-emerald-900/40 border"
+                  className="bg-white text-black px-10 py-4 rounded-[6px] transition-all shadow-2xl shadow-emerald-900/40 border font-normal"
                 >
                   Start Discovery Now
                 </motion.button>
