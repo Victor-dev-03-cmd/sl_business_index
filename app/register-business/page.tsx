@@ -107,19 +107,19 @@ export default function RegisterBusinessPage() {
               <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-1">
                   <label className="block text-sm font-normal text-gray-600 mb-2">Business Name</label>
-                  <input type="text" value={businessName} onChange={(e) => setBusinessName(e.target.value)} required className="w-full px-4 py-3.5 rounded-xl border border-gray-100 bg-gray-50/50 focus:bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all" />
+                  <input type="text" value={businessName} onChange={(e) => setBusinessName(e.target.value)} required className="w-full px-4 py-3.5 rounded-[6px] border border-gray-100 bg-gray-50/50 focus:bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all" />
                 </div>
                 <div className="md:col-span-1">
                   <CategorySelector value={category} onChange={setCategory} />
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm font-normal text-gray-600 mb-2">Description</label>
-                  <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} className="w-full px-4 py-3.5 rounded-xl border border-gray-100 bg-gray-50/50 focus:bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all" placeholder="Write a brief overview of your business..."></textarea>
+                  <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} className="w-full px-4 py-3.5 rounded-[6px] border border-gray-100 bg-gray-50/50 focus:bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all" placeholder="Write a brief overview of your business..."></textarea>
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm font-normal text-gray-600 mb-2">Business Logo</label>
-                  <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-100 border-dashed rounded-xl hover:bg-gray-50 transition-all cursor-pointer">
-                    <input type="file" onChange={(e) => setLogo(e.target.files ? e.target.files[0] : null)} className="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-green-50 file:text-green-700 cursor-pointer"/>
+                  <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-100 border-dashed rounded-[6px] hover:bg-gray-50 transition-all cursor-pointer">
+                    <input type="file" onChange={(e) => setLogo(e.target.files ? e.target.files[0] : null)} className="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-[6px] file:border-0 file:text-xs file:font-semibold file:bg-green-50 file:text-green-700 cursor-pointer"/>
                   </div>
                 </div>
               </div>
@@ -134,15 +134,15 @@ export default function RegisterBusinessPage() {
               <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-normal text-gray-600 mb-2">Owner Name</label>
-                  <input type="text" value={ownerName} onChange={(e) => setOwnerName(e.target.value)} required className="w-full px-4 py-3.5 rounded-xl border border-gray-100 bg-gray-50/50 focus:bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all" />
+                  <input type="text" value={ownerName} onChange={(e) => setOwnerName(e.target.value)} required className="w-full px-4 py-3.5 rounded-[6px] border border-gray-100 bg-gray-50/50 focus:bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all" />
                 </div>
                 <div>
                   <label className="block text-sm font-normal text-gray-600 mb-2">Contact Number</label>
-                  <input type="tel" value={contactNumber} onChange={(e) => setContactNumber(e.target.value)} required className="w-full px-4 py-3.5 rounded-xl border border-gray-100 bg-gray-50/50 focus:bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all" />
+                  <input type="tel" value={contactNumber} onChange={(e) => setContactNumber(e.target.value)} required className="w-full px-4 py-3.5 rounded-[6px] border border-gray-100 bg-gray-50/50 focus:bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all" />
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm font-normal text-gray-600 mb-2">Business Email</label>
-                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full px-4 py-3.5 rounded-xl border border-gray-100 bg-gray-50/50 focus:bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all" />
+                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full px-4 py-3.5 rounded-[6px] border border-gray-100 bg-gray-50/50 focus:bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all" />
                 </div>
 
                 <div className="md:col-span-2">
@@ -174,12 +174,12 @@ export default function RegisterBusinessPage() {
                   {registrationType === 'registered' ? (
                       <div>
                         <label className="block text-sm font-normal text-gray-600 mb-2">BR Number</label>
-                        <input type="text" value={brNumber} onChange={(e) => setBrNumber(e.target.value)} className="w-full px-4 py-3.5 rounded-xl border border-gray-200 bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all" placeholder="Enter Registration Number" />
+                        <input type="text" value={brNumber} onChange={(e) => setBrNumber(e.target.value)} className="w-full px-4 py-3.5 rounded-[6px] border border-gray-200 bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all" placeholder="Enter Registration Number" />
                       </div>
                   ) : (
                       <div>
                         <label className="block text-sm font-normal text-gray-600 mb-2">NIC or Passport Number</label>
-                        <input type="text" value={nicNumber} onChange={(e) => setNicNumber(e.target.value)} className="w-full px-4 py-3.5 rounded-xl border border-gray-200 bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all" placeholder="Enter NIC Number" />
+                        <input type="text" value={nicNumber} onChange={(e) => setNicNumber(e.target.value)} className="w-full px-4 py-3.5 rounded-[6px] border border-gray-200 bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all" placeholder="Enter NIC Number" />
                       </div>
                   )}
                 </div>
@@ -187,7 +187,7 @@ export default function RegisterBusinessPage() {
             </div>
 
             {error && (
-                <div className="p-4 bg-red-50 rounded-xl border border-red-100 flex items-center space-x-3">
+                <div className="p-4 bg-red-50 rounded-[6px] border border-red-100 flex items-center space-x-3">
                   <span className="text-red-600 text-sm font-normal">⚠️ {error}</span>
                 </div>
             )}

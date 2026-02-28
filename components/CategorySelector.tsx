@@ -28,7 +28,7 @@ export default function CategorySelector({ value, onChange }: CategorySelectorPr
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className="w-full flex items-center justify-between px-4 py-3.5 rounded-xl border border-gray-100 bg-gray-50/50 focus:bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all text-left"
+          className="w-full flex items-center justify-between px-4 py-3.5 rounded-[6px] border border-gray-100 bg-gray-50/50 focus:bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all text-left"
         >
           <span className={cn("block truncate", !value && "text-gray-400")}>
             {value ? categories.find((c) => c.name === value)?.name : "Select a category..."}
@@ -37,7 +37,7 @@ export default function CategorySelector({ value, onChange }: CategorySelectorPr
         </button>
 
         {open && (
-          <div className="absolute z-50 w-full mt-2 bg-white rounded-xl border border-gray-100 shadow-lg overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="absolute z-50 w-full mt-2 bg-white rounded-[6px] border border-gray-100 shadow-lg overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
             <Command shouldFilter={true}>
               <CommandInput placeholder="Search categories..." className="h-11" />
               <CommandList className="max-h-[300px]">
