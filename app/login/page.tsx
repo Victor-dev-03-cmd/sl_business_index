@@ -49,7 +49,7 @@ export default function LogIn() {
         <div className="hidden lg:flex lg:w-1/2 bg-emerald-950 relative overflow-hidden items-center justify-center p-12">
           {/* Professional Background Effects */}
           <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
-          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[120px] -mr-64 -mt-64 animate-ambient-float"></div>
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-500/10    rounded-full blur-[120px] -mr-64 -mt-64 animate-ambient-float"></div>
           <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-emerald-600/5 rounded-full blur-[100px] -ml-48 -mb-48 animate-ambient-float" style={{ animationDelay: '2s' }}></div>
 
           <div className="relative z-10 max-w-md w-full">

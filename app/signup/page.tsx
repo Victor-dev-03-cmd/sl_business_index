@@ -36,21 +36,9 @@ export default function SignUp() {
     if (error) {
       setError(error.message);
     } else {
-      // Save profile data to profiles table
-      if (data.user) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .upsert({
-            id: data.user.id,
-            username: username,
-            full_name: username,
-            role: 'customer',
-          });
-        
-        if (profileError) {
-          console.error('Error saving profile:', profileError);
-        }
-      }
+      // Profile is now handled automatically by the Supabase DB trigger 
+      // for better performance and reliability.
+      
       // Redirect to the OTP confirmation page with the email as a query param
       router.push(`/auth/confirm-otp?email=${encodeURIComponent(email)}`);
     }

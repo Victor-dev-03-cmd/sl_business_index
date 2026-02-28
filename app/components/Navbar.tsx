@@ -37,14 +37,17 @@ export default async function Navbar() {
 
         {/* Center: Navigation Menus */}
         <nav className="hidden md:flex flex-grow justify-center items-center space-x-8">
-          <Link href="/" className="text-gray-600 hover:text-green-700 transition-colors">
+          <Link href="/" className="text-gray-600 hover:text-emerald-700 transition-colors">
             Home
           </Link>
           <CategoriesMenu />
-          <Link href="/about" className="text-gray-600 hover:text-green-700 transition-colors">
+          <Link href="/register-business" className="text-gray-600 hover:text-emerald-700 transition-colors">
+            Register Business
+          </Link>
+          <Link href="/about" className="text-gray-600 hover:text-emerald-700 transition-colors">
             About
           </Link>
-          <Link href="/contact" className="text-gray-600 hover:text-green-700 transition-colors">
+          <Link href="/contact" className="text-gray-600 hover:text-emerald-700 transition-colors">
             Contact
           </Link>
         </nav>
