@@ -18,6 +18,7 @@ import {
   MapPin, 
   Search,
   ChevronRight,
+  ChevronDown,
   Clock,
   Navigation
 } from 'lucide-react';
@@ -306,17 +307,18 @@ export default function ContactPage() {
               <form onSubmit={handleSubmit} className="p-8 space-y-6">
                 <div className="space-y-2">
                   <label className="text-xs text-gray-400 font-normal uppercase tracking-wider">Department</label>
-                  <select 
-                    value={department}
-                    onChange={(e) => setDepartment(e.target.value)}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-[6px] focus:bg-white focus:ring-1 focus:ring-emerald-600 outline-none transition-all text-sm font-normal appearance-none cursor-pointer"
-                  >
-                    <option>General Inquiry</option>
-                    <option>Add My Business</option>
-                    <option>Report Location Error</option>
-                    <option>Advertising / Pricing</option>
-                    <option>Technical Support</option>
-                  </select>
+                  <div className="relative">
+                    <select 
+                      value={department}
+                      onChange={(e) => setDepartment(e.target.value)}
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-[6px] hover:bg-white hover:border-emerald-200 transition-all text-sm font-normal outline-none appearance-none focus:bg-white focus:ring-1 focus:ring-emerald-600 pr-10"
+                    >
+                      {['General Inquiry', 'Add My Business', 'Report Location Error', 'Advertising / Pricing', 'Technical Support'].map((opt) => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
+                    <ChevronDown size={16} strokeWidth={1.5} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  </div>
                 </div>
 
                 <div className="space-y-2">

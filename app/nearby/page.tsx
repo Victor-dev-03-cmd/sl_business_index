@@ -559,23 +559,24 @@ function SplitScreenResultsContent() {
             </DropdownMenu>
 
             <div className="relative">
-              <button 
-                onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-                className="hidden md:flex items-center gap-2 text-sm border border-gray-200 bg-white hover:bg-gray-50 rounded-lg px-3 h-10 outline-none focus:ring-1 focus:ring-green-600 transition-all shadow-sm font-normal"
-              >
-                <span className="whitespace-nowrap text-gray-600">
-                  {selectedCategory ? (
-                    <div className="flex items-center">
-                      <span className="text-green-600 mr-2">{categories.find(c => c.name === selectedCategory)?.icon}</span>
-                      {selectedCategory}
-                    </div>
-                  ) : 'Category'}
-                </span>
-                <ChevronDown size={14} strokeWidth={1.5} className={cn("text-gray-400 transition-transform duration-200", isCategoryOpen && "rotate-180")} />
-              </button>
+              <DropdownMenu open={isCategoryOpen} onOpenChange={setIsCategoryOpen}>
+                <DropdownMenuTrigger asChild>
+                  <button 
+                    className="hidden md:flex items-center gap-2 text-sm border border-gray-200 bg-white hover:bg-gray-50 rounded-lg px-3 h-10 outline-none focus:ring-1 focus:ring-green-600 transition-all shadow-sm font-normal"
+                  >
+                    <span className="whitespace-nowrap text-gray-600">
+                      {selectedCategory ? (
+                        <div className="flex items-center">
+                          <span className="text-green-600 mr-2">{categories.find(c => c.name === selectedCategory)?.icon}</span>
+                          {selectedCategory}
+                        </div>
+                      ) : 'Category'}
+                    </span>
+                    <ChevronDown size={14} strokeWidth={1.5} className={cn("text-gray-400 transition-transform duration-200", isCategoryOpen && "rotate-180")} />
+                  </button>
+                </DropdownMenuTrigger>
 
-              {isCategoryOpen && (
-                <div className="absolute z-50 right-0 mt-2 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                <DropdownMenuContent align="end" className="w-64 p-0 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                   <Command shouldFilter={true}>
                     <CommandInput placeholder="Search categories..." className="h-10 border-none ring-0 focus:ring-0" />
                     <CommandList className="max-h-[300px] overflow-y-auto custom-scrollbar">
@@ -618,8 +619,8 @@ function SplitScreenResultsContent() {
                       </CommandGroup>
                     </CommandList>
                   </Command>
-                </div>
-              )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
             <div className="hidden md:block w-56">
@@ -648,9 +649,6 @@ function SplitScreenResultsContent() {
               {mobileMenuOpen ? <X size={20} /> : <Search size={20} />}
             </button>
           </div>
-          {isCategoryOpen && (
-            <div className="fixed inset-0 z-40 bg-transparent" onClick={() => setIsCategoryOpen(false)} />
-          )}
         </div>
 
         {/* Main Content */}
