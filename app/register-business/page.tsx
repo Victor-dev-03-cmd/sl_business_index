@@ -2,9 +2,11 @@
 
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
 import AddressAutocomplete from '@/components/AddressAutocomplete';
 import CategorySelector from '@/components/CategorySelector';
+import { CheckCircle2, Clock, Home, ArrowRight, ShieldCheck } from 'lucide-react';
 
 export default function RegisterBusinessPage() {
   const router = useRouter();
@@ -22,6 +24,7 @@ export default function RegisterBusinessPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const handleLocationSelect = useCallback((lat: number, lng: number, address: string) => {
     setLocation({ lat, lng, address });
@@ -71,13 +74,14 @@ export default function RegisterBusinessPage() {
           address: location.address,
           latitude: location.lat,
           longitude: location.lng,
+          status: 'pending'
         },
       ]);
 
       if (insertError) throw insertError;
 
-      alert('Business registered successfully!');
-      router.push('/dashboard');
+      setIsSubmitted(true);
+      window.scrollTo(0, 0);
 
     } catch (err: any) {
       setError(err.message);
@@ -86,6 +90,59 @@ export default function RegisterBusinessPage() {
       setLoading(false);
     }
   };
+
+  if (isSubmitted) {
+    return (
+      <div className="min-h-screen bg-gray-50/50 flex items-center justify-center py-12 px-6">
+        <div className="max-w-2xl w-full bg-white p-10 md:p-16 border border-gray-100 shadow-2xl rounded-3xl text-center">
+          <div className="flex justify-center mb-8">
+            <div className="relative">
+              <div className="absolute inset-0 bg-emerald-100 rounded-full animate-ping opacity-25"></div>
+              <div className="relative bg-emerald-50 p-6 rounded-full text-emerald-600">
+                <CheckCircle2 size={64} strokeWidth={1.5} />
+              </div>
+            </div>
+          </div>
+
+          <h1 className="text-3xl font-normal text-gray-900 mb-4 tracking-tight">Registration Submitted</h1>
+          <p className="text-gray-500 text-lg font-normal mb-10 leading-relaxed">
+            Thank you for registering <span className="text-emerald-700 font-medium">{businessName}</span>. 
+            Our team is reviewing your application.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+            <div className="p-6 bg-gray-50/50 rounded-2xl border border-gray-100 flex flex-col items-center text-center">
+              <Clock className="text-emerald-600 mb-3" size={24} strokeWidth={1.5} />
+              <h3 className="text-sm font-medium text-gray-900 mb-1">Approval Time</h3>
+              <p className="text-xs text-gray-500 font-normal">Applications are typically reviewed within 48 hours.</p>
+            </div>
+            <div className="p-6 bg-gray-50/50 rounded-2xl border border-gray-100 flex flex-col items-center text-center">
+              <ShieldCheck className="text-emerald-600 mb-3" size={24} strokeWidth={1.5} />
+              <h3 className="text-sm font-medium text-gray-900 mb-1">Status Tracking</h3>
+              <p className="text-xs text-gray-500 font-normal">You'll be notified via email once approved.</p>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link 
+              href="/"
+              className="flex items-center justify-center gap-2 px-8 py-4 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-900/10 active:scale-95"
+            >
+              <Home size={18} />
+              Go to Home
+            </Link>
+            <Link 
+              href="/profile"
+              className="flex items-center justify-center gap-2 px-8 py-4 bg-white border border-gray-200 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-50 transition-all active:scale-95"
+            >
+              View My Profile
+              <ArrowRight size={18} />
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
       <div className="min-h-screen bg-gray-50/50 py-12 px-6">
