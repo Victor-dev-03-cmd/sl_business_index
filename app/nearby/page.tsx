@@ -23,6 +23,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { cn, expandSearchQuery } from "@/lib/utils";
+import { Business } from '@/lib/types';
 
 const MapboxMap = dynamic(() => import('@/components/MapboxMap'), { 
   ssr: false, 
@@ -79,7 +80,9 @@ const MOCK_DEMOS: Business[] = [
     image_url: "/business-1.jpg",
     latitude: 6.9697,
     longitude: 80.7672,
-    distanceText: "2.4 km"
+    distanceText: "2.4 km",
+    status: 'approved',
+    owner_name: 'Demo Owner'
   },
   {
     id: -2,
@@ -95,7 +98,9 @@ const MOCK_DEMOS: Business[] = [
     image_url: "/business-2.jpg",
     latitude: 9.6615,
     longitude: 80.0070,
-    distanceText: "1.1 km"
+    distanceText: "1.1 km",
+    status: 'approved',
+    owner_name: 'Demo Owner'
   },
   {
     id: -3,
@@ -111,27 +116,11 @@ const MOCK_DEMOS: Business[] = [
     image_url: "/business-3.jpg",
     latitude: 8.7514,
     longitude: 80.4971,
-    distanceText: "0.5 km"
+    distanceText: "0.5 km",
+    status: 'approved',
+    owner_name: 'Demo Owner'
   }
 ];
-
-interface Business {
-  id: number | string;
-  name: string;
-  category: string;
-  description: string;
-  address: string;
-  phone: string;
-  email: string;
-  website: string;
-  rating: number;
-  reviews_count: number;
-  image_url: string;
-  latitude: number;
-  longitude: number;
-  distanceText?: string;
-  durationText?: string;
-}
 
 import { SL_TOWNS, Town } from '@/lib/towns';
 import TownSelector from '@/components/TownSelector';
@@ -829,7 +818,7 @@ function SplitScreenResultsContent() {
                           <h3 className="text-sm font-normal text-gray-900 truncate">
                             {business.name}
                           </h3>
-                          {business.rating > 0 && (
+                          {(business.rating || 0) > 0 && (
                             <div className="flex items-center gap-1 bg-amber-50 px-1.5 py-0.5 rounded text-xs flex-shrink-0">
                               <Star size={12} strokeWidth={1.5} className="text-amber-500 fill-amber-500" />
                               <span className="font-normal text-amber-900">{business.rating}</span>

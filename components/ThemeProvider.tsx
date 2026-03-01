@@ -8,7 +8,13 @@ type ThemeSettings = {
   theme_accent_color: string;
 };
 
-const ThemeContext = createContext<ThemeSettings | undefined>(undefined);
+type ThemeContextType = {
+  settings: ThemeSettings;
+  isDarkMode: boolean;
+  toggleDarkMode: () => void;
+};
+
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<ThemeSettings>({
@@ -16,18 +22,36 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     theme_accent_color: '#10b981',  // Emerald 500
   });
 
-  useEffect(() => {
-    // Initial fetch
-    const fetchSettings = async () => {
-      const { data, error } = await supabase
-        .from('site_settings')
-        .select('theme_primary_color, theme_accent_color')
-        .eq('id', 1)
-        .single();
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
-      if (data) {
-        setSettings(data);
-        updateCSSVariables(data);
+  useEffect(() => {
+    // Check local storage for theme preference
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+      setIsDarkMode(true);
+      document.documentElement.classList.add('dark');
+    } else {
+      setIsDarkMode(false);
+      document.documentElement.classList.remove('dark');
+    }
+
+    // Initial fetch for site settings
+    const fetchSettings = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('site_settings')
+          .select('theme_primary_color, theme_accent_color')
+          .eq('id', 1)
+          .single();
+
+        if (data) {
+          setSettings(data);
+          updateCSSVariables(data);
+        }
+      } catch (err) {
+        console.error('Error fetching theme settings:', err);
       }
     };
 
@@ -52,6 +76,20 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  const toggleDarkMode = () => {
+    setIsDarkMode((prev) => {
+      const newValue = !prev;
+      if (newValue) {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      }
+      return newValue;
+    });
+  };
+
   const updateCSSVariables = (theme: ThemeSettings) => {
     if (typeof document !== 'undefined') {
       const root = document.documentElement;
@@ -61,7 +99,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <ThemeContext.Provider value={settings}>
+    <ThemeContext.Provider value={{ settings, isDarkMode, toggleDarkMode }}>
       {children}
     </ThemeContext.Provider>
   );

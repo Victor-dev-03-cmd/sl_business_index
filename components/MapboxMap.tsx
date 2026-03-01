@@ -5,14 +5,7 @@ import Map, { Marker, Popup, NavigationControl, FullscreenControl, GeolocateCont
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useState, useEffect, useRef } from 'react';
 import { MapPin, Navigation } from 'lucide-react';
-
-interface Business {
-  id: number;
-  name: string;
-  category: string;
-  latitude: number;
-  longitude: number;
-}
+import { Business } from '@/lib/types';
 
 interface MapboxMapProps {
   userLat: number;

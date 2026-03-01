@@ -2,10 +2,10 @@
 
 import { usePathname } from 'next/navigation';
 
-export default function FooterWrapper({ children }: { children: React.ReactNode }) {
+export default function AnnouncementWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   
-  // Don't show Footer on specific pages or admin routes
+  // Don't show AnnouncementBar on specific pages or admin routes
   if (
     pathname === '/nearby' || 
     pathname === '/login' || 
