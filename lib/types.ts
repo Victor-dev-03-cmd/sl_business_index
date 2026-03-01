@@ -21,4 +21,5 @@ export interface Business {
   logo_url?: string;
   registration_number?: string;
   is_registered?: boolean;
+  nic_number?: string;
 }
