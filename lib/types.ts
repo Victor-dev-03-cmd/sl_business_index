@@ -19,4 +19,6 @@ export interface Business {
   owner_name?: string;
   owner_id?: string;
   logo_url?: string;
+  registration_number?: string;
+  is_registered?: boolean;
 }
