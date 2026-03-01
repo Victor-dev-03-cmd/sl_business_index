@@ -116,7 +116,7 @@ const MOCK_DEMOS: Business[] = [
 ];
 
 interface Business {
-  id: number;
+  id: number | string;
   name: string;
   category: string;
   description: string;

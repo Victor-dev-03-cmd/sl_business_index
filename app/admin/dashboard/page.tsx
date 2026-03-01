@@ -60,7 +60,8 @@ export default function AdminDashboard() {
       .eq('id', user.id)
       .single();
 
-    if (profile?.role !== 'admin' && profile?.role !== 'ceo') {
+    const role = profile?.role?.toLowerCase();
+    if (role !== 'admin' && role !== 'ceo') {
       router.push('/');
     }
   };
