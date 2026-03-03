@@ -189,7 +189,7 @@ export default function ContactPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       {/* Hero Section */}
-      <section className="bg-gray-50 border-b border-gray-100 py-20 px-6">
+      <section className="bg-gray-50 border-b border-gray-300 py-20 px-6">
         <div className="max-w-7xl mx-auto text-center">
           <motion.span 
             initial={{ opacity: 0, y: 10 }}
@@ -235,7 +235,7 @@ export default function ContactPage() {
                   placeholder="Search service, area, or dept..." 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-[6px] focus:bg-white focus:ring-1 focus:ring-emerald-600 outline-none transition-all text-sm font-normal"
+                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-300 rounded-[6px] focus:bg-white focus:ring-1 focus:ring-emerald-600 outline-none transition-all text-sm font-normal"
                 />
               </div>
             </div>
@@ -255,7 +255,7 @@ export default function ContactPage() {
                       {cat.services.map((service, sIdx) => (
                         <div 
                           key={sIdx}
-                          className="p-5 border border-gray-100 rounded-[6px] hover:border-emerald-200 hover:shadow-lg hover:shadow-emerald-900/5 transition-all group bg-white"
+                          className="p-5 border border-gray-300 rounded-[6px] hover:border-emerald-200 hover:shadow-lg hover:shadow-emerald-900/5 transition-all group bg-white"
                         >
                           <div className="flex justify-between items-start mb-2">
                             <h3 className="text-[15px] font-normal text-gray-900 group-hover:text-emerald-700 transition-colors">
@@ -284,7 +284,7 @@ export default function ContactPage() {
                   </div>
                 ))
               ) : (
-                <div className="py-20 text-center border-2 border-dashed border-gray-100 rounded-3xl">
+                <div className="py-20 text-center border-2 border-dashed border-gray-300 rounded-3xl">
                   <div className="inline-flex p-4 bg-gray-50 rounded-full mb-4">
                     <Search size={32} strokeWidth={1.5} className="text-gray-200" />
                   </div>
@@ -297,7 +297,7 @@ export default function ContactPage() {
 
           {/* Right Column: Contact Form */}
           <div className="lg:col-span-1">
-            <div className="sticky top-28 bg-white border border-gray-100 rounded-[8px] shadow-xl shadow-gray-200/50 overflow-hidden">
+            <div className="sticky top-28 bg-white border border-gray-300 rounded-[8px] shadow-xl shadow-gray-200/50 overflow-hidden">
               <div className="p-8 bg-emerald-950 text-white relative overflow-hidden">
                 <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
                 <h3 className="text-xl relative z-10 mb-2">Send us a message</h3>
@@ -311,7 +311,7 @@ export default function ContactPage() {
                     <select 
                       value={department}
                       onChange={(e) => setDepartment(e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-[6px] hover:bg-white hover:border-emerald-200 transition-all text-sm font-normal outline-none appearance-none focus:bg-white focus:ring-1 focus:ring-emerald-600 pr-10"
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-[6px] hover:bg-white hover:border-emerald-200 transition-all text-sm font-normal outline-none appearance-none focus:bg-white focus:ring-1 focus:ring-emerald-600 pr-10"
                     >
                       {['General Inquiry', 'Add My Business', 'Report Location Error', 'Advertising / Pricing', 'Technical Support'].map((opt) => (
                         <option key={opt} value={opt}>{opt}</option>
@@ -329,7 +329,7 @@ export default function ContactPage() {
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
                     placeholder="Laxsan Victor" 
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-[6px] focus:bg-white focus:ring-1 focus:ring-emerald-600 outline-none transition-all text-sm font-normal"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-[6px] focus:bg-white focus:ring-1 focus:ring-emerald-600 outline-none transition-all text-sm font-normal"
                   />
                 </div>
 
@@ -341,7 +341,7 @@ export default function ContactPage() {
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
                     placeholder="laxsan@example.com" 
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-[6px] focus:bg-white focus:ring-1 focus:ring-emerald-600 outline-none transition-all text-sm font-normal"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-[6px] focus:bg-white focus:ring-1 focus:ring-emerald-600 outline-none transition-all text-sm font-normal"
                   />
                 </div>
 
@@ -363,7 +363,7 @@ export default function ContactPage() {
                     value={formData.location}
                     onChange={(e) => setFormData({...formData, location: e.target.value})}
                     placeholder="6.9271, 79.8612" 
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-[6px] focus:bg-white focus:ring-1 focus:ring-emerald-600 outline-none transition-all text-sm font-normal"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-[6px] focus:bg-white focus:ring-1 focus:ring-emerald-600 outline-none transition-all text-sm font-normal"
                   />
                 </div>
 
@@ -375,7 +375,7 @@ export default function ContactPage() {
                     value={formData.message}
                     onChange={(e) => setFormData({...formData, message: e.target.value})}
                     placeholder="How can we help you today?" 
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-[6px] focus:bg-white focus:ring-1 focus:ring-emerald-600 outline-none transition-all text-sm font-normal resize-none"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-[6px] focus:bg-white focus:ring-1 focus:ring-emerald-600 outline-none transition-all text-sm font-normal resize-none"
                   ></textarea>
                 </div>
 
@@ -413,10 +413,10 @@ export default function ContactPage() {
       </section>
 
       {/* Office Locations / More Info */}
-      <section className="py-24 bg-gray-50 border-t border-gray-100">
+      <section className="py-24 bg-gray-50 border-t border-gray-300">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12">
           <div className="flex gap-4">
-            <div className="flex-shrink-0 w-12 h-12 bg-white rounded-[6px] shadow-sm border border-gray-100 flex items-center justify-center text-emerald-600">
+            <div className="flex-shrink-0 w-12 h-12 bg-white rounded-[6px] shadow-sm border border-gray-300 flex items-center justify-center text-emerald-600">
               <Mail size={24} strokeWidth={1.5} />
             </div>
             <div>
@@ -429,7 +429,7 @@ export default function ContactPage() {
           </div>
 
           <div className="flex gap-4">
-            <div className="flex-shrink-0 w-12 h-12 bg-white rounded-[6px] shadow-sm border border-gray-100 flex items-center justify-center text-emerald-600">
+            <div className="flex-shrink-0 w-12 h-12 bg-white rounded-[6px] shadow-sm border border-gray-300 flex items-center justify-center text-emerald-600">
               <Phone size={24} strokeWidth={1.5} />
             </div>
             <div>
@@ -443,7 +443,7 @@ export default function ContactPage() {
           </div>
 
           <div className="flex gap-4">
-            <div className="flex-shrink-0 w-12 h-12 bg-white rounded-[6px] shadow-sm border border-gray-100 flex items-center justify-center text-emerald-600">
+            <div className="flex-shrink-0 w-12 h-12 bg-white rounded-[6px] shadow-sm border border-gray-300 flex items-center justify-center text-emerald-600">
               <Globe size={24} strokeWidth={1.5} />
             </div>
             <div>
