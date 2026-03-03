@@ -229,7 +229,7 @@ export default function HomePage() {
             {/* --- New Search Bar Design --- */}
             <div className="relative max-w-2xl mx-auto space-y-4">
               {/* Main Search Input */}
-              <div className="bg-white rounded-md overflow-hidden shadow-lg border border-white/10">
+              <div className="bg-white rounded-[6px] overflow-hidden shadow-lg border border-gray-300">
                 <div className="flex items-center px-5 py-4 bg-white">
                   <Search className="text-gray-400 mr-3" size={20} strokeWidth={1.5} />
                   <input
@@ -248,7 +248,7 @@ export default function HomePage() {
               <button
                   onClick={() => handleUseCurrentLocation(true)}
                   disabled={isFetchingLocation}
-                  className="flex items-center gap-2 w-full sm:w-auto px-5 py-3 text-gray-200 bg-white/5 hover:bg-white/10 border border-white/10 font-normal transition-all disabled:opacity-50 text-base rounded"
+                  className="flex items-center gap-2 w-full sm:w-auto px-5 py-3 text-gray-200 bg-white/5 hover:bg-white/10 border border-white/10 font-normal transition-all disabled:opacity-50 text-base rounded-[6px]"
               >
                 <Navigation size={16} strokeWidth={1.5} className={cn(isFetchingLocation && "animate-pulse")} />
                 {isFetchingLocation ? 'Locating...' : 'Search near me'}
@@ -256,7 +256,7 @@ export default function HomePage() {
 
               <button
                   onClick={handleSearch}
-                  className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white text-base font-normal px-10 py-3 shadow-lg shadow-emerald-900/20 transition-all rounded"
+                  className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white text-base font-normal px-10 py-3 shadow-lg shadow-emerald-900/20 transition-all rounded-[6px]"
               >
                 Search
               </button>
@@ -284,9 +284,9 @@ export default function HomePage() {
                 <div
                     key={idx}
                     onClick={() => handleCategoryClick(cat.name)}
-                    className="group cursor-pointer flex flex-col items-center p-6 bg-gray-50/30 border border-gray-300 rounded-xl hover:bg-white hover:border-emerald-600/20 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                    className="group cursor-pointer flex flex-col items-center p-6 bg-gray-50/30 border border-gray-300 rounded-[6px] hover:bg-white hover:border-emerald-600/20 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                 >
-                  <div className="p-4 rounded-full mb-4 bg-emerald-50 text-emerald-700 opacity-90 transition-transform group-hover:scale-110 group-hover:bg-emerald-100 font-normal">
+                  <div className="p-4 rounded-[6px] mb-4 bg-emerald-50 text-emerald-700 opacity-90 transition-transform group-hover:scale-110 group-hover:bg-emerald-100 font-normal">
                     {/* Assuming cat.icon is a React element, we can't easily inject strokeWidth if it's already rendered, 
                         but we'll assume the categories defined in lib use default or consistent strokes */}
                     {cat.icon}
@@ -312,7 +312,7 @@ export default function HomePage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="group bg-white rounded-sm overflow-hidden border border-gray-300 hover:border-emerald-600/20 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full">
+                  <div key={i} className="group bg-white rounded-[6px] overflow-hidden border border-gray-300 hover:border-emerald-600/20 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full">
                     {/* Image Section */}
                     <div className="relative h-48 w-full overflow-hidden bg-gray-100">
                       <Image
@@ -323,12 +323,12 @@ export default function HomePage() {
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                       <div className="absolute top-3 left-3">
-                        <span className="bg-emerald-600 text-white text-[9px] font-normal uppercase tracking-[0.1em] px-2 py-1 rounded-sm shadow-sm">
+                        <span className="bg-emerald-600 text-white text-[9px] font-normal uppercase tracking-[0.1em] px-2 py-1 rounded-[6px] shadow-sm">
                           Verified
                         </span>
                       </div>
                       <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
-                        <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-sm shadow-lg text-gray-900">
+                        <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-[6px] shadow-lg text-gray-900">
                           <Star size={10} strokeWidth={1.5} className="text-amber-400 fill-amber-400" />
                           <span className="text-[10px] font-normal">4.9</span>
                         </div>

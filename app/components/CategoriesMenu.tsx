@@ -36,7 +36,7 @@ export default function CategoriesMenu() {
       {isMegaMenuOpen && (
         <>
           <div className="fixed inset-0 top-20 z-[40] bg-black/5 backdrop-blur-[2px]" onClick={() => setIsMegaMenuOpen(false)}></div>
-          <div className="fixed top-20 left-1/2 -translate-x-1/2 w-[95%] max-w-6xl bg-white shadow-2xl rounded-b-2xl p-8 border border-gray-300 z-[50] animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="fixed top-20 left-1/2 -translate-x-1/2 w-[95%] max-w-6xl bg-white shadow-2xl rounded-[6px] p-8 border border-gray-300 z-[50] animate-in fade-in slide-in-from-top-4 duration-300">
             
             {/* Search Header */}
             <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-300 pb-6">
@@ -51,7 +51,7 @@ export default function CategoriesMenu() {
                   placeholder="Find a category..." 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-10 py-2.5 bg-gray-50 border border-gray-300 rounded-xl focus:bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all text-sm font-normal"
+                  className="w-full pl-10 pr-10 py-2.5 bg-gray-50 border border-gray-300 rounded-[6px] focus:bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all text-sm font-normal"
                   autoFocus
                 />
                 {searchQuery && (
@@ -75,7 +75,7 @@ export default function CategoriesMenu() {
                     className="flex items-center group py-2 text-sm text-gray-600 hover:text-green-700 transition-all"
                     onClick={() => setIsMegaMenuOpen(false)}
                   >
-                    <span className="w-8 h-8 rounded-lg bg-gray-50 border border-gray-300 flex items-center justify-center text-green-600 mr-3 group-hover:bg-green-50 transition-colors shadow-sm">
+                    <span className="w-8 h-8 rounded-[6px] bg-gray-50 border border-gray-300 flex items-center justify-center text-green-600 mr-3 group-hover:bg-green-50 transition-colors shadow-sm">
                       {category.icon}
                     </span>
                     <span className="font-normal border-b border-transparent group-hover:border-green-100 transition-all">{category.name}</span>

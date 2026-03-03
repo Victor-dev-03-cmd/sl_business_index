@@ -61,7 +61,7 @@ export default function AboutPage() {
             viewport={{ once: true }}
             className="space-y-6"
           >
-            <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600">
+            <div className="w-12 h-12 bg-emerald-50 rounded-[6px] border border-gray-300 flex items-center justify-center text-emerald-600">
               <Target size={24} strokeWidth={1.5} />
             </div>
             <h3 className="text-2xl font-normal text-gray-900">Our Mission</h3>
@@ -77,7 +77,7 @@ export default function AboutPage() {
             transition={{ delay: 0.1 }}
             className="space-y-6"
           >
-            <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600">
+            <div className="w-12 h-12 bg-emerald-50 rounded-[6px] border border-gray-300 flex items-center justify-center text-emerald-600">
               <ShieldCheck size={24} strokeWidth={1.5} />
             </div>
             <h3 className="text-2xl font-normal text-gray-900">Verified Profiles</h3>
@@ -93,7 +93,7 @@ export default function AboutPage() {
             transition={{ delay: 0.2 }}
             className="space-y-6"
           >
-            <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600">
+            <div className="w-12 h-12 bg-emerald-50 rounded-[6px] border border-gray-300 flex items-center justify-center text-emerald-600">
               <Cpu size={24} strokeWidth={1.5} />
             </div>
             <h3 className="text-2xl font-normal text-gray-900">Tech Ecosystem</h3>
@@ -118,11 +118,11 @@ export default function AboutPage() {
               initial={{ opacity: 0, scale: 0.95 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
-              className="bg-white p-8 rounded-[8px] border border-gray-300 shadow-sm group hover:border-emerald-200 transition-all"
+              className="bg-white p-8 rounded-[6px] border border-gray-300 shadow-sm group hover:border-emerald-200 transition-all"
             >
-              <div className="relative w-full h-48 bg-gray-100 rounded-xl mb-8 overflow-hidden flex items-center justify-center">
+              <div className="relative w-full h-48 bg-gray-50 border border-gray-300 rounded-[6px] mb-8 overflow-hidden flex items-center justify-center">
                 {/* Skeleton Animation */}
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-100/40 to-transparent animate-skeleton-shimmer" />
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-gray-300/20 to-transparent animate-skeleton-shimmer" />
                 <div className="relative">
                   <div className="w-20 h-20 rounded-full border-2 border-emerald-100 animate-glow-pulse flex items-center justify-center">
                     <Navigation size={32} strokeWidth={1.5} className="text-emerald-500" />
@@ -144,13 +144,13 @@ export default function AboutPage() {
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
-              className="bg-white p-8 rounded-[8px] border border-gray-300 shadow-sm group hover:border-emerald-200 transition-all"
+              className="bg-white p-8 rounded-[6px] border border-gray-300 shadow-sm group hover:border-emerald-200 transition-all"
             >
-              <div className="relative w-full h-48 bg-gray-100 rounded-xl mb-8 overflow-hidden flex flex-col items-center justify-center p-6 gap-3">
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-100/40 to-transparent animate-skeleton-shimmer" style={{ animationDelay: '0.5s' }} />
-                <div className="w-full h-8 bg-gray-200 rounded-md" />
-                <div className="w-3/4 h-8 bg-gray-200 rounded-md" />
-                <div className="w-1/2 h-8 bg-emerald-500/20 rounded-md flex items-center px-3">
+              <div className="relative w-full h-48 bg-gray-50 border border-gray-300 rounded-[6px] mb-8 overflow-hidden flex flex-col items-center justify-center p-6 gap-3">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-gray-300/20 to-transparent animate-skeleton-shimmer" style={{ animationDelay: '0.5s' }} />
+                <div className="w-full h-8 bg-gray-200 rounded-[6px]" />
+                <div className="w-3/4 h-8 bg-gray-200 rounded-[6px]" />
+                <div className="w-1/2 h-8 bg-emerald-500/20 rounded-[6px] flex items-center px-3">
                   <Search size={14} strokeWidth={1.5} className="text-emerald-500" />
                 </div>
               </div>
@@ -166,22 +166,22 @@ export default function AboutPage() {
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ delay: 0.2 }}
-              className="bg-white p-8 rounded-[8px] border border-gray-300 shadow-sm group hover:border-emerald-200 transition-all"
+              className="bg-white p-8 rounded-[6px] border border-gray-300 shadow-sm group hover:border-emerald-200 transition-all"
             >
-              <div className="relative w-full h-48 bg-gray-100 rounded-xl mb-8 overflow-hidden flex items-center justify-center">
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-100/40 to-transparent animate-skeleton-shimmer" style={{ animationDelay: '1s' }} />
+              <div className="relative w-full h-48 bg-gray-50 border border-gray-300 rounded-[6px] mb-8 overflow-hidden flex items-center justify-center">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-gray-300/20 to-transparent animate-skeleton-shimmer" style={{ animationDelay: '1s' }} />
                 <div className="space-y-3 w-2/3">
-                  <div className="h-12 bg-white rounded-lg shadow-sm border border-emerald-50 p-3 flex items-center gap-3 transform group-hover:translate-x-2 transition-transform">
+                  <div className="h-12 bg-white rounded-[6px] shadow-sm border border-emerald-50 p-3 flex items-center gap-3 transform group-hover:translate-x-2 transition-transform">
                     <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center">
                       <CheckCircle2 size={14} strokeWidth={1.5} className="text-emerald-600" />
                     </div>
-                    <div className="h-2 w-20 bg-gray-200 rounded" />
+                    <div className="h-2 w-20 bg-gray-200 rounded-[6px]" />
                   </div>
-                  <div className="h-12 bg-white rounded-lg shadow-sm border border-emerald-50 p-3 flex items-center gap-3 transform translate-x-4 group-hover:translate-x-6 transition-transform">
+                  <div className="h-12 bg-white rounded-[6px] shadow-sm border border-emerald-50 p-3 flex items-center gap-3 transform translate-x-4 group-hover:translate-x-6 transition-transform">
                     <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center">
                       <MapPin size={14} strokeWidth={1.5} className="text-emerald-600" />
                     </div>
-                    <div className="h-2 w-24 bg-gray-200 rounded" />
+                    <div className="h-2 w-24 bg-gray-200 rounded-[6px]" />
                   </div>
                 </div>
               </div>

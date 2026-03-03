@@ -96,8 +96,18 @@ export default function RegisterBusinessPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('handleSubmit called');
     setLoading(true);
     setError(null);
+
+    console.log('Form data:', {
+      businessName,
+      category,
+      location,
+      registrationType,
+      brNumber,
+      nicNumber
+    });
 
     if (!location) {
       setError('Please select a valid business address.');
@@ -107,6 +117,7 @@ export default function RegisterBusinessPage() {
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
+      console.log('User check:', user?.id);
       if (!user) throw new Error('You must be logged in to register a business.');
 
       let logoUrl = null;
