@@ -65,66 +65,6 @@ const districtCoordinates: Record<string, { lat: number; lng: number }> = {
   "Vavuniya": { lat: 8.7514, lng: 80.4971 }
 };
 
-const MOCK_DEMOS: Business[] = [
-  {
-    id: -1,
-    name: "Victoria Luxury Villa (Demo)",
-    category: "Hospitality & Leisure",
-    description: "A premium luxury stay in the heart of Sri Lanka.",
-    address: "No 45, Gregory Lake Road, Nuwara Eliya",
-    phone: "+94 77 123 4567",
-    email: "stay@victoria.lk",
-    website_url: "https://victoria.lk",
-    website_name: "Victoria Luxury Villa",
-    rating: 4.9,
-    reviews_count: 128,
-    image_url: "/business-1.jpg",
-    latitude: 6.9697,
-    longitude: 80.7672,
-    distanceText: "2.4 km",
-    status: 'approved',
-    owner_name: 'Demo Owner'
-  },
-  {
-    id: -2,
-    name: "The Grand Jaffna (Demo)",
-    category: "Food & Dining",
-    description: "Authentic Jaffna cuisine with a modern twist.",
-    address: "Palali Road, Jaffna",
-    phone: "+94 21 987 6543",
-    email: "dine@grandjaffna.lk",
-    website_url: "https://grandjaffna.lk",
-    website_name: "The Grand Jaffna",
-    rating: 4.7,
-    reviews_count: 85,
-    image_url: "/business-2.jpg",
-    latitude: 9.6615,
-    longitude: 80.0070,
-    distanceText: "1.1 km",
-    status: 'approved',
-    owner_name: 'Demo Owner'
-  },
-  {
-    id: -3,
-    name: "Vavuniya Medical Center (Demo)",
-    category: "Health & Wellness",
-    description: "24/7 dedicated medical care for the local community.",
-    address: "Kandy Road, Vavuniya",
-    phone: "+94 24 555 1212",
-    email: "care@vavuniyamed.lk",
-    website_url: "https://vavuniyamed.lk",
-    website_name: "Vavuniya Medical Center",
-    rating: 4.8,
-    reviews_count: 210,
-    image_url: "/business-3.jpg",
-    latitude: 8.7514,
-    longitude: 80.4971,
-    distanceText: "0.5 km",
-    status: 'approved',
-    owner_name: 'Demo Owner'
-  }
-];
-
 import { SL_TOWNS, Town } from '@/lib/towns';
 import TownSelector from '@/components/TownSelector';
 
@@ -205,25 +145,10 @@ function SplitScreenResultsContent() {
     if (!currentLat || !currentLng) return;
 
     try {
-      let finalCategory = selectedCategory;
-      
-      // Auto-detect category from keywords if none selected
-      if (!finalCategory && searchQuery) {
-        const query = searchQuery.toLowerCase();
-        const matchedCat = categories.find(cat => 
-          cat.keywords?.some(kw => query.includes(kw.toLowerCase()))
-        );
-        if (matchedCat) {
-          finalCategory = matchedCat.name;
-        }
-      }
-
-      const finalQuery = [searchQuery, finalCategory].filter(Boolean).join(' ');
-
       const { data, error: rpcError } = await supabase.rpc('get_nearby_businesses', {
         user_lat: parseFloat(currentLat),
         user_lng: parseFloat(currentLng),
-        search_query: finalQuery,
+        search_query: searchQuery,
         dist_limit: selectedRadius,
       });
 
@@ -233,7 +158,7 @@ function SplitScreenResultsContent() {
       }
 
       if (!data || data.length === 0) {
-        setResults(MOCK_DEMOS);
+        setResults([]);
         return;
       }
 
@@ -272,30 +197,18 @@ function SplitScreenResultsContent() {
     }
 
     try {
-      let finalCategory = selectedCategory;
-      
-      // Auto-detect category from keywords if none selected
-      if (!finalCategory && searchQuery) {
-        const query = searchQuery.toLowerCase();
-        const matchedCat = categories.find(cat => 
-          cat.keywords?.some(kw => query.includes(kw.toLowerCase()))
-        );
-        if (matchedCat) {
-          finalCategory = matchedCat.name;
-        }
-      }
-
       let query_builder = supabase
         .from('businesses')
         .select('*')
+        .eq('status', 'approved')
         .ilike('address', `%${districtToSearch}%`);
 
       if (searchQuery) {
         query_builder = query_builder.or(`name.ilike.%${searchQuery}%,category.ilike.%${searchQuery}%`);
       }
 
-      if (finalCategory) {
-        query_builder = query_builder.eq('category', finalCategory);
+      if (selectedCategory) {
+        query_builder = query_builder.eq('category', selectedCategory);
       }
 
       const { data, error: dbError } = await query_builder;
@@ -324,7 +237,7 @@ function SplitScreenResultsContent() {
         return business;
       });
 
-      setResults(enriched.length > 0 ? enriched : MOCK_DEMOS);
+      setResults(enriched.length > 0 ? enriched : []);
     } catch (err) {
       setError('Failed to fetch results.');
       console.error(err);
@@ -506,7 +419,7 @@ function SplitScreenResultsContent() {
   return (
     <div className="flex flex-col h-screen bg-white">
         {/* Top Filter Bar */}
-        <div className="h-16 border-b border-gray-200 flex items-center justify-between px-4 md:px-6 bg-white z-10 gap-4">
+        <div className="h-16 border-b border-gray-300 flex items-center justify-between px-4 md:px-6 bg-white z-10 gap-4">
           {/* Left Section */}
           <div className="flex items-center space-x-3 flex-shrink-0">
             <Link href="/" className="text-green-700 hover:text-green-800 transition-colors">
@@ -521,7 +434,7 @@ function SplitScreenResultsContent() {
 
           {/* Center Section: Search Bar */}
           <div className="flex-1 max-w-md hidden sm:block">
-            <div className="flex items-center w-full px-3 bg-gray-50 rounded-lg border border-gray-200 focus-within:bg-white focus-within:border-green-600 h-10 transition-all shadow-sm">
+            <div className="flex items-center w-full px-3 bg-gray-50 rounded-[6px] border border-gray-300 focus-within:bg-white focus-within:border-green-600 h-10 transition-all shadow-sm">
               <Search size={16} strokeWidth={1.5} className="text-gray-400 mr-2" />
               <input
                 type="text"
@@ -538,7 +451,7 @@ function SplitScreenResultsContent() {
           <div className="flex items-center gap-2 flex-shrink-0">
             <button 
               onClick={findMyLocation}
-              className="flex items-center gap-2 text-sm border border-gray-200 bg-white hover:bg-gray-50 rounded-lg px-3 h-10 outline-none focus:ring-1 focus:ring-green-600 transition-all shadow-sm group font-normal"
+              className="flex items-center gap-2 text-sm border border-gray-300 bg-white hover:bg-gray-50 rounded-[6px] px-3 h-10 outline-none focus:ring-1 focus:ring-green-600 transition-all shadow-sm group font-normal"
               title="Find my current location"
             >
               <Navigation size={14} strokeWidth={1.5} className="text-green-700 group-hover:scale-110 transition-transform" />
@@ -547,12 +460,12 @@ function SplitScreenResultsContent() {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 text-sm border border-gray-200 bg-white hover:bg-gray-50 rounded-lg px-3 h-10 outline-none focus:ring-1 focus:ring-green-600 transition-all shadow-sm font-normal">
+                <button className="flex items-center gap-2 text-sm border border-gray-300 bg-white hover:bg-gray-50 rounded-[6px] px-3 h-10 outline-none focus:ring-1 focus:ring-green-600 transition-all shadow-sm font-normal">
                   <span className="whitespace-nowrap text-gray-600">Radius: <span className="text-green-700 font-normal">{formatDistance(selectedRadius)}</span></span>
                   <ChevronDown size={14} strokeWidth={1.5} className="text-gray-400" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="p-4 w-64 bg-white shadow-xl border border-gray-100 rounded-xl">
+              <DropdownMenuContent className="p-4 w-64 bg-white shadow-xl border border-gray-300 rounded-[6px]">
                 <div className="mb-4 flex justify-between font-normal">
                   <span className="text-xs text-gray-500 uppercase tracking-wider">Search Radius</span>
                   <span className="text-xs text-green-700 bg-green-50 px-2 py-0.5 rounded">{formatDistance(selectedRadius)}</span>
@@ -572,7 +485,7 @@ function SplitScreenResultsContent() {
               <DropdownMenu open={isCategoryOpen} onOpenChange={setIsCategoryOpen}>
                 <DropdownMenuTrigger asChild>
                   <button 
-                    className="hidden md:flex items-center gap-2 text-sm border border-gray-200 bg-white hover:bg-gray-50 rounded-lg px-3 h-10 outline-none focus:ring-1 focus:ring-green-600 transition-all shadow-sm font-normal"
+                    className="hidden md:flex items-center gap-2 text-sm border border-gray-300 bg-white hover:bg-gray-50 rounded-[6px] px-3 h-10 outline-none focus:ring-1 focus:ring-green-600 transition-all shadow-sm font-normal"
                   >
                     <span className="whitespace-nowrap text-gray-600">
                       {selectedCategory ? (
@@ -586,7 +499,7 @@ function SplitScreenResultsContent() {
                   </button>
                 </DropdownMenuTrigger>
 
-                <DropdownMenuContent align="end" className="w-64 p-0 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                <DropdownMenuContent align="end" className="w-64 p-0 bg-white rounded-[6px] shadow-2xl border border-gray-300 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                   <Command shouldFilter={true}>
                     <CommandInput placeholder="Search categories..." className="h-10 border-none ring-0 focus:ring-0" />
                     <CommandList className="max-h-[300px] overflow-y-auto custom-scrollbar">
@@ -647,14 +560,14 @@ function SplitScreenResultsContent() {
                 }} 
                 selectedTownName={selectedTown?.name || selectedDistrict || undefined}
                 placeholder="Select Town or District"
-                className="h-10 border-gray-200 text-gray-600 rounded-lg shadow-sm"
+                className="h-10 border-gray-300 text-gray-600 rounded-[6px] shadow-sm"
                 iconClassName="text-green-700"
               />
             </div>
             
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors h-10 w-10 flex items-center justify-center border border-gray-200"
+              className="md:hidden p-2 hover:bg-gray-100 rounded-[6px] transition-colors h-10 w-10 flex items-center justify-center border border-gray-300"
             >
               {mobileMenuOpen ? <X size={20} /> : <Search size={20} />}
             </button>
@@ -666,8 +579,8 @@ function SplitScreenResultsContent() {
           {/* Quick Actions Sidebar (Hover to Open) */}
           <div className="hidden md:flex absolute left-0 top-0 bottom-0 z-20 group">
             {/* Narrow Bar (Always Visible) */}
-            <div className="w-12 bg-white border-r border-gray-200 flex flex-col items-center py-4 gap-6 h-full shadow-sm">
-              <div className="p-2 rounded-lg bg-green-50 text-green-700">
+            <div className="w-12 bg-white border-r border-gray-300 flex flex-col items-center py-4 gap-6 h-full shadow-sm">
+              <div className="p-2 rounded-[6px] bg-green-50 text-green-700">
                 <Menu size={20} />
               </div>
               <div className="flex flex-col gap-6 mt-4">
@@ -687,7 +600,7 @@ function SplitScreenResultsContent() {
             </div>
 
             {/* Expanded Sidebar content on hover */}
-            <div className="w-0 group-hover:w-64 overflow-hidden transition-all duration-300 bg-white border-r border-gray-200 shadow-xl flex flex-col h-full">
+            <div className="w-0 group-hover:w-64 overflow-hidden transition-all duration-300 bg-white border-r border-gray-300 shadow-xl flex flex-col h-full">
               <div className="p-6 w-64">
                 <h2 className="text-lg font-normal text-gray-900 mb-6">Quick Actions</h2>
                 
@@ -697,9 +610,9 @@ function SplitScreenResultsContent() {
                       setSearchQuery("Open Now");
                       handleSearch();
                     }}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-green-50 text-gray-700 hover:text-green-700 transition-all text-left group/item font-normal"
+                    className="w-full flex items-center gap-3 p-3 rounded-[6px] hover:bg-green-50 text-gray-700 hover:text-green-700 transition-all text-left group/item font-normal"
                   >
-                    <div className="p-2 rounded-lg bg-gray-100 group-hover/item:bg-green-100 transition-colors">
+                    <div className="p-2 rounded-[6px] bg-gray-100 group-hover/item:bg-green-100 transition-colors">
                       <Clock size={18} strokeWidth={1.5} />
                     </div>
                     <div>
@@ -710,9 +623,9 @@ function SplitScreenResultsContent() {
 
                   <button 
                     onClick={findMyLocation}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-green-50 text-gray-700 hover:text-green-700 transition-all text-left group/item font-normal"
+                    className="w-full flex items-center gap-3 p-3 rounded-[6px] hover:bg-green-50 text-gray-700 hover:text-green-700 transition-all text-left group/item font-normal"
                   >
-                    <div className="p-2 rounded-lg bg-gray-100 group-hover/item:bg-green-100 transition-colors">
+                    <div className="p-2 rounded-[6px] bg-gray-100 group-hover/item:bg-green-100 transition-colors">
                       <Navigation size={18} strokeWidth={1.5} />
                     </div>
                     <div>
@@ -726,9 +639,9 @@ function SplitScreenResultsContent() {
                       setSearchQuery("Top Rated");
                       handleSearch();
                     }}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-green-50 text-gray-700 hover:text-green-700 transition-all text-left group/item font-normal"
+                    className="w-full flex items-center gap-3 p-3 rounded-[6px] hover:bg-green-50 text-gray-700 hover:text-green-700 transition-all text-left group/item font-normal"
                   >
-                    <div className="p-2 rounded-lg bg-gray-100 group-hover/item:bg-green-100 transition-colors">
+                    <div className="p-2 rounded-[6px] bg-gray-100 group-hover/item:bg-green-100 transition-colors">
                       <Star size={18} strokeWidth={1.5} />
                     </div>
                     <div>
@@ -742,9 +655,9 @@ function SplitScreenResultsContent() {
                       setSearchQuery("Verified");
                       handleSearch();
                     }}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-green-50 text-gray-700 hover:text-green-700 transition-all text-left group/item font-normal"
+                    className="w-full flex items-center gap-3 p-3 rounded-[6px] hover:bg-green-50 text-gray-700 hover:text-green-700 transition-all text-left group/item font-normal"
                   >
-                    <div className="p-2 rounded-lg bg-gray-100 group-hover/item:bg-green-100 transition-colors">
+                    <div className="p-2 rounded-[6px] bg-gray-100 group-hover/item:bg-green-100 transition-colors">
                       <Zap size={18} strokeWidth={1.5} />
                     </div>
                     <div>
@@ -754,7 +667,7 @@ function SplitScreenResultsContent() {
                   </button>
                 </div>
 
-                <div className="mt-8 pt-6 border-t border-gray-100 font-normal">
+                <div className="mt-8 pt-6 border-t border-gray-300 font-normal">
                   <h3 className="text-xs text-gray-400 uppercase tracking-widest mb-4 px-3 font-normal">Recent Searches</h3>
                   <div className="space-y-1">
                     {['Hotels', 'Clinics', 'Restaurants'].map(item => (
@@ -764,7 +677,7 @@ function SplitScreenResultsContent() {
                           setSearchQuery(item);
                           handleSearch();
                         }}
-                        className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors"
+                        className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:text-green-700 hover:bg-green-50 rounded-[6px] transition-colors"
                       >
                         {item}
                       </button>
@@ -779,9 +692,9 @@ function SplitScreenResultsContent() {
           <div
             className={`${
               mobileMenuOpen ? 'block' : 'hidden'
-            } md:block w-full md:w-96 lg:w-[450px] overflow-y-auto bg-gray-50 border-r border-gray-200 ml-0 md:ml-12 transition-all font-normal h-full`}
+            } md:block w-full md:w-96 lg:w-[450px] overflow-y-auto bg-gray-50 border-r border-gray-300 ml-0 md:ml-12 transition-all font-normal h-full`}
           >
-            <div className="p-4 sticky top-0 bg-gray-50 border-b border-gray-200 z-10">
+            <div className="p-4 sticky top-0 bg-gray-50 border-b border-gray-300 z-10">
               <p className="text-xs text-gray-500 uppercase tracking-widest font-normal">
                 {results.length} Registered Business{results.length !== 1 ? 'es' : ''}
               </p>
@@ -796,13 +709,13 @@ function SplitScreenResultsContent() {
               </div>
             ) : error ? (
               <div className="p-4 font-normal">
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="bg-red-50 border border-red-200 rounded-[6px] p-4">
                   <p className="text-red-800 text-sm">{error}</p>
                 </div>
               </div>
             ) : results.length === 0 ? (
               <div className="p-4 font-normal">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+                <div className="bg-blue-50 border border-gray-300 rounded-[6px] p-4 text-center">
                   <p className="text-blue-900 text-sm font-normal">No businesses found</p>
                   <p className="text-blue-700 text-xs mt-1 font-normal">Try expanding the search radius</p>
                 </div>
@@ -818,15 +731,15 @@ function SplitScreenResultsContent() {
                       setMapCenter({ lat: business.latitude, lng: business.longitude });
                       setMapZoom(16);
                     }}
-                    className={`p-4 rounded-xl border transition-all cursor-pointer ${
+                    className={`p-4 rounded-[6px] border transition-all cursor-pointer ${
                       selectedBusiness?.id === business.id
                         ? 'bg-green-50 border-green-300 shadow-md'
-                        : 'bg-white border-gray-200 hover:border-green-300'
+                        : 'bg-white border-gray-300 hover:border-green-300'
                     }`}
                   >
                     <div className="flex gap-3">
                       {business.image_url && (
-                        <div className="w-20 h-20 rounded-lg bg-gray-200 flex-shrink-0 overflow-hidden">
+                        <div className="w-20 h-20 rounded-[6px] bg-gray-200 flex-shrink-0 overflow-hidden">
                           <img
                             src={business.image_url}
                             alt={business.name}
@@ -878,6 +791,7 @@ function SplitScreenResultsContent() {
                 onMapClick={handleMapClick}
                 onMarkerDragEnd={handleMarkerDragEnd}
                 draggableMarker={true}
+                radius={selectedRadius}
               />
 
               {/* Search this area button (only shows when map is clicked/moved manually) */}
@@ -894,7 +808,7 @@ function SplitScreenResultsContent() {
               )}
 
               {/* Map Status Indicator */}
-              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white px-4 py-2.5 rounded-full shadow-lg border border-gray-200 flex items-center gap-2 text-xs text-gray-700 z-[1000] font-normal">
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white px-4 py-2.5 rounded-full shadow-lg border border-gray-300 flex items-center gap-2 text-xs text-gray-700 z-[1000] font-normal">
                 <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse"></div>
                 Showing {results.length} business{results.length !== 1 ? 'es' : ''} {searchType === 'location' ? `within ${(selectedRadius / 1000).toFixed(0)}km` : `in ${selectedDistrict || district}`}
               </div>

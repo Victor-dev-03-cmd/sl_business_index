@@ -40,7 +40,7 @@ export default async function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 bg-white dark:bg-gray-950 shadow-md border-b border-transparent dark:border-gray-800 transition-colors">
+    <header className="sticky top-0 z-50 bg-white shadow-md border-b border-transparent transition-colors">
       <div className="container mx-auto flex items-center justify-between h-20 px-4">
         {/* Left: Logo Section */}
         <div className="flex items-center justify-center flex-shrink-0">
@@ -49,19 +49,19 @@ export default async function Navbar() {
 
         {/* Center: Navigation Menus */}
         <nav className="hidden md:flex flex-grow justify-center items-center space-x-8">
-          <Link href="/" className="text-gray-600 dark:text-gray-300 hover:text-emerald-700 dark:hover:text-emerald-500 transition-colors">
+          <Link href="/" className="text-gray-600 hover:text-emerald-700 transition-colors">
             Home
           </Link>
           <CategoriesMenu />
           {(!fullUserData || (fullUserData.role !== 'vendor' && fullUserData.role !== 'admin' && fullUserData.role !== 'ceo')) && (
-            <Link href="/register-business" className="text-gray-600 dark:text-gray-300 hover:text-emerald-700 dark:hover:text-emerald-500 transition-colors">
+            <Link href="/register-business" className="text-gray-600 hover:text-emerald-700 transition-colors">
               Register Business
             </Link>
           )}
-          <Link href="/about" className="text-gray-600 dark:text-gray-300 hover:text-emerald-700 dark:hover:text-emerald-500 transition-colors">
+          <Link href="/about" className="text-gray-600 hover:text-emerald-700 transition-colors">
             About
           </Link>
-          <Link href="/contact" className="text-gray-600 dark:text-gray-300 hover:text-emerald-700 dark:hover:text-emerald-500 transition-colors">
+          <Link href="/contact" className="text-gray-600 hover:text-emerald-700 transition-colors">
             Contact
           </Link>
         </nav>
@@ -74,7 +74,7 @@ export default async function Navbar() {
           {/* Pass the combined user data (now with role) to the client component */}
           <AuthButton user={fullUserData} />
 
-          <button className="md:hidden p-2 text-gray-700 dark:text-gray-300">
+          <button className="md:hidden p-2 text-gray-700">
             <Menu className="h-6 w-6" strokeWidth={1.5} />
           </button>
         </div>

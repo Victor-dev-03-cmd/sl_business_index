@@ -51,17 +51,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, []);
 
   return (
-    <div className="flex h-screen bg-gray-50/50 dark:bg-gray-950 transition-colors duration-300">
+    <div className="flex h-screen bg-gray-50/50  transition-colors duration-300">
       {/* Sidebar */}
       <aside 
         className={`${
           sidebarOpen ? 'w-64' : 'w-20'
-        } fixed inset-y-0 left-0 z-50 bg-white dark:bg-gray-900 border-r border-gray-300 dark:border-gray-800 transition-all duration-300 ease-in-out hidden md:flex flex-col`}
+        } fixed inset-y-0 left-0 z-50 bg-white  border-r border-gray-300  transition-all duration-300 ease-in-out hidden md:flex flex-col`}
       >
-        <div className="flex items-center h-20 px-6 border-b border-gray-300 dark:border-gray-800">
+        <div className="flex items-center h-20 px-6 border-b border-gray-300 ">
           <ShieldCheck className="h-6 w-6 text-emerald-600 mr-3 shrink-0" strokeWidth={1.5} />
           {sidebarOpen && (
-            <span className="font-normal text-gray-900 dark:text-white truncate">Admin Panel</span>
+            <span className="font-normal text-gray-900  truncate">Admin Panel</span>
           )}
         </div>
 
@@ -76,26 +76,26 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 href={item.href}
                 className={`flex items-center px-4 py-3 rounded-[6px] transition-colors group ${
                   isActive 
-                    ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400' 
-                    : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
+                    ? 'bg-emerald-50  text-emerald-700  
+                    : 'text-gray-500  hover:bg-gray-50  hover:text-gray-900 
                 }`}
               >
-                <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300'}`} strokeWidth={1.5} />
+                <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-emerald-600  : 'text-gray-400 group-hover:text-gray-600  strokeWidth={1.5} />
                 {sidebarOpen && (
                   <span className="ml-3 font-normal text-sm">{item.name}</span>
                 )}
                 {isActive && sidebarOpen && (
-                  <div className="ml-auto w-1 h-1 rounded-[6px] bg-emerald-600 dark:bg-emerald-400" />
+                  <div className="ml-auto w-1 h-1 rounded-[6px] bg-emerald-600 " />
                 )}
               </Link>
             );
           })}
         </nav>
 
-        <div className="p-4 border-t border-gray-300 dark:border-gray-800">
+        <div className="p-4 border-t border-gray-300 ">
           <button 
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="flex items-center justify-center w-full p-2.5 rounded-[6px] bg-gray-50 dark:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+            className="flex items-center justify-center w-full p-2.5 rounded-[6px] bg-gray-50  text-gray-400 hover:text-gray-600  transition-colors"
             title={sidebarOpen ? "Collapse Sidebar" : "Expand Sidebar"}
           >
             {sidebarOpen ? (
@@ -110,7 +110,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Main Content Area */}
       <div className={`flex-1 flex flex-col ${sidebarOpen ? 'md:ml-64' : 'md:ml-20'} transition-all duration-300`}>
         {/* Topbar */}
-        <header className="h-20 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-300 dark:border-gray-800 sticky top-0 z-40 transition-colors duration-300">
+        <header className="h-20 bg-white/80  backdrop-blur-md border-b border-gray-300  sticky top-0 z-40 transition-colors duration-300">
           <div className="h-full px-4 md:px-8 flex items-center justify-between">
             {/* Search */}
             <div className="relative w-full max-w-md group hidden md:block">
@@ -118,14 +118,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <input 
                 type="text" 
                 placeholder="Search analytics, users, businesses..." 
-                className="w-full pl-10 pr-4 py-2 bg-gray-100/50 dark:bg-gray-800/50 border-gray-300 focus:bg-white dark:focus:bg-gray-900 border focus:border-emerald-500/30 rounded-[6px] text-sm outline-none transition-all placeholder:text-gray-400 dark:text-gray-200"
+                className="w-full pl-10 pr-4 py-2 bg-gray-100/50  border-gray-300 focus:bg-white  border focus:border-emerald-500/30 rounded-[6px] text-sm outline-none transition-all placeholder:text-gray-400 "
               />
             </div>
 
             <div className="flex items-center space-x-4 ml-auto">
               <ThemeToggle />
               <NotificationBell />
-              <div className="h-8 w-px bg-gray-300 dark:bg-gray-800 mx-2" />
+              <div className="h-8 w-px bg-gray-300  mx-2" />
               <AuthButton user={user} />
             </div>
           </div>

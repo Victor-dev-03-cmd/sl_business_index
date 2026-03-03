@@ -5,6 +5,7 @@ html {
 }
 
 :root {
+  color-scheme: light !important;
   --background: 0 0% 100%;
   --foreground: 222.2 84% 4.9%;
   --card: 0 0% 100%;
@@ -28,6 +29,14 @@ html {
   /* Live Theme Variables */
   --primary-color: #059669;
   --accent-color: #10b981;
+}
+
+/* Force Light Mode for Inputs */
+@layer base {
+  input, textarea, select {
+    background-color: white !important;
+    color: black !important;
+  }
 }
 
 .text-theme-primary {
@@ -58,30 +67,6 @@ html {
   background-color: var(--accent-color);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 142.1 76.2% 36.3%;
-    --primary-foreground: 355.7 100% 97.3%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 215 20.2% 65.1%;
-  }
-}
-
 body {
   background: hsl(var(--background));
   color: hsl(var(--foreground));
@@ -105,15 +90,6 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #aaa;
-}
-
-@media (prefers-color-scheme: dark) {
-  ::-webkit-scrollbar-thumb {
-    background: #444;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: #666;
-  }
 }
 
 /* Notification Bell Shake */
@@ -172,3 +148,5 @@ body {
   backface-visibility: hidden;
   transform: translateZ(0);
 }
+
+

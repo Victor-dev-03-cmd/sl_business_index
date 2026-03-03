@@ -168,22 +168,6 @@ export default function HomePage() {
       }
     }
 
-    // 3. Detect Category from search string (if not already selected)
-    if (!finalCategory) {
-      for (const cat of categories) {
-        const isNameMatch = lowerQuery.includes(cat.name.toLowerCase());
-        const isKeywordMatch = cat.keywords?.some(kw => lowerQuery.includes(kw.toLowerCase()));
-        
-        if (isNameMatch || isKeywordMatch) {
-          finalCategory = cat.name;
-          // Don't break if it's one of the overlapping categories, keep looking
-          if (!['Hotels & Restaurants', 'Food & Dining'].includes(cat.name)) {
-            break;
-          }
-        }
-      }
-    }
-
     // 4. Default to Current Location if no explicit location found
     if (!finalLat && !finalDistrict && !finalSearchMode) {
       handleUseCurrentLocation(true);
@@ -192,7 +176,7 @@ export default function HomePage() {
 
     const searchParams = new URLSearchParams();
     searchParams.set('q', expandSearchQuery(finalQuery));
-    if (finalCategory) searchParams.set('category', finalCategory);
+    if (selectedCategory) searchParams.set('category', selectedCategory);
 
     if (finalLat && finalLng) {
       searchParams.set('lat', finalLat);

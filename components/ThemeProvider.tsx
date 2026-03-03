@@ -25,18 +25,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
-    // Check local storage for theme preference
-    const savedTheme = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    // Force Light Mode: Remove any dark class and set theme to light
+    document.documentElement.classList.remove('dark');
+    document.documentElement.classList.add('light');
+    localStorage.setItem('theme', 'light');
     
-    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-      setIsDarkMode(true);
-      document.documentElement.classList.add('dark');
-    } else {
-      setIsDarkMode(false);
-      document.documentElement.classList.remove('dark');
-    }
-
     // Initial fetch for site settings
     const fetchSettings = async () => {
       try {
@@ -77,17 +70,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const toggleDarkMode = () => {
-    setIsDarkMode((prev) => {
-      const newValue = !prev;
-      if (newValue) {
-        document.documentElement.classList.add('dark');
-        localStorage.setItem('theme', 'dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-        localStorage.setItem('theme', 'light');
-      }
-      return newValue;
-    });
+    // Dark mode disabled
+    console.log("Dark mode is disabled");
   };
 
   const updateCSSVariables = (theme: ThemeSettings) => {

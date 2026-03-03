@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       lat: result.geometry.location.lat,
       lng: result.geometry.location.lng,
       phone: result.formatted_phone_number || null,
-      website: result.website || null,
+      website_url: result.website || null,
       photoUrl: result.photos
         ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photoreference=${result.photos[0].photo_reference}&key=${GOOGLE_PLACES_API_KEY}`
         : null,

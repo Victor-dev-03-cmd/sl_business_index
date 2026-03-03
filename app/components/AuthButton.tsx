@@ -94,7 +94,7 @@ export default function AuthButton({ user: initialUser }: { user: any | null }) 
 
   if (isChecking) {
     return (
-      <div className="h-10 w-10 rounded-full bg-gray-100 dark:bg-gray-800 animate-pulse border-2 border-transparent" />
+      <div className="h-10 w-10 rounded-full bg-gray-100 animate-pulse border-2 border-transparent" />
     );
   }
 
@@ -107,22 +107,22 @@ export default function AuthButton({ user: initialUser }: { user: any | null }) 
             </button>
           </DropdownMenuTrigger>
 
-          <DropdownMenuContent className="w-64 bg-white dark:bg-gray-950 p-2 shadow-2xl border border-gray-100 dark:border-gray-800 font-normal rounded-[6px]" align="end">
-            <div className="px-3 py-3 mb-2 bg-gray-50/50 dark:bg-gray-900/50 rounded-[6px] border border-gray-50 dark:border-gray-800">
+          <DropdownMenuContent className="w-64 bg-white p-2 shadow-2xl border border-gray-100 font-normal rounded-[6px]" align="end">
+            <div className="px-3 py-3 mb-2 bg-gray-50/50 rounded-[6px] border border-gray-50">
               <p className="text-[10px] text-gray-400 font-normal uppercase tracking-widest mb-1">Signed in as</p>
-              <p className="text-sm font-normal text-gray-900 dark:text-gray-100 truncate">
+              <p className="text-sm font-normal text-gray-900 truncate">
                 {displayName}
               </p>
-              <div className="mt-1 inline-flex px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 text-[10px] uppercase font-normal tracking-wider">
+              <div className="mt-1 inline-flex px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] uppercase font-normal tracking-wider">
                 {user.role || 'customer'}
               </div>
             </div>
 
-            <DropdownMenuSeparator className="my-1 bg-gray-50 dark:bg-gray-800" />
+            <DropdownMenuSeparator className="my-1 bg-gray-50" />
 
             <div className="py-1">
               {isAdminOrCeo(user.role) ? (
-                <DropdownMenuItem asChild className="cursor-pointer py-2.5 focus:bg-emerald-50 dark:focus:bg-emerald-950/50 focus:text-emerald-700 dark:focus:text-emerald-400 rounded-[4px] transition-colors">
+                <DropdownMenuItem asChild className="cursor-pointer py-2.5 focus:bg-emerald-50 focus:text-emerald-700 rounded-[4px] transition-colors">
                   <Link href="/admin/dashboard" className="flex items-center w-full">
                     <LayoutDashboard strokeWidth={1.5} className="mr-3 h-4 w-4 opacity-70" />
                     <span className="font-normal text-[13px]">Admin Control Center</span>
@@ -131,7 +131,7 @@ export default function AuthButton({ user: initialUser }: { user: any | null }) 
               ) : null}
 
               {isVendor(user.role) ? (
-                <DropdownMenuItem asChild className="cursor-pointer py-2.5 focus:bg-emerald-50 dark:focus:bg-emerald-950/50 focus:text-emerald-700 dark:focus:text-emerald-400 rounded-[4px] transition-colors">
+                <DropdownMenuItem asChild className="cursor-pointer py-2.5 focus:bg-emerald-50 focus:text-emerald-700 rounded-[4px] transition-colors">
                   <Link href="/my-business" className="flex items-center w-full">
                     <Briefcase strokeWidth={1.5} className="mr-3 h-4 w-4 opacity-70" />
                     <span className="font-normal text-[13px]">Vendor Dashboard</span>
@@ -139,7 +139,7 @@ export default function AuthButton({ user: initialUser }: { user: any | null }) 
                 </DropdownMenuItem>
               ) : null}
 
-              <DropdownMenuItem asChild className="cursor-pointer py-2.5 focus:bg-emerald-50 dark:focus:bg-emerald-950/50 focus:text-emerald-700 dark:focus:text-emerald-400 rounded-[4px] transition-colors">
+              <DropdownMenuItem asChild className="cursor-pointer py-2.5 focus:bg-emerald-50 focus:text-emerald-700 rounded-[4px] transition-colors">
                 <Link href="/profile" className="flex items-center w-full">
                   <UserIcon strokeWidth={1.5} className="mr-3 h-4 w-4 opacity-70" />
                   <span className="font-normal text-[13px]">User Settings</span>
@@ -147,7 +147,7 @@ export default function AuthButton({ user: initialUser }: { user: any | null }) 
               </DropdownMenuItem>
             </div>
 
-            <DropdownMenuSeparator className="my-1 bg-gray-50 dark:bg-gray-800" />
+            <DropdownMenuSeparator className="my-1 bg-gray-50" />
 
             <div className="py-1">
               <button 
@@ -158,7 +158,7 @@ export default function AuthButton({ user: initialUser }: { user: any | null }) 
                 }}
                 className="w-full"
               >
-                <DropdownMenuItem className="flex items-center text-red-600 focus:bg-red-50 dark:focus:bg-red-950/30 focus:text-red-700 dark:focus:text-red-400 cursor-pointer py-2.5 rounded-[4px] transition-colors">
+                <DropdownMenuItem className="flex items-center text-red-600 focus:bg-red-50 focus:text-red-700 cursor-pointer py-2.5 rounded-[4px] transition-colors">
                   <LogOut strokeWidth={1.5} className="mr-3 h-4 w-4 opacity-70" />
                   <span className="font-normal text-[13px]">Sign Out</span>
                 </DropdownMenuItem>
