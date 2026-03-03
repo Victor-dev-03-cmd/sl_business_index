@@ -284,7 +284,7 @@ export default function HomePage() {
                 <div
                     key={idx}
                     onClick={() => handleCategoryClick(cat.name)}
-                    className="group cursor-pointer flex flex-col items-center p-6 bg-gray-50/30 border border-gray-50 rounded-xl hover:bg-white hover:border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                    className="group cursor-pointer flex flex-col items-center p-6 bg-gray-50/30 border border-gray-300 rounded-xl hover:bg-white hover:border-emerald-600/20 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                 >
                   <div className="p-4 rounded-full mb-4 bg-emerald-50 text-emerald-700 opacity-90 transition-transform group-hover:scale-110 group-hover:bg-emerald-100 font-normal">
                     {/* Assuming cat.icon is a React element, we can't easily inject strokeWidth if it's already rendered, 
@@ -298,7 +298,7 @@ export default function HomePage() {
         </section>
 
         {/* --- LISTINGS (4-Column Modern Grid) --- */}
-        <section className="py-24 bg-gray-50/50 border-t border-gray-100">
+        <section className="py-24 bg-gray-50/50 border-t border-gray-300">
           <div className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-14 gap-4">
               <div>
@@ -312,7 +312,7 @@ export default function HomePage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="group bg-white rounded-sm overflow-hidden border border-gray-100 hover:border-emerald-600/20 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full">
+                  <div key={i} className="group bg-white rounded-sm overflow-hidden border border-gray-300 hover:border-emerald-600/20 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full">
                     {/* Image Section */}
                     <div className="relative h-48 w-full overflow-hidden bg-gray-100">
                       <Image

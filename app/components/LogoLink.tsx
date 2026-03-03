@@ -1,16 +1,9 @@
 'use client';
 
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function LogoLink() {
-  const router = useRouter();
-
-  const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    router.push('/');
-  };
-
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
   };
@@ -22,13 +15,13 @@ export default function LogoLink() {
   };
 
   return (
-    <button
-      onClick={handleClick}
+    <Link
+      href="/"
       onContextMenu={handleContextMenu}
       onAuxClick={handleAuxClick}
       className="transition-transform active:scale-95 cursor-pointer border-none bg-none p-0 flex items-center justify-center"
-      type="button"
       aria-label="Home"
+      prefetch={true}
     >
       <Image
         src="/logo.png"
@@ -40,6 +33,6 @@ export default function LogoLink() {
         draggable={false}
         onContextMenu={handleContextMenu}
       />
-    </button>
+    </Link>
   );
 }

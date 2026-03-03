@@ -3,9 +3,12 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabaseClient';
-import AddressAutocomplete from '@/components/AddressAutocomplete';
-import CategorySelector from '@/components/CategorySelector';
+
+const AddressAutocomplete = dynamic(() => import('@/components/AddressAutocomplete'), { ssr: false });
+const CategorySelector = dynamic(() => import('@/components/CategorySelector'), { ssr: false });
+
 import { CheckCircle2, Clock, Home, ArrowRight, ShieldCheck, Camera, Upload, Globe, Timer, Building2 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -32,6 +35,7 @@ export default function RegisterBusinessPage() {
   const [loading, setLoading] = useState(false);
   const [fetchingStatus, setFetchingStatus] = useState(true);
   const [existingBusiness, setExistingBusiness] = useState<any>(null);
+  const [isUnauthenticated, setIsUnauthenticated] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
@@ -42,18 +46,22 @@ export default function RegisterBusinessPage() {
   const checkExistingBusiness = async () => {
     setFetchingStatus(true);
     const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data, error } = await supabase
-        .from('businesses')
-        .select('*')
-        .eq('owner_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-      
-      if (data) {
-        setExistingBusiness(data);
-      }
+    if (!user) {
+      setIsUnauthenticated(true);
+      setFetchingStatus(false);
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from('businesses')
+      .select('*')
+      .eq('owner_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+    
+    if (data) {
+      setExistingBusiness(data);
     }
     setFetchingStatus(false);
   };
@@ -168,6 +176,32 @@ export default function RegisterBusinessPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50/50">
         <div className="animate-spin rounded-[6px] h-10 w-10 border-b-2 border-emerald-600"></div>
+      </div>
+    );
+  }
+
+  if (isUnauthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50/50 flex items-center justify-center py-12 px-6">
+        <div className="max-w-2xl w-full bg-white p-10 md:p-16 border border-gray-300 shadow-2xl rounded-[6px] text-center transition-all animate-in fade-in zoom-in duration-500">
+          <div className="flex justify-center mb-8">
+            <div className="p-6 rounded-[6px] bg-emerald-50 text-emerald-600">
+              <ShieldCheck size={64} strokeWidth={1.5} />
+            </div>
+          </div>
+          <h1 className="text-3xl font-normal text-gray-900 mb-4 tracking-tight">Login Required</h1>
+          <p className="text-gray-500 text-lg font-normal mb-10 leading-relaxed">
+            Please log in to your account to continue with business registration.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/login?redirect=/register-business" className="flex items-center justify-center gap-2 px-8 py-4 bg-emerald-600 text-white rounded-[6px] text-sm font-medium hover:bg-emerald-700 transition-all shadow-lg active:scale-95">
+               Login to Continue
+            </Link>
+            <Link href="/" className="flex items-center justify-center gap-2 px-8 py-4 bg-white border border-gray-300 text-gray-600 rounded-[6px] text-sm font-medium hover:bg-gray-50 transition-all active:scale-95">
+              <Home size={18} /> Back to Home
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
