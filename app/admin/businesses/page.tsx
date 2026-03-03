@@ -222,7 +222,7 @@ export default function AdminBusinessesPage() {
                     <div>
                       <h2 className="text-2xl font-normal text-gray-900 ">{selectedBusiness.name}</h2>
                       <div className="flex items-center gap-4 mt-2">
-                        <span className={`px-2.5 py-0.5 rounded-[6px] text-[10px] uppercase tracking-wider font-normal bg-emerald-50  text-emerald-700  border border-emerald-100 
+                        <span className={`px-2.5 py-0.5 rounded-[6px] text-[10px] uppercase tracking-wider font-normal bg-emerald-50 text-emerald-700 border border-emerald-100`}>
                           Active
                         </span>
                         <span className="text-xs text-gray-400  flex items-center gap-1.5 font-normal">

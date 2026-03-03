@@ -77,7 +77,7 @@ export default function AdminAnalyticsPage() {
                 <div className={`p-2.5 rounded-[6px] bg-${stat.color}-50  text-${stat.color}-600  group-hover:scale-110 transition-transform`}>
                   <stat.icon size={20} />
                 </div>
-                <div className={`flex items-center gap-1 text-[11px] font-normal ${stat.trending === 'up' ? 'text-emerald-600  : 'text-red-600 
+                <div className={`flex items-center gap-1 text-[11px] font-normal ${stat.trending === 'up' ? 'text-emerald-600' : 'text-red-600'}`}>
                   {stat.trending === 'up' ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
                   {stat.change}
                 </div>

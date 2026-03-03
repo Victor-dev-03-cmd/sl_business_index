@@ -19,7 +19,6 @@ import {
 } from 'lucide-react';
 import AuthButton from '@/app/components/AuthButton';
 import NotificationBell from '@/app/components/NotificationBell';
-import ThemeToggle from '@/app/components/ThemeToggle';
 import { supabase } from '@/lib/supabaseClient';
 
 const adminMenuItems = [
@@ -76,11 +75,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 href={item.href}
                 className={`flex items-center px-4 py-3 rounded-[6px] transition-colors group ${
                   isActive 
-                    ? 'bg-emerald-50  text-emerald-700  
-                    : 'text-gray-500  hover:bg-gray-50  hover:text-gray-900 
+                    ? 'bg-emerald-50 text-emerald-700'
+                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
                 }`}
               >
-                <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-emerald-600  : 'text-gray-400 group-hover:text-gray-600  strokeWidth={1.5} />
+                <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-emerald-600' : 'text-gray-400 group-hover:text-gray-600'}`} strokeWidth={1.5} />
                 {sidebarOpen && (
                   <span className="ml-3 font-normal text-sm">{item.name}</span>
                 )}
@@ -123,7 +122,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </div>
 
             <div className="flex items-center space-x-4 ml-auto">
-              <ThemeToggle />
               <NotificationBell />
               <div className="h-8 w-px bg-gray-300  mx-2" />
               <AuthButton user={user} />

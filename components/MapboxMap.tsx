@@ -75,9 +75,10 @@ export default function MapboxMap({
     }
 
     return {
-      type: 'Feature',
+      type: 'Feature' as const,
+      properties: {},
       geometry: {
-        type: 'Polygon',
+        type: 'Polygon' as const,
         coordinates: [ret]
       }
     };
