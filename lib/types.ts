@@ -6,7 +6,8 @@ export interface Business {
   address?: string;
   phone?: string;
   email?: string;
-  website?: string;
+  website_name?: string;
+  website_url?: string;
   rating?: number;
   reviews_count?: number;
   image_url?: string;

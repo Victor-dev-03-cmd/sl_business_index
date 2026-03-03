@@ -74,7 +74,8 @@ const MOCK_DEMOS: Business[] = [
     address: "No 45, Gregory Lake Road, Nuwara Eliya",
     phone: "+94 77 123 4567",
     email: "stay@victoria.lk",
-    website: "https://victoria.lk",
+    website_url: "https://victoria.lk",
+    website_name: "Victoria Luxury Villa",
     rating: 4.9,
     reviews_count: 128,
     image_url: "/business-1.jpg",
@@ -92,7 +93,8 @@ const MOCK_DEMOS: Business[] = [
     address: "Palali Road, Jaffna",
     phone: "+94 21 987 6543",
     email: "dine@grandjaffna.lk",
-    website: "https://grandjaffna.lk",
+    website_url: "https://grandjaffna.lk",
+    website_name: "The Grand Jaffna",
     rating: 4.7,
     reviews_count: 85,
     image_url: "/business-2.jpg",
@@ -110,7 +112,8 @@ const MOCK_DEMOS: Business[] = [
     address: "Kandy Road, Vavuniya",
     phone: "+94 24 555 1212",
     email: "care@vavuniyamed.lk",
-    website: "https://vavuniyamed.lk",
+    website_url: "https://vavuniyamed.lk",
+    website_name: "Vavuniya Medical Center",
     rating: 4.8,
     reviews_count: 210,
     image_url: "/business-3.jpg",
@@ -244,7 +247,7 @@ function SplitScreenResultsContent() {
         );
         return {
           ...business,
-          distanceText: `${dist.toFixed(1)} km`,
+          distanceText: `${dist.toFixed(2)} km`,
         };
       });
 
@@ -303,7 +306,25 @@ function SplitScreenResultsContent() {
       }
 
       const foundResults = (data as Business[]) || [];
-      setResults(foundResults.length > 0 ? foundResults : MOCK_DEMOS);
+      
+      // Calculate distances for district results if user location is available
+      const enriched = foundResults.map((business: Business) => {
+        if (currentLat && currentLng) {
+          const dist = calculateHaversineDistance(
+            parseFloat(currentLat),
+            parseFloat(currentLng),
+            business.latitude,
+            business.longitude
+          );
+          return {
+            ...business,
+            distanceText: `${dist.toFixed(2)} km`,
+          };
+        }
+        return business;
+      });
+
+      setResults(enriched.length > 0 ? enriched : MOCK_DEMOS);
     } catch (err) {
       setError('Failed to fetch results.');
       console.error(err);

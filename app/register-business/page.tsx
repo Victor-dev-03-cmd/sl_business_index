@@ -1,34 +1,90 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
 import AddressAutocomplete from '@/components/AddressAutocomplete';
 import CategorySelector from '@/components/CategorySelector';
-import { CheckCircle2, Clock, Home, ArrowRight, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, Clock, Home, ArrowRight, ShieldCheck, Camera, Upload, Globe, Timer, Building2 } from 'lucide-react';
+import Image from 'next/image';
 
 export default function RegisterBusinessPage() {
   const router = useRouter();
   const [businessName, setBusinessName] = useState('');
   const [description, setDescription] = useState('');
   const [logo, setLogo] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [hoverImage, setHoverImage] = useState<File | null>(null);
+  const [hoverImagePreview, setHoverImagePreview] = useState<string | null>(null);
   const [email, setEmail] = useState('');
   const [ownerName, setOwnerName] = useState('');
   const [contactNumber, setContactNumber] = useState('');
   const [category, setCategory] = useState('');
+  const [websiteName, setWebsiteName] = useState('');
+  const [websiteUrl, setWebsiteUrl] = useState('');
+  const [workingHours, setWorkingHours] = useState('');
   const [registrationType, setRegistrationType] = useState<'registered' | 'unregistered'>('registered');
   const [brNumber, setBrNumber] = useState('');
   const [nicNumber, setNicNumber] = useState('');
   const [location, setLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
 
   const [loading, setLoading] = useState(false);
+  const [fetchingStatus, setFetchingStatus] = useState(true);
+  const [existingBusiness, setExistingBusiness] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
+
+  useEffect(() => {
+    checkExistingBusiness();
+  }, []);
+
+  const checkExistingBusiness = async () => {
+    setFetchingStatus(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data, error } = await supabase
+        .from('businesses')
+        .select('*')
+        .eq('owner_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+      
+      if (data) {
+        setExistingBusiness(data);
+      }
+    }
+    setFetchingStatus(false);
+  };
 
   const handleLocationSelect = useCallback((lat: number, lng: number, address: string) => {
     setLocation({ lat, lng, address });
   }, []);
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setLogo(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleHoverImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setHoverImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setHoverImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +103,7 @@ export default function RegisterBusinessPage() {
 
       let logoUrl = null;
       if (logo) {
-        const filePath = `${user.id}/${Date.now()}_${logo.name}`;
+        const filePath = `${user.id}/${Date.now()}_logo_${logo.name}`;
         const { data: uploadData, error: uploadError } = await supabase.storage
             .from('business-logos')
             .upload(filePath, logo);
@@ -58,15 +114,32 @@ export default function RegisterBusinessPage() {
         logoUrl = urlData.publicUrl;
       }
 
+      let hoverImageUrl = null;
+      if (hoverImage) {
+        const filePath = `${user.id}/${Date.now()}_hover_${hoverImage.name}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('business-logos')
+            .upload(filePath, hoverImage);
+
+        if (uploadError) throw uploadError;
+
+        const { data: urlData } = supabase.storage.from('business-logos').getPublicUrl(filePath);
+        hoverImageUrl = urlData.publicUrl;
+      }
+
       const { error: insertError } = await supabase.from('businesses').insert([
         {
           name: businessName,
           description,
           logo_url: logoUrl,
+          image_url: hoverImageUrl,
           email,
           owner_name: ownerName,
           phone: contactNumber,
           category,
+          website_name: websiteName,
+          website_url: websiteUrl,
+          working_hours: workingHours,
           is_registered: registrationType === 'registered',
           registration_number: registrationType === 'registered' ? brNumber : nicNumber,
           owner_id: user.id,
@@ -91,14 +164,54 @@ export default function RegisterBusinessPage() {
     }
   };
 
+  if (fetchingStatus) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50/50">
+        <div className="animate-spin rounded-[6px] h-10 w-10 border-b-2 border-emerald-600"></div>
+      </div>
+    );
+  }
+
+  if (existingBusiness && (existingBusiness.status === 'pending' || existingBusiness.status === 'approved') && !isSubmitted) {
+    return (
+      <div className="min-h-screen bg-gray-50/50 flex items-center justify-center py-12 px-6">
+        <div className="max-w-2xl w-full bg-white p-10 md:p-16 border border-gray-300 shadow-2xl rounded-[6px] text-center transition-all animate-in fade-in zoom-in duration-500">
+          <div className="flex justify-center mb-8">
+            <div className={`p-6 rounded-[6px] ${existingBusiness.status === 'approved' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+              {existingBusiness.status === 'approved' ? <CheckCircle2 size={64} strokeWidth={1.5} /> : <Clock size={64} strokeWidth={1.5} />}
+            </div>
+          </div>
+          <h1 className="text-3xl font-normal text-gray-900 mb-4 tracking-tight">
+            {existingBusiness.status === 'approved' ? 'Business Already Approved' : 'Application Pending'}
+          </h1>
+          <p className="text-gray-500 text-lg font-normal mb-10 leading-relaxed">
+            {existingBusiness.status === 'approved' 
+              ? `Your business "${existingBusiness.name}" is already active in our directory.` 
+              : `We've already received your application for "${existingBusiness.name}". It's currently being reviewed.`}
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/" className="flex items-center justify-center gap-2 px-8 py-4 bg-emerald-600 text-white rounded-[6px] text-sm font-medium hover:bg-emerald-700 transition-all shadow-lg active:scale-95">
+              <Home size={18} /> Go to Home
+            </Link>
+            {existingBusiness.status === 'approved' && (
+              <Link href="/admin/dashboard" className="flex items-center justify-center gap-2 px-8 py-4 bg-white border border-gray-300 text-gray-600 rounded-[6px] text-sm font-medium hover:bg-gray-50 transition-all active:scale-95">
+                Go to Dashboard <ArrowRight size={18} />
+              </Link>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (isSubmitted) {
     return (
       <div className="min-h-screen bg-gray-50/50 flex items-center justify-center py-12 px-6">
-        <div className="max-w-2xl w-full bg-white p-10 md:p-16 border border-gray-100 shadow-2xl rounded-3xl text-center">
+        <div className="max-w-2xl w-full bg-white p-10 md:p-16 border border-gray-300 shadow-2xl rounded-[6px] text-center">
           <div className="flex justify-center mb-8">
             <div className="relative">
-              <div className="absolute inset-0 bg-emerald-100 rounded-full animate-ping opacity-25"></div>
-              <div className="relative bg-emerald-50 p-6 rounded-full text-emerald-600">
+              <div className="absolute inset-0 bg-emerald-100 rounded-[6px] animate-ping opacity-25"></div>
+              <div className="relative bg-emerald-50 p-6 rounded-[6px] text-emerald-600">
                 <CheckCircle2 size={64} strokeWidth={1.5} />
               </div>
             </div>
@@ -111,12 +224,12 @@ export default function RegisterBusinessPage() {
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-            <div className="p-6 bg-gray-50/50 rounded-2xl border border-gray-100 flex flex-col items-center text-center">
+            <div className="p-6 bg-gray-50/50 rounded-[6px] border border-gray-300 flex flex-col items-center text-center">
               <Clock className="text-emerald-600 mb-3" size={24} strokeWidth={1.5} />
               <h3 className="text-sm font-medium text-gray-900 mb-1">Approval Time</h3>
               <p className="text-xs text-gray-500 font-normal">Applications are typically reviewed within 48 hours.</p>
             </div>
-            <div className="p-6 bg-gray-50/50 rounded-2xl border border-gray-100 flex flex-col items-center text-center">
+            <div className="p-6 bg-gray-50/50 rounded-[6px] border border-gray-300 flex flex-col items-center text-center">
               <ShieldCheck className="text-emerald-600 mb-3" size={24} strokeWidth={1.5} />
               <h3 className="text-sm font-medium text-gray-900 mb-1">Status Tracking</h3>
               <p className="text-xs text-gray-500 font-normal">You'll be notified via email once approved.</p>
@@ -126,17 +239,10 @@ export default function RegisterBusinessPage() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link 
               href="/"
-              className="flex items-center justify-center gap-2 px-8 py-4 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-900/10 active:scale-95"
+              className="flex items-center justify-center gap-2 px-8 py-4 bg-emerald-600 text-white rounded-[6px] text-sm font-medium hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-900/10 active:scale-95"
             >
               <Home size={18} />
               Go to Home
-            </Link>
-            <Link 
-              href="/profile"
-              className="flex items-center justify-center gap-2 px-8 py-4 bg-white border border-gray-200 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-50 transition-all active:scale-95"
-            >
-              View My Profile
-              <ArrowRight size={18} />
             </Link>
           </div>
         </div>
@@ -146,7 +252,7 @@ export default function RegisterBusinessPage() {
 
   return (
       <div className="min-h-screen bg-gray-50/50 py-12 px-6">
-        <div className="max-w-6xl mx-auto bg-white p-8 md:p-12 border border-gray-100 shadow-sm">
+        <div className="max-w-6xl mx-auto bg-white p-8 md:p-12 border border-gray-300 shadow-sm rounded-[6px]">
 
           <div className="mb-12 border-b border-gray-50 pb-8 text-center md:text-left">
             <h1 className="text-4xl font-normal text-gray-900 tracking-tight">Register Your Business</h1>
@@ -159,25 +265,80 @@ export default function RegisterBusinessPage() {
               <div className="lg:col-span-1">
                 <h2 className="text-xl font-normal text-green-900">Basic Information</h2>
                 <p className="text-sm text-gray-400 mt-2 font-normal">Tell us the core details about your brand and services.</p>
+                
+                {/* Image Uploads Section */}
+                <div className="mt-8 flex flex-col sm:flex-row justify-center lg:justify-start gap-6">
+                   {/* Logo Upload */}
+                   <div className="flex flex-col items-center lg:items-start gap-2">
+                     <span className="text-[10px] uppercase tracking-widest text-gray-400 font-medium ml-1">Logo</span>
+                     <div className="relative group w-32 h-32 rounded-[6px] bg-gray-50 border-2 border-dashed border-gray-300 overflow-hidden cursor-pointer hover:border-emerald-500 transition-all flex items-center justify-center">
+                        {logoPreview ? (
+                          <Image src={logoPreview} alt="Logo preview" fill className="object-cover" />
+                        ) : (
+                          <div className="flex flex-col items-center text-gray-400 group-hover:text-emerald-500">
+                            <Building2 size={32} strokeWidth={1} />
+                            <span className="text-[10px] mt-2 uppercase tracking-widest">Logo</span>
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white">
+                          <Camera size={24} className="mb-1" />
+                          <span className="text-[10px] uppercase font-medium">Change</span>
+                        </div>
+                        <input type="file" accept="image/*" onChange={handleLogoChange} className="absolute inset-0 opacity-0 cursor-pointer" />
+                     </div>
+                   </div>
+
+                   {/* Hover/Business Image Upload */}
+                   <div className="flex flex-col items-center lg:items-start gap-2">
+                     <span className="text-[10px] uppercase tracking-widest text-gray-400 font-medium ml-1">Business Image</span>
+                     <div className="relative group w-48 h-32 rounded-[6px] bg-gray-50 border-2 border-dashed border-gray-300 overflow-hidden cursor-pointer hover:border-emerald-500 transition-all flex items-center justify-center">
+                        {hoverImagePreview ? (
+                          <Image src={hoverImagePreview} alt="Hover preview" fill className="object-cover" />
+                        ) : (
+                          <div className="flex flex-col items-center text-gray-400 group-hover:text-emerald-500">
+                            <Upload size={32} strokeWidth={1} />
+                            <span className="text-[10px] mt-2 uppercase tracking-widest text-center px-2">Hover Image</span>
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white">
+                          <Camera size={24} className="mb-1" />
+                          <span className="text-[10px] uppercase font-medium">Change</span>
+                        </div>
+                        <input type="file" accept="image/*" onChange={handleHoverImageChange} className="absolute inset-0 opacity-0 cursor-pointer" />
+                     </div>
+                   </div>
+                </div>
               </div>
 
               <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-1">
                   <label className="block text-sm font-normal text-gray-600 mb-2">Business Name</label>
-                  <input type="text" value={businessName} onChange={(e) => setBusinessName(e.target.value)} required className="w-full px-4 py-3.5 rounded-[6px] border border-gray-100 bg-gray-50/50 focus:bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all" />
+                  <input type="text" value={businessName} onChange={(e) => setBusinessName(e.target.value)} required className="w-full px-4 py-3.5 rounded-[6px] border border-gray-300 bg-gray-50/50 focus:bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all font-normal text-sm" />
                 </div>
                 <div className="md:col-span-1">
                   <CategorySelector value={category} onChange={setCategory} />
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm font-normal text-gray-600 mb-2">Description</label>
-                  <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} className="w-full px-4 py-3.5 rounded-[6px] border border-gray-100 bg-gray-50/50 focus:bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all" placeholder="Write a brief overview of your business..."></textarea>
+                  <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} className="w-full px-4 py-3.5 rounded-[6px] border border-gray-300 bg-gray-50/50 focus:bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all font-normal text-sm" placeholder="Write a brief overview of your business..."></textarea>
                 </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-normal text-gray-600 mb-2">Business Logo</label>
-                  <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-100 border-dashed rounded-[6px] hover:bg-gray-50 transition-all cursor-pointer">
-                    <input type="file" onChange={(e) => setLogo(e.target.files ? e.target.files[0] : null)} className="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-[6px] file:border-0 file:text-xs file:font-semibold file:bg-green-50 file:text-green-700 cursor-pointer"/>
-                  </div>
+                <div className="md:col-span-1">
+                  <label className="block text-sm font-normal text-gray-600 mb-2 flex items-center gap-2">
+                    <Globe size={14} className="text-gray-400" /> Website Name (Optional)
+                  </label>
+                  <input type="text" value={websiteName} onChange={(e) => setWebsiteName(e.target.value)} placeholder="e.g. My Portfolio" className="w-full px-4 py-3.5 rounded-[6px] border border-gray-300 bg-gray-50/50 focus:bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all font-normal text-sm" />
+                </div>
+                <div className="md:col-span-1">
+                  <label className="block text-sm font-normal text-gray-600 mb-2 flex items-center gap-2">
+                    <Globe size={14} className="text-gray-400" /> Website URL (Optional)
+                  </label>
+                  <input type="url" value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)} placeholder="https://other-site.com" className="w-full px-4 py-3.5 rounded-[6px] border border-gray-300 bg-gray-50/50 focus:bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all font-normal text-sm" />
+                </div>
+                <div className="md:col-span-1">
+                  <label className="block text-sm font-normal text-gray-600 mb-2 flex items-center gap-2">
+                    <Timer size={14} className="text-gray-400" /> Working Hours (Optional)
+                  </label>
+                  <input type="text" value={workingHours} onChange={(e) => setWorkingHours(e.target.value)} placeholder="e.g. 9 AM - 6 PM" className="w-full px-4 py-3.5 rounded-[6px] border border-gray-300 bg-gray-50/50 focus:bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all font-normal text-sm" />
                 </div>
               </div>
             </div>
@@ -191,15 +352,15 @@ export default function RegisterBusinessPage() {
               <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-normal text-gray-600 mb-2">Owner Name</label>
-                  <input type="text" value={ownerName} onChange={(e) => setOwnerName(e.target.value)} required className="w-full px-4 py-3.5 rounded-[6px] border border-gray-100 bg-gray-50/50 focus:bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all" />
+                  <input type="text" value={ownerName} onChange={(e) => setOwnerName(e.target.value)} required className="w-full px-4 py-3.5 rounded-[6px] border border-gray-300 bg-gray-50/50 focus:bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all font-normal text-sm" />
                 </div>
                 <div>
                   <label className="block text-sm font-normal text-gray-600 mb-2">Contact Number</label>
-                  <input type="tel" value={contactNumber} onChange={(e) => setContactNumber(e.target.value)} required className="w-full px-4 py-3.5 rounded-[6px] border border-gray-100 bg-gray-50/50 focus:bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all" />
+                  <input type="tel" value={contactNumber} onChange={(e) => setContactNumber(e.target.value)} required className="w-full px-4 py-3.5 rounded-[6px] border border-gray-300 bg-gray-50/50 focus:bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all font-normal text-sm" />
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm font-normal text-gray-600 mb-2">Business Email</label>
-                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full px-4 py-3.5 rounded-[6px] border border-gray-100 bg-gray-50/50 focus:bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all" />
+                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full px-4 py-3.5 rounded-[6px] border border-gray-300 bg-gray-50/50 focus:bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all font-normal text-sm" />
                 </div>
 
                 <div className="md:col-span-2">
@@ -215,15 +376,15 @@ export default function RegisterBusinessPage() {
                 <p className="text-sm text-gray-400 mt-2 font-normal">Choose your registration type and provide ID for verification.</p>
               </div>
 
-              <div className="lg:col-span-2 space-y-8 bg-gray-50/30 p-8 rounded-2xl">
+              <div className="lg:col-span-2 space-y-8 bg-gray-50/30 p-8 rounded-[6px]">
                 <div className="flex flex-wrap gap-8">
                   <label className="flex items-center cursor-pointer group">
                     <input type="radio" name="regType" value="registered" checked={registrationType === 'registered'} onChange={() => setRegistrationType('registered')} className="h-4 w-4 text-green-700 focus:ring-green-600 border-gray-300" />
-                    <span className="ml-3 text-sm text-gray-600 group-hover:text-gray-900 transition-colors">Registered Company</span>
+                    <span className="ml-3 text-sm text-gray-600 group-hover:text-gray-900 transition-colors font-normal">Registered Company</span>
                   </label>
                   <label className="flex items-center cursor-pointer group">
                     <input type="radio" name="regType" value="unregistered" checked={registrationType === 'unregistered'} onChange={() => setRegistrationType('unregistered')} className="h-4 w-4 text-green-700 focus:ring-green-600 border-gray-300" />
-                    <span className="ml-3 text-sm text-gray-600 group-hover:text-gray-900 transition-colors">Individual / Freelancer</span>
+                    <span className="ml-3 text-sm text-gray-600 group-hover:text-gray-900 transition-colors font-normal">Individual / Freelancer</span>
                   </label>
                 </div>
 
@@ -231,12 +392,12 @@ export default function RegisterBusinessPage() {
                   {registrationType === 'registered' ? (
                       <div>
                         <label className="block text-sm font-normal text-gray-600 mb-2">BR Number</label>
-                        <input type="text" value={brNumber} onChange={(e) => setBrNumber(e.target.value)} className="w-full px-4 py-3.5 rounded-[6px] border border-gray-200 bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all" placeholder="Enter Registration Number" />
+                        <input type="text" value={brNumber} onChange={(e) => setBrNumber(e.target.value)} className="w-full px-4 py-3.5 rounded-[6px] border border-gray-300 bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all font-normal text-sm" placeholder="Enter Registration Number" />
                       </div>
                   ) : (
                       <div>
                         <label className="block text-sm font-normal text-gray-600 mb-2">NIC or Passport Number</label>
-                        <input type="text" value={nicNumber} onChange={(e) => setNicNumber(e.target.value)} className="w-full px-4 py-3.5 rounded-[6px] border border-gray-200 bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all" placeholder="Enter NIC Number" />
+                        <input type="text" value={nicNumber} onChange={(e) => setNicNumber(e.target.value)} className="w-full px-4 py-3.5 rounded-[6px] border border-gray-300 bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all font-normal text-sm" placeholder="Enter NIC Number" />
                       </div>
                   )}
                 </div>
@@ -251,7 +412,7 @@ export default function RegisterBusinessPage() {
 
             <div className="pt-10 flex flex-col md:flex-row gap-4 items-center justify-between">
               <p className="text-xs text-gray-400 max-w-sm font-normal">By submitting, you agree to our terms of service and business directory guidelines.</p>
-              <button type="submit" disabled={loading} className="w-full md:w-auto min-w-[240px] bg-green-700 text-white py-4 px-10 rounded-[5px] text-lg hover:bg-green-800 shadow-md transition-all disabled:opacity-50">
+              <button type="submit" disabled={loading} className="w-full md:w-auto min-w-[240px] bg-green-700 text-white py-4 px-10 rounded-[5px] text-lg hover:bg-green-800 shadow-md transition-all disabled:opacity-50 font-normal">
                 {loading ? 'Submitting Details...' : 'Register Business'}
               </button>
             </div>

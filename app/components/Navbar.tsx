@@ -53,9 +53,11 @@ export default async function Navbar() {
             Home
           </Link>
           <CategoriesMenu />
-          <Link href="/register-business" className="text-gray-600 dark:text-gray-300 hover:text-emerald-700 dark:hover:text-emerald-500 transition-colors">
-            Register Business
-          </Link>
+          {(!fullUserData || (fullUserData.role !== 'vendor' && fullUserData.role !== 'admin' && fullUserData.role !== 'ceo')) && (
+            <Link href="/register-business" className="text-gray-600 dark:text-gray-300 hover:text-emerald-700 dark:hover:text-emerald-500 transition-colors">
+              Register Business
+            </Link>
+          )}
           <Link href="/about" className="text-gray-600 dark:text-gray-300 hover:text-emerald-700 dark:hover:text-emerald-500 transition-colors">
             About
           </Link>

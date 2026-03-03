@@ -90,7 +90,7 @@ export default function AdminDashboard() {
     setLoading(false);
   };
 
-  const handleUpdateStatus = async (id: string | number, status: 'approved' | 'rejected') => {
+  const handleUpdateStatus = async (id: string | number, owner_id: string, status: 'approved' | 'rejected') => {
     const { error } = await supabase
       .from('businesses')
       .update({ status })
@@ -99,14 +99,11 @@ export default function AdminDashboard() {
     if (!error) {
       setBusinesses(businesses.map(b => b.id === id ? { ...b, status } : b));
       // Update role of owner to vendor if approved
-      if (status === 'approved') {
-        const business = businesses.find(b => b.id === id);
-        if (business && business.owner_id) {
-          await supabase
-            .from('profiles')
-            .update({ role: 'vendor' })
-            .eq('id', business.owner_id);
-        }
+      if (status === 'approved' && owner_id) {
+        await supabase
+          .from('profiles')
+          .update({ role: 'vendor' })
+          .eq('id', owner_id);
       }
     }
   };
@@ -127,11 +124,11 @@ export default function AdminDashboard() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm">
+          <div className="bg-white dark:bg-gray-900 p-6 rounded-[6px] border border-gray-300 dark:border-gray-800 shadow-sm">
             <p className="text-xs font-normal text-gray-400 dark:text-gray-500 uppercase tracking-wider">Pending Approvals</p>
             <h2 className="text-3xl font-medium text-emerald-600 dark:text-emerald-400 mt-2">{stats.pending}</h2>
           </div>
-          <div className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm">
+          <div className="bg-white dark:bg-gray-900 p-6 rounded-[6px] border border-gray-300 dark:border-gray-800 shadow-sm">
             <p className="text-xs font-normal text-gray-400 dark:text-gray-500 uppercase tracking-wider">Total Businesses</p>
             <h2 className="text-3xl font-medium text-gray-900 dark:text-white mt-2">{stats.total}</h2>
           </div>
@@ -144,7 +141,7 @@ export default function AdminDashboard() {
             <input 
               type="text" 
               placeholder="Search by business or owner name..." 
-              className="w-full pl-12 pr-4 py-3 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all font-normal text-sm shadow-sm dark:text-gray-200"
+              className="w-full pl-12 pr-4 py-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-[6px] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all font-normal text-sm shadow-sm dark:text-gray-200"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -155,10 +152,10 @@ export default function AdminDashboard() {
               <button
                 key={s}
                 onClick={() => setFilter(s)}
-                className={`px-5 py-3 rounded-xl text-sm font-normal capitalize transition-all border whitespace-nowrap ${
+                className={`px-5 py-3 rounded-[6px] text-sm font-normal capitalize transition-all border whitespace-nowrap ${
                   filter === s 
                     ? 'bg-emerald-600 text-white border-emerald-600 shadow-lg shadow-emerald-900/10' 
-                    : 'bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800'
+                    : 'bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 border-gray-300 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800'
                 }`}
               >
                 {s}
@@ -171,19 +168,19 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-1 gap-4">
           {loading ? (
             <div className="flex items-center justify-center py-20">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+              <div className="animate-spin rounded-[6px] h-8 w-8 border-b-2 border-emerald-600"></div>
             </div>
           ) : filteredBusinesses.length === 0 ? (
-            <div className="text-center py-20 bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800">
+            <div className="text-center py-20 bg-white dark:bg-gray-900 rounded-[6px] border border-gray-300 dark:border-gray-800">
               <Building2 className="mx-auto text-gray-200 dark:text-gray-800 mb-4" size={48} />
               <p className="text-gray-400 dark:text-gray-500 font-normal">No business applications found.</p>
             </div>
           ) : (
             filteredBusinesses.map((business) => (
-              <div key={business.id} className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl p-6 hover:shadow-xl hover:shadow-emerald-950/5 dark:hover:shadow-none transition-all group">
+              <div key={business.id} className="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-[6px] p-6 hover:shadow-xl hover:shadow-emerald-950/5 dark:hover:shadow-none transition-all group">
                 <div className="flex flex-col lg:flex-row gap-6">
                   {/* Logo/Image Section */}
-                  <div className="w-20 h-20 relative flex-shrink-0 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-50 dark:border-gray-700 overflow-hidden flex items-center justify-center">
+                  <div className="w-20 h-20 relative flex-shrink-0 bg-gray-50 dark:bg-gray-800 rounded-[6px] border border-gray-300 dark:border-gray-700 overflow-hidden flex items-center justify-center">
                     {business.logo_url ? (
                       <Image src={business.logo_url} alt={business.name} fill className="object-cover" />
                     ) : (
@@ -197,7 +194,7 @@ export default function AdminDashboard() {
                       <div>
                         <div className="flex items-center gap-3">
                           <h3 className="text-lg font-normal text-gray-900 dark:text-white">{business.name}</h3>
-                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-normal ${
+                          <span className={`px-2.5 py-0.5 rounded-[6px] text-[10px] uppercase tracking-wider font-normal ${
                             business.status === 'approved' ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400' :
                             business.status === 'rejected' ? 'bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-400' :
                             'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400'
@@ -220,7 +217,7 @@ export default function AdminDashboard() {
                       {business.description || 'No description provided.'}
                     </p>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-gray-50 dark:border-gray-800 pt-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-gray-300 dark:border-gray-800 pt-4">
                       <div className="flex items-center gap-3 text-xs text-gray-600 dark:text-gray-400 font-normal">
                         <UserIcon size={14} className="text-gray-300 dark:text-gray-600" />
                         {business.owner_name}
@@ -241,14 +238,14 @@ export default function AdminDashboard() {
                     {business.status === 'pending' && (
                       <>
                         <button 
-                          onClick={() => handleUpdateStatus(business.id, 'approved')}
-                          className="flex-grow py-2.5 bg-emerald-600 text-white rounded-xl text-xs font-normal hover:bg-emerald-700 flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-900/10"
+                          onClick={() => handleUpdateStatus(business.id, business.owner_id as string, 'approved')}
+                          className="flex-grow py-2.5 bg-emerald-600 text-white rounded-[6px] text-xs font-normal hover:bg-emerald-700 flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-900/10"
                         >
                           <CheckCircle size={14} /> Approve
                         </button>
                         <button 
-                          onClick={() => handleUpdateStatus(business.id, 'rejected')}
-                          className="flex-grow py-2.5 bg-white dark:bg-gray-800 border border-red-100 dark:border-red-900/30 text-red-600 dark:text-red-400 rounded-xl text-xs font-normal hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center justify-center gap-2 transition-all"
+                          onClick={() => handleUpdateStatus(business.id, business.owner_id as string, 'rejected')}
+                          className="flex-grow py-2.5 bg-white dark:bg-gray-800 border border-red-100 dark:border-red-900/30 text-red-600 dark:text-red-400 rounded-[6px] text-xs font-normal hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center justify-center gap-2 transition-all"
                         >
                           <XCircle size={14} /> Reject
                         </button>
@@ -256,7 +253,7 @@ export default function AdminDashboard() {
                     )}
                     <button 
                       onClick={() => setSelectedBusiness(business)}
-                      className="flex-grow py-2.5 bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-xl text-xs font-normal hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center gap-2 transition-all border border-gray-100 dark:border-gray-700"
+                      className="flex-grow py-2.5 bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-[6px] text-xs font-normal hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center gap-2 transition-all border border-gray-300 dark:border-gray-700"
                     >
                       <Eye size={14} /> View Details
                     </button>
@@ -269,16 +266,16 @@ export default function AdminDashboard() {
 
         {/* Business Details Modal */}
         <Dialog open={!!selectedBusiness} onOpenChange={() => setSelectedBusiness(null)}>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-950 border-gray-100 dark:border-gray-800 p-0 overflow-hidden">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-800 p-0 overflow-hidden">
             {selectedBusiness && (
               <>
-                <div className="relative h-48 w-full bg-gray-100 dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 flex items-center justify-center">
+                <div className="relative h-48 w-full bg-gray-100 dark:bg-gray-900 border-b border-gray-300 dark:border-gray-800 flex items-center justify-center">
                   {selectedBusiness.image_url ? (
                     <Image src={selectedBusiness.image_url} alt="" fill className="object-cover opacity-60 grayscale-[0.5]" />
                   ) : (
                     <Building2 size={64} className="text-gray-300 dark:text-gray-700" strokeWidth={1} />
                   )}
-                  <div className="absolute -bottom-10 left-8 h-20 w-20 bg-white dark:bg-gray-950 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-xl p-3 flex items-center justify-center">
+                  <div className="absolute -bottom-10 left-8 h-20 w-20 bg-white dark:bg-gray-950 rounded-[6px] border border-gray-300 dark:border-gray-800 shadow-xl p-3 flex items-center justify-center">
                     {selectedBusiness.logo_url ? (
                       <Image src={selectedBusiness.logo_url} alt="" width={64} height={64} className="object-contain" />
                     ) : (
@@ -292,7 +289,7 @@ export default function AdminDashboard() {
                     <div>
                       <h2 className="text-2xl font-normal text-gray-900 dark:text-white">{selectedBusiness.name}</h2>
                       <div className="flex items-center gap-4 mt-2">
-                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-normal ${
+                        <span className={`px-2.5 py-0.5 rounded-[6px] text-[10px] uppercase tracking-wider font-normal ${
                           selectedBusiness.status === 'approved' ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400' :
                           selectedBusiness.status === 'rejected' ? 'bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-400' :
                           'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400'
@@ -322,25 +319,27 @@ export default function AdminDashboard() {
                         </p>
                       </div>
 
-                      <div className="grid grid-cols-1 gap-4 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
+                      <div className="grid grid-cols-1 gap-4 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-[6px] border border-gray-300 dark:border-gray-800">
                         <div className="flex items-center gap-3">
-                          <div className="p-1.5 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
+                          <div className="p-1.5 bg-white dark:bg-gray-800 rounded-[6px] shadow-sm border border-gray-300 dark:border-gray-700">
                             <Phone size={14} className="text-gray-400" />
                           </div>
                           <span className="text-sm text-gray-600 dark:text-gray-400">{selectedBusiness.phone}</span>
                         </div>
                         <div className="flex items-center gap-3">
-                          <div className="p-1.5 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
+                          <div className="p-1.5 bg-white dark:bg-gray-800 rounded-[6px] shadow-sm border border-gray-300 dark:border-gray-700">
                             <Mail size={14} className="text-gray-400" />
                           </div>
                           <span className="text-sm text-gray-600 dark:text-gray-400">{selectedBusiness.email}</span>
                         </div>
-                        {selectedBusiness.website && (
+                        {selectedBusiness.website_url && (
                           <div className="flex items-center gap-3">
-                            <div className="p-1.5 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
+                            <div className="p-1.5 bg-white dark:bg-gray-800 rounded-[6px] shadow-sm border border-gray-300 dark:border-gray-700">
                               <ExternalLink size={14} className="text-gray-400" />
                             </div>
-                            <span className="text-sm text-emerald-600 dark:text-emerald-400 truncate">{selectedBusiness.website}</span>
+                            <span className="text-sm text-emerald-600 dark:text-emerald-400 truncate">
+                              {selectedBusiness.website_name || selectedBusiness.website_url}
+                            </span>
                           </div>
                         )}
                       </div>
@@ -348,13 +347,13 @@ export default function AdminDashboard() {
 
                     {/* Right Column: Registration & Owner Info */}
                     <div className="space-y-6">
-                      <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl overflow-hidden">
-                         <div className="px-4 py-3 bg-gray-50/50 dark:bg-gray-800/30 border-b border-gray-50 dark:border-gray-800">
+                      <div className="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-[6px] overflow-hidden">
+                         <div className="px-4 py-3 bg-gray-50/50 dark:bg-gray-800/30 border-b border-gray-300 dark:border-gray-800">
                            <h4 className="text-[11px] uppercase tracking-widest text-gray-500 dark:text-gray-400 font-normal">Owner Information</h4>
                          </div>
                          <div className="p-4 space-y-4">
                             <div className="flex items-center gap-3">
-                              <div className="h-8 w-8 rounded-full bg-blue-50 dark:bg-blue-950 flex items-center justify-center">
+                              <div className="h-8 w-8 rounded-[6px] bg-blue-50 dark:bg-blue-950 flex items-center justify-center">
                                 <User size={14} className="text-blue-600 dark:text-blue-400" />
                               </div>
                               <div className="min-w-0">
@@ -363,7 +362,7 @@ export default function AdminDashboard() {
                               </div>
                             </div>
                             <div className="flex items-center gap-3">
-                              <div className="h-8 w-8 rounded-full bg-emerald-50 dark:bg-emerald-950 flex items-center justify-center">
+                              <div className="h-8 w-8 rounded-[6px] bg-emerald-50 dark:bg-emerald-950 flex items-center justify-center">
                                 <Briefcase size={14} className="text-emerald-600 dark:text-emerald-400" />
                               </div>
                               <div className="min-w-0">
@@ -374,13 +373,13 @@ export default function AdminDashboard() {
                          </div>
                       </div>
 
-                      <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl overflow-hidden">
-                         <div className="px-4 py-3 bg-gray-50/50 dark:bg-gray-800/30 border-b border-gray-50 dark:border-gray-800">
+                      <div className="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-[6px] overflow-hidden">
+                         <div className="px-4 py-3 bg-gray-50/50 dark:bg-gray-800/30 border-b border-gray-300 dark:border-gray-800">
                            <h4 className="text-[11px] uppercase tracking-widest text-gray-500 dark:text-gray-400 font-normal">Legal Details</h4>
                          </div>
                          <div className="p-4 space-y-4">
                             <div className="flex items-center gap-3">
-                              <div className="h-8 w-8 rounded-full bg-purple-50 dark:bg-purple-950 flex items-center justify-center">
+                              <div className="h-8 w-8 rounded-[6px] bg-purple-50 dark:bg-purple-950 flex items-center justify-center">
                                 <FileText size={14} className="text-purple-600 dark:text-purple-400" />
                               </div>
                               <div className="min-w-0">
@@ -389,7 +388,7 @@ export default function AdminDashboard() {
                               </div>
                             </div>
                             <div className="flex items-center gap-3">
-                              <div className="h-8 w-8 rounded-full bg-amber-50 dark:bg-amber-950 flex items-center justify-center">
+                              <div className="h-8 w-8 rounded-[6px] bg-amber-50 dark:bg-amber-950 flex items-center justify-center">
                                 <Clock size={14} className="text-amber-600 dark:text-amber-400" />
                               </div>
                               <div className="min-w-0">
@@ -407,22 +406,22 @@ export default function AdminDashboard() {
 
                 {/* Fixed Footer for Actions */}
                 {selectedBusiness.status === 'pending' && (
-                  <div className="sticky bottom-0 left-0 right-0 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md border-t border-gray-100 dark:border-gray-800 p-4 flex justify-end gap-3 px-8 z-10">
+                  <div className="sticky bottom-0 left-0 right-0 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md border-t border-gray-300 dark:border-gray-800 p-4 flex justify-end gap-3 px-8 z-10">
                     <button 
                       onClick={() => {
-                        handleUpdateStatus(selectedBusiness.id, 'rejected');
+                        handleUpdateStatus(selectedBusiness.id, selectedBusiness.owner_id as string, 'rejected');
                         setSelectedBusiness(null);
                       }}
-                      className="px-6 py-2.5 bg-white dark:bg-gray-900 border border-red-100 dark:border-red-900/30 text-red-600 dark:text-red-400 rounded-xl text-xs font-normal hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+                      className="px-6 py-2.5 bg-white dark:bg-gray-900 border border-red-100 dark:border-red-900/30 text-red-600 dark:text-red-400 rounded-[6px] text-xs font-normal hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
                     >
                       Reject Application
                     </button>
                     <button 
                       onClick={() => {
-                        handleUpdateStatus(selectedBusiness.id, 'approved');
+                        handleUpdateStatus(selectedBusiness.id, selectedBusiness.owner_id as string, 'approved');
                         setSelectedBusiness(null);
                       }}
-                      className="px-8 py-2.5 bg-emerald-600 text-white rounded-xl text-xs font-normal hover:bg-emerald-700 flex items-center gap-2 transition-all shadow-lg shadow-emerald-900/20"
+                      className="px-8 py-2.5 bg-emerald-600 text-white rounded-[6px] text-xs font-normal hover:bg-emerald-700 flex items-center gap-2 transition-all shadow-lg shadow-emerald-900/20"
                     >
                       <CheckCircle size={16} /> Approve Business
                     </button>

@@ -72,11 +72,11 @@ export default function AdminUsersPage() {
     switch (role.toLowerCase()) {
       case 'admin':
       case 'ceo':
-        return <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400 border border-red-100 dark:border-red-900/50">Admin</span>;
+        return <span className="text-[10px] px-2 py-0.5 rounded-[6px] bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400 border border-red-100 dark:border-red-900/50">Admin</span>;
       case 'vendor':
-        return <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50">Vendor</span>;
+        return <span className="text-[10px] px-2 py-0.5 rounded-[6px] bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50">Vendor</span>;
       default:
-        return <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400 border border-blue-100 dark:border-blue-900/50">Customer</span>;
+        return <span className="text-[10px] px-2 py-0.5 rounded-[6px] bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400 border border-blue-100 dark:border-blue-900/50">Customer</span>;
     }
   };
 
@@ -95,7 +95,7 @@ export default function AdminUsersPage() {
             <input 
               type="text" 
               placeholder="Search users by name or username..." 
-              className="w-full pl-12 pr-4 py-3 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all font-normal text-sm shadow-sm dark:text-gray-200"
+              className="w-full pl-12 pr-4 py-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-[6px] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all font-normal text-sm shadow-sm dark:text-gray-200"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -103,10 +103,10 @@ export default function AdminUsersPage() {
         </div>
 
         {/* Users Table */}
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden text-sm">
+        <div className="bg-white dark:bg-gray-900 rounded-[6px] border border-gray-300 dark:border-gray-800 shadow-sm overflow-hidden text-sm">
           {loading ? (
             <div className="flex items-center justify-center py-20">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+              <div className="animate-spin rounded-[6px] h-8 w-8 border-b-2 border-emerald-600"></div>
             </div>
           ) : filteredProfiles.length === 0 ? (
             <div className="text-center py-24">
@@ -117,19 +117,19 @@ export default function AdminUsersPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-gray-50 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-800/20">
+                  <tr className="border-b border-gray-300 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-800/20">
                     <th className="px-6 py-4 text-[11px] font-normal text-gray-400 dark:text-gray-500 uppercase tracking-widest">User</th>
                     <th className="px-6 py-4 text-[11px] font-normal text-gray-400 dark:text-gray-500 uppercase tracking-widest">Role</th>
                     <th className="px-6 py-4 text-[11px] font-normal text-gray-400 dark:text-gray-500 uppercase tracking-widest">Joined</th>
                     <th className="px-6 py-4 text-[11px] font-normal text-gray-400 dark:text-gray-500 uppercase tracking-widest text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50 dark:divide-gray-800/50">
+                <tbody className="divide-y divide-gray-300 dark:divide-gray-800/50">
                   {filteredProfiles.map((profile) => (
                     <tr key={profile.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/20 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="h-9 w-9 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center border border-gray-200 dark:border-gray-700">
+                          <div className="h-9 w-9 rounded-[6px] bg-gray-100 dark:bg-gray-800 flex items-center justify-center border border-gray-300 dark:border-gray-700">
                             <User size={18} className="text-gray-400 dark:text-gray-500" />
                           </div>
                           <div className="min-w-0">
@@ -149,10 +149,10 @@ export default function AdminUsersPage() {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <DropdownMenu>
-                          <DropdownMenuTrigger className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors outline-none">
+                          <DropdownMenuTrigger className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-[6px] transition-colors outline-none">
                             <MoreVertical size={16} className="text-gray-400" />
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48 bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800 shadow-xl">
+                          <DropdownMenuContent align="end" className="w-48 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-800 shadow-xl">
                             <DropdownMenuItem 
                               onClick={() => updateRole(profile.id, 'admin')}
                               className="flex items-center gap-2 cursor-pointer py-2 px-3 text-xs font-normal focus:bg-red-50 dark:focus:bg-red-950/30 focus:text-red-600 dark:focus:text-red-400"

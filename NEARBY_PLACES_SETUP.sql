@@ -18,7 +18,8 @@ create table if not exists businesses (
   address text,
   phone text,
   email text,
-  website text,
+  website_name text,
+  website_url text,
   rating numeric,
   reviews_count integer default 0,
   image_url text,
@@ -34,7 +35,8 @@ alter table businesses add column if not exists reviews_count integer default 0;
 alter table businesses add column if not exists image_url text;
 alter table businesses add column if not exists phone text;
 alter table businesses add column if not exists email text;
-alter table businesses add column if not exists website text;
+alter table businesses add column if not exists website_name text;
+alter table businesses add column if not exists website_url text;
 
 -- Step 4: Create an index for faster geospatial queries
 create index if not exists idx_businesses_location on businesses using gist(location);
@@ -48,17 +50,19 @@ create or replace function get_nearby_businesses (
   search_query text default '',
   dist_limit double precision default 5000
 ) returns table (
-  id bigint,
+  id uuid,
   name text,
   category text,
   description text,
   address text,
   phone text,
   email text,
-  website text,
+  website_name text,
+  website_url text,
   rating numeric,
   reviews_count integer,
   image_url text,
+  logo_url text,
   distance_meters double precision,
   latitude double precision,
   longitude double precision
@@ -73,10 +77,12 @@ begin
     b.address,
     b.phone,
     b.email,
-    b.website,
+    b.website_name,
+    b.website_url,
     b.rating,
     b.reviews_count,
     b.image_url,
+    b.logo_url,
     st_distance(
       b.location,
       st_setsrid(st_makepoint(user_lng, user_lat), 4326)::geography
@@ -85,6 +91,7 @@ begin
     st_x(b.location::geometry) as longitude
   from businesses b
   where 
+    b.status = 'approved' and
     st_dwithin(
       b.location,
       st_setsrid(st_makepoint(user_lng, user_lat), 4326)::geography,

@@ -64,7 +64,7 @@ export default function AdminSettingsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+        <div className="animate-spin rounded-[6px] h-8 w-8 border-b-2 border-emerald-600"></div>
       </div>
     );
   }
@@ -80,18 +80,18 @@ export default function AdminSettingsPage() {
           <button 
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-all text-sm font-normal disabled:opacity-50 shadow-sm"
+            className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-[6px] transition-all text-sm font-normal disabled:opacity-50 shadow-sm"
           >
-            {saving ? <div className="h-4 w-4 border-2 border-white/30 border-t-white animate-spin rounded-full" /> : <Save size={16} />}
+            {saving ? <div className="h-4 w-4 border-2 border-white/30 border-t-white animate-spin rounded-[6px]" /> : <Save size={16} />}
             {saving ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
 
         <div className="space-y-6">
           {/* General Settings */}
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-6 border-b border-gray-50 dark:border-gray-800 pb-4">
-              <div className="p-2 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
+          <div className="bg-white dark:bg-gray-900 rounded-[6px] border border-gray-300 dark:border-gray-800 p-6 shadow-sm">
+            <div className="flex items-center gap-3 mb-6 border-b border-gray-300 dark:border-gray-800 pb-4">
+              <div className="p-2 bg-blue-50 dark:bg-blue-950/30 rounded-[6px]">
                 <Globe size={18} className="text-blue-600 dark:text-blue-400" />
               </div>
               <h2 className="text-lg font-normal text-gray-900 dark:text-white">General Information</h2>
@@ -106,7 +106,7 @@ export default function AdminSettingsPage() {
                   type="text" 
                   value={settings?.site_name || ''}
                   onChange={(e) => setSettings(s => s ? {...s, site_name: e.target.value} : null)}
-                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all font-normal text-sm dark:text-white"
+                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 rounded-[6px] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all font-normal text-sm dark:text-white"
                 />
               </div>
 
@@ -118,16 +118,16 @@ export default function AdminSettingsPage() {
                   rows={3}
                   value={settings?.site_description || ''}
                   onChange={(e) => setSettings(s => s ? {...s, site_description: e.target.value} : null)}
-                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all font-normal text-sm dark:text-white resize-none"
+                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 rounded-[6px] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all font-normal text-sm dark:text-white resize-none"
                 />
               </div>
             </div>
           </div>
 
           {/* Appearance Settings */}
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-6 border-b border-gray-50 dark:border-gray-800 pb-4">
-              <div className="p-2 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg">
+          <div className="bg-white dark:bg-gray-900 rounded-[6px] border border-gray-300 dark:border-gray-800 p-6 shadow-sm">
+            <div className="flex items-center gap-3 mb-6 border-b border-gray-300 dark:border-gray-800 pb-4">
+              <div className="p-2 bg-emerald-50 dark:bg-emerald-950/30 rounded-[6px]">
                 <Palette size={18} className="text-emerald-600 dark:text-emerald-400" />
               </div>
               <h2 className="text-lg font-normal text-gray-900 dark:text-white">Appearance & Theme</h2>
@@ -141,14 +141,14 @@ export default function AdminSettingsPage() {
                     type="color" 
                     value={settings?.theme_primary_color || '#10b981'}
                     onChange={(e) => setSettings(s => s ? {...s, theme_primary_color: e.target.value} : null)}
-                    className="h-12 w-20 rounded-lg border-0 cursor-pointer p-0 bg-transparent"
+                    className="h-12 w-20 rounded-[6px] border-0 cursor-pointer p-0 bg-transparent"
                   />
                   <div className="flex-1">
                     <input 
                       type="text" 
                       value={settings?.theme_primary_color || ''}
                       onChange={(e) => setSettings(s => s ? {...s, theme_primary_color: e.target.value} : null)}
-                      className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 rounded-lg font-mono text-xs uppercase dark:text-white"
+                      className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 rounded-[6px] font-mono text-xs uppercase dark:text-white"
                     />
                   </div>
                 </div>
@@ -161,14 +161,14 @@ export default function AdminSettingsPage() {
                     type="color" 
                     value={settings?.theme_accent_color || '#3b82f6'}
                     onChange={(e) => setSettings(s => s ? {...s, theme_accent_color: e.target.value} : null)}
-                    className="h-12 w-20 rounded-lg border-0 cursor-pointer p-0 bg-transparent"
+                    className="h-12 w-20 rounded-[6px] border-0 cursor-pointer p-0 bg-transparent"
                   />
                   <div className="flex-1">
                     <input 
                       type="text" 
                       value={settings?.theme_accent_color || ''}
                       onChange={(e) => setSettings(s => s ? {...s, theme_accent_color: e.target.value} : null)}
-                      className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 rounded-lg font-mono text-xs uppercase dark:text-white"
+                      className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 rounded-[6px] font-mono text-xs uppercase dark:text-white"
                     />
                   </div>
                 </div>
@@ -177,9 +177,9 @@ export default function AdminSettingsPage() {
           </div>
 
           {/* Assets Settings */}
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-6 border-b border-gray-50 dark:border-gray-800 pb-4">
-              <div className="p-2 bg-amber-50 dark:bg-amber-950/30 rounded-lg">
+          <div className="bg-white dark:bg-gray-900 rounded-[6px] border border-gray-300 dark:border-gray-800 p-6 shadow-sm">
+            <div className="flex items-center gap-3 mb-6 border-b border-gray-300 dark:border-gray-800 pb-4">
+              <div className="p-2 bg-amber-50 dark:bg-amber-950/30 rounded-[6px]">
                 <ImageIcon size={18} className="text-amber-600 dark:text-amber-400" />
               </div>
               <h2 className="text-lg font-normal text-gray-900 dark:text-white">Brand Assets</h2>
@@ -193,9 +193,9 @@ export default function AdminSettingsPage() {
                   value={settings?.logo_url || ''}
                   onChange={(e) => setSettings(s => s ? {...s, logo_url: e.target.value} : null)}
                   placeholder="https://example.com/logo.png"
-                  className="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all font-normal text-sm dark:text-white"
+                  className="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 rounded-[6px] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all font-normal text-sm dark:text-white"
                 />
-                <div className="h-11 w-11 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 flex items-center justify-center overflow-hidden">
+                <div className="h-11 w-11 rounded-[6px] bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 flex items-center justify-center overflow-hidden">
                   {settings?.logo_url ? (
                     <img src={settings.logo_url} alt="Site Logo" className="h-full w-full object-contain p-1" />
                   ) : (
