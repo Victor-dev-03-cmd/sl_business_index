@@ -27,9 +27,37 @@ html {
   --ring: 215 20.2% 65.1%;
 
   /* Live Theme Variables */
-  --primary-color: #059669;
-  --accent-color: #10b981;
+  --brand-dark: #053765;
+  --brand-blue: #2a7db4;
+  --brand-gold: #b4863b;
+  --brand-gold-light: #c09a54;
+  --brand-sand: #dfb85d;
+  --brand-text: #124272;
 }
+
+/* Custom Theme Utilities */
+.bg-brand-dark { background-color: var(--brand-dark); }
+.text-brand-dark { color: var(--brand-dark); }
+.border-brand-dark { border-color: var(--brand-dark); }
+
+.bg-brand-blue { background-color: var(--brand-blue); }
+.text-brand-blue { color: var(--brand-blue); }
+.border-brand-blue { border-color: var(--brand-blue); }
+
+.bg-brand-gold { background-color: var(--brand-gold); }
+.text-brand-gold { color: var(--brand-gold); }
+.border-brand-gold { border-color: var(--brand-gold); }
+
+.bg-brand-gold-light { background-color: var(--brand-gold-light); }
+.text-brand-gold-light { color: var(--brand-gold-light); }
+.border-brand-gold-light { border-color: var(--brand-gold-light); }
+
+.bg-brand-sand { background-color: var(--brand-sand); }
+.text-brand-sand { color: var(--brand-sand); }
+.border-brand-sand { border-color: var(--brand-sand); }
+
+.text-brand-text { color: var(--brand-text); }
+.bg-brand-text { background-color: var(--brand-text); }
 
 /* Force Light Mode for Inputs */
 @layer base {
@@ -39,37 +67,9 @@ html {
   }
 }
 
-.text-theme-primary {
-  color: var(--primary-color);
-}
-
-.bg-theme-primary {
-  background-color: var(--primary-color);
-}
-
-.border-theme-primary {
-  border-color: var(--primary-color);
-}
-
-.hover\:bg-theme-primary:hover {
-  background-color: var(--primary-color);
-}
-
-.hover\:text-theme-primary:hover {
-  color: var(--primary-color);
-}
-
-.text-theme-accent {
-  color: var(--accent-color);
-}
-
-.bg-theme-accent {
-  background-color: var(--accent-color);
-}
-
 body {
   background: hsl(var(--background));
-  color: hsl(var(--foreground));
+  color: var(--text-color);
   font-family: var(--font-sans);
   overflow-x: hidden;
 }

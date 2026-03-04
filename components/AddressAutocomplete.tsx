@@ -167,7 +167,7 @@ export default function AddressAutocomplete({
               type="button"
               onClick={findMyLocation}
               disabled={isLocating}
-              className="flex items-center gap-1.5 text-xs font-medium text-green-700 hover:text-green-800 transition-colors bg-green-50 px-2.5 py-1.5 rounded-lg border border-green-100 disabled:opacity-50"
+              className="flex items-center gap-1.5 text-xs font-medium text-brand-dark transition-colors bg-green-50 px-2.5 py-1.5 rounded-lg border border-green-100 disabled:opacity-50"
             >
               <Navigation size={14} className={isLocating ? "animate-pulse" : ""} />
               {isLocating ? "Locating..." : "Find My Location"}

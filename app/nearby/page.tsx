@@ -301,7 +301,7 @@ function SplitScreenResultsContent() {
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-600 font-medium mb-4">{error}</p>
-          <Link href="/" className="text-green-700 hover:text-green-800 font-medium">
+          <Link href="/" className="text-brand-dark hover:text-brand-blue font-medium">
             Back to Home
           </Link>
         </div>
@@ -313,7 +313,7 @@ function SplitScreenResultsContent() {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block h-6 w-6 border-3 border-green-700 border-t-transparent rounded-full animate-spin mb-3"></div>
+          <div className="inline-block h-6 w-6 border-3 border-brand-dark border-t-transparent rounded-full animate-spin mb-3"></div>
           <p className="text-gray-600">Getting your location...</p>
         </div>
       </div>
@@ -326,19 +326,19 @@ function SplitScreenResultsContent() {
         <div className="h-16 border-b border-gray-300 flex items-center justify-between px-4 md:px-6 bg-white z-10 gap-4">
           {/* Left Section */}
           <div className="flex items-center space-x-3 flex-shrink-0">
-            <Link href="/" className="text-green-700 hover:text-green-800 transition-colors">
+            <Link href="/" className="text-brand-dark hover:text-brand-blue transition-colors">
               <ArrowLeft size={20} strokeWidth={1.5} />
             </Link>
             <div className="h-6 w-px bg-gray-200 hidden md:block"></div>
             <div className="hidden md:flex items-center text-sm text-gray-600 font-normal">
-              <MapPin size={16} strokeWidth={1.5} className="mr-1.5 text-green-700" />
+              <MapPin size={16} strokeWidth={1.5} className="mr-1.5 text-brand-dark" />
               <span>Nearby</span>
             </div>
           </div>
 
           {/* Center Section: Search Bar */}
           <div className="flex-1 max-w-md hidden sm:block">
-            <div className="flex items-center w-full px-3 bg-gray-50 rounded-[6px] border border-gray-300 focus-within:bg-white focus-within:border-green-600 h-10 transition-all shadow-sm">
+            <div className="flex items-center w-full px-3 bg-gray-50 rounded-[6px] border border-gray-300 focus-within:bg-white focus-within:border-brand-dark h-10 transition-all shadow-sm">
               <Search size={16} strokeWidth={1.5} className="text-gray-400 mr-2" />
               <input
                 type="text"
@@ -355,24 +355,24 @@ function SplitScreenResultsContent() {
           <div className="flex items-center gap-2 flex-shrink-0">
             <button 
               onClick={findMyLocation}
-              className="flex items-center gap-2 text-sm border border-gray-300 bg-white hover:bg-gray-50 rounded-[6px] px-3 h-10 outline-none focus:ring-1 focus:ring-green-600 transition-all shadow-sm group font-normal"
+              className="flex items-center gap-2 text-sm border border-gray-300 bg-white hover:bg-gray-50 rounded-[6px] px-3 h-10 outline-none focus:ring-1 focus:ring-brand-dark transition-all shadow-sm group font-normal"
               title="Find my current location"
             >
-              <Navigation size={14} strokeWidth={1.5} className="text-green-700 group-hover:scale-110 transition-transform" />
+              <Navigation size={14} strokeWidth={1.5} className="text-brand-dark group-hover:scale-110 transition-transform" />
               <span className="hidden lg:inline whitespace-nowrap text-gray-600">Find Me</span>
             </button>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 text-sm border border-gray-300 bg-white hover:bg-gray-50 rounded-[6px] px-3 h-10 outline-none focus:ring-1 focus:ring-green-600 transition-all shadow-sm font-normal">
-                  <span className="whitespace-nowrap text-gray-600">Radius: <span className="text-green-700 font-normal">{formatDistance(selectedRadius)}</span></span>
+                <button className="flex items-center gap-2 text-sm border border-gray-300 bg-white hover:bg-gray-50 rounded-[6px] px-3 h-10 outline-none focus:ring-1 focus:ring-brand-dark transition-all shadow-sm font-normal">
+                  <span className="whitespace-nowrap text-gray-600">Radius: <span className="text-brand-dark font-normal">{formatDistance(selectedRadius)}</span></span>
                   <ChevronDown size={14} strokeWidth={1.5} className="text-gray-400" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="p-4 w-64 bg-white shadow-xl border border-gray-300 rounded-[6px]">
                 <div className="mb-4 flex justify-between font-normal">
                   <span className="text-xs text-gray-500 uppercase tracking-wider">Search Radius</span>
-                  <span className="text-xs text-green-700 bg-green-50 px-2 py-0.5 rounded">{formatDistance(selectedRadius)}</span>
+                  <span className="text-xs text-brand-dark bg-blue-50 px-2 py-0.5 rounded">{formatDistance(selectedRadius)}</span>
                 </div>
                 <Slider
                   defaultValue={[selectedRadius]}
@@ -389,12 +389,12 @@ function SplitScreenResultsContent() {
               <DropdownMenu open={isCategoryOpen} onOpenChange={setIsCategoryOpen}>
                 <DropdownMenuTrigger asChild>
                   <button 
-                    className="hidden md:flex items-center gap-2 text-sm border border-gray-300 bg-white hover:bg-gray-50 rounded-[6px] px-3 h-10 outline-none focus:ring-1 focus:ring-green-600 transition-all shadow-sm font-normal"
+                    className="hidden md:flex items-center gap-2 text-sm border border-gray-300 bg-white hover:bg-gray-50 rounded-[6px] px-3 h-10 outline-none focus:ring-1 focus:ring-brand-dark transition-all shadow-sm font-normal"
                   >
                     <span className="whitespace-nowrap text-gray-600">
                       {selectedCategory ? (
                         <div className="flex items-center">
-                          <span className="text-green-600 mr-2">{categories.find(c => c.name === selectedCategory)?.icon}</span>
+                          <span className="text-brand-dark mr-2">{categories.find(c => c.name === selectedCategory)?.icon}</span>
                           {selectedCategory}
                         </div>
                       ) : 'Category'}
@@ -415,11 +415,11 @@ function SplitScreenResultsContent() {
                             setSelectedCategory(null);
                             setIsCategoryOpen(false);
                           }}
-                          className="flex items-center px-4 py-2.5 hover:bg-green-50 cursor-pointer transition-colors"
+                          className="flex items-center px-4 py-2.5 hover:bg-blue-50 cursor-pointer transition-colors"
                         >
                           <span className="text-gray-500 mr-3 opacity-50"><X size={14} /></span>
                           <span className="text-sm font-medium text-gray-700">All Categories</span>
-                          {selectedCategory === null && <Check className="ml-auto h-4 w-4 text-green-600" />}
+                          {selectedCategory === null && <Check className="ml-auto h-4 w-4 text-brand-dark" />}
                         </CommandItem>
                         {categories.map((cat) => (
                           <CommandItem
@@ -429,16 +429,16 @@ function SplitScreenResultsContent() {
                               setSelectedCategory(cat.name === selectedCategory ? null : cat.name);
                               setIsCategoryOpen(false);
                             }}
-                            className="flex items-center px-4 py-2.5 hover:bg-green-50 cursor-pointer transition-colors"
+                            className="flex items-center px-4 py-2.5 hover:bg-blue-50 cursor-pointer transition-colors"
                           >
                             <div className="flex items-center flex-1">
-                              <span className="text-green-600 mr-3">{cat.icon}</span>
+                              <span className="text-brand-dark mr-3">{cat.icon}</span>
                               <span className="text-sm font-normal text-gray-700">{cat.name}</span>
                             </div>
                             <Check
                               className={cn(
                                 "ml-auto h-4 w-4",
-                                selectedCategory === cat.name ? "opacity-100 text-green-600" : "opacity-0"
+                                selectedCategory === cat.name ? "opacity-100 text-brand-dark" : "opacity-0"
                               )}
                             />
                           </CommandItem>
@@ -465,7 +465,7 @@ function SplitScreenResultsContent() {
                 selectedTownName={selectedTown?.name || selectedDistrict || undefined}
                 placeholder="Select Town or District"
                 className="h-10 border-gray-300 text-gray-600 rounded-[6px] shadow-sm"
-                iconClassName="text-green-700"
+                iconClassName="text-brand-dark"
               />
             </div>
             
@@ -484,20 +484,20 @@ function SplitScreenResultsContent() {
           <div className="hidden md:flex absolute left-0 top-0 bottom-0 z-20 group">
             {/* Narrow Bar (Always Visible) */}
             <div className="w-12 bg-white border-r border-gray-300 flex flex-col items-center py-4 gap-6 h-full shadow-sm">
-              <div className="p-2 rounded-[6px] bg-green-50 text-green-700">
+              <div className="p-2 rounded-[6px] bg-blue-50 text-brand-dark">
                 <Menu size={20} />
               </div>
               <div className="flex flex-col gap-6 mt-4">
-                <div className="p-2 text-gray-400 group-hover:text-green-600 transition-colors">
+                <div className="p-2 text-gray-400 group-hover:text-brand-blue transition-colors">
                   <Clock size={20} />
                 </div>
-                <div className="p-2 text-gray-400 group-hover:text-green-600 transition-colors">
+                <div className="p-2 text-gray-400 group-hover:text-brand-blue transition-colors">
                   <Navigation size={20} />
                 </div>
-                <div className="p-2 text-gray-400 group-hover:text-green-600 transition-colors">
+                <div className="p-2 text-gray-400 group-hover:text-brand-blue transition-colors">
                   <Star size={20} />
                 </div>
-                <div className="p-2 text-gray-400 group-hover:text-green-600 transition-colors">
+                <div className="p-2 text-gray-400 group-hover:text-brand-blue transition-colors">
                   <Zap size={20} />
                 </div>
               </div>
@@ -513,9 +513,9 @@ function SplitScreenResultsContent() {
                     onClick={() => {
                       setSearchQuery("Open Now");
                     }}
-                    className="w-full flex items-center gap-3 p-3 rounded-[6px] hover:bg-green-50 text-gray-700 hover:text-green-700 transition-all text-left group/item font-normal"
+                    className="w-full flex items-center gap-3 p-3 rounded-[6px] hover:bg-blue-50 text-gray-700 hover:text-brand-dark transition-all text-left group/item font-normal"
                   >
-                    <div className="p-2 rounded-[6px] bg-gray-100 group-hover/item:bg-green-100 transition-colors">
+                    <div className="p-2 rounded-[6px] bg-gray-100 group-hover/item:bg-blue-100 transition-colors">
                       <Clock size={18} strokeWidth={1.5} />
                     </div>
                     <div>
@@ -526,9 +526,9 @@ function SplitScreenResultsContent() {
 
                   <button 
                     onClick={findMyLocation}
-                    className="w-full flex items-center gap-3 p-3 rounded-[6px] hover:bg-green-50 text-gray-700 hover:text-green-700 transition-all text-left group/item font-normal"
+                    className="w-full flex items-center gap-3 p-3 rounded-[6px] hover:bg-blue-50 text-gray-700 hover:text-brand-dark transition-all text-left group/item font-normal"
                   >
-                    <div className="p-2 rounded-[6px] bg-gray-100 group-hover/item:bg-green-100 transition-colors">
+                    <div className="p-2 rounded-[6px] bg-gray-100 group-hover/item:bg-blue-100 transition-colors">
                       <Navigation size={18} strokeWidth={1.5} />
                     </div>
                     <div>
@@ -541,9 +541,9 @@ function SplitScreenResultsContent() {
                     onClick={() => {
                       setSearchQuery("Top Rated");
                     }}
-                    className="w-full flex items-center gap-3 p-3 rounded-[6px] hover:bg-green-50 text-gray-700 hover:text-green-700 transition-all text-left group/item font-normal"
+                    className="w-full flex items-center gap-3 p-3 rounded-[6px] hover:bg-blue-50 text-gray-700 hover:text-brand-dark transition-all text-left group/item font-normal"
                   >
-                    <div className="p-2 rounded-[6px] bg-gray-100 group-hover/item:bg-green-100 transition-colors">
+                    <div className="p-2 rounded-[6px] bg-gray-100 group-hover/item:bg-blue-100 transition-colors">
                       <Star size={18} strokeWidth={1.5} />
                     </div>
                     <div>
@@ -556,9 +556,9 @@ function SplitScreenResultsContent() {
                     onClick={() => {
                       setSearchQuery("Verified");
                     }}
-                    className="w-full flex items-center gap-3 p-3 rounded-[6px] hover:bg-green-50 text-gray-700 hover:text-green-700 transition-all text-left group/item font-normal"
+                    className="w-full flex items-center gap-3 p-3 rounded-[6px] hover:bg-blue-50 text-gray-700 hover:text-brand-dark transition-all text-left group/item font-normal"
                   >
-                    <div className="p-2 rounded-[6px] bg-gray-100 group-hover/item:bg-green-100 transition-colors">
+                    <div className="p-2 rounded-[6px] bg-gray-100 group-hover/item:bg-blue-100 transition-colors">
                       <Zap size={18} strokeWidth={1.5} />
                     </div>
                     <div>
@@ -577,7 +577,7 @@ function SplitScreenResultsContent() {
                         onClick={() => {
                           setSearchQuery(item);
                         }}
-                        className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:text-green-700 hover:bg-green-50 rounded-[6px] transition-colors"
+                        className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:text-brand-dark hover:bg-blue-50 rounded-[6px] transition-colors"
                       >
                         {item}
                       </button>
@@ -640,8 +640,8 @@ function SplitScreenResultsContent() {
                     }}
                     className={`p-4 rounded-[6px] border transition-all cursor-pointer ${
                       selectedBusiness?.id === business.id
-                        ? 'bg-green-50 border-green-300 shadow-md'
-                        : 'bg-white border-gray-300 hover:border-green-300'
+                        ? 'bg-blue-50 border-brand-blue shadow-md'
+                        : 'bg-white border-gray-300 hover:border-brand-blue'
                     }`}
                   >
                     <div className="flex gap-3">
@@ -660,13 +660,13 @@ function SplitScreenResultsContent() {
                             {business.name}
                           </h3>
                           {(business.rating || 0) > 0 && (
-                            <div className="flex items-center gap-1 bg-amber-50 px-1.5 py-0.5 rounded text-xs flex-shrink-0">
-                              <Star size={12} strokeWidth={1.5} className="text-amber-500 fill-amber-500" />
-                              <span className="font-normal text-amber-900">{business.rating}</span>
+                            <div className="flex items-center gap-1 bg-brand-sand/20 px-1.5 py-0.5 rounded text-xs flex-shrink-0">
+                              <Star size={12} strokeWidth={1.5} className="text-brand-gold fill-brand-gold" />
+                              <span className="font-normal text-brand-text">{business.rating}</span>
                             </div>
                           )}
                         </div>
-                        <p className="text-xs text-green-700 font-normal uppercase tracking-wide mt-1">
+                        <p className="text-xs text-brand-blue font-normal uppercase tracking-wide mt-1">
                           {business.category}
                         </p>
                         <p className="text-xs text-gray-500 mt-1 line-clamp-1 flex items-center font-normal">
@@ -674,7 +674,7 @@ function SplitScreenResultsContent() {
                           {business.address}
                         </p>
                         <div className="mt-2 inline-flex items-center gap-1 px-2 py-1 bg-gray-100 rounded-full text-xs font-normal">
-                          <Navigation size={11} strokeWidth={1.5} className="text-green-600" />
+                          <Navigation size={11} strokeWidth={1.5} className="text-brand-dark" />
                           <span className="text-gray-700">
                             {business.distanceText || 'Calculating...'}
                           </span>
@@ -708,7 +708,7 @@ function SplitScreenResultsContent() {
                     onClick={() => {
                       refetch();
                     }}
-                    className="bg-green-700 text-white px-6 py-2.5 rounded-full shadow-2xl hover:bg-green-800 transition-all font-normal flex items-center gap-2 border-2 border-white animate-in zoom-in-95"
+                    className="bg-brand-dark text-white px-6 py-2.5 rounded-full shadow-2xl hover:bg-brand-blue transition-all font-normal flex items-center gap-2 border-2 border-white animate-in zoom-in-95"
                   >
                     <Search size={18} strokeWidth={1.5} />
                     Search this area
@@ -718,7 +718,7 @@ function SplitScreenResultsContent() {
 
               {/* Map Status Indicator */}
               <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white px-4 py-2.5 rounded-full shadow-lg border border-gray-300 flex items-center gap-2 text-xs text-gray-700 z-[1000] font-normal">
-                <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse"></div>
+                <div className="w-2 h-2 bg-brand-dark rounded-full animate-pulse"></div>
                 Showing {results.length} business{results.length !== 1 ? 'es' : ''} {searchType === 'location' ? `within ${(selectedRadius / 1000).toFixed(0)}km` : `in ${selectedDistrict || district}`}
               </div>
           </div>

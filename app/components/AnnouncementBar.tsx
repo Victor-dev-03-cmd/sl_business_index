@@ -37,10 +37,10 @@ export default function AnnouncementBar() {
   if (!isVisible) return null;
 
   return (
-    <div className="bg-emerald-800 text-white overflow-hidden relative border-b border-emerald-900/50">
+    <div className="bg-brand-dark text-white overflow-hidden relative border-b border-brand-dark/50">
       <div className="container mx-auto px-4 h-10 flex items-center justify-between">
         <div className="flex items-center gap-3 overflow-hidden">
-          <div className="bg-emerald-500/20 p-1 rounded-full text-emerald-400 flex-shrink-0 animate-pulse">
+          <div className="bg-brand-gold/20 p-1 rounded-full text-brand-sand flex-shrink-0 animate-pulse">
             <Megaphone size={12} strokeWidth={2.5} />
           </div>
           
@@ -54,12 +54,12 @@ export default function AnnouncementBar() {
                 transition={{ duration: 0.5, ease: "easeInOut" }}
                 className="flex items-center gap-4 whitespace-nowrap"
               >
-                <p className="text-[11px] font-normal text-emerald-100/90 truncate">
+                <p className="text-[11px] font-normal text-brand-sand/90 truncate">
                   {announcements[index].text}
                 </p>
                 <Link 
                   href={announcements[index].link}
-                  className="hidden sm:flex items-center gap-1 text-[10px] font-normal text-emerald-400 hover:text-white transition-colors uppercase tracking-widest group"
+                  className="hidden sm:flex items-center gap-1 text-[10px] font-normal text-brand-sand hover:text-white transition-colors uppercase tracking-widest group"
                 >
                   {announcements[index].cta}
                   <ChevronRight size={10} className="group-hover:translate-x-0.5 transition-transform" />
@@ -71,14 +71,14 @@ export default function AnnouncementBar() {
 
         <button 
           onClick={() => setIsVisible(false)}
-          className="p-1 hover:bg-white/5 rounded-full text-emerald-100/30 hover:text-white transition-colors ml-4"
+          className="p-1 hover:bg-white/5 rounded-full text-brand-sand/30 hover:text-white transition-colors ml-4"
         >
           <X size={12} />
         </button>
       </div>
 
       {/* Subtle Bottom Glow Line */}
-      <div className="absolute bottom-0 left-0 h-[1px] bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent w-full"></div>
+      <div className="absolute bottom-0 left-0 h-[1px] bg-gradient-to-r from-transparent via-brand-gold/30 to-transparent w-full"></div>
     </div>
   );
 }

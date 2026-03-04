@@ -6,15 +6,12 @@ import { usePathname } from 'next/navigation';
 import { 
   LayoutDashboard, 
   Building2, 
-  ClipboardList, 
   Users, 
   BarChart3, 
   Settings,
   Search,
-  Bell,
   PanelLeftClose,
   PanelLeftOpen,
-  ChevronRight,
   ShieldCheck
 } from 'lucide-react';
 import AuthButton from '@/app/components/AuthButton';
@@ -32,7 +29,7 @@ const adminMenuItems = [
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<unknown>(null);
 
   useEffect(() => {
     const getUser = async () => {
@@ -58,7 +55,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         } fixed inset-y-0 left-0 z-50 bg-white  border-r border-gray-300  transition-all duration-300 ease-in-out hidden md:flex flex-col`}
       >
         <div className="flex items-center h-20 px-6 border-b border-gray-300 ">
-          <ShieldCheck className="h-6 w-6 text-emerald-600 mr-3 shrink-0" strokeWidth={1.5} />
+          <ShieldCheck className="h-6 w-6 text-brand-dark mr-3 shrink-0" strokeWidth={1.5} />
           {sidebarOpen && (
             <span className="font-normal text-gray-900  truncate">Admin Panel</span>
           )}
@@ -75,16 +72,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 href={item.href}
                 className={`flex items-center px-4 py-3 rounded-[6px] transition-colors group ${
                   isActive 
-                    ? 'bg-emerald-50 text-emerald-700'
+                    ? 'bg-brand-blue/10 text-brand-dark'
                     : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
                 }`}
               >
-                <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-emerald-600' : 'text-gray-400 group-hover:text-gray-600'}`} strokeWidth={1.5} />
+                <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-brand-dark' : 'text-gray-400 group-hover:text-gray-600'}`} strokeWidth={1.5} />
                 {sidebarOpen && (
                   <span className="ml-3 font-normal text-sm">{item.name}</span>
                 )}
                 {isActive && sidebarOpen && (
-                  <div className="ml-auto w-1 h-1 rounded-[6px] bg-emerald-600 " />
+                  <div className="ml-auto w-1 h-1 rounded-[6px] bg-brand-dark " />
                 )}
               </Link>
             );
@@ -113,11 +110,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="h-full px-4 md:px-8 flex items-center justify-between">
             {/* Search */}
             <div className="relative w-full max-w-md group hidden md:block">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-emerald-500 transition-colors" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-brand-blue transition-colors" />
               <input 
                 type="text" 
                 placeholder="Search analytics, users, businesses..." 
-                className="w-full pl-10 pr-4 py-2 bg-gray-100/50  border-gray-300 focus:bg-white  border focus:border-emerald-500/30 rounded-[6px] text-sm outline-none transition-all placeholder:text-gray-400 "
+                className="w-full pl-10 pr-4 py-2 bg-gray-100/50  border-gray-300 focus:bg-white  border focus:border-brand-blue/30 rounded-[6px] text-sm outline-none transition-all placeholder:text-gray-400 "
               />
             </div>
 

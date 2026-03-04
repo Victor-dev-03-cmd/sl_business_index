@@ -5,13 +5,11 @@ import { supabase } from '@/lib/supabaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
-  Settings, 
   Palette, 
   Globe, 
   Save, 
-  RotateCcw,
-  Layout,
-  Type,
+  Layout, 
+  Type, 
   ImageIcon
 } from 'lucide-react';
 
@@ -101,7 +99,7 @@ export default function AdminSettingsPage() {
           <button 
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-[6px] transition-all text-sm font-normal disabled:opacity-50 shadow-sm"
+            className="flex items-center gap-2 px-6 py-2.5 bg-brand-dark hover:bg-brand-blue text-white rounded-[6px] transition-all text-sm font-normal disabled:opacity-50 shadow-sm"
           >
             {saving ? <div className="h-4 w-4 border-2 border-white/30 border-t-white animate-spin rounded-[6px]" /> : <Save size={16} />}
             {saving ? 'Saving...' : 'Save Changes'}
@@ -127,7 +125,7 @@ export default function AdminSettingsPage() {
                   type="text" 
                   value={localSettings?.site_name || ''}
                   onChange={(e) => setLocalSettings(s => s ? {...s, site_name: e.target.value} : null)}
-                  className="w-full px-4 py-2.5 bg-gray-50  border border-gray-300  rounded-[6px] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all font-normal text-sm "
+                  className="w-full px-4 py-2.5 bg-gray-50  border border-gray-300  rounded-[6px] focus:outline-none focus:ring-1 focus:ring-brand-blue transition-all font-normal text-sm "
                 />
               </div>
 
@@ -139,7 +137,7 @@ export default function AdminSettingsPage() {
                   rows={3}
                   value={localSettings?.site_description || ''}
                   onChange={(e) => setLocalSettings(s => s ? {...s, site_description: e.target.value} : null)}
-                  className="w-full px-4 py-2.5 bg-gray-50  border border-gray-300  rounded-[6px] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all font-normal text-sm  resize-none"
+                  className="w-full px-4 py-2.5 bg-gray-50  border border-gray-300  rounded-[6px] focus:outline-none focus:ring-1 focus:ring-brand-blue transition-all font-normal text-sm  resize-none"
                 />
               </div>
             </div>
@@ -148,8 +146,8 @@ export default function AdminSettingsPage() {
           {/* Appearance Settings */}
           <div className="bg-white  rounded-[6px] border border-gray-300  p-6 shadow-sm">
             <div className="flex items-center gap-3 mb-6 border-b border-gray-300  pb-4">
-              <div className="p-2 bg-emerald-50  rounded-[6px]">
-                <Palette size={18} className="text-emerald-600 " />
+              <div className="p-2 bg-brand-sand/20  rounded-[6px]">
+                <Palette size={18} className="text-brand-dark " />
               </div>
               <h2 className="text-lg font-normal text-gray-900 ">Appearance & Theme</h2>
             </div>
@@ -160,7 +158,7 @@ export default function AdminSettingsPage() {
                 <div className="flex items-center gap-4">
                   <input 
                     type="color" 
-                    value={localSettings?.theme_primary_color || '#10b981'}
+                    value={localSettings?.theme_primary_color || '#053765'}
                     onChange={(e) => setLocalSettings(s => s ? {...s, theme_primary_color: e.target.value} : null)}
                     className="h-12 w-20 rounded-[6px] border-0 cursor-pointer p-0 bg-transparent"
                   />
@@ -180,7 +178,7 @@ export default function AdminSettingsPage() {
                 <div className="flex items-center gap-4">
                   <input 
                     type="color" 
-                    value={localSettings?.theme_accent_color || '#3b82f6'}
+                    value={localSettings?.theme_accent_color || '#b4863b'}
                     onChange={(e) => setLocalSettings(s => s ? {...s, theme_accent_color: e.target.value} : null)}
                     className="h-12 w-20 rounded-[6px] border-0 cursor-pointer p-0 bg-transparent"
                   />
@@ -214,7 +212,7 @@ export default function AdminSettingsPage() {
                   value={localSettings?.logo_url || ''}
                   onChange={(e) => setLocalSettings(s => s ? {...s, logo_url: e.target.value} : null)}
                   placeholder="https://example.com/logo.png"
-                  className="flex-1 px-4 py-2.5 bg-gray-50  border border-gray-300  rounded-[6px] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all font-normal text-sm "
+                  className="flex-1 px-4 py-2.5 bg-gray-50  border border-gray-300  rounded-[6px] focus:outline-none focus:ring-1 focus:ring-brand-blue transition-all font-normal text-sm "
                 />
                 <div className="h-11 w-11 rounded-[6px] bg-gray-50  border border-gray-300  flex items-center justify-center overflow-hidden">
                   {localSettings?.logo_url ? (

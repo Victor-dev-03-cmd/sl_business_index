@@ -12,6 +12,14 @@ const config: Config = {
       colors: {
         primary: 'var(--primary)',
         secondary: 'var(--secondary)',
+        brand: {
+          dark: '#053765',
+          blue: '#2a7db4',
+          gold: '#b4863b',
+          'gold-light': '#c09a54',
+          sand: '#dfb85d',
+          text: '#124272',
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

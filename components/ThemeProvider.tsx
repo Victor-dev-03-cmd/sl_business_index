@@ -18,8 +18,8 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<ThemeSettings>({
-    theme_primary_color: '#059669', // Emerald 600
-    theme_accent_color: '#10b981',  // Emerald 500
+    theme_primary_color: '#053765', // Primary Dark Blue
+    theme_accent_color: '#b4863b',  // Golden Accent 1
   });
 
   const [isDarkMode, setIsDarkMode] = useState(false);

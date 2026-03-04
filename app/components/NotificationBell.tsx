@@ -163,7 +163,7 @@ export default function NotificationBell() {
               {unreadCount > 0 && (
                 <button 
                   onClick={markAllAsRead}
-                  className="text-xs text-emerald-600 hover:text-emerald-700 font-medium"
+                  className="text-xs text-brand-blue hover:text-brand-dark font-medium"
                 >
                   Mark all read
                 </button>
@@ -176,13 +176,13 @@ export default function NotificationBell() {
                   <div 
                     key={notif.id}
                     onClick={() => markAsRead(notif.id)}
-                    className={`p-4 border-b border-gray-100 flex gap-4 hover:bg-gray-50 transition-colors cursor-pointer ${!notif.is_read ? 'bg-emerald-50/30' : ''}`}
+                    className={`p-4 border-b border-gray-100 flex gap-4 hover:bg-gray-50 transition-colors cursor-pointer ${!notif.is_read ? 'bg-brand-sand/20' : ''}`}
                   >
                     <div className={`w-10 h-10 rounded-[6px] flex-shrink-0 flex items-center justify-center ${
-                      notif.type === 'success' ? 'bg-green-100 text-green-600' : 
+                      notif.type === 'success' ? 'bg-brand-sand/30 text-brand-gold' : 
                       notif.type === 'error' ? 'bg-red-100 text-red-600' : 
                       notif.type === 'warning' ? 'bg-amber-100 text-amber-600' : 
-                      'bg-blue-100 text-blue-600'
+                      'bg-brand-sand/30 text-brand-blue'
                     }`}>
                       {notif.type === 'success' ? <Check size={18} strokeWidth={1.5} /> : 
                        notif.type === 'error' ? <X size={18} strokeWidth={1.5} /> : 
@@ -202,7 +202,7 @@ export default function NotificationBell() {
                       </div>
                     </div>
                     {!notif.is_read && (
-                      <div className="w-2 h-2 bg-emerald-500 rounded-full mt-1 flex-shrink-0" />
+                      <div className="w-2 h-2 bg-brand-gold rounded-full mt-1 flex-shrink-0" />
                     )}
                   </div>
                 ))

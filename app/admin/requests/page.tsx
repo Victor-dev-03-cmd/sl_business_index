@@ -100,11 +100,11 @@ export default function BusinessRequestsPage() {
         {/* Search Bar */}
         <div className="mb-8 max-w-xl">
           <div className="relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-emerald-500 transition-colors h-4 w-4" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-blue transition-colors h-4 w-4" />
             <input 
               type="text" 
               placeholder="Search by business, owner, or BR number..." 
-              className="w-full pl-12 pr-4 py-3 bg-white  border border-gray-300  rounded-[6px] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all font-normal text-sm shadow-sm "
+              className="w-full pl-12 pr-4 py-3 bg-white  border border-gray-300  rounded-[6px] focus:outline-none focus:ring-1 focus:ring-brand-blue transition-all font-normal text-sm shadow-sm "
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -180,7 +180,7 @@ export default function BusinessRequestsPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-xs font-normal text-emerald-600  bg-emerald-50  px-2 py-1 rounded-[6px]">
+                        <span className="text-xs font-normal text-brand-dark  bg-brand-sand/20  px-2 py-1 rounded-[6px]">
                           {business.category}
                         </span>
                       </td>
@@ -208,7 +208,7 @@ export default function BusinessRequestsPage() {
                         <div className="flex items-center justify-end gap-2">
                           <button 
                             onClick={() => setSelectedBusiness(business)}
-                            className="p-2 text-gray-400 hover:bg-gray-50  rounded-[6px] transition-colors hover:text-emerald-600"
+                            className="p-2 text-gray-400 hover:bg-gray-50  rounded-[6px] transition-colors hover:text-brand-dark"
                             title="View Application"
                           >
                             <Eye size={18} strokeWidth={1.5} />
@@ -216,7 +216,7 @@ export default function BusinessRequestsPage() {
                           <div className="w-px h-4 bg-gray-100  mx-1" />
                           <button 
                             onClick={() => handleUpdateStatus(business.id, business.owner_id as string, 'approved')}
-                            className="p-2 text-emerald-600 hover:bg-emerald-50  rounded-[6px] transition-colors"
+                            className="p-2 text-brand-dark hover:bg-brand-sand/20  rounded-[6px] transition-colors"
                             title="Approve"
                           >
                             <CheckCircle size={18} strokeWidth={1.5} />
@@ -263,11 +263,11 @@ export default function BusinessRequestsPage() {
                     <div>
                       <h2 className="text-2xl font-normal text-gray-900 ">{selectedBusiness.name}</h2>
                       <div className="flex items-center gap-4 mt-2 font-normal">
-                        <span className="px-2.5 py-0.5 rounded-[6px] text-[10px] uppercase tracking-wider bg-amber-50  text-amber-700  border border-amber-100 ">
+                        <span className="px-2.5 py-0.5 rounded-[6px] text-[10px] uppercase tracking-wider bg-brand-blue/10  text-brand-blue  border border-brand-blue/20 ">
                           Pending Approval
                         </span>
                         <span className="text-xs text-gray-400  flex items-center gap-1.5 font-normal">
-                          <MapPin size={12} className="text-emerald-500" /> {selectedBusiness.address}
+                          <MapPin size={12} className="text-brand-blue" /> {selectedBusiness.address}
                         </span>
                       </div>
                     </div>
@@ -307,7 +307,7 @@ export default function BusinessRequestsPage() {
                             <div className="p-1.5 bg-white  rounded-[6px] shadow-sm border border-gray-300 ">
                               <ExternalLink size={14} className="text-gray-400" />
                             </div>
-                            <span className="text-sm text-emerald-600  truncate font-normal">
+                            <span className="text-sm text-brand-dark  truncate font-normal">
                               {selectedBusiness.website_name || selectedBusiness.website_url}
                             </span>
                           </div>
@@ -332,8 +332,8 @@ export default function BusinessRequestsPage() {
                               </div>
                             </div>
                             <div className="flex items-center gap-3">
-                              <div className="h-8 w-8 rounded-[6px] bg-emerald-50  flex items-center justify-center">
-                                <Briefcase size={14} className="text-emerald-600 " />
+                              <div className="h-8 w-8 rounded-[6px] bg-brand-sand/20  flex items-center justify-center">
+                                <Briefcase size={14} className="text-brand-dark " />
                               </div>
                               <div className="min-w-0">
                                 <p className="text-xs text-gray-400 font-normal">Owner NIC</p>
@@ -384,7 +384,7 @@ export default function BusinessRequestsPage() {
                   </button>
                   <button 
                     onClick={() => handleUpdateStatus(selectedBusiness.id, selectedBusiness.owner_id as string, 'approved')}
-                    className="px-8 py-2.5 bg-emerald-600 text-white rounded-[6px] text-xs font-normal hover:bg-emerald-700 flex items-center gap-2 transition-all shadow-lg shadow-emerald-900/20"
+                    className="px-8 py-2.5 bg-brand-dark text-white rounded-[6px] text-xs font-normal hover:bg-emerald-700 flex items-center gap-2 transition-all shadow-lg shadow-emerald-900/20"
                   >
                     <CheckCircle size={16} /> Approve Business
                   </button>

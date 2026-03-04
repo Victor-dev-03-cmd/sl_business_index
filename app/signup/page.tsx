@@ -56,11 +56,11 @@ export default function SignUp() {
   return (
       <div className="flex min-h-screen bg-white">
         {/* Left Side: Branding Panel */}
-        <div className="hidden lg:flex lg:w-1/2 bg-emerald-950 relative overflow-hidden items-center justify-center p-12">
+        <div className="hidden lg:flex lg:w-1/2 bg-brand-dark relative overflow-hidden items-center justify-center p-12">
           {/* Professional Background Effects */}
           <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
-          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[120px] -mr-64 -mt-64 animate-ambient-float"></div>
-          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-emerald-600/5 rounded-full blur-[100px] -ml-48 -mb-48 animate-ambient-float" style={{ animationDelay: '2s' }}></div>
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-brand-gold/10 rounded-full blur-[120px] -mr-64 -mt-64 animate-ambient-float"></div>
+          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-brand-blue/5 rounded-full blur-[100px] -ml-48 -mb-48 animate-ambient-float" style={{ animationDelay: '2s' }}></div>
 
           <div className="relative z-10 max-w-md w-full">
             <motion.div
@@ -68,7 +68,7 @@ export default function SignUp() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <Link href="/" className="inline-flex items-center text-emerald-400 hover:text-white mb-10 transition-colors text-xs uppercase tracking-widest font-normal">
+              <Link href="/" className="inline-flex items-center text-brand-sand hover:text-white mb-10 transition-colors text-xs uppercase tracking-widest font-normal">
                 <ArrowLeft className="mr-2" size={14} /> Back to Home
               </Link>
 
@@ -84,10 +84,10 @@ export default function SignUp() {
 
               <h1 className="text-4xl font-normal text-white mb-6 leading-tight tracking-tight">
                 Scale Your <br />
-                <span className="text-emerald-400">Business Today.</span>
+                <span className="text-brand-sand">Business Today.</span>
               </h1>
               
-              <p className="text-emerald-100/60 text-base leading-relaxed mb-10 font-normal">
+              <p className="text-brand-sand/60 text-base leading-relaxed mb-10 font-normal">
                 Join the largest business ecosystem in Sri Lanka. List your service, connect with locals, and grow your brand.
               </p>
 
@@ -99,8 +99,8 @@ export default function SignUp() {
                   "AI-Powered Social Media Tools",
                   "Direct Customer Lead Generation"
                 ].map((benefit, i) => (
-                  <div key={i} className="flex items-center gap-3 text-emerald-100/80">
-                    <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                  <div key={i} className="flex items-center gap-3 text-brand-sand/80">
+                    <div className="w-5 h-5 rounded-full bg-brand-gold/20 flex items-center justify-center text-brand-gold">
                       <Check size={12} strokeWidth={3} />
                     </div>
                     <span className="text-sm font-normal">{benefit}</span>
@@ -108,14 +108,14 @@ export default function SignUp() {
                 ))}
               </div>
 
-              <div className="flex gap-12 text-white border-t border-emerald-500/10 pt-10">
+              <div className="flex gap-12 text-white border-t border-brand-gold/10 pt-10">
                 <div>
-                  <p className="text-2xl font-normal text-emerald-400">Join</p>
-                  <p className="text-emerald-100/40 text-[10px] uppercase tracking-widest mt-1">The Index</p>
+                  <p className="text-2xl font-normal text-brand-sand">Join</p>
+                  <p className="text-brand-sand/40 text-[10px] uppercase tracking-widest mt-1">The Index</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-normal text-emerald-400">Get</p>
-                  <p className="text-emerald-100/40 text-[10px] uppercase tracking-widest mt-1">Verified</p>
+                  <p className="text-2xl font-normal text-brand-sand">Get</p>
+                  <p className="text-brand-sand/40 text-[10px] uppercase tracking-widest mt-1">Verified</p>
                 </div>
               </div>
             </motion.div>
@@ -124,7 +124,7 @@ export default function SignUp() {
 
         {/* Right Side: Sign Up Form */}
         <div className="w-full lg:w-1/2 flex items-center justify-center bg-white px-6 py-12 md:px-12">
-          <div className="w-full max-w-md bg-white p-8 md:p-10 rounded-[6px] shadow-2xl shadow-emerald-950/5 border border-gray-100">
+          <div className="w-full max-w-md bg-white p-8 md:p-10 rounded-[6px] shadow-2xl shadow-brand-dark/5 border border-gray-100">
 
             {/* Mobile Logo */}
             <div className="lg:hidden flex justify-center mb-8">
@@ -148,7 +148,7 @@ export default function SignUp() {
                     onChange={(e) => setUsername(e.target.value)}
                     required
                     placeholder="e.g. victor_lxs"
-                    className="w-full px-4 py-3.5 text-gray-900 bg-gray-50 border border-gray-100 rounded-[6px] focus:outline-none focus:ring-1 focus:ring-emerald-600 focus:bg-white transition-all text-sm font-normal"
+                    className="w-full px-4 py-3.5 text-gray-900 bg-gray-50 border border-gray-100 rounded-[6px] focus:outline-none focus:ring-1 focus:ring-brand-dark focus:bg-white transition-all text-sm font-normal"
                 />
               </div>
 
@@ -161,7 +161,7 @@ export default function SignUp() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     placeholder="e.g. victor@example.com"
-                    className="w-full px-4 py-3.5 text-gray-900 bg-gray-50 border border-gray-100 rounded-[6px] focus:outline-none focus:ring-1 focus:ring-emerald-600 focus:bg-white transition-all text-sm font-normal"
+                    className="w-full px-4 py-3.5 text-gray-900 bg-gray-50 border border-gray-100 rounded-[6px] focus:outline-none focus:ring-1 focus:ring-brand-dark focus:bg-white transition-all text-sm font-normal"
                 />
               </div>
 
@@ -174,7 +174,7 @@ export default function SignUp() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     placeholder="Min. 6 characters"
-                    className="w-full px-4 py-3.5 text-gray-900 bg-gray-50 border border-gray-100 rounded-[6px] focus:outline-none focus:ring-1 focus:ring-emerald-600 focus:bg-white transition-all text-sm font-normal"
+                    className="w-full px-4 py-3.5 text-gray-900 bg-gray-50 border border-gray-100 rounded-[6px] focus:outline-none focus:ring-1 focus:ring-brand-dark focus:bg-white transition-all text-sm font-normal"
                 />
               </div>
 
@@ -187,7 +187,7 @@ export default function SignUp() {
               <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-4 px-6 bg-emerald-600 text-white font-normal rounded-[6px] hover:bg-emerald-700 shadow-lg shadow-emerald-900/10 transition-all transform active:scale-[0.98] disabled:opacity-50 text-sm"
+                  className="w-full py-4 px-6 bg-brand-dark text-white font-normal rounded-[6px] hover:bg-brand-blue shadow-lg shadow-brand-dark/10 transition-all transform active:scale-[0.98] disabled:opacity-50 text-sm"
               >
                 {loading ? 'Creating Account...' : 'Get Started'}
               </button>
@@ -206,14 +206,14 @@ export default function SignUp() {
                 onClick={() => handleSocialLogin('google')}
                 className="flex items-center justify-center w-full py-4 px-6 bg-white border border-gray-100 rounded-[6px] text-gray-600 font-normal hover:bg-gray-50 transition-all shadow-sm text-sm"
             >
-              <Chrome size={18} className="mr-3 text-emerald-600" />
+              <Chrome size={18} className="mr-3 text-brand-blue" />
               Sign up with Google
             </button>
 
             <div className="mt-10 text-center">
               <p className="text-sm text-gray-400 font-normal">
                 Already have an account?{' '}
-                <Link href="/login" className="text-emerald-600 font-normal hover:text-emerald-700 ml-1 transition-colors">
+                <Link href="/login" className="text-brand-blue font-normal hover:text-brand-dark ml-1 transition-colors">
                   Sign In
                 </Link>
               </p>

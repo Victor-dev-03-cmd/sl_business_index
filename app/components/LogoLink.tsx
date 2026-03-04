@@ -24,7 +24,7 @@ export default function LogoLink() {
       prefetch={true}
     >
       <Image
-        src="/logo.png"
+        src="/sl-logo.png"
         alt="SL Business Index Logo"
         width={180}
         height={60}

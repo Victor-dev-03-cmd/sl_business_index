@@ -36,17 +36,27 @@ export default function AdminAnalyticsPage() {
 
   const statCards = [
     { name: 'Total Users', value: stats.totalUsers, change: '+12%', trending: 'up', icon: Users, color: 'blue' },
-    { name: 'Active Businesses', value: stats.totalBusinesses, change: '+5%', trending: 'up', icon: Building2, color: 'emerald' },
-    { name: 'Pending Requests', value: stats.pendingRequests, change: '-2%', trending: 'down', icon: TrendingUp, color: 'amber' },
-    { name: 'Platform Views', value: stats.totalViews.toLocaleString(), change: '+24%', trending: 'up', icon: Eye, color: 'purple' },
+    { name: 'Active Businesses', value: stats.totalBusinesses, change: '+5%', trending: 'up', icon: Building2, color: 'brand-dark' },
+    { name: 'Pending Requests', value: stats.pendingRequests, change: '-2%', trending: 'down', icon: TrendingUp, color: 'brand-blue' },
+    { name: 'Platform Views', value: stats.totalViews.toLocaleString(), change: '+24%', trending: 'up', icon: Eye, color: 'brand-gold' },
   ];
+
+  const getStatColors = (color: string) => {
+    switch (color) {
+      case 'brand-dark': return 'bg-brand-dark/10 text-brand-dark';
+      case 'brand-blue': return 'bg-brand-blue/10 text-brand-blue';
+      case 'brand-gold': return 'bg-brand-sand/20 text-brand-gold';
+      case 'blue': return 'bg-blue-50 text-blue-600';
+      default: return 'bg-gray-50 text-gray-600';
+    }
+  };
 
   return (
     <div className="min-h-full bg-gray-50/50  transition-colors">
       <main className="max-w-7xl mx-auto px-4 md:px-8 py-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
           <div>
-            <h1 className="text-2xl font-normal text-gray-900 ">Platform Analytics</h1>
+            <h1 className="text-2xl font-normal text-brand-dark ">Platform Analytics</h1>
             <p className="text-sm text-gray-500  mt-1">Track key performance indicators and growth metrics.</p>
           </div>
           <div className="flex items-center gap-3">
@@ -64,10 +74,10 @@ export default function AdminAnalyticsPage() {
           {statCards.map((stat) => (
             <div key={stat.name} className="bg-white  p-6 rounded-[6px] border border-gray-300  shadow-sm hover:shadow-md transition-shadow group">
               <div className="flex items-start justify-between mb-4">
-                <div className={`p-2.5 rounded-[6px] bg-${stat.color}-50  text-${stat.color}-600  group-hover:scale-110 transition-transform`}>
+                <div className={`p-2.5 rounded-[6px] ${getStatColors(stat.color)}  group-hover:scale-110 transition-transform`}>
                   <stat.icon size={20} />
                 </div>
-                <div className={`flex items-center gap-1 text-[11px] font-normal ${stat.trending === 'up' ? 'text-emerald-600' : 'text-red-600'}`}>
+                <div className={`flex items-center gap-1 text-[11px] font-normal ${stat.trending === 'up' ? 'text-brand-blue' : 'text-red-600'}`}>
                   {stat.trending === 'up' ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
                   {stat.change}
                 </div>

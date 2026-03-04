@@ -146,16 +146,16 @@ export default function MapboxMap({
               id="radius-fill"
               type="fill"
               paint={{
-                'fill-color': '#10b981',
+                'fill-color': '#2a7db4',
                 'fill-opacity': pulseOpacity,
-                'fill-outline-color': '#059669'
+                'fill-outline-color': '#053765'
               }}
             />
             <Layer
               id="radius-outline"
               type="line"
               paint={{
-                'line-color': '#10b981',
+                'line-color': '#2a7db4',
                 'line-width': 2,
                 'line-dasharray': [2, 2]
               }}
@@ -176,9 +176,9 @@ export default function MapboxMap({
           anchor="bottom"
         >
           <div className="relative flex items-center justify-center">
-            <div className="absolute w-12 h-12 bg-emerald-500/20 rounded-[6px] animate-ping" />
-            <div className="relative bg-white p-1 rounded-[6px] shadow-2xl border border-emerald-100">
-              <div className="bg-emerald-600 p-2 rounded-[6px] shadow-inner">
+            <div className="absolute w-15 h-15 bg-brand-dark rounded-[50%] animate-ping" />
+            <div className="relative bg-white p-1 rounded-[50%] shadow-2xl border border-blue-100">
+              <div className="bg-brand-blue p-2 rounded-[50%] shadow-inner">
                 <Navigation size={18} className="text-white fill-white" />
               </div>
             </div>
@@ -199,9 +199,9 @@ export default function MapboxMap({
           >
             <div className="flex flex-col items-center cursor-pointer group">
               <div className="relative">
-                <div className="absolute -inset-1 bg-emerald-500/20 rounded-[6px] blur-sm group-hover:bg-emerald-500/40 transition-all" />
-                <div className="relative bg-white p-1.5 rounded-[6px] shadow-lg border border-emerald-100 group-hover:scale-110 group-hover:-translate-y-1 transition-all duration-300">
-                  <div className="bg-gray-900 p-1.5 rounded-[6px]">
+                <div className="absolute -inset-1 bg-brand-dark rounded-[50%] blur-sm group-hover:bg-brand-text transition-all" />
+                <div className="relative bg-white p-1.5 rounded-[50%] shadow-lg border border-emerald-100 group-hover:scale-110 group-hover:-translate-y-1 transition-all duration-300">
+                  <div className="bg-gray-900 p-1.5 rounded-[50%]">
                     <Building2 size={14} className="text-white" />
                   </div>
                 </div>
@@ -240,7 +240,7 @@ export default function MapboxMap({
                 </div>
               ) : (
                 <div className="h-16 bg-emerald-50 flex items-center justify-center">
-                  <Building2 size={24} className="text-emerald-200" />
+                  <Building2 size={24} className="text-blue-200" />
                 </div>
               )}
               
@@ -262,7 +262,7 @@ export default function MapboxMap({
                 <div className="flex gap-2">
                   <button 
                     onClick={() => window.location.href = `/nearby?q=${selectedBusiness.name}`}
-                    className="flex-1 py-2 bg-emerald-600 text-white text-[10px] font-bold rounded-[6px] hover:bg-emerald-700 transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-900/10"
+                    className="flex-1 py-2 bg-brand-blue text-white text-[10px] font-bold rounded-[6px] hover:bg-brand-dark transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-900/10"
                   >
                     View Details
                   </button>
@@ -271,7 +271,7 @@ export default function MapboxMap({
                       href={selectedBusiness.website_url} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="p-2 bg-gray-50 text-gray-400 hover:text-emerald-600 rounded-[6px] transition-colors border border-gray-300"
+                      className="p-2 bg-gray-50 text-gray-400 hover:text-brand-blue rounded-[6px] transition-colors border border-gray-300"
                     >
                       <ExternalLink size={14} />
                     </a>

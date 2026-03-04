@@ -102,7 +102,7 @@ export default function AuthButton({ user: initialUser }: { user: any | null }) 
     return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center justify-center h-10 w-10 bg-emerald-600 text-white rounded-full font-normal text-sm focus:outline-none ring-offset-2 hover:bg-emerald-700 transition-all border-2 border-transparent hover:border-emerald-100 shadow-sm uppercase overflow-hidden">
+            <button className="flex items-center justify-center h-10 w-10 bg-brand-dark text-white rounded-full font-normal text-sm focus:outline-none ring-offset-2 hover:bg-brand-blue transition-all border-2 border-transparent hover:border-brand-sand shadow-sm uppercase overflow-hidden">
               {getInitials(displayName)}
             </button>
           </DropdownMenuTrigger>
@@ -113,7 +113,7 @@ export default function AuthButton({ user: initialUser }: { user: any | null }) 
               <p className="text-sm font-normal text-gray-900 truncate">
                 {displayName}
               </p>
-              <div className="mt-1 inline-flex px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] uppercase font-normal tracking-wider">
+              <div className="mt-1 inline-flex px-2 py-0.5 rounded-full bg-brand-sand/30 text-brand-text text-[10px] uppercase font-normal tracking-wider">
                 {user.role || 'customer'}
               </div>
             </div>
@@ -122,7 +122,7 @@ export default function AuthButton({ user: initialUser }: { user: any | null }) 
 
             <div className="py-1">
               {isAdminOrCeo(user.role) ? (
-                <DropdownMenuItem asChild className="cursor-pointer py-2.5 focus:bg-emerald-50 focus:text-emerald-700 rounded-[4px] transition-colors">
+                <DropdownMenuItem asChild className="cursor-pointer py-2.5 focus:bg-brand-sand/30 focus:text-brand-dark rounded-[4px] transition-colors">
                   <Link href="/admin/dashboard" className="flex items-center w-full">
                     <LayoutDashboard strokeWidth={1.5} className="mr-3 h-4 w-4 opacity-70" />
                     <span className="font-normal text-[13px]">Admin Control Center</span>
@@ -131,7 +131,7 @@ export default function AuthButton({ user: initialUser }: { user: any | null }) 
               ) : null}
 
               {isVendor(user.role) ? (
-                <DropdownMenuItem asChild className="cursor-pointer py-2.5 focus:bg-emerald-50 focus:text-emerald-700 rounded-[4px] transition-colors">
+                <DropdownMenuItem asChild className="cursor-pointer py-2.5 focus:bg-brand-sand/30 focus:text-brand-dark rounded-[4px] transition-colors">
                   <Link href="/my-business" className="flex items-center w-full">
                     <Briefcase strokeWidth={1.5} className="mr-3 h-4 w-4 opacity-70" />
                     <span className="font-normal text-[13px]">Vendor Dashboard</span>
@@ -139,7 +139,7 @@ export default function AuthButton({ user: initialUser }: { user: any | null }) 
                 </DropdownMenuItem>
               ) : null}
 
-              <DropdownMenuItem asChild className="cursor-pointer py-2.5 focus:bg-emerald-50 focus:text-emerald-700 rounded-[4px] transition-colors">
+              <DropdownMenuItem asChild className="cursor-pointer py-2.5 focus:bg-brand-sand/30 focus:text-brand-dark rounded-[4px] transition-colors">
                 <Link href="/profile" className="flex items-center w-full">
                   <UserIcon strokeWidth={1.5} className="mr-3 h-4 w-4 opacity-70" />
                   <span className="font-normal text-[13px]">User Settings</span>
@@ -173,7 +173,7 @@ export default function AuthButton({ user: initialUser }: { user: any | null }) 
       <div className="flex items-center">
         <Link
             href="/login"
-            className="px-6 py-2.5 text-sm font-normal text-white bg-emerald-600 rounded-[6px] hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-900/10 active:scale-[0.98]"
+            className="px-6 py-2.5 text-sm font-normal text-white bg-brand-dark rounded-[6px] hover:bg-brand-blue transition-all shadow-lg shadow-brand-dark/10 active:scale-[0.98]"
         >
           Sign In
         </Link>

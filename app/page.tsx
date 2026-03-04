@@ -83,7 +83,15 @@ export default function HomePage() {
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [isFetchingLocation, setIsFetchingLocation] = useState(false);
 
-  const featuredCategories = categories.slice(0, 7);
+  const featuredCategories = [
+    { name: 'Hotels & Restaurants', icon: '/icons/Hotels & Restaurants.png' },
+    { name: 'Vehicles & Automative', icon: '/icons/Vehicles & Automative.png' },
+    { name: 'Food & Dining', icon: '/icons/Food & Dining.png' },
+    { name: 'Home Appliances & Services', icon: '/icons/Home Appliances & Services.png' },
+    { name: 'Health & Medical', icon: '/icons/Health & Medical.png' },
+    { name: 'Travel & Tourism', icon: '/icons/Travel & Tourism.png' },
+    { name: 'Shopping & Retail', icon: '/icons/Shopping & Retail.png' },
+  ];
 
   const handleUseCurrentLocation = (autoSearch: boolean = false) => {
     if (navigator.geolocation) {
@@ -211,18 +219,18 @@ export default function HomePage() {
   return (
       <div className="min-h-screen bg-white font-normal">
         {/* --- HERO SECTION --- */}
-        <section className="relative h-[78vh] flex items-center justify-center overflow-hidden bg-green-950">
+        <section className="relative h-[78vh] flex items-center justify-center overflow-hidden bg-brand-dark">
           <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
 
           <div className="relative z-10 max-w-5xl px-6 text-center">
-            <span className="inline-block px-4 py-1.5 mb-6 text-[11px] tracking-[0.15em] uppercase text-emerald-400 border border-emerald-400/20 rounded-md">
+            <span className="inline-block px-4 py-1.5 mb-6 text-[11px] tracking-[0.15em] uppercase text-brand-sand border border-brand-sand/20 rounded-md">
               Sri Lanka Business Index
             </span>
             <h1 className="text-5xl md:text-6xl text-white mb-6 leading-tight tracking-tight">
               Find the best businesses in <br />
-              <span className="text-emerald-400">Sri Lanka</span>
+              <span className="text-brand-sand">Sri Lanka</span>
             </h1>
-            <p className="text-green-100/70 text-base mb-10 max-w-xl mx-auto leading-relaxed">
+            <p className="text-blue-100/70 text-base mb-10 max-w-xl mx-auto leading-relaxed">
               Explore verified local businesses, clinics, and luxury villas across the island.
             </p>
 
@@ -256,7 +264,7 @@ export default function HomePage() {
 
               <button
                   onClick={handleSearch}
-                  className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white text-base font-normal px-10 py-3 shadow-lg shadow-emerald-900/20 transition-all rounded-[6px]"
+                  className="w-full sm:w-auto bg-brand-gold hover:bg-brand-gold-light text-white text-base font-normal px-10 py-3 shadow-lg shadow-brand-gold/20 transition-all rounded-[6px]"
               >
                 Search
               </button>
@@ -274,7 +282,7 @@ export default function HomePage() {
         <section className="py-24 px-6 max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-14 px-2">
             <h2 className="text-2xl text-gray-800 tracking-tight font-normal">Browse Categories</h2>
-            <Link href="/categories" className="text-sm text-emerald-700 flex items-center hover:underline font-normal">
+            <Link href="/categories" className="text-sm text-brand-gold flex items-center hover:underline font-normal">
               View All <ChevronRight size={16} strokeWidth={1.5} className="ml-1" />
             </Link>
           </div>
@@ -284,14 +292,19 @@ export default function HomePage() {
                 <div
                     key={idx}
                     onClick={() => handleCategoryClick(cat.name)}
-                    className="group cursor-pointer flex flex-col items-center p-6 bg-gray-50/30 border border-gray-300 rounded-[6px] hover:bg-white hover:border-emerald-600/20 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                    className="group cursor-pointer flex flex-col items-center p-6 bg-white border border-gray-200 rounded-[12px] hover:border-brand-gold hover:shadow-xl hover:-translate-y-1 transition-all duration-300 select-none"
+                    onContextMenu={(e) => e.preventDefault()}
                 >
-                  <div className="p-4 rounded-[6px] mb-4 bg-emerald-50 text-emerald-700 opacity-90 transition-transform group-hover:scale-110 group-hover:bg-emerald-100 font-normal">
-                    {/* Assuming cat.icon is a React element, we can't easily inject strokeWidth if it's already rendered, 
-                        but we'll assume the categories defined in lib use default or consistent strokes */}
-                    {cat.icon}
+                  <div className="relative w-16 h-16 mb-4 transition-transform group-hover:scale-110 pointer-events-none">
+                    <Image 
+                      src={cat.icon} 
+                      alt={cat.name} 
+                      fill 
+                      className="object-contain"
+                      draggable={false}
+                    />
                   </div>
-                  <span className="text-gray-700 text-sm text-center group-hover:text-emerald-700 font-normal">{cat.name}</span>
+                  <span className="text-gray-700 text-[11px] font-medium text-center group-hover:text-brand-gold transition-colors leading-tight">{cat.name}</span>
                 </div>
             ))}
           </div>
@@ -305,14 +318,14 @@ export default function HomePage() {
                 <h2 className="text-2xl text-gray-900 tracking-tight font-normal">Featured Listings</h2>
                 <p className="text-sm text-gray-500 mt-2 font-normal">Discover handpicked and verified establishments across Sri Lanka</p>
               </div>
-              <Link href="/nearby" className="text-sm font-normal text-emerald-700 hover:text-emerald-800 transition-colors flex items-center gap-1 group">
+              <Link href="/nearby" className="text-sm font-normal text-brand-gold hover:text-brand-gold-light transition-colors flex items-center gap-1 group">
                 Explore All <ChevronRight size={16} strokeWidth={1.5} className="group-hover:translate-x-0.5 transition-transform" />
               </Link>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="group bg-white rounded-[6px] overflow-hidden border border-gray-300 hover:border-emerald-600/20 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full">
+                  <div key={i} className="group bg-white rounded-[6px] overflow-hidden border border-gray-300 hover:border-brand-gold/20 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full">
                     {/* Image Section */}
                     <div className="relative h-48 w-full overflow-hidden bg-gray-100">
                       <Image
@@ -323,13 +336,13 @@ export default function HomePage() {
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                       <div className="absolute top-3 left-3">
-                        <span className="bg-emerald-600 text-white text-[9px] font-normal uppercase tracking-[0.1em] px-2 py-1 rounded-[6px] shadow-sm">
+                        <span className="bg-brand-gold text-white text-[9px] font-normal uppercase tracking-[0.1em] px-2 py-1 rounded-[6px] shadow-sm">
                           Verified
                         </span>
                       </div>
                       <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
                         <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-[6px] shadow-lg text-gray-900">
-                          <Star size={10} strokeWidth={1.5} className="text-amber-400 fill-amber-400" />
+                          <Star size={10} strokeWidth={1.5} className="text-brand-gold fill-brand-gold" />
                           <span className="text-[10px] font-normal">4.9</span>
                         </div>
                       </div>
@@ -338,16 +351,16 @@ export default function HomePage() {
                     {/* Content Section */}
                     <div className="p-4 flex flex-col flex-1 font-normal">
                       <div className="mb-4">
-                        <p className="text-[10px] font-normal text-emerald-600 uppercase tracking-widest mb-1.5">
+                        <p className="text-[10px] font-normal text-brand-blue uppercase tracking-widest mb-1.5">
                           Hospitality & Leisure
                         </p>
-                        <h3 className="text-sm text-gray-900 font-normal group-hover:text-emerald-700 transition-colors line-clamp-1">
+                        <h3 className="text-sm text-gray-900 font-normal group-hover:text-brand-gold transition-colors line-clamp-1">
                           Victoria Luxury Villa {i}
                         </h3>
                       </div>
 
                       <div className="flex items-start text-gray-500 mb-6 flex-1">
-                        <MapPin size={12} strokeWidth={1.5} className="mr-2 mt-0.5 flex-shrink-0 text-emerald-600/70" />
+                        <MapPin size={12} strokeWidth={1.5} className="mr-2 mt-0.5 flex-shrink-0 text-brand-gold/70" />
                         <p className="text-[11px] leading-relaxed line-clamp-2 font-normal">
                           No 45, Gregory Lake Road, Nuwara Eliya
                         </p>
@@ -357,7 +370,7 @@ export default function HomePage() {
                         <span className="text-[10px] font-normal text-gray-400">#BUSINESS-{2024 + i}</span>
                         <button 
                           onClick={() => router.push('/nearby')}
-                          className="text-[11px] font-normal text-emerald-700 hover:text-emerald-800 flex items-center gap-1 group/btn"
+                          className="text-[11px] font-normal text-brand-dark hover:text-brand-blue flex items-center gap-1 group/btn"
                         >
                           View Details
                           <ChevronRight size={14} strokeWidth={1.5} className="group-hover/btn:translate-x-0.5 transition-transform" />
@@ -379,9 +392,9 @@ export default function HomePage() {
               viewport={{ once: true }}
               className="text-center mb-20"
             >
-              <span className="text-emerald-600 text-[10px] uppercase tracking-[0.2em] mb-4 block">Process</span>
+              <span className="text-brand-blue text-[10px] uppercase tracking-[0.2em] mb-4 block">Process</span>
               <h2 className="text-3xl text-gray-900 tracking-tight font-normal">How Live Discovery Works</h2>
-              <div className="w-12 h-1 bg-emerald-600 mx-auto mt-6 rounded-full"></div>
+              <div className="w-12 h-1 bg-brand-dark mx-auto mt-6 rounded-full"></div>
             </motion.div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-16 relative font-normal">
@@ -398,7 +411,7 @@ export default function HomePage() {
                       repeat: Infinity, 
                       ease: "linear" 
                     }}
-                    className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-400 to-transparent"
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-brand-gold-light to-transparent"
                   />
                 </div>
                 <motion.div
@@ -406,7 +419,7 @@ export default function HomePage() {
                   transition={{ duration: 2, repeat: Infinity }}
                   className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2"
                 >
-                  <ChevronRight size={16} strokeWidth={1.5} className="text-emerald-500" />
+                  <ChevronRight size={16} strokeWidth={1.5} className="text-brand-gold" />
                 </motion.div>
               </div>
 
@@ -423,7 +436,7 @@ export default function HomePage() {
                       ease: "linear",
                       delay: 1
                     }}
-                    className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-400 to-transparent"
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-brand-gold-light to-transparent"
                   />
                 </div>
                 <motion.div
@@ -431,7 +444,7 @@ export default function HomePage() {
                   transition={{ duration: 2, repeat: Infinity, delay: 1 }}
                   className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2"
                 >
-                  <ChevronRight size={16} strokeWidth={1.5} className="text-emerald-500" />
+                  <ChevronRight size={16} strokeWidth={1.5} className="text-brand-gold" />
                 </motion.div>
               </div>
 
@@ -447,9 +460,9 @@ export default function HomePage() {
                   <motion.div 
                     animate={{ scale: [1, 1.15, 1], opacity: [0.1, 0.3, 0.1] }}
                     transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute -inset-4 bg-emerald-400 rounded-full blur-xl"
+                    className="absolute -inset-4 bg-brand-gold-light rounded-full blur-xl"
                   />
-                  <div className="w-24 h-24 rounded-[50%] bg-gray-50 border border-gray-100 text-emerald-600 flex items-center justify-center mb-8 group-hover:border-emerald-200 transition-colors relative z-10 overflow-hidden">
+                  <div className="w-24 h-24 rounded-[50%] bg-gray-50 border border-gray-100 text-brand-blue flex items-center justify-center mb-8 group-hover:border-brand-sand transition-colors relative z-10 overflow-hidden">
                     <Navigation size={32} strokeWidth={1.5} />
                     <motion.div 
                       animate={{ x: ['-100%', '200%'] }}
@@ -476,9 +489,9 @@ export default function HomePage() {
                   <motion.div 
                     animate={{ scale: [1, 1.15, 1], opacity: [0.1, 0.3, 0.1] }}
                     transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                    className="absolute -inset-4 bg-emerald-400 rounded-full blur-xl"
+                    className="absolute -inset-4 bg-brand-gold-light rounded-full blur-xl"
                   />
-                  <div className="w-24 h-24 rounded-[50%] bg-gray-50 border border-gray-100 text-emerald-600 flex items-center justify-center mb-8 group-hover:border-emerald-200 transition-colors relative z-10 overflow-hidden">
+                  <div className="w-24 h-24 rounded-[50%] bg-gray-50 border border-gray-100 text-brand-blue flex items-center justify-center mb-8 group-hover:border-brand-sand transition-colors relative z-10 overflow-hidden">
                     <Search size={32} strokeWidth={1.5} />
                     <motion.div 
                       animate={{ x: ['-100%', '200%'] }}
@@ -505,9 +518,9 @@ export default function HomePage() {
                   <motion.div 
                     animate={{ scale: [1, 1.15, 1], opacity: [0.1, 0.3, 0.1] }}
                     transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-                    className="absolute -inset-4 bg-emerald-400 rounded-full blur-xl"
+                    className="absolute -inset-4 bg-brand-gold-light rounded-full blur-xl"
                   />
-                  <div className="w-24 h-24 rounded-[50%] bg-gray-50 border border-gray-100 text-emerald-600 flex items-center justify-center mb-8 group-hover:border-emerald-200 transition-colors relative z-10 overflow-hidden">
+                  <div className="w-24 h-24 rounded-[50%] bg-gray-50 border border-gray-100 text-brand-blue flex items-center justify-center mb-8 group-hover:border-brand-sand transition-colors relative z-10 overflow-hidden">
                     <MapPin size={32} strokeWidth={1.5} />
                     <motion.div 
                       animate={{ x: ['-100%', '200%'] }}
@@ -528,7 +541,7 @@ export default function HomePage() {
               initial={{ opacity: 0, scale: 0.95 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
-              className="mt-24 p-12 bg-green-950 rounded-[6px] relative overflow-hidden text-center shadow-2xl"
+              className="mt-24 p-12 bg-brand-dark rounded-[6px] relative overflow-hidden text-center shadow-2xl"
             >
               <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
               <motion.div 
@@ -537,18 +550,18 @@ export default function HomePage() {
                   scale: [1, 1.05, 1] 
                 }}
                 transition={{ duration: 8, repeat: Infinity }}
-                className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 to-transparent"
+                className="absolute inset-0 bg-gradient-to-br from-brand-gold/20 to-transparent"
               />
               <div className="relative z-10 font-normal">
                 <h3 className="text-3xl text-white mb-6 font-normal">Ready to find something nearby?</h3>
-                <p className="text-green-100/70 text-base mb-10 max-w-xl mx-auto leading-relaxed font-normal">
+                <p className="text-brand-sand text-base mb-10 max-w-xl mx-auto leading-relaxed">
                   Start your discovery journey now and support verified local businesses in your community across Sri Lanka.
                 </p>
                 <motion.button 
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => handleUseCurrentLocation(true)}
-                  className="bg-white text-black px-10 py-4 rounded-[6px] transition-all shadow-2xl shadow-emerald-900/40 border font-normal"
+                  className="bg-white text-black px-10 py-4 rounded-[6px] transition-all shadow-2xl shadow-brand-dark/40 border font-normal"
                 >
                   Start Discovery Now
                 </motion.button>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -12,8 +12,8 @@ import {
   Building2, 
   Phone, 
   Mail, 
-  User as UserIcon,
   MapPin,
+  UserIcon,
   Eye,
   FileText,
   Clock,
@@ -26,7 +26,6 @@ import { Business } from '@/lib/types';
 import {
   Dialog,
   DialogContent,
-  DialogTitle,
 } from "@/components/ui/dialog";
 
 export default function AdminDashboard() {
@@ -59,7 +58,7 @@ export default function AdminDashboard() {
     checkAdmin();
   }, [checkAdmin]);
 
-  const { data: businesses = [], isLoading: loading, error } = useQuery({
+  const { data: businesses = [], isLoading: loading } = useQuery({
     queryKey: ['admin-businesses', filter],
     queryFn: async () => {
       let query = supabase
@@ -132,7 +131,7 @@ export default function AdminDashboard() {
       <main className="max-w-7xl mx-auto px-4 md:px-8 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
-          <h1 className="text-2xl font-normal text-gray-900">Overview</h1>
+          <h1 className="text-2xl font-normal text-brand-dark">Overview</h1>
           <p className="text-sm text-gray-500 mt-1">Manage your platform&apos;s businesses and requests.</p>
         </div>
 
@@ -140,7 +139,7 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <div className="bg-white p-6 rounded-[6px] border border-gray-300 shadow-sm">
             <p className="text-xs font-normal text-gray-400 uppercase tracking-wider">Pending Approvals</p>
-            {loading ? <Skeleton className="h-9 w-12 mt-2" /> : <h2 className="text-3xl font-medium text-emerald-600 mt-2">{stats.pending}</h2>}
+            {loading ? <Skeleton className="h-9 w-12 mt-2" /> : <h2 className="text-3xl font-medium text-brand-dark mt-2">{stats.pending}</h2>}
           </div>
           <div className="bg-white p-6 rounded-[6px] border border-gray-300 shadow-sm">
             <p className="text-xs font-normal text-gray-400 uppercase tracking-wider">Total Businesses</p>
@@ -151,11 +150,11 @@ export default function AdminDashboard() {
         {/* Controls Bar */}
         <div className="flex flex-col lg:flex-row gap-4 mb-8">
           <div className="relative flex-grow group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-emerald-500 transition-colors" size={18} />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-blue transition-colors" size={18} />
             <input 
               type="text" 
               placeholder="Search by business or owner name..." 
-              className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-[6px] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all font-normal text-sm shadow-sm"
+              className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-[6px] focus:outline-none focus:ring-1 focus:ring-brand-blue transition-all font-normal text-sm shadow-sm"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -168,7 +167,7 @@ export default function AdminDashboard() {
                 onClick={() => setFilter(s)}
                 className={`px-5 py-3 rounded-[6px] text-sm font-normal capitalize transition-all border whitespace-nowrap ${
                   filter === s 
-                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-lg shadow-emerald-900/10' 
+                    ? 'bg-brand-dark text-white border-brand-dark shadow-lg shadow-brand-dark/10' 
                     : 'bg-white text-gray-500 border-gray-300 hover:bg-gray-50'
                 }`}
               >
@@ -208,7 +207,7 @@ export default function AdminDashboard() {
             </div>
           ) : (
             filteredBusinesses.map((business) => (
-              <div key={business.id} className="bg-white border border-gray-300 rounded-[6px] p-6 hover:shadow-xl hover:shadow-emerald-950/5 transition-all group">
+              <div key={business.id} className="bg-white border border-gray-300 rounded-[6px] p-6 hover:shadow-xl hover:shadow-brand-dark/5 transition-all group">
                 <div className="flex flex-col lg:flex-row gap-6">
                   {/* Logo/Image Section */}
                   <div className="w-20 h-20 relative flex-shrink-0 bg-gray-50 rounded-[6px] border border-gray-300 overflow-hidden flex items-center justify-center">
@@ -226,15 +225,15 @@ export default function AdminDashboard() {
                         <div className="flex items-center gap-3">
                           <h3 className="text-lg font-normal text-gray-900">{business.name}</h3>
                           <span className={`px-2.5 py-0.5 rounded-[6px] text-[10px] uppercase tracking-wider font-normal ${
-                            business.status === 'approved' ? 'bg-emerald-50 text-emerald-700' :
+                            business.status === 'approved' ? 'bg-brand-sand/20 text-brand-gold' :
                             business.status === 'rejected' ? 'bg-red-50 text-red-700' :
-                            'bg-amber-50 text-amber-700'
+                            'bg-brand-blue/10 text-brand-blue'
                           }`}>
                             {business.status}
                           </span>
                         </div>
                         <p className="text-xs text-gray-400 font-normal mt-1 flex items-center gap-2">
-                          <MapPin size={12} className="text-emerald-500" />
+                          <MapPin size={12} className="text-brand-blue" />
                           {business.address}
                         </p>
                       </div>
@@ -250,7 +249,7 @@ export default function AdminDashboard() {
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-gray-300 pt-4">
                       <div className="flex items-center gap-3 text-xs text-gray-600 font-normal">
-                        <UserIcon size={14} className="text-gray-300" />
+                        <User size={14} className="text-gray-300" />
                         {business.owner_name}
                       </div>
                       <div className="flex items-center gap-3 text-xs text-gray-600 font-normal">
@@ -270,7 +269,7 @@ export default function AdminDashboard() {
                       <>
                         <button 
                           onClick={() => handleUpdateStatus(business.id, business.owner_id as string, 'approved')}
-                          className="flex-grow py-2.5 bg-emerald-600 text-white rounded-[6px] text-xs font-normal hover:bg-emerald-700 flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-900/10"
+                          className="flex-grow py-2.5 bg-brand-dark text-white rounded-[6px] text-xs font-normal hover:bg-brand-blue flex items-center justify-center gap-2 transition-all shadow-md shadow-brand-dark/10"
                         >
                           <CheckCircle size={14} /> Approve
                         </button>
@@ -321,14 +320,14 @@ export default function AdminDashboard() {
                       <h2 className="text-2xl font-normal text-gray-900">{selectedBusiness.name}</h2>
                       <div className="flex items-center gap-4 mt-2">
                         <span className={`px-2.5 py-0.5 rounded-[6px] text-[10px] uppercase tracking-wider font-normal ${
-                          selectedBusiness.status === 'approved' ? 'bg-emerald-50 text-emerald-700' :
+                          selectedBusiness.status === 'approved' ? 'bg-brand-sand/20 text-brand-gold' :
                           selectedBusiness.status === 'rejected' ? 'bg-red-50 text-red-700' :
-                          'bg-amber-50 text-amber-700'
+                          'bg-brand-blue/10 text-brand-blue'
                         }`}>
                           {selectedBusiness.status}
                         </span>
                         <span className="text-xs text-gray-400 flex items-center gap-1.5">
-                          <MapPin size={12} className="text-emerald-500" /> {selectedBusiness.address}
+                          <MapPin size={12} className="text-brand-blue" /> {selectedBusiness.address}
                         </span>
                       </div>
                     </div>
@@ -368,7 +367,7 @@ export default function AdminDashboard() {
                             <div className="p-1.5 bg-white  rounded-[6px] shadow-sm border border-gray-300 ">
                               <ExternalLink size={14} className="text-gray-400" />
                             </div>
-                            <span className="text-sm text-emerald-600  truncate">
+                            <span className="text-sm text-brand-dark  truncate">
                               {selectedBusiness.website_name || selectedBusiness.website_url}
                             </span>
                           </div>
@@ -393,8 +392,8 @@ export default function AdminDashboard() {
                               </div>
                             </div>
                             <div className="flex items-center gap-3">
-                              <div className="h-8 w-8 rounded-[6px] bg-emerald-50  flex items-center justify-center">
-                                <Briefcase size={14} className="text-emerald-600 " />
+                              <div className="h-8 w-8 rounded-[6px] bg-brand-sand/20  flex items-center justify-center">
+                                <Briefcase size={14} className="text-brand-dark " />
                               </div>
                               <div className="min-w-0">
                                 <p className="text-xs text-gray-400 font-normal">Owner NIC</p>
@@ -452,7 +451,7 @@ export default function AdminDashboard() {
                         handleUpdateStatus(selectedBusiness.id, selectedBusiness.owner_id as string, 'approved');
                         setSelectedBusiness(null);
                       }}
-                      className="px-8 py-2.5 bg-emerald-600 text-white rounded-[6px] text-xs font-normal hover:bg-emerald-700 flex items-center gap-2 transition-all shadow-lg shadow-emerald-900/20"
+                      className="px-8 py-2.5 bg-brand-dark text-white rounded-[6px] text-xs font-normal hover:bg-brand-blue flex items-center gap-2 transition-all shadow-lg shadow-brand-dark/20"
                     >
                       <CheckCircle size={16} /> Approve Business
                     </button>

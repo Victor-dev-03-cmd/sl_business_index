@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -8,6 +8,7 @@ import {
   Search, 
   User,
   Ban,
+  CheckCircle,
   Shield, 
   Calendar,
   ChevronLeft,
@@ -142,8 +143,8 @@ export default function AdminUsersPage() {
 
   const getStatusBadge = (status: string) => {
     return status === 'active' ? (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-100">
-        <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span> Active
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-sand/20 text-brand-gold border border-brand-sand/30">
+        <span className="w-1.5 h-1.5 rounded-full bg-brand-gold"></span> Active
       </span>
     ) : (
       <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-100">
@@ -155,7 +156,7 @@ export default function AdminUsersPage() {
   // Stats Calculation
   const stats = [
     { label: 'Total Users', value: profiles.length, icon: User, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { label: 'Vendors', value: profiles.filter(p => p.role === 'vendor').length, icon: ShieldCheck, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { label: 'Vendors', value: profiles.filter(p => p.role === 'vendor').length, icon: ShieldCheck, color: 'text-brand-dark', bg: 'bg-brand-sand/20' },
     { label: 'Admins', value: profiles.filter(p => ['admin', 'ceo'].includes(p.role)).length, icon: Shield, color: 'text-purple-600', bg: 'bg-purple-50' },
     { label: 'Suspended', value: profiles.filter(p => p.status === 'suspended').length, icon: Ban, color: 'text-red-600', bg: 'bg-red-50' },
   ];
@@ -174,7 +175,7 @@ export default function AdminUsersPage() {
             <button className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-[6px] text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
               <Download size={16} /> Export CSV
             </button>
-            <button className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-[6px] text-sm font-medium hover:bg-emerald-700 transition-colors shadow-sm shadow-emerald-200">
+            <button className="inline-flex items-center gap-2 px-4 py-2 bg-brand-dark text-white rounded-[6px] text-sm font-medium hover:bg-brand-blue transition-colors shadow-sm shadow-brand-dark/10">
               <User size={16} /> Add User
             </button>
           </div>
@@ -204,7 +205,7 @@ export default function AdminUsersPage() {
             <input 
               type="text" 
               placeholder="Search by name, email or username..." 
-              className="w-full pl-10 pr-4 py-2.5 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-sm"
+              className="w-full pl-10 pr-4 py-2.5 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue transition-all text-sm"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -277,11 +278,11 @@ export default function AdminUsersPage() {
               </div>
               <h3 className="text-lg font-medium text-gray-900">No users found</h3>
               <p className="text-gray-500 text-sm mt-1 max-w-sm mx-auto">
-                We couldn't find any users matching your search criteria. Try adjusting your filters.
+                We couldn&apos;t find any users matching your search criteria. Try adjusting your filters.
               </p>
               <button 
                 onClick={() => { setSearch(''); setRoleFilter('all'); setStatusFilter('all'); }}
-                className="mt-6 text-emerald-600 font-medium hover:text-emerald-700 text-sm"
+                className="mt-6 text-brand-dark font-medium hover:text-brand-blue text-sm"
               >
                 Clear all filters
               </button>
@@ -348,7 +349,7 @@ export default function AdminUsersPage() {
                                 onClick={() => toggleStatus(profile.id, profile.status || 'active')}
                                 className={`gap-2 text-xs cursor-pointer hover:bg-gray-50 ${profile.status === 'suspended' ? 'text-green-600 focus:text-green-700 focus:bg-green-50' : 'text-red-600 focus:text-red-700 focus:bg-red-50'}`}
                               >
-                                {profile.status === 'suspended' ? <CheckCircle2 size={14} /> : <Ban size={14} />}
+                                {profile.status === 'suspended' ? <CheckCircle size={14} /> : <Ban size={14} />}
                                 {profile.status === 'suspended' ? 'Activate User' : 'Suspend User'}
                               </DropdownMenuItem>
                             </DropdownMenuContent>

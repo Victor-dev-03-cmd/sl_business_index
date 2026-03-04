@@ -44,7 +44,7 @@ export default function TownSelector({
           <button
             type="button"
             className={cn(
-              "flex items-center justify-between w-full px-4 py-2.5 text-sm font-medium text-left bg-white border border-gray-200 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all shadow-sm",
+              "flex items-center justify-between w-full px-4 py-2.5 text-sm font-medium text-left bg-white border border-gray-200 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-dark transition-all shadow-sm",
               className
             )}
           >

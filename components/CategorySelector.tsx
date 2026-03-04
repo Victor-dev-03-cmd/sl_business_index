@@ -28,7 +28,7 @@ export default function CategorySelector({ value, onChange }: CategorySelectorPr
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className="w-full flex items-center justify-between px-4 py-3.5 rounded-[6px] border border-gray-300 bg-gray-50/50 focus:bg-white focus:ring-1 focus:ring-green-600 outline-none transition-all text-left"
+          className="w-full flex items-center justify-between px-4 py-3.5 rounded-[6px] border border-gray-300 bg-gray-50/50 focus:bg-white focus:ring-1 focus:ring-blue-900 outline-none transition-all text-left"
         >
           <span className={cn("block truncate", !value && "text-gray-400")}>
             {value ? categories.find((c) => c.name === value)?.name : "Select a category..."}
@@ -54,13 +54,13 @@ export default function CategorySelector({ value, onChange }: CategorySelectorPr
                       className="flex items-center px-4 py-2 hover:bg-green-50 cursor-pointer transition-colors"
                     >
                       <div className="flex items-center flex-1">
-                        <span className="text-green-600 mr-3">{category.icon}</span>
+                        <span className="text-brand-dark  mr-3">{category.icon}</span>
                         <span className="text-sm font-normal text-gray-700">{category.name}</span>
                       </div>
                       <Check
                         className={cn(
                           "ml-auto h-4 w-4",
-                          value === category.name ? "opacity-100 text-green-600" : "opacity-0"
+                          value === category.name ? "opacity-100 text-brand-dark " : "opacity-0"
                         )}
                       />
                     </CommandItem>

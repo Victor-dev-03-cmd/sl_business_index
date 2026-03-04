@@ -91,11 +91,11 @@ export default function AdminBusinessesPage() {
         {/* Search Bar */}
         <div className="mb-8 max-w-xl">
           <div className="relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-emerald-500 transition-colors h-4 w-4" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-blue transition-colors h-4 w-4" />
             <input 
               type="text" 
               placeholder="Search active businesses..." 
-              className="w-full pl-12 pr-4 py-3 bg-white  border border-gray-300  rounded-[6px] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all font-normal text-sm shadow-sm "
+              className="w-full pl-12 pr-4 py-3 bg-white  border border-gray-300  rounded-[6px] focus:outline-none focus:ring-1 focus:ring-brand-blue transition-all font-normal text-sm shadow-sm "
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -188,7 +188,7 @@ export default function AdminBusinessesPage() {
                         <div className="flex items-center justify-end gap-2">
                            <button 
                              onClick={() => setSelectedBusiness(business)}
-                             className="p-2 hover:bg-gray-100  rounded-[6px] transition-colors text-gray-400 hover:text-emerald-600"
+                             className="p-2 hover:bg-gray-100  rounded-[6px] transition-colors text-gray-400 hover:text-brand-dark"
                              title="Quick View"
                            >
                              <Eye size={16} />
@@ -198,7 +198,7 @@ export default function AdminBusinessesPage() {
                                <MoreVertical size={16} className="text-gray-400" />
                              </DropdownMenuTrigger>
                              <DropdownMenuContent align="end" className="w-40 bg-white  border-gray-300 ">
-                               <DropdownMenuItem className="flex items-center gap-2 cursor-pointer py-2 px-3 text-xs font-normal focus:bg-emerald-50  focus:text-emerald-600 ">
+                               <DropdownMenuItem className="flex items-center gap-2 cursor-pointer py-2 px-3 text-xs font-normal focus:bg-brand-sand/20  focus:text-brand-dark ">
                                  <Edit size={14} /> Edit Business
                                </DropdownMenuItem>
                                <DropdownMenuItem className="flex items-center gap-2 cursor-pointer py-2 px-3 text-xs font-normal focus:bg-blue-50  focus:text-blue-600 " onClick={() => window.open(`/nearby?q=${business.name}`, '_blank')}>
@@ -247,11 +247,11 @@ export default function AdminBusinessesPage() {
                     <div>
                       <h2 className="text-2xl font-normal text-gray-900 ">{selectedBusiness.name}</h2>
                       <div className="flex items-center gap-4 mt-2">
-                        <span className={`px-2.5 py-0.5 rounded-[6px] text-[10px] uppercase tracking-wider font-normal bg-emerald-50 text-emerald-700 border border-emerald-100`}>
+                        <span className={`px-2.5 py-0.5 rounded-[6px] text-[10px] uppercase tracking-wider font-normal bg-brand-sand/20 text-brand-gold border border-brand-sand/30`}>
                           Active
                         </span>
                         <span className="text-xs text-gray-400  flex items-center gap-1.5 font-normal">
-                          <MapPin size={12} className="text-emerald-500" /> {selectedBusiness.address}
+                          <MapPin size={12} className="text-brand-blue" /> {selectedBusiness.address}
                         </span>
                       </div>
                     </div>
@@ -296,7 +296,7 @@ export default function AdminBusinessesPage() {
                             <div className="p-1.5 bg-white  rounded-[6px] shadow-sm border border-gray-300 ">
                               <ExternalLink size={14} className="text-gray-400" />
                             </div>
-                            <span className="text-sm text-emerald-600  truncate font-normal">
+                            <span className="text-sm text-brand-dark  truncate font-normal">
                               {selectedBusiness.website_name || selectedBusiness.website_url}
                             </span>
                           </div>
@@ -322,7 +322,7 @@ export default function AdminBusinessesPage() {
                             </div>
                             <div className="flex items-center gap-3">
                               <div className="h-8 w-8 rounded-[6px] bg-emerald-50  flex items-center justify-center">
-                                <Briefcase size={14} className="text-emerald-600 " />
+                                <Briefcase size={14} className="text-brand-dark " />
                               </div>
                               <div className="min-w-0">
                                 <p className="text-xs text-gray-400 font-normal">Owner NIC</p>
