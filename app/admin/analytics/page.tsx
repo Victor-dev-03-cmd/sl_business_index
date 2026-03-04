@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import { useQuery } from '@tanstack/react-query';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   TrendingUp, 
   Users, 
@@ -14,35 +15,24 @@ import {
 } from 'lucide-react';
 
 export default function AdminAnalyticsPage() {
-  const [stats, setStats] = useState({
-    totalUsers: 0,
-    totalBusinesses: 0,
-    pendingRequests: 0,
-    totalViews: 12450 // Placeholder for now
+  const { data: stats = { totalUsers: 0, totalBusinesses: 0, pendingRequests: 0, totalViews: 12450 }, isLoading: loading } = useQuery({
+    queryKey: ['admin-analytics'],
+    queryFn: async () => {
+      const [usersRes, businessesRes, pendingRes] = await Promise.all([
+        supabase.from('profiles').select('*', { count: 'exact', head: true }),
+        supabase.from('businesses').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
+        supabase.from('businesses').select('*', { count: 'exact', head: true }).eq('status', 'pending')
+      ]);
+
+      return {
+        totalUsers: usersRes.count || 0,
+        totalBusinesses: businessesRes.count || 0,
+        pendingRequests: pendingRes.count || 0,
+        totalViews: 12450
+      };
+    },
+    staleTime: 5 * 60 * 1000,
   });
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchStats();
-  }, []);
-
-  const fetchStats = async () => {
-    setLoading(true);
-    
-    const [usersRes, businessesRes, pendingRes] = await Promise.all([
-      supabase.from('profiles').select('*', { count: 'exact', head: true }),
-      supabase.from('businesses').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
-      supabase.from('businesses').select('*', { count: 'exact', head: true }).eq('status', 'pending')
-    ]);
-
-    setStats({
-      totalUsers: usersRes.count || 0,
-      totalBusinesses: businessesRes.count || 0,
-      pendingRequests: pendingRes.count || 0,
-      totalViews: 12450
-    });
-    setLoading(false);
-  };
 
   const statCards = [
     { name: 'Total Users', value: stats.totalUsers, change: '+12%', trending: 'up', icon: Users, color: 'blue' },
@@ -84,9 +74,9 @@ export default function AdminAnalyticsPage() {
               </div>
               <div>
                 <p className="text-sm font-normal text-gray-500 ">{stat.name}</p>
-                <p className="text-2xl font-normal text-gray-900  mt-1">
-                  {loading ? <span className="inline-block w-12 h-6 bg-gray-100  animate-pulse rounded" /> : stat.value}
-                </p>
+                <div className="text-2xl font-normal text-gray-900  mt-1">
+                  {loading ? <Skeleton className="h-8 w-20" /> : stat.value}
+                </div>
               </div>
             </div>
           ))}

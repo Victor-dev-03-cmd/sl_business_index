@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useMemo } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Search, 
   Building2, 
@@ -17,8 +19,6 @@ import {
   Clock,
   Briefcase,
   User,
-  CheckCircle,
-  XCircle
 } from 'lucide-react';
 import Image from 'next/image';
 import { Business } from '@/lib/types';
@@ -34,49 +34,51 @@ import {
 } from "@/components/ui/dialog";
 
 export default function AdminBusinessesPage() {
-  const [businesses, setBusinesses] = useState<Business[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
 
-  useEffect(() => {
-    fetchBusinesses();
-  }, []);
+  const { data: businesses = [], isLoading: loading } = useQuery({
+    queryKey: ['admin-businesses-active'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('businesses')
+        .select('*')
+        .eq('status', 'approved')
+        .order('name', { ascending: true });
 
-  const fetchBusinesses = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('businesses')
-      .select('*')
-      .eq('status', 'approved')
-      .order('name', { ascending: true });
+      if (error) throw error;
+      return data as Business[];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-    if (data) {
-      setBusinesses(data);
-    }
-    setLoading(false);
-  };
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string | number) => {
+      const { error } = await supabase
+        .from('businesses')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-businesses-active'] });
+      setSelectedBusiness(null);
+    },
+  });
 
   const handleDelete = async (id: string | number) => {
     if (!confirm('Are you sure you want to delete this business? This action cannot be undone.')) return;
-
-    const { error } = await supabase
-      .from('businesses')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      alert('Error deleting business');
-    } else {
-      setBusinesses(businesses.filter(b => b.id !== id));
-      setSelectedBusiness(null);
-    }
+    deleteMutation.mutate(id);
   };
 
-  const filteredBusinesses = businesses.filter(b => 
-    b.name.toLowerCase().includes(search.toLowerCase()) || 
-    (b.owner_name?.toLowerCase() || '').includes(search.toLowerCase())
-  );
+  const filteredBusinesses = useMemo(() => {
+    return businesses.filter(b => 
+      b.name.toLowerCase().includes(search.toLowerCase()) || 
+      (b.owner_name?.toLowerCase() || '').includes(search.toLowerCase())
+    );
+  }, [businesses, search]);
 
   return (
     <div className="min-h-full bg-gray-50/50  transition-colors">
@@ -103,8 +105,31 @@ export default function AdminBusinessesPage() {
         {/* Businesses Table */}
         <div className="bg-white  rounded-[6px] border border-gray-300  shadow-sm overflow-hidden text-sm">
           {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="animate-spin rounded-[6px] h-8 w-8 border-b-2 border-emerald-600"></div>
+            <div className="p-0">
+              <div className="border-b border-gray-200 bg-gray-50/50 p-4 grid grid-cols-5 gap-4">
+                {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-4 w-20" />)}
+              </div>
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="p-4 grid grid-cols-5 gap-4 border-b border-gray-100">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-10 w-10 flex-shrink-0" />
+                    <div className="space-y-2 flex-grow">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-3 w-1/2" />
+                    </div>
+                  </div>
+                  <Skeleton className="h-6 w-24 my-auto" />
+                  <Skeleton className="h-4 w-12 my-auto" />
+                  <div className="space-y-2 my-auto">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </div>
+                  <div className="flex justify-end gap-2 my-auto">
+                    <Skeleton className="h-8 w-8" />
+                    <Skeleton className="h-8 w-8" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : filteredBusinesses.length === 0 ? (
             <div className="text-center py-24">

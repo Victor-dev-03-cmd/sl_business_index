@@ -1,53 +1,42 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   CheckCircle, 
   XCircle, 
   Search, 
-  Filter, 
   Building2, 
   Phone, 
   Mail, 
   User as UserIcon,
-  ShieldCheck,
   MapPin,
-  ExternalLink,
-  ChevronRight,
-  MoreVertical,
   Eye,
   FileText,
   Clock,
   Briefcase,
   User,
-  Image as ImageIcon
+  ExternalLink,
 } from 'lucide-react';
 import Image from 'next/image';
 import { Business } from '@/lib/types';
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 
 export default function AdminDashboard() {
-  const [businesses, setBusinesses] = useState<Business[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
   const [search, setSearch] = useState('');
-  const [stats, setStats] = useState({ pending: 0, total: 0 });
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
   const router = useRouter();
 
-  useEffect(() => {
-    checkAdmin();
-    fetchBusinesses();
-  }, [filter]);
-
-  const checkAdmin = async () => {
+  const checkAdmin = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       router.push('/login');
@@ -64,54 +53,79 @@ export default function AdminDashboard() {
     if (role !== 'admin' && role !== 'ceo') {
       router.push('/');
     }
-  };
+  }, [router]);
 
-  const fetchBusinesses = async () => {
-    setLoading(true);
-    let query = supabase
-      .from('businesses')
-      .select('*')
-      .order('created_at', { ascending: false });
+  useEffect(() => {
+    checkAdmin();
+  }, [checkAdmin]);
 
-    if (filter !== 'all') {
-      query = query.eq('status', filter);
-    }
+  const { data: businesses = [], isLoading: loading, error } = useQuery({
+    queryKey: ['admin-businesses', filter],
+    queryFn: async () => {
+      let query = supabase
+        .from('businesses')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-    const { data, error } = await query;
+      if (filter !== 'all') {
+        query = query.eq('status', filter);
+      }
 
-    if (data) {
-      setBusinesses(data);
-      
-      // Calculate stats
-      const total = data.length;
-      const pendingCount = data.filter(b => b.status === 'pending').length;
-      setStats({ pending: pendingCount, total });
-    }
-    setLoading(false);
-  };
+      const { data, error } = await query;
+      if (error) throw error;
+      return data as Business[];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const handleUpdateStatus = async (id: string | number, owner_id: string, status: 'approved' | 'rejected') => {
-    const { error } = await supabase
-      .from('businesses')
-      .update({ status })
-      .eq('id', id);
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ id, owner_id, status }: { id: string | number, owner_id: string, status: 'approved' | 'rejected' }) => {
+      const { error } = await supabase
+        .from('businesses')
+        .update({ status })
+        .eq('id', id);
 
-    if (!error) {
-      setBusinesses(businesses.map(b => b.id === id ? { ...b, status } : b));
-      // Update role of owner to vendor if approved
+      if (error) throw error;
+
       if (status === 'approved' && owner_id) {
         await supabase
           .from('profiles')
           .update({ role: 'vendor' })
           .eq('id', owner_id);
       }
-    }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-businesses'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
+    },
+  });
+
+  const { data: stats = { pending: 0, total: 0 } } = useQuery({
+    queryKey: ['admin-stats'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('businesses')
+        .select('status');
+      
+      if (error) throw error;
+
+      const total = data.length;
+      const pendingCount = data.filter(b => b.status === 'pending').length;
+      return { pending: pendingCount, total };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const handleUpdateStatus = (id: string | number, owner_id: string, status: 'approved' | 'rejected') => {
+    updateStatusMutation.mutate({ id, owner_id, status });
   };
 
-  const filteredBusinesses = businesses.filter(b => 
-    b.name.toLowerCase().includes(search.toLowerCase()) || 
-    (b.owner_name?.toLowerCase() || '').includes(search.toLowerCase())
-  );
+  const filteredBusinesses = useMemo(() => {
+    return businesses.filter(b => 
+      b.name.toLowerCase().includes(search.toLowerCase()) || 
+      (b.owner_name?.toLowerCase() || '').includes(search.toLowerCase())
+    );
+  }, [businesses, search]);
 
   return (
     <div className="min-h-full bg-gray-50/50 transition-colors">
@@ -119,18 +133,18 @@ export default function AdminDashboard() {
         {/* Welcome Section */}
         <div className="mb-8">
           <h1 className="text-2xl font-normal text-gray-900">Overview</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage your platform's businesses and requests.</p>
+          <p className="text-sm text-gray-500 mt-1">Manage your platform&apos;s businesses and requests.</p>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <div className="bg-white p-6 rounded-[6px] border border-gray-300 shadow-sm">
             <p className="text-xs font-normal text-gray-400 uppercase tracking-wider">Pending Approvals</p>
-            <h2 className="text-3xl font-medium text-emerald-600 mt-2">{stats.pending}</h2>
+            {loading ? <Skeleton className="h-9 w-12 mt-2" /> : <h2 className="text-3xl font-medium text-emerald-600 mt-2">{stats.pending}</h2>}
           </div>
           <div className="bg-white p-6 rounded-[6px] border border-gray-300 shadow-sm">
             <p className="text-xs font-normal text-gray-400 uppercase tracking-wider">Total Businesses</p>
-            <h2 className="text-3xl font-medium text-gray-900 mt-2">{stats.total}</h2>
+            {loading ? <Skeleton className="h-9 w-12 mt-2" /> : <h2 className="text-3xl font-medium text-gray-900 mt-2">{stats.total}</h2>}
           </div>
         </div>
 
@@ -167,8 +181,25 @@ export default function AdminDashboard() {
         {/* Business Grid */}
         <div className="grid grid-cols-1 gap-4">
           {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="animate-spin rounded-[6px] h-8 w-8 border-b-2 border-emerald-600"></div>
+            <div className="space-y-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="bg-white border border-gray-300 rounded-[6px] p-6 flex flex-col lg:flex-row gap-6">
+                  <Skeleton className="w-20 h-20 flex-shrink-0" />
+                  <div className="flex-grow space-y-3">
+                    <div className="flex justify-between">
+                      <Skeleton className="h-6 w-1/3" />
+                      <Skeleton className="h-4 w-20" />
+                    </div>
+                    <Skeleton className="h-4 w-1/4" />
+                    <Skeleton className="h-10 w-full" />
+                    <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-100">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-full" />
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : filteredBusinesses.length === 0 ? (
             <div className="text-center py-20 bg-white rounded-[6px] border border-gray-300">

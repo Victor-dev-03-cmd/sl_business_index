@@ -1,22 +1,21 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useMemo } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Search, 
-  User, 
-  Shield, 
-  Mail, 
-  Calendar,
-  MoreVertical,
-  ShieldCheck,
-  UserCog,
+  User,
   Ban,
-  Filter,
-  Download,
+  Shield, 
+  Calendar,
   ChevronLeft,
   ChevronRight,
-  CheckCircle2,
+  MoreVertical,
+  ShieldCheck,
+  Filter,
+  Download,
   AlertCircle
 } from 'lucide-react';
 import {
@@ -40,73 +39,75 @@ interface Profile {
 }
 
 export default function AdminUsersPage() {
-  const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  useEffect(() => {
-    fetchProfiles();
-  }, []);
-
-  const fetchProfiles = async () => {
-    setLoading(true);
-    try {
+  const { data: profiles = [], isLoading: loading } = useQuery({
+    queryKey: ['admin-profiles'],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (data) {
-        // Mocking some data that might not be in the profile table yet
-        const enrichedData = data.map(p => ({
-          ...p,
-          status: p.status || 'active',
-          // email would typically come from auth.users, but we'll use a placeholder or join if available
-        }));
-        setProfiles(enrichedData);
-      }
-    } catch (error) {
-      console.error('Error fetching profiles:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      if (error) throw error;
+      
+      return data.map(p => ({
+        ...p,
+        status: p.status || 'active',
+      })) as Profile[];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const updateRole = async (userId: string, newRole: string) => {
-    const { error } = await supabase
-      .from('profiles')
-      .update({ role: newRole })
-      .eq('id', userId);
+  const updateRoleMutation = useMutation({
+    mutationFn: async ({ userId, newRole }: { userId: string, newRole: string }) => {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ role: newRole })
+        .eq('id', userId);
 
-    if (error) {
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-profiles'] });
+    },
+    onError: () => {
       alert('Error updating role');
-    } else {
-      setProfiles(profiles.map(p => p.id === userId ? { ...p, role: newRole } : p));
     }
+  });
+
+  const updateRole = (userId: string, newRole: string) => {
+    updateRoleMutation.mutate({ userId, newRole });
   };
 
   const toggleStatus = async (userId: string, currentStatus: string) => {
     const newStatus = currentStatus === 'active' ? 'suspended' : 'active';
-    // In a real app, you'd update this in the DB
-    setProfiles(profiles.map(p => p.id === userId ? { ...p, status: newStatus } : p));
+    // This is a local toggle in the current UI, but we could also make it a mutation
+    // For now keeping it consistent with the previous local update but using queryClient to update cache
+    queryClient.setQueryData(['admin-profiles'], (old: Profile[] | undefined) => 
+      old?.map(p => p.id === userId ? { ...p, status: newStatus } : p)
+    );
   };
 
   // Filtering Logic
-  const filteredProfiles = profiles.filter(p => {
-    const matchesSearch = 
-      p.full_name?.toLowerCase().includes(search.toLowerCase()) || 
-      p.username?.toLowerCase().includes(search.toLowerCase()) ||
-      p.email?.toLowerCase().includes(search.toLowerCase());
-    
-    const matchesRole = roleFilter === 'all' || p.role === roleFilter;
-    const matchesStatus = statusFilter === 'all' || p.status === statusFilter;
+  const filteredProfiles = useMemo(() => {
+    return profiles.filter(p => {
+      const matchesSearch = 
+        (p.full_name?.toLowerCase().includes(search.toLowerCase()) || 
+         p.username?.toLowerCase().includes(search.toLowerCase()) ||
+         p.email?.toLowerCase().includes(search.toLowerCase()));
+      
+      const matchesRole = roleFilter === 'all' || p.role === roleFilter;
+      const matchesStatus = statusFilter === 'all' || p.status === statusFilter;
 
-    return matchesSearch && matchesRole && matchesStatus;
-  });
+      return matchesSearch && matchesRole && matchesStatus;
+    });
+  }, [profiles, search, roleFilter, statusFilter]);
 
   // Pagination Logic
   const totalPages = Math.ceil(filteredProfiles.length / itemsPerPage);
@@ -244,9 +245,30 @@ export default function AdminUsersPage() {
         {/* Users Table */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-20">
-              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-600 mb-4"></div>
-              <p className="text-gray-500 text-sm">Loading users...</p>
+            <div className="p-0">
+              <div className="border-b border-gray-300 bg-gray-50/50 p-4 grid grid-cols-5 gap-4">
+                {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-4 w-20" />)}
+              </div>
+              {[...Array(10)].map((_, i) => (
+                <div key={i} className="p-4 grid grid-cols-5 gap-4 border-b border-gray-200">
+                  <div className="flex items-center gap-4">
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <div className="space-y-2 flex-grow">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-3 w-1/2" />
+                    </div>
+                  </div>
+                  <Skeleton className="h-6 w-24 my-auto rounded-full" />
+                  <Skeleton className="h-6 w-24 my-auto rounded-full" />
+                  <div className="flex items-center gap-2 my-auto">
+                    <Skeleton className="h-4 w-4" />
+                    <Skeleton className="h-4 w-24" />
+                  </div>
+                  <div className="flex justify-end my-auto">
+                    <Skeleton className="h-8 w-8" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : paginatedProfiles.length === 0 ? (
             <div className="text-center py-24">

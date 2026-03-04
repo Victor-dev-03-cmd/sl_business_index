@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Settings, 
   Palette, 
@@ -23,48 +25,67 @@ interface SiteSettings {
 }
 
 export default function AdminSettingsPage() {
-  const [settings, setSettings] = useState<SiteSettings | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const queryClient = useQueryClient();
+  const [localSettings, setLocalSettings] = useState<SiteSettings | null>(null);
+
+  const { data: settings, isLoading: loading } = useQuery({
+    queryKey: ['site-settings'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('site_settings')
+        .select('*')
+        .eq('id', 1)
+        .single();
+
+      if (error) throw error;
+      return data as SiteSettings;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   useEffect(() => {
-    fetchSettings();
-  }, []);
-
-  const fetchSettings = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('site_settings')
-      .select('*')
-      .eq('id', 1)
-      .single();
-
-    if (data) {
-      setSettings(data);
+    if (settings) {
+      setLocalSettings(settings);
     }
-    setLoading(false);
-  };
+  }, [settings]);
 
-  const handleSave = async () => {
-    if (!settings) return;
-    setSaving(true);
-    const { error } = await supabase
-      .from('site_settings')
-      .update(settings)
-      .eq('id', 1);
+  const saveMutation = useMutation({
+    mutationFn: async (newSettings: SiteSettings) => {
+      const { error } = await supabase
+        .from('site_settings')
+        .update(newSettings)
+        .eq('id', 1);
 
-    if (error) {
-      alert('Error saving settings');
-    } else {
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['site-settings'] });
       alert('Settings saved successfully');
-    }
-    setSaving(false);
+    },
+    onError: () => {
+      alert('Error saving settings');
+    },
+  });
+
+  const handleSave = () => {
+    if (!localSettings) return;
+    saveMutation.mutate(localSettings);
   };
+
+  const saving = saveMutation.isPending;
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="animate-spin rounded-[6px] h-8 w-8 border-b-2 border-emerald-600"></div>
+      <div className="max-w-4xl mx-auto px-4 md:px-8 py-8 space-y-8">
+        <div className="flex justify-between items-center">
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+          <Skeleton className="h-10 w-32" />
+        </div>
+        <Skeleton className="h-64 w-full" />
+        <Skeleton className="h-64 w-full" />
       </div>
     );
   }
@@ -104,8 +125,8 @@ export default function AdminSettingsPage() {
                 </label>
                 <input 
                   type="text" 
-                  value={settings?.site_name || ''}
-                  onChange={(e) => setSettings(s => s ? {...s, site_name: e.target.value} : null)}
+                  value={localSettings?.site_name || ''}
+                  onChange={(e) => setLocalSettings(s => s ? {...s, site_name: e.target.value} : null)}
                   className="w-full px-4 py-2.5 bg-gray-50  border border-gray-300  rounded-[6px] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all font-normal text-sm "
                 />
               </div>
@@ -116,8 +137,8 @@ export default function AdminSettingsPage() {
                 </label>
                 <textarea 
                   rows={3}
-                  value={settings?.site_description || ''}
-                  onChange={(e) => setSettings(s => s ? {...s, site_description: e.target.value} : null)}
+                  value={localSettings?.site_description || ''}
+                  onChange={(e) => setLocalSettings(s => s ? {...s, site_description: e.target.value} : null)}
                   className="w-full px-4 py-2.5 bg-gray-50  border border-gray-300  rounded-[6px] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all font-normal text-sm  resize-none"
                 />
               </div>
@@ -139,15 +160,15 @@ export default function AdminSettingsPage() {
                 <div className="flex items-center gap-4">
                   <input 
                     type="color" 
-                    value={settings?.theme_primary_color || '#10b981'}
-                    onChange={(e) => setSettings(s => s ? {...s, theme_primary_color: e.target.value} : null)}
+                    value={localSettings?.theme_primary_color || '#10b981'}
+                    onChange={(e) => setLocalSettings(s => s ? {...s, theme_primary_color: e.target.value} : null)}
                     className="h-12 w-20 rounded-[6px] border-0 cursor-pointer p-0 bg-transparent"
                   />
                   <div className="flex-1">
                     <input 
                       type="text" 
-                      value={settings?.theme_primary_color || ''}
-                      onChange={(e) => setSettings(s => s ? {...s, theme_primary_color: e.target.value} : null)}
+                      value={localSettings?.theme_primary_color || ''}
+                      onChange={(e) => setLocalSettings(s => s ? {...s, theme_primary_color: e.target.value} : null)}
                       className="w-full px-4 py-2 bg-gray-50  border border-gray-300  rounded-[6px] font-mono text-xs uppercase "
                     />
                   </div>
@@ -159,15 +180,15 @@ export default function AdminSettingsPage() {
                 <div className="flex items-center gap-4">
                   <input 
                     type="color" 
-                    value={settings?.theme_accent_color || '#3b82f6'}
-                    onChange={(e) => setSettings(s => s ? {...s, theme_accent_color: e.target.value} : null)}
+                    value={localSettings?.theme_accent_color || '#3b82f6'}
+                    onChange={(e) => setLocalSettings(s => s ? {...s, theme_accent_color: e.target.value} : null)}
                     className="h-12 w-20 rounded-[6px] border-0 cursor-pointer p-0 bg-transparent"
                   />
                   <div className="flex-1">
                     <input 
                       type="text" 
-                      value={settings?.theme_accent_color || ''}
-                      onChange={(e) => setSettings(s => s ? {...s, theme_accent_color: e.target.value} : null)}
+                      value={localSettings?.theme_accent_color || ''}
+                      onChange={(e) => setLocalSettings(s => s ? {...s, theme_accent_color: e.target.value} : null)}
                       className="w-full px-4 py-2 bg-gray-50  border border-gray-300  rounded-[6px] font-mono text-xs uppercase "
                     />
                   </div>
@@ -190,14 +211,14 @@ export default function AdminSettingsPage() {
               <div className="flex gap-4">
                 <input 
                   type="text" 
-                  value={settings?.logo_url || ''}
-                  onChange={(e) => setSettings(s => s ? {...s, logo_url: e.target.value} : null)}
+                  value={localSettings?.logo_url || ''}
+                  onChange={(e) => setLocalSettings(s => s ? {...s, logo_url: e.target.value} : null)}
                   placeholder="https://example.com/logo.png"
                   className="flex-1 px-4 py-2.5 bg-gray-50  border border-gray-300  rounded-[6px] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all font-normal text-sm "
                 />
                 <div className="h-11 w-11 rounded-[6px] bg-gray-50  border border-gray-300  flex items-center justify-center overflow-hidden">
-                  {settings?.logo_url ? (
-                    <img src={settings.logo_url} alt="Site Logo" className="h-full w-full object-contain p-1" />
+                  {localSettings?.logo_url ? (
+                    <img src={localSettings.logo_url} alt="Site Logo" className="h-full w-full object-contain p-1" />
                   ) : (
                     <ImageIcon size={18} className="text-gray-300 " />
                   )}

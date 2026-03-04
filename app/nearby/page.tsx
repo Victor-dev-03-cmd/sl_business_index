@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, Suspense, useRef, useCallback } from 'react';
+import { useEffect, useState, Suspense, useRef, useCallback, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -8,6 +8,8 @@ import { supabase } from '@/lib/supabaseClient';
 import { categories } from '@/lib/categories';
 import { MapPin, ArrowLeft, Star, Navigation, Phone, Globe, Menu, X, ChevronDown, Search, Check, Clock, Zap } from 'lucide-react';
 import { Slider } from "@/components/ui/slider";
+import { useQuery } from '@tanstack/react-query';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -77,12 +79,10 @@ function SplitScreenResultsContent() {
   const initialQuery = searchParams.get('q') || '';
   const radius = parseInt(searchParams.get('radius') || '5000');
 
-  const [results, setResults] = useState<Business[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [selectedRadius, setSelectedRadius] = useState(radius);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState(initialQuery);
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(initialQuery);
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
@@ -97,6 +97,7 @@ function SplitScreenResultsContent() {
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(district);
   const [selectedTown, setSelectedTown] = useState<Town | null>(null);
   const [isMapManual, setIsMapManual] = useState(false);
+  const [locationLoading, setLocationLoading] = useState(false);
   
   const isInitialMount = useRef(true);
 
@@ -112,78 +113,77 @@ function SplitScreenResultsContent() {
     return R * c;
   };
 
-  const fetchLocationResults = useCallback(async () => {
-    if (!currentLat || !currentLng) return;
-    setLoading(true);
-    setError(null);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
-    try {
-      const { data, error: rpcError } = await supabase.rpc('get_nearby_businesses', {
-        user_lat: parseFloat(currentLat),
-        user_lng: parseFloat(currentLng),
-        search_query: searchQuery,
-        dist_limit: selectedRadius,
-      });
+  const { data: businesses, isLoading: queryLoading, error: queryError, refetch } = useQuery({
+    queryKey: ['businesses', { 
+      searchType, 
+      currentLat, 
+      currentLng, 
+      searchQuery: debouncedSearchQuery, 
+      selectedRadius, 
+      selectedCategory, 
+      selectedDistrict: selectedDistrict || district 
+    }],
+    queryFn: async () => {
+      if (searchType === 'location') {
+        if (!currentLat || !currentLng) return [];
+        const { data, error: rpcError } = await supabase.rpc('get_nearby_businesses', {
+          user_lat: parseFloat(currentLat),
+          user_lng: parseFloat(currentLng),
+          search_query: debouncedSearchQuery,
+          dist_limit: selectedRadius,
+        });
 
-      if (rpcError) throw rpcError;
+        if (rpcError) throw rpcError;
 
-      const enriched = (data || []).map((business: Business) => ({
-        ...business,
-        distanceText: `${calculateHaversineDistance(parseFloat(currentLat), parseFloat(currentLng), business.latitude, business.longitude).toFixed(2)} km`,
-      }));
-      setResults(enriched);
-    } catch (err: any) {
-      setError(`Error: ${err.message}`);
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [currentLat, currentLng, searchQuery, selectedRadius]);
+        return (data || []).map((business: Business) => ({
+          ...business,
+          distanceText: `${calculateHaversineDistance(parseFloat(currentLat), parseFloat(currentLng), business.latitude, business.longitude).toFixed(2)} km`,
+        }));
+      } else {
+        const districtToSearch = selectedDistrict || district;
+        if (!districtToSearch) return [];
 
-  const fetchDistrictResults = useCallback(async () => {
-    const districtToSearch = selectedDistrict || district;
-    if (!districtToSearch) {
-      setError('Please select a district');
-      return;
-    }
-    setLoading(true);
-    setError(null);
+        let query_builder = supabase
+          .from('businesses')
+          .select('*')
+          .eq('status', 'approved')
+          .ilike('address', `%${districtToSearch}%`);
 
-    try {
-      let query_builder = supabase
-        .from('businesses')
-        .select('*')
-        .eq('status', 'approved')
-        .ilike('address', `%${districtToSearch}%`);
-
-      if (searchQuery) {
-        query_builder = query_builder.or(`name.ilike.%${searchQuery}%,category.ilike.%${searchQuery}%`);
-      }
-      if (selectedCategory) {
-        query_builder = query_builder.eq('category', selectedCategory);
-      }
-
-      const { data, error: dbError } = await query_builder;
-      if (dbError) throw dbError;
-
-      const foundResults = (data as Business[]) || [];
-      const enriched = foundResults.map((business: Business) => {
-        if (currentLat && currentLng) {
-          return {
-            ...business,
-            distanceText: `${calculateHaversineDistance(parseFloat(currentLat), parseFloat(currentLng), business.latitude, business.longitude).toFixed(2)} km`,
-          };
+        if (debouncedSearchQuery) {
+          query_builder = query_builder.or(`name.ilike.%${debouncedSearchQuery}%,category.ilike.%${debouncedSearchQuery}%`);
         }
-        return business;
-      });
-      setResults(enriched);
-    } catch (err: any) {
-      setError(`Error: ${err.message}`);
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedDistrict, district, searchQuery, selectedCategory, currentLat, currentLng]);
+        if (selectedCategory) {
+          query_builder = query_builder.eq('category', selectedCategory);
+        }
+
+        const { data, error: dbError } = await query_builder;
+        if (dbError) throw dbError;
+
+        return (data as Business[] || []).map((business: Business) => {
+          if (currentLat && currentLng) {
+            return {
+              ...business,
+              distanceText: `${calculateHaversineDistance(parseFloat(currentLat), parseFloat(currentLng), business.latitude, business.longitude).toFixed(2)} km`,
+            };
+          }
+          return business;
+        });
+      }
+    },
+    enabled: !!((searchType === 'location' && currentLat && currentLng) || (searchType === 'district' && (selectedDistrict || district))),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const loading = queryLoading || locationLoading;
+  const results = businesses || [];
+  const error = queryError ? (queryError as Error).message : null;
 
   const handleSearch = useCallback(() => {
     let finalQuery = searchQuery;
@@ -242,50 +242,9 @@ function SplitScreenResultsContent() {
     }
   }, [searchQuery, selectedCategory, selectedDistrict, currentLat, currentLng]);
 
-  useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      if (!lat && !lng && !district) {
-        findMyLocation();
-      } else {
-         // Initial load from URL params
-         if (searchType === 'district') fetchDistrictResults();
-         else fetchLocationResults();
-      }
-      return;
-    }
-
-    const handler = setTimeout(() => {
-      if (searchType === 'district') {
-        fetchDistrictResults();
-      } else {
-        fetchLocationResults();
-      }
-    }, 500); // 500ms debounce for all filter changes
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [searchQuery, selectedRadius, selectedCategory, selectedDistrict, currentLat, currentLng, searchType, fetchDistrictResults, fetchLocationResults]);
-
-  useEffect(() => {
-    if (results.length > 0 && currentLat && currentLng && !results[0].distanceText) {
-      const enrichedWithDistance = results.map((business) => {
-        if (business.latitude && business.longitude) {
-          return {
-            ...business,
-            distanceText: `${calculateHaversineDistance(parseFloat(currentLat), parseFloat(currentLng), business.latitude, business.longitude).toFixed(2)} km`,
-          };
-        }
-        return business;
-      });
-      setResults(enrichedWithDistance);
-    }
-  }, [currentLat, currentLng, results]);
-
-  const findMyLocation = () => {
+  const findMyLocation = useCallback(() => {
     if (navigator.geolocation) {
-      setLoading(true);
+      setLocationLoading(true);
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
@@ -295,35 +254,30 @@ function SplitScreenResultsContent() {
           setCurrentLat(latitude.toString());
           setCurrentLng(longitude.toString());
           setSearchType('location');
-          setLoading(false);
+          setLocationLoading(false);
         },
         (error) => {
           console.error('Geolocation error:', error);
-          setError('Unable to get your location. Please grant permission.');
-          setLoading(false);
+          // We don't set global error here to not break the UI
+          setLocationLoading(false);
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
-    } else {
-      setError('Geolocation is not supported by your browser.');
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      if (!lat && !lng && !district) {
+        findMyLocation();
+      }
+    }
+  }, [lat, lng, district, findMyLocation]);
 
   const formatDistance = (meters: number): string => {
     if (meters < 1000) return `${Math.round(meters)} m`;
     return `${(meters / 1000).toFixed(0)} km`;
-  };
-
-  const handleDistrictSelect = (districtName: string) => {
-    setSearchType('district');
-    setSelectedDistrict(districtName);
-    setCurrentLat(null);
-    setCurrentLng(null);
-    if (districtCoordinates[districtName]) {
-      setMapCenter(districtCoordinates[districtName]);
-      setMapZoom(11);
-    }
-    setIsMapManual(false);
   };
 
   const handleMapClick = (lat: number, lng: number) => {
@@ -647,11 +601,18 @@ function SplitScreenResultsContent() {
             </div>
 
             {loading ? (
-              <div className="flex items-center justify-center h-64 font-normal">
-                <div className="text-center">
-                  <div className="inline-block h-6 w-6 border-3 border-green-700 border-t-transparent rounded-full animate-spin mb-3"></div>
-                  <p className="text-sm text-gray-600">Finding nearby businesses...</p>
-                </div>
+              <div className="space-y-4 p-4">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="flex gap-3 p-4 border border-gray-200 rounded-[6px]">
+                    <Skeleton className="w-20 h-20 flex-shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-3 w-1/2" />
+                      <Skeleton className="h-3 w-full" />
+                      <Skeleton className="h-5 w-24 rounded-full" />
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : error ? (
               <div className="p-4 font-normal">
@@ -745,8 +706,7 @@ function SplitScreenResultsContent() {
                 <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[1000]">
                   <button 
                     onClick={() => {
-                      if (searchType === 'district') fetchDistrictResults();
-                      else fetchLocationResults();
+                      refetch();
                     }}
                     className="bg-green-700 text-white px-6 py-2.5 rounded-full shadow-2xl hover:bg-green-800 transition-all font-normal flex items-center gap-2 border-2 border-white animate-in zoom-in-95"
                   >

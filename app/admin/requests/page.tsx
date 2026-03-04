@@ -1,8 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useMemo } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   CheckCircle, 
   XCircle, 
@@ -10,18 +12,14 @@ import {
   Building2, 
   Phone, 
   Mail, 
-  User as UserIcon,
-  MapPin,
-  ChevronRight,
+  MapPin, 
   FileText,
-  BadgeCheck,
-  AlertCircle,
   Eye,
-  Clock,
   Briefcase,
   User,
-  ExternalLink,
-  ClipboardList
+  ClipboardList,
+  Clock,
+  ExternalLink
 } from 'lucide-react';
 import Image from 'next/image';
 import { Business } from '@/lib/types';
@@ -31,58 +29,65 @@ import {
 } from "@/components/ui/dialog";
 
 export default function BusinessRequestsPage() {
-  const [requests, setRequests] = useState<Business[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
   const router = useRouter();
 
-  useEffect(() => {
-    fetchRequests();
-  }, []);
+  const { data: requests = [], isLoading: loading } = useQuery({
+    queryKey: ['admin-businesses-pending'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('businesses')
+        .select('*')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
 
-  const fetchRequests = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('businesses')
-      .select('*')
-      .eq('status', 'pending')
-      .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data as Business[];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-    if (data) {
-      setRequests(data);
-    }
-    setLoading(false);
-  };
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ id, owner_id, status }: { id: string | number, owner_id: string, status: 'approved' | 'rejected' }) => {
+      const { error: businessError } = await supabase
+        .from('businesses')
+        .update({ status })
+        .eq('id', id);
 
-  const handleUpdateStatus = async (id: string | number, owner_id: string, status: 'approved' | 'rejected') => {
-    const { error: businessError } = await supabase
-      .from('businesses')
-      .update({ status })
-      .eq('id', id);
+      if (businessError) throw businessError;
 
-    if (businessError) {
+      if (status === 'approved' && owner_id) {
+        await supabase
+          .from('profiles')
+          .update({ role: 'vendor' })
+          .eq('id', owner_id);
+      }
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-businesses-pending'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-businesses-active'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
+      setSelectedBusiness(null);
+      alert(`Business application ${variables.status} successfully!`);
+    },
+    onError: () => {
       alert('Failed to update business status');
-      return;
     }
+  });
 
-    if (status === 'approved' && owner_id) {
-      await supabase
-        .from('profiles')
-        .update({ role: 'vendor' })
-        .eq('id', owner_id);
-    }
-
-    setRequests(requests.filter(r => r.id !== id));
-    setSelectedBusiness(null);
-    alert(`Business application ${status} successfully!`);
+  const handleUpdateStatus = (id: string | number, owner_id: string, status: 'approved' | 'rejected') => {
+    updateStatusMutation.mutate({ id, owner_id, status });
   };
 
-  const filteredRequests = requests.filter(r => 
-    r.name.toLowerCase().includes(search.toLowerCase()) || 
-    (r.owner_name?.toLowerCase() || '').includes(search.toLowerCase()) ||
-    (r.registration_number?.toLowerCase() || '').includes(search.toLowerCase())
-  );
+  const filteredRequests = useMemo(() => {
+    return requests.filter(r => 
+      r.name.toLowerCase().includes(search.toLowerCase()) || 
+      (r.owner_name?.toLowerCase() || '').includes(search.toLowerCase()) ||
+      (r.registration_number?.toLowerCase() || '').includes(search.toLowerCase())
+    );
+  }, [requests, search]);
 
   return (
     <div className="min-h-full bg-gray-50/50  transition-colors">
@@ -109,8 +114,35 @@ export default function BusinessRequestsPage() {
         {/* Requests Table */}
         <div className="bg-white  rounded-[6px] border border-gray-300  shadow-sm overflow-hidden text-sm">
           {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="animate-spin rounded-[6px] h-8 w-8 border-b-2 border-emerald-600"></div>
+            <div className="p-0">
+              <div className="border-b border-gray-200 bg-gray-50/50 p-4 grid grid-cols-5 gap-4">
+                {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-4 w-20" />)}
+              </div>
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="p-4 grid grid-cols-5 gap-4 border-b border-gray-100">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-10 w-10 flex-shrink-0" />
+                    <div className="space-y-2 flex-grow">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-3 w-1/2" />
+                    </div>
+                  </div>
+                  <Skeleton className="h-6 w-24 my-auto" />
+                  <div className="space-y-2 my-auto">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </div>
+                  <div className="space-y-2 my-auto">
+                    <Skeleton className="h-3 w-8" />
+                    <Skeleton className="h-4 w-20" />
+                  </div>
+                  <div className="flex justify-end gap-2 my-auto">
+                    <Skeleton className="h-8 w-8" />
+                    <Skeleton className="h-8 w-8" />
+                    <Skeleton className="h-8 w-8" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : filteredRequests.length === 0 ? (
             <div className="text-center py-24">

@@ -7,6 +7,7 @@ import FooterWrapper from "./components/FooterWrapper";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import AnnouncementBar from "./components/AnnouncementBar";
 import AnnouncementWrapper from "./components/AnnouncementWrapper";
+import QueryProvider from "./components/QueryProvider";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -29,18 +30,20 @@ export default function RootLayout({
       <body
         className={`${outfit.variable} antialiased`}
       >
-        <ThemeProvider>
-          <AnnouncementWrapper>
-            <AnnouncementBar />
-          </AnnouncementWrapper>
-          <NavbarWrapper>
-            <Navbar />
-          </NavbarWrapper>
-          <main>{children}</main>
-          <FooterWrapper>
-            <Footer />
-          </FooterWrapper>
-        </ThemeProvider>
+        <QueryProvider>
+          <ThemeProvider>
+            <AnnouncementWrapper>
+              <AnnouncementBar />
+            </AnnouncementWrapper>
+            <NavbarWrapper>
+              <Navbar />
+            </NavbarWrapper>
+            <main>{children}</main>
+            <FooterWrapper>
+              <Footer />
+            </FooterWrapper>
+          </ThemeProvider>
+        </QueryProvider>
       </body>
     </html>
   );
