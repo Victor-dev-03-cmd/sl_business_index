@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, useRef, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -71,8 +71,8 @@ import TownSelector from '@/components/TownSelector';
 function SplitScreenResultsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  let lat = searchParams.get('lat');
-  let lng = searchParams.get('lng');
+  const lat = searchParams.get('lat');
+  const lng = searchParams.get('lng');
   const district = searchParams.get('district');
   const initialQuery = searchParams.get('q') || '';
   const radius = parseInt(searchParams.get('radius') || '5000');
@@ -97,154 +97,8 @@ function SplitScreenResultsContent() {
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(district);
   const [selectedTown, setSelectedTown] = useState<Town | null>(null);
   const [isMapManual, setIsMapManual] = useState(false);
-
-  // Set initial town if district matches a town name (or just clear it)
-  useEffect(() => {
-    if (district) {
-      const town = SL_TOWNS.find(t => t.name === district);
-      if (town) setSelectedTown(town);
-    }
-  }, [district]);
-
-  useEffect(() => {
-    if (district) {
-      setSelectedDistrict(district);
-      setSearchType('district');
-      setCurrentLat(null);
-      setCurrentLng(null);
-      if (districtCoordinates[district]) {
-        setMapCenter(districtCoordinates[district]);
-        setMapZoom(11);
-      }
-    }
-  }, [district]);
-
-  useEffect(() => {
-    if (searchType === 'district' && selectedDistrict) {
-      fetchDistrictResults();
-    }
-  }, [selectedDistrict, searchQuery, selectedCategory, searchType]);
-
-  useEffect(() => {
-    if (searchType === 'location') {
-      if (currentLat && currentLng) {
-        const newCenter = { lat: parseFloat(currentLat), lng: parseFloat(currentLng) };
-        setMapCenter(newCenter);
-        setMapZoom(14);
-        fetchLocationResults();
-      } else if (!lat && !lng && !district) {
-        findMyLocation();
-      }
-    }
-  }, [currentLat, currentLng, searchQuery, selectedRadius, selectedCategory, searchType]);
-
-  const fetchLocationResults = async () => {
-    setLoading(true);
-    setError(null);
-
-    if (!currentLat || !currentLng) return;
-
-    try {
-      const { data, error: rpcError } = await supabase.rpc('get_nearby_businesses', {
-        user_lat: parseFloat(currentLat),
-        user_lng: parseFloat(currentLng),
-        search_query: searchQuery,
-        dist_limit: selectedRadius,
-      });
-
-      if (rpcError) {
-        setError(`Error: ${rpcError.message}`);
-        return;
-      }
-
-      if (!data || data.length === 0) {
-        setResults([]);
-        return;
-      }
-
-      // Local Haversine calculation instead of Google API
-      const enriched = data.map((business: Business) => {
-        const dist = calculateHaversineDistance(
-          parseFloat(currentLat),
-          parseFloat(currentLng),
-          business.latitude,
-          business.longitude
-        );
-        return {
-          ...business,
-          distanceText: `${dist.toFixed(2)} km`,
-        };
-      });
-
-      setResults(enriched);
-    } catch (err) {
-      setError('Failed to fetch results.');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchDistrictResults = async () => {
-    setLoading(true);
-    setError(null);
-
-    const districtToSearch = selectedDistrict || district;
-    if (!districtToSearch) {
-      setError('Please select a district');
-      setLoading(false);
-      return;
-    }
-
-    try {
-      let query_builder = supabase
-        .from('businesses')
-        .select('*')
-        .eq('status', 'approved')
-        .ilike('address', `%${districtToSearch}%`);
-
-      if (searchQuery) {
-        query_builder = query_builder.or(`name.ilike.%${searchQuery}%,category.ilike.%${searchQuery}%`);
-      }
-
-      if (selectedCategory) {
-        query_builder = query_builder.eq('category', selectedCategory);
-      }
-
-      const { data, error: dbError } = await query_builder;
-
-      if (dbError) {
-        setError(`Error: ${dbError.message}`);
-        return;
-      }
-
-      const foundResults = (data as Business[]) || [];
-      
-      // Calculate distances for district results if user location is available
-      const enriched = foundResults.map((business: Business) => {
-        if (currentLat && currentLng) {
-          const dist = calculateHaversineDistance(
-            parseFloat(currentLat),
-            parseFloat(currentLng),
-            business.latitude,
-            business.longitude
-          );
-          return {
-            ...business,
-            distanceText: `${dist.toFixed(2)} km`,
-          };
-        }
-        return business;
-      });
-
-      setResults(enriched.length > 0 ? enriched : []);
-    } catch (err) {
-      setError('Failed to fetch results.');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  
+  const isInitialMount = useRef(true);
 
   const calculateHaversineDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
     const R = 6371; // Earth's radius in km
@@ -257,67 +111,88 @@ function SplitScreenResultsContent() {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     return R * c;
   };
-  
-  const formatDistance = (meters: number): string => {
-    if (meters < 1000) return `${Math.round(meters)} m`;
-    return `${(meters / 1000).toFixed(0)} km`;
-  };
 
-  const handleDistrictSelect = (districtName: string) => {
-    setSearchType('district');
-    setSelectedDistrict(districtName);
-    setCurrentLat(null);
-    setCurrentLng(null);
-    if (districtCoordinates[districtName]) {
-      setMapCenter(districtCoordinates[districtName]);
-      setMapZoom(11);
+  const fetchLocationResults = useCallback(async () => {
+    if (!currentLat || !currentLng) return;
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { data, error: rpcError } = await supabase.rpc('get_nearby_businesses', {
+        user_lat: parseFloat(currentLat),
+        user_lng: parseFloat(currentLng),
+        search_query: searchQuery,
+        dist_limit: selectedRadius,
+      });
+
+      if (rpcError) throw rpcError;
+
+      const enriched = (data || []).map((business: Business) => ({
+        ...business,
+        distanceText: `${calculateHaversineDistance(parseFloat(currentLat), parseFloat(currentLng), business.latitude, business.longitude).toFixed(2)} km`,
+      }));
+      setResults(enriched);
+    } catch (err: any) {
+      setError(`Error: ${err.message}`);
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
-    setIsMapManual(false);
-  };
+  }, [currentLat, currentLng, searchQuery, selectedRadius]);
 
-  const findMyLocation = () => {
-    if (navigator.geolocation) {
-      setLoading(true);
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          console.log('Geolocation success:', latitude, longitude);
-          const newCenter = { lat: latitude, lng: longitude };
-          setMapCenter(newCenter);
-          setMapZoom(15);
-          setCurrentLat(latitude.toString());
-          setCurrentLng(longitude.toString());
-          setSearchType('location');
-          setLoading(false);
-        },
-        (error) => {
-          console.error('Geolocation error:', error);
-          setError('Unable to get your location. Please grant permission.');
-          setLoading(false);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0
+  const fetchDistrictResults = useCallback(async () => {
+    const districtToSearch = selectedDistrict || district;
+    if (!districtToSearch) {
+      setError('Please select a district');
+      return;
+    }
+    setLoading(true);
+    setError(null);
+
+    try {
+      let query_builder = supabase
+        .from('businesses')
+        .select('*')
+        .eq('status', 'approved')
+        .ilike('address', `%${districtToSearch}%`);
+
+      if (searchQuery) {
+        query_builder = query_builder.or(`name.ilike.%${searchQuery}%,category.ilike.%${searchQuery}%`);
+      }
+      if (selectedCategory) {
+        query_builder = query_builder.eq('category', selectedCategory);
+      }
+
+      const { data, error: dbError } = await query_builder;
+      if (dbError) throw dbError;
+
+      const foundResults = (data as Business[]) || [];
+      const enriched = foundResults.map((business: Business) => {
+        if (currentLat && currentLng) {
+          return {
+            ...business,
+            distanceText: `${calculateHaversineDistance(parseFloat(currentLat), parseFloat(currentLng), business.latitude, business.longitude).toFixed(2)} km`,
+          };
         }
-      );
-    } else {
-      setError('Geolocation is not supported by your browser.');
+        return business;
+      });
+      setResults(enriched);
+    } catch (err: any) {
+      setError(`Error: ${err.message}`);
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [selectedDistrict, district, searchQuery, selectedCategory, currentLat, currentLng]);
 
-  const handleSearch = () => {
-    setIsMapManual(false);
-    
+  const handleSearch = useCallback(() => {
     let finalQuery = searchQuery;
     let finalCategory = selectedCategory;
     let finalDistrict = selectedDistrict;
     let finalLat = currentLat;
     let finalLng = currentLng;
-    
     const lowerQuery = searchQuery.toLowerCase();
 
-    // 1. Smart Town Detection (High Priority)
     for (const town of SL_TOWNS) {
       if (lowerQuery.includes(town.name.toLowerCase())) {
         finalLat = town.lat.toString();
@@ -333,8 +208,7 @@ function SplitScreenResultsContent() {
       }
     }
 
-    // 2. Smart District Detection (if no town)
-    if (finalLat === currentLat) { // Only if we didn't just find a town
+    if (finalLat === currentLat) {
       for (const d of sriLankanDistricts) {
         if (lowerQuery.includes(d.toLowerCase())) {
           finalDistrict = d;
@@ -352,28 +226,104 @@ function SplitScreenResultsContent() {
       }
     }
 
-    // 3. Smart Category Detection
     if (!finalCategory) {
       for (const cat of categories) {
         if (lowerQuery.includes(cat.name.toLowerCase()) || cat.keywords?.some(kw => lowerQuery.includes(kw.toLowerCase()))) {
           finalCategory = cat.name;
           setSelectedCategory(cat.name);
-          // Don't break if it's one of the overlapping categories, keep looking
-          if (!['Hotels & Restaurants', 'Food & Dining'].includes(cat.name)) {
-            break;
-          }
+          if (!['Hotels & Restaurants', 'Food & Dining'].includes(cat.name)) break;
         }
       }
     }
 
-    setSearchQuery(expandSearchQuery(finalQuery));
-
-    // Trigger Fetch based on updated state
-    if (finalLat || (searchType === 'location' && !finalDistrict)) {
-      fetchLocationResults();
-    } else {
-      fetchDistrictResults();
+    const newSearchQuery = expandSearchQuery(finalQuery);
+    if (newSearchQuery !== searchQuery) {
+      setSearchQuery(newSearchQuery);
     }
+  }, [searchQuery, selectedCategory, selectedDistrict, currentLat, currentLng]);
+
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      if (!lat && !lng && !district) {
+        findMyLocation();
+      } else {
+         // Initial load from URL params
+         if (searchType === 'district') fetchDistrictResults();
+         else fetchLocationResults();
+      }
+      return;
+    }
+
+    const handler = setTimeout(() => {
+      if (searchType === 'district') {
+        fetchDistrictResults();
+      } else {
+        fetchLocationResults();
+      }
+    }, 500); // 500ms debounce for all filter changes
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchQuery, selectedRadius, selectedCategory, selectedDistrict, currentLat, currentLng, searchType, fetchDistrictResults, fetchLocationResults]);
+
+  useEffect(() => {
+    if (results.length > 0 && currentLat && currentLng && !results[0].distanceText) {
+      const enrichedWithDistance = results.map((business) => {
+        if (business.latitude && business.longitude) {
+          return {
+            ...business,
+            distanceText: `${calculateHaversineDistance(parseFloat(currentLat), parseFloat(currentLng), business.latitude, business.longitude).toFixed(2)} km`,
+          };
+        }
+        return business;
+      });
+      setResults(enrichedWithDistance);
+    }
+  }, [currentLat, currentLng, results]);
+
+  const findMyLocation = () => {
+    if (navigator.geolocation) {
+      setLoading(true);
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          const newCenter = { lat: latitude, lng: longitude };
+          setMapCenter(newCenter);
+          setMapZoom(15);
+          setCurrentLat(latitude.toString());
+          setCurrentLng(longitude.toString());
+          setSearchType('location');
+          setLoading(false);
+        },
+        (error) => {
+          console.error('Geolocation error:', error);
+          setError('Unable to get your location. Please grant permission.');
+          setLoading(false);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    } else {
+      setError('Geolocation is not supported by your browser.');
+    }
+  };
+
+  const formatDistance = (meters: number): string => {
+    if (meters < 1000) return `${Math.round(meters)} m`;
+    return `${(meters / 1000).toFixed(0)} km`;
+  };
+
+  const handleDistrictSelect = (districtName: string) => {
+    setSearchType('district');
+    setSelectedDistrict(districtName);
+    setCurrentLat(null);
+    setCurrentLng(null);
+    if (districtCoordinates[districtName]) {
+      setMapCenter(districtCoordinates[districtName]);
+      setMapZoom(11);
+    }
+    setIsMapManual(false);
   };
 
   const handleMapClick = (lat: number, lng: number) => {
@@ -440,7 +390,7 @@ function SplitScreenResultsContent() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleSearch() }}
                 placeholder="Search businesses..."
                 className="w-full bg-transparent outline-none text-sm text-gray-700 placeholder:text-gray-400 font-normal"
               />
@@ -608,7 +558,6 @@ function SplitScreenResultsContent() {
                   <button 
                     onClick={() => {
                       setSearchQuery("Open Now");
-                      handleSearch();
                     }}
                     className="w-full flex items-center gap-3 p-3 rounded-[6px] hover:bg-green-50 text-gray-700 hover:text-green-700 transition-all text-left group/item font-normal"
                   >
@@ -637,7 +586,6 @@ function SplitScreenResultsContent() {
                   <button 
                     onClick={() => {
                       setSearchQuery("Top Rated");
-                      handleSearch();
                     }}
                     className="w-full flex items-center gap-3 p-3 rounded-[6px] hover:bg-green-50 text-gray-700 hover:text-green-700 transition-all text-left group/item font-normal"
                   >
@@ -653,7 +601,6 @@ function SplitScreenResultsContent() {
                   <button 
                     onClick={() => {
                       setSearchQuery("Verified");
-                      handleSearch();
                     }}
                     className="w-full flex items-center gap-3 p-3 rounded-[6px] hover:bg-green-50 text-gray-700 hover:text-green-700 transition-all text-left group/item font-normal"
                   >
@@ -675,7 +622,6 @@ function SplitScreenResultsContent() {
                         key={item}
                         onClick={() => {
                           setSearchQuery(item);
-                          handleSearch();
                         }}
                         className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:text-green-700 hover:bg-green-50 rounded-[6px] transition-colors"
                       >
@@ -738,10 +684,10 @@ function SplitScreenResultsContent() {
                     }`}
                   >
                     <div className="flex gap-3">
-                      {business.image_url && (
+                      {(business.logo_url || business.image_url) && (
                         <div className="w-20 h-20 rounded-[6px] bg-gray-200 flex-shrink-0 overflow-hidden">
                           <img
-                            src={business.image_url}
+                            src={business.logo_url || business.image_url}
                             alt={business.name}
                             className="w-full h-full object-cover"
                           />
@@ -798,7 +744,10 @@ function SplitScreenResultsContent() {
               {isMapManual && (
                 <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[1000]">
                   <button 
-                    onClick={handleSearch}
+                    onClick={() => {
+                      if (searchType === 'district') fetchDistrictResults();
+                      else fetchLocationResults();
+                    }}
                     className="bg-green-700 text-white px-6 py-2.5 rounded-full shadow-2xl hover:bg-green-800 transition-all font-normal flex items-center gap-2 border-2 border-white animate-in zoom-in-95"
                   >
                     <Search size={18} strokeWidth={1.5} />

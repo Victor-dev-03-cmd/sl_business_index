@@ -194,7 +194,7 @@ export default function ContactPage() {
           <motion.span 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-block px-4 py-1.5 mb-6 text-[10px] tracking-[0.2em] uppercase text-emerald-600 border border-emerald-600/20 rounded-md"
+            className="inline-block px-4 py-1.5 mb-6 text-[10px] tracking-[0.2em] uppercase text-emerald-600 border border-emerald-600/20 rounded-[6px]"
           >
             Contact & Support
           </motion.span>
@@ -284,7 +284,7 @@ export default function ContactPage() {
                   </div>
                 ))
               ) : (
-                <div className="py-20 text-center border-2 border-dashed border-gray-300 rounded-3xl">
+                <div className="py-20 text-center border-2 border-dashed border-gray-300 rounded-[6px]">
                   <div className="inline-flex p-4 bg-gray-50 rounded-full mb-4">
                     <Search size={32} strokeWidth={1.5} className="text-gray-200" />
                   </div>
@@ -297,7 +297,7 @@ export default function ContactPage() {
 
           {/* Right Column: Contact Form */}
           <div className="lg:col-span-1">
-            <div className="sticky top-28 bg-white border border-gray-300 rounded-[8px] shadow-xl shadow-gray-200/50 overflow-hidden">
+            <div className="sticky top-28 bg-white border border-gray-300 rounded-[6px] shadow-xl shadow-gray-200/50 overflow-hidden">
               <div className="p-8 bg-emerald-950 text-white relative overflow-hidden">
                 <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
                 <h3 className="text-xl relative z-10 mb-2">Send us a message</h3>

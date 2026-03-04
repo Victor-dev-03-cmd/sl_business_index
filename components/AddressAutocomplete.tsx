@@ -173,7 +173,7 @@ export default function AddressAutocomplete({
               {isLocating ? "Locating..." : "Find My Location"}
             </button>
           </div>
-          <Command className="border rounded-md" shouldFilter={false}>
+          <Command className="border border-gray-300 rounded-[6px]" shouldFilter={false}>
             <CommandInput
                 placeholder="Type your shop address..."
                 value={value}
@@ -181,14 +181,14 @@ export default function AddressAutocomplete({
                 className="text-base"
             />
             <CommandList>
-              {status === "LOADING" && <div className="p-4 text-center text-sm text-gray-500">Searching...</div>}
+              {status === "LOADING" && <div className="p-4 text-center text-sm text-gray-500 font-normal">Searching...</div>}
               {status === "OK" && (
                   <CommandGroup>
                     {suggestions.map((suggestion) => (
                         <CommandItem
                             key={suggestion.place_id}
                             onSelect={() => handleSelect(suggestion)}
-                            className="cursor-pointer"
+                            className="cursor-pointer font-normal text-sm py-3"
                         >
                           {suggestion.display_name}
                         </CommandItem>
@@ -196,10 +196,10 @@ export default function AddressAutocomplete({
                   </CommandGroup>
               )}
               {value.length > 2 && status === "ZERO_RESULTS" && (
-                  <CommandEmpty>No address found.</CommandEmpty>
+                  <CommandEmpty className="py-6 text-sm text-gray-400 font-normal">No address found.</CommandEmpty>
               )}
               {status === "ERROR" && (
-                  <div className="p-4 text-center text-sm text-red-500">Error fetching addresses.</div>
+                  <div className="p-4 text-center text-sm text-red-500 font-normal">Error fetching addresses.</div>
               )}
             </CommandList>
           </Command>
@@ -208,7 +208,7 @@ export default function AddressAutocomplete({
           </p>
         </div>
 
-        <div className="h-64 w-full rounded-lg overflow-hidden border">
+        <div className="h-64 w-full rounded-[6px] overflow-hidden border border-gray-300">
           <MapboxMap
               userLat={mapCenter.lat}
               userLng={mapCenter.lng}

@@ -282,13 +282,16 @@ export default function RegisterBusinessPage() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link 
-              href="/"
-              className="flex items-center justify-center gap-2 px-8 py-4 bg-emerald-600 text-white rounded-[6px] text-sm font-medium hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-900/10 active:scale-95"
-            >
-              <Home size={18} />
-              Go to Home
-            </Link>
+          <button
+                onClick={() => {
+                  router.refresh();
+                  router.push('/');
+                }}
+                className="flex items-center justify-center gap-2 px-8 py-4 bg-emerald-600 text-white rounded-[6px] text-sm font-medium hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-900/10 active:scale-95"
+              >
+                <Home size={18} />
+                Go to Home
+              </button>
           </div>
         </div>
       </div>
