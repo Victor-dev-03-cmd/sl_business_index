@@ -629,7 +629,7 @@ function SplitScreenResultsContent() {
               </div>
             ) : (
               <div className="space-y-2 p-4 font-normal">
-                {results.map((business) => (
+                {results.map((business: Business) => (
                   <div
                     key={business.id}
                     onClick={() => {
