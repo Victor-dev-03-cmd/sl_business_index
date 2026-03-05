@@ -354,14 +354,14 @@ export default function HomePage() {
                     disabled={!canScrollLeft}
                     className="p-2 border border-gray-200 rounded-full hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                 >
-                  <ChevronLeft size={18} strokeWidth={1.5} />
+
                 </button>
                 <button
                     onClick={() => scroll('right')}
                     disabled={!canScrollRight}
                     className="p-2 border border-gray-200 rounded-full hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                 >
-                  <ChevronRight size={18} strokeWidth={1.5} />
+
                 </button>
               </div>
               <Link href="/categories" className="text-sm text-brand-gold flex items-center hover:underline font-normal">
