@@ -74,7 +74,7 @@ export default function SignUp() {
 
               <div className="mb-10">
                 <Image
-                    src="/logo.png"
+                    src="/sl-logo.png"
                     alt="Logo"
                     width={180}
                     height={50}
@@ -87,7 +87,7 @@ export default function SignUp() {
                 <span className="text-brand-sand">Business Today.</span>
               </h1>
               
-              <p className="text-brand-sand/60 text-base leading-relaxed mb-10 font-normal">
+              <p className="text-white text-base leading-relaxed mb-10 font-normal">
                 Join the largest business ecosystem in Sri Lanka. List your service, connect with locals, and grow your brand.
               </p>
 
@@ -99,8 +99,8 @@ export default function SignUp() {
                   "AI-Powered Social Media Tools",
                   "Direct Customer Lead Generation"
                 ].map((benefit, i) => (
-                  <div key={i} className="flex items-center gap-3 text-brand-sand/80">
-                    <div className="w-5 h-5 rounded-full bg-brand-gold/20 flex items-center justify-center text-brand-gold">
+                  <div key={i} className="flex items-center gap-3 text-brand-sand">
+                    <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center text-green-700">
                       <Check size={12} strokeWidth={3} />
                     </div>
                     <span className="text-sm font-normal">{benefit}</span>
@@ -124,7 +124,7 @@ export default function SignUp() {
 
         {/* Right Side: Sign Up Form */}
         <div className="w-full lg:w-1/2 flex items-center justify-center bg-white px-6 py-12 md:px-12">
-          <div className="w-full max-w-md bg-white p-8 md:p-10 rounded-[6px] shadow-2xl shadow-brand-dark/5 border border-gray-100">
+          <div className="w-full max-w-md bg-white p-8 md:p-10 rounded-[6px] shadow-2xl shadow-brand-dark/5 border border-gray-300">
 
             {/* Mobile Logo */}
             <div className="lg:hidden flex justify-center mb-8">

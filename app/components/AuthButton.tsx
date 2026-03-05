@@ -16,8 +16,8 @@ import { User as UserIcon, LogOut, LayoutDashboard, Briefcase } from 'lucide-rea
 export default function AuthButton({ user: initialUser }: { user: any | null }) {
   const router = useRouter();
   const [user, setUser] = useState(initialUser);
-  // If initialUser is passed from server, we are NOT checking
-  const [isChecking, setIsChecking] = useState(!initialUser);
+  // Default to false to avoid the "slow" pulse animation on every load
+  const [isChecking, setIsChecking] = useState(false);
 
   useEffect(() => {
     setUser(initialUser);

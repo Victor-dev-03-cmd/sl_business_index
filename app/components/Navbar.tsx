@@ -8,7 +8,10 @@ import { Menu } from 'lucide-react';
 
 export default async function Navbar() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  
+  // Use getSession for faster initial check on the server
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
 
   let fullUserData = null;
   if (user) {

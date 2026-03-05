@@ -401,8 +401,8 @@ export default function HomePage() {
                         draggable={false}
                       />
                     ) : (
-                      <div className="text-brand-gold">
-                        {React.cloneElement(cat.icon as React.ReactElement, { size: 32 })}
+                      <div className="text-brand-gold scale-[2]">
+                        {cat.icon}
                       </div>
                     )}
                   </div>
