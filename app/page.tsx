@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -9,6 +9,7 @@ import { categories } from '@/lib/categories';
 import {
   Search,
   MapPin,
+  ChevronLeft,
   ChevronRight,
   ChevronDown,
   Navigation,
@@ -82,16 +83,80 @@ export default function HomePage() {
   const [searchMode, setSearchMode] = useState<'location' | 'nearby' | null>(null);
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [isFetchingLocation, setIsFetchingLocation] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
 
-  const featuredCategories = [
-    { name: 'Hotels & Restaurants', icon: '/icons/Hotels & Restaurants.png' },
-    { name: 'Vehicles & Automative', icon: '/icons/Vehicles & Automative.png' },
-    { name: 'Food & Dining', icon: '/icons/Food & Dining.png' },
-    { name: 'Home Appliances & Services', icon: '/icons/Home Appliances & Services.png' },
-    { name: 'Health & Medical', icon: '/icons/Health & Medical.png' },
-    { name: 'Travel & Tourism', icon: '/icons/Travel & Tourism.png' },
-    { name: 'Shopping & Retail', icon: '/icons/Shopping & Retail.png' },
-  ];
+  useEffect(() => {
+    let animationId: number;
+    const scrollStep = 0.3; // Slower speed (was 0.5)
+
+    const autoScroll = () => {
+      if (scrollContainerRef.current && !isPaused && !isDragging) {
+        const { scrollLeft: sLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+        
+        // If we reached the end, reset to start or stop (resetting to start for continuous)
+        if (sLeft >= scrollWidth - clientWidth - 5) {
+          scrollContainerRef.current.scrollLeft = 0;
+        } else {
+          scrollContainerRef.current.scrollLeft += scrollStep;
+        }
+      }
+      animationId = requestAnimationFrame(autoScroll);
+    };
+
+    animationId = requestAnimationFrame(autoScroll);
+    return () => cancelAnimationFrame(animationId);
+  }, [isPaused, isDragging]);
+
+  const checkScroll = () => {
+    if (scrollContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+      setCanScrollLeft(scrollLeft > 0);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 5);
+    }
+  };
+
+  useEffect(() => {
+    checkScroll();
+    window.addEventListener('resize', checkScroll);
+    return () => window.removeEventListener('resize', checkScroll);
+  }, []);
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollContainerRef.current) {
+      const scrollAmount = 300;
+      scrollContainerRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!scrollContainerRef.current) return;
+    setIsDragging(true);
+    setStartX(e.pageX - scrollContainerRef.current.offsetLeft);
+    setScrollLeft(scrollContainerRef.current.scrollLeft);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !scrollContainerRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - scrollContainerRef.current.offsetLeft;
+    const walk = (x - startX) * 2; // Scroll speed multiplier
+    scrollContainerRef.current.scrollLeft = scrollLeft - walk;
+    checkScroll();
+  };
+
+  const handleMouseUpOrLeave = () => {
+    setIsDragging(false);
+    setIsPaused(false);
+  };
 
   const handleUseCurrentLocation = (autoSearch: boolean = false) => {
     if (navigator.geolocation) {
@@ -278,33 +343,70 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* --- CATEGORIES (Balanced Grid) --- */}
-        <section className="py-24 px-6 max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-14 px-2">
+        {/* --- CATEGORIES (Slider) --- */}
+        <section className="py-24 px-6 max-w-7xl mx-auto overflow-hidden">
+          <div className="flex justify-between items-center mb-10 px-2">
             <h2 className="text-2xl text-gray-800 tracking-tight font-normal">Browse Categories</h2>
-            <Link href="/categories" className="text-sm text-brand-gold flex items-center hover:underline font-normal">
-              View All <ChevronRight size={16} strokeWidth={1.5} className="ml-1" />
-            </Link>
+            <div className="flex items-center gap-4">
+              <div className="hidden md:flex items-center gap-2 mr-2">
+                <button
+                    onClick={() => scroll('left')}
+                    disabled={!canScrollLeft}
+                    className="p-2 border border-gray-200 rounded-full hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                >
+                  <ChevronLeft size={18} strokeWidth={1.5} />
+                </button>
+                <button
+                    onClick={() => scroll('right')}
+                    disabled={!canScrollRight}
+                    className="p-2 border border-gray-200 rounded-full hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                >
+                  <ChevronRight size={18} strokeWidth={1.5} />
+                </button>
+              </div>
+              <Link href="/categories" className="text-sm text-brand-gold flex items-center hover:underline font-normal">
+                View All <ChevronRight size={16} strokeWidth={1.5} className="ml-1" />
+              </Link>
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-6 px-2">
-            {featuredCategories.map((cat, idx) => (
+          <div 
+            ref={scrollContainerRef}
+            onScroll={checkScroll}
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUpOrLeave}
+            onMouseLeave={handleMouseUpOrLeave}
+            className={cn(
+              "flex gap-6 px-2 overflow-x-auto no-scrollbar pb-8 cursor-grab active:cursor-grabbing select-none",
+              isDragging && "cursor-grabbing"
+            )}
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
+            {categories.map((cat, idx) => (
                 <div
                     key={idx}
                     onClick={() => handleCategoryClick(cat.name)}
-                    className="group cursor-pointer flex flex-col items-center p-6 bg-white border border-gray-200 rounded-[12px] hover:border-brand-gold hover:shadow-xl hover:-translate-y-1 transition-all duration-300 select-none"
+                    className="flex-shrink-0 w-40 md:w-44 group cursor-pointer flex flex-col items-center p-6 bg-white border border-gray-200 rounded-[12px] hover:border-brand-gold hover:shadow-xl hover:-translate-y-1 transition-all duration-300 select-none"
                     onContextMenu={(e) => e.preventDefault()}
                 >
-                  <div className="relative w-16 h-16 mb-4 transition-transform group-hover:scale-110 pointer-events-none">
-                    <Image 
-                      src={cat.icon} 
-                      alt={cat.name} 
-                      fill 
-                      className="object-contain"
-                      draggable={false}
-                    />
+                  <div className="relative w-16 h-16 mb-4 transition-transform group-hover:scale-110 pointer-events-none flex items-center justify-center">
+                    {cat.image ? (
+                      <Image 
+                        src={cat.image} 
+                        alt={cat.name} 
+                        fill 
+                        className="object-contain"
+                        draggable={false}
+                      />
+                    ) : (
+                      <div className="text-brand-gold">
+                        {React.cloneElement(cat.icon as React.ReactElement, { size: 32 })}
+                      </div>
+                    )}
                   </div>
-                  <span className="text-gray-700 text-[11px] font-medium text-center group-hover:text-brand-gold transition-colors leading-tight">{cat.name}</span>
+                  <span className="text-gray-700 text-[11px] font-medium text-center group-hover:text-brand-gold transition-colors leading-tight line-clamp-2">{cat.name}</span>
                 </div>
             ))}
           </div>
