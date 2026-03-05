@@ -2,20 +2,41 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ChevronDown, Search, X } from 'lucide-react';
-import { categories } from '@/lib/categories';
+import { ChevronDown, Search, X, Tags } from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
+import { supabase } from '@/lib/supabaseClient';
+import { useQuery } from '@tanstack/react-query';
 
 export default function CategoriesMenu() {
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories-menu'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('name', { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const IconComponent = ({ name, size = 20 }: { name: string | null, size?: number }) => {
+    if (!name) return <Tags size={size} />;
+    const Icon = (LucideIcons as any)[name];
+    return Icon ? <Icon size={size} /> : <Tags size={size} />;
+  };
+
   const filteredCategories = useMemo(() => {
     const query = searchQuery.toLowerCase();
-    return categories.filter(cat =>
+    return categories.filter((cat: any) =>
       cat.name.toLowerCase().includes(query) ||
-      cat.keywords?.some(kw => kw.toLowerCase().includes(query))
+      cat.keywords?.some((kw: string) => kw.toLowerCase().includes(query))
     );
-  }, [searchQuery]);
+  }, [categories, searchQuery]);
 
   const slugify = (name: string) => {
     return name.toLowerCase()
@@ -77,9 +98,9 @@ export default function CategoriesMenu() {
                       onClick={() => setIsMegaMenuOpen(false)}
                     >
                       <span className="w-10 h-10 rounded-[8px] bg-gray-50 border border-gray-300 flex items-center justify-center text-brand-blue mr-3 group-hover:bg-brand-sand/30 transition-colors shadow-sm overflow-hidden flex-shrink-0">
-                        {category.image ? (
+                        {category.image_url ? (
                           <Image
-                            src={category.image}
+                            src={category.image_url}
                             alt={category.name}
                             width={28}
                             height={28}
@@ -88,7 +109,7 @@ export default function CategoriesMenu() {
                             onContextMenu={(e) => e.preventDefault()}
                           />
                         ) : (
-                          category.icon
+                          <IconComponent name={category.icon} />
                         )}
                       </span>
                       <span className="font-normal border-b border-transparent group-hover:border-brand-sand transition-all line-clamp-1">{category.name}</span>

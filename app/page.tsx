@@ -5,7 +5,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { categories } from '@/lib/categories';
+import { supabase } from '@/lib/supabaseClient';
+import { useQuery } from '@tanstack/react-query';
 import {
   Search,
   MapPin,
@@ -17,8 +18,10 @@ import {
   LayoutGrid,
   Star,
   Phone,
-  Clock
+  Clock,
+  Tags
 } from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
 import {
   Command,
   CommandEmpty,
@@ -90,6 +93,26 @@ export default function HomePage() {
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories-home'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .is('parent_id', null)
+        .order('name', { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const IconComponent = ({ name, className }: { name: string | null, className?: string }) => {
+    if (!name) return <Tags className={className} />;
+    const Icon = (LucideIcons as any)[name];
+    return Icon ? <Icon className={className} /> : <Tags className={className} />;
+  };
 
   useEffect(() => {
     let animationId: number;
@@ -365,7 +388,7 @@ export default function HomePage() {
                 </button>
               </div>
               <Link href="/categories" className="text-sm text-brand-gold flex items-center hover:underline font-normal">
-                View All <ChevronRight size={16} strokeWidth={1.5} className="ml-1" />
+                View All
               </Link>
             </div>
           </div>
@@ -386,15 +409,15 @@ export default function HomePage() {
           >
             {categories.map((cat, idx) => (
                 <div
-                    key={idx}
+                    key={cat.id || idx}
                     onClick={() => handleCategoryClick(cat.name)}
-                    className="flex-shrink-0 w-40 md:w-44 group cursor-pointer flex flex-col items-center p-6 bg-white border border-gray-200 rounded-[12px] hover:border-brand-gold hover:shadow-xl hover:-translate-y-1 transition-all duration-300 select-none"
+                    className="flex-shrink-0 w-44 md:w-48 group cursor-pointer flex flex-col items-center p-8 bg-white border border-gray-200 rounded-[12px] hover:border-brand-gold hover:shadow-xl hover:-translate-y-1 transition-all duration-300 select-none"
                     onContextMenu={(e) => e.preventDefault()}
                 >
-                  <div className="relative w-16 h-16 mb-4 transition-transform group-hover:scale-110 pointer-events-none flex items-center justify-center">
-                    {cat.image ? (
+                  <div className="relative w-20 h-20 mb-4 transition-transform group-hover:scale-110 pointer-events-none flex items-center justify-center">
+                    {cat.image_url ? (
                       <Image 
-                        src={cat.image} 
+                        src={cat.image_url} 
                         alt={cat.name} 
                         fill 
                         className="object-contain"
@@ -402,7 +425,7 @@ export default function HomePage() {
                       />
                     ) : (
                       <div className="text-brand-gold scale-[2]">
-                        {cat.icon}
+                        <IconComponent name={cat.icon} />
                       </div>
                     )}
                   </div>

@@ -5,8 +5,8 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabaseClient';
-import { categories } from '@/lib/categories';
-import { MapPin, ArrowLeft, Star, Navigation, Phone, Globe, Menu, X, ChevronDown, Search, Check, Clock, Zap } from 'lucide-react';
+import { MapPin, ArrowLeft, Star, Navigation, Phone, Globe, Menu, X, ChevronDown, Search, Check, Clock, Zap, Tags } from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
 import { Slider } from "@/components/ui/slider";
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -99,6 +99,25 @@ function SplitScreenResultsContent() {
   const [isMapManual, setIsMapManual] = useState(false);
   const [locationLoading, setLocationLoading] = useState(false);
   
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories-nearby'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('name', { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const IconComponent = ({ name, className }: { name: string | null, className?: string }) => {
+    if (!name) return <Tags className={className} />;
+    const Icon = (LucideIcons as any)[name];
+    return Icon ? <Icon className={className} /> : <Tags className={className} />;
+  };
+
   const isInitialMount = useRef(true);
 
   const calculateHaversineDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
@@ -421,7 +440,7 @@ function SplitScreenResultsContent() {
                           <span className="text-sm font-medium text-gray-700">All Categories</span>
                           {selectedCategory === null && <Check className="ml-auto h-4 w-4 text-brand-dark" />}
                         </CommandItem>
-                        {categories.map((cat) => (
+                        {categories.map((cat: any) => (
                           <CommandItem
                             key={cat.name}
                             value={`${cat.name} ${cat.keywords?.join(' ')}`}
@@ -432,7 +451,9 @@ function SplitScreenResultsContent() {
                             className="flex items-center px-4 py-2.5 hover:bg-blue-50 cursor-pointer transition-colors"
                           >
                             <div className="flex items-center flex-1">
-                              <span className="text-brand-dark mr-3">{cat.icon}</span>
+                              <span className="text-brand-dark mr-3">
+                                <IconComponent name={cat.icon} />
+                              </span>
                               <span className="text-sm font-normal text-gray-700">{cat.name}</span>
                             </div>
                             <Check

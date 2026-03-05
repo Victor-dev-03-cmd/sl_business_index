@@ -12,6 +12,7 @@ import {
   Shield, 
   Calendar,
   ChevronLeft,
+  ChevronDown,
   ChevronRight,
   MoreVertical,
   ShieldCheck,
@@ -45,6 +46,7 @@ export default function AdminUsersPage() {
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const itemsPerPage = 10;
 
   const { data: profiles = [], isLoading: loading } = useQuery({
@@ -81,6 +83,36 @@ export default function AdminUsersPage() {
       alert('Error updating role');
     }
   });
+
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      setSelectedIds(paginatedProfiles.map(p => p.id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleSelectOne = (id: string) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleBulkStatusChange = async (newStatus: 'active' | 'suspended') => {
+    if (!confirm(`Are you sure you want to ${newStatus} ${selectedIds.length} users?`)) return;
+    
+    const { error } = await supabase
+      .from('profiles')
+      .update({ status: newStatus })
+      .in('id', selectedIds);
+
+    if (error) {
+      alert(`Error updating users status to ${newStatus}`);
+    } else {
+      setSelectedIds([]);
+      queryClient.invalidateQueries({ queryKey: ['admin-profiles'] });
+    }
+  };
 
   const updateRole = (userId: string, newRole: string) => {
     updateRoleMutation.mutate({ userId, newRole });
@@ -162,29 +194,21 @@ export default function AdminUsersPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50/50 p-6 md:p-8 font-sans">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="min-h-full bg-gray-50/30 transition-colors">
+      <main className="max-w-[1600px] mx-auto px-6 md:px-12 py-10 space-y-12">
         
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex justify-between items-center mb-12">
           <div>
             <h1 className="text-2xl text-gray-900 tracking-tight">User Management</h1>
-            <p className="text-sm text-gray-500 mt-1">Monitor and manage user accounts, roles, and permissions.</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <button className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-[6px] text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
-              <Download size={16} /> Export CSV
-            </button>
-            <button className="inline-flex items-center gap-2 px-4 py-2 bg-brand-dark text-white rounded-[6px] text-sm font-medium hover:bg-brand-blue transition-colors shadow-sm shadow-brand-dark/10">
-              <User size={16} /> Add User
-            </button>
+            <p className="text-base text-gray-500 mt-2">Monitor and manage user accounts, roles, and permissions.</p>
           </div>
         </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {stats.map((stat, index) => (
-            <div key={index} className="bg-white p-6 rounded-[8px] border border-gray-300 shadow-sm hover:shadow-md transition-shadow">
+            <div key={index} className="bg-white p-6 rounded-[8px] border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-500">{stat.label}</p>
@@ -198,53 +222,92 @@ export default function AdminUsersPage() {
           ))}
         </div>
 
-        {/* Filters & Search */}
-        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
-          <div className="relative w-full md:w-96">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <input 
-              type="text" 
-              placeholder="Search by name, email or username..." 
-              className="w-full pl-10 pr-4 py-2.5 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue transition-all text-sm"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-          
-          <div className="flex items-center gap-3 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
-            <DropdownMenu>
-              <DropdownMenuTrigger className="inline-flex items-center gap-2 px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors whitespace-nowrap">
-                <Filter size={16} /> 
-                Role: <span className="text-gray-900">{roleFilter === 'all' ? 'All Roles' : roleFilter}</span>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 bg-white border border-gray-300 shadow-lg rounded-lg">
-                <DropdownMenuLabel>Filter by Role</DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-gray-200" />
-                <DropdownMenuItem onClick={() => setRoleFilter('all')} className="cursor-pointer hover:bg-gray-50">All Roles</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setRoleFilter('admin')} className="cursor-pointer hover:bg-gray-50">Admin</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setRoleFilter('vendor')} className="cursor-pointer hover:bg-gray-50">Vendor</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setRoleFilter('customer')} className="cursor-pointer hover:bg-gray-50">Customer</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+        {/* Professional Action Bar */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-white p-4 rounded-[6px] shadow-sm border border-gray-100 mb-12">
+          <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+            <div className="relative w-full md:w-96 group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 transition-colors" />
+              <input 
+                type="text" 
+                placeholder="Search by name, email or username..." 
+                className="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-300 rounded-[6px] text-sm focus:outline-none focus:ring-1 focus:border-brand-blue/10 focus:border-brand-blue focus:bg-white transition-all"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            
+            <div className="flex items-center gap-3 w-full md:w-auto">
+              <div className="relative group w-full md:w-auto">
+                <Filter className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-brand-blue transition-colors pointer-events-none" />
+                <select 
+                  value={roleFilter}
+                  onChange={(e) => setRoleFilter(e.target.value)}
+                  className="bg-white border border-gray-300 rounded-[6px] pl-10 pr-10 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-brand-blue/5 focus:border-brand-blue appearance-none cursor-pointer hover:border-gray-300 transition-all min-w-[160px] shadow-sm w-full md:w-auto"
+                >
+                  <option value="all">All Roles</option>
+                  <option value="admin">Admin</option>
+                  <option value="vendor">Vendor</option>
+                  <option value="customer">Customer</option>
+                </select>
+                <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+              </div>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger className="inline-flex items-center gap-2 px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors whitespace-nowrap">
-                <AlertCircle size={16} /> 
-                Status: <span className="text-gray-900">{statusFilter === 'all' ? 'All Status' : statusFilter}</span>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 bg-white border border-gray-300 shadow-lg rounded-lg">
-                <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-gray-200" />
-                <DropdownMenuItem onClick={() => setStatusFilter('all')} className="cursor-pointer hover:bg-gray-50">All Status</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setStatusFilter('active')} className="cursor-pointer hover:bg-gray-50">Active</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setStatusFilter('suspended')} className="cursor-pointer hover:bg-gray-50">Suspended</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              <div className="relative group w-full md:w-auto">
+                <AlertCircle className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-brand-blue transition-colors pointer-events-none" />
+                <select 
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="bg-white border border-gray-300 rounded-[6px] pl-10 pr-10 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-brand-blue/5 focus:border-brand-blue appearance-none cursor-pointer hover:border-gray-300 transition-all min-w-[160px] shadow-sm w-full md:w-auto"
+                >
+                  <option value="all">All Status</option>
+                  <option value="active">Active</option>
+                  <option value="suspended">Suspended</option>
+                </select>
+                <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 w-full md:w-auto justify-end">
+            <button className="inline-flex items-center gap-2 px-6 py-2.5 bg-white border border-gray-300 rounded-[6px] text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
+              <Download size={16} /> Export CSV
+            </button>
+            <div className="h-8 w-px bg-gray-200 hidden md:block" />
+            <button className="inline-flex items-center gap-2 px-6 py-2.5 bg-brand-dark text-white rounded-[6px] text-sm font-medium hover:bg-brand-dark/90 transition-all shadow-lg">
+              <User size={16} /> Add User
+            </button>
           </div>
         </div>
 
         {/* Users Table */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-[6px] border border-gray-300 shadow-xl overflow-hidden relative">
+          {selectedIds.length > 0 && (
+            <div className="bg-brand-dark/5 border-b border-gray-200 px-8 py-3 flex items-center justify-between animate-in fade-in slide-in-from-top-2">
+              <span className="text-sm font-medium text-brand-dark">
+                {selectedIds.length} users selected
+              </span>
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={() => handleBulkStatusChange('active')}
+                  className="flex items-center gap-2 bg-green-50 text-green-700 px-4 py-1.5 rounded-[6px] text-xs font-bold hover:bg-green-600 hover:text-white transition-all border border-green-100 shadow-sm"
+                >
+                  <CheckCircle size={14} /> Activate Selected
+                </button>
+                <button 
+                  onClick={() => handleBulkStatusChange('suspended')}
+                  className="flex items-center gap-2 bg-red-50 text-red-600 px-4 py-1.5 rounded-[6px] text-xs font-bold hover:bg-red-600 hover:text-white transition-all border border-red-100 shadow-sm"
+                >
+                  <Ban size={14} /> Suspend Selected
+                </button>
+                <button 
+                  onClick={() => setSelectedIds([])}
+                  className="text-xs font-medium text-gray-500 hover:text-gray-700 ml-2"
+                >
+                  Clear Selection
+                </button>
+              </div>
+            </div>
+          )}
           {loading ? (
             <div className="p-0">
               <div className="border-b border-gray-300 bg-gray-50/50 p-4 grid grid-cols-5 gap-4">
@@ -292,25 +355,41 @@ export default function AdminUsersPage() {
               <div className="overflow-x-auto border-gray-300">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="border-b border-gray-300 bg-gray-60/50">
-                      <th className="px-6 py-4 text-xs text-gray-950 uppercase tracking-wider">User Details</th>
-                      <th className="px-6 py-4 text-xs text-gray-950 uppercase tracking-wider">Role</th>
-                      <th className="px-6 py-4 text-xs text-gray-950 uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-4 text-xs text-gray-950 uppercase tracking-wider">Joined Date</th>
-                      <th className="px-6 py-4 text-xs text-gray-950 uppercase tracking-wider text-right">Actions</th>
+                    <tr className="bg-gray-200 border-b border-gray-300">
+                      <th className="px-6 py-4 w-10">
+                        <input 
+                          type="checkbox" 
+                          className="rounded-[4px] border-gray-300 text-brand-blue focus:ring-brand-blue/20 cursor-pointer"
+                          onChange={handleSelectAll}
+                          checked={selectedIds.length === paginatedProfiles.length && paginatedProfiles.length > 0}
+                        />
+                      </th>
+                      <th className="px-6 py-4 text-xs text-gray-800 uppercase tracking-wider">User Details</th>
+                      <th className="px-6 py-4 text-xs text-gray-800 uppercase tracking-wider">Role</th>
+                      <th className="px-6 py-4 text-xs text-gray-800 uppercase tracking-wider">Status</th>
+                      <th className="px-6 py-4 text-xs text-gray-800 uppercase tracking-wider">Joined Date</th>
+                      <th className="px-6 py-4 text-xs text-gray-800 uppercase tracking-wider text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-300">
                     {paginatedProfiles.map((profile) => (
-                      <tr key={profile.id} className="hover:bg-gray-50/50 transition-colors group">
+                      <tr key={profile.id} className={`hover:bg-gray-50/50 transition-colors group ${selectedIds.includes(profile.id) ? 'bg-brand-blue/5' : ''}`}>
+                        <td className="px-6 py-4">
+                          <input 
+                            type="checkbox" 
+                            className="rounded-[4px] border-gray-300 text-brand-blue focus:ring-brand-blue/20 cursor-pointer"
+                            checked={selectedIds.includes(profile.id)}
+                            onChange={() => handleSelectOne(profile.id)}
+                          />
+                        </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-4">
                             <div className="h-10 w-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center border border-gray-200 text-gray-500 font-medium text-sm">
                               {profile.full_name?.charAt(0) || 'U'}
                             </div>
                             <div className="min-w-0">
-                              <p className="font-medium text-gray-900 truncate">{profile.full_name || 'Anonymous User'}</p>
-                              <p className="text-xs text-gray-500 truncate">@{profile.username || 'unknown'}</p>
+                              <p className="text-brand-blue truncate">{profile.full_name || 'Anonymous User'}</p>
+                              <p className="font-medium text-xs text-gray-500 truncate">@{profile.username || 'unknown'}</p>
                             </div>
                           </div>
                         </td>
@@ -386,7 +465,7 @@ export default function AdminUsersPage() {
             </>
           )}
         </div>
-      </div>
+      </main>
     </div>
   );
 }
