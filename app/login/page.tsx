@@ -64,7 +64,7 @@ export default function LogIn() {
 
               <div className="mb-10">
                 <Image
-                    src="/logo.png"
+                    src="/sl-logo.png"
                     alt="Logo"
                     width={180}
                     height={50}
