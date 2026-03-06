@@ -74,13 +74,11 @@ const districtCoordinates: Record<string, { lat: number; lng: number }> = {
 };
 
 import { SL_TOWNS, Town } from '@/lib/towns';
-import TownSelector from '@/components/TownSelector';
 
 export default function HomePage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
-  const [selectedTown, setSelectedTown] = useState<Town | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [searchMode, setSearchMode] = useState<'location' | 'nearby' | null>(null);
@@ -227,58 +225,96 @@ export default function HomePage() {
     let finalSearchMode = searchMode;
 
     // --- SMART PARSING ---
-    const lowerQuery = searchQuery.toLowerCase();
+    let lowerQuery = searchQuery.toLowerCase().trim();
     let finalLat = '';
     let finalLng = '';
+    let extractedTown: Town | null = null;
 
-    // 0. Use Selected Town (Highest Priority)
-    if (selectedTown) {
-      finalLat = selectedTown.lat.toString();
-      finalLng = selectedTown.lng.toString();
+    // Detect Town from search string (High Priority)
+    // We check for "in [town]" or just "[town]"
+    for (const town of SL_TOWNS) {
+      const townName = town.name.toLowerCase();
+      // Match "in Colombo", "at Colombo", or just "Colombo" at the end/start
+      const patterns = [
+        ` in ${townName}`,
+        ` at ${townName}`,
+        ` near ${townName}`,
+        `${townName} `,
+        ` ${townName}`
+      ];
+
+      if (lowerQuery === townName) {
+        extractedTown = town;
+        lowerQuery = '';
+        break;
+      }
+
+      let found = false;
+      for (const pattern of patterns) {
+        if (lowerQuery.includes(pattern)) {
+          extractedTown = town;
+          lowerQuery = lowerQuery.replace(pattern, ' ').trim();
+          found = true;
+          break;
+        }
+      }
+      if (found) break;
+    }
+
+    if (extractedTown) {
+      finalLat = extractedTown.lat.toString();
+      finalLng = extractedTown.lon.toString();
       finalSearchMode = 'nearby';
     }
 
-    // 1. Detect Town from search string (High Priority)
-    if (!finalLat) {
-      for (const town of SL_TOWNS) {
-        if (lowerQuery.includes(town.name.toLowerCase())) {
-          finalLat = town.lat.toString();
-          finalLng = town.lng.toString();
-          finalSearchMode = 'nearby';
-          // Remove town name from query
-          finalQuery = finalQuery.replace(new RegExp(town.name, 'gi'), '').trim();
-          break;
-        }
-      }
-    }
-
-    // 2. Detect District from search string (if no town found)
+    // Detect District from search string (if no town found)
     if (!finalLat) {
       for (const district of sriLankanDistricts) {
-        if (lowerQuery.includes(district.toLowerCase())) {
+        const dLower = district.toLowerCase();
+        const patterns = [` in ${dLower}`, ` at ${dLower}`, ` near ${dLower}`, `${dLower} `, ` ${dLower}`];
+        
+        if (lowerQuery === dLower) {
           finalDistrict = district;
           finalSearchMode = 'location';
-          finalQuery = finalQuery.replace(new RegExp(district, 'gi'), '').trim();
+          lowerQuery = '';
           break;
         }
+
+        let found = false;
+        for (const pattern of patterns) {
+          if (lowerQuery.includes(pattern)) {
+            finalDistrict = district;
+            finalSearchMode = 'location';
+            lowerQuery = lowerQuery.replace(pattern, ' ').trim();
+            found = true;
+            break;
+          }
+        }
+        if (found) break;
       }
     }
 
-    // 4. Default to Current Location if no explicit location found
+    // Default to Current Location if no explicit location found and query is not empty
     if (!finalLat && !finalDistrict && !finalSearchMode) {
-      handleUseCurrentLocation(true);
-      return;
+      if (!userCoords && !searchQuery.trim()) {
+        handleUseCurrentLocation(true);
+        return;
+      }
+      // If we have no location but have a query, search near current location if available
+      if (userCoords) {
+        finalSearchMode = 'nearby';
+      }
     }
 
     const searchParams = new URLSearchParams();
-    searchParams.set('q', expandSearchQuery(finalQuery));
+    searchParams.set('q', expandSearchQuery(lowerQuery || searchQuery));
     if (selectedCategory) searchParams.set('category', selectedCategory);
 
     if (finalLat && finalLng) {
       searchParams.set('lat', finalLat);
       searchParams.set('lng', finalLng);
-      searchParams.set('radius', '3000'); // Closer radius for specific towns
-    } else if (finalSearchMode === 'nearby' && userCoords) {
+      searchParams.set('radius', '3000');
+    } else if ((finalSearchMode === 'nearby' || (!finalDistrict && userCoords)) && userCoords) {
       searchParams.set('lat', userCoords.lat.toString());
       searchParams.set('lng', userCoords.lng.toString());
       searchParams.set('radius', '5000');
@@ -333,7 +369,7 @@ export default function HomePage() {
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                      placeholder="Service or Business..."
+                      placeholder="Service or Business... (e.g. Hospital in Colombo)"
                       className="w-full bg-transparent outline-none text-gray-700 text-base placeholder:text-gray-400 font-normal"
                   />
                 </div>

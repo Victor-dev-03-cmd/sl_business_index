@@ -1,12 +1,11 @@
 'use client';
 
 import * as React from 'react';
-import { Check, ChevronDown, MapPin, Search } from 'lucide-react';
+import { Check, ChevronDown, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Command,
   CommandEmpty,
-  CommandGroup,
   CommandInput,
   CommandItem,
   CommandList,
@@ -17,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SL_TOWNS, Town } from '@/lib/towns';
+import { List } from 'react-window';
 
 interface TownSelectorProps {
   onSelect: (town: Town) => void;
@@ -27,6 +27,10 @@ interface TownSelectorProps {
   textClassName?: string;
 }
 
+type ListItem = 
+  | { type: 'header'; district: string }
+  | { type: 'town'; town: Town };
+
 export default function TownSelector({ 
   onSelect, 
   selectedTownName, 
@@ -36,9 +40,107 @@ export default function TownSelector({
   textClassName = ""
 }: TownSelectorProps) {
   const [open, setOpen] = React.useState(false);
+  const [search, setSearch] = React.useState('');
+
+  // High-performance search using useMemo with prioritization and grouping
+  const flatItems = React.useMemo(() => {
+    const lowerSearch = search.toLowerCase().trim();
+    
+    // 1. Filter towns
+    let filtered: Town[] = SL_TOWNS;
+    if (lowerSearch) {
+      filtered = SL_TOWNS.filter(town => 
+        town.name.toLowerCase().includes(lowerSearch) || 
+        town.district.toLowerCase().includes(lowerSearch)
+      );
+
+      // 2. Prioritize "starts with" matches
+      filtered.sort((a, b) => {
+        const aStarts = a.name.toLowerCase().startsWith(lowerSearch);
+        const bStarts = b.name.toLowerCase().startsWith(lowerSearch);
+        if (aStarts && !bStarts) return -1;
+        if (!aStarts && bStarts) return 1;
+        return 0;
+      });
+    }
+
+    // 3. Group by District
+    const groups: Record<string, Town[]> = {};
+    filtered.forEach(town => {
+      if (!groups[town.district]) groups[town.district] = [];
+      groups[town.district].push(town);
+    });
+
+    // 4. Create flat list with headers
+    const items: ListItem[] = [];
+    const sortedDistricts = Object.keys(groups).sort();
+    
+    sortedDistricts.forEach(district => {
+      items.push({ type: 'header', district });
+      groups[district].forEach(town => {
+        items.push({ type: 'town', town });
+      });
+    });
+
+    return items;
+  }, [search]);
+
+  const Row = React.useCallback(({ index, style, ariaAttributes }: { 
+    index: number; 
+    style: React.CSSProperties;
+    ariaAttributes: any;
+  }) => {
+    const item = flatItems[index];
+    if (!item) return null;
+
+    if (item.type === 'header') {
+      return (
+        <div 
+          style={{ ...style, display: 'flex', alignItems: 'center' }} 
+          className="px-4 py-1 bg-gray-50 border-y border-gray-100 sticky top-0 z-10"
+          {...ariaAttributes}
+        >
+          <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest">
+            {item.district} District
+          </span>
+        </div>
+      );
+    }
+
+    const { town } = item;
+    return (
+      <div style={style} {...ariaAttributes}>
+        <CommandItem
+          key={`${town.name}-${town.lat}-${town.lon}`}
+          value={`${town.name} ${town.district}`}
+          onSelect={() => {
+            onSelect(town);
+            setOpen(false);
+          }}
+          className="flex items-center px-4 py-2 hover:bg-emerald-50 cursor-pointer transition-colors"
+        >
+          <div className="flex flex-col flex-1">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-gray-900">{town.name}</span>
+              <span className="text-[9px] px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded-full capitalize">
+                {town.type}
+              </span>
+            </div>
+            <span className="text-xs text-gray-400">{town.district} District</span>
+          </div>
+          <Check
+            className={cn(
+              "ml-auto h-4 w-4",
+              selectedTownName === town.name ? "opacity-100 text-emerald-600" : "opacity-0"
+            )}
+          />
+        </CommandItem>
+      </div>
+    );
+  }, [flatItems, onSelect, selectedTownName]);
 
   return (
-    <div className="relative w-full">
+    <div className="relative w-full font-normal">
       <DropdownMenu open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger asChild>
           <button
@@ -59,40 +161,32 @@ export default function TownSelector({
         </DropdownMenuTrigger>
         <DropdownMenuContent 
           align="start" 
-          className="w-full min-w-[280px] p-0 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
+          className="w-full min-w-[300px] p-0 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
         >
-          <Command shouldFilter={true} className="rounded-none border-none">
+          <Command shouldFilter={false} className="rounded-none border-none">
             <CommandInput 
-              placeholder="Search towns..." 
+              placeholder="Search 6,600+ locations..." 
               className="h-11 border-none focus:ring-0" 
               autoFocus
+              value={search}
+              onValueChange={setSearch}
             />
-            <CommandList className="max-h-[300px] overflow-y-auto custom-scrollbar">
-              <CommandEmpty className="py-6 text-center text-sm text-gray-500">No town found.</CommandEmpty>
-              <CommandGroup heading="Sri Lankan Towns">
-                {SL_TOWNS.map((town) => (
-                  <CommandItem
-                    key={`${town.name}-${town.district}`}
-                    value={`${town.name} ${town.district}`}
-                    onSelect={() => {
-                      onSelect(town);
-                      setOpen(false);
-                    }}
-                    className="flex items-center px-4 py-2.5 hover:bg-emerald-50 cursor-pointer transition-colors"
-                  >
-                    <div className="flex flex-col flex-1">
-                      <span className="text-sm font-medium text-gray-900">{town.name}</span>
-                      <span className="text-xs text-gray-500">{town.district} District</span>
-                    </div>
-                    <Check
-                      className={cn(
-                        "ml-auto h-4 w-4",
-                        selectedTownName === town.name ? "opacity-100 text-emerald-600" : "opacity-0"
-                      )}
-                    />
-                  </CommandItem>
-                ))}
-              </CommandGroup>
+            <CommandList className="max-h-[350px] overflow-hidden">
+              {flatItems.length === 0 && (
+                <CommandEmpty className="py-8 text-center text-sm text-gray-500">
+                  No locations found matching "{search}"
+                </CommandEmpty>
+              )}
+              {flatItems.length > 0 && (
+                <List
+                  style={{ height: 350, width: '100%' }}
+                  rowCount={flatItems.length}
+                  rowHeight={55}
+                  className="custom-scrollbar"
+                  rowComponent={Row as any}
+                  rowProps={{}}
+                />
+              )}
             </CommandList>
           </Command>
         </DropdownMenuContent>

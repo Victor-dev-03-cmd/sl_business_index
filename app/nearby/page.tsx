@@ -70,6 +70,583 @@ const districtCoordinates: Record<string, { lat: number; lng: number }> = {
 import { SL_TOWNS, Town } from '@/lib/towns';
 import TownSelector from '@/components/TownSelector';
 
+const CATEGORY_SUBGROUPS: Record<string, { group: string; items: string[] }[]> = {
+  'Health & Medical': [
+    {
+      group: 'Medical Specialties & Subspecialties',
+      items: ['Anesthesiology', 'Adult Cardiac Anesthesiology', 'Critical Care Medicine', 'Obstetric Anesthesiology', 'Pain Medicine', 'Pediatric Anesthesiology']
+    },
+    {
+      group: 'Dermatology',
+      items: ['Dermatopathology', 'Micrographic Dermatologic Surgery', 'Pediatric Dermatology']
+    },
+    {
+      group: 'Emergency Medicine',
+      items: ['Emergency Medical Services', 'Medical Toxicology', 'Pediatric Emergency Medicine', 'Sports Medicine', 'Undersea and Hyperbaric Medicine']
+    },
+    {
+      group: 'Family Medicine',
+      items: ['Adolescent Medicine', 'Geriatric Medicine', 'Hospice and Palliative Medicine']
+    },
+    {
+      group: 'Internal Medicine',
+      items: ['Cardiovascular Disease', 'Endocrinology, Diabetes, and Metabolism', 'Gastroenterology', 'Hematology and Oncology', 'Infectious Disease', 'Nephrology', 'Pulmonary Disease', 'Rheumatology']
+    },
+    {
+      group: 'Neurology',
+      items: ['Brain Injury Medicine', 'Child Neurology', 'Epilepsy', 'Vascular Neurology']
+    },
+    {
+      group: 'Obstetrics and Gynecology (OB/GYN)',
+      items: ['Gynecologic Oncology', 'Maternal-Fetal Medicine', 'Reproductive Endocrinology and Infertility']
+    },
+    {
+      group: 'Ophthalmology',
+      items: ['Neuro-Ophthalmology', 'Ocular Oncology']
+    },
+    {
+      group: 'Orthopaedic Surgery',
+      items: ['Adult Reconstructive Orthopaedic Surgery', 'Hand Surgery', 'Orthopaedic Sports Medicine']
+    },
+    {
+      group: 'Pathology',
+      items: ['Blood Banking-Transfusion Medicine', 'Forensic Pathology', 'Neuropathology']
+    },
+    {
+      group: 'Pediatrics',
+      items: ['Neonatal-Perinatal Medicine', 'Pediatric Cardiology', 'Pediatric Nephrology']
+    },
+    {
+      group: 'Psychiatry',
+      items: ['Addiction Psychiatry', 'Child and Adolescent Psychiatry', 'Forensic Psychiatry', 'Geriatric Psychiatry']
+    },
+    {
+      group: 'Radiology',
+      items: ['Diagnostic Radiology', 'Interventional Radiology', 'Neuroradiology', 'Nuclear Medicine']
+    },
+    {
+      group: 'Surgery',
+      items: ['Colon and Rectal Surgery', 'Neurological Surgery', 'Plastic Surgery', 'Thoracic Surgery', 'Vascular Surgery']
+    }
+  ],
+  'Food & Dining': [
+    {
+      group: 'Cuisines',
+      items: ['Sri Lankan', 'Chinese', 'Indian', 'Italian', 'Western', 'Japanese', 'Thai', 'Arabic']
+    },
+    {
+      group: 'Establishment Type',
+      items: ['Fine Dining', 'Casual Dining', 'Cafes & Coffee Shops', 'Bakeries', 'Fast Food', 'Pubs & Bars', 'Juice Bars', 'Pastry Shops']
+    }
+  ],
+  'Hotels & Accommodation': [
+    {
+      group: 'Accommodation Type',
+      items: ['Luxury Hotels', 'Boutique Hotels', 'Resorts', 'Guest Houses', 'Homestays', 'Villas', 'Budget Hotels', 'Eco Lodges']
+    },
+    {
+      group: 'Facilities',
+      items: ['Swimming Pool', 'Spa & Wellness', 'Beachfront', 'Conference Halls', 'Wedding Venues']
+    }
+  ],
+  'Transportation & Logistics': [
+    {
+      group: 'Transportation Services',
+      items: ['Airlines', 'Trains', 'Buses', 'Cars', 'Taxis', 'Ferries', 'Subways', 'Bikes', 'Scooters', 'Freight', 'Logistics', 'Limousines', 'Charters']
+    },
+    {
+      group: 'Infrastructure',
+      items: ['Airports', 'Stations', 'Harbors', 'Tolls', 'Parking', 'Highways']
+    }
+  ],
+  'Education': [
+    {
+      group: 'Institutions',
+      items: ['Primary Schools', 'Secondary Schools', 'International Schools', 'Universities', 'Vocational Training', 'Technical Colleges']
+    },
+    {
+      group: 'Tuition & Courses',
+      items: ['Maths Tuition', 'Science Tuition', 'English Language', 'IT & Coding', 'Music & Arts', 'Driving Schools']
+    }
+  ],
+  'Finance & Legal': [
+    {
+      group: 'Banking & Finance',
+      items: ['Banks', 'ATM Locations', 'Finance Companies', 'Insurance Agents', 'Microfinance', 'Leasing Services']
+    },
+    {
+      group: 'Legal Services',
+      items: ['Lawyers', 'Notary Public', 'Legal Consultants', 'Corporate Law', 'Divorce Lawyers']
+    }
+  ],
+  'Agriculture, Forestry & Aquaculture': [
+    {
+      group: 'Cereals & Grains',
+      items: ['Wheat', 'Rice', 'Corn (Maize)', 'Barley', 'Oats', 'Sorghum']
+    },
+    {
+      group: 'Legumes & Pulses',
+      items: ['Beans', 'Peas', 'Lentils', 'Chickpeas']
+    },
+    {
+      group: 'Oilseeds & Oil-Bearing Crops',
+      items: ['Soybeans', 'Canola', 'Sunflower seeds', 'Peanuts', 'Oil palm']
+    },
+    {
+      group: 'Fruits (Temperate)',
+      items: ['Apples', 'Pears', 'Grapes', 'Berries']
+    },
+    {
+      group: 'Fruits (Tropical/Subtropical)',
+      items: ['Bananas', 'Mangoes', 'Citrus', 'Pineapple']
+    },
+    {
+      group: 'Vegetables (Leafy/Stem)',
+      items: ['Lettuce', 'Spinach', 'Cabbage']
+    },
+    {
+      group: 'Vegetables (Root, Bulb & Tuber)',
+      items: ['Potatoes', 'Carrots', 'Onions', 'Cassava']
+    },
+    {
+      group: 'Vegetables (Fruit-bearing)',
+      items: ['Tomatoes', 'Peppers', 'Cucumbers']
+    },
+    {
+      group: 'Sugar & Fiber Crops',
+      items: ['Sugarcane', 'Sugar beet', 'Cotton', 'Jute', 'Flax', 'Hemp']
+    },
+    {
+      group: 'Beverage & Stimulant Crops',
+      items: ['Coffee', 'Tea', 'Cocoa', 'Tobacco']
+    },
+    {
+      group: 'Spices & Aromatic Herbs',
+      items: ['Black pepper', 'Vanilla', 'Cinnamon', 'Ginger', 'Cardamom']
+    },
+    {
+      group: 'Forage & Ornamental Crops',
+      items: ['Alfalfa', 'Clover', 'Grasses', 'Flowers', 'Nursery plants', 'Foliage']
+    },
+    {
+      group: 'Meat & Poultry',
+      items: ['Beef', 'Pork', 'Lamb', 'Chicken', 'Turkey', 'Goat']
+    },
+    {
+      group: 'Dairy & Eggs',
+      items: ['Milk', 'Cheese', 'Yogurt', 'Butter', 'Eggs']
+    },
+    {
+      group: 'Animal Fibers & By-products',
+      items: ['Wool', 'Mohair', 'Silk', 'Hides', 'Leather', 'Tallow', 'Manure']
+    },
+    {
+      group: 'Forestry',
+      items: ['Timber', 'Rubber', 'Resin', 'Firewood', 'Charcoal']
+    },
+    {
+      group: 'Aquaculture',
+      items: ['Fish (Tilapia, Catfish)', 'Shellfish (Shrimp, Oysters)']
+    }
+  ],
+  'Agriculture Products': [], // This will be handled as an alias in logic
+  'Beauty & Health': [
+    {
+      group: 'Beauty & Personal Care',
+      items: ['Skin', 'Hair', 'Makeup', 'Fragrance', 'Grooming', 'Bath', 'Tools', 'Oral']
+    },
+    {
+      group: 'Health & Wellness',
+      items: ['Vitamins', 'Medical', 'Sports', 'Sexual', 'Hygiene', 'Vision', 'Aromatherapy']
+    }
+  ],
+  'Electronic Peripherals': [
+    {
+      group: 'Input',
+      items: ['Keyboards', 'Mice', 'Scanners', 'Microphones', 'Webcams', 'Controllers', 'Tablets', 'Readers']
+    },
+    {
+      group: 'Output',
+      items: ['Monitors', 'Printers', 'Speakers', 'Headphones', 'Projectors', 'Plotters']
+    },
+    {
+      group: 'Storage',
+      items: ['Drives', 'Flash', 'Cards', 'Optical']
+    },
+    {
+      group: 'Communication & Networking',
+      items: ['Modems', 'Routers', 'Adapters', 'Hubs']
+    }
+  ],
+  'Home Appliances & Services': [
+    {
+      group: 'Home Services',
+      items: ['Cleaning', 'Plumbing', 'Electrical', 'Installation', 'Repair', 'Maintenance', 'Gardening', 'Pest', 'Security', 'Moving', 'Painting', 'Renovation', 'Interior', 'Laundry', 'HVAC']
+    }
+  ],
+  'Interior Design Services': [
+    {
+      group: 'Interior Design Styles',
+      items: ['Modern', 'Contemporary', 'Minimalist', 'Industrial', 'Mid-Century Modern', 'Traditional', 'Transitional', 'Bohemian', 'Scandinavian', 'Rustic', 'Coastal', 'Art Deco', 'French Country', 'Japandi']
+    }
+  ],
+  'Pet Care': [
+    {
+      group: 'Pet Products',
+      items: ['Food', 'Treats', 'Toys', 'Beds', 'Collars', 'Leashes', 'Grooming', 'Cages', 'Aquariums', 'Litter', 'Health', 'Apparel', 'Bowls', 'Carriers']
+    },
+    {
+      group: 'Pet Services',
+      items: ['Veterinary', 'Grooming', 'Boarding', 'Sitting', 'Walking', 'Training', 'Daycare', 'Therapy', 'Insurance', 'Photography', 'Waste (Removal)', 'Transport']
+    }
+  ],
+  'Shopping & Retail': [
+    {
+      group: 'Categories',
+      items: ['Apparel', 'Electronics', 'Grocery', 'Home', 'Beauty', 'Health', 'Hardware', 'Toys', 'Automotive', 'Pet', 'Media', 'Sports']
+    },
+    {
+      group: 'Store Types',
+      items: ['Department', 'Specialty', 'Supermarket', 'Convenience', 'Discount', 'eCommerce', 'Warehouse']
+    }
+  ],
+  'Travel & Transportation': [
+    {
+      group: 'Travel',
+      items: ['Flights', 'Hotels', 'Cruises', 'Resorts', 'Vacations', 'Rentals', 'Tours', 'Insurance', 'Adventure', 'Business', 'Camping', 'Hostels', 'Safaris']
+    },
+    {
+      group: 'Transportation',
+      items: ['Airlines', 'Trains', 'Buses', 'Cars', 'Taxis', 'Ferries', 'Subways', 'Bikes', 'Scooters', 'Freight', 'Logistics', 'Limousines', 'Charters']
+    },
+    {
+      group: 'Infrastructure',
+      items: ['Airports', 'Stations', 'Harbors', 'Tolls', 'Parking', 'Highways']
+    }
+  ],
+  'Arts, Entertainment & Leisure': [
+    {
+      group: 'Arts',
+      items: ['Visual', 'Performing', 'Fine', 'Digital', 'Photography', 'Sculpture', 'Literature', 'Crafts', 'Galleries', 'Museums']
+    },
+    {
+      group: 'Entertainment',
+      items: ['Movies', 'Music', 'Theater', 'Gaming', 'Concerts', 'Festivals', 'Broadcasting', 'Streaming', 'Events', 'Nightlife']
+    },
+    {
+      group: 'Leisure',
+      items: ['Hobbies', 'Sports', 'Parks', 'Fitness', 'Reading', 'Gardening', 'Crafting', 'Clubs', 'Tourism']
+    }
+  ],
+  'Construction Services': [
+    {
+      group: 'Planning & Consulting',
+      items: ['Planning', 'Architecture', 'Engineering', 'Surveying', 'Drafting', 'Consulting']
+    },
+    {
+      group: 'Site Preparation',
+      items: ['Demolition', 'Excavation', 'Grading', 'Foundation', 'Dredging']
+    },
+    {
+      group: 'Structural & Exterior',
+      items: ['Structural', 'Framing', 'Masonry', 'Concrete', 'Roofing', 'Siding', 'Welding']
+    },
+    {
+      group: 'Systems & Finishing',
+      items: ['Electrical', 'Plumbing', 'HVAC', 'Mechanical', 'Solar', 'Security', 'Drywall', 'Painting', 'Flooring', 'Carpentry', 'Tiling', 'Glazing']
+    },
+    {
+      group: 'Exterior & Landscaping',
+      items: ['Paving', 'Landscaping', 'Fencing', 'Pool', 'Decking']
+    }
+  ],
+  'Embassies & High commission': [
+    {
+      group: 'Diplomatic Missions',
+      items: ['Embassies', 'High Commissions', 'Consulates', 'Missions', 'Delegations', 'Chanceries', 'Residences']
+    },
+    {
+      group: 'Departments',
+      items: ['Consular', 'Political', 'Economic', 'Commercial', 'Cultural', 'Defense', 'Press', 'Legal', 'Administration', 'Immigration', 'Security']
+    },
+    {
+      group: 'Services',
+      items: ['Visas', 'Passports', 'Notarization', 'Authentication', 'Registration', 'Evacuation']
+    }
+  ],
+  'Government & Services': [
+    {
+      group: 'Government Services',
+      items: ['Agriculture', 'Banking', 'Registration', 'Communication', 'Education', 'Employment', 'Environment', 'Health', 'Housing', 'Justice', 'Trade', 'Travel']
+    },
+    {
+      group: 'Public Service Groups',
+      items: ['Administrative', 'Police', 'Customs', 'Medical', 'Engineering', 'Planning', 'Scientific', 'Architectural', 'Teaching', 'Legal', 'Surveyors', 'Accountants']
+    },
+    {
+      group: 'Local Authority Services',
+      items: ['Sanitation', 'Thoroughfares', 'Parks', 'Waste', 'Markets', 'Utility', 'Fire']
+    }
+  ],
+  'Hotels & Restaurants': [
+    {
+      group: 'Hotels',
+      items: ['Luxury', 'Boutique', 'Resorts', 'Business', 'Budget', 'Motels', 'Hostels', 'Suites', 'Villas', 'Lodges', 'Apartments', 'Transit']
+    },
+    {
+      group: 'Restaurants',
+      items: ['Fine (Dining)', 'Casual', 'Fast (Food)', 'Cafes', 'Bistros', 'Buffets', 'Bakeries', 'Pubs', 'Bars', 'Pizzerias', 'Steakhouses', 'Grills', 'Diners', 'Delis']
+    },
+    {
+      group: 'Services',
+      items: ['Catering', 'Delivery', 'Takeout', 'Reservations', 'Concierge', 'Housekeeping', 'Banquet', 'Valet']
+    }
+  ],
+  'Media & Advertising': [
+    {
+      group: 'Media',
+      items: ['Broadcasting', 'Television', 'Radio', 'Print', 'Digital', 'Social', 'Streaming', 'News', 'Publishing', 'Podcasting', 'Websites']
+    },
+    {
+      group: 'Advertising',
+      items: ['Creative', 'Branding', 'Design', 'SEO', 'SEM', 'PPC', 'Display', 'Billboards', 'Signage', 'Email', 'Programmatic', 'Experiential']
+    },
+    {
+      group: 'Services',
+      items: ['Planning', 'Buying', 'Production', 'Research', 'Analytics', 'Relations', 'Consulting', 'Copywriting']
+    }
+  ],
+  'Professional Services': [
+    {
+      group: 'Consulting',
+      items: ['Management', 'Strategy', 'Operations', 'Financial', 'Human (Resources)', 'Information (Technology)', 'Sustainability']
+    },
+    {
+      group: 'Legal',
+      items: ['Corporate', 'Litigation', 'Intellectual (Property)', 'Employment', 'Environmental', 'Notary', 'Paralegal']
+    },
+    {
+      group: 'Finance & Accounting',
+      items: ['Auditing', 'Taxation', 'Bookkeeping', 'Payroll', 'Actuarial', 'Investment (Advisory)']
+    },
+    {
+      group: 'Technical & Design',
+      items: ['Architecture', 'Engineering', 'Drafting', 'Graphic (Design)', 'Interior (Design)', 'Surveying']
+    },
+    {
+      group: 'Marketing & Communications',
+      items: ['Advertising', 'Public (Relations)', 'Translation', 'Copywriting', 'Research (Market)']
+    },
+    {
+      group: 'Scientific',
+      items: ['Research', 'Testing', 'Laboratory', 'Veterinary']
+    }
+  ],
+  'Sports & Recreation': [
+    {
+      group: 'Sports',
+      items: ['Athletics', 'Gymnastics', 'Swimming', 'Combat', 'Racquet', 'Team', 'Motorsports', 'Equestrian', 'Cycling', 'Golf']
+    },
+    {
+      group: 'Recreation',
+      items: ['Fitness', 'Outdoor', 'Water', 'Winter', 'Gaming', 'Adventure']
+    },
+    {
+      group: 'Infrastructure & Gear',
+      items: ['Stadiums', 'Arenas', 'Courts', 'Apparel', 'Equipment', 'Footwear']
+    },
+    {
+      group: 'Services',
+      items: ['Coaching', 'Training', 'Officiating', 'Physiotherapy', 'Management', 'Broadcasting']
+    }
+  ],
+  'Vehicles & Automotive': [
+    {
+      group: 'Vehicles',
+      items: ['Cars', 'Trucks', 'Vans', 'Motorcycles', 'Buses', 'Electric', 'Luxury', 'Commercial', 'Industrial', 'Specialty']
+    },
+    {
+      group: 'Automotive Parts',
+      items: ['Engines', 'Tires', 'Wheels', 'Brakes', 'Suspension', 'Lighting', 'Interior', 'Body', 'Batteries', 'Electronics']
+    },
+    {
+      group: 'Services',
+      items: ['Repair', 'Maintenance', 'Bodywork', 'Detailing', 'Inspection', 'Rental', 'Financing', 'Roadside']
+    },
+    {
+      group: 'Fuel & Charging',
+      items: ['Gasoline', 'Diesel', 'Electric', 'Hydrogen', 'Lubricants']
+    }
+  ],
+  'Baby Care': [
+    {
+      group: 'Feeding',
+      items: ['Nursing', 'Bottles', 'Formula', 'Solid', 'Utensils']
+    },
+    {
+      group: 'Diapering',
+      items: ['Diapers', 'Wipes', 'Creams', 'Bags', 'Disposal']
+    },
+    {
+      group: 'Bath & Body',
+      items: ['Cleansers', 'Moisturizers', 'Bathing', 'Grooming', 'Laundry']
+    },
+    {
+      group: 'Nursery & Sleep',
+      items: ['Furniture', 'Bedding', 'Monitoring', 'Soothing']
+    },
+    {
+      group: 'Travel & Gear',
+      items: ['Strollers', 'Car Seats', 'Carriers', 'Playpens']
+    },
+    {
+      group: 'Health & Safety',
+      items: ['Medical', 'Safety', 'Teething', 'Sun']
+    },
+    {
+      group: 'Play & Learning',
+      items: ['Toys', 'Walkers', 'Books']
+    }
+  ],
+  'Educational institutes & Services': [
+    {
+      group: 'Institutions',
+      items: ['Preschools', 'Schools', 'Colleges', 'Universities', 'Vocational', 'Polytechnics', 'Academies', 'Conservatories', 'Seminaries']
+    },
+    {
+      group: 'Specialized Learning',
+      items: ['Language', 'Technical', 'Medical', 'Legal', 'Business', 'Art', 'Music', 'Flight', 'Special']
+    },
+    {
+      group: 'Educational Services',
+      items: ['Tutoring', 'Coaching', 'Consultancy', 'Counseling', 'Testing', 'Placement', 'Training', 'E-learning']
+    },
+    {
+      group: 'Supplies & Support',
+      items: ['Textbooks', 'Stationery', 'Uniforms', 'Library', 'Research', 'Scholarships']
+    }
+  ],
+  'Emergency Services': [
+    {
+      group: 'Core Agencies',
+      items: ['Police', 'Fire', 'Ambulance', 'Dispatch']
+    },
+    {
+      group: 'Specialized Rescue',
+      items: ['Search', 'Coast', 'Mountain', 'Lifeguard', 'Hazmat']
+    },
+    {
+      group: 'Disaster & Management',
+      items: ['Management', 'Military', 'Meteorology', 'Cyber']
+    },
+    {
+      group: 'Community & Welfare',
+      items: ['Child', 'Women', 'Mental', 'Poison', 'Animal']
+    },
+    {
+      group: 'Utilities (Emergency Response)',
+      items: ['Electricity', 'Water', 'Road']
+    }
+  ],
+  'Hardware Equipment': [
+    {
+      group: 'Tools',
+      items: ['Hand', 'Power', 'Pneumatic', 'Measuring', 'Cutting']
+    },
+    {
+      group: 'Fasteners & Fixings',
+      items: ['Screws', 'Nails', 'Bolts', 'Anchors', 'Rivets', 'Adhesives']
+    },
+    {
+      group: 'Building Materials',
+      items: ['Lumber', 'Cement', 'Drywall', 'Insulation', 'Roofing', 'Brick']
+    },
+    {
+      group: 'Plumbing & Electrical',
+      items: ['Pipes', 'Fittings', 'Wiring', 'Switches', 'Breakers', 'Conduit']
+    },
+    {
+      group: 'Fixtures & Finishings',
+      items: ['Knobs', 'Hinges', 'Handles', 'Locks', 'Latches', 'Brackets']
+    },
+    {
+      group: 'Safety & Storage',
+      items: ['Personal', 'Toolboxes', 'Shelving', 'Ladders', 'Workbenches']
+    }
+  ]
+};
+
+// Update alias mapping
+const CATEGORY_ALIASES: Record<string, string> = {
+  'Agriculture Products': 'Agriculture, Forestry & Aquaculture',
+  'Farming': 'Agriculture, Forestry & Aquaculture',
+  'Beauty': 'Beauty & Health',
+  'Health': 'Beauty & Health',
+  'Personal Care': 'Beauty & Health',
+  'Wellness': 'Beauty & Health',
+  'Electronics': 'Electronic Peripherals',
+  'Computers': 'Electronic Peripherals',
+  'Peripherals': 'Electronic Peripherals',
+  'Electronic Pheripherals': 'Electronic Peripherals',
+  'Home Services': 'Home Appliances & Services',
+  'Maintenance': 'Home Appliances & Services',
+  'Appliances': 'Home Appliances & Services',
+  'Interior Design': 'Interior Design Services',
+  'Interior Decor': 'Interior Design Services',
+  'Pets': 'Pet Care',
+  'Veterinary': 'Pet Care',
+  'Pet Shop': 'Pet Care',
+  'Shopping': 'Shopping & Retail',
+  'Retail': 'Shopping & Retail',
+  'Supermarket': 'Shopping & Retail',
+  'Travel': 'Travel & Transportation',
+  'Transportation': 'Travel & Transportation',
+  'Transport': 'Travel & Transportation',
+  'Taxi': 'Travel & Transportation',
+  'Sports': 'Sports & Recreation',
+  'Fitness': 'Sports & Recreation',
+  'Vehicles': 'Vehicles & Automotive',
+  'Cars': 'Vehicles & Automotive',
+  'Automotive': 'Vehicles & Automotive',
+  'Automative': 'Vehicles & Automotive',
+  'Arts': 'Arts, Entertainment & Leisure',
+  'Entertainment': 'Arts, Entertainment & Leisure',
+  'Leisure': 'Arts, Entertainment & Leisure',
+  'Music': 'Arts, Entertainment & Leisure',
+  'Movies': 'Arts, Entertainment & Leisure',
+  'Construction': 'Construction Services',
+  'Architecture': 'Construction Services',
+  'Embassy': 'Embassies & High commission',
+  'Consulate': 'Embassies & High commission',
+  'Diplomatic': 'Embassies & High commission',
+  'Government': 'Government & Services',
+  'Public Service': 'Government & Services',
+  'Hotels': 'Hotels & Restaurants',
+  'Restaurants': 'Hotels & Restaurants',
+  'Food & Dining': 'Hotels & Restaurants',
+  'Media': 'Media & Advertising',
+  'Advertising': 'Media & Advertising',
+  'Marketing': 'Media & Advertising',
+  'Professional': 'Professional Services',
+  'Consulting': 'Professional Services',
+  'Legal': 'Professional Services',
+  'Accounting': 'Professional Services',
+  'Baby': 'Baby Care',
+  'Kids': 'Baby Care',
+  'Education': 'Educational institutes & Services',
+  'School': 'Educational institutes & Services',
+  'University': 'Educational institutes & Services',
+  'Tuition': 'Educational institutes & Services',
+  'Emergency': 'Emergency Services',
+  'Rescue': 'Emergency Services',
+  'Police': 'Emergency Services',
+  'Fire': 'Emergency Services',
+  'Ambulance': 'Emergency Services',
+  'Hardware': 'Hardware Equipment',
+  'Tools': 'Hardware Equipment',
+  'Building Materials': 'Hardware Equipment'
+};
+
 function SplitScreenResultsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -99,6 +676,103 @@ function SplitScreenResultsContent() {
   const [isMapManual, setIsMapManual] = useState(false);
   const [locationLoading, setLocationLoading] = useState(false);
   
+  const activeSubgroups = useMemo(() => {
+    // 1. Check selected category (including aliases)
+    if (selectedCategory) {
+      if (CATEGORY_SUBGROUPS[selectedCategory]) {
+        return CATEGORY_SUBGROUPS[selectedCategory];
+      }
+      const alias = CATEGORY_ALIASES[selectedCategory];
+      if (alias && CATEGORY_SUBGROUPS[alias]) {
+        return CATEGORY_SUBGROUPS[alias];
+      }
+    }
+    
+    // 2. Try to match searchQuery with main categories that have subgroups
+    const lowerQuery = searchQuery.toLowerCase();
+    for (const catName in CATEGORY_SUBGROUPS) {
+      if (lowerQuery.includes(catName.toLowerCase())) {
+        if (CATEGORY_SUBGROUPS[catName].length > 0) {
+          return CATEGORY_SUBGROUPS[catName];
+        }
+        const alias = CATEGORY_ALIASES[catName];
+        if (alias && CATEGORY_SUBGROUPS[alias]) {
+          return CATEGORY_SUBGROUPS[alias];
+        }
+      }
+    }
+
+    // 3. Special case for common terms
+    if (lowerQuery.includes('health') || lowerQuery.includes('medical') || lowerQuery.includes('doctor') || lowerQuery.includes('clinic')) {
+       return CATEGORY_SUBGROUPS['Health & Medical'];
+    }
+    if (lowerQuery.includes('food') || lowerQuery.includes('restaurant') || lowerQuery.includes('eat') || lowerQuery.includes('cafe') || lowerQuery.includes('dining')) {
+       return CATEGORY_SUBGROUPS['Hotels & Restaurants'];
+    }
+    if (lowerQuery.includes('hotel') || lowerQuery.includes('resort') || lowerQuery.includes('stay') || lowerQuery.includes('accommodation')) {
+       return CATEGORY_SUBGROUPS['Hotels & Restaurants'];
+    }
+    if (lowerQuery.includes('car') || lowerQuery.includes('auto') || lowerQuery.includes('vehicle') || lowerQuery.includes('repair') || lowerQuery.includes('motorcycle') || lowerQuery.includes('bike')) {
+       return CATEGORY_SUBGROUPS['Vehicles & Automotive'];
+    }
+    if (lowerQuery.includes('school') || lowerQuery.includes('learn') || lowerQuery.includes('education') || lowerQuery.includes('class') || lowerQuery.includes('university') || lowerQuery.includes('college')) {
+       return CATEGORY_SUBGROUPS['Educational institutes & Services'];
+    }
+    if (lowerQuery.includes('bank') || lowerQuery.includes('finance') || lowerQuery.includes('legal') || lowerQuery.includes('lawyer') || lowerQuery.includes('accountant')) {
+       return CATEGORY_SUBGROUPS['Professional Services'];
+    }
+    if (lowerQuery.includes('shop') || lowerQuery.includes('retail') || lowerQuery.includes('store') || lowerQuery.includes('supermarket') || lowerQuery.includes('market')) {
+       return CATEGORY_SUBGROUPS['Shopping & Retail'];
+    }
+    if (lowerQuery.includes('travel') || lowerQuery.includes('transport') || lowerQuery.includes('tour') || lowerQuery.includes('flight') || lowerQuery.includes('taxi') || lowerQuery.includes('bus') || lowerQuery.includes('train')) {
+       return CATEGORY_SUBGROUPS['Transportation & Logistics'];
+    }
+    if (lowerQuery.includes('electron') || lowerQuery.includes('computer') || lowerQuery.includes('peripheral') || lowerQuery.includes('pheripheral') || lowerQuery.includes('keyboard') || lowerQuery.includes('monitor')) {
+       return CATEGORY_SUBGROUPS['Electronic Peripherals'];
+    }
+    if (lowerQuery.includes('home service') || lowerQuery.includes('cleaning') || lowerQuery.includes('plumbing') || lowerQuery.includes('repair') || lowerQuery.includes('appliance')) {
+       return CATEGORY_SUBGROUPS['Home Appliances & Services'];
+    }
+    if (lowerQuery.includes('interior') || lowerQuery.includes('decor') || lowerQuery.includes('design')) {
+       return CATEGORY_SUBGROUPS['Interior Design Services'];
+    }
+    if (lowerQuery.includes('pet') || lowerQuery.includes('vet') || lowerQuery.includes('animal care') || lowerQuery.includes('dog') || lowerQuery.includes('cat')) {
+       return CATEGORY_SUBGROUPS['Pet Care'];
+    }
+    if (lowerQuery.includes('beauty') || lowerQuery.includes('cosmetic') || lowerQuery.includes('makeup') || lowerQuery.includes('salon') || lowerQuery.includes('wellness') || lowerQuery.includes('grooming')) {
+       return CATEGORY_SUBGROUPS['Beauty & Health'];
+    }
+    if (lowerQuery.includes('agri') || lowerQuery.includes('farm') || lowerQuery.includes('crop') || lowerQuery.includes('animal') || lowerQuery.includes('fish') || lowerQuery.includes('forest') || lowerQuery.includes('agriculture products')) {
+       return CATEGORY_SUBGROUPS['Agriculture, Forestry & Aquaculture'];
+    }
+    if (lowerQuery.includes('art') || lowerQuery.includes('entertain') || lowerQuery.includes('leisure') || lowerQuery.includes('music') || lowerQuery.includes('movie') || lowerQuery.includes('game') || lowerQuery.includes('hobby')) {
+       return CATEGORY_SUBGROUPS['Arts, Entertainment & Leisure'];
+    }
+    if (lowerQuery.includes('sport') || lowerQuery.includes('recreation') || lowerQuery.includes('gym') || lowerQuery.includes('fitness') || lowerQuery.includes('outdoor') || lowerQuery.includes('adventure')) {
+       return CATEGORY_SUBGROUPS['Sports & Recreation'];
+    }
+    if (lowerQuery.includes('construct') || lowerQuery.includes('build') || lowerQuery.includes('architect') || lowerQuery.includes('engineer') || lowerQuery.includes('plumb') || lowerQuery.includes('electr')) {
+       return CATEGORY_SUBGROUPS['Construction Services'];
+    }
+    if (lowerQuery.includes('embassy') || lowerQuery.includes('consulate') || lowerQuery.includes('diplomat') || lowerQuery.includes('visa') || lowerQuery.includes('passport')) {
+       return CATEGORY_SUBGROUPS['Embassies & High commission'];
+    }
+    if (lowerQuery.includes('gov') || lowerQuery.includes('police') || lowerQuery.includes('public service') || lowerQuery.includes('sanitation')) {
+       return CATEGORY_SUBGROUPS['Government & Services'];
+    }
+    if (lowerQuery.includes('media') || lowerQuery.includes('advertis') || lowerQuery.includes('market') || lowerQuery.includes('brand') || lowerQuery.includes('broadcas')) {
+       return CATEGORY_SUBGROUPS['Media & Advertising'];
+    }
+    if (lowerQuery.includes('professional') || lowerQuery.includes('consult') || lowerQuery.includes('legal') || lowerQuery.includes('account') || lowerQuery.includes('audit')) {
+       return CATEGORY_SUBGROUPS['Professional Services'];
+    }
+    if (lowerQuery.includes('baby') || lowerQuery.includes('kid') || lowerQuery.includes('infant') || lowerQuery.includes('nursery') || lowerQuery.includes('toy')) {
+       return CATEGORY_SUBGROUPS['Baby Care'];
+    }
+
+    return [];
+  }, [selectedCategory, searchQuery]);
+
   const { data: categories = [] } = useQuery({
     queryKey: ['categories-nearby'],
     queryFn: async () => {
@@ -212,22 +886,27 @@ function SplitScreenResultsContent() {
     let finalLng = currentLng;
     const lowerQuery = searchQuery.toLowerCase();
 
-    for (const town of SL_TOWNS) {
-      if (lowerQuery.includes(town.name.toLowerCase())) {
-        finalLat = town.lat.toString();
-        finalLng = town.lng.toString();
-        setCurrentLat(finalLat);
-        setCurrentLng(finalLng);
-        setSearchType('location');
-        setSelectedDistrict(null);
-        setMapCenter({ lat: town.lat, lng: town.lng });
-        setMapZoom(14);
-        finalQuery = finalQuery.replace(new RegExp(town.name, 'gi'), '').trim();
-        break;
-      }
-    }
+    // Prioritize local town matches from GeoJSON data
+    const matchedTown = SL_TOWNS.find(town => {
+      const townName = town.name.toLowerCase();
+      return lowerQuery === townName || 
+             lowerQuery.startsWith(townName + ' ') ||
+             lowerQuery.endsWith(' ' + townName) ||
+             lowerQuery.includes(' ' + townName + ' ');
+    });
 
-    if (finalLat === currentLat) {
+    if (matchedTown) {
+      finalLat = matchedTown.lat.toString();
+      finalLng = matchedTown.lon.toString();
+      setCurrentLat(finalLat);
+      setCurrentLng(finalLng);
+      setSearchType('location');
+      setSelectedDistrict(matchedTown.district);
+      setSelectedTown(matchedTown);
+      setMapCenter({ lat: matchedTown.lat, lng: matchedTown.lon });
+      setMapZoom(14);
+      finalQuery = finalQuery.replace(new RegExp(matchedTown.name, 'gi'), '').trim();
+    } else if (finalLat === currentLat) {
       for (const d of sriLankanDistricts) {
         if (lowerQuery.includes(d.toLowerCase())) {
           finalDistrict = d;
@@ -478,8 +1157,8 @@ function SplitScreenResultsContent() {
                   setSelectedDistrict(town.district);
                   setSearchType('location');
                   setCurrentLat(town.lat.toString());
-                  setCurrentLng(town.lng.toString());
-                  setMapCenter({ lat: town.lat, lng: town.lng });
+                  setCurrentLng(town.lon.toString());
+                  setMapCenter({ lat: town.lat, lng: town.lon });
                   setMapZoom(14);
                   setIsMapManual(false);
                 }} 
@@ -742,6 +1421,74 @@ function SplitScreenResultsContent() {
                 <div className="w-2 h-2 bg-brand-dark rounded-full animate-pulse"></div>
                 Showing {results.length} business{results.length !== 1 ? 'es' : ''} {searchType === 'location' ? `within ${(selectedRadius / 1000).toFixed(0)}km` : `in ${selectedDistrict || district}`}
               </div>
+          </div>
+
+          {/* Right Side Bar: Category Chips (Hover to Open) */}
+          <div className="hidden md:flex absolute right-0 top-0 bottom-0 z-20 flex-row-reverse group">
+             {/* Narrow Bar (Always Visible) */}
+             <div className="w-12 bg-white border-l border-gray-300 flex flex-col items-center py-4 gap-6 h-full shadow-sm">
+                <div className="p-2 rounded-[6px] bg-blue-50 text-brand-dark">
+                  <Tags size={20} />
+                </div>
+                <div className="flex flex-col gap-6 mt-4">
+                  {activeSubgroups.slice(0, 4).map((_, i) => (
+                    <div key={i} className="p-2 text-gray-400 group-hover:text-brand-blue transition-colors">
+                      <Zap size={20} />
+                    </div>
+                  ))}
+                </div>
+             </div>
+
+             {/* Expanded Sidebar content on hover */}
+             <div className="w-0 group-hover:w-80 overflow-hidden transition-all duration-300 bg-white border-l border-gray-300 shadow-xl flex flex-col h-full overflow-y-auto custom-scrollbar">
+                <div className="p-6 w-80">
+                   <h2 className="text-lg font-normal text-gray-900 mb-6 flex items-center gap-2">
+                     <Tags size={20} className="text-brand-dark" />
+                     Quick Filters
+                   </h2>
+                   {activeSubgroups.length > 0 ? (
+                      <div className="space-y-6">
+                        {(searchQuery.toLowerCase().includes('agri') || (selectedCategory && (selectedCategory.includes('Agri') || selectedCategory.includes('Agriculture Products')))) && (
+                          <div className="mb-4">
+                             <Link 
+                               href="/agriculture" 
+                               className="w-full flex items-center justify-center gap-2 py-2.5 bg-brand-dark text-white rounded-xl text-sm font-medium hover:bg-brand-blue transition-all shadow-sm"
+                             >
+                               <Tags size={16} />
+                               View All Agriculture Products
+                             </Link>
+                          </div>
+                        )}
+                        {activeSubgroups.map((group, idx) => (
+                          <div key={idx} className="animate-in fade-in slide-in-from-right-4 duration-300" style={{ animationDelay: `${idx * 50}ms` }}>
+                            <h3 className="text-[10px] text-gray-400 uppercase tracking-[0.2em] mb-3 font-medium">{group.group}</h3>
+                            <div className="flex flex-wrap gap-2">
+                              {group.items.map(item => (
+                                <button
+                                  key={item}
+                                  onClick={() => {
+                                    setSearchQuery(item);
+                                    handleSearch();
+                                  }}
+                                  className="px-3 py-1.5 bg-gray-50 hover:bg-brand-blue/10 text-gray-600 hover:text-brand-dark rounded-full text-xs transition-all border border-gray-200 hover:border-brand-blue/30 text-left font-normal"
+                                >
+                                  {item}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                   ) : (
+                      <div className="text-center py-10 opacity-60">
+                        <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-dashed border-gray-300">
+                          <Search size={24} className="text-gray-300" />
+                        </div>
+                        <p className="text-sm text-gray-500 font-normal">Search for a category like <br/> <span className="text-brand-dark font-medium cursor-pointer hover:underline" onClick={() => setSearchQuery('Health')}>"Health"</span> to see filters</p>
+                      </div>
+                   )}
+                </div>
+             </div>
           </div>
         </div>
     </div>
