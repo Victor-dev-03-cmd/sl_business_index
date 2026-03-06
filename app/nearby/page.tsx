@@ -247,7 +247,7 @@ function SplitScreenResultsContent() {
 
     if (!finalCategory) {
       for (const cat of categories) {
-        if (lowerQuery.includes(cat.name.toLowerCase()) || cat.keywords?.some(kw => lowerQuery.includes(kw.toLowerCase()))) {
+        if (lowerQuery.includes(cat.name.toLowerCase()) || cat.keywords?.some((kw: string) => lowerQuery.includes(kw.toLowerCase()))) {
           finalCategory = cat.name;
           setSelectedCategory(cat.name);
           if (!['Hotels & Restaurants', 'Food & Dining'].includes(cat.name)) break;
