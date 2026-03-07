@@ -2,8 +2,10 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
   })
 
   const supabase = createServerClient(
@@ -20,10 +22,12 @@ export async function middleware(request: NextRequest) {
             value,
             ...options,
           })
-          supabaseResponse = NextResponse.next({
-            request,
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
           })
-          supabaseResponse.cookies.set({
+          response.cookies.set({
             name,
             value,
             ...options,
@@ -35,10 +39,12 @@ export async function middleware(request: NextRequest) {
             value: '',
             ...options,
           })
-          supabaseResponse = NextResponse.next({
-            request,
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
           })
-          supabaseResponse.cookies.set({
+          response.cookies.set({
             name,
             value: '',
             ...options,
@@ -48,8 +54,6 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // IMPORTANT: DO NOT remove this getUser() call.
-  // This is required to refresh the session if it's expired.
   const { data: { user } } = await supabase.auth.getUser()
   const { pathname } = request.nextUrl
 
@@ -58,11 +62,10 @@ export async function middleware(request: NextRequest) {
       const url = request.nextUrl.clone()
       url.pathname = '/login'
       url.searchParams.set('next', pathname)
-      // When redirecting, we must still return the supabaseResponse (which has any refreshed cookies)
-      // but modified to be a redirect.
+      
       const redirectResponse = NextResponse.redirect(url)
-      // Copy cookies from the sync'd supabaseResponse to the redirect response
-      supabaseResponse.cookies.getAll().forEach((cookie) => {
+      // Copy refreshed cookies to redirect response
+      response.cookies.getAll().forEach((cookie) => {
         redirectResponse.cookies.set(cookie.name, cookie.value)
       })
       return redirectResponse
@@ -88,7 +91,7 @@ export async function middleware(request: NextRequest) {
         const url = request.nextUrl.clone()
         url.pathname = '/'
         const redirectResponse = NextResponse.redirect(url)
-        supabaseResponse.cookies.getAll().forEach((cookie) => {
+        response.cookies.getAll().forEach((cookie) => {
           redirectResponse.cookies.set(cookie.name, cookie.value)
         })
         return redirectResponse
@@ -100,7 +103,7 @@ export async function middleware(request: NextRequest) {
         const url = request.nextUrl.clone()
         url.pathname = '/'
         const redirectResponse = NextResponse.redirect(url)
-        supabaseResponse.cookies.getAll().forEach((cookie) => {
+        response.cookies.getAll().forEach((cookie) => {
           redirectResponse.cookies.set(cookie.name, cookie.value)
         })
         return redirectResponse
@@ -108,7 +111,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  return supabaseResponse
+  return response
 }
 
 export const config = {
