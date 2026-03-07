@@ -317,16 +317,26 @@ export default function RegisterBusinessPage() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <button
-                onClick={() => {
-                  router.refresh();
-                  router.push('/');
-                }}
-                className="flex items-center justify-center gap-2 px-8 py-4 bg-brand-dark text-white rounded-[6px] text-sm font-medium hover:bg-brand-blue transition-all shadow-lg shadow-brand-dark/10 active:scale-95"
-              >
-                <Home size={18} />
-                Go to Home
-              </button>
+            <button
+                  onClick={() => {
+                    router.refresh();
+                    router.push('/');
+                  }}
+                  className="flex items-center justify-center gap-2 px-8 py-4 bg-white border border-gray-300 text-gray-600 rounded-[6px] text-sm font-medium hover:bg-gray-50 transition-all active:scale-95"
+                >
+                  <Home size={18} />
+                  Go to Home
+                </button>
+            <button
+                  onClick={() => {
+                    router.refresh();
+                    router.push('/vendor/dashboard');
+                  }}
+                  className="flex items-center justify-center gap-2 px-8 py-4 bg-brand-dark text-white rounded-[6px] text-sm font-medium hover:bg-brand-blue transition-all shadow-lg shadow-brand-dark/10 active:scale-95"
+                >
+                  Go to Dashboard
+                  <ArrowRight size={18} />
+                </button>
           </div>
         </div>
       </div>

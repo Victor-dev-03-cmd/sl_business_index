@@ -2,43 +2,113 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
+  let supabaseResponse = NextResponse.next({
+    request,
   })
 
   const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return request.cookies.get(name)?.value
-          },
-          set(name: string, value: string, options: CookieOptions) {
-            // Request மற்றும் Response இரண்டிலும் குக்கீகளை செட் செய்தல்
-            request.cookies.set({ name, value, ...options })
-            response = NextResponse.next({
-              request: { headers: request.headers },
-            })
-            response.cookies.set({ name, value, ...options })
-          },
-          remove(name: string, options: CookieOptions) {
-            request.cookies.set({ name, value: '', ...options })
-            response = NextResponse.next({
-              request: { headers: request.headers },
-            })
-            response.cookies.set({ name, value: '', ...options })
-          },
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return request.cookies.get(name)?.value
         },
-      }
+        set(name: string, value: string, options: CookieOptions) {
+          request.cookies.set({
+            name,
+            value,
+            ...options,
+          })
+          supabaseResponse = NextResponse.next({
+            request,
+          })
+          supabaseResponse.cookies.set({
+            name,
+            value,
+            ...options,
+          })
+        },
+        remove(name: string, options: CookieOptions) {
+          request.cookies.set({
+            name,
+            value: '',
+            ...options,
+          })
+          supabaseResponse = NextResponse.next({
+            request,
+          })
+          supabaseResponse.cookies.set({
+            name,
+            value: '',
+            ...options,
+          })
+        },
+      },
+    }
   )
 
-  // இது மிகவும் முக்கியம்: Session-ஐ ரிஃப்ரெஷ் செய்து Navbar-க்குத் தேவையான தரவை உறுதிப்படுத்தும்
-  await supabase.auth.getUser()
+  // IMPORTANT: DO NOT remove this getUser() call.
+  // This is required to refresh the session if it's expired.
+  const { data: { user } } = await supabase.auth.getUser()
+  const { pathname } = request.nextUrl
 
-  return response
+  if (pathname.startsWith('/admin') || pathname.startsWith('/vendor')) {
+    if (!user) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      url.searchParams.set('next', pathname)
+      // When redirecting, we must still return the supabaseResponse (which has any refreshed cookies)
+      // but modified to be a redirect.
+      const redirectResponse = NextResponse.redirect(url)
+      // Copy cookies from the sync'd supabaseResponse to the redirect response
+      supabaseResponse.cookies.getAll().forEach((cookie) => {
+        redirectResponse.cookies.set(cookie.name, cookie.value)
+      })
+      return redirectResponse
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    const role = profile?.role?.toLowerCase()
+
+    const { count: businessCount } = await supabase
+      .from('businesses')
+      .select('*', { count: 'exact', head: true })
+      .eq('owner_id', user.id)
+
+    const isBusinessOwner = (businessCount || 0) > 0
+
+    if (pathname.startsWith('/admin')) {
+      if (role !== 'admin' && role !== 'ceo') {
+        const url = request.nextUrl.clone()
+        url.pathname = '/'
+        const redirectResponse = NextResponse.redirect(url)
+        supabaseResponse.cookies.getAll().forEach((cookie) => {
+          redirectResponse.cookies.set(cookie.name, cookie.value)
+        })
+        return redirectResponse
+      }
+    }
+
+    if (pathname.startsWith('/vendor')) {
+      if (role !== 'vendor' && role !== 'admin' && role !== 'ceo' && !isBusinessOwner) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/'
+        const redirectResponse = NextResponse.redirect(url)
+        supabaseResponse.cookies.getAll().forEach((cookie) => {
+          redirectResponse.cookies.set(cookie.name, cookie.value)
+        })
+        return redirectResponse
+      }
+    }
+  }
+
+  return supabaseResponse
 }
 
 export const config = {

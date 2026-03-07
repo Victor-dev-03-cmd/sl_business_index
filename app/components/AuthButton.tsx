@@ -16,13 +16,26 @@ import { User as UserIcon, LogOut, LayoutDashboard, Briefcase } from 'lucide-rea
 export default function AuthButton({ user: initialUser }: { user: any | null }) {
   const router = useRouter();
   const [user, setUser] = useState(initialUser);
+  const [hasBusiness, setHasBusiness] = useState(false);
   // Default to false to avoid the "slow" pulse animation on every load
   const [isChecking, setIsChecking] = useState(false);
 
   useEffect(() => {
     setUser(initialUser);
-    if (initialUser) setIsChecking(false);
+    if (initialUser) {
+      checkBusiness(initialUser.id);
+    }
+    setIsChecking(false);
   }, [initialUser]);
+
+  const checkBusiness = async (userId: string) => {
+    if (!userId) return;
+    const { count } = await supabase
+      .from('businesses')
+      .select('*', { count: 'exact', head: true })
+      .eq('owner_id', userId);
+    setHasBusiness((count || 0) > 0);
+  };
 
   useEffect(() => {
     // Client-side session sync
@@ -37,7 +50,9 @@ export default function AuthButton({ user: initialUser }: { user: any | null }) 
             .eq('id', session.user.id)
             .single();
           
-          setUser({ ...session.user, ...profile });
+          const combinedUser = { ...session.user, ...profile };
+          setUser(combinedUser);
+          checkBusiness(session.user.id);
         }
         setIsChecking(false);
       }
@@ -52,9 +67,12 @@ export default function AuthButton({ user: initialUser }: { user: any | null }) 
           .select('*')
           .eq('id', session.user.id)
           .single();
-        setUser({ ...session.user, ...profile });
+        const combinedUser = { ...session.user, ...profile };
+        setUser(combinedUser);
+        checkBusiness(session.user.id);
       } else {
         setUser(null);
+        setHasBusiness(false);
       }
       
       if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
@@ -85,8 +103,9 @@ export default function AuthButton({ user: initialUser }: { user: any | null }) 
     return r === 'admin' || r === 'ceo';
   };
 
-  // Helper to check for vendor role (case-insensitive)
+  // Helper to check for vendor role (case-insensitive) or has a business
   const isVendor = (role?: string) => {
+    if (hasBusiness) return true;
     if (!role) return false;
     const r = role.toLowerCase();
     return r === 'vendor';
@@ -140,9 +159,9 @@ export default function AuthButton({ user: initialUser }: { user: any | null }) 
               ) : null}
 
               <DropdownMenuItem asChild className="cursor-pointer py-2.5 focus:bg-brand-sand/30 focus:text-brand-dark rounded-[4px] transition-colors">
-                <Link href="/profile" className="flex items-center w-full">
+                <Link href={isAdminOrCeo(user.role) ? "/admin/settings" : (isVendor(user.role) ? "/vendor/settings" : "/")} className="flex items-center w-full">
                   <UserIcon strokeWidth={1.5} className="mr-3 h-4 w-4 opacity-70" />
-                  <span className="font-normal text-[13px]">User Settings</span>
+                  <span className="font-normal text-[13px]">{isAdminOrCeo(user.role) || isVendor(user.role) ? "Settings" : "Profile"}</span>
                 </Link>
               </DropdownMenuItem>
             </div>
