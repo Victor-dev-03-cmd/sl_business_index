@@ -86,34 +86,34 @@ export default function ReviewsPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Reviews & Feedback</h1>
+          <h1 className="text-2xl text-gray-900">Reviews & Feedback</h1>
           <p className="text-gray-500 mt-1">Manage customer reviews and build trust.</p>
         </div>
         
         {/* Overall Stats */}
-        <div className="flex items-center gap-6 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm">
+        <div className="flex items-center gap-6 bg-white px-6 py-3 rounded border border-gray-300 shadow-sm">
           <div className="text-center">
             <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Avg Rating</p>
-            <div className="flex items-center gap-1.5 text-emerald-600 font-bold text-xl mt-0.5">
+            <div className="flex items-center gap-1.5 text-brand-sand text-xl mt-0.5">
               4.2 <Star size={18} fill="currentColor" />
             </div>
           </div>
           <div className="w-px h-8 bg-gray-200"></div>
           <div className="text-center">
             <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Total Reviews</p>
-            <p className="text-gray-900 font-bold text-xl mt-0.5">{MOCK_REVIEWS.length}</p>
+            <p className="text-brand-dark text-xl mt-0.5">{MOCK_REVIEWS.length}</p>
           </div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
+      <div className="bg-white p-4 rounded border border-gray-300 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
         <div className="relative w-full md:w-96">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
           <input 
             type="text" 
             placeholder="Search reviews..." 
-            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-sm"
+            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-emerald-500/20 focus:border-blue-500 transition-all text-sm"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -122,7 +122,7 @@ export default function ReviewsPage() {
         <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0">
           <button 
             onClick={() => setFilterRating('all')}
-            className={`px-4 py-2 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap ${filterRating === 'all' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
+            className={`px-4 py-2 rounded text-xs font-medium border transition-colors whitespace-nowrap ${filterRating === 'all' ? 'bg-blue-50 text-brand-dark border-blue-200' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'}`}
           >
             All Reviews
           </button>
@@ -130,7 +130,7 @@ export default function ReviewsPage() {
             <button 
               key={star}
               onClick={() => setFilterRating(star)}
-              className={`px-3 py-2 rounded-lg text-xs font-medium border transition-colors flex items-center gap-1 whitespace-nowrap ${filterRating === star ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
+              className={`px-3 py-2 rounded text-xs font-medium border transition-colors flex items-center gap-1 whitespace-nowrap ${filterRating === star ? 'bg-gold-50 text-brand-sand border-gold-200' : 'bg-white text-brand-dark border-gray-300 hover:bg-gray-100'}`}
             >
               {star} <Star size={12} fill="currentColor" />
             </button>
@@ -139,7 +139,7 @@ export default function ReviewsPage() {
       </div>
 
       {/* Reviews Table */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded border border-gray-300 shadow-sm overflow-hidden">
         {filteredReviews.length === 0 ? (
           <div className="text-center py-16">
             <MessageSquare className="mx-auto h-12 w-12 text-gray-300 mb-3" />
@@ -150,12 +150,12 @@ export default function ReviewsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50/50">
-                  <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider w-1/4">User</th>
-                  <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider w-1/6">Rating</th>
-                  <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider w-1/3">Comment Preview</th>
-                  <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider w-1/6">Status</th>
-                  <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Action</th>
+                <tr className="border-b border-gray-300 bg-gray-200">
+                  <th className="px-6 py-4 text-xs font-semibold text-gray-800 uppercase tracking-wider w-1/4">User</th>
+                  <th className="px-6 py-4 text-xs font-semibold text-gray-800 uppercase tracking-wider w-1/6">Rating</th>
+                  <th className="px-6 py-4 text-xs font-semibold text-gray-800 uppercase tracking-wider w-1/3">Comment Preview</th>
+                  <th className="px-6 py-4 text-xs font-semibold text-gray-800 uppercase tracking-wider w-1/6">Status</th>
+                  <th className="px-6 py-4 text-xs font-semibold text-gray-800 uppercase tracking-wider text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -172,8 +172,8 @@ export default function ReviewsPage() {
                             {review.user.charAt(0)}
                           </div>
                           <div>
-                            <p className="font-medium text-gray-900 text-sm">{review.user}</p>
-                            <p className="text-xs text-gray-500">{review.date}</p>
+                            <p className="font-medium text-brand-blue text-sm">{review.user}</p>
+                            <p className="font-medium text-xs text-gray-500">{review.date}</p>
                           </div>
                         </div>
                       </td>
@@ -193,17 +193,17 @@ export default function ReviewsPage() {
                       </td>
                       <td className="px-6 py-4">
                         {review.replied ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-100">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs bg-green-50 text-green-700 border border-green-100">
                             <CheckCircle2 size={12} /> Replied
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-100">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs bg-amber-50 text-amber-800 border border-amber-100">
                             <Clock size={12} /> Pending
                           </span>
                         )}
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <button className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
+                        <button className="p-2 text-gray-400 hover:text-gray-600 rounded hover:bg-gray-100 transition-colors">
                           {expandedReview === review.id ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                         </button>
                       </td>
@@ -216,27 +216,27 @@ export default function ReviewsPage() {
                           <div className="max-w-3xl mx-auto space-y-6">
                             {/* Full Comment */}
                             <div>
-                              <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Full Review</h4>
-                              <p className="text-gray-800 text-sm leading-relaxed bg-white p-4 rounded-lg border border-gray-200">
+                              <h4 className="text-xs text-brand-dark uppercase tracking-wider mb-2">Full Review</h4>
+                              <p className="text-gray-800 text-sm leading-relaxed bg-white p-4 rounded border border-gray-300">
                                 "{review.comment}"
                               </p>
                             </div>
 
                             {/* Reply Section */}
                             <div>
-                              <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                              <h4 className="text-xs text-brand-dark uppercase tracking-wider mb-2">
                                 {review.replied ? 'Your Reply' : 'Post a Reply'}
                               </h4>
                               
                               {review.replied ? (
-                                <div className="bg-emerald-50/50 p-4 rounded-lg border border-emerald-100">
+                                <div className="bg-emerald-50/50 p-4 rounded border border-blue-100">
                                   <p className="text-sm text-gray-700">{review.replyText}</p>
-                                  <p className="text-xs text-emerald-600 mt-2 font-medium">Replied on {review.date}</p>
+                                  <p className="text-xs text-brand-dark mt-2 font-medium">Replied on {review.date}</p>
                                 </div>
                               ) : (
                                 <div className="space-y-3">
                                   <textarea 
-                                    className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none bg-white"
+                                    className="w-full p-3 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500/20 focus:border-blue-500 outline-none bg-white"
                                     rows={3}
                                     placeholder="Write your response to the customer..."
                                     value={replyText}
@@ -246,13 +246,13 @@ export default function ReviewsPage() {
                                   <div className="flex justify-end gap-3">
                                     <button 
                                       onClick={() => setExpandedReview(null)}
-                                      className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-200 rounded-lg transition-colors"
+                                      className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-300 rounded transition-colors border border-gray-300"
                                     >
                                       Cancel
                                     </button>
                                     <button 
                                       onClick={() => handleReplySubmit(review.id)}
-                                      className="px-4 py-2 text-sm bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors shadow-sm flex items-center gap-2"
+                                      className="px-4 py-2 text-sm bg-brand-dark text-white rounded  transition-colors flex items-center gap-2"
                                     >
                                       <Reply size={16} /> Post Reply
                                     </button>

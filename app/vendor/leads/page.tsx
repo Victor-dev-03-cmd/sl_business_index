@@ -122,16 +122,16 @@ export default function LeadsPage() {
     <div className="flex h-[calc(100vh-120px)] gap-6">
       
       {/* Left: Leads List */}
-      <div className={`flex-1 flex flex-col bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden ${selectedLead ? 'hidden lg:flex' : 'flex'}`}>
+      <div className={`flex-1 flex flex-col bg-white rounded border border-gray-300 overflow-hidden ${selectedLead ? 'hidden lg:flex' : 'flex'}`}>
         
         {/* Toolbar */}
-        <div className="p-4 border-b border-gray-200 flex flex-col sm:flex-row gap-4 justify-between items-center bg-gray-50/50">
+        <div className="p-4 border-b border-gray-300 flex flex-col sm:flex-row gap-4 justify-between items-center bg-gray-50/50">
           <div className="relative w-full sm:w-72">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
             <input 
               type="text" 
               placeholder="Search leads..." 
-              className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-sm"
+              className="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -142,7 +142,7 @@ export default function LeadsPage() {
               <button 
                 key={status}
                 onClick={() => setFilterStatus(status)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium border capitalize transition-colors whitespace-nowrap ${filterStatus === status ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
+                className={`px-3 py-1.5 rounded text-xs font-medium border capitalize transition-colors whitespace-nowrap ${filterStatus === status ? 'bg-brand-dark text-white border-brand-dark' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-100'}`}
               >
                 {status}
               </button>
@@ -162,10 +162,10 @@ export default function LeadsPage() {
               <div 
                 key={lead.id}
                 onClick={() => setSelectedLead(lead)}
-                className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors border-l-4 ${selectedLead?.id === lead.id ? 'bg-emerald-50/30 border-emerald-500' : 'border-transparent'}`}
+                className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors border-l-4 ${selectedLead?.id === lead.id ? 'bg-blue-50/30 border-blue-500' : 'border-transparent'}`}
               >
                 <div className="flex justify-between items-start mb-1">
-                  <h3 className="font-semibold text-gray-900">{lead.name}</h3>
+                  <h3 className=" text-brand-blue">{lead.name}</h3>
                   <span className="text-xs text-gray-400">{lead.date}</span>
                 </div>
                 <p className="text-sm text-gray-600 truncate mb-2">{lead.message}</p>
@@ -185,17 +185,17 @@ export default function LeadsPage() {
 
       {/* Right: Lead Details (Drawer style) */}
       {selectedLead ? (
-        <div className="w-full lg:w-[400px] xl:w-[450px] bg-white rounded-xl border border-gray-200 shadow-lg flex flex-col overflow-hidden animate-in slide-in-from-right-4 duration-300">
+        <div className="w-full lg:w-[400px] xl:w-[450px] bg-white rounded border border-gray-300 shadow-lg flex flex-col overflow-hidden animate-in slide-in-from-right-4 duration-300">
           
           {/* Header */}
-          <div className="p-6 border-b border-gray-200 bg-gray-50/30 flex justify-between items-start">
+          <div className="p-6 border-b border-gray-300 bg-gray-50/30 flex justify-between items-start">
             <div>
-              <h2 className="text-xl font-bold text-gray-900">{selectedLead.name}</h2>
+              <h2 className="text-xl text-brand-dark">{selectedLead.name}</h2>
               <div className="flex items-center gap-2 mt-2">
                 <span className={`text-xs px-2.5 py-1 rounded-full font-medium border uppercase tracking-wide ${getStatusColor(selectedLead.status)}`}>
                   {selectedLead.status}
                 </span>
-                <span className="text-xs text-gray-500 flex items-center gap-1">
+                <span className="font-medium text-xs text-gray-500 flex items-center gap-1">
                   <Clock size={12} /> {selectedLead.date}
                 </span>
               </div>
@@ -210,15 +210,15 @@ export default function LeadsPage() {
             
             {/* Quick Actions */}
             <div className="grid grid-cols-3 gap-3">
-              <a href={`tel:${selectedLead.phone}`} className="flex flex-col items-center justify-center p-3 bg-emerald-50 text-emerald-700 rounded-xl hover:bg-emerald-100 transition-colors">
+              <a href={`tel:${selectedLead.phone}`} className="flex flex-col items-center justify-center p-3 bg-green-50 text-green-600 rounded hover:bg-green-100 transition-colors">
                 <Phone size={20} className="mb-1" />
                 <span className="text-xs font-medium">Call</span>
               </a>
-              <a href={`mailto:${selectedLead.email}`} className="flex flex-col items-center justify-center p-3 bg-blue-50 text-blue-700 rounded-xl hover:bg-blue-100 transition-colors">
+              <a href={`mailto:${selectedLead.email}`} className="flex flex-col items-center justify-center p-3 bg-blue-50 text-blue-500 rounded hover:bg-blue-100 transition-colors">
                 <Mail size={20} className="mb-1" />
                 <span className="text-xs font-medium">Email</span>
               </a>
-              <a href={`https://wa.me/${selectedLead.phone.replace(/\D/g,'')}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-green-50 text-green-700 rounded-xl hover:bg-green-100 transition-colors">
+              <a href={`https://wa.me/${selectedLead.phone.replace(/\D/g,'')}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-green-50 text-green-600 rounded hover:bg-green-100 transition-colors">
                 <MessageCircle size={20} className="mb-1" />
                 <span className="text-xs font-medium">WhatsApp</span>
               </a>
@@ -226,37 +226,37 @@ export default function LeadsPage() {
 
             {/* Contact Info */}
             <div className="space-y-4">
-              <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider border-b pb-2">Contact Details</h3>
+              <h3 className="text-sm text-brand-dark uppercase tracking-wider border-b pb-2">Contact Details</h3>
               <div className="space-y-3 text-sm">
                 <div className="flex items-center gap-3 text-gray-600">
-                  <Mail size={16} className="text-gray-400" /> {selectedLead.email}
+                  <Mail size={16} className="text-brand-blue" /> {selectedLead.email}
                 </div>
                 <div className="flex items-center gap-3 text-gray-600">
-                  <Phone size={16} className="text-gray-400" /> {selectedLead.phone}
+                  <Phone size={16} className="text-brand-blue" /> {selectedLead.phone}
                 </div>
                 <div className="flex items-center gap-3 text-gray-600">
-                  <MapPin size={16} className="text-gray-400" /> {selectedLead.source}
+                  <MapPin size={16} className="text-brand-blue" /> {selectedLead.source}
                 </div>
               </div>
             </div>
 
             {/* Message */}
             <div className="space-y-2">
-              <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider border-b pb-2">Enquiry Message</h3>
-              <p className="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg italic border border-gray-100">
+              <h3 className="text-sm text-brand-dark uppercase tracking-wider border-b pb-2">Enquiry Message</h3>
+              <p className="text-sm text-gray-600 bg-gray-50 p-4 rounded border border-gray-200">
                 "{selectedLead.message}"
               </p>
             </div>
 
             {/* Notes */}
             <div className="space-y-4">
-              <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider border-b pb-2">Internal Notes</h3>
+              <h3 className="text-sm text-brand-dark uppercase tracking-wider border-b pb-2">Internal Notes</h3>
               <div className="space-y-3">
                 {selectedLead.notes.length === 0 ? (
                   <p className="text-xs text-gray-400 italic">No notes added yet.</p>
                 ) : (
                   selectedLead.notes.map((note: string, i: number) => (
-                    <div key={i} className="text-xs text-gray-600 bg-yellow-50 p-3 rounded-lg border border-yellow-100 flex gap-2">
+                    <div key={i} className="text-xs text-gray-600 bg-yellow-50 p-3 rounded border border-yellow-100 flex gap-2">
                       <FileText size={14} className="text-yellow-500 shrink-0 mt-0.5" />
                       {note}
                     </div>
@@ -268,14 +268,14 @@ export default function LeadsPage() {
                 <input 
                   type="text" 
                   placeholder="Add a note..." 
-                  className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500/20 focus:border-blue-500"
                   value={noteText}
                   onChange={(e) => setNoteText(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addNote()}
                 />
                 <button 
                   onClick={addNote}
-                  className="p-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors"
+                  className="p-2 bg-brand-blue text-white rounded hover:bg-blue-600q transition-colors"
                 >
                   <Plus size={18} />
                 </button>
@@ -285,10 +285,10 @@ export default function LeadsPage() {
             {/* Status Actions */}
             <div className="pt-4">
               <DropdownMenu>
-                <DropdownMenuTrigger className="w-full py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
+                <DropdownMenuTrigger className="w-full py-2.5 border border-gray-300 rounded text-sm text-gray-100 bg-brand-dark transition-colors flex items-center justify-center gap-2">
                   Change Status <ArrowRight size={16} />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuContent align="end" className="w-56 bg-white rounded border border-gray-300 shadow-lg">
                   <DropdownMenuLabel>Move to Stage</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => updateStatus(selectedLead.id, 'new')}>
@@ -311,7 +311,7 @@ export default function LeadsPage() {
         </div>
       ) : (
         // Empty State for Right Panel (Desktop)
-        <div className="hidden lg:flex flex-1 bg-gray-50 rounded-xl border border-gray-200 border-dashed items-center justify-center text-gray-400 flex-col">
+        <div className="hidden lg:flex flex-1 bg-gray-50 rounded border border-gray-300 border-dashed items-center justify-center text-gray-400 flex-col">
           <User size={48} className="mb-4 opacity-20" />
           <p className="text-sm font-medium">Select a lead to view details</p>
         </div>
