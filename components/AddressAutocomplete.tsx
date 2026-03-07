@@ -31,19 +31,26 @@ interface Suggestion {
   lon: string;
 }
 
-// Prop பெயரை onLocationSelectAction என்று மாற்றியுள்ளோம்
 export default function AddressAutocomplete({
-                                              onLocationSelectAction
-                                            }: {
-  onLocationSelectAction: (lat: number, lng: number, address: string) => void
+  onLocationSelectAction,
+  initialAddress
+}: {
+  onLocationSelectAction: (lat: number, lng: number, address: string) => void;
+  initialAddress?: string;
 }) {
-  const [value, setValue] = useState('');
+  const [value, setValue] = useState(initialAddress || '');
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [status, setStatus] = useState<'IDLE' | 'LOADING' | 'OK' | 'ZERO_RESULTS' | 'ERROR'>('IDLE');
   const [isLocating, setIsLocating] = useState(false);
   const [markerPosition, setMarkerPosition] = useState<{ lat: number; lng: number } | null>(null);
   const [mapCenter, setMapCenter] = useState(defaultCenter);
   const [zoom, setZoom] = useState(10);
+
+  useEffect(() => {
+    if (initialAddress) {
+      setValue(initialAddress);
+    }
+  }, [initialAddress]);
 
   // Nominatim API மூலம் முகவரியைத் தேடுதல்
   useEffect(() => {
