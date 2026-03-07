@@ -13,6 +13,7 @@ export interface Business {
   image_url?: string;
   latitude: number;
   longitude: number;
+  location?: string; // PostGIS point string
   distanceText?: string;
   durationText?: string;
   status?: 'pending' | 'approved' | 'rejected';
