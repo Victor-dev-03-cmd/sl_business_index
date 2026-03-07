@@ -8,10 +8,7 @@ import { Menu } from 'lucide-react';
 
 export default async function Navbar() {
   const supabase = await createClient();
-  
-  // Use getSession for faster initial check on the server
-  const { data: { session } } = await supabase.auth.getSession();
-  const user = session?.user;
+  const { data: { user } } = await supabase.auth.getUser();
 
   let fullUserData = null;
   if (user) {
@@ -43,28 +40,28 @@ export default async function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 bg-white shadow-md border-b border-gray-100 transition-colors">
-      <div className="container mx-auto flex items-stretch justify-between h-20 px-4">
+    <header className="sticky top-0 z-50 bg-white shadow-md border-b border-transparent transition-colors">
+      <div className="container mx-auto flex items-center justify-between h-20 px-4">
         {/* Left: Logo Section */}
         <div className="flex items-center justify-center flex-shrink-0">
           <LogoLink />
         </div>
 
         {/* Center: Navigation Menus */}
-        <nav className="hidden md:flex flex-grow justify-center items-stretch space-x-8">
-          <Link href="/" className="flex items-center text-gray-600 hover:text-brand-gold-light transition-colors">
+        <nav className="hidden md:flex flex-grow justify-center items-center space-x-8">
+          <Link href="/" className="text-gray-600 hover:text-emerald-700 transition-colors">
             Home
           </Link>
           <CategoriesMenu />
           {(!fullUserData || (fullUserData.role !== 'vendor' && fullUserData.role !== 'admin' && fullUserData.role !== 'ceo')) && (
-            <Link href="/register-business" className="flex items-center text-gray-600 hover:text-brand-gold-light transition-colors">
+            <Link href="/register-business" className="text-gray-600 hover:text-emerald-700 transition-colors">
               Register Business
             </Link>
           )}
-          <Link href="/about" className="flex items-center text-gray-600 hover:text-brand-gold-light transition-colors">
+          <Link href="/about" className="text-gray-600 hover:text-emerald-700 transition-colors">
             About
           </Link>
-          <Link href="/contact" className="flex items-center text-gray-600 hover:text-brand-gold-light transition-colors">
+          <Link href="/contact" className="text-gray-600 hover:text-emerald-700 transition-colors">
             Contact
           </Link>
         </nav>

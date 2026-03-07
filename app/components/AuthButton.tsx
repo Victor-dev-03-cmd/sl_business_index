@@ -132,7 +132,7 @@ export default function AuthButton({ user: initialUser }: { user: any | null }) 
 
               {isVendor(user.role) ? (
                 <DropdownMenuItem asChild className="cursor-pointer py-2.5 focus:bg-brand-sand/30 focus:text-brand-dark rounded-[4px] transition-colors">
-                  <Link href="/my-business" className="flex items-center w-full">
+                  <Link href="/vendor/dashboard" className="flex items-center w-full">
                     <Briefcase strokeWidth={1.5} className="mr-3 h-4 w-4 opacity-70" />
                     <span className="font-normal text-[13px]">Vendor Dashboard</span>
                   </Link>
