@@ -94,7 +94,7 @@ export default async function MyBusinessesPage() {
                 <div className="flex-shrink-0">
                   <Link 
                     href={`/vendor/my-businesses/${business.id}/edit`}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
                   >
                     <Edit size={16} /> Edit Details
                   </Link>

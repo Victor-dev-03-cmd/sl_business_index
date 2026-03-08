@@ -11,11 +11,26 @@ import {
   Clock, 
   Plus, 
   Edit, 
-  Megaphone,
-  MoreVertical,
   Star
 } from 'lucide-react';
 import Link from 'next/link';
+
+interface Business {
+  id: string;
+  name: string;
+  logo_url?: string;
+  status: string;
+  is_open: boolean;
+  views: number;
+  calls: number;
+}
+
+interface Activity {
+  id: string;
+  type: string;
+  message: string;
+  date: string;
+}
 
 export default function VendorDashboard() {
   const [loading, setLoading] = useState(true);
@@ -25,7 +40,8 @@ export default function VendorDashboard() {
     reviews: 0,
     leads: 0
   });
-  const [businesses, setBusinesses] = useState<any[]>([]);
+  const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -43,18 +59,49 @@ export default function VendorDashboard() {
         .select('*')
         .eq('owner_id', user.id);
 
-      if (businessData) {
+      if (businessData && businessData.length > 0) {
         setBusinesses(businessData);
         
-        // Calculate stats (Mock logic for now, replace with real analytics tables later)
+        const businessIds = businessData.map(b => b.id);
+        
+        // Fetch reviews count for these businesses
+        const { count: reviewsCount } = await supabase
+          .from('reviews')
+          .select('*', { count: 'exact', head: true })
+          .in('business_id', businessIds);
+
+        // Fetch leads count for these businesses
+        const { count: leadsCount } = await supabase
+          .from('leads')
+          .select('*', { count: 'exact', head: true })
+          .in('business_id', businessIds);
+        
+        // Fetch recent activities (reviews)
+        const { data: recentReviews } = await supabase
+          .from('reviews')
+          .select('*, businesses(name)')
+          .in('business_id', businessIds)
+          .order('created_at', { ascending: false })
+          .limit(3);
+
+        if (recentReviews) {
+          setActivities(recentReviews.map((r) => ({
+            id: r.id,
+            type: 'review',
+            message: `New review from ${r.user_name} on ${r.businesses.name}`,
+            date: new Date(r.created_at).toLocaleDateString()
+          })));
+        }
+        
+        // Calculate stats
         const totalViews = businessData.reduce((acc, curr) => acc + (curr.views || 0), 0);
         const totalCalls = businessData.reduce((acc, curr) => acc + (curr.calls || 0), 0);
         
         setStats({
           views: totalViews,
           calls: totalCalls,
-          reviews: 12, // Mock
-          leads: 5     // Mock
+          reviews: reviewsCount || 0,
+          leads: leadsCount || 0
         });
       }
     } catch (error) {
@@ -65,11 +112,20 @@ export default function VendorDashboard() {
   };
 
   const toggleBusinessStatus = async (businessId: string, currentStatus: boolean) => {
-    // This would update an 'is_open' column in the database
-    // For now, we'll just update the local state to simulate the toggle
-    setBusinesses(businesses.map(b => 
-      b.id === businessId ? { ...b, is_open: !currentStatus } : b
-    ));
+    try {
+      const { error } = await supabase
+        .from('businesses')
+        .update({ is_open: !currentStatus })
+        .eq('id', businessId);
+
+      if (error) throw error;
+
+      setBusinesses((prev: Business[]) => prev.map(b => 
+        b.id === businessId ? { ...b, is_open: !currentStatus } : b
+      ));
+    } catch (error) {
+      console.error('Error toggling business status:', error);
+    }
   };
 
   return (
@@ -78,7 +134,7 @@ export default function VendorDashboard() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl text-gray-900">Dashboard Overview</h1>
-          <p className="text-gray-500 mt-1">Welcome back! Here's what's happening with your businesses today.</p>
+          <p className="text-gray-500 mt-1">Welcome back! Here&apos;s what&apos;s happening with your businesses today.</p>
         </div>
         <Link 
           href="/vendor/marketing" 
@@ -230,17 +286,21 @@ export default function VendorDashboard() {
           <div className="bg-white rounded border border-gray-300 shadow-sm p-6">
             <h3 className="text-gray-900 mb-4">Recent Activity</h3>
             <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex gap-3 items-start">
-                  <div className="mt-1 p-1.5 bg-blue-50 text-blue-500 rounded-full shrink-0">
-                    <MessageSquare size={12} />
+              {activities.length === 0 ? (
+                <p className="text-sm text-gray-500 italic">No recent activity.</p>
+              ) : (
+                activities.map((activity) => (
+                  <div key={activity.id} className="flex gap-3 items-start">
+                    <div className="mt-1 p-1.5 bg-blue-50 text-blue-500 rounded-full shrink-0">
+                      <MessageSquare size={12} />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-800">{activity.message}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{activity.date}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-800">New review from John Doe</p>
-                    <p className="text-xs text-gray-500 mt-0.5">2 hours ago</p>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
             <Link href="/vendor/reviews" className="block mt-4 text-center text-sm text-brand-dark ">
               View All Activity

@@ -1,18 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabaseClient';
 import { 
   Search, 
-  Filter, 
-  MoreVertical, 
   Phone, 
   Mail, 
   MessageCircle, 
-  Calendar, 
   User, 
   MapPin, 
   Clock, 
-  CheckCircle2, 
   XCircle, 
   ArrowRight,
   FileText,
@@ -27,85 +24,114 @@ import {
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 
-// Mock Data for Leads
-const MOCK_LEADS = [
-  {
-    id: 1,
-    name: 'John Anderson',
-    email: 'john.anderson@example.com',
-    phone: '+94 77 123 4567',
-    status: 'new',
-    source: 'Website Enquiry',
-    date: '2 hours ago',
-    message: 'Hi, I am interested in your catering services for a wedding next month. Can you send me a quote?',
-    notes: []
-  },
-  {
-    id: 2,
-    name: 'Sarah Williams',
-    email: 'sarah.w@example.com',
-    phone: '+94 71 987 6543',
-    status: 'contacted',
-    source: 'Phone Call',
-    date: '1 day ago',
-    message: 'Looking for a bulk order of cupcakes for a corporate event.',
-    notes: ['Called on Monday, she is busy. Call back on Wednesday.']
-  },
-  {
-    id: 3,
-    name: 'David Miller',
-    email: 'david.m@example.com',
-    phone: '+94 76 555 1234',
-    status: 'converted',
-    source: 'Walk-in',
-    date: '3 days ago',
-    message: 'Visited the store and asked about custom cake designs.',
-    notes: ['Order placed for $50.']
-  },
-  {
-    id: 4,
-    name: 'Emma Brown',
-    email: 'emma.b@example.com',
-    phone: '+94 70 111 2222',
-    status: 'lost',
-    source: 'Website Enquiry',
-    date: '1 week ago',
-    message: 'Do you deliver to Kandy?',
-    notes: ['We do not deliver to Kandy yet.']
-  }
-];
+interface LeadNote {
+  id: string;
+  note: string;
+  created_at: string;
+}
+
+interface Lead {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  message: string;
+  status: string;
+  source: string;
+  created_at: string;
+  lead_notes: LeadNote[];
+}
 
 export default function LeadsPage() {
-  const [selectedLead, setSelectedLead] = useState<any | null>(null);
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [leads, setLeads] = useState(MOCK_LEADS);
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [loading, setLoading] = useState(true);
   const [noteText, setNoteText] = useState('');
+
+  useEffect(() => {
+    fetchLeads();
+  }, []);
+
+  const fetchLeads = async () => {
+    setLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: businessData } = await supabase
+        .from('businesses')
+        .select('id')
+        .eq('owner_id', user.id);
+      
+      if (businessData && businessData.length > 0) {
+        const businessIds = businessData.map(b => b.id);
+        
+        const { data: leadsData, error } = await supabase
+          .from('leads')
+          .select('*, lead_notes(*)')
+          .in('business_id', businessIds)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        setLeads(leadsData || []);
+      }
+    } catch (error) {
+      console.error('Error fetching leads:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Filter Logic
   const filteredLeads = leads.filter(lead => {
     const matchesStatus = filterStatus === 'all' || lead.status === filterStatus;
-    const matchesSearch = lead.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          lead.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          lead.phone.includes(searchQuery);
+    const matchesSearch = (lead.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          lead.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          lead.phone?.includes(searchQuery)) ?? false;
     return matchesStatus && matchesSearch;
   });
 
-  const updateStatus = (id: number, newStatus: string) => {
-    setLeads(leads.map(l => l.id === id ? { ...l, status: newStatus } : l));
-    if (selectedLead && selectedLead.id === id) {
-      setSelectedLead({ ...selectedLead, status: newStatus });
+  const updateStatus = async (id: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('leads')
+        .update({ status: newStatus })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setLeads(leads.map(l => l.id === id ? { ...l, status: newStatus } : l));
+      if (selectedLead && selectedLead.id === id) {
+        setSelectedLead({ ...selectedLead, status: newStatus });
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
     }
   };
 
-  const addNote = () => {
+  const addNote = async () => {
     if (!noteText.trim() || !selectedLead) return;
-    const updatedLeads = leads.map(l => 
-      l.id === selectedLead.id ? { ...l, notes: [...l.notes, noteText] } : l
-    );
-    setLeads(updatedLeads);
-    setSelectedLead({ ...selectedLead, notes: [...selectedLead.notes, noteText] });
-    setNoteText('');
+    
+    try {
+      const { data: newNote, error } = await supabase
+        .from('lead_notes')
+        .insert({ lead_id: selectedLead.id, note: noteText })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const updatedLeads = leads.map(l => 
+        l.id === selectedLead.id ? { ...l, lead_notes: [...(l.lead_notes || []), newNote] } : l
+      );
+      setLeads(updatedLeads);
+      setSelectedLead({ ...selectedLead, lead_notes: [...(selectedLead.lead_notes || []), newNote] });
+      setNoteText('');
+    } catch (error) {
+      console.error('Error adding note:', error);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -116,6 +142,22 @@ export default function LeadsPage() {
       case 'lost': return 'bg-gray-100 text-gray-600 border-gray-200';
       default: return 'bg-gray-50 text-gray-600 border-gray-200';
     }
+  };
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) {
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      if (diffHours === 0) return 'Just now';
+      return `${diffHours} hours ago`;
+    }
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    return date.toLocaleDateString();
   };
 
   return (
@@ -152,7 +194,11 @@ export default function LeadsPage() {
 
         {/* List */}
         <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
-          {filteredLeads.length === 0 ? (
+          {loading ? (
+            <div className="flex items-center justify-center h-full text-gray-500">
+              <p>Loading leads...</p>
+            </div>
+          ) : filteredLeads.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-500">
               <User className="h-12 w-12 mb-3 text-gray-300" />
               <p>No leads found</p>
@@ -166,7 +212,7 @@ export default function LeadsPage() {
               >
                 <div className="flex justify-between items-start mb-1">
                   <h3 className=" text-brand-blue">{lead.name}</h3>
-                  <span className="text-xs text-gray-400">{lead.date}</span>
+                  <span className="text-xs text-gray-400">{formatDate(lead.created_at)}</span>
                 </div>
                 <p className="text-sm text-gray-600 truncate mb-2">{lead.message}</p>
                 <div className="flex items-center gap-2">
@@ -196,7 +242,7 @@ export default function LeadsPage() {
                   {selectedLead.status}
                 </span>
                 <span className="font-medium text-xs text-gray-500 flex items-center gap-1">
-                  <Clock size={12} /> {selectedLead.date}
+                  <Clock size={12} /> {formatDate(selectedLead.created_at)}
                 </span>
               </div>
             </div>
@@ -218,7 +264,7 @@ export default function LeadsPage() {
                 <Mail size={20} className="mb-1" />
                 <span className="text-xs font-medium">Email</span>
               </a>
-              <a href={`https://wa.me/${selectedLead.phone.replace(/\D/g,'')}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-green-50 text-green-600 rounded hover:bg-green-100 transition-colors">
+              <a href={`https://wa.me/${selectedLead.phone?.replace(/\D/g,'')}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-green-50 text-green-600 rounded hover:bg-green-100 transition-colors">
                 <MessageCircle size={20} className="mb-1" />
                 <span className="text-xs font-medium">WhatsApp</span>
               </a>
@@ -244,7 +290,7 @@ export default function LeadsPage() {
             <div className="space-y-2">
               <h3 className="text-sm text-brand-dark uppercase tracking-wider border-b pb-2">Enquiry Message</h3>
               <p className="text-sm text-gray-600 bg-gray-50 p-4 rounded border border-gray-200">
-                "{selectedLead.message}"
+                &quot;{selectedLead.message}&quot;
               </p>
             </div>
 
@@ -252,13 +298,13 @@ export default function LeadsPage() {
             <div className="space-y-4">
               <h3 className="text-sm text-brand-dark uppercase tracking-wider border-b pb-2">Internal Notes</h3>
               <div className="space-y-3">
-                {selectedLead.notes.length === 0 ? (
+                {(!selectedLead.lead_notes || selectedLead.lead_notes.length === 0) ? (
                   <p className="text-xs text-gray-400 italic">No notes added yet.</p>
                 ) : (
-                  selectedLead.notes.map((note: string, i: number) => (
-                    <div key={i} className="text-xs text-gray-600 bg-yellow-50 p-3 rounded border border-yellow-100 flex gap-2">
+                  selectedLead.lead_notes.map((note) => (
+                    <div key={note.id} className="text-xs text-gray-600 bg-yellow-50 p-3 rounded border border-yellow-100 flex gap-2">
                       <FileText size={14} className="text-yellow-500 shrink-0 mt-0.5" />
-                      {note}
+                      {note.note}
                     </div>
                   ))
                 )}

@@ -1,27 +1,168 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabaseClient';
 import { 
   User, 
   ShieldCheck, 
   MapPin, 
   Bell,
-  Zap, 
-  Lock, 
   Save, 
   Upload, 
   Globe, 
   Search,
   AlertTriangle,
-  CheckCircle2
+  Loader2
 } from 'lucide-react';
 import { Slider } from "@/components/ui/slider";
 
+interface Profile {
+  full_name: string;
+  email: string;
+  phone: string;
+  job_title: string;
+  avatar_url: string;
+}
+
+interface Business {
+  id: string;
+  name: string;
+  service_radius: number;
+  seo_keywords: string[];
+}
+
+interface Verification {
+  id: string;
+  status: string;
+  br_document_url?: string;
+  nic_passport_url?: string;
+}
+
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<'profile' | 'verification' | 'optimization' | 'notifications'>('profile');
+  const [submitting, setSubmitting] = useState(false);
+  
+  // Profile State
+  const [profile, setProfile] = useState<Profile>({
+    full_name: '',
+    email: '',
+    phone: '',
+    job_title: '',
+    avatar_url: ''
+  });
+
+  // Optimization State
+  const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [selectedBusinessId, setSelectedBusinessId] = useState<string>('');
   const [radius, setRadius] = useState([5]);
-  const [keywords, setKeywords] = useState(['Bakery', 'Cakes', 'Wedding']);
+  const [keywords, setKeywords] = useState<string[]>([]);
   const [newKeyword, setNewKeyword] = useState('');
+
+  // Verification State
+  const [verification, setVerification] = useState<Verification | null>(null);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Fetch Profile
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      
+      if (profileData) {
+        setProfile({
+          full_name: profileData.full_name || '',
+          email: profileData.email || user.email || '',
+          phone: profileData.phone || '',
+          job_title: profileData.job_title || '',
+          avatar_url: profileData.avatar_url || ''
+        });
+      }
+
+      // Fetch Businesses for Optimization
+      const { data: businessData } = await supabase
+        .from('businesses')
+        .select('*')
+        .eq('owner_id', user.id);
+      
+      if (businessData) {
+        setBusinesses(businessData);
+        if (businessData.length > 0) {
+          const first = businessData[0];
+          setSelectedBusinessId(first.id);
+          setRadius([first.service_radius || 5]);
+          setKeywords(first.seo_keywords || []);
+          
+          // Fetch Verification for the first business
+          const { data: verData } = await supabase
+            .from('verifications')
+            .select('*')
+            .eq('business_id', first.id)
+            .maybeSingle();
+          setVerification(verData);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching settings data:', error);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    setSubmitting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: profile.full_name,
+          phone: profile.phone,
+          job_title: profile.job_title,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
+      alert('Profile updated successfully!');
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      alert('Failed to update profile');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleSaveOptimization = async () => {
+    if (!selectedBusinessId) return;
+    setSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from('businesses')
+        .update({
+          service_radius: radius[0],
+          seo_keywords: keywords,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', selectedBusinessId);
+
+      if (error) throw error;
+      alert('Optimization settings saved!');
+    } catch (error) {
+      console.error('Error saving optimization:', error);
+      alert('Failed to save settings');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const addKeyword = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && newKeyword.trim()) {
@@ -58,7 +199,7 @@ export default function SettingsPage() {
             ].map((item) => (
               <button
                 key={item.id}
-                onClick={() => setActiveTab(item.id as any)}
+                onClick={() => setActiveTab(item.id as 'profile' | 'verification' | 'optimization' | 'notifications')}
                 className={`w-full flex items-center gap-3 px-4 py-3 text-sm rounded transition-all ${
                   activeTab === item.id 
                     ? 'bg-blue-50 text-brand-blue shadow-sm ring-1 ring-blue-200' 
@@ -82,7 +223,11 @@ export default function SettingsPage() {
               
               <div className="flex items-center gap-6 mb-8">
                 <div className="h-24 w-24 rounded-full bg-gray-100 border-4 border-white shadow-lg flex items-center justify-center overflow-hidden relative group cursor-pointer">
-                  <User size={30} className="text-gray-400" />
+                  {profile.avatar_url ? (
+                    <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <User size={30} className="text-gray-400" />
+                  )}
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
                     <Upload size={20} />
                   </div>
@@ -99,25 +244,49 @@ export default function SettingsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                  <input type="text" className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm" />
+                  <input 
+                    type="text" 
+                    value={profile.full_name}
+                    onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm" 
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                  <input type="email" className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm" />
+                  <input 
+                    type="email" 
+                    value={profile.email}
+                    disabled
+                    className="w-full px-4 py-2 border border-gray-300 rounded bg-gray-50 text-gray-500 outline-none text-sm" 
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                  <input type="tel" className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm" />
+                  <input 
+                    type="tel" 
+                    value={profile.phone}
+                    onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm" 
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Job Title</label>
-                  <input type="text" className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm" />
+                  <input 
+                    type="text" 
+                    value={profile.job_title}
+                    onChange={(e) => setProfile({ ...profile, job_title: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm" 
+                  />
                 </div>
               </div>
 
               <div className="mt-8 pt-8 border-t border-gray-200 flex justify-end">
-                <button className="px-6 py-2.5 bg-brand-dark text-white rounded text-sm hover:bg-brand-light transition-colors shadow-sm flex items-center gap-2">
-                  <Save size={18} /> Save Changes
+                <button 
+                  onClick={handleSaveProfile}
+                  disabled={submitting}
+                  className="px-6 py-2.5 bg-brand-dark text-white rounded text-sm hover:bg-brand-light transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50"
+                >
+                  {submitting ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />} Save Changes
                 </button>
               </div>
             </div>
@@ -130,18 +299,24 @@ export default function SettingsPage() {
                 <div>
                   <h2 className="text-lg text-brand-dark flex items-center gap-2">
                     Verification Status
-                    <span className="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 text-xs font-medium border border-amber-100">Pending</span>
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                      verification?.status === 'approved' ? 'bg-green-50 text-green-700 border-green-100' :
+                      verification?.status === 'rejected' ? 'bg-red-50 text-red-700 border-red-100' :
+                      'bg-amber-50 text-amber-700 border-amber-100'
+                    }`}>
+                      {verification?.status || 'Not Started'}
+                    </span>
                   </h2>
                   <p className="text-sm text-gray-500 mt-1">Get the blue tick to build trust with customers.</p>
                 </div>
-                <ShieldCheck size={32} className="text-gray-300" />
+                <ShieldCheck size={32} className={verification?.status === 'approved' ? "text-blue-500" : "text-gray-300"} />
               </div>
 
               <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-8">
                 <h4 className="text-sm font-medium text-brand-dark mb-2">Why verify?</h4>
                 <ul className="text-sm text-brand-blue space-y-1 list-disc list-inside">
                   <li>Higher ranking in search results</li>
-                  <li>"Verified" badge on your profile</li>
+                  <li>&quot;Verified&quot; badge on your profile</li>
                   <li>Access to premium analytics</li>
                 </ul>
               </div>
@@ -151,7 +326,7 @@ export default function SettingsPage() {
                   <label className="block text-sm font-medium text-brand-dark mb-2">Business Registration (BR) Document</label>
                   <div className="border-2 border-dashed border-gray-300 rounded p-8 flex flex-col items-center justify-center text-gray-500 hover:border-blue-500 hover:bg-blue-50 transition-colors cursor-pointer">
                     <Upload size={24} className="mb-2" />
-                    <p className="text-sm">Click to upload or drag and drop</p>
+                    <p className="text-sm">{verification?.br_document_url ? 'Document uploaded' : 'Click to upload or drag and drop'}</p>
                     <p className="text-xs text-gray-400 mt-1">PDF, JPG up to 10MB</p>
                   </div>
                 </div>
@@ -160,15 +335,18 @@ export default function SettingsPage() {
                   <label className="block text-sm font-medium text-brand-dark mb-2">NIC / Passport (Owner)</label>
                   <div className="border-2 border-dashed border-gray-300 rounded p-8 flex flex-col items-center justify-center text-gray-500 hover:border-blue-500 hover:bg-blue-50 transition-colors cursor-pointer">
                     <Upload size={24} className="mb-2" />
-                    <p className="text-sm">Click to upload or drag and drop</p>
+                    <p className="text-sm">{verification?.nic_passport_url ? 'Document uploaded' : 'Click to upload or drag and drop'}</p>
                     <p className="text-xs text-gray-400 mt-1">Front & Back sides</p>
                   </div>
                 </div>
               </div>
 
               <div className="mt-8 pt-8 border-t border-gray-200 flex justify-end">
-                <button className="px-6 py-2.5 bg-brand-dark text-white rounded text-sm font-medium  transition-colors shadow-sm">
-                  Submit for Review
+                <button 
+                  disabled={verification?.status === 'pending' || verification?.status === 'approved'}
+                  className="px-6 py-2.5 bg-brand-dark text-white rounded text-sm font-medium  transition-colors shadow-sm disabled:opacity-50"
+                >
+                  {verification?.status === 'pending' ? 'Under Review' : 'Submit for Review'}
                 </button>
               </div>
             </div>
@@ -178,6 +356,26 @@ export default function SettingsPage() {
           {activeTab === 'optimization' && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
               
+              <div className="bg-white rounded border border-gray-300 shadow-sm p-6 md:p-8">
+                <label className="block text-sm font-medium text-brand-dark mb-2">Select Business to Optimize</label>
+                <select 
+                  value={selectedBusinessId}
+                  onChange={(e) => {
+                    const b = businesses.find(bus => bus.id === e.target.value);
+                    if (b) {
+                      setSelectedBusinessId(b.id);
+                      setRadius([b.service_radius || 5]);
+                      setKeywords(b.seo_keywords || []);
+                    }
+                  }}
+                  className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm bg-white"
+                >
+                  {businesses.map(b => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
+                </select>
+              </div>
+
               {/* Radius Card */}
               <div className="bg-white rounded border border-gray-300 shadow-sm p-6 md:p-8">
                 <h2 className="text-lg text-brand-dark mb-4 flex items-center gap-2">
@@ -191,7 +389,7 @@ export default function SettingsPage() {
                     <span className="text-sm font-medium text-brand-dark bg-blue-50 px-2 py-0.5 rounded">{radius[0]} km</span>
                   </div>
                   <Slider 
-                    defaultValue={[5]} 
+                    value={radius} 
                     max={50} 
                     step={1} 
                     onValueChange={(val) => setRadius(val)}
@@ -206,7 +404,10 @@ export default function SettingsPage() {
                 {/* Mock Map Preview */}
                 <div className="h-48 bg-gray-100 rounded border border-gray-300 flex items-center justify-center relative overflow-hidden">
                   <div className="absolute inset-0 opacity-20 bg-[url('https://upload.wikimedia.org/wikipedia/commons/e/ec/Colombo_city_map.png')] bg-cover bg-center"></div>
-                  <div className="w-32 h-32 rounded-full bg-blue-500/20 border-2 border-brand-blue flex items-center justify-center relative z-10 animate-pulse">
+                  <div 
+                    className="rounded-full bg-blue-500/20 border-2 border-brand-blue flex items-center justify-center relative z-10 animate-pulse transition-all duration-300"
+                    style={{ width: `${radius[0] * 6}px`, height: `${radius[0] * 6}px`, maxWidth: '100%', maxHeight: '100%' }}
+                  >
                     <div className="w-3 h-3 bg-brand-blue rounded-full shadow-lg"></div>
                   </div>
                   <p className="absolute bottom-2 right-2 text-[10px] text-gray-500 bg-white/80 px-2 py-1 rounded">Map Preview</p>
@@ -245,17 +446,14 @@ export default function SettingsPage() {
                   ))}
                 </div>
 
-                <div className="mt-6 p-4 bg-blue-50 rounded border border-blue-100">
-                  <p className="text-sm  text-brand-dark mb-2 flex items-center gap-1">
-                    <Zap size={12} /> AI Suggestion
-                  </p>
-                  <div className="flex gap-2">
-                    {['Catering', 'Events', 'Party'].map(s => (
-                      <button key={s} onClick={() => { if(!keywords.includes(s)) setKeywords([...keywords, s]) }} className="text-xs bg-white text-brand-blue px-2 py-1 rounded border border-brand-blue hover:border-brand-dark transition-colors">
-                        + {s}
-                      </button>
-                    ))}
-                  </div>
+                <div className="mt-8 pt-8 border-t border-gray-200 flex justify-end">
+                  <button 
+                    onClick={handleSaveOptimization}
+                    disabled={submitting || !selectedBusinessId}
+                    className="px-6 py-2.5 bg-brand-dark text-white rounded text-sm hover:bg-brand-light transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {submitting ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />} Save Optimization
+                  </button>
                 </div>
               </div>
             </div>

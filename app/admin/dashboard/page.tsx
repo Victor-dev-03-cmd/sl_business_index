@@ -13,7 +13,6 @@ import {
   Phone, 
   Mail, 
   MapPin,
-  UserIcon,
   Eye,
   FileText,
   Clock,
@@ -224,6 +223,9 @@ export default function AdminDashboard() {
                       <div>
                         <div className="flex items-center gap-3">
                           <h3 className="text-lg font-normal text-gray-900">{business.name}</h3>
+                          {business.is_verified && (
+                            <CheckCircle size={16} className="text-blue-500 fill-blue-50" title="Verified Business" />
+                          )}
                           <span className={`px-2.5 py-0.5 rounded-[6px] text-[10px] uppercase tracking-wider font-normal ${
                             business.status === 'approved' ? 'bg-brand-sand/20 text-brand-gold' :
                             business.status === 'rejected' ? 'bg-red-50 text-red-700' :
@@ -317,7 +319,12 @@ export default function AdminDashboard() {
                 <div className="pt-14 px-8 pb-8">
                   <div className="flex justify-between items-start mb-6">
                     <div>
-                      <h2 className="text-2xl font-normal text-gray-900">{selectedBusiness.name}</h2>
+                      <div className="flex items-center gap-3">
+                        <h2 className="text-2xl font-normal text-gray-900">{selectedBusiness.name}</h2>
+                        {selectedBusiness.is_verified && (
+                          <CheckCircle size={20} className="text-blue-500 fill-blue-50" title="Verified Business" />
+                        )}
+                      </div>
                       <div className="flex items-center gap-4 mt-2">
                         <span className={`px-2.5 py-0.5 rounded-[6px] text-[10px] uppercase tracking-wider font-normal ${
                           selectedBusiness.status === 'approved' ? 'bg-brand-sand/20 text-brand-gold' :

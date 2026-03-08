@@ -1,19 +1,123 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabaseClient';
 import { 
   CreditCard, 
   CheckCircle2, 
   Download, 
-  Zap, 
-  Shield, 
-  Clock, 
-  AlertCircle,
-  ChevronRight
+  ChevronRight,
+  Loader2
 } from 'lucide-react';
+
+interface Subscription {
+  id: string;
+  plan_name: string;
+  price: number;
+  billing_cycle: string;
+  renews_at: string;
+}
+
+interface Invoice {
+  id: string;
+  amount: number;
+  status: string;
+  created_at: string;
+}
 
 export default function BillingPage() {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+  const [loading, setLoading] = useState(true);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [businessCount, setBusinessCount] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    fetchBillingData();
+  }, []);
+
+  const fetchBillingData = async () => {
+    setLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Fetch subscription
+      const { data: subData } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .maybeSingle();
+      
+      setSubscription(subData);
+
+      // Fetch business count
+      const { count } = await supabase
+        .from('businesses')
+        .select('*', { count: 'exact', head: true })
+        .eq('owner_id', user.id);
+      
+      setBusinessCount(count || 0);
+
+      // Fetch invoices
+      if (subData) {
+        const { data: invData } = await supabase
+          .from('invoices')
+          .select('*')
+          .eq('subscription_id', subData.id)
+          .order('created_at', { ascending: false });
+        
+        setInvoices(invData || []);
+      }
+    } catch (error) {
+      console.error('Error fetching billing data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpgrade = async (planName: string, price: number) => {
+    setSubmitting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // If there's an existing active sub, we should probably mark it as replaced/expired
+      // For simplicity here, we just insert a new one
+      const { data: newSub, error: subError } = await supabase
+        .from('subscriptions')
+        .insert({
+          user_id: user.id,
+          plan_name: planName,
+          price: price,
+          billing_cycle: billingCycle,
+          status: 'active',
+          renews_at: new Date(Date.now() + (billingCycle === 'monthly' ? 30 : 365) * 24 * 60 * 60 * 1000).toISOString()
+        })
+        .select()
+        .single();
+
+      if (subError) throw subError;
+
+      // Create a mock invoice
+      await supabase.from('invoices').insert({
+        id: `INV-${Date.now()}`,
+        subscription_id: newSub.id,
+        amount: price,
+        status: 'paid'
+      });
+
+      alert(`Successfully upgraded to ${planName} plan!`);
+      fetchBillingData();
+    } catch (error) {
+      console.error('Error upgrading:', error);
+      alert('Failed to upgrade plan');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const plans = [
     {
@@ -21,32 +125,28 @@ export default function BillingPage() {
       price: 0,
       description: 'Perfect for getting started',
       features: ['1 Business Listing', 'Basic Analytics', 'Standard Support'],
-      current: true,
-      
+      limit: 1,
     },
     {
       name: 'Pro',
       price: billingCycle === 'monthly' ? 7999 : 75000,
       description: 'Best for growing businesses',
       features: ['5 Business Listings', 'Advanced Analytics', 'Priority Support', 'Verified Badge', 'Social Media Auto-Post'],
-      current: false,
       popular: true,
+      limit: 5,
     },
     {
       name: 'Enterprise',
       price: billingCycle === 'monthly' ? 30999 : 300000,
       description: 'For large scale operations',
       features: ['Unlimited Listings', 'Dedicated Account Manager', 'API Access', 'Custom Branding', 'All Pro Features'],
-      current: false,
       popular: false,
+      limit: 9999,
     },
   ];
 
-  const invoices = [
-    { id: 'INV-2024-001', date: 'Oct 1, 2024', amount: '$29.00', status: 'Paid' },
-    { id: 'INV-2024-002', date: 'Sep 1, 2024', amount: '$29.00', status: 'Paid' },
-    { id: 'INV-2024-003', date: 'Aug 1, 2024', amount: '$29.00', status: 'Paid' },
-  ];
+  const currentPlan = subscription?.plan_name || 'Free';
+  const planLimit = plans.find(p => p.name === currentPlan)?.limit || 1;
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
@@ -63,41 +163,54 @@ export default function BillingPage() {
         <div className="md:col-span-2 bg-gradient-to-br from-gray-900 to-gray-800 rounded p-6 text-white shadow-lg relative overflow-hidden">
           <div className="absolute top-0 right-0 p-32 bg-white/5 rounded-full blur-3xl -mr-16 -mt-16"></div>
           
-          <div className="relative z-10 flex justify-between items-start">
-            <div>
-              <p className="text-gray-400 text-sm uppercase tracking-wider mb-1">Current Plan</p>
-              <h2 className="text-3xl font-medium flex items-center gap-2">
-                Pro Plan <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded-full border border-emerald-500/30">Active</span>
-              </h2>
-              <p className="text-gray-400 text-sm mt-2">Renews on March 1, 2026</p>
+          {loading ? (
+            <div className="h-40 flex items-center justify-center">
+              <Loader2 className="animate-spin" />
             </div>
-            <div className="text-right">
-              <p className="text-3xl font-bold">LKR 7999<span className="text-lg text-gray-400 font-normal">/mo</span></p>
-            </div>
-          </div>
+          ) : (
+            <>
+              <div className="relative z-10 flex justify-between items-start">
+                <div>
+                  <p className="text-gray-400 text-sm uppercase tracking-wider mb-1">Current Plan</p>
+                  <h2 className="text-3xl font-medium flex items-center gap-2">
+                    {currentPlan} Plan <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded-full border border-emerald-500/30">Active</span>
+                  </h2>
+                  <p className="text-gray-400 text-sm mt-2">
+                    {subscription?.renews_at ? `Renews on ${new Date(subscription.renews_at).toLocaleDateString()}` : 'Free forever'}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-3xl font-bold">LKR {subscription?.price || 0}<span className="text-lg text-gray-400 font-normal">/{subscription?.billing_cycle === 'yearly' ? 'yr' : 'mo'}</span></p>
+                </div>
+              </div>
 
-          <div className="mt-8 pt-8 border-t border-gray-700/50 grid grid-cols-2 gap-8">
-            <div>
-              <p className="text-gray-400 text-xs uppercase mb-2">Listings Used</p>
-              <div className="flex items-end gap-2">
-                <span className="text-2xl font-medium">3</span>
-                <span className="text-gray-500 mb-1">/ 5</span>
+              <div className="mt-8 pt-8 border-t border-gray-700/50 grid grid-cols-2 gap-8">
+                <div>
+                  <p className="text-gray-400 text-xs uppercase mb-2">Listings Used</p>
+                  <div className="flex items-end gap-2">
+                    <span className="text-2xl font-medium">{businessCount}</span>
+                    <span className="text-gray-500 mb-1">/ {planLimit === 9999 ? '∞' : planLimit}</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-gray-700 rounded-full mt-2 overflow-hidden">
+                    <div 
+                      className="h-full bg-emerald-500 rounded-full transition-all duration-500" 
+                      style={{ width: `${Math.min((businessCount / planLimit) * 100, 100)}%` }}
+                    ></div>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-gray-400 text-xs uppercase mb-2">Leads This Month</p>
+                  <div className="flex items-end gap-2">
+                    <span className="text-2xl font-medium">0</span>
+                    <span className="text-gray-500 mb-1">/ 100</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-gray-700 rounded-full mt-2 overflow-hidden">
+                    <div className="h-full bg-blue-500 w-0 rounded-full"></div>
+                  </div>
+                </div>
               </div>
-              <div className="w-full h-1.5 bg-gray-700 rounded-full mt-2 overflow-hidden">
-                <div className="h-full bg-emerald-500 w-3/5 rounded-full"></div>
-              </div>
-            </div>
-            <div>
-              <p className="text-gray-400 text-xs uppercase mb-2">Leads This Month</p>
-              <div className="flex items-end gap-2">
-                <span className="text-2xl font-medium">42</span>
-                <span className="text-gray-500 mb-1">/ 100</span>
-              </div>
-              <div className="w-full h-1.5 bg-gray-700 rounded-full mt-2 overflow-hidden">
-                <div className="h-full bg-blue-500 w-2/5 rounded-full"></div>
-              </div>
-            </div>
-          </div>
+            </>
+          )}
         </div>
 
         {/* Payment Method */}
@@ -178,14 +291,15 @@ export default function BillingPage() {
               </ul>
 
               <button 
+                onClick={() => handleUpgrade(plan.name, plan.price)}
                 className={`w-full py-2.5 rounded text-sm transition-colors ${
-                  plan.current 
+                  plan.name === currentPlan
                     ? 'bg-gray-200 text-gray-400 cursor-default' 
                     : 'bg-brand-dark text-white'
                 }`}
-                disabled={plan.current}
+                disabled={plan.name === currentPlan || submitting}
               >
-                {plan.current ? 'Current Plan' : 'Upgrade'}
+                {submitting ? <Loader2 className="animate-spin mx-auto" size={18} /> : (plan.name === currentPlan ? 'Current Plan' : 'Upgrade')}
               </button>
             </div>
           ))}
@@ -212,23 +326,35 @@ export default function BillingPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {invoices.map((invoice) => (
-                <tr key={invoice.id} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="px-6 py-4 text-brand-blue text-sm">{invoice.id}</td>
-                  <td className="px-6 py-4 text-gray-500 text-sm">{invoice.date}</td>
-                  <td className="px-6 py-4 text-gray-900 font-medium text-sm">{invoice.amount}</td>
-                  <td className="px-6 py-4">
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-100">
-                      <CheckCircle2 size={10} /> {invoice.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button className="text-gray-400 hover:text-gray-600 transition-colors">
-                      <Download size={16} />
-                    </button>
-                  </td>
+              {loading ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-8 text-center text-gray-500 italic">Loading invoices...</td>
                 </tr>
-              ))}
+              ) : invoices.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-8 text-center text-gray-500 italic">No invoices found.</td>
+                </tr>
+              ) : (
+                invoices.map((invoice) => (
+                  <tr key={invoice.id} className="hover:bg-gray-50/50 transition-colors">
+                    <td className="px-6 py-4 text-brand-blue text-sm">{invoice.id}</td>
+                    <td className="px-6 py-4 text-gray-500 text-sm">{new Date(invoice.created_at).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 text-gray-900 font-medium text-sm">LKR {invoice.amount}</td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                        invoice.status === 'paid' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-red-50 text-red-700 border-red-100'
+                      }`}>
+                        <CheckCircle2 size={10} /> {invoice.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button className="text-gray-400 hover:text-gray-600 transition-colors">
+                        <Download size={16} />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

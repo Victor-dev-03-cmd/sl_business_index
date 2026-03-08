@@ -25,4 +25,6 @@ export interface Business {
   is_registered?: boolean;
   nic_number?: string;
   working_hours?: string;
+  is_verified?: boolean;
+  admin_notes?: string;
 }
