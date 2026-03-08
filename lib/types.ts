@@ -27,4 +27,5 @@ export interface Business {
   working_hours?: string;
   is_verified?: boolean;
   admin_notes?: string;
+  facilities?: string[];
 }

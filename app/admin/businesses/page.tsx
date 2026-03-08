@@ -23,7 +23,8 @@ import {
   RefreshCw,
   X,
   Plus,
-  ChevronDown
+  ChevronDown,
+  ShieldCheck
 } from 'lucide-react';
 import Image from 'next/image';
 import { Business } from '@/lib/types';
@@ -290,7 +291,10 @@ export default function AdminBusinessesPage() {
                             )}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-brand-blue truncate group-hover:text-brand-dark transition-colors">{business.name}</p>
+                            <div className="flex items-center gap-1.5">
+                              <p className="text-brand-blue truncate group-hover:text-brand-dark transition-colors">{business.name}</p>
+                              {business.is_verified && <ShieldCheck size={14} className="text-blue-500 flex-shrink-0" />}
+                            </div>
                             <p className="font-semibold text-[11px] text-gray-400 truncate flex items-center gap-1 mt-0.5">
                               <MapPin size={10} className="text-brand-blue" /> {business.address}
                             </p>

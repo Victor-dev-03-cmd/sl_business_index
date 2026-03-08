@@ -164,6 +164,34 @@ export default function SettingsPage() {
     }
   };
 
+  const handleSubmitVerification = async () => {
+    if (!selectedBusinessId) return;
+    setSubmitting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from('verifications')
+        .insert({
+          business_id: selectedBusinessId,
+          status: 'pending',
+          // In a real app, these would be uploaded file URLs
+          br_document_url: 'https://placeholder.com/br.pdf',
+          nic_passport_url: 'https://placeholder.com/nic.jpg'
+        });
+
+      if (error) throw error;
+      alert('Verification request submitted successfully!');
+      fetchData();
+    } catch (error) {
+      console.error('Error submitting verification:', error);
+      alert('Failed to submit verification');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const addKeyword = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && newKeyword.trim()) {
       if (!keywords.includes(newKeyword.trim())) {
@@ -343,10 +371,11 @@ export default function SettingsPage() {
 
               <div className="mt-8 pt-8 border-t border-gray-200 flex justify-end">
                 <button 
-                  disabled={verification?.status === 'pending' || verification?.status === 'approved'}
+                  onClick={handleSubmitVerification}
+                  disabled={submitting || verification?.status === 'pending' || verification?.status === 'approved'}
                   className="px-6 py-2.5 bg-brand-dark text-white rounded text-sm font-medium  transition-colors shadow-sm disabled:opacity-50"
                 >
-                  {verification?.status === 'pending' ? 'Under Review' : 'Submit for Review'}
+                  {submitting ? <Loader2 className="animate-spin" size={18} /> : (verification?.status === 'pending' ? 'Under Review' : 'Submit for Review')}
                 </button>
               </div>
             </div>

@@ -106,7 +106,10 @@ export default function VendorLayout({ children }: { children: React.ReactNode }
 
         <div className="p-4 border-t border-gray-100 space-y-2">
           {sidebarOpen && (
-            <button className="flex items-center w-full px-4 py-3 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-all text-[13px] font-bold">
+            <button 
+              onClick={() => alert('Support Center coming soon! Please email support@slbusiness.com')}
+              className="flex items-center w-full px-4 py-3 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-all text-[13px] font-bold"
+            >
               <HelpCircle className="h-[18px] w-[18px] mr-3" strokeWidth={1.5} />
               Vendor Support
             </button>

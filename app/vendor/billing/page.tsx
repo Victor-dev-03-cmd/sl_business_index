@@ -227,7 +227,10 @@ export default function BillingPage() {
               </div>
             </div>
           </div>
-          <button className="w-full py-2 mt-4 text-sm  text-gray-100 hover:text-gray-200 border border-gray-300 rounded bg-brand-dark transition-colors">
+          <button 
+            onClick={() => alert('Secure payment portal integration is in progress. Please contact billing@slbusiness.com to update your details.')}
+            className="w-full py-2 mt-4 text-sm  text-gray-100 hover:text-gray-200 border border-gray-300 rounded bg-brand-dark transition-colors"
+          >
             Update Payment Method
           </button>
         </div>
@@ -348,7 +351,10 @@ export default function BillingPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button className="text-gray-400 hover:text-gray-600 transition-colors">
+                      <button 
+                        onClick={() => alert(`Downloading PDF for invoice ${invoice.id}...`)}
+                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                      >
                         <Download size={16} />
                       </button>
                     </td>

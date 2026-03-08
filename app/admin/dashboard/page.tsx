@@ -19,6 +19,7 @@ import {
   Briefcase,
   User,
   ExternalLink,
+  ShieldCheck
 } from 'lucide-react';
 import Image from 'next/image';
 import { Business } from '@/lib/types';
@@ -224,7 +225,7 @@ export default function AdminDashboard() {
                         <div className="flex items-center gap-3">
                           <h3 className="text-lg font-normal text-gray-900">{business.name}</h3>
                           {business.is_verified && (
-                            <CheckCircle size={16} className="text-blue-500 fill-blue-50" />
+                            <ShieldCheck size={16} className="text-blue-500 fill-blue-50" />
                           )}
                           <span className={`px-2.5 py-0.5 rounded-[6px] text-[10px] uppercase tracking-wider font-normal ${
                             business.status === 'approved' ? 'bg-brand-sand/20 text-brand-gold' :

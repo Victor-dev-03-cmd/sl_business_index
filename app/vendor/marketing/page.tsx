@@ -340,7 +340,10 @@ export default function MarketingPage() {
           </div>
 
           <div className="mt-4 flex justify-end">
-            <button className="text-sm text-gray-500 hover:text-[#053765] flex items-center gap-1 transition-colors">
+            <button 
+              onClick={() => alert('Banner download functionality is currently being optimized. Please use the "Post Now" feature to go live immediately.')}
+              className="text-sm text-gray-500 hover:text-[#053765] flex items-center gap-1 transition-colors"
+            >
               <Download size={16} /> Download Preview
             </button>
           </div>

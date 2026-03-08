@@ -102,13 +102,22 @@ export default function BusinessRequestsPage() {
   });
 
   const updateVerificationMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: string, status: 'approved' | 'rejected' }) => {
-      const { error } = await supabase
+    mutationFn: async ({ id, business_id, status }: { id: string, business_id: string, status: 'approved' | 'rejected' }) => {
+      const { error: verificationError } = await supabase
         .from('verifications')
         .update({ status })
         .eq('id', id);
 
-      if (error) throw error;
+      if (verificationError) throw verificationError;
+
+      if (status === 'approved' && business_id) {
+        const { error: businessError } = await supabase
+          .from('businesses')
+          .update({ is_verified: true })
+          .eq('id', business_id);
+
+        if (businessError) throw businessError;
+      }
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['admin-verifications-pending'] });
@@ -522,13 +531,21 @@ export default function BusinessRequestsPage() {
 
                 <div className="flex gap-4 pt-4">
                   <button 
-                    onClick={() => updateVerificationMutation.mutate({ id: selectedVerification.id, status: 'approved' })}
+                    onClick={() => updateVerificationMutation.mutate({ 
+                      id: selectedVerification.id, 
+                      business_id: selectedVerification.business_id, 
+                      status: 'approved' 
+                    })}
                     className="flex-1 py-3 bg-emerald-600 text-white rounded-[6px] text-sm font-bold hover:bg-emerald-700 transition-all flex items-center justify-center gap-2"
                   >
                     <CheckCircle size={18} /> Approve Verification
                   </button>
                   <button 
-                    onClick={() => updateVerificationMutation.mutate({ id: selectedVerification.id, status: 'rejected' })}
+                    onClick={() => updateVerificationMutation.mutate({ 
+                      id: selectedVerification.id, 
+                      business_id: selectedVerification.business_id, 
+                      status: 'rejected' 
+                    })}
                     className="flex-1 py-3 bg-white border border-red-100 text-red-600 rounded-[6px] text-sm font-bold hover:bg-red-50 transition-all flex items-center justify-center gap-2"
                   >
                     <XCircle size={18} /> Reject
