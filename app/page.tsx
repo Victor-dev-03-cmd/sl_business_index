@@ -37,6 +37,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Skeleton } from '@/components/ui/skeleton';
 
 const sriLankanDistricts = [
   "Ampara", "Anuradhapura", "Badulla", "Batticaloa", "Colombo", "Galle", "Gampaha",
@@ -92,7 +93,7 @@ export default function HomePage() {
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
 
-  const { data: categories = [] } = useQuery({
+  const { data: categories = [], isLoading: categoriesLoading } = useQuery({
     queryKey: ['categories-home'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -443,31 +444,40 @@ export default function HomePage() {
             )}
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
-            {categories.map((cat, idx) => (
-                <div
-                    key={cat.id || idx}
-                    onClick={() => handleCategoryClick(cat.name)}
-                    className="flex-shrink-0 w-44 md:w-48 group cursor-pointer flex flex-col items-center p-8 bg-white border border-gray-200 rounded-[12px] hover:border-brand-gold hover:shadow-xl hover:-translate-y-1 transition-all duration-300 select-none"
-                    onContextMenu={(e) => e.preventDefault()}
-                >
-                  <div className="relative w-20 h-20 mb-4 transition-transform group-hover:scale-110 pointer-events-none flex items-center justify-center">
-                    {cat.image_url ? (
-                      <Image 
-                        src={cat.image_url} 
-                        alt={cat.name} 
-                        fill 
-                        className="object-contain"
-                        draggable={false}
-                      />
-                    ) : (
-                      <div className="text-brand-gold scale-[2]">
-                        <IconComponent name={cat.icon} />
-                      </div>
-                    )}
-                  </div>
-                  <span className="text-gray-700 text-[11px] font-medium text-center group-hover:text-brand-gold transition-colors leading-tight line-clamp-2">{cat.name}</span>
+            {categoriesLoading ? (
+              [...Array(8)].map((_, i) => (
+                <div key={i} className="flex-shrink-0 w-44 md:w-48 flex flex-col items-center p-8 bg-white border border-gray-200 rounded-[12px]">
+                  <Skeleton className="w-20 h-20 rounded-full mb-4" />
+                  <Skeleton className="h-4 w-3/4" />
                 </div>
-            ))}
+              ))
+            ) : (
+              categories.map((cat, idx) => (
+                  <div
+                      key={cat.id || idx}
+                      onClick={() => handleCategoryClick(cat.name)}
+                      className="flex-shrink-0 w-44 md:w-48 group cursor-pointer flex flex-col items-center p-8 bg-white border border-gray-200 rounded-[12px] hover:border-brand-gold hover:shadow-xl hover:-translate-y-1 transition-all duration-300 select-none"
+                      onContextMenu={(e) => e.preventDefault()}
+                  >
+                    <div className="relative w-20 h-20 mb-4 transition-transform group-hover:scale-110 pointer-events-none flex items-center justify-center">
+                      {cat.image_url ? (
+                        <Image 
+                          src={cat.image_url} 
+                          alt={cat.name} 
+                          fill 
+                          className="object-contain"
+                          draggable={false}
+                        />
+                      ) : (
+                        <div className="text-brand-gold scale-[2]">
+                          <IconComponent name={cat.icon} />
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-gray-700 text-[11px] font-medium text-center group-hover:text-brand-gold transition-colors leading-tight line-clamp-2">{cat.name}</span>
+                  </div>
+              ))
+            )}
           </div>
         </section>
 
@@ -663,7 +673,7 @@ export default function HomePage() {
                 </div>
                 <h3 className="text-lg font-normal text-gray-900 mb-4">2. Intelligent Filtering</h3>
                 <p className="text-sm text-gray-500 leading-relaxed max-w-[280px] font-normal">
-                  Type what you need. Our system scans the local database for businesses within your chosen radius.
+                  Our system scans the local database for businesses within your chosen radius.
                 </p>
               </motion.div>
 
