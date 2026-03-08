@@ -69,6 +69,7 @@ const districtCoordinates: Record<string, { lat: number; lng: number }> = {
 
 import { SL_TOWNS, Town } from '@/lib/towns';
 import TownSelector from '@/components/TownSelector';
+import VerifiedBadge from '@/app/components/VerifiedBadge';
 
 const CATEGORY_SUBGROUPS: Record<string, { group: string; items: string[] }[]> = {
   'Health & Medical': [
@@ -1356,8 +1357,9 @@ function SplitScreenResultsContent() {
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                          <h3 className="text-sm font-normal text-gray-900 truncate">
+                          <h3 className="text-sm font-normal text-gray-900 truncate flex items-center gap-1">
                             {business.name}
+                            {(business.is_verified || business.verification_status === 'verified') && <VerifiedBadge size={10} />}
                           </h3>
                           {(business.rating || 0) > 0 && (
                             <div className="flex items-center gap-1 bg-brand-sand/20 px-1.5 py-0.5 rounded text-xs flex-shrink-0">

@@ -26,6 +26,7 @@ import {
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabaseClient';
+import VerifiedBadge from '@/app/components/VerifiedBadge';
 
 const MapboxMap = dynamic(() => import('@/components/MapboxMap'), { 
   ssr: false,
@@ -183,9 +184,9 @@ export default function BusinessDetailsClient({ business }: Props) {
                 <span className="px-3 py-1 bg-brand-gold text-white text-[10px] font-bold uppercase tracking-widest rounded-full">
                   {business.category}
                 </span>
-                {business.is_verified && (
+                {(business.is_verified || business.verification_status === 'verified') && (
                   <span className="flex items-center gap-1.5 px-3 py-1 bg-blue-500/20 backdrop-blur-md text-blue-200 text-[10px] font-bold uppercase tracking-widest rounded-full border border-blue-400/30">
-                    <ShieldCheck size={12} /> Verified
+                    <VerifiedBadge size={10} /> Verified
                   </span>
                 )}
               </div>

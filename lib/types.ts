@@ -26,6 +26,7 @@ export interface Business {
   nic_number?: string;
   working_hours?: string;
   is_verified?: boolean;
+  verification_status?: string;
   admin_notes?: string;
   facilities?: string[];
 }

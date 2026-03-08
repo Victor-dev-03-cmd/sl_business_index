@@ -27,6 +27,7 @@ const adminMenuItems = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
   { name: 'Businesses', href: '/admin/businesses', icon: Building2 },
   { name: 'Requests', href: '/admin/requests', icon: ClipboardList },
+  { name: 'Verifications', href: '/admin/verifications', icon: ShieldCheck },
   { name: 'Categories', href: '/admin/categories', icon: Tags },
   { name: 'Users', href: '/admin/users', icon: Users },
   { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },

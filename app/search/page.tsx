@@ -18,6 +18,7 @@ import {
     ShieldCheck
 } from 'lucide-react';
 import Image from 'next/image';
+import VerifiedBadge from '@/app/components/VerifiedBadge';
 
 const MapboxMap = dynamic(() => import('@/components/MapboxMap'), { 
     ssr: false, 
@@ -39,6 +40,7 @@ interface BusinessSearchResult {
     image_url: string;
     logo_url: string;
     is_verified: boolean;
+    verification_status?: string;
     distance_meters: number;
     latitude: number;
     longitude: number;
@@ -152,7 +154,10 @@ function SearchResults() {
                                                     </span>
                                                 )}
                                             </div>
-                                            <h2 className="text-lg font-bold text-gray-900 group-hover:text-brand-dark transition-colors line-clamp-1">{business.name}</h2>
+                                            <div className="flex items-center gap-1.5">
+                                                <h2 className="text-lg font-bold text-gray-900 group-hover:text-brand-dark transition-colors line-clamp-1">{business.name}</h2>
+                                                {(business.is_verified || business.verification_status === 'verified') && <VerifiedBadge size={12} />}
+                                            </div>
                                             
                                             <div className="flex items-center gap-1.5 mt-1">
                                                 <div className="flex items-center gap-0.5">

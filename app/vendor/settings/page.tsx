@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { 
-  User, 
-  ShieldCheck, 
-  MapPin, 
+import {
+  User,
+  ShieldCheck,
+  MapPin,
   Bell,
-  Save, 
-  Upload, 
-  Globe, 
+  Save,
+  Upload,
+  Globe,
   Search,
   AlertTriangle,
   Loader2
@@ -22,6 +22,8 @@ interface Profile {
   phone: string;
   job_title: string;
   avatar_url: string;
+  verification_status: string;
+  verification_image_url: string;
 }
 
 interface Business {
@@ -41,15 +43,19 @@ interface Verification {
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<'profile' | 'verification' | 'optimization' | 'notifications'>('profile');
   const [submitting, setSubmitting] = useState(false);
-  
+
   // Profile State
   const [profile, setProfile] = useState<Profile>({
     full_name: '',
     email: '',
     phone: '',
     job_title: '',
-    avatar_url: ''
+    avatar_url: '',
+    verification_status: 'unverified',
+    verification_image_url: ''
   });
+
+  const [verificationFile, setVerificationFile] = useState<File | null>(null);
 
   // Optimization State
   const [businesses, setBusinesses] = useState<Business[]>([]);
@@ -76,14 +82,16 @@ export default function SettingsPage() {
         .select('*')
         .eq('id', user.id)
         .single();
-      
+
       if (profileData) {
         setProfile({
           full_name: profileData.full_name || '',
           email: profileData.email || user.email || '',
           phone: profileData.phone || '',
           job_title: profileData.job_title || '',
-          avatar_url: profileData.avatar_url || ''
+          avatar_url: profileData.avatar_url || '',
+          verification_status: profileData.verification_status || 'unverified',
+          verification_image_url: profileData.verification_image_url || ''
         });
       }
 
@@ -92,7 +100,7 @@ export default function SettingsPage() {
         .from('businesses')
         .select('*')
         .eq('owner_id', user.id);
-      
+
       if (businessData) {
         setBusinesses(businessData);
         if (businessData.length > 0) {
@@ -100,7 +108,7 @@ export default function SettingsPage() {
           setSelectedBusinessId(first.id);
           setRadius([first.service_radius || 5]);
           setKeywords(first.seo_keywords || []);
-          
+
           // Fetch Verification for the first business
           const { data: verData } = await supabase
             .from('verifications')
@@ -165,24 +173,62 @@ export default function SettingsPage() {
   };
 
   const handleSubmitVerification = async () => {
-    if (!selectedBusinessId) return;
+    if (!verificationFile) {
+      alert('Please select a document to upload.');
+      return;
+    }
+
+    if (!selectedBusinessId) {
+      alert('Please select a business to verify from the "Radius & SEO" tab first.');
+      return;
+    }
+
     setSubmitting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { error } = await supabase
+      const fileExt = verificationFile.name.split('.').pop();
+      const fileName = `${selectedBusinessId}-${user.id}-${Math.random()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('verification-docs')
+        .upload(fileName, verificationFile);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('verification-docs')
+        .getPublicUrl(fileName);
+
+      const { error: verificationError } = await supabase
         .from('verifications')
         .insert({
           business_id: selectedBusinessId,
           status: 'pending',
-          // In a real app, these would be uploaded file URLs
-          br_document_url: 'https://placeholder.com/br.pdf',
-          nic_passport_url: 'https://placeholder.com/nic.jpg'
+          br_document_url: publicUrl,
         });
 
-      if (error) throw error;
-      alert('Verification request submitted successfully!');
+      if (verificationError) {
+        throw verificationError;
+      }
+
+      // To keep UI consistent without a large refactor, we still update the profile status.
+      // The main data (document URL) is now correctly in the 'verifications' table.
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          verification_status: 'pending',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+
+      if (profileError) {
+        throw profileError;
+      }
+
+      alert('Your request is pending admin approval.');
+      setVerificationFile(null);
       fetchData();
     } catch (error) {
       console.error('Error submitting verification:', error);
@@ -205,9 +251,17 @@ export default function SettingsPage() {
     setKeywords(keywords.filter(k => k !== keyword));
   };
 
+  // Determine display status
+  const displayStatus = verification?.status === 'approved' ? 'verified' : 
+                        verification?.status === 'pending' ? 'pending' : 
+                        profile.verification_status;
+
+  const isVerified = displayStatus === 'verified';
+  const isPending = displayStatus === 'pending';
+
   return (
     <div className="max-w-6xl mx-auto space-y-8">
-      
+
       {/* Header */}
       <div>
         <h1 className="text-2xl text-gray-900">Settings & Optimization</h1>
@@ -215,7 +269,7 @@ export default function SettingsPage() {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8">
-        
+
         {/* Sidebar Navigation */}
         <div className="w-full lg:w-64 flex-shrink-0">
           <nav className="space-y-1">
@@ -243,12 +297,12 @@ export default function SettingsPage() {
 
         {/* Content Area */}
         <div className="flex-1 space-y-6">
-          
+
           {/* Profile Settings */}
           {activeTab === 'profile' && (
             <div className="bg-white rounded border border-gray-300 shadow-sm p-6 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <h2 className="text-lg text-brand-dark mb-6">Profile Details</h2>
-              
+
               <div className="flex items-center gap-6 mb-8">
                 <div className="h-24 w-24 rounded-full bg-gray-100 border-4 border-white shadow-lg flex items-center justify-center overflow-hidden relative group cursor-pointer">
                   {profile.avatar_url ? (
@@ -272,44 +326,44 @@ export default function SettingsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={profile.full_name}
                     onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm" 
+                    className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                  <input 
-                    type="email" 
+                  <input
+                    type="email"
                     value={profile.email}
                     disabled
-                    className="w-full px-4 py-2 border border-gray-300 rounded bg-gray-50 text-gray-500 outline-none text-sm" 
+                    className="w-full px-4 py-2 border border-gray-300 rounded bg-gray-50 text-gray-500 outline-none text-sm"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                  <input 
-                    type="tel" 
+                  <input
+                    type="tel"
                     value={profile.phone}
                     onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm" 
+                    className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Job Title</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={profile.job_title}
                     onChange={(e) => setProfile({ ...profile, job_title: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm" 
+                    className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm"
                   />
                 </div>
               </div>
 
               <div className="mt-8 pt-8 border-t border-gray-200 flex justify-end">
-                <button 
+                <button
                   onClick={handleSaveProfile}
                   disabled={submitting}
                   className="px-6 py-2.5 bg-brand-dark text-white rounded text-sm hover:bg-brand-light transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50"
@@ -328,17 +382,24 @@ export default function SettingsPage() {
                   <h2 className="text-lg text-brand-dark flex items-center gap-2">
                     Verification Status
                     <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                      verification?.status === 'approved' ? 'bg-green-50 text-green-700 border-green-100' :
-                      verification?.status === 'rejected' ? 'bg-red-50 text-red-700 border-red-100' :
-                      'bg-amber-50 text-amber-700 border-amber-100'
+                      isVerified ? 'bg-green-50 text-green-700 border-green-100' :
+                      isPending ? 'bg-amber-50 text-amber-700 border-amber-100' :
+                      'bg-gray-50 text-gray-700 border-gray-100'
                     }`}>
-                      {verification?.status || 'Not Started'}
+                      {displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1)}
                     </span>
                   </h2>
                   <p className="text-sm text-gray-500 mt-1">Get the blue tick to build trust with customers.</p>
                 </div>
-                <ShieldCheck size={32} className={verification?.status === 'approved' ? "text-blue-500" : "text-gray-300"} />
+                <ShieldCheck size={32} className={isVerified ? "text-blue-500" : "text-gray-300"} />
               </div>
+
+              {isPending && (
+                <div className="bg-amber-50 border border-amber-100 rounded-lg p-4 mb-8 flex items-center gap-3">
+                    <AlertTriangle className="text-amber-600" size={20} />
+                    <p className="text-sm text-amber-700 font-medium">Your request is pending admin approval.</p>
+                </div>
+              )}
 
               <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-8">
                 <h4 className="text-sm font-medium text-brand-dark mb-2">Why verify?</h4>
@@ -351,31 +412,51 @@ export default function SettingsPage() {
 
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-brand-dark mb-2">Business Registration (BR) Document</label>
-                  <div className="border-2 border-dashed border-gray-300 rounded p-8 flex flex-col items-center justify-center text-gray-500 hover:border-blue-500 hover:bg-blue-50 transition-colors cursor-pointer">
+                  <label className="block text-sm font-medium text-brand-dark mb-2">ID or Business Document</label>
+                  <div
+                    className={`border-2 border-dashed rounded p-8 flex flex-col items-center justify-center text-gray-500 transition-colors cursor-pointer relative ${
+                        verificationFile ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-blue-500 hover:bg-blue-50'
+                    }`}
+                  >
+                    <input
+                      type="file"
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                      accept="image/*"
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          setVerificationFile(e.target.files[0]);
+                        }
+                      }}
+                      disabled={isPending || isVerified}
+                    />
                     <Upload size={24} className="mb-2" />
-                    <p className="text-sm">{verification?.br_document_url ? 'Document uploaded' : 'Click to upload or drag and drop'}</p>
-                    <p className="text-xs text-gray-400 mt-1">PDF, JPG up to 10MB</p>
+                    <p className="text-sm">
+                        {verificationFile ? verificationFile.name : (verification?.br_document_url || profile.verification_image_url) ? 'Document uploaded' : 'Click to upload or drag and drop'}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">PNG, JPG up to 10MB</p>
                   </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-brand-dark mb-2">NIC / Passport (Owner)</label>
-                  <div className="border-2 border-dashed border-gray-300 rounded p-8 flex flex-col items-center justify-center text-gray-500 hover:border-blue-500 hover:bg-blue-50 transition-colors cursor-pointer">
-                    <Upload size={24} className="mb-2" />
-                    <p className="text-sm">{verification?.nic_passport_url ? 'Document uploaded' : 'Click to upload or drag and drop'}</p>
-                    <p className="text-xs text-gray-400 mt-1">Front & Back sides</p>
-                  </div>
+                  {(verification?.br_document_url || profile.verification_image_url) && !verificationFile && (
+                    <div className="mt-4">
+                        <p className="text-xs text-gray-500 mb-2">Current document:</p>
+                        <div className="h-48 w-full max-w-md rounded border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center">
+                            <img
+                              src={verification?.br_document_url || profile.verification_image_url}
+                              alt="Verification Document"
+                              className="max-h-full max-w-full object-contain"
+                            />
+                        </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
               <div className="mt-8 pt-8 border-t border-gray-200 flex justify-end">
-                <button 
+                <button
                   onClick={handleSubmitVerification}
-                  disabled={submitting || verification?.status === 'pending' || verification?.status === 'approved'}
+                  disabled={submitting || !verificationFile || isPending || isVerified}
                   className="px-6 py-2.5 bg-brand-dark text-white rounded text-sm font-medium  transition-colors shadow-sm disabled:opacity-50"
                 >
-                  {submitting ? <Loader2 className="animate-spin" size={18} /> : (verification?.status === 'pending' ? 'Under Review' : 'Submit for Review')}
+                  {submitting ? <Loader2 className="animate-spin" size={18} /> : (isPending ? 'Under Review' : isVerified ? 'Verified' : 'Submit for Review')}
                 </button>
               </div>
             </div>
@@ -384,10 +465,10 @@ export default function SettingsPage() {
           {/* Optimization (Radius & SEO) */}
           {activeTab === 'optimization' && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              
+
               <div className="bg-white rounded border border-gray-300 shadow-sm p-6 md:p-8">
                 <label className="block text-sm font-medium text-brand-dark mb-2">Select Business to Optimize</label>
-                <select 
+                <select
                   value={selectedBusinessId}
                   onChange={(e) => {
                     const b = businesses.find(bus => bus.id === e.target.value);
@@ -417,10 +498,10 @@ export default function SettingsPage() {
                     <span className="text-sm font-medium text-brand-dark">Range</span>
                     <span className="text-sm font-medium text-brand-dark bg-blue-50 px-2 py-0.5 rounded">{radius[0]} km</span>
                   </div>
-                  <Slider 
-                    value={radius} 
-                    max={50} 
-                    step={1} 
+                  <Slider
+                    value={radius}
+                    max={50}
+                    step={1}
                     onValueChange={(val) => setRadius(val)}
                     className="py-4"
                   />
@@ -433,7 +514,7 @@ export default function SettingsPage() {
                 {/* Mock Map Preview */}
                 <div className="h-48 bg-gray-100 rounded border border-gray-300 flex items-center justify-center relative overflow-hidden">
                   <div className="absolute inset-0 opacity-20 bg-[url('https://upload.wikimedia.org/wikipedia/commons/e/ec/Colombo_city_map.png')] bg-cover bg-center"></div>
-                  <div 
+                  <div
                     className="rounded-full bg-blue-500/20 border-2 border-brand-blue flex items-center justify-center relative z-10 animate-pulse transition-all duration-300"
                     style={{ width: `${radius[0] * 6}px`, height: `${radius[0] * 6}px`, maxWidth: '100%', maxHeight: '100%' }}
                   >
@@ -451,9 +532,9 @@ export default function SettingsPage() {
                 <p className="text-sm text-gray-500 mb-6">Add keywords to help customers find you. We recommend 5-10 relevant tags.</p>
 
                 <div className="relative mb-4">
-                  <input 
-                    type="text" 
-                    placeholder="Type a keyword and press Enter..." 
+                  <input
+                    type="text"
+                    placeholder="Type a keyword and press Enter..."
                     className="w-full pl-4 pr-12 py-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm"
                     value={newKeyword}
                     onChange={(e) => setNewKeyword(e.target.value)}
@@ -476,7 +557,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="mt-8 pt-8 border-t border-gray-200 flex justify-end">
-                  <button 
+                  <button
                     onClick={handleSaveOptimization}
                     disabled={submitting || !selectedBusinessId}
                     className="px-6 py-2.5 bg-brand-dark text-white rounded text-sm hover:bg-brand-light transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50"
@@ -492,7 +573,7 @@ export default function SettingsPage() {
           {activeTab === 'notifications' && (
             <div className="bg-white rounded border border-gray-300 shadow-sm p-6 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <h2 className="text-lg text-brand-dark mb-6">Notification Preferences</h2>
-              
+
               <div className="space-y-6">
                 {[
                   { title: 'New Reviews', desc: 'Get notified when a customer writes a review.' },
