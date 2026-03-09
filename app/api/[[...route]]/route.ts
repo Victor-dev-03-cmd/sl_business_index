@@ -2,10 +2,16 @@ import { Hono } from 'hono'
 import { handle } from 'hono/vercel'
 import { getCookie, setCookie, deleteCookie } from 'hono/cookie'
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { User, SupabaseClient } from '@supabase/supabase-js'
 
 export const runtime = 'edge'
 
-const app = new Hono().basePath('/api')
+type Variables = {
+  user: User | null
+  supabase: SupabaseClient
+}
+
+const app = new Hono<{ Variables: Variables }>().basePath('/api')
 
 // Supabase Auth Middleware
 app.use('*', async (c, next) => {
