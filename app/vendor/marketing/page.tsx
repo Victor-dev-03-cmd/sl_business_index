@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import MarketingDesignEditor from './components/MarketingDesignEditor';
 import { 
   Calendar, 
   Share2, 
@@ -14,7 +15,8 @@ import {
   Send,
   Loader2,
   CheckCircle2,
-  Clock
+  Clock,
+  Sparkles
 } from 'lucide-react';
 
 interface Business {
@@ -36,6 +38,7 @@ interface Campaign {
 
 export default function MarketingPage() {
   const [activeTab, setActiveTab] = useState<'create' | 'schedule' | 'history'>('create');
+  const [showEditor, setShowEditor] = useState(false);
   const [bannerText, setBannerText] = useState('Special Offer!');
   const [bannerColor, setBannerColor] = useState('bg-emerald-600');
   const [selectedPlatform, setSelectedPlatform] = useState<string[]>([]);
@@ -130,12 +133,24 @@ export default function MarketingPage() {
     }
   };
 
+  if (showEditor) {
+    return <MarketingDesignEditor onBack={() => setShowEditor(false)} />;
+  }
+
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl text-gray-900">Marketing & Automation</h1>
-        <p className="text-gray-500 mt-1">Create, schedule, and automate your business promotions.</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl text-gray-900 font-bold">Marketing & Automation</h1>
+          <p className="text-gray-500 mt-1">Create, schedule, and automate your business promotions.</p>
+        </div>
+        <button 
+          onClick={() => setShowEditor(true)}
+          className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-xl font-bold shadow-lg shadow-blue-500/20 hover:scale-[1.02] transition-all"
+        >
+          <Sparkles size={20} /> Open Pro Design Editor
+        </button>
       </div>
 
       {/* Tabs */}
