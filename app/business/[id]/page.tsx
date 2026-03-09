@@ -4,9 +4,9 @@ import { Business } from '@/lib/types';
 import BusinessDetailsClient from './BusinessDetailsClient';
 
 type Props = {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 };
 
 async function getBusinessDetails(id: string): Promise<Business | null> {
@@ -53,7 +53,8 @@ async function getBusinessDetails(id: string): Promise<Business | null> {
 }
 
 export default async function BusinessDetailPage({ params }: Props) {
-  const business = await getBusinessDetails(params.id);
+  const { id } = await params;
+  const business = await getBusinessDetails(id);
 
   if (!business) {
     notFound();
