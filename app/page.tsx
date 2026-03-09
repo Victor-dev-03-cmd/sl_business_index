@@ -19,7 +19,8 @@ import {
   Star,
   Phone,
   Clock,
-  Tags
+  Tags,
+  Building2
 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import {
@@ -101,6 +102,22 @@ export default function HomePage() {
         .select('*')
         .is('parent_id', null)
         .order('name', { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: featuredBusinesses = [], isLoading: featuredLoading } = useQuery({
+    queryKey: ['featured-businesses-home'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('businesses')
+        .select('id, name, category, address, image_url, logo_url, rating, is_verified')
+        .eq('is_featured', true)
+        .eq('status', 'approved')
+        .limit(4);
+      
       if (error) throw error;
       return data;
     },
@@ -495,26 +512,50 @@ export default function HomePage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="group bg-white rounded-[6px] overflow-hidden border border-gray-300 hover:border-brand-gold/20 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full">
+              {featuredLoading ? (
+                [...Array(4)].map((_, i) => (
+                  <div key={i} className="bg-white rounded-[6px] overflow-hidden border border-gray-300 shadow-sm flex flex-col h-full">
+                    <Skeleton className="h-48 w-full" />
+                    <div className="p-4 flex flex-col flex-1 space-y-3">
+                      <Skeleton className="h-3 w-1/2" />
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-3 w-full" />
+                      <div className="flex justify-between pt-4 mt-auto">
+                        <Skeleton className="h-3 w-20" />
+                        <Skeleton className="h-3 w-20" />
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : featuredBusinesses.length > 0 ? (
+                featuredBusinesses.map((business) => (
+                  <div key={business.id} className="group bg-white rounded-[6px] overflow-hidden border border-gray-300 hover:border-brand-gold/20 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full">
                     {/* Image Section */}
                     <div className="relative h-48 w-full overflow-hidden bg-gray-100">
-                      <Image
-                          src={`/business-${i}.jpg`}
-                          alt="Business"
-                          fill
-                          className="object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
+                      {business.image_url ? (
+                        <Image
+                            src={business.image_url}
+                            alt={business.name}
+                            fill
+                            className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300">
+                          <Building2 size={48} strokeWidth={1} />
+                        </div>
+                      )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                      <div className="absolute top-3 left-3">
-                        <span className="bg-brand-gold text-white text-[9px] font-normal uppercase tracking-[0.1em] px-2 py-1 rounded-[6px] shadow-sm">
-                          Verified
-                        </span>
-                      </div>
+                      {business.is_verified && (
+                        <div className="absolute top-3 left-3">
+                          <span className="bg-brand-gold text-white text-[9px] font-normal uppercase tracking-[0.1em] px-2 py-1 rounded-[6px] shadow-sm">
+                            Verified
+                          </span>
+                        </div>
+                      )}
                       <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
                         <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-[6px] shadow-lg text-gray-900">
                           <Star size={10} strokeWidth={1.5} className="text-brand-gold fill-brand-gold" />
-                          <span className="text-[10px] font-normal">4.9</span>
+                          <span className="text-[10px] font-normal">{business.rating || 'N/A'}</span>
                         </div>
                       </div>
                     </div>
@@ -523,24 +564,24 @@ export default function HomePage() {
                     <div className="p-4 flex flex-col flex-1 font-normal">
                       <div className="mb-4">
                         <p className="text-[10px] font-normal text-brand-blue uppercase tracking-widest mb-1.5">
-                          Hospitality & Leisure
+                          {business.category}
                         </p>
                         <h3 className="text-sm text-gray-900 font-normal group-hover:text-brand-gold transition-colors line-clamp-1">
-                          Victoria Luxury Villa {i}
+                          {business.name}
                         </h3>
                       </div>
 
                       <div className="flex items-start text-gray-500 mb-6 flex-1">
                         <MapPin size={12} strokeWidth={1.5} className="mr-2 mt-0.5 flex-shrink-0 text-brand-gold/70" />
                         <p className="text-[11px] leading-relaxed line-clamp-2 font-normal">
-                          No 45, Gregory Lake Road, Nuwara Eliya
+                          {business.address}
                         </p>
                       </div>
 
                       <div className="flex items-center justify-between pt-4 border-t border-gray-50">
-                        <span className="text-[10px] font-normal text-gray-400">#BUSINESS-{2024 + i}</span>
+                        <span className="text-[10px] font-normal text-gray-400">#{business.id.slice(0, 8)}</span>
                         <button 
-                          onClick={() => router.push('/nearby')}
+                          onClick={() => router.push(`/business/${business.id}`)}
                           className="text-[11px] font-normal text-brand-dark hover:text-brand-blue flex items-center gap-1 group/btn"
                         >
                           View Details
@@ -549,7 +590,12 @@ export default function HomePage() {
                       </div>
                     </div>
                   </div>
-              ))}
+                ))
+              ) : (
+                <div className="col-span-full text-center py-12 text-gray-400">
+                  <p>No featured businesses yet.</p>
+                </div>
+              )}
             </div>
           </div>
         </section>

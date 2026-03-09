@@ -115,7 +115,7 @@ export default function VerificationsPage() {
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+        <h1 className="text-2xl text-brand-dark flex items-center gap-2">
           <ShieldCheck className="text-brand-blue" />
           Verification Requests
         </h1>
@@ -126,7 +126,7 @@ export default function VerificationsPage() {
       <div className="flex gap-6 border-b border-gray-200">
         <button
           onClick={() => setActiveTab('pending')}
-          className={`pb-4 text-sm font-bold transition-all relative flex items-center gap-2 ${
+          className={`pb-4 text-sm transition-all relative flex items-center gap-2 ${
             activeTab === 'pending' ? 'text-brand-blue' : 'text-gray-500 hover:text-gray-700'
           }`}
         >
@@ -136,7 +136,7 @@ export default function VerificationsPage() {
         </button>
         <button
           onClick={() => setActiveTab('history')}
-          className={`pb-4 text-sm font-bold transition-all relative flex items-center gap-2 ${
+          className={`pb-4 text-sm transition-all relative flex items-center gap-2 ${
             activeTab === 'history' ? 'text-brand-blue' : 'text-gray-500 hover:text-gray-700'
           }`}
         >

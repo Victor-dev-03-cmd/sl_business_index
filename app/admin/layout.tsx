@@ -17,7 +17,8 @@ import {
   ClipboardList,
   Bell,
   LogOut,
-  HelpCircle
+  HelpCircle,
+  Star
 } from 'lucide-react';
 import AuthButton from '@/app/components/AuthButton';
 import NotificationBell from '@/app/components/NotificationBell';
@@ -28,6 +29,7 @@ const adminMenuItems = [
   { name: 'Businesses', href: '/admin/businesses', icon: Building2 },
   { name: 'Requests', href: '/admin/requests', icon: ClipboardList },
   { name: 'Verifications', href: '/admin/verifications', icon: ShieldCheck },
+  { name: 'Featured', href: '/admin/featured', icon: Star },
   { name: 'Categories', href: '/admin/categories', icon: Tags },
   { name: 'Users', href: '/admin/users', icon: Users },
   { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
