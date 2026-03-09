@@ -134,7 +134,7 @@ export default function MarketingPage() {
   };
 
   if (showEditor) {
-    return <MarketingDesignEditor onBack={() => setShowEditor(false)} />;
+    return <MarketingDesignEditor onBackAction={() => setShowEditor(false)} />;
   }
 
   return (

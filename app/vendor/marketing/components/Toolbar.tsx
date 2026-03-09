@@ -123,10 +123,10 @@ export default function Toolbar() {
           top: (cloned.top || 0) + 10,
           evented: true,
         });
-        if (cloned.type === 'activeSelection') {
+        if (cloned instanceof fabric.ActiveSelection) {
           // active selection needs a reference to the canvas.
           cloned.canvas = canvas;
-          cloned.forEachObject((obj) => {
+          cloned.getObjects().forEach((obj) => {
             canvas.add(obj);
           });
           // this should be fixed in fabric 5+ automatically but good to be safe
