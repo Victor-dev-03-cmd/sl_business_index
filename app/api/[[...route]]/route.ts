@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import { handle } from 'hono/vercel'
+import { getCookie, setCookie, deleteCookie } from 'hono/cookie'
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 
 export const runtime = 'edge'
@@ -14,13 +15,19 @@ app.use('*', async (c, next) => {
     {
       cookies: {
         get(name: string) {
-          return c.req.cookie(name)
+          return getCookie(c, name)
         },
         set(name: string, value: string, options: CookieOptions) {
-          c.header('set-cookie', `${name}=${value}; Path=/; HttpOnly; SameSite=Lax`)
+          setCookie(c, name, value, {
+            ...options,
+            path: options.path || '/',
+          } as any)
         },
         remove(name: string, options: CookieOptions) {
-          c.header('set-cookie', `${name}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`)
+          deleteCookie(c, name, {
+            ...options,
+            path: options.path || '/',
+          } as any)
         },
       },
     }
