@@ -116,11 +116,12 @@ ALTER TABLE public.marketing_campaigns ENABLE ROW LEVEL SECURITY;
 -- Marketing Campaigns Policies
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'marketing_campaigns' AND policyname = 'Vendors manage own campaigns') THEN
-        CREATE POLICY "Vendors manage own campaigns" ON public.marketing_campaigns FOR ALL USING (
-            EXISTS (SELECT 1 FROM public.businesses WHERE id = business_id AND owner_id = auth.uid())
-        );
-    END IF;
+    -- Drop policy if exists to ensure clean update
+    DROP POLICY IF EXISTS "Vendors manage own campaigns" ON public.marketing_campaigns;
+    
+    CREATE POLICY "Vendors manage own campaigns" ON public.marketing_campaigns FOR ALL USING (
+        EXISTS (SELECT 1 FROM public.businesses WHERE id = business_id AND owner_id = auth.uid())
+    );
 END $$;
 
 -- Create Subscriptions Table
@@ -141,15 +142,14 @@ ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
 -- Subscriptions Policies
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'subscriptions' AND policyname = 'Users view own subscriptions') THEN
-        CREATE POLICY "Users view own subscriptions" ON public.subscriptions FOR SELECT USING (auth.uid() = user_id);
-    END IF;
+    DROP POLICY IF EXISTS "Users view own subscriptions" ON public.subscriptions;
+    DROP POLICY IF EXISTS "Admins manage subscriptions" ON public.subscriptions;
     
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'subscriptions' AND policyname = 'Admins manage subscriptions') THEN
-        CREATE POLICY "Admins manage subscriptions" ON public.subscriptions FOR ALL USING (
-            EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin', 'ceo'))
-        );
-    END IF;
+    CREATE POLICY "Users view own subscriptions" ON public.subscriptions FOR SELECT USING (auth.uid() = user_id);
+    
+    CREATE POLICY "Admins manage subscriptions" ON public.subscriptions FOR ALL USING (
+        EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin', 'ceo'))
+    );
 END $$;
 
 -- Create Invoices Table
@@ -167,9 +167,9 @@ ALTER TABLE public.invoices ENABLE ROW LEVEL SECURITY;
 -- Invoices Policies
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'invoices' AND policyname = 'Users view own invoices') THEN
-        CREATE POLICY "Users view own invoices" ON public.invoices FOR SELECT USING (
-            EXISTS (SELECT 1 FROM public.subscriptions WHERE id = subscription_id AND user_id = auth.uid())
-        );
-    END IF;
+    DROP POLICY IF EXISTS "Users view own invoices" ON public.invoices;
+    
+    CREATE POLICY "Users view own invoices" ON public.invoices FOR SELECT USING (
+        EXISTS (SELECT 1 FROM public.subscriptions WHERE id = subscription_id AND user_id = auth.uid())
+    );
 END $$;

@@ -1357,7 +1357,7 @@ function SplitScreenResultsContent() {
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                          <h3 className="text-sm font-normal text-gray-900 truncate flex items-center gap-1">
+                          <h3 className="text-sm font-normal text-gray-900 truncate flex items-center gap-1 group-hover:text-brand-blue transition-colors">
                             {business.name}
                             {(business.is_verified || business.verification_status === 'verified') && <VerifiedBadge size={10} />}
                           </h3>
@@ -1372,14 +1372,23 @@ function SplitScreenResultsContent() {
                           {business.category}
                         </p>
                         <p className="text-xs text-gray-500 mt-1 line-clamp-1 flex items-center font-normal">
-                          <MapPin size={12} strokeWidth={1.5} className="mr-1 flex-shrink-0" />
+                          <MapPin size={12} strokeWidth={1.5} className="mr-1 flex-shrink-0 text-brand-gold" />
                           {business.address}
                         </p>
-                        <div className="mt-2 inline-flex items-center gap-1 px-2 py-1 bg-gray-100 rounded-full text-xs font-normal">
-                          <Navigation size={11} strokeWidth={1.5} className="text-brand-dark" />
-                          <span className="text-gray-700">
-                            {business.distanceText || 'Calculating...'}
-                          </span>
+                        <div className="mt-3 flex items-center justify-between">
+                          <div className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 rounded-full text-[10px] font-normal">
+                            <Navigation size={10} strokeWidth={1.5} className="text-brand-dark" />
+                            <span className="text-gray-700">
+                              {business.distanceText || 'Calculating...'}
+                            </span>
+                          </div>
+                          <Link 
+                            href={`/business/${business.id}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-[10px] font-bold text-brand-dark hover:text-brand-blue flex items-center gap-1 border-b border-brand-dark/20 pb-0.5"
+                          >
+                            View Profile <LucideIcons.ArrowRight size={10} />
+                          </Link>
                         </div>
                       </div>
                     </div>

@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from '@/components/ui/skeleton';
 
+
 const sriLankanDistricts = [
   "Ampara", "Anuradhapura", "Badulla", "Batticaloa", "Colombo", "Galle", "Gampaha",
   "Hambantota", "Jaffna", "Kalutara", "Kandy", "Kegalle", "Kilinochchi", "Kurunegala",
@@ -76,6 +77,7 @@ const districtCoordinates: Record<string, { lat: number; lng: number }> = {
 };
 
 import { SL_TOWNS, Town } from '@/lib/towns';
+import VerifiedBadge from './components/VerifiedBadge';
 
 export default function HomePage() {
   const router = useRouter();
@@ -529,67 +531,85 @@ export default function HomePage() {
                 ))
               ) : featuredBusinesses.length > 0 ? (
                 featuredBusinesses.map((business) => (
-                  <div key={business.id} className="group bg-white rounded-[6px] overflow-hidden border border-gray-300 hover:border-brand-gold/20 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full">
+                  <Link 
+                    key={business.id} 
+                    href={`/business/${business.id}`}
+                    className="group bg-white rounded-[6px] overflow-hidden border border-gray-300 hover:border-brand-gold/40 shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col h-full relative"
+                  >
                     {/* Image Section */}
-                    <div className="relative h-48 w-full overflow-hidden bg-gray-100">
+                    <div className="relative h-52 w-full overflow-hidden bg-gray-100">
                       {business.image_url ? (
                         <Image
                             src={business.image_url}
                             alt={business.name}
                             fill
-                            className="object-cover transition-transform duration-500 group-hover:scale-105"
+                            className="object-cover transition-transform duration-700 group-hover:scale-110"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300">
                           <Building2 size={48} strokeWidth={1} />
                         </div>
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                      {business.is_verified && (
-                        <div className="absolute top-3 left-3">
-                          <span className="bg-brand-gold text-white text-[9px] font-normal uppercase tracking-[0.1em] px-2 py-1 rounded-[6px] shadow-sm">
-                            Verified
+                      
+                      {/* Logo Overlay on Hover */}
+                      {business.logo_url && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500 backdrop-blur-[2px]">
+                          <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-white/50 shadow-2xl transform scale-50 group-hover:scale-100 transition-transform duration-500">
+                            <Image 
+                              src={business.logo_url} 
+                              alt={`${business.name} logo`}
+                              fill
+                              className="object-cover bg-white"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
+                      
+                      {(business.is_verified || business.verification_status === 'verified') && (
+                        <div className="absolute top-3 left-3 z-10">
+                          <span className="bg-brand-gold text-white text-[9px] font-bold uppercase tracking-[0.2em] px-2.5 py-1.5 rounded-[4px] shadow-lg flex items-center gap-1.5">
+                            <VerifiedBadge size={10} /> Verified
                           </span>
                         </div>
                       )}
-                      <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
-                        <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-[6px] shadow-lg text-gray-900">
-                          <Star size={10} strokeWidth={1.5} className="text-brand-gold fill-brand-gold" />
-                          <span className="text-[10px] font-normal">{business.rating || 'N/A'}</span>
+
+                      <div className="absolute bottom-3 right-3 z-10">
+                        <div className="flex items-center gap-1.5 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-[4px] shadow-lg text-gray-900 border border-white/50">
+                          <Star size={12} strokeWidth={2} className="text-brand-gold fill-brand-gold" />
+                          <span className="text-[11px] font-bold">{business.rating || 'New'}</span>
                         </div>
                       </div>
                     </div>
 
                     {/* Content Section */}
-                    <div className="p-4 flex flex-col flex-1 font-normal">
+                    <div className="p-5 flex flex-col flex-1 font-normal bg-white">
                       <div className="mb-4">
-                        <p className="text-[10px] font-normal text-brand-blue uppercase tracking-widest mb-1.5">
+                        <p className="text-[10px] font-bold text-brand-blue uppercase tracking-[0.15em] mb-2 opacity-80">
                           {business.category}
                         </p>
-                        <h3 className="text-sm text-gray-900 font-normal group-hover:text-brand-gold transition-colors line-clamp-1">
+                        <h3 className="text-base text-gray-900 font-normal group-hover:text-brand-gold transition-colors duration-300 line-clamp-1 leading-tight">
                           {business.name}
                         </h3>
                       </div>
 
                       <div className="flex items-start text-gray-500 mb-6 flex-1">
-                        <MapPin size={12} strokeWidth={1.5} className="mr-2 mt-0.5 flex-shrink-0 text-brand-gold/70" />
-                        <p className="text-[11px] leading-relaxed line-clamp-2 font-normal">
+                        <MapPin size={14} strokeWidth={1.5} className="mr-2 mt-0.5 flex-shrink-0 text-brand-gold" />
+                        <p className="text-[12px] leading-relaxed line-clamp-2 font-normal text-gray-600">
                           {business.address}
                         </p>
                       </div>
 
-                      <div className="flex items-center justify-between pt-4 border-t border-gray-50">
-                        <span className="text-[10px] font-normal text-gray-400">#{business.id.slice(0, 8)}</span>
-                        <button 
-                          onClick={() => router.push(`/business/${business.id}`)}
-                          className="text-[11px] font-normal text-brand-dark hover:text-brand-blue flex items-center gap-1 group/btn"
-                        >
-                          View Details
-                          <ChevronRight size={14} strokeWidth={1.5} className="group-hover/btn:translate-x-0.5 transition-transform" />
-                        </button>
+                      <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-auto">
+                        <span className="text-[10px] font-normal text-gray-400 font-mono tracking-tighter">ID: {business.id.toString().slice(0, 8)}</span>
+                        <div className="text-[11px] font-bold text-brand-dark flex items-center gap-1 group/btn px-3 py-1.5 bg-gray-50 rounded-[4px] group-hover:bg-brand-gold group-hover:text-white transition-all duration-300">
+                          Explore
+                          <ChevronRight size={14} strokeWidth={2} className="group-hover/btn:translate-x-1 transition-transform" />
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 ))
               ) : (
                 <div className="col-span-full text-center py-12 text-gray-400">

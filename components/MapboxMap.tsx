@@ -34,6 +34,7 @@ export default function MapboxMap({
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
   const mapRef = useRef<any>(null);
   const [pulseOpacity, setPulseOpacity] = useState(0.15);
+  const [mapLoaded, setMapLoaded] = useState(false);
 
   // Pulse animation for the radius
   useEffect(() => {
@@ -130,6 +131,7 @@ export default function MapboxMap({
         }}
         mapStyle="mapbox://styles/mapbox/streets-v12"
         style={{ width: '100%', height: '100%' }}
+        onLoad={() => setMapLoaded(true)}
       >
         <NavigationControl position="bottom-right" />
         <FullscreenControl position="top-right" />
@@ -139,8 +141,7 @@ export default function MapboxMap({
           showUserHeading={true}
         />
 
-        {/* Search Radius Circle with Pulse Effect */}
-        {radiusGeoJSON && (
+        {mapLoaded && radiusGeoJSON && (
           <Source id="radius-source" type="geojson" data={radiusGeoJSON}>
             <Layer
               id="radius-fill"
@@ -164,29 +165,31 @@ export default function MapboxMap({
         )}
 
         {/* User's Current Location Marker */}
-        <Marker
-          latitude={userLat}
-          longitude={userLng}
-          draggable={draggableMarker}
-          onDragEnd={(e) => {
-            if (onMarkerDragEnd) {
-              onMarkerDragEnd(e.lngLat.lat, e.lngLat.lng);
-            }
-          }}
-          anchor="bottom"
-        >
-          <div className="relative flex items-center justify-center">
-            <div className="absolute w-15 h-15 bg-brand-dark rounded-[50%] animate-ping" />
-            <div className="relative bg-white p-1 rounded-[50%] shadow-2xl border border-blue-100">
-              <div className="bg-brand-blue p-2 rounded-[50%] shadow-inner">
-                <Navigation size={18} className="text-white fill-white" />
+        {mapLoaded && userLat !== undefined && userLng !== undefined && (
+          <Marker
+            latitude={userLat}
+            longitude={userLng}
+            draggable={draggableMarker}
+            onDragEnd={(e) => {
+              if (onMarkerDragEnd) {
+                onMarkerDragEnd(e.lngLat.lat, e.lngLat.lng);
+              }
+            }}
+            anchor="bottom"
+          >
+            <div className="relative flex items-center justify-center">
+              <div className="absolute w-15 h-15 bg-brand-dark rounded-[50%] animate-ping" />
+              <div className="relative bg-white p-1 rounded-[50%] shadow-2xl border border-blue-100">
+                <div className="bg-brand-blue p-2 rounded-[50%] shadow-inner">
+                  <Navigation size={18} className="text-white fill-white" />
+                </div>
               </div>
             </div>
-          </div>
-        </Marker>
+          </Marker>
+        )}
 
         {/* Business Markers */}
-        {businesses.map((biz) => (
+        {mapLoaded && businesses.map((biz) => (
           <Marker
             key={biz.id}
             latitude={biz.latitude}
@@ -214,7 +217,7 @@ export default function MapboxMap({
         ))}
 
         {/* Popup for Businesses (Modern Design) */}
-        {selectedBusiness && (
+        {mapLoaded && selectedBusiness && (
           <Popup
             latitude={selectedBusiness.latitude}
             longitude={selectedBusiness.longitude}

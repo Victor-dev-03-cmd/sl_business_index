@@ -181,7 +181,7 @@ export default function BusinessDetailsClient({ business }: Props) {
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-4">
-                <span className="px-3 py-1 bg-brand-gold text-white text-[10px] font-bold uppercase tracking-widest rounded-full">
+                <span className="px-3 py-1 bg-brand-gold text-white text-[10px] uppercase tracking-widest rounded">
                   {business.category}
                 </span>
                 {(business.is_verified || business.verification_status === 'verified') && (
@@ -196,7 +196,7 @@ export default function BusinessDetailsClient({ business }: Props) {
               <div className="flex flex-wrap items-center gap-6 text-white/80">
                 <div className="flex items-center gap-2">
                   <MapPin size={18} className="text-brand-gold" />
-                  <span className="text-sm md:text-base font-normal">{business.address}</span>
+                  <span className="text-sm md:text-base">{business.address}</span>
                 </div>
                 {business.rating && (
                   <div className="flex items-center gap-2">
@@ -211,12 +211,12 @@ export default function BusinessDetailsClient({ business }: Props) {
             </div>
             
             <div className="flex gap-3">
-              <button className="p-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl text-white hover:bg-white/20 transition-all">
+              <button className="p-3 bg-white/10 backdrop-blur-md border border-white/20 rounded text-white hover:bg-white/20 transition-all">
                 <Share2 size={20} />
               </button>
               <a 
                 href={`tel:${business.phone}`}
-                className="flex items-center gap-2 px-8 py-3 bg-white text-brand-dark font-bold rounded-xl hover:bg-brand-sand transition-all shadow-xl"
+                className="flex items-center gap-2 px-8 py-3 bg-white text-brand-dark rounded hover:bg-brand-sand transition-all shadow-xl"
               >
                 <Phone size={20} /> Call Now
               </a>
@@ -231,8 +231,8 @@ export default function BusinessDetailsClient({ business }: Props) {
           {/* Main Info */}
           <div className="lg:col-span-2 space-y-12">
             <section>
-              <h2 className="text-2xl font-normal text-gray-900 mb-6">About the Business</h2>
-              <p className="text-gray-600 leading-relaxed text-lg font-normal">
+              <h2 className="text-xl text-brand-dark mb-6">About the Business</h2>
+              <p className="text-gray-600 leading-relaxed text-sm">
                 {business.description || "No description available for this business."}
               </p>
             </section>
@@ -240,14 +240,14 @@ export default function BusinessDetailsClient({ business }: Props) {
             {/* Facilities */}
             {business.facilities && business.facilities.length > 0 && (
               <section>
-                <h2 className="text-2xl font-normal text-gray-900 mb-6">Facilities & Amenities</h2>
+                <h2 className="text-xl text-brand-dark mb-6">Facilities & Amenities</h2>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {business.facilities.map((facility, index) => (
-                    <div key={index} className="flex items-center gap-3 p-4 bg-white rounded-xl border border-gray-200 shadow-sm group hover:border-brand-gold transition-all">
+                    <div key={index} className="flex items-center gap-3 p-4 bg-white rounded border border-gray-300 shadow-sm group hover:border-brand-gold transition-all">
                       <div className="text-brand-dark group-hover:text-brand-gold transition-colors">
                         {getFacilityIcon(facility)}
                       </div>
-                      <span className="text-sm font-medium text-gray-700">{facility}</span>
+                      <span className="text-sm text-gray-700">{facility}</span>
                     </div>
                   ))}
                 </div>
@@ -255,10 +255,10 @@ export default function BusinessDetailsClient({ business }: Props) {
             )}
 
             <section>
-              <h2 className="text-2xl font-normal text-gray-900 mb-6 flex items-center gap-3">
-                <MapPin className="text-brand-dark" /> Location & Directions
+              <h2 className="text-xl text-brand-dark mb-6 flex items-center gap-3">
+                <MapPin className="text-brand-blue" /> Location & Directions
               </h2>
-              <div className="rounded-xl overflow-hidden shadow-2xl border border-gray-300">
+              <div className="rounded overflow-hidden shadow-xl border border-gray-300">
                 <MapboxMap 
                   userLat={business.latitude} 
                   userLng={business.longitude}
@@ -272,28 +272,28 @@ export default function BusinessDetailsClient({ business }: Props) {
             {/* Reviews Section */}
             <section id="reviews" className="space-y-8">
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-normal text-gray-900 flex items-center gap-3">
-                  <MessageSquare className="text-brand-dark" /> Customer Reviews ({reviews.length})
+                <h2 className="text-xl text-brand-dark flex items-center gap-3">
+                  <MessageSquare className="text-brand-blue" /> Customer Reviews ({reviews.length})
                 </h2>
               </div>
 
               {/* Review Form */}
-              <div className="bg-white rounded-xl border border-gray-300 p-8 shadow-sm">
-                <h3 className="text-xl font-normal mb-6">Write a Review</h3>
+              <div className="bg-white rounded border border-gray-300 p-8 shadow-sm">
+                <h3 className="text-sm mb-6 text-brand-blue">Write a Review</h3>
                 <form onSubmit={handleReviewSubmit} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-bold text-gray-400 uppercase tracking-widest mb-2">Your Name</label>
+                      <label className="block text-sm text-gray-400 uppercase tracking-widest mb-2">Your Name</label>
                       <input 
                         type="text" 
                         required
-                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-gold/20 focus:border-brand-gold transition-all"
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-brand-gold focus:border-brand-gold transition-all"
                         value={reviewForm.user_name}
                         onChange={(e) => setReviewForm({ ...reviewForm, user_name: e.target.value })}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-bold text-gray-400 uppercase tracking-widest mb-2">Rating</label>
+                      <label className="block text-sm text-gray-400 uppercase tracking-widest mb-2">Rating</label>
                       <div className="flex gap-2">
                         {[1, 2, 3, 4, 5].map((star) => (
                           <button
@@ -312,11 +312,11 @@ export default function BusinessDetailsClient({ business }: Props) {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-gray-400 uppercase tracking-widest mb-2">Your Review</label>
+                    <label className="block text-sm text-gray-400 uppercase tracking-widest mb-2">Your Review</label>
                     <textarea 
                       required
                       rows={4}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-gold/20 focus:border-brand-gold transition-all"
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-brand-gold focus:border-brand-gold transition-all"
                       value={reviewForm.comment}
                       onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
                     />
@@ -324,7 +324,7 @@ export default function BusinessDetailsClient({ business }: Props) {
                   <button 
                     type="submit" 
                     disabled={submittingReview}
-                    className="flex items-center justify-center gap-2 px-8 py-4 bg-brand-dark text-white rounded-xl font-bold hover:bg-brand-blue disabled:opacity-50 transition-all shadow-lg"
+                    className="flex items-center justify-center gap-2 px-8 py-4 bg-brand-dark text-white rounded hover:bg-brand-blue disabled:opacity-50 transition-all shadow-lg"
                   >
                     {submittingReview ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} />}
                     Post Review
@@ -340,20 +340,20 @@ export default function BusinessDetailsClient({ business }: Props) {
                     <p className="text-gray-500">Loading reviews...</p>
                   </div>
                 ) : reviews.length === 0 ? (
-                  <div className="text-center py-12 bg-white rounded-xl border border-gray-200 border-dashed">
-                    <MessageSquare size={48} className="mx-auto text-gray-200 mb-4" />
+                  <div className="text-center py-12 bg-white rounded border border-gray-300 border-dashed">
+                    <MessageSquare size={48} className="mx-auto text-gray-300 mb-4" />
                     <p className="text-gray-400">No reviews yet. Be the first to review!</p>
                   </div>
                 ) : (
                   reviews.map((review) => (
-                    <div key={review.id} className="bg-white rounded-xl border border-gray-200 p-8 shadow-sm space-y-4">
+                    <div key={review.id} className="bg-white rounded border border-gray-300 p-8 shadow-sm space-y-4">
                       <div className="flex justify-between items-start">
                         <div className="flex items-center gap-4">
-                          <div className="h-12 w-12 rounded-full bg-brand-gold/10 flex items-center justify-center font-bold text-brand-gold">
+                          <div className="h-10 w-10 rounded-full bg-brand-dark flex items-center justify-center text-white">
                             {review.user_name.charAt(0)}
                           </div>
                           <div>
-                            <h4 className="font-bold text-gray-900">{review.user_name}</h4>
+                            <h4 className="font-medium text-brand-blue">{review.user_name}</h4>
                             <div className="flex items-center gap-1">
                               {[...Array(5)].map((_, i) => (
                                 <Star 
@@ -362,7 +362,7 @@ export default function BusinessDetailsClient({ business }: Props) {
                                   className={i < review.rating ? "fill-amber-400 text-amber-400" : "text-gray-300"} 
                                 />
                               ))}
-                              <span className="text-[10px] text-gray-400 ml-2">
+                              <span className="text-[10px] text-gray-500 ml-2">
                                 {new Date(review.created_at).toLocaleDateString()}
                               </span>
                             </div>
@@ -373,8 +373,8 @@ export default function BusinessDetailsClient({ business }: Props) {
                       
                       {/* Vendor Reply */}
                       {review.review_replies && review.review_replies.length > 0 && (
-                        <div className="mt-6 p-6 bg-gray-50 rounded-xl border-l-4 border-brand-dark">
-                          <p className="text-xs font-bold text-brand-dark uppercase tracking-widest mb-2 flex items-center gap-2">
+                        <div className="mt-6 p-6 bg-gray-100 rounded border-l-4 border-brand-dark">
+                          <p className="text-xs text-brand-dark uppercase tracking-widest mb-2 flex items-center gap-2">
                             <ShieldCheck size={14} /> Owner Response
                           </p>
                           <p className="text-gray-600 italic">&quot;{review.review_replies[0].reply_text}&quot;</p>
@@ -388,11 +388,11 @@ export default function BusinessDetailsClient({ business }: Props) {
           </div>
 
           {/* Sidebar Info */}
-          <div className="space-y-8">
+          <div className="space-y-8 sticky top-24 self-start">
             {/* Quick Enquiry Card */}
-            <div className="bg-white rounded-xl border border-gray-300 p-8 shadow-xl space-y-6 sticky top-24">
+            <div className="bg-white rounded border border-gray-300 p-8 shadow-xl space-y-6">
               <div>
-                <h3 className="text-xl font-normal text-gray-900">Quick Enquiry</h3>
+                <h3 className="text-xl text-brand-dark">Quick Enquiry</h3>
                 <p className="text-sm text-gray-500 mt-1">Send a message directly to the business.</p>
               </div>
               
@@ -402,7 +402,7 @@ export default function BusinessDetailsClient({ business }: Props) {
                     type="text" 
                     placeholder="Your Name"
                     required
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-gold/20 focus:border-brand-gold transition-all text-sm"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all text-sm"
                     value={enquiryForm.name}
                     onChange={(e) => setEnquiryForm({ ...enquiryForm, name: e.target.value })}
                   />
@@ -412,7 +412,7 @@ export default function BusinessDetailsClient({ business }: Props) {
                     type="email" 
                     placeholder="Email Address"
                     required
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-gold/20 focus:border-brand-gold transition-all text-sm"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all text-sm"
                     value={enquiryForm.email}
                     onChange={(e) => setEnquiryForm({ ...enquiryForm, email: e.target.value })}
                   />
@@ -422,7 +422,7 @@ export default function BusinessDetailsClient({ business }: Props) {
                     type="tel" 
                     placeholder="Phone Number"
                     required
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-gold/20 focus:border-brand-gold transition-all text-sm"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all text-sm"
                     value={enquiryForm.phone}
                     onChange={(e) => setEnquiryForm({ ...enquiryForm, phone: e.target.value })}
                   />
@@ -432,7 +432,7 @@ export default function BusinessDetailsClient({ business }: Props) {
                     placeholder="How can we help you?"
                     required
                     rows={3}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-gold/20 focus:border-brand-gold transition-all text-sm"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all text-sm"
                     value={enquiryForm.message}
                     onChange={(e) => setEnquiryForm({ ...enquiryForm, message: e.target.value })}
                   />
@@ -440,7 +440,7 @@ export default function BusinessDetailsClient({ business }: Props) {
                 <button 
                   type="submit" 
                   disabled={submittingEnquiry}
-                  className="w-full py-4 bg-brand-dark text-white rounded-xl font-bold hover:bg-brand-blue disabled:opacity-50 transition-all shadow-lg flex items-center justify-center gap-2"
+                  className="w-full py-4 bg-brand-dark text-white rounded disabled:opacity-50 transition-all shadow flex items-center justify-center gap-2"
                 >
                   {submittingEnquiry ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
                   Send Enquiry
@@ -452,37 +452,37 @@ export default function BusinessDetailsClient({ business }: Props) {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-300 p-8 shadow-sm space-y-8">
-              <h3 className="text-xl font-normal text-gray-900 border-b border-gray-100 pb-4">Contact Details</h3>
+            <div className="bg-white rounded border border-gray-300 p-8 shadow-sm space-y-8">
+              <h3 className="text-xl text-brand-dark border-b border-gray-100 pb-4">Contact Details</h3>
               
               <div className="space-y-6">
                 <div className="flex items-start gap-4">
-                  <div className="p-3 bg-gray-50 rounded-xl text-brand-dark border border-gray-100">
-                    <Phone size={20} />
+                  <div className="p-3 bg-gray-50 rounded text-brand-blue border border-gray-100">
+                    <Phone size={16} />
                   </div>
                   <div>
-                    <p className="text-xs text-gray-400 uppercase tracking-widest font-bold mb-1">Phone</p>
-                    <p className="text-gray-900 font-medium">{business.phone || "Not provided"}</p>
+                    <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">Phone</p>
+                    <p className="text-brand-blue">{business.phone || "Not provided"}</p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-4">
-                  <div className="p-3 bg-gray-50 rounded-xl text-brand-dark border border-gray-100">
-                    <Mail size={20} />
+                  <div className="p-3 bg-gray-50 rounded text-brand-blue border border-gray-100">
+                    <Mail size={16} />
                   </div>
                   <div>
-                    <p className="text-xs text-gray-400 uppercase tracking-widest font-bold mb-1">Email</p>
-                    <p className="text-gray-900 font-medium">{business.email || "Not provided"}</p>
+                    <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">Email</p>
+                    <p className="text-brand-blue">{business.email || "Not provided"}</p>
                   </div>
                 </div>
 
                 {business.website_url && (
                   <div className="flex items-start gap-4">
-                    <div className="p-3 bg-gray-50 rounded-xl text-brand-dark border border-gray-100">
-                      <Globe size={20} />
+                    <div className="p-3 bg-gray-50 rounded text-brand-blue border border-gray-100">
+                      <Globe size={16} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs text-gray-400 uppercase tracking-widest font-bold mb-1">Website</p>
+                      <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">Website</p>
                       <a 
                         href={business.website_url} 
                         target="_blank" 
@@ -496,12 +496,12 @@ export default function BusinessDetailsClient({ business }: Props) {
                 )}
 
                 <div className="flex items-start gap-4">
-                  <div className="p-3 bg-gray-50 rounded-xl text-brand-dark border border-gray-100">
-                    <Clock size={20} />
+                  <div className="p-3 bg-gray-50 rounded text-brand-blue border border-gray-100">
+                    <Clock size={16} />
                   </div>
                   <div>
-                    <p className="text-xs text-gray-400 uppercase tracking-widest font-bold mb-1">Working Hours</p>
-                    <p className="text-gray-900 font-medium">{business.working_hours || "Contact for hours"}</p>
+                    <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">Working Hours</p>
+                    <p className="text-brand-blue">{business.working_hours || "Contact for hours"}</p>
                   </div>
                 </div>
               </div>
