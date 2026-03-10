@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import AnnouncementBar from "./components/AnnouncementBar";
 import AnnouncementWrapper from "./components/AnnouncementWrapper";
 import QueryProvider from "./components/QueryProvider";
+import GlobalAnnouncement from "@/components/GlobalAnnouncement";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -39,6 +40,7 @@ export default function RootLayout({
               <Navbar />
             </NavbarWrapper>
             <main>{children}</main>
+            <GlobalAnnouncement />
             <FooterWrapper>
               <Footer />
             </FooterWrapper>

@@ -110,18 +110,30 @@ export default function HomePage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: featuredBusinesses = [], isLoading: featuredLoading } = useQuery({
+  const { data: featuredBusinesses = [], isLoading: featuredLoading, error: featuredError } = useQuery({
     queryKey: ['featured-businesses-home'],
     queryFn: async () => {
+      // Fetch from featured_listings table which references businesses
       const { data, error } = await supabase
-        .from('businesses')
-        .select('id, name, category, address, image_url, logo_url, rating, is_verified, verification_status')
-        .eq('is_featured', true)
-        .eq('status', 'approved')
+        .from('featured_listings')
+        .select(`
+          business_id,
+          businesses (
+            id, name, category, address, image_url, logo_url, rating, is_verified, status, can_show_badge
+          )
+        `)
+        .order('order_index', { ascending: true })
         .limit(4);
       
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error('Featured listings fetch error:', error);
+        throw error;
+      }
+      
+      // Flatten the data and ensure we only have businesses that actually exist and are approved
+      return (data as any[])
+        .map(item => item.businesses)
+        .filter(b => b && b.status === 'approved') as any[];
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -481,7 +493,7 @@ export default function HomePage() {
                     <div className="relative w-20 h-20 mb-4 transition-transform group-hover:scale-110 pointer-events-none flex items-center justify-center">
                       {cat.image_url ? (
                         <Image 
-                          src={cat.image_url} 
+                          src={encodeURI(cat.image_url)} 
                           alt={cat.name} 
                           fill 
                           className="object-contain"
@@ -529,6 +541,10 @@ export default function HomePage() {
                     </div>
                   </div>
                 ))
+              ) : featuredError ? (
+                <div className="col-span-full text-center py-12 text-red-400">
+                  <p>Failed to load featured listings. Please refresh.</p>
+                </div>
               ) : featuredBusinesses.length > 0 ? (
                 featuredBusinesses.map((business) => (
                   <Link 
@@ -567,10 +583,18 @@ export default function HomePage() {
 
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
                       
-                      {(business.is_verified || business.verification_status === 'verified') && (
+                      {(business.is_verified) && business.can_show_badge && (
                         <div className="absolute top-3 left-3 z-10">
                           <span className="bg-brand-gold text-white text-[9px] font-bold uppercase tracking-[0.2em] px-2.5 py-1.5 rounded-[4px] shadow-lg flex items-center gap-1.5">
                             <VerifiedBadge size={10} /> Verified
+                          </span>
+                        </div>
+                      )}
+
+                      {business.status === 'pending' && (
+                        <div className="absolute top-3 right-3 z-10">
+                          <span className="bg-amber-500 text-white text-[9px] font-bold uppercase tracking-[0.2em] px-2.5 py-1.5 rounded-[4px] shadow-lg">
+                            Pending
                           </span>
                         </div>
                       )}

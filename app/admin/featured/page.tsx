@@ -33,35 +33,55 @@ export default function AdminFeaturedPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('businesses')
-        .select('id, name, logo_url, category, is_featured, status')
+        .select(`
+          id, name, logo_url, category, status,
+          featured_listings (id)
+        `)
         .eq('status', 'approved')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as Business[];
+      
+      // Transform data to include is_featured boolean based on joined table
+      return (data as any[]).map(b => ({
+        ...b,
+        is_featured: b.featured_listings && b.featured_listings.length > 0
+      })) as Business[];
     },
     staleTime: 5 * 60 * 1000,
   });
 
   const toggleFeaturedMutation = useMutation({
-    mutationFn: async ({ businessId, currentStatus }: { businessId: string, currentStatus: boolean }) => {
-      const { error } = await supabase
-        .from('businesses')
-        .update({ is_featured: !currentStatus })
-        .eq('id', businessId);
+    mutationFn: async ({ businessId, isFeatured }: { businessId: string, isFeatured: boolean }) => {
+      if (isFeatured) {
+        // Remove from featured
+        const { error } = await supabase
+          .from('featured_listings')
+          .delete()
+          .eq('business_id', businessId);
+        if (error) throw error;
+      } else {
+        // Add to featured - use upsert to avoid duplicate key errors
+        const { error } = await supabase
+          .from('featured_listings')
+          .upsert({ business_id: businessId }, { onConflict: 'business_id' });
+        if (error) throw error;
+      }
 
-      if (error) throw error;
+      // Also update the boolean on business table for redundancy/trigger compatibility
+      await supabase.from('businesses').update({ is_featured: !isFeatured }).eq('id', businessId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-approved-businesses'] });
+      queryClient.invalidateQueries({ queryKey: ['featured-businesses-home'] });
     },
     onError: (err: any) => {
       alert(`Error updating status: ${err.message}`);
     }
   });
 
-  const handleToggleFeatured = (businessId: string, currentStatus: boolean) => {
-    toggleFeaturedMutation.mutate({ businessId, currentStatus });
+  const handleToggleFeatured = (businessId: string, isFeatured: boolean) => {
+    toggleFeaturedMutation.mutate({ businessId, isFeatured });
   };
 
   const filteredBusinesses = useMemo(() => {

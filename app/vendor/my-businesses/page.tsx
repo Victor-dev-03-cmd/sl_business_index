@@ -22,6 +22,26 @@ export default async function MyBusinessesPage() {
     .eq('owner_id', user.id)
     .order('created_at', { ascending: false });
 
+  // Fetch active subscription and plan limits
+  const { data: subscription } = await supabase
+    .from('subscriptions')
+    .select('plan_name')
+    .eq('user_id', user.id)
+    .eq('status', 'active')
+    .maybeSingle();
+
+  const planName = subscription?.plan_name || 'Basic';
+  
+  const { data: planDetails } = await supabase
+    .from('subscription_plans')
+    .select('max_listings')
+    .eq('name', planName)
+    .maybeSingle();
+
+  const maxListings = planDetails?.max_listings || 1;
+  const currentCount = businesses?.length || 0;
+  const isLimitReached = currentCount >= maxListings;
+
   if (error) {
     console.error('Error fetching businesses:', error);
     return (
@@ -36,14 +56,25 @@ export default async function MyBusinessesPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl text-gray-900">My Businesses</h1>
-          <p className="text-gray-500 mt-1">Manage your business listings and locations.</p>
+          <p className="text-gray-500 mt-1">
+            Manage your listings. Plan limit: <span className="font-bold text-brand-dark">{currentCount}/{maxListings}</span>
+          </p>
         </div>
-        <Link 
-          href="/register-business" 
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-dark text-white rounded text-sm  transition-colors shadow-sm"
-        >
-          <Plus size={18} /> Register New Business
-        </Link>
+        {isLimitReached ? (
+          <Link 
+            href="/vendor/billing" 
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-gold text-white rounded text-sm transition-colors shadow-sm animate-pulse"
+          >
+            Upgrade Plan to Add More
+          </Link>
+        ) : (
+          <Link 
+            href="/register-business" 
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-dark text-white rounded text-sm transition-colors shadow-sm"
+          >
+            <Plus size={18} /> Register New Business
+          </Link>
+        )}
       </div>
 
       {businesses && businesses.length === 0 ? (

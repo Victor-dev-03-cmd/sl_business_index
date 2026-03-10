@@ -25,6 +25,17 @@ interface Invoice {
   created_at: string;
 }
 
+interface SubscriptionPlan {
+  id: string;
+  name: string;
+  description: string;
+  price_monthly: number;
+  price_yearly: number;
+  features: string[];
+  is_active: boolean;
+  discount_percentage?: number;
+}
+
 export default function BillingPage() {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [loading, setLoading] = useState(true);
@@ -32,6 +43,7 @@ export default function BillingPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [businessCount, setBusinessCount] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
 
   useEffect(() => {
     fetchBillingData();
@@ -42,6 +54,15 @@ export default function BillingPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+
+      // Fetch Plans
+      const { data: plansData } = await supabase
+        .from('subscription_plans')
+        .select('*')
+        .eq('is_active', true)
+        .order('price_monthly', { ascending: true });
+      
+      if (plansData) setPlans(plansData);
 
       // Fetch subscription
       const { data: subData } = await supabase
@@ -78,19 +99,18 @@ export default function BillingPage() {
     }
   };
 
-  const handleUpgrade = async (planName: string, price: number) => {
+  const handleUpgrade = async (plan: SubscriptionPlan) => {
+    const price = billingCycle === 'monthly' ? plan.price_monthly : plan.price_yearly;
     setSubmitting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // If there's an existing active sub, we should probably mark it as replaced/expired
-      // For simplicity here, we just insert a new one
       const { data: newSub, error: subError } = await supabase
         .from('subscriptions')
         .insert({
           user_id: user.id,
-          plan_name: planName,
+          plan_name: plan.name,
           price: price,
           billing_cycle: billingCycle,
           status: 'active',
@@ -101,7 +121,6 @@ export default function BillingPage() {
 
       if (subError) throw subError;
 
-      // Create a mock invoice
       await supabase.from('invoices').insert({
         id: `INV-${Date.now()}`,
         subscription_id: newSub.id,
@@ -109,7 +128,7 @@ export default function BillingPage() {
         status: 'paid'
       });
 
-      alert(`Successfully upgraded to ${planName} plan!`);
+      alert(`Successfully upgraded to ${plan.name} plan!`);
       fetchBillingData();
     } catch (error) {
       console.error('Error upgrading:', error);
@@ -119,34 +138,9 @@ export default function BillingPage() {
     }
   };
 
-  const plans = [
-    {
-      name: 'Free',
-      price: 0,
-      description: 'Perfect for getting started',
-      features: ['1 Business Listing', 'Basic Analytics', 'Standard Support'],
-      limit: 1,
-    },
-    {
-      name: 'Pro',
-      price: billingCycle === 'monthly' ? 7999 : 75000,
-      description: 'Best for growing businesses',
-      features: ['5 Business Listings', 'Advanced Analytics', 'Priority Support', 'Verified Badge', 'Social Media Auto-Post'],
-      popular: true,
-      limit: 5,
-    },
-    {
-      name: 'Enterprise',
-      price: billingCycle === 'monthly' ? 30999 : 300000,
-      description: 'For large scale operations',
-      features: ['Unlimited Listings', 'Dedicated Account Manager', 'API Access', 'Custom Branding', 'All Pro Features'],
-      popular: false,
-      limit: 9999,
-    },
-  ];
-
   const currentPlan = subscription?.plan_name || 'Free';
-  const planLimit = plans.find(p => p.name === currentPlan)?.limit || 1;
+  const activePlanDetails = plans.find(p => p.name === currentPlan);
+  const planLimit = activePlanDetails?.max_listings || (currentPlan === 'Enterprise' ? 9999 : (currentPlan === 'Professional' ? 3 : 1));
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
@@ -259,53 +253,69 @@ export default function BillingPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {plans.map((plan) => (
-            <div 
-              key={plan.name} 
-              className={`relative rounded p-6 border transition-all duration-300 ${
-                plan.popular 
-                  ? 'border-brand-blue bg-blue-50/30 ring-1 ring-blue-500/20' 
-                  : 'border-gray-300 bg-white hover:border-blue-300 hover:shadow-md'
-              }`}
-            >
-              {plan.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand-blue text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wide shadow-sm">
-                  Most Popular
-                </div>
-              )}
-              
-              <div className="mb-4">
-                <h3 className="text-lg text-gray-900">{plan.name}</h3>
-                <p className="font-medium text-sm text-gray-500 mt-1">{plan.description}</p>
-              </div>
-              
-              <div className="mb-6">
-                <span className="text-3xl text-gray-900">${plan.price}</span>
-                <span className="text-gray-500 text-sm">/{billingCycle === 'monthly' ? 'mo' : 'yr'}</span>
-              </div>
-
-              <ul className="space-y-3 mb-8">
-                {plan.features.map((feature, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
-                    <CheckCircle2 size={16} className="text-brand-blue mt-0.5 shrink-0" />
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-
-              <button 
-                onClick={() => handleUpgrade(plan.name, plan.price)}
-                className={`w-full py-2.5 rounded text-sm transition-colors ${
-                  plan.name === currentPlan
-                    ? 'bg-gray-200 text-gray-400 cursor-default' 
-                    : 'bg-brand-dark text-white'
+          {plans.map((plan) => {
+            const basePrice = billingCycle === 'monthly' ? plan.price_monthly : plan.price_yearly;
+            const discount = plan.discount_percentage || 0;
+            const price = discount > 0 ? Math.floor(basePrice * (1 - discount / 100)) : basePrice;
+            const isProfessional = plan.name === 'Professional';
+            
+            return (
+              <div 
+                key={plan.id} 
+                className={`relative rounded p-6 border transition-all duration-300 ${
+                  isProfessional 
+                    ? 'border-brand-gold bg-brand-sand/5 ring-1 ring-brand-gold/20' 
+                    : 'border-gray-300 bg-white hover:border-brand-gold/50 hover:shadow-md'
                 }`}
-                disabled={plan.name === currentPlan || submitting}
               >
-                {submitting ? <Loader2 className="animate-spin mx-auto" size={18} /> : (plan.name === currentPlan ? 'Current Plan' : 'Upgrade')}
-              </button>
-            </div>
-          ))}
+                {isProfessional && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand-gold text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wide shadow-sm">
+                    Most Popular
+                  </div>
+                )}
+                
+                <div className="mb-4">
+                  <h3 className="text-lg text-gray-900">{plan.name}</h3>
+                  <p className="font-medium text-sm text-gray-500 mt-1">{plan.description}</p>
+                </div>
+                
+                <div className="mb-6">
+                  {discount > 0 && (
+                    <p className="text-xs text-gray-400 line-through mb-1">LKR {basePrice.toLocaleString()}</p>
+                  )}
+                  <span className="text-3xl text-gray-900">LKR {price.toLocaleString()}</span>
+                  <span className="text-gray-500 text-sm">/{billingCycle === 'monthly' ? 'mo' : 'yr'}</span>
+                  {discount > 0 && (
+                    <p className="text-xs text-green-600 font-bold mt-1 uppercase tracking-widest">{discount}% Promotional Discount Applied</p>
+                  )}
+                  {plan.discount_percentage && plan.discount_percentage > 0 && billingCycle === 'yearly' && (
+                    <p className="text-xs text-green-600 font-medium mt-1">Save {plan.discount_percentage}% with annual billing</p>
+                  )}
+                </div>
+
+                <ul className="space-y-3 mb-8">
+                  {plan.features.map((feature, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
+                      <CheckCircle2 size={16} className="text-brand-gold mt-0.5 shrink-0" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+
+                <button 
+                  onClick={() => handleUpgrade(plan)}
+                  className={`w-full py-2.5 rounded text-sm transition-colors ${
+                    plan.name === currentPlan
+                      ? 'bg-gray-200 text-gray-400 cursor-default' 
+                      : 'bg-brand-dark text-white hover:bg-black'
+                  }`}
+                  disabled={plan.name === currentPlan || submitting}
+                >
+                  {submitting ? <Loader2 className="animate-spin mx-auto" size={18} /> : (plan.name === currentPlan ? 'Current Plan' : 'Upgrade')}
+                </button>
+              </div>
+            );
+          })}
         </div>
       </div>
 

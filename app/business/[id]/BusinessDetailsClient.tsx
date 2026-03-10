@@ -184,7 +184,7 @@ export default function BusinessDetailsClient({ business }: Props) {
                 <span className="px-3 py-1 bg-brand-gold text-white text-[10px] uppercase tracking-widest rounded">
                   {business.category}
                 </span>
-                {(business.is_verified || business.verification_status === 'verified') && (
+                {(business.is_verified || business.verification_status === 'verified') && business.can_show_badge && (
                   <span className="flex items-center gap-1.5 px-3 py-1 bg-blue-500/20 backdrop-blur-md text-blue-200 text-[10px] font-bold uppercase tracking-widest rounded-full border border-blue-400/30">
                     <VerifiedBadge size={10} /> Verified
                   </span>

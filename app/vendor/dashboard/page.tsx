@@ -11,7 +11,8 @@ import {
   Clock, 
   Plus, 
   Edit, 
-  Star
+  Star,
+  Lock
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -42,6 +43,7 @@ export default function VendorDashboard() {
   });
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [planLimits, setPlanLimits] = useState<any>(null);
 
   useEffect(() => {
     fetchDashboardData();
@@ -52,6 +54,24 @@ export default function VendorDashboard() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+
+      // Fetch active subscription and plan limits
+      const { data: subscription } = await supabase
+        .from('subscriptions')
+        .select('plan_name')
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .maybeSingle();
+
+      const planName = subscription?.plan_name || 'Basic';
+      
+      const { data: planDetails } = await supabase
+        .from('subscription_plans')
+        .select('*')
+        .eq('name', planName)
+        .maybeSingle();
+
+      setPlanLimits(planDetails);
 
       // Fetch businesses owned by the vendor
       const { data: businessData } = await supabase
@@ -148,12 +168,18 @@ export default function VendorDashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-6 rounded border border-gray-300 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-blue-200 rounded-lg text-blue-600">
+            <div className="p-3 bg-blue-100 rounded-lg text-blue-600">
               <Eye size={20} />
             </div>
-            <span className="text-xs text-green-600 bg-blue-50 px-2 py-1 rounded-full flex items-center gap-1">
-              <TrendingUp size={12} /> +12%
-            </span>
+            {planLimits?.advanced_analytics ? (
+              <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full flex items-center gap-1">
+                <TrendingUp size={12} /> +12%
+              </span>
+            ) : (
+              <Link href="/vendor/billing" className="text-[10px] font-bold text-brand-gold bg-brand-sand/20 px-2 py-1 rounded flex items-center gap-1">
+                <Lock size={10} /> Upgrade
+              </Link>
+            )}
           </div>
           <h3 className="text-2xl text-gray-900">{stats.views}</h3>
           <p className="text-sm text-gray-500">Total Profile Views</p>
@@ -161,12 +187,18 @@ export default function VendorDashboard() {
 
         <div className="bg-white p-6 rounded border border-gray-300 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-emerald-200 rounded-lg text-emerald-600">
+            <div className="p-3 bg-emerald-100 rounded-lg text-emerald-600">
               <Phone size={20} />
             </div>
-            <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full flex items-center gap-1">
-              <TrendingUp size={12} /> +5%
-            </span>
+            {planLimits?.advanced_analytics ? (
+              <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full flex items-center gap-1">
+                <TrendingUp size={12} /> +5%
+              </span>
+            ) : (
+              <Link href="/vendor/billing" className="text-[10px] font-bold text-brand-gold bg-brand-sand/20 px-2 py-1 rounded flex items-center gap-1">
+                <Lock size={10} /> Upgrade
+              </Link>
+            )}
           </div>
           <h3 className="text-2xl text-gray-900">{stats.calls}</h3>
           <p className="text-sm text-gray-500">Click to Calls</p>
@@ -174,7 +206,7 @@ export default function VendorDashboard() {
 
         <div className="bg-white p-6 rounded border border-gray-300 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-amber-200 rounded-lg text-amber-600">
+            <div className="p-3 bg-amber-100 rounded-lg text-amber-600">
               <Star size={20} />
             </div>
             <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
@@ -187,12 +219,18 @@ export default function VendorDashboard() {
 
         <div className="bg-white p-6 rounded border border-gray-300 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-purple-200 rounded-lg text-purple-600">
+            <div className="p-3 bg-purple-100 rounded-lg text-purple-600">
               <MessageSquare size={20} />
             </div>
-            <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full flex items-center gap-1">
-              <TrendingUp size={12} /> +2
-            </span>
+            {planLimits?.advanced_analytics ? (
+              <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full flex items-center gap-1">
+                <TrendingUp size={12} /> +2
+              </span>
+            ) : (
+              <Link href="/vendor/billing" className="text-[10px] font-bold text-brand-gold bg-brand-sand/20 px-2 py-1 rounded flex items-center gap-1">
+                <Lock size={10} /> Upgrade
+              </Link>
+            )}
           </div>
           <h3 className="text-2xl text-gray-900">{stats.leads}</h3>
           <p className="text-sm text-gray-500">Active Leads</p>

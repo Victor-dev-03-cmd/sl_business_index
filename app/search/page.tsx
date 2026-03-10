@@ -156,7 +156,7 @@ function SearchResults() {
                                             </div>
                                             <div className="flex items-center gap-1.5">
                                                 <h2 className="text-lg font-bold text-gray-900 group-hover:text-brand-dark transition-colors line-clamp-1">{business.name}</h2>
-                                                {(business.is_verified || business.verification_status === 'verified') && <VerifiedBadge size={12} />}
+                                                {(business.is_verified || business.verification_status === 'verified') && business.can_show_badge && <VerifiedBadge size={12} />}
                                             </div>
                                             
                                             <div className="flex items-center gap-1.5 mt-1">

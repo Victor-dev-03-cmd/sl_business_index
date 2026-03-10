@@ -29,4 +29,5 @@ export interface Business {
   verification_status?: string;
   admin_notes?: string;
   facilities?: string[];
+  can_show_badge?: boolean;
 }

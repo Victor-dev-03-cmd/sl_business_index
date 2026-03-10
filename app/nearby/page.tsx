@@ -1359,7 +1359,7 @@ function SplitScreenResultsContent() {
                         <div className="flex items-start justify-between gap-2">
                           <h3 className="text-sm font-normal text-gray-900 truncate flex items-center gap-1 group-hover:text-brand-blue transition-colors">
                             {business.name}
-                            {(business.is_verified || business.verification_status === 'verified') && <VerifiedBadge size={10} />}
+                            {(business.is_verified || business.verification_status === 'verified') && business.can_show_badge && <VerifiedBadge size={10} />}
                           </h3>
                           {(business.rating || 0) > 0 && (
                             <div className="flex items-center gap-1 bg-brand-sand/20 px-1.5 py-0.5 rounded text-xs flex-shrink-0">

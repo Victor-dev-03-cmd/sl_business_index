@@ -77,6 +77,54 @@ export default function AdminDashboard() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: featuredIds = [] } = useQuery({
+    queryKey: ['admin-featured-ids'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('featured_listings')
+        .select('business_id');
+      
+      if (error) throw error;
+      return data.map(item => item.business_id);
+    }
+  });
+
+  const toggleFeaturedMutation = useMutation({
+    mutationFn: async ({ businessId, isFeatured }: { businessId: string | number, isFeatured: boolean }) => {
+      console.log('Toggling featured for:', businessId, 'Current status:', isFeatured);
+      if (isFeatured) {
+        // Remove from featured
+        const { error } = await supabase
+          .from('featured_listings')
+          .delete()
+          .eq('business_id', businessId);
+        if (error) {
+          console.error('Delete error:', error);
+          throw error;
+        }
+      } else {
+        // Add to featured
+        const { error } = await supabase
+          .from('featured_listings')
+          .insert({ business_id: businessId });
+        if (error) {
+          console.error('Insert error:', error);
+          throw error;
+        }
+      }
+    },
+    onSuccess: () => {
+      console.log('Toggle success, invalidating queries...');
+      queryClient.invalidateQueries({ queryKey: ['admin-featured-ids'] });
+      queryClient.invalidateQueries({ queryKey: ['featured-businesses-home'] });
+      alert('Featured status updated successfully!');
+    },
+    onError: (err: any) => {
+      console.error('Mutation error:', err);
+      alert(`Failed to update: ${err.message || 'Unknown error'}`);
+    }
+  });
+
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, owner_id, status }: { id: string | number, owner_id: string, status: 'approved' | 'rejected' }) => {
       const { error } = await supabase
@@ -99,18 +147,21 @@ export default function AdminDashboard() {
     },
   });
 
-  const { data: stats = { pending: 0, total: 0 } } = useQuery({
+  const { data: stats = { pending: 0, total: 0, pendingVerifications: 0 } } = useQuery({
     queryKey: ['admin-stats'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: bizData } = await supabase
         .from('businesses')
         .select('status');
       
-      if (error) throw error;
+      const { count: verifCount } = await supabase
+        .from('verifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending');
 
-      const total = data.length;
-      const pendingCount = data.filter(b => b.status === 'pending').length;
-      return { pending: pendingCount, total };
+      const total = bizData?.length || 0;
+      const pendingCount = bizData?.filter(b => b.status === 'pending').length || 0;
+      return { pending: pendingCount, total, pendingVerifications: verifCount || 0 };
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -137,13 +188,24 @@ export default function AdminDashboard() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white p-6 rounded-[6px] border border-gray-300 shadow-sm">
+          <div className="bg-white p-6 rounded-[6px] border border-gray-300 shadow-sm cursor-pointer hover:border-brand-blue transition-all" onClick={() => router.push('/admin/requests')}>
             <p className="text-xs font-normal text-gray-400 uppercase tracking-wider">Pending Approvals</p>
             {loading ? <Skeleton className="h-9 w-12 mt-2" /> : <h2 className="text-3xl font-medium text-brand-dark mt-2">{stats.pending}</h2>}
+          </div>
+          <div className="bg-white p-6 rounded-[6px] border border-gray-300 shadow-sm cursor-pointer hover:border-brand-blue transition-all" onClick={() => router.push('/admin/verifications')}>
+            <p className="text-xs font-normal text-gray-400 uppercase tracking-wider">Pending Verifications</p>
+            {loading ? <Skeleton className="h-9 w-12 mt-2" /> : <h2 className="text-3xl font-medium text-brand-dark mt-2">{stats.pendingVerifications}</h2>}
           </div>
           <div className="bg-white p-6 rounded-[6px] border border-gray-300 shadow-sm">
             <p className="text-xs font-normal text-gray-400 uppercase tracking-wider">Total Businesses</p>
             {loading ? <Skeleton className="h-9 w-12 mt-2" /> : <h2 className="text-3xl font-medium text-gray-900 mt-2">{stats.total}</h2>}
+          </div>
+          <div className="bg-brand-dark p-6 rounded-[6px] border border-brand-dark shadow-lg cursor-pointer hover:bg-brand-blue transition-all" onClick={() => router.push('/admin/billing')}>
+            <p className="text-xs font-normal text-white/60 uppercase tracking-wider">Billing & Revenue</p>
+            <div className="flex items-center justify-between mt-2">
+              <h2 className="text-2xl font-medium text-white">Management</h2>
+              <ShieldCheck className="text-brand-sand" size={24} />
+            </div>
           </div>
         </div>
 
@@ -290,6 +352,26 @@ export default function AdminDashboard() {
                     >
                       <Eye size={14} /> View Details
                     </button>
+
+                    {business.status === 'approved' && (
+                      <button 
+                        onClick={() => {
+                          const isCurrentlyFeatured = featuredIds.some(fid => String(fid) === String(business.id));
+                          toggleFeaturedMutation.mutate({ 
+                            businessId: business.id, 
+                            isFeatured: isCurrentlyFeatured
+                          });
+                        }}
+                        className={`flex-grow py-2.5 rounded-[6px] text-xs font-normal flex items-center justify-center gap-2 transition-all border ${
+                          featuredIds.some(fid => String(fid) === String(business.id))
+                            ? 'bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100'
+                            : 'bg-white text-gray-400 border-gray-300 hover:text-amber-600 hover:border-amber-200'
+                        }`}
+                      >
+                        <Star size={14} className={featuredIds.some(fid => String(fid) === String(business.id)) ? "fill-amber-600" : ""} />
+                        {featuredIds.some(fid => String(fid) === String(business.id)) ? 'Featured' : 'Mark Featured'}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
