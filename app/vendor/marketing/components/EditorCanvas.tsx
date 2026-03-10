@@ -6,13 +6,13 @@ import { useEditorStore } from '../store/useEditorStore';
 
 export default function EditorCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const { 
-    setCanvas, 
-    setActiveObject, 
-    updateLayers, 
-    saveHistory, 
-    canvasWidth, 
-    canvasHeight 
+  const {
+    setCanvas,
+    setActiveObject,
+    updateLayers,
+    saveHistory,
+    canvasWidth,
+    canvasHeight
   } = useEditorStore();
 
   useEffect(() => {
@@ -25,44 +25,52 @@ export default function EditorCanvas() {
     });
 
     setCanvas(canvas);
-
-    // Initial state
     saveHistory();
     updateLayers();
 
-    // Event listeners
     canvas.on('selection:created', (e) => setActiveObject(e.selected ? e.selected[0] : null));
     canvas.on('selection:updated', (e) => setActiveObject(e.selected ? e.selected[0] : null));
     canvas.on('selection:cleared', () => setActiveObject(null));
-    
-    canvas.on('object:modified', () => {
-      saveHistory();
-      updateLayers();
-    });
-    
+    canvas.on('object:modified', () => { saveHistory(); updateLayers(); });
     canvas.on('object:added', () => updateLayers());
     canvas.on('object:removed', () => updateLayers());
 
     return () => {
       canvas.dispose();
+      setCanvas(null);
     };
   }, []);
 
-  // Sync canvas size with store
   const canvasInstance = useEditorStore(state => state.canvas);
   useEffect(() => {
-    if (canvasInstance) {
-      canvasInstance.setDimensions({
-        width: canvasWidth,
-        height: canvasHeight,
-      });
-      canvasInstance.renderAll();
+    // Check if canvas is not disposed and has required internal elements
+    if (canvasInstance && (canvasInstance as any).lowerCanvasEl) {
+      try {
+        canvasInstance.setDimensions({ width: canvasWidth, height: canvasHeight });
+        canvasInstance.renderAll();
+      } catch (err) {
+        console.warn('Failed to set canvas dimensions:', err);
+      }
     }
   }, [canvasWidth, canvasHeight, canvasInstance]);
 
   return (
-    <div className="relative bg-gray-900 flex items-center justify-center p-20 overflow-auto custom-scrollbar h-full w-full">
-      <div className="shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] bg-white relative">
+    <div
+      className="flex-1 flex items-center justify-center overflow-auto"
+      style={{
+        background: `
+          radial-gradient(ellipse at 50% 0%, rgba(59,130,246,0.04) 0%, transparent 60%),
+          repeating-conic-gradient(#1e2a3a 0% 25%, #1a2535 0% 50%) 0 0 / 24px 24px
+        `
+      }}
+    >
+      <div
+        className="relative"
+        style={{
+          boxShadow: '0 0 0 1px rgba(255,255,255,0.06), 0 32px 80px -10px rgba(0,0,0,0.7), 0 8px 24px -4px rgba(0,0,0,0.5)',
+          margin: '48px'
+        }}
+      >
         <canvas ref={canvasRef} />
       </div>
     </div>

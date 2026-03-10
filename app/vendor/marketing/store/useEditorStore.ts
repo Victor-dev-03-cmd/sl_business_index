@@ -23,8 +23,8 @@ interface EditorState {
   redo: () => void;
   
   // Tools
-  activeTool: 'select' | 'text' | 'rect' | 'circle' | 'pen' | 'image' | 'star';
-  setActiveTool: (tool: 'select' | 'text' | 'rect' | 'circle' | 'pen' | 'image' | 'star') => void;
+  activeTool: 'select' | 'text' | 'rect' | 'circle' | 'pen' | 'image' | 'star' | 'triangle';
+  setActiveTool: (tool: 'select' | 'text' | 'rect' | 'circle' | 'pen' | 'image' | 'star' | 'triangle') => void;
 }
 
 export const useEditorStore = create<EditorState>((set, get) => ({
