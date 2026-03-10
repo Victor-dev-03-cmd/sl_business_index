@@ -115,7 +115,7 @@ export default function HomePage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('businesses')
-        .select('id, name, category, address, image_url, logo_url, rating, is_verified')
+        .select('id, name, category, address, image_url, logo_url, rating, is_verified, verification_status')
         .eq('is_featured', true)
         .eq('status', 'approved')
         .limit(4);
