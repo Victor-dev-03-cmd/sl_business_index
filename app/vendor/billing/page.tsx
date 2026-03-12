@@ -34,6 +34,12 @@ interface SubscriptionPlan {
   features: string[];
   is_active: boolean;
   discount_percentage?: number;
+  max_listings: number;
+  show_verified_badge: boolean;
+  priority_support: boolean;
+  advanced_analytics: boolean;
+  has_social_sharing: boolean;
+  featured_boost: boolean;
 }
 
 export default function BillingPage() {

@@ -27,6 +27,7 @@ import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabaseClient';
 import VerifiedBadge from '@/app/components/VerifiedBadge';
+import { logEvent } from '@/lib/utils';
 
 const MapboxMap = dynamic(() => import('@/components/MapboxMap'), { 
   ssr: false,
@@ -78,6 +79,9 @@ export default function BusinessDetailsClient({ business }: Props) {
 
   const recordView = async () => {
     try {
+      // New Analytics logging
+      await logEvent(business.id, 'view', business.address?.split(',').pop()?.trim());
+
       const { data: { user } } = await supabase.auth.getUser();
       await supabase.from('business_views').insert({
         business_id: business.id,
@@ -138,6 +142,10 @@ export default function BusinessDetailsClient({ business }: Props) {
         });
 
       if (error) throw error;
+      
+      // Log analytics event
+      await logEvent(business.id, 'lead_form_submit', business.address?.split(',').pop()?.trim());
+
       setEnquiryForm({ name: '', email: '', phone: '', message: '' });
       alert('Enquiry sent successfully! The business will contact you soon.');
     } catch (error) {
@@ -216,6 +224,7 @@ export default function BusinessDetailsClient({ business }: Props) {
               </button>
               <a 
                 href={`tel:${business.phone}`}
+                onClick={() => logEvent(business.id, 'call_click', business.address?.split(',').pop()?.trim())}
                 className="flex items-center gap-2 px-8 py-3 bg-white text-brand-dark rounded hover:bg-brand-sand transition-all shadow-xl"
               >
                 <Phone size={20} /> Call Now
@@ -258,7 +267,10 @@ export default function BusinessDetailsClient({ business }: Props) {
               <h2 className="text-xl text-brand-dark mb-6 flex items-center gap-3">
                 <MapPin className="text-brand-blue" /> Location & Directions
               </h2>
-              <div className="rounded overflow-hidden shadow-xl border border-gray-300">
+              <div 
+                className="rounded overflow-hidden shadow-xl border border-gray-300"
+                onClick={() => logEvent(business.id, 'location_click', business.address?.split(',').pop()?.trim())}
+              >
                 <MapboxMap 
                   userLat={business.latitude} 
                   userLng={business.longitude}

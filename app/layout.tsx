@@ -9,6 +9,8 @@ import AnnouncementBar from "./components/AnnouncementBar";
 import AnnouncementWrapper from "./components/AnnouncementWrapper";
 import QueryProvider from "./components/QueryProvider";
 import GlobalAnnouncement from "@/components/GlobalAnnouncement";
+import ClarityTracker from "./components/ClarityTracker";
+import LiveCounter from "./components/LiveCounter";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -31,6 +33,7 @@ export default function RootLayout({
       <body
         className={`${outfit.variable} antialiased`}
       >
+        <ClarityTracker />
         <QueryProvider>
           <ThemeProvider>
             <AnnouncementWrapper>

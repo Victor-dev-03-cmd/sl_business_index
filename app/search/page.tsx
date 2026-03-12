@@ -44,6 +44,7 @@ interface BusinessSearchResult {
     distance_meters: number;
     latitude: number;
     longitude: number;
+    can_show_badge?: boolean;
 }
 
 function SearchResults() {

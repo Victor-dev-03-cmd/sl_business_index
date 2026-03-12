@@ -6,6 +6,7 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabaseClient';
 import { useQuery } from '@tanstack/react-query';
+import { sanitizeFilename } from '@/lib/utils';
 
 const AddressAutocomplete = dynamic(() => import('@/components/AddressAutocomplete'), { ssr: false });
 const CategorySelector = dynamic(() => import('@/components/CategorySelector'), { ssr: false });
@@ -120,7 +121,8 @@ export default function RegisterBusinessPage() {
 
       let logoUrl = null;
       if (logo) {
-        const filePath = `${user.id}/${Date.now()}_logo_${logo.name}`;
+        const sanitizedName = sanitizeFilename(logo.name);
+        const filePath = `${user.id}/${Date.now()}_logo_${sanitizedName}`;
         const { data: uploadData, error: uploadError } = await supabase.storage
             .from('business-logos')
             .upload(filePath, logo);
@@ -133,7 +135,8 @@ export default function RegisterBusinessPage() {
 
       let hoverImageUrl = null;
       if (hoverImage) {
-        const filePath = `${user.id}/${Date.now()}_hover_${hoverImage.name}`;
+        const sanitizedName = sanitizeFilename(hoverImage.name);
+        const filePath = `${user.id}/${Date.now()}_hover_${sanitizedName}`;
         const { data: uploadData, error: uploadError } = await supabase.storage
             .from('business-logos')
             .upload(filePath, hoverImage);

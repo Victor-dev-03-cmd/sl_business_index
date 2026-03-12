@@ -19,7 +19,8 @@ import {
   Briefcase,
   User,
   ExternalLink,
-  ShieldCheck
+  ShieldCheck,
+  Star
 } from 'lucide-react';
 import Image from 'next/image';
 import { Business } from '@/lib/types';

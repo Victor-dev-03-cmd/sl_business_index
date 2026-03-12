@@ -209,6 +209,35 @@ app.post('/google-places/details', async (c) => {
   return c.json({ place })
 })
 
+// Analytics Logging Endpoint
+app.post('/analytics/log', async (c) => {
+  const supabase = c.get('supabase')
+  const user = c.get('user')
+  const body = await c.req.json()
+  const { business_id, event_type, city, metadata } = body
+
+  if (!business_id || !event_type) {
+    return c.json({ error: 'business_id and event_type are required' }, 400)
+  }
+
+  const { error } = await supabase
+    .from('analytics_logs')
+    .insert({
+      business_id,
+      event_type,
+      user_id: user?.id || null,
+      city,
+      metadata: metadata || {}
+    })
+
+  if (error) {
+    console.error('Error logging analytics:', error)
+    return c.json({ error: 'Failed to log analytics' }, 500)
+  }
+
+  return c.json({ success: true })
+})
+
 export const GET = handle(app)
 export const POST = handle(app)
 export const PUT = handle(app)

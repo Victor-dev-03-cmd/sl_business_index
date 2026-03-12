@@ -4,6 +4,7 @@ import CategoriesMenu from './CategoriesMenu';
 import AuthButton from './AuthButton';
 import LogoLink from './LogoLink';
 import NotificationBell from './NotificationBell';
+import LiveCounter from './LiveCounter';
 import { Menu } from 'lucide-react';
 
 export default async function Navbar() {
@@ -68,7 +69,9 @@ export default async function Navbar() {
 
         {/* Right: Action Buttons */}
         <div className="flex items-center space-x-4">
-
+          <div className="hidden sm:block">
+            <LiveCounter />
+          </div>
           <NotificationBell />
 
           {/* Pass the combined user data (now with role) to the client component */}

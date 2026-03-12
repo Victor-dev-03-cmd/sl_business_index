@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabaseClient';
 import { Business } from '@/lib/types';
+import { sanitizeFilename } from '@/lib/utils';
 import { Camera, Upload, Globe, Timer, Building2, Save, ArrowLeft } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -75,7 +76,8 @@ export default function EditBusinessForm({ business }: { business: Business }) {
     try {
       let logoUrl = business.logo_url;
       if (logo) {
-        const filePath = `${business.owner_id}/${Date.now()}_logo_${logo.name}`;
+        const sanitizedName = sanitizeFilename(logo.name);
+        const filePath = `${business.owner_id}/${Date.now()}_logo_${sanitizedName}`;
         const { error: uploadError } = await supabase.storage
             .from('business-logos')
             .upload(filePath, logo);
@@ -86,7 +88,8 @@ export default function EditBusinessForm({ business }: { business: Business }) {
 
       let hoverImageUrl = business.image_url;
       if (hoverImage) {
-        const filePath = `${business.owner_id}/${Date.now()}_hover_${hoverImage.name}`;
+        const sanitizedName = sanitizeFilename(hoverImage.name);
+        const filePath = `${business.owner_id}/${Date.now()}_hover_${sanitizedName}`;
         const { error: uploadError } = await supabase.storage
             .from('business-logos')
             .upload(filePath, hoverImage);

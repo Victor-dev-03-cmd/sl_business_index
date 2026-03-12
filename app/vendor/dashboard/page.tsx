@@ -15,6 +15,7 @@ import {
   Lock
 } from 'lucide-react';
 import Link from 'next/link';
+import VendorAnalytics from './VendorAnalytics';
 
 interface Business {
   id: string;
@@ -44,6 +45,7 @@ export default function VendorDashboard() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [planLimits, setPlanLimits] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<'overview' | 'performance'>('overview');
 
   useEffect(() => {
     fetchDashboardData();
@@ -164,8 +166,36 @@ export default function VendorDashboard() {
         </Link>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Tabs */}
+      <div className="flex border-b border-gray-300">
+        <button
+          onClick={() => setActiveTab('overview')}
+          className={`px-6 py-3 text-sm font-bold tracking-tight transition-all relative ${
+            activeTab === 'overview' ? 'text-brand-dark' : 'text-gray-500 hover:text-gray-900'
+          }`}
+        >
+          Overview
+          {activeTab === 'overview' && (
+            <div className="absolute bottom-0 left-0 w-full h-0.5 bg-brand-dark" />
+          )}
+        </button>
+        <button
+          onClick={() => setActiveTab('performance')}
+          className={`px-6 py-3 text-sm font-bold tracking-tight transition-all relative ${
+            activeTab === 'performance' ? 'text-brand-dark' : 'text-gray-500 hover:text-gray-900'
+          }`}
+        >
+          Business Performance
+          {activeTab === 'performance' && (
+            <div className="absolute bottom-0 left-0 w-full h-0.5 bg-brand-dark" />
+          )}
+        </button>
+      </div>
+
+      {activeTab === 'overview' ? (
+        <>
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-6 rounded border border-gray-300 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <div className="p-3 bg-blue-100 rounded-lg text-blue-600">
@@ -346,6 +376,12 @@ export default function VendorDashboard() {
           </div>
         </div>
       </div>
+    </>
+  ) : (
+        <div className="space-y-8">
+          <VendorAnalytics businessIds={businesses.map(b => b.id)} />
+        </div>
+      )}
     </div>
   );
 }
