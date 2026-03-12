@@ -22,9 +22,14 @@ interface AnalyticsData {
 }
 
 export default function VendorAnalytics({ businessIds }: { businessIds: string[] }) {
+  const [mounted, setMounted] = useState(false)
   const [data, setData] = useState<AnalyticsData[]>([])
   const [loading, setLoading] = useState(true)
   const [timeRange, setTimeRange] = useState<'7d' | '30d'>('7d')
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     if (businessIds.length > 0) {
@@ -109,72 +114,78 @@ export default function VendorAnalytics({ businessIds }: { businessIds: string[]
 
       <div className="bg-white p-6 rounded border border-gray-300 shadow-sm">
         <div className="h-[350px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data}>
-              <defs>
-                <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#2563eb" stopOpacity={0.1}/>
-                  <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
-                </linearGradient>
-                <linearGradient id="colorCalls" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                </linearGradient>
-                <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.1}/>
-                  <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-              <XAxis 
-                dataKey="date" 
-                tick={{fontSize: 10, fill: '#94a3b8'}}
-                axisLine={false}
-                tickLine={false}
-                tickFormatter={(str) => {
-                  const date = new Date(str);
-                  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                }}
-              />
-              <YAxis 
-                tick={{fontSize: 10, fill: '#94a3b8'}}
-                axisLine={false}
-                tickLine={false}
-              />
-              <Tooltip 
-                contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                labelFormatter={(str) => new Date(str).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-              />
-              <Legend verticalAlign="top" height={36}/>
-              <Area 
-                name="Views"
-                type="monotone" 
-                dataKey="views" 
-                stroke="#2563eb" 
-                strokeWidth={2}
-                fillOpacity={1} 
-                fill="url(#colorViews)" 
-              />
-              <Area 
-                name="Calls"
-                type="monotone" 
-                dataKey="calls" 
-                stroke="#10b981" 
-                strokeWidth={2}
-                fillOpacity={1} 
-                fill="url(#colorCalls)" 
-              />
-              <Area 
-                name="Leads"
-                type="monotone" 
-                dataKey="leads" 
-                stroke="#8b5cf6" 
-                strokeWidth={2}
-                fillOpacity={1} 
-                fill="url(#colorLeads)" 
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+          {mounted ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={data}>
+                <defs>
+                  <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#2563eb" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorCalls" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                <XAxis 
+                  dataKey="date" 
+                  tick={{fontSize: 10, fill: '#94a3b8'}}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(str) => {
+                    const date = new Date(str);
+                    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                  }}
+                />
+                <YAxis 
+                  tick={{fontSize: 10, fill: '#94a3b8'}}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Tooltip 
+                  contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                  labelFormatter={(str) => new Date(str).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                />
+                <Legend verticalAlign="top" height={36}/>
+                <Area 
+                  name="Views"
+                  type="monotone" 
+                  dataKey="views" 
+                  stroke="#2563eb" 
+                  strokeWidth={2}
+                  fillOpacity={1} 
+                  fill="url(#colorViews)" 
+                />
+                <Area 
+                  name="Calls"
+                  type="monotone" 
+                  dataKey="calls" 
+                  stroke="#10b981" 
+                  strokeWidth={2}
+                  fillOpacity={1} 
+                  fill="url(#colorCalls)" 
+                />
+                <Area 
+                  name="Leads"
+                  type="monotone" 
+                  dataKey="leads" 
+                  stroke="#8b5cf6" 
+                  strokeWidth={2}
+                  fillOpacity={1} 
+                  fill="url(#colorLeads)" 
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-full flex items-center justify-center text-gray-400 text-sm">
+              Preparing charts...
+            </div>
+          )}
         </div>
       </div>
     </div>

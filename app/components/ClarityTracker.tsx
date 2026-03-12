@@ -10,8 +10,8 @@ declare global {
 }
 
 export default function ClarityTracker() {
-  // Clarity Project ID should be set in .env.local
-  const clarityId = process.env.NEXT_PUBLIC_CLARITY_ID || "placeholder"
+  // Clarity Project ID
+  const clarityId = "vuj4gussov"
 
   useEffect(() => {
     if (!clarityId || clarityId === "placeholder") {

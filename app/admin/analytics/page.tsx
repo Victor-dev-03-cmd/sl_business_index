@@ -1,5 +1,7 @@
 'use client';
 
+import React, { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabaseClient';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -10,21 +12,19 @@ import {
   ArrowUpRight, 
   ArrowDownRight,
   DollarSign,
-  ExternalLink,
-  Activity
+  ExternalLink
 } from 'lucide-react';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer, 
-  Cell,
-  LineChart,
-  Line
-} from 'recharts';
+
+// Use dynamic import for the charts component to avoid hydration issues
+const AnalyticsCharts = dynamic(() => import('./AnalyticsCharts'), { 
+  ssr: false,
+  loading: () => (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="h-[400px] bg-white rounded-[6px] border border-gray-300 animate-pulse" />
+      <div className="h-[400px] bg-white rounded-[6px] border border-gray-300 animate-pulse" />
+    </div>
+  )
+});
 
 export default function AdminAnalyticsPage() {
   const { data: stats, isLoading: loading } = useQuery({
@@ -84,10 +84,10 @@ export default function AdminAnalyticsPage() {
   });
 
   const statCards = [
-    { name: 'Total Users', value: stats?.totalUsers || 0, change: '+12%', trending: 'up', icon: Users, color: 'blue' },
-    { name: 'Active Businesses', value: stats?.totalBusinesses || 0, change: '+5%', trending: 'up', icon: Building2, color: 'brand-dark' },
-    { name: 'Pending Requests', value: stats?.pendingRequests || 0, change: '+3', trending: 'up', icon: TrendingUp, color: 'brand-blue' },
-    { name: 'Total Revenue', value: `LKR ${stats?.totalRevenue.toLocaleString() || 0}`, change: '+18%', trending: 'up', icon: DollarSign, color: 'brand-gold' },
+    { name: 'Total Users', value: stats?.totalUsers ?? 0, change: '+12%', trending: 'up', icon: Users, color: 'blue' },
+    { name: 'Active Businesses', value: stats?.totalBusinesses ?? 0, change: '+5%', trending: 'up', icon: Building2, color: 'brand-dark' },
+    { name: 'Pending Requests', value: stats?.pendingRequests ?? 0, change: '+3', trending: 'up', icon: TrendingUp, color: 'brand-blue' },
+    { name: 'Total Revenue', value: `LKR ${stats?.totalRevenue?.toLocaleString() || 0}`, change: '+18%', trending: 'up', icon: DollarSign, color: 'brand-gold' },
   ];
 
   const getStatColors = (color: string) => {
@@ -99,8 +99,6 @@ export default function AdminAnalyticsPage() {
       default: return 'bg-gray-50 text-gray-600';
     }
   };
-
-  const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
   return (
     <div className="min-h-full bg-gray-50/50 transition-colors">
@@ -145,75 +143,13 @@ export default function AdminAnalyticsPage() {
           ))}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Growth Chart */}
-          <div className="bg-white rounded-[6px] border border-gray-300 p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg text-gray-900 font-normal">Business Growth</h3>
-              <span className="text-xs text-gray-400">Monthly Registrations</span>
-            </div>
-            <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={stats?.growthData || []}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#94a3b8'}} />
-                  <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#94a3b8'}} />
-                  <Tooltip 
-                    contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0' }}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="count" 
-                    stroke="#2563eb" 
-                    strokeWidth={3} 
-                    dot={{ r: 4, fill: '#2563eb' }}
-                    activeDot={{ r: 6 }} 
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* District Distribution */}
-          <div className="bg-white rounded-[6px] border border-gray-300 p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg text-gray-900 font-normal">Active Regions</h3>
-              <span className="text-xs text-gray-400">Most Active Districts</span>
-            </div>
-            <div className="h-[300px] w-full">
-              {stats?.districtData && stats.districtData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={stats.districtData} layout="vertical">
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
-                    <XAxis type="number" hide />
-                    <YAxis 
-                      dataKey="name" 
-                      type="category" 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{fontSize: 12, fill: '#64748b'}}
-                      width={100}
-                    />
-                    <Tooltip 
-                      cursor={{fill: 'transparent'}}
-                      contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0' }}
-                    />
-                    <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-                      {stats.districtData.map((entry: any, index: number) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-full flex flex-col items-center justify-center text-gray-400">
-                  <Activity size={48} strokeWidth={1} className="mb-2" />
-                  <p>No district data available yet</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        {/* Charts Section */}
+        {!loading && stats && (
+          <AnalyticsCharts 
+            growthData={stats.growthData} 
+            districtData={stats.districtData} 
+          />
+        )}
 
         {/* Realtime Status Summary */}
         <div className="mt-8 bg-white rounded-[6px] border border-gray-300 p-8 shadow-sm">

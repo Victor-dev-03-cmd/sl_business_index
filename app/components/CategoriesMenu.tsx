@@ -4,25 +4,12 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronDown, Search, X, Tags } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
-import { supabase } from '@/lib/supabaseClient';
-import { useQuery } from '@tanstack/react-query';
 
-export default function CategoriesMenu() {
+export default function CategoriesMenu({ initialCategories = [] }: { initialCategories?: any[] }) {
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { data: categories = [] } = useQuery({
-    queryKey: ['categories-menu'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('categories')
-        .select('*')
-        .order('name', { ascending: true });
-      if (error) throw error;
-      return data;
-    },
-    staleTime: 5 * 60 * 1000,
-  });
+  const categories = initialCategories;
 
   const IconComponent = ({ name, size = 20 }: { name: string | null, size?: number }) => {
     if (!name) return <Tags size={size} />;

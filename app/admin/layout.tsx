@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import AuthButton from '@/app/components/AuthButton';
 import NotificationBell from '@/app/components/NotificationBell';
+import LiveCounter from '@/app/components/LiveCounter';
 import { supabase } from '@/lib/supabaseClient';
 
 const adminMenuItems = [
@@ -153,6 +154,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </div>
 
             <div className="flex items-center space-x-4 ml-4">
+              <div className="hidden sm:block">
+                <LiveCounter />
+              </div>
               <NotificationBell />
               <div className="h-8 w-px bg-gray-300  mx-2" />
               <AuthButton user={user} />
