@@ -4,27 +4,38 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ImageIcon, Save, TextCursorInput, Settings2 } from 'lucide-react';
+import { 
+  Palette, 
+  Save, 
+  Type, 
+  MousePointer2,
+  Check
+} from 'lucide-react';
 
 interface SiteSettings {
   id: number;
-  logo_url: string;
-  logo_text: string;
-  logo_width: number;
-  logo_height: number;
+  primary_font: string;
+  button_border_radius: number;
 }
+
+const FONTS = [
+  { name: 'Inter', value: 'Inter' },
+  { name: 'Outfit', value: 'Outfit' },
+  { name: 'Poppins', value: 'Poppins' },
+  { name: 'Roboto', value: 'Roboto' },
+  { name: 'Montserrat', value: 'Montserrat' },
+];
 
 export default function AppearanceSettingsPage() {
   const queryClient = useQueryClient();
   const [localSettings, setLocalSettings] = useState<SiteSettings | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
 
   const { data: settings, isLoading: loading } = useQuery({
-    queryKey: ['site-settings'],
+    queryKey: ['site-settings', 'appearance'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('site_settings')
-        .select('*')
+        .select('id, primary_font, button_border_radius')
         .eq('id', 1)
         .single();
 
@@ -36,13 +47,7 @@ export default function AppearanceSettingsPage() {
 
   useEffect(() => {
     if (settings) {
-      setLocalSettings({
-        id: settings.id,
-        logo_url: settings.logo_url,
-        logo_text: settings.logo_text,
-        logo_width: settings.logo_width,
-        logo_height: settings.logo_height,
-      });
+      setLocalSettings(settings);
     }
   }, [settings]);
 
@@ -56,42 +61,14 @@ export default function AppearanceSettingsPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['site-settings'] });
+      queryClient.invalidateQueries({ queryKey: ['site-settings', 'appearance'] });
+      queryClient.invalidateQueries({ queryKey: ['site-settings', 'vars'] });
       alert('Appearance settings saved successfully');
     },
     onError: () => {
-      alert('Error saving settings');
+      alert('Error saving appearance settings');
     },
   });
-
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      setIsUploading(true);
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `brand/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('business-logos')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('business-logos')
-        .getPublicUrl(filePath);
-
-      setLocalSettings(s => s ? { ...s, logo_url: publicUrl } : null);
-    } catch (error) {
-      console.error('Error uploading logo:', error);
-      alert('Failed to upload logo');
-    } finally {
-      setIsUploading(false);
-    }
-  };
 
   const handleSave = () => {
     if (!localSettings) return;
@@ -99,116 +76,104 @@ export default function AppearanceSettingsPage() {
   };
 
   if (loading) return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <Skeleton className="h-8 w-48" />
+      <Skeleton className="h-48 w-full" />
       <Skeleton className="h-48 w-full" />
     </div>
   );
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex items-center justify-between mb-8 pb-6 border-b border-gray-100">
+    <div className="space-y-10 animate-in fade-in duration-500 pb-12">
+      {/* Header */}
+      <div className="flex items-center justify-between pb-6 border-b border-gray-100">
         <div>
-          <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-            <ImageIcon className="h-5 w-5 text-amber-600" /> Brand Assets
+          <h1 className="text-2xl font-normal text-gray-900 flex items-center gap-3">
+            <Palette className="h-6 w-6 text-brand-blue" /> Appearance Settings
           </h1>
-          <p className="text-sm text-gray-500 mt-1 font-normal">Customize platform logo and brand imagery.</p>
+          <p className="text-sm text-gray-500 mt-1">Configure global typography and UI component styles.</p>
         </div>
         <button 
           onClick={handleSave}
           disabled={saveMutation.isPending}
-          className="flex items-center gap-2 px-6 py-2 bg-brand-dark hover:bg-brand-blue text-white rounded-[6px] transition-all text-sm font-bold shadow-md hover:shadow-lg disabled:opacity-50"
+          className="flex items-center gap-2 px-8 py-2.5 bg-brand-dark hover:bg-brand-blue text-white rounded-[6px] transition-all text-sm font-bold shadow-sm hover:shadow-md disabled:opacity-50"
         >
           {saveMutation.isPending ? <div className="h-4 w-4 border-2 border-white/30 border-t-white animate-spin rounded-full" /> : <Save size={16} />}
           {saveMutation.isPending ? 'Saving...' : 'Save Changes'}
         </button>
       </div>
 
-      <div className="grid gap-10">
-        <div className="space-y-3">
-          <label className="text-sm font-bold text-gray-700 flex items-center gap-2 tracking-tight">
-            <TextCursorInput size={14} className="text-gray-400" /> Logo Text
-          </label>
-          <input 
-            type="text" 
-            value={localSettings?.logo_text || ''}
-            onChange={(e) => setLocalSettings(s => s ? {...s, logo_text: e.target.value} : null)}
-            className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-[6px] focus:outline-none focus:ring-1 focus:ring-brand-dark focus:bg-white transition-all font-normal text-sm"
-            placeholder="e.g. SL Business"
-          />
+      {/* Typography Selection */}
+      <section className="space-y-6">
+        <h2 className="text-sm font-bold text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
+          <Type size={14} /> Global Typography
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-gray-50/30 p-6 rounded-xl border border-gray-100">
+          {FONTS.map((font) => (
+            <button
+              key={font.value}
+              onClick={() => setLocalSettings(s => s ? {...s, primary_font: font.value} : null)}
+              className={`relative p-6 bg-white border rounded-xl text-left transition-all hover:shadow-md ${
+                localSettings?.primary_font === font.value 
+                  ? 'border-brand-blue ring-1 ring-brand-blue shadow-sm' 
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-bold text-gray-900">{font.name}</span>
+                {localSettings?.primary_font === font.value && (
+                  <div className="h-5 w-5 bg-brand-blue rounded-full flex items-center justify-center">
+                    <Check size={12} className="text-white" />
+                  </div>
+                )}
+              </div>
+              <p className="text-2xl text-gray-400 truncate" style={{ fontFamily: font.value }}>
+                The quick brown fox
+              </p>
+              <p className="text-[10px] text-gray-400 mt-2 font-bold uppercase tracking-widest">Preview</p>
+            </button>
+          ))}
         </div>
+      </section>
 
-        <div className="space-y-4">
-          <label className="text-sm font-bold text-gray-700 flex items-center gap-2 tracking-tight">
-             <Settings2 size={14} className="text-gray-400" /> Brand Identity
-          </label>
-          <div className="flex flex-col md:flex-row items-center gap-10 bg-gray-50/50 p-8 rounded-[6px] border border-gray-100">
-            <div className="relative group shrink-0">
-              <div className="h-32 w-64 rounded-[6px] bg-white border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden transition-all group-hover:border-brand-dark shadow-sm">
-                {localSettings?.logo_url ? (
-                  <img 
-                    src={localSettings.logo_url} 
-                    alt="Logo Preview" 
-                    style={{ 
-                      width: `${localSettings.logo_width}px`, 
-                      height: `${localSettings.logo_height}px` 
-                    }}
-                    className="object-contain" 
-                  />
-                ) : (
-                  <div className="flex flex-col items-center justify-center text-gray-300">
-                    <ImageIcon size={32} />
-                    <span className="text-xs mt-2">Drop logo here</span>
-                  </div>
-                )}
-                {isUploading && (
-                  <div className="absolute inset-0 bg-white/90 flex items-center justify-center">
-                    <div className="h-6 w-6 border-2 border-brand-dark border-t-transparent animate-spin rounded-full" />
-                  </div>
-                )}
+      {/* Component Styles */}
+      <section className="space-y-6">
+        <h2 className="text-sm font-bold text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
+          <MousePointer2 size={14} /> UI Components
+        </h2>
+        <div className="bg-gray-50/30 p-6 rounded-xl border border-gray-100 space-y-8">
+          <div className="space-y-4">
+            <div className="flex justify-between items-end">
+              <div>
+                <label className="text-sm font-bold text-gray-700 block">Button Border Radius</label>
+                <p className="text-xs text-gray-500 font-normal mt-1">Sets the roundness for buttons and interactive elements across the site.</p>
               </div>
-              <input 
-                type="file" 
-                accept="image/*"
-                onChange={handleUpload}
-                className="absolute inset-0 opacity-0 cursor-pointer"
-              />
-              <p className="text-[10px] text-gray-400 mt-2 text-center uppercase tracking-widest font-bold">Click to replace logo</p>
+              <span className="text-brand-blue font-bold text-sm bg-brand-blue/10 px-3 py-1 rounded-full">
+                {localSettings?.button_border_radius ?? 6}px
+              </span>
             </div>
-
-            <div className="flex-1 space-y-6 w-full max-w-sm">
-              <div className="space-y-2">
-                <div className="flex justify-between text-xs font-bold text-gray-900 tracking-tight">
-                  <span>Logo Width</span>
-                  <span className="text-brand-dark">{localSettings?.logo_width || 150}px</span>
-                </div>
-                <input 
-                  type="range" 
-                  min="50" 
-                  max="400" 
-                  value={localSettings?.logo_width || 150}
-                  onChange={(e) => setLocalSettings(s => s ? {...s, logo_width: parseInt(e.target.value)} : null)}
-                  className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-dark"
-                />
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between text-xs font-bold text-gray-900 tracking-tight">
-                  <span>Logo Height</span>
-                  <span className="text-brand-dark">{localSettings?.logo_height || 50}px</span>
-                </div>
-                <input 
-                  type="range" 
-                  min="20" 
-                  max="150" 
-                  value={localSettings?.logo_height || 50}
-                  onChange={(e) => setLocalSettings(s => s ? {...s, logo_height: parseInt(e.target.value)} : null)}
-                  className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-dark"
-                />
+            
+            <div className="flex items-center gap-6">
+              <input 
+                type="range" 
+                min="0" 
+                max="30" 
+                value={localSettings?.button_border_radius ?? 6}
+                onChange={(e) => setLocalSettings(s => s ? {...s, button_border_radius: parseInt(e.target.value)} : null)}
+                className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-blue"
+              />
+              <div className="shrink-0 w-32 flex justify-center">
+                <button 
+                  style={{ borderRadius: `${localSettings?.button_border_radius ?? 6}px` }}
+                  className="px-6 py-2 bg-brand-dark text-white text-sm font-bold transition-all hover:bg-brand-blue pointer-events-none"
+                >
+                  Preview Button
+                </button>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

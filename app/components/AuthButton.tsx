@@ -14,30 +14,40 @@ import {
 import { User as UserIcon, LogOut, LayoutDashboard, Briefcase } from 'lucide-react';
 import VerifiedBadge from './VerifiedBadge';
 
-export default function AuthButton({ user: initialUser }: { user: any | null }) {
-  const router = useRouter();
-  const [user, setUser] = useState(initialUser);
-  const [hasBusiness, setHasBusiness] = useState(false);
-  const [isChecking, setIsChecking] = useState(true); // தற்காலிகமாக true இல் வைக்கவும்
+interface AuthUser {
+  id: string;
+  email?: string;
+  full_name?: string;
+  username?: string;
+  role?: string;
+  verification_status?: string;
+  avatar_url?: string;
+}
 
-  // ப்ரொபைல் மற்றும் பிசினஸைச் சரிபார்க்கும் பொதுவான பங்க்ஷன்
+export default function AuthButton({ user: initialUser }: { user: AuthUser | null }) {
+  const router = useRouter();
+  const [user, setUser] = useState<AuthUser | null>(initialUser);
+  const [hasBusiness, setHasBusiness] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
+
+  // Profile and business check function
   const fetchFullUserProfile = useCallback(async (userId: string) => {
     try {
-      // 1. ப்ரொபைல் டேபிளில் இருந்து ரோல் (Role) எடுத்தல்
+      // 1. Get role and avatar from profiles table
       const { data: profile } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', userId)
           .single();
 
-      // 2. பிசினஸ் இருக்கிறதா எனப் பார்த்தல்
+      // 2. Check for business
       const { count } = await supabase
           .from('businesses')
           .select('*', { count: 'exact', head: true })
           .eq('owner_id', userId);
 
       if (profile) {
-        setUser((prev: any) => ({ ...prev, ...profile }));
+        setUser((prev) => (prev ? { ...prev, ...profile } : profile as AuthUser));
       }
       setHasBusiness((count || 0) > 0);
     } catch (error) {
@@ -98,8 +108,12 @@ export default function AuthButton({ user: initialUser }: { user: any | null }) 
     return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center justify-center h-10 w-10 bg-brand-dark text-white rounded-full font-normal text-sm focus:outline-none hover:bg-brand-blue transition-all border-2 border-transparent hover:border-brand-sand shadow-sm uppercase">
-              {user.full_name ? user.full_name[0] : (user.email ? user.email[0] : '?')}
+            <button className="avatar flex items-center justify-center h-10 w-10 bg-brand-dark text-white rounded-full font-normal text-sm focus:outline-none hover:bg-brand-blue transition-all border-2 border-transparent hover:border-brand-sand shadow-sm uppercase overflow-hidden">
+              {user.avatar_url ? (
+                <img src={user.avatar_url} alt={displayName} className="h-full w-full object-cover" />
+              ) : (
+                user.full_name ? user.full_name[0] : (user.email ? user.email[0] : '?')
+              )}
             </button>
           </DropdownMenuTrigger>
 

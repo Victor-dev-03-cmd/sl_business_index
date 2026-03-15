@@ -20,3 +20,5 @@ insert into site_settings (id) values (1) on conflict (id) do nothing;
 alter table site_settings add column if not exists logo_text text default 'SL Business';
 alter table site_settings add column if not exists logo_width integer default 150;
 alter table site_settings add column if not exists logo_height integer default 50;
+alter table site_settings add column if not exists maintenance_mode boolean default false;
+alter table site_settings add column if not exists maintenance_message text default 'The site is currently under maintenance. Please check back later.';

@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState, Suspense, useRef, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, Suspense, useRef, useCallback, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabaseClient';
-import { MapPin, ArrowLeft, Star, Navigation, Phone, Globe, Menu, X, ChevronDown, Search, Check, Clock, Zap, Tags } from 'lucide-react';
+import { MapPin, ArrowLeft, Star, Navigation, Menu, X, ChevronDown, Search, Check, Clock, Zap, Tags } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { Slider } from "@/components/ui/slider";
 import { useQuery } from '@tanstack/react-query';
@@ -13,7 +13,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -26,8 +25,12 @@ import {
 } from "@/components/ui/command";
 import { cn, expandSearchQuery } from "@/lib/utils";
 import { Business } from '@/lib/types';
+import Fuse from 'fuse.js';
+import { SL_TOWNS, Town } from '@/lib/towns';
+import TownSelector from '@/components/TownSelector';
+import VerifiedBadge from '@/app/components/VerifiedBadge';
 
-const MapboxMap = dynamic(() => import('@/components/MapboxMap'), { 
+const LeafletMap = dynamic(() => import('@/components/LeafletMap'), { 
   ssr: false, 
   loading: () => <div className="h-full w-full bg-gray-100 animate-pulse flex items-center justify-center text-gray-400">Loading Map...</div>
 });
@@ -66,10 +69,6 @@ const districtCoordinates: Record<string, { lat: number; lng: number }> = {
   "Trincomalee": { lat: 8.5874, lng: 81.2152 },
   "Vavuniya": { lat: 8.7514, lng: 80.4971 }
 };
-
-import { SL_TOWNS, Town } from '@/lib/towns';
-import TownSelector from '@/components/TownSelector';
-import VerifiedBadge from '@/app/components/VerifiedBadge';
 
 const CATEGORY_SUBGROUPS: Record<string, { group: string; items: string[] }[]> = {
   'Health & Medical': [
@@ -649,17 +648,28 @@ const CATEGORY_ALIASES: Record<string, string> = {
 };
 
 function SplitScreenResultsContent() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+
   const searchParams = useSearchParams();
   const router = useRouter();
   const lat = searchParams.get('lat');
   const lng = searchParams.get('lng');
   const district = searchParams.get('district');
   const initialQuery = searchParams.get('q') || '';
-  const radius = parseInt(searchParams.get('radius') || '5000');
+  const initialRadius = searchParams.get('radius');
+  const radius = useMemo(() => {
+    if (!initialRadius) return 5000;
+    const r = parseInt(initialRadius);
+    if (isNaN(r)) return 5000;
+    // If someone put KM (e.g. 5) instead of meters (e.g. 5000)
+    return r < 100 ? r * 1000 : r;
+  }, [initialRadius]);
 
   const [selectedRadius, setSelectedRadius] = useState(radius);
+  const [visualRadius, setVisualRadius] = useState(radius);
+  const memoizedVisualRadius = useMemo(() => [visualRadius], [visualRadius]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(initialQuery);
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -668,16 +678,68 @@ function SplitScreenResultsContent() {
   const [currentLat, setCurrentLat] = useState<string | null>(lat);
   const [currentLng, setCurrentLng] = useState<string | null>(lng);
   const [mapCenter, setMapCenter] = useState({ 
-    lat: lat ? parseFloat(lat) : (district && districtCoordinates[district] ? districtCoordinates[district].lat : 6.9271), 
-    lng: lng ? parseFloat(lng) : (district && districtCoordinates[district] ? districtCoordinates[district].lng : 79.8612) 
+    lat: lat ? parseFloat(lat) : (district && districtCoordinates[district] ? districtCoordinates[district].lat : 7.8731), 
+    lng: lng ? parseFloat(lng) : (district && districtCoordinates[district] ? districtCoordinates[district].lng : 80.7718) 
   });
-  const [mapZoom, setMapZoom] = useState(14);
+  const [mapZoom, setMapZoom] = useState(lat || district ? 14 : 8);
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(district);
   const [selectedTown, setSelectedTown] = useState<Town | null>(null);
   const [isMapManual, setIsMapManual] = useState(false);
   const [locationLoading, setLocationLoading] = useState(false);
+
+  const calculateHaversineDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371; // km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
+  const handleSearch = React.useCallback(() => {
+    setDebouncedSearchQuery(searchQuery);
+  }, [searchQuery]);
+
+  const findMyLocation = React.useCallback(() => {
+    if (navigator.geolocation) {
+      setLocationLoading(true);
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setIsMapManual(false);
+          setMapCenter({ lat: latitude, lng: longitude });
+          setMapZoom(15);
+          setCurrentLat(latitude.toString());
+          setCurrentLng(longitude.toString());
+          setSearchType('location');
+          setLocationLoading(false);
+        },
+        (error) => {
+          console.error('Geolocation error:', error);
+          setLocationLoading(false);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!lat && !lng && !district) {
+      findMyLocation();
+    }
+  }, [lat, lng, district, findMyLocation]);
+
+  const formatDistance = (meters: number): string => {
+    if (meters < 1000) return `${Math.round(meters)} m`;
+    const km = meters / 1000;
+    // Show .5 if it's not a whole number (e.g., 1.5 km)
+    return km % 1 === 0 ? `${km.toFixed(0)} km` : `${km.toFixed(1)} km`;
+  };
   
-  const activeSubgroups = useMemo(() => {
+  const activeSubgroups = React.useMemo(() => {
     // 1. Check selected category (including aliases)
     if (selectedCategory) {
       if (CATEGORY_SUBGROUPS[selectedCategory]) {
@@ -794,18 +856,19 @@ function SplitScreenResultsContent() {
   };
 
   const isInitialMount = useRef(true);
+  
+  useEffect(() => {
+    if (initialQuery) {
+      setSearchQuery(initialQuery);
+    }
+  }, [initialQuery]);
 
-  const calculateHaversineDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-    const R = 6371; // Earth's radius in km
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-      Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-  };
+  useEffect(() => {
+    if (!isNaN(radius)) {
+      setVisualRadius(radius);
+      setSelectedRadius(radius);
+    }
+  }, [radius]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -814,192 +877,95 @@ function SplitScreenResultsContent() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  const { data: businesses, isLoading: queryLoading, error: queryError, refetch } = useQuery({
-    queryKey: ['businesses', { 
-      searchType, 
-      currentLat, 
-      currentLng, 
-      searchQuery: debouncedSearchQuery, 
-      selectedRadius, 
-      selectedCategory, 
-      selectedDistrict: selectedDistrict || district 
-    }],
+  const { data: businessesData = [], isLoading: loadingBusinesses, error } = useQuery({
+    queryKey: ['nearby-businesses', currentLat, currentLng, selectedRadius, debouncedSearchQuery],
     queryFn: async () => {
-      if (searchType === 'location') {
-        if (!currentLat || !currentLng) return [];
-        const { data, error: rpcError } = await supabase.rpc('get_nearby_businesses', {
-          user_lat: parseFloat(currentLat),
-          user_lng: parseFloat(currentLng),
-          search_query: debouncedSearchQuery,
-          dist_limit: selectedRadius,
-        });
+      // If we don't have location and it's not a district search, we use Sri Lanka center as default for the RPC
+      const lat = currentLat ? parseFloat(currentLat) : 7.8731;
+      const lng = currentLng ? parseFloat(currentLng) : 80.7718;
+      
+      const { data, error } = await supabase.rpc('get_nearby_businesses', {
+        user_lat: lat,
+        user_lng: lng,
+        search_query: debouncedSearchQuery || '',
+        dist_limit: selectedRadius
+      });
 
-        if (rpcError) throw rpcError;
+      if (error) throw error;
 
-        return (data || []).map((business: Business) => ({
-          ...business,
-          distanceText: `${calculateHaversineDistance(parseFloat(currentLat), parseFloat(currentLng), business.latitude, business.longitude).toFixed(2)} km`,
-        }));
-      } else {
-        const districtToSearch = selectedDistrict || district;
-        if (!districtToSearch) return [];
-
-        let query_builder = supabase
-          .from('businesses')
-          .select('*')
-          .eq('status', 'approved')
-          .ilike('address', `%${districtToSearch}%`);
-
-        if (debouncedSearchQuery) {
-          query_builder = query_builder.or(`name.ilike.%${debouncedSearchQuery}%,category.ilike.%${debouncedSearchQuery}%`);
+      // Convert to Feature format for compatibility with existing LeafletMap/clustering logic
+      return data.map((b: any) => ({
+        type: 'Feature',
+        id: b.id,
+        properties: { 
+          ...b,
+          distance: b.distance_meters 
+        },
+        geometry: {
+          type: 'Point',
+          coordinates: [b.longitude, b.latitude]
         }
-        if (selectedCategory) {
-          query_builder = query_builder.eq('category', selectedCategory);
-        }
-
-        const { data, error: dbError } = await query_builder;
-        if (dbError) throw dbError;
-
-        return (data as Business[] || []).map((business: Business) => {
-          if (currentLat && currentLng) {
-            return {
-              ...business,
-              distanceText: `${calculateHaversineDistance(parseFloat(currentLat), parseFloat(currentLng), business.latitude, business.longitude).toFixed(2)} km`,
-            };
-          }
-          return business;
-        });
-      }
+      }));
     },
-    enabled: !!((searchType === 'location' && currentLat && currentLng) || (searchType === 'district' && (selectedDistrict || district))),
-    staleTime: 5 * 60 * 1000,
+    enabled: true, // Always fetch something
+    staleTime: 60 * 1000, // 1 minute
   });
 
-  const loading = queryLoading || locationLoading;
-  const results = businesses || [];
-  const error = queryError ? (queryError as Error).message : null;
+  const businesses = React.useMemo(() => {
+    if (loadingBusinesses) return [];
+    
+    let filtered = [...businessesData];
 
-  const handleSearch = useCallback(() => {
-    let finalQuery = searchQuery;
-    let finalCategory = selectedCategory;
-    let finalDistrict = selectedDistrict;
-    let finalLat = currentLat;
-    let finalLng = currentLng;
-    const lowerQuery = searchQuery.toLowerCase();
-
-    // Prioritize local town matches from GeoJSON data
-    const matchedTown = SL_TOWNS.find(town => {
-      const townName = town.name.toLowerCase();
-      return lowerQuery === townName || 
-             lowerQuery.startsWith(townName + ' ') ||
-             lowerQuery.endsWith(' ' + townName) ||
-             lowerQuery.includes(' ' + townName + ' ');
-    });
-
-    if (matchedTown) {
-      finalLat = matchedTown.lat.toString();
-      finalLng = matchedTown.lon.toString();
-      setCurrentLat(finalLat);
-      setCurrentLng(finalLng);
-      setSearchType('location');
-      setSelectedDistrict(matchedTown.district);
-      setSelectedTown(matchedTown);
-      setMapCenter({ lat: matchedTown.lat, lng: matchedTown.lon });
-      setMapZoom(14);
-      finalQuery = finalQuery.replace(new RegExp(matchedTown.name, 'gi'), '').trim();
-    } else if (finalLat === currentLat) {
-      for (const d of sriLankanDistricts) {
-        if (lowerQuery.includes(d.toLowerCase())) {
-          finalDistrict = d;
-          setSelectedDistrict(d);
-          setSearchType('district');
-          setCurrentLat(null);
-          setCurrentLng(null);
-          finalQuery = finalQuery.replace(new RegExp(d, 'gi'), '').trim();
-          if (districtCoordinates[d]) {
-            setMapCenter(districtCoordinates[d]);
-            setMapZoom(11);
-          }
-          break;
-        }
-      }
+    // Filter by Category (since RPC doesn't currently filter by category)
+    if (selectedCategory) {
+      filtered = filtered.filter(f => f.properties.category === selectedCategory);
     }
 
-    if (!finalCategory) {
-      for (const cat of categories) {
-        if (lowerQuery.includes(cat.name.toLowerCase()) || cat.keywords?.some((kw: string) => lowerQuery.includes(kw.toLowerCase()))) {
-          finalCategory = cat.name;
-          setSelectedCategory(cat.name);
-          if (!['Hotels & Restaurants', 'Food & Dining'].includes(cat.name)) break;
-        }
-      }
+    // Filter by District if searchType is district
+    if (searchType === 'district' && (selectedDistrict || district)) {
+       const dist = (selectedDistrict || district).toLowerCase();
+       filtered = filtered.filter(f => 
+         f.properties.location?.toLowerCase().includes(dist) ||
+         f.properties.city?.toLowerCase().includes(dist) ||
+         f.properties.address?.toLowerCase().includes(dist)
+       );
     }
 
-    const newSearchQuery = expandSearchQuery(finalQuery);
-    if (newSearchQuery !== searchQuery) {
-      setSearchQuery(newSearchQuery);
-    }
-  }, [searchQuery, selectedCategory, selectedDistrict, currentLat, currentLng]);
+    return filtered.map(f => ({
+      ...f.properties,
+      id: f.id || f.properties.id || Math.random().toString(),
+      latitude: f.geometry.coordinates[1],
+      longitude: f.geometry.coordinates[0],
+      distanceText: (typeof f.properties.distance === 'number') 
+        ? (f.properties.distance < 10 ? 'At location' : (f.properties.distance < 1000 ? `${Math.round(f.properties.distance)} m` : `${(f.properties.distance / 1000).toFixed(1)} km`)) 
+        : 'Calculating...'
+    }));
+  }, [businessesData, loadingBusinesses, selectedCategory, searchType, selectedDistrict, district]);
 
-  const findMyLocation = useCallback(() => {
-    if (navigator.geolocation) {
-      setLocationLoading(true);
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          const newCenter = { lat: latitude, lng: longitude };
-          setMapCenter(newCenter);
-          setMapZoom(15);
-          setCurrentLat(latitude.toString());
-          setCurrentLng(longitude.toString());
-          setSearchType('location');
-          setLocationLoading(false);
-        },
-        (error) => {
-          console.error('Geolocation error:', error);
-          // We don't set global error here to not break the UI
-          setLocationLoading(false);
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-      );
-    }
-  }, []);
+  const loading = loadingBusinesses || locationLoading;
+  const fuse = React.useMemo(() => new Fuse(businessesData, {
+    keys: ['properties.name', 'properties.category', 'properties.location', 'properties.address'],
+    threshold: 0.3,
+  }), [businessesData]);
 
   useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      if (!lat && !lng && !district) {
-        findMyLocation();
-      }
+    if (searchQuery.trim().length > 1) {
+      const results = fuse.search(searchQuery).slice(0, 6);
+      setSuggestions(results.map(r => r.item));
+    } else {
+      setSuggestions([]);
     }
-  }, [lat, lng, district, findMyLocation]);
+  }, [searchQuery, fuse]);
 
-  const formatDistance = (meters: number): string => {
-    if (meters < 1000) return `${Math.round(meters)} m`;
-    return `${(meters / 1000).toFixed(0)} km`;
-  };
-
-  const handleMapClick = (lat: number, lng: number) => {
-    setMapCenter({ lat, lng });
-    setCurrentLat(lat.toString());
-    setCurrentLng(lng.toString());
-    setSearchType('location');
-    setIsMapManual(true);
-  };
-
-  const handleMarkerDragEnd = (lat: number, lng: number) => {
-    setMapCenter({ lat, lng });
-    setCurrentLat(lat.toString());
-    setCurrentLng(lng.toString());
-    setSearchType('location');
-    setIsMapManual(true);
-  };
+  const results = businesses || [];
 
   if (!currentLat && !currentLng && !district && error) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-600 font-medium mb-4">{error}</p>
+          <p className="text-red-600 font-medium mb-4">
+            {error instanceof Error ? error.message : String(error)}
+          </p>
           <Link href="/" className="text-brand-dark hover:text-brand-blue font-medium">
             Back to Home
           </Link>
@@ -1036,18 +1002,48 @@ function SplitScreenResultsContent() {
           </div>
 
           {/* Center Section: Search Bar */}
-          <div className="flex-1 max-w-md hidden sm:block">
+          <div className="flex-1 max-w-md hidden sm:block relative">
             <div className="flex items-center w-full px-3 bg-gray-50 rounded-[6px] border border-gray-300 focus-within:bg-white focus-within:border-brand-dark h-10 transition-all shadow-sm">
               <Search size={16} strokeWidth={1.5} className="text-gray-400 mr-2" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') handleSearch() }}
-                placeholder="Search businesses..."
+                placeholder="Search businesses or areas..."
                 className="w-full bg-transparent outline-none text-sm text-gray-700 placeholder:text-gray-400 font-normal"
               />
             </div>
+
+            {suggestions.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-[6px] shadow-2xl z-50 overflow-hidden">
+                {suggestions.map((feature, idx) => (
+                  <button
+                    key={feature.id || idx}
+                    onClick={() => {
+                      const { name } = feature.properties;
+                      const [lng, lat] = feature.geometry.coordinates;
+                      setSearchQuery(name);
+                      setSuggestions([]);
+                      setIsMapManual(false);
+                      setMapCenter({ lat, lng });
+                      setMapZoom(16);
+                      setCurrentLat(lat.toString());
+                      setCurrentLng(lng.toString());
+                      setSearchType('location');
+                    }}
+                    className="w-full text-left px-4 py-2.5 hover:bg-gray-50 flex items-center gap-2 transition-colors border-b border-gray-50 last:border-0"
+                  >
+                    <MapPin size={14} className="text-gray-400" />
+                    <div className="flex flex-col">
+                      <span className="text-xs text-gray-700 font-medium">{feature.properties.name}</span>
+                      <span className="text-[10px] text-gray-400 leading-tight">
+                        {feature.properties.category} • {feature.properties.location || feature.properties.city || 'Sri Lanka'}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Right Section: Filters */}
@@ -1064,21 +1060,22 @@ function SplitScreenResultsContent() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-2 text-sm border border-gray-300 bg-white hover:bg-gray-50 rounded-[6px] px-3 h-10 outline-none focus:ring-1 focus:ring-brand-dark transition-all shadow-sm font-normal">
-                  <span className="whitespace-nowrap text-gray-600">Radius: <span className="text-brand-dark font-normal">{formatDistance(selectedRadius)}</span></span>
+                  <span className="whitespace-nowrap text-gray-600">Radius: <span className="text-brand-dark font-normal">{formatDistance(visualRadius)}</span></span>
                   <ChevronDown size={14} strokeWidth={1.5} className="text-gray-400" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="p-4 w-64 bg-white shadow-xl border border-gray-300 rounded-[6px]">
                 <div className="mb-4 flex justify-between font-normal">
                   <span className="text-xs text-gray-500 uppercase tracking-wider">Search Radius</span>
-                  <span className="text-xs text-brand-dark bg-blue-50 px-2 py-0.5 rounded">{formatDistance(selectedRadius)}</span>
+                  <span className="text-xs text-brand-dark bg-blue-50 px-2 py-0.5 rounded">{formatDistance(visualRadius)}</span>
                 </div>
                 <Slider
-                  defaultValue={[selectedRadius]}
+                  value={memoizedVisualRadius}
                   max={50000}
-                  min={1000}
-                  step={1000}
-                  onValueChange={(value) => setSelectedRadius(value[0])}
+                  min={500}
+                  step={500}
+                  onValueChange={(value) => setVisualRadius(value[0])}
+                  onValueCommit={(value) => setSelectedRadius(value[0])}
                   className="py-4"
                 />
               </DropdownMenuContent>
@@ -1318,7 +1315,7 @@ function SplitScreenResultsContent() {
             ) : error ? (
               <div className="p-4 font-normal">
                 <div className="bg-red-50 border border-red-200 rounded-[6px] p-4">
-                  <p className="text-red-800 text-sm">{error}</p>
+                  <p className="text-red-800 text-sm">{error instanceof Error ? error.message : String(error)}</p>
                 </div>
               </div>
             ) : results.length === 0 ? (
@@ -1336,6 +1333,7 @@ function SplitScreenResultsContent() {
                     onClick={() => {
                       setSelectedBusiness(business);
                       setMobileMenuOpen(false);
+                      setIsMapManual(false);
                       setMapCenter({ lat: business.latitude, lng: business.longitude });
                       setMapZoom(16);
                     }}
@@ -1400,16 +1398,22 @@ function SplitScreenResultsContent() {
 
           {/* Right Side: Map */}
           <div className="hidden md:flex flex-1 relative bg-gray-100 font-normal">
-              <MapboxMap 
-                userLat={mapCenter.lat}
-                userLng={mapCenter.lng}
+              <LeafletMap 
+                centerLat={mapCenter.lat}
+                centerLng={mapCenter.lng}
+                userLat={currentLat ? parseFloat(currentLat) : undefined}
+                userLng={currentLng ? parseFloat(currentLng) : undefined}
                 businesses={results}
                 zoom={mapZoom}
                 height="100%"
-                onMapClick={handleMapClick}
-                onMarkerDragEnd={handleMarkerDragEnd}
-                draggableMarker={true}
                 radius={selectedRadius}
+                enableClustering={results.length > 20}
+                onMarkerClick={(business) => {
+                  setSelectedBusiness(business);
+                }}
+                onMapMove={() => {
+                  setIsMapManual(true);
+                }}
               />
 
               {/* Search this area button (only shows when map is clicked/moved manually) */}
@@ -1417,7 +1421,8 @@ function SplitScreenResultsContent() {
                 <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[1000]">
                   <button 
                     onClick={() => {
-                      refetch();
+                      // Logic handled by useMemo
+                      setIsMapManual(false);
                     }}
                     className="bg-brand-dark text-white px-6 py-2.5 rounded-full shadow-2xl hover:bg-brand-blue transition-all font-normal flex items-center gap-2 border-2 border-white animate-in zoom-in-95"
                   >

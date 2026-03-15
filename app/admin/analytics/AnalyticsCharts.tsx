@@ -102,7 +102,7 @@ export default function AnalyticsCharts({ growthData, districtData }: AnalyticsC
                   contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0' }}
                 />
                 <RechartsBar dataKey="value" radius={[0, 4, 4, 0]}>
-                  {districtData.map((entry, index) => (
+                  {districtData.map((entry: DistrictData, index: number) => (
                     <RechartsCell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </RechartsBar>

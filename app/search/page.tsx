@@ -20,7 +20,7 @@ import {
 import Image from 'next/image';
 import VerifiedBadge from '@/app/components/VerifiedBadge';
 
-const MapboxMap = dynamic(() => import('@/components/MapboxMap'), { 
+const LeafletMap = dynamic(() => import('@/components/LeafletMap'), { 
     ssr: false, 
     loading: () => <div className="h-96 md:h-full w-full bg-gray-100 animate-pulse rounded-lg flex items-center justify-center text-gray-400">Loading Map...</div>
 });
@@ -189,12 +189,15 @@ function SearchResults() {
 
                 {/* Map View */}
                 <div className="lg:col-span-7 xl:col-span-8 h-full bg-gray-100 relative shadow-inner">
-                    <MapboxMap
+                    <LeafletMap
+                        centerLat={userLat}
+                        centerLng={userLng}
                         userLat={userLat}
                         userLng={userLng}
-                        businesses={businesses}
+                        businesses={businesses as any}
                         zoom={13}
                         height="100%"
+                        showUserLocation={true}
                     />
                 </div>
             </div>

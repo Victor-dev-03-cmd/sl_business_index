@@ -1,7 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
+import React, { useState, useEffect, useCallback } from 'react';
+import usePlacesAutocomplete, {
+  getGeocode,
+  getLatLng,
+} from "use-places-autocomplete";
 import {
   Command,
   CommandInput,
@@ -10,114 +13,76 @@ import {
   CommandEmpty,
   CommandGroup,
 } from "@/components/ui/command";
-import { Navigation } from 'lucide-react';
+import { Navigation, Loader2 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 
-// Mapbox Map-ஐ Dynamic-ஆக இம்போர்ட் செய்கிறோம் (SSR எர்ரரைத் தவிர்க்க)
-const MapboxMap = dynamic(() => import('@/components/MapboxMap'), {
+const LeafletMap = dynamic(() => import('@/components/LeafletMap'), {
   ssr: false,
   loading: () => (
-      <div className="h-64 w-full bg-gray-100 animate-pulse rounded-lg flex items-center justify-center text-gray-400">
-        Loading Map...
-      </div>
+    <div className="h-64 w-full bg-gray-100 animate-pulse rounded-lg flex items-center justify-center text-gray-400">
+      Loading Map...
+    </div>
   )
 });
 
 const defaultCenter = { lat: 6.9271, lng: 79.8612 };
 
-interface Suggestion {
-  place_id: number;
-  display_name: string;
-  lat: string;
-  lon: string;
+interface AddressAutocompleteProps {
+  onLocationSelectAction: (lat: number, lng: number, address: string) => void;
+  initialAddress?: string;
 }
 
 export default function AddressAutocomplete({
   onLocationSelectAction,
   initialAddress
-}: {
-  onLocationSelectAction: (lat: number, lng: number, address: string) => void;
-  initialAddress?: string;
-}) {
-  const [value, setValue] = useState(initialAddress || '');
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-  const [status, setStatus] = useState<'IDLE' | 'LOADING' | 'OK' | 'ZERO_RESULTS' | 'ERROR'>('IDLE');
+}: AddressAutocompleteProps) {
+  const {
+    ready,
+    value,
+    suggestions: { status, data },
+    setValue,
+    clearSuggestions,
+  } = usePlacesAutocomplete({
+    requestOptions: {
+      componentRestrictions: { country: "lk" },
+    },
+    debounce: 300,
+    defaultValue: initialAddress
+  });
+
   const [isLocating, setIsLocating] = useState(false);
   const [markerPosition, setMarkerPosition] = useState<{ lat: number; lng: number } | null>(null);
   const [mapCenter, setMapCenter] = useState(defaultCenter);
   const [zoom, setZoom] = useState(10);
 
-  useEffect(() => {
-    if (initialAddress) {
-      setValue(initialAddress);
-    }
-  }, [initialAddress]);
-
-  // Nominatim API மூலம் முகவரியைத் தேடுதல்
-  useEffect(() => {
-    if (value.length < 3) {
-      setSuggestions([]);
-      setStatus('IDLE');
-      return;
-    }
-
-    const timer = setTimeout(async () => {
-      setStatus('LOADING');
-      try {
-        // இலங்கை (Sri Lanka) என்று தேடலை மட்டுப்படுத்துகிறோம்
-        const response = await fetch(`/api/geocode?q=${encodeURIComponent(value + ', Sri Lanka')}`);
-        const data = await response.json();
-
-        if (data && data.length > 0) {
-          setSuggestions(data);
-          setStatus('OK');
-        } else {
-          setSuggestions([]);
-          setStatus('ZERO_RESULTS');
-        }
-      } catch (error) {
-        console.error("Error fetching suggestions:", error);
-        setStatus('ERROR');
-      }
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [value]);
-
-  // லொகேஷன் மாறும்போதெல்லாம் Parent காம்போனென்டிற்கு தகவல் அனுப்புதல்
-  useEffect(() => {
-    if (markerPosition && value) {
-      onLocationSelectAction(markerPosition.lat, markerPosition.lng, value);
-    }
-  }, [markerPosition, value, onLocationSelectAction]);
-
-  const handleSelect = (suggestion: Suggestion) => {
-    const lat = parseFloat(suggestion.lat);
-    const lng = parseFloat(suggestion.lon);
-
-    setValue(suggestion.display_name);
-    setSuggestions([]);
-    setStatus('IDLE');
-    setMapCenter({ lat, lng });
-    setMarkerPosition({ lat, lng });
-    setZoom(15);
-  };
-
-  // மேப்பில் மார்க்கரை நகர்த்தும்போது முகவரியைப் புதுப்பித்தல் (Reverse Geocoding)
-  const handleMarkerDragEnd = async (lat: number, lng: number) => {
-    setMarkerPosition({ lat, lng });
+  const handleSelect = useCallback(async (description: string) => {
+    setValue(description, false);
+    clearSuggestions();
 
     try {
-      const response = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
-      );
-      const data = await response.json();
-      if (data && data.display_name) {
-        setValue(data.display_name);
-      }
+      const results = await getGeocode({ address: description });
+      const { lat, lng } = await getLatLng(results[0]);
+      
+      setMapCenter({ lat, lng });
+      setMarkerPosition({ lat, lng });
+      setZoom(15);
+      onLocationSelectAction(lat, lng, description);
+    } catch (error) {
+      console.error("Error selecting place:", error);
+    }
+  }, [setValue, clearSuggestions, onLocationSelectAction]);
+
+  const handleMarkerDragEnd = useCallback(async (lat: number, lng: number) => {
+    setMarkerPosition({ lat, lng });
+    try {
+      const results = await getGeocode({ location: { lat, lng } });
+      const address = results[0].formatted_address;
+      setValue(address, false);
+      onLocationSelectAction(lat, lng, address);
     } catch (error) {
       console.error("Error during reverse geocoding:", error);
     }
-  };
+  }, [setValue, onLocationSelectAction]);
 
   const findMyLocation = () => {
     if (!navigator.geolocation) {
@@ -129,25 +94,19 @@ export default function AddressAutocomplete({
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
-        const lat = latitude;
-        const lng = longitude;
-
-        setMapCenter({ lat, lng });
-        setMarkerPosition({ lat, lng });
+        setMapCenter({ lat: latitude, lng: longitude });
+        setMarkerPosition({ lat: latitude, lng: longitude });
         setZoom(16);
 
-        // Get address via reverse geocoding
         try {
-          const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
-          );
-          const data = await response.json();
-          if (data && data.display_name) {
-            setValue(data.display_name);
-          }
+          const results = await getGeocode({ location: { lat: latitude, lng: longitude } });
+          const address = results[0].formatted_address;
+          setValue(address, false);
+          onLocationSelectAction(latitude, longitude, address);
         } catch (error) {
           console.error("Error during reverse geocoding:", error);
-          setValue(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+          setValue(`${latitude.toFixed(6)}, ${longitude.toFixed(6)}`, false);
+          onLocationSelectAction(latitude, longitude, `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
         } finally {
           setIsLocating(false);
         }
@@ -157,75 +116,69 @@ export default function AddressAutocomplete({
         alert("Unable to retrieve your location. Please ensure location services are enabled.");
         setIsLocating(false);
       },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0,
-      }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   };
 
   return (
-      <div className="w-full space-y-4">
-        <div>
-          <div className="flex justify-between items-center mb-2">
-            <label className="block text-sm font-normal text-gray-600">Business Address</label>
-            <button
-              type="button"
-              onClick={findMyLocation}
-              disabled={isLocating}
-              className="flex items-center gap-1.5 text-xs font-medium text-brand-dark transition-colors bg-green-50 px-2.5 py-1.5 rounded-lg border border-green-100 disabled:opacity-50"
-            >
-              <Navigation size={14} className={isLocating ? "animate-pulse" : ""} />
-              {isLocating ? "Locating..." : "Find My Location"}
-            </button>
-          </div>
-          <Command className="border border-gray-300 rounded-[6px]" shouldFilter={false}>
-            <CommandInput
-                placeholder="Type your shop address..."
-                value={value}
-                onValueChange={setValue}
-                className="text-base"
-            />
-            <CommandList>
-              {status === "LOADING" && <div className="p-4 text-center text-sm text-gray-500 font-normal">Searching...</div>}
-              {status === "OK" && (
-                  <CommandGroup>
-                    {suggestions.map((suggestion) => (
-                        <CommandItem
-                            key={suggestion.place_id}
-                            onSelect={() => handleSelect(suggestion)}
-                            className="cursor-pointer font-normal text-sm py-3"
-                        >
-                          {suggestion.display_name}
-                        </CommandItem>
-                    ))}
-                  </CommandGroup>
-              )}
-              {value.length > 2 && status === "ZERO_RESULTS" && (
-                  <CommandEmpty className="py-6 text-sm text-gray-400 font-normal">No address found.</CommandEmpty>
-              )}
-              {status === "ERROR" && (
-                  <div className="p-4 text-center text-sm text-red-500 font-normal">Error fetching addresses.</div>
-              )}
-            </CommandList>
-          </Command>
-          <p className="mt-2 text-[11px] text-gray-400 font-normal italic">
-            * Select from the dropdown for accurate map pinning.
-          </p>
+    <div className="w-full space-y-4">
+      <div>
+        <div className="flex justify-between items-center mb-2">
+          <label className="block text-sm font-normal text-gray-600">Business Address</label>
+          <button
+            type="button"
+            onClick={findMyLocation}
+            disabled={isLocating}
+            className="flex items-center gap-1.5 text-xs font-medium text-[#2a7db4] transition-colors bg-blue-50 px-2.5 py-1.5 rounded-lg border border-blue-100 disabled:opacity-50"
+          >
+            {isLocating ? <Loader2 size={14} className="animate-spin" /> : <Navigation size={14} />}
+            {isLocating ? "Locating..." : "Find My Location"}
+          </button>
         </div>
-
-        <div className="h-64 w-full rounded-[6px] overflow-hidden border border-gray-300">
-          <MapboxMap
-              userLat={mapCenter.lat}
-              userLng={mapCenter.lng}
-              zoom={zoom}
-              height="100%"
-              draggableMarker={true}
-              onMarkerDragEnd={handleMarkerDragEnd}
-              onMapClick={handleMarkerDragEnd}
+        <Command className="border border-gray-300 rounded-[6px]" shouldFilter={false}>
+          <CommandInput
+            placeholder="Type your shop address..."
+            value={value}
+            onValueChange={setValue}
+            disabled={!ready}
+            className="text-base"
           />
-        </div>
+          <CommandList>
+            {status === "OK" && (
+              <CommandGroup>
+                {data.map(({ place_id, description }) => (
+                  <CommandItem
+                    key={place_id}
+                    onSelect={() => handleSelect(description)}
+                    className="cursor-pointer font-normal text-sm py-3"
+                  >
+                    {description}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
+            {value.length > 2 && status === "ZERO_RESULTS" && (
+              <CommandEmpty className="py-6 text-sm text-gray-400 font-normal text-center">No address found in Sri Lanka.</CommandEmpty>
+            )}
+          </CommandList>
+        </Command>
+        <p className="mt-2 text-[11px] text-gray-400 font-normal italic">
+          * Select from the dropdown for accurate map pinning. Biased to Sri Lanka.
+        </p>
       </div>
+
+      <div className="h-64 w-full rounded-[6px] overflow-hidden border border-gray-300">
+        <LeafletMap
+          centerLat={mapCenter.lat}
+          centerLng={mapCenter.lng}
+          zoom={zoom}
+          height="100%"
+          draggableMarker={true}
+          onMarkerDragEnd={handleMarkerDragEnd}
+          onMapClick={handleMarkerDragEnd}
+          showUserLocation={false}
+        />
+      </div>
+    </div>
   );
 }

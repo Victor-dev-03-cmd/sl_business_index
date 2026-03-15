@@ -96,8 +96,8 @@ export default function BusinessRequestsPage() {
       setSelectedBusiness(null);
       alert(`Business application ${variables.status} successfully!`);
     },
-    onError: () => {
-      alert('Failed to update business status');
+    onError: (err: Error) => {
+      alert(`Failed to update business status: ${err.message}`);
     }
   });
 
@@ -124,6 +124,9 @@ export default function BusinessRequestsPage() {
       queryClient.invalidateQueries({ queryKey: ['admin-businesses-active'] });
       setSelectedVerification(null);
       alert(`Verification ${variables.status} successfully!`);
+    },
+    onError: (err: Error) => {
+      alert(`Failed to update verification status: ${err.message}`);
     }
   });
 

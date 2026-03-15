@@ -8,12 +8,13 @@ DECLARE
     new_sub_id UUID;
 BEGIN
   -- Insert profile, allowing role from metadata (useful for admins/initial setup)
-  INSERT INTO public.profiles (id, full_name, email, username, role)
+  INSERT INTO public.profiles (id, full_name, email, username, avatar_url, role)
   VALUES (
     new.id, 
     COALESCE(new.raw_user_meta_data->>'full_name', ''), 
     new.email,
     COALESCE(new.raw_user_meta_data->>'username', SPLIT_PART(new.email, '@', 1)), 
+    new.raw_user_meta_data->>'avatar_url',
     COALESCE(new.raw_user_meta_data->>'role', 'customer')
   );
 

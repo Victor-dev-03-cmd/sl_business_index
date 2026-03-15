@@ -21,15 +21,17 @@ import {
   Car,
   CreditCard,
   Languages,
-  Coffee
+  Coffee,
+  Navigation
 } from 'lucide-react';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabaseClient';
 import VerifiedBadge from '@/app/components/VerifiedBadge';
 import { logEvent } from '@/lib/utils';
+import { toast } from 'sonner';
 
-const MapboxMap = dynamic(() => import('@/components/MapboxMap'), { 
+const LeafletMap = dynamic(() => import('@/components/LeafletMap'), { 
   ssr: false,
   loading: () => <div className="h-[400px] w-full bg-gray-100 animate-pulse rounded-xl flex items-center justify-center text-gray-400">Loading Map...</div>
 });
@@ -66,6 +68,7 @@ export default function BusinessDetailsClient({ business }: Props) {
         .from('reviews')
         .select('*, review_replies(reply_text, created_at)')
         .eq('business_id', business.id)
+        .eq('is_approved', true)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -101,26 +104,62 @@ export default function BusinessDetailsClient({ business }: Props) {
 
     setSubmittingReview(true);
     try {
+      let sentiment = null;
+      let is_approved = true;
+
+      // AI Moderation Call
+      try {
+        const modRes = await fetch('/api/reviews/moderate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ comment: reviewForm.comment })
+        });
+        
+        if (modRes.ok) {
+          const moderation = await modRes.json();
+          if (moderation.status === 'blocked') {
+            toast.error('Your review contains inappropriate content and cannot be posted.', {
+              description: moderation.reason
+            });
+            setSubmittingReview(false);
+            return;
+          }
+          sentiment = moderation.sentiment;
+        }
+      } catch (modError) {
+        console.error('Moderation service error, proceeding with manual flag:', modError);
+        is_approved = false; // Flag for manual review if AI fails
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
+      
       const { data, error } = await supabase
         .from('reviews')
         .insert({
           business_id: business.id,
-          user_id: user?.id,
+          user_id: user?.id || null,
           user_name: reviewForm.user_name,
           rating: reviewForm.rating,
-          comment: reviewForm.comment
+          comment: reviewForm.comment,
+          sentiment: sentiment,
+          is_approved: is_approved
         })
         .select()
         .single();
 
       if (error) throw error;
-      setReviews([data, ...reviews]);
+      
+      if (is_approved) {
+        setReviews([{ ...data, review_replies: [] }, ...reviews]);
+        toast.success('Review posted successfully!');
+      } else {
+        toast.info('Review submitted and pending manual moderation.');
+      }
+      
       setReviewForm({ rating: 5, comment: '', user_name: '' });
-      alert('Review posted successfully!');
     } catch (error) {
       console.error('Error posting review:', error);
-      alert('Failed to post review.');
+      toast.error('Failed to post review.');
     } finally {
       setSubmittingReview(false);
     }
@@ -264,19 +303,31 @@ export default function BusinessDetailsClient({ business }: Props) {
             )}
 
             <section>
-              <h2 className="text-xl text-brand-dark mb-6 flex items-center gap-3">
-                <MapPin className="text-brand-blue" /> Location & Directions
-              </h2>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl text-brand-dark flex items-center gap-3">
+                  <MapPin className="text-brand-blue" /> Location & Directions
+                </h2>
+                <a 
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${business.latitude},${business.longitude}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-brand-blue rounded-lg text-sm font-medium hover:bg-blue-100 transition-all border border-blue-100"
+                >
+                  <Navigation size={16} /> Get Directions
+                </a>
+              </div>
               <div 
                 className="rounded overflow-hidden shadow-xl border border-gray-300"
                 onClick={() => logEvent(business.id, 'location_click', business.address?.split(',').pop()?.trim())}
               >
-                <MapboxMap 
-                  userLat={business.latitude} 
-                  userLng={business.longitude}
+                <LeafletMap 
+                  centerLat={business.latitude} 
+                  centerLng={business.longitude}
                   businesses={[business]}
                   zoom={15}
                   height="450px"
+                  showUserLocation={false}
+                  enableClustering={false}
                 />
               </div>
             </section>

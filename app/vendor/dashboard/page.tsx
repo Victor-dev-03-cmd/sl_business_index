@@ -34,6 +34,12 @@ interface Activity {
   date: string;
 }
 
+interface PlanLimits {
+  advanced_analytics?: boolean;
+  featured_listing?: boolean;
+  business_limit?: number;
+}
+
 export default function VendorDashboard() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -44,7 +50,7 @@ export default function VendorDashboard() {
   });
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
-  const [planLimits, setPlanLimits] = useState<any>(null);
+  const [planLimits, setPlanLimits] = useState<PlanLimits | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'performance'>('overview');
 
   useEffect(() => {

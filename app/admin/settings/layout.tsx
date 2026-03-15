@@ -14,8 +14,8 @@ import {
 } from 'lucide-react';
 
 const settingsSubMenu = [
-  { name: 'General', href: '/admin/settings/general', icon: Globe, description: 'Site identity and metadata' },
-  { name: 'Appearance', href: '/admin/settings/appearance', icon: ImageIcon, description: 'Logo and brand assets' },
+  { name: 'General', href: '/admin/settings/general', icon: Globe, description: 'Site identity and logo' },
+  { name: 'Appearance', href: '/admin/settings/appearance', icon: ImageIcon, description: 'Typography and UI styles' },
   { name: 'Theme', href: '/admin/settings/theme', icon: Palette, description: 'Colors and platform styling' },
   { name: 'Notification', href: '/admin/settings/notification', icon: Bell, description: 'Email and push alerts' },
   { name: 'Web Blocker', href: '/admin/settings/web-blocker', icon: ShieldAlert, description: 'Spam and security rules' },

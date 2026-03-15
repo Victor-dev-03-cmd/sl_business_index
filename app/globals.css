@@ -33,6 +33,24 @@ html {
   --brand-gold-light: #c09a54;
   --brand-sand: #dfb85d;
   --brand-text: #124272;
+  --btn-radius: 6px;
+}
+
+/* Global Component Overrides */
+button:not(.avatar), 
+input,
+textarea,
+select,
+.rounded-md, 
+.rounded-lg, 
+.rounded-xl, 
+.rounded-2xl {
+  border-radius: var(--btn-radius) !important;
+}
+
+/* Profiles/Avatars must stay circular */
+.avatar, .rounded-full {
+  border-radius: 9999px !important;
 }
 
 /* Custom Theme Utilities */

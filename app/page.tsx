@@ -39,6 +39,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from '@/components/ui/skeleton';
+import { SL_TOWNS, Town } from '@/lib/towns';
+import VerifiedBadge from './components/VerifiedBadge';
+import Fuse from 'fuse.js';
 
 
 const sriLankanDistricts = [
@@ -76,12 +79,37 @@ const districtCoordinates: Record<string, { lat: number; lng: number }> = {
   "Vavuniya": { lat: 8.7514, lng: 80.4971 }
 };
 
-import { SL_TOWNS, Town } from '@/lib/towns';
-import VerifiedBadge from './components/VerifiedBadge';
-
 export default function HomePage() {
   const router = useRouter();
+  
   const [searchQuery, setSearchQuery] = useState('');
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [geoData, setGeoData] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch('/srilanka.geojson')
+      .then(res => res.json())
+      .then(data => {
+        setGeoData(data.features || []);
+      })
+      .catch(err => console.error("Error loading GeoJSON:", err));
+  }, []);
+
+  const fuse = React.useMemo(() => new Fuse(geoData, {
+    keys: ['properties.name', 'properties.category', 'properties.location', 'properties.address'],
+    threshold: 0.3,
+    distance: 100,
+  }), [geoData]);
+
+  useEffect(() => {
+    if (searchQuery.trim().length > 1) {
+      const results = fuse.search(searchQuery).slice(0, 6);
+      setSuggestions(results.map(r => r.item));
+    } else {
+      setSuggestions([]);
+    }
+  }, [searchQuery, fuse]);
+
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
@@ -357,6 +385,21 @@ export default function HomePage() {
     router.push(`/nearby?${searchParams.toString()}`);
   };
 
+  const handleSelectPlace = (feature: any) => {
+    const { name } = feature.properties;
+    const [lng, lat] = feature.geometry.coordinates;
+    
+    setSearchQuery(name);
+    setSuggestions([]);
+
+    const searchParams = new URLSearchParams();
+    searchParams.set('q', name);
+    searchParams.set('lat', lat.toString());
+    searchParams.set('lng', lng.toString());
+    searchParams.set('radius', '5000');
+    router.push(`/nearby?${searchParams.toString()}`);
+  };
+
   const handleCategoryClick = (categoryName: string) => {
     const params = new URLSearchParams();
     
@@ -393,7 +436,7 @@ export default function HomePage() {
             {/* --- New Search Bar Design --- */}
             <div className="relative max-w-2xl mx-auto space-y-4">
               {/* Main Search Input */}
-              <div className="bg-white rounded-[6px] overflow-hidden shadow-lg border border-gray-300">
+              <div className="bg-white rounded-[6px] overflow-hidden shadow-lg border border-gray-300 relative">
                 <div className="flex items-center px-5 py-4 bg-white">
                   <Search className="text-gray-400 mr-3" size={20} strokeWidth={1.5} />
                   <input
@@ -405,6 +448,26 @@ export default function HomePage() {
                       className="w-full bg-transparent outline-none text-gray-700 text-base placeholder:text-gray-400 font-normal"
                   />
                 </div>
+
+                {suggestions.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-[6px] shadow-2xl z-50 overflow-hidden text-left">
+                    {suggestions.map((feature, idx) => (
+                      <button
+                        key={feature.id || idx}
+                        onClick={() => handleSelectPlace(feature)}
+                        className="w-full px-5 py-3 hover:bg-gray-50 flex items-center gap-3 transition-colors border-b border-gray-50 last:border-0"
+                      >
+                        <MapPin size={14} className="text-gray-400" />
+                        <div className="flex flex-col">
+                          <span className="text-sm text-gray-700 font-medium">{feature.properties.name}</span>
+                          <span className="text-[10px] text-gray-400 leading-tight">
+                            {feature.properties.category} • {feature.properties.location || feature.properties.city || 'Sri Lanka'}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
             {/* Location and Action Buttons */}

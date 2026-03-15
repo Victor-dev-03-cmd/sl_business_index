@@ -21,6 +21,9 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     full_name TEXT,
     email TEXT,
     username TEXT UNIQUE,
+    avatar_url TEXT,
+    phone TEXT,
+    job_title TEXT,
     role public.user_role DEFAULT 'customer',
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now()

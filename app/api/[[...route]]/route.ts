@@ -238,6 +238,53 @@ app.post('/analytics/log', async (c) => {
   return c.json({ success: true })
 })
 
+// Review Moderation Endpoint (Groq AI)
+app.post('/reviews/moderate', async (c) => {
+  const { comment } = await c.req.json()
+  const GROQ_API_KEY = process.env.GROQ_API_KEY
+
+  if (!comment) {
+    return c.json({ error: 'Comment is required' }, 400)
+  }
+
+  if (!GROQ_API_KEY) {
+    console.error('GROQ_API_KEY is missing')
+    return c.json({ error: 'Moderation service unavailable' }, 500)
+  }
+
+  try {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${GROQ_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a strict review moderator. Analyze reviews for profanity, spam, or hate speech. Always respond in valid JSON format only.'
+          },
+          {
+            role: 'user',
+            content: `Analyze the following review for profanity, spam, or hate speech. If it is safe, return a JSON: {"status": "safe", "sentiment": "positive/negative"}. If it is unsafe, return {"status": "blocked", "reason": "reason_here"}. Review: "${comment}"`
+          }
+        ],
+        response_format: { type: 'json_object' }
+      })
+    })
+
+    const data = await response.json()
+    const moderationResult = JSON.parse(data.choices[0].message.content)
+    
+    return c.json(moderationResult)
+  } catch (error) {
+    console.error('Groq API Error:', error)
+    return c.json({ error: 'Moderation failed' }, 500)
+  }
+})
+
 export const GET = handle(app)
 export const POST = handle(app)
 export const PUT = handle(app)

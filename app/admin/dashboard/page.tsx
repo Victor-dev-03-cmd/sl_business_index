@@ -120,7 +120,7 @@ export default function AdminDashboard() {
       queryClient.invalidateQueries({ queryKey: ['featured-businesses-home'] });
       alert('Featured status updated successfully!');
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       console.error('Mutation error:', err);
       alert(`Failed to update: ${err.message || 'Unknown error'}`);
     }

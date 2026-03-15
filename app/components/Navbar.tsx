@@ -19,7 +19,7 @@ export default async function Navbar() {
     try {
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('username, full_name, role') // Fetch the user's role
+        .select('*') // Fetch the user's role and avatar
         .eq('id', user.id)
         .single();
 
@@ -31,7 +31,8 @@ export default async function Navbar() {
           ...user, 
           username: profileData?.username,
           full_name: profileData?.full_name,
-          role: profileData?.role 
+          role: profileData?.role,
+          avatar_url: profileData?.avatar_url
         };
       }
     } catch (err) {
