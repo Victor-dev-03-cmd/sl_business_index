@@ -913,34 +913,37 @@ function SplitScreenResultsContent() {
 
   const businesses = React.useMemo(() => {
     if (loadingBusinesses) return [];
-    
+
     let filtered = [...businessesData];
 
     // Filter by Category (since RPC doesn't currently filter by category)
     if (selectedCategory) {
-      filtered = filtered.filter(f => f.properties.category === selectedCategory);
+        filtered = filtered.filter(f => f.properties.category === selectedCategory);
     }
 
     // Filter by District if searchType is district
-    if (searchType === 'district' && (selectedDistrict || district)) {
-       const dist = (selectedDistrict || district).toLowerCase();
-       filtered = filtered.filter(f => 
-         f.properties.location?.toLowerCase().includes(dist) ||
-         f.properties.city?.toLowerCase().includes(dist) ||
-         f.properties.address?.toLowerCase().includes(dist)
-       );
+    if (searchType === 'district') {
+        const dist = selectedDistrict || district;
+        if (dist) {
+            const lowerDist = dist.toLowerCase();
+            filtered = filtered.filter(f =>
+                f.properties.location?.toLowerCase().includes(lowerDist) ||
+                f.properties.city?.toLowerCase().includes(lowerDist) ||
+                f.properties.address?.toLowerCase().includes(lowerDist)
+            );
+        }
     }
 
     return filtered.map(f => ({
-      ...f.properties,
-      id: f.id || f.properties.id || Math.random().toString(),
-      latitude: f.geometry.coordinates[1],
-      longitude: f.geometry.coordinates[0],
-      distanceText: (typeof f.properties.distance === 'number') 
-        ? (f.properties.distance < 10 ? 'At location' : (f.properties.distance < 1000 ? `${Math.round(f.properties.distance)} m` : `${(f.properties.distance / 1000).toFixed(1)} km`)) 
-        : 'Calculating...'
+        ...f.properties,
+        id: f.id || f.properties.id || Math.random().toString(),
+        latitude: f.geometry.coordinates[1],
+        longitude: f.geometry.coordinates[0],
+        distanceText: (typeof f.properties.distance === 'number')
+            ? (f.properties.distance < 10 ? 'At location' : (f.properties.distance < 1000 ? `${Math.round(f.properties.distance)} m` : `${(f.properties.distance / 1000).toFixed(1)} km`))
+            : 'Calculating...'
     }));
-  }, [businessesData, loadingBusinesses, selectedCategory, searchType, selectedDistrict, district]);
+}, [businessesData, loadingBusinesses, selectedCategory, searchType, selectedDistrict, district]);
 
   const loading = loadingBusinesses || locationLoading;
   const fuse = React.useMemo(() => new Fuse(businessesData, {
