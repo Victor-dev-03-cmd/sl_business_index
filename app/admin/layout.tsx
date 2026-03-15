@@ -26,6 +26,16 @@ import NotificationBell from '@/app/components/NotificationBell';
 import LiveCounter from '@/app/components/LiveCounter';
 import { supabase } from '@/lib/supabaseClient';
 
+interface AuthUser {
+  id: string;
+  email?: string;
+  full_name?: string;
+  username?: string;
+  role?: string;
+  verification_status?: string;
+  avatar_url?: string;
+}
+
 const adminMenuItems = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
   { name: 'Businesses', href: '/admin/businesses', icon: Building2 },
@@ -42,25 +52,34 @@ const adminMenuItems = [
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [user, setUser] = useState<unknown>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
 
   useEffect(() => {
     const getUser = async () => {
       try {
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
         if (authError) throw authError;
         
-        if (user) {
-          const { data: profile } = await supabase
+        if (authUser) {
+          const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('*')
-            .eq('id', user.id)
+            .eq('id', authUser.id)
             .single();
-          setUser({ ...user, ...profile });
+          
+          if (profileError) {
+             console.error('Error fetching profile:', profileError);
+          }
+
+          const currentUser: AuthUser = {
+            ...authUser,
+            ...(profile || {}),
+          };
+          
+          setUser(currentUser);
         }
       } catch (err) {
         console.error('Admin layout auth error:', err);
-        // If it's a lock timeout, we might want to retry once or just let it be
       }
     };
     getUser();
