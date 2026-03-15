@@ -22,6 +22,16 @@ import NotificationBell from '@/app/components/NotificationBell';
 import VerifiedBadge from '@/app/components/VerifiedBadge';
 import { supabase } from '@/lib/supabaseClient';
 
+interface AuthUser {
+  id: string;
+  email?: string;
+  full_name?: string;
+  username?: string;
+  role?: string;
+  verification_status?: string;
+  avatar_url?: string;
+}
+
 const vendorMenuItems = [
   { name: 'Dashboard', href: '/vendor/dashboard', icon: LayoutDashboard },
   { name: 'My Businesses', href: '/vendor/my-businesses', icon: Store },
@@ -35,21 +45,31 @@ const vendorMenuItems = [
 export default function VendorLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [user, setUser] = useState<unknown>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
 
   useEffect(() => {
     const getUser = async () => {
       try {
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
         if (authError) throw authError;
         
-        if (user) {
-          const { data: profile } = await supabase
+        if (authUser) {
+          const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('*')
-            .eq('id', user.id)
+            .eq('id', authUser.id)
             .single();
-          setUser({ ...user, ...profile });
+          
+          if (profileError) {
+             console.error('Error fetching profile:', profileError);
+          }
+
+          const currentUser: AuthUser = {
+            ...authUser,
+            ...(profile || {}),
+          };
+          
+          setUser(currentUser);
         }
       } catch (err) {
         console.error('Vendor layout auth error:', err);
@@ -149,19 +169,19 @@ export default function VendorLayout({ children }: { children: React.ReactNode }
             </div>
 
             <div className="flex items-center space-x-4 ml-4">
-              {user && (user as any).verification_status && (
+              {user && user.verification_status && (
                 <div className={`flex items-center px-3 py-1.5 rounded-full border hidden lg:flex ${
-                  (user as any).verification_status === 'verified' 
+                  user.verification_status === 'verified' 
                     ? 'bg-blue-50 text-blue-600 border-blue-100' 
-                    : (user as any).verification_status === 'pending'
+                    : user.verification_status === 'pending'
                     ? 'bg-amber-50 text-amber-600 border-amber-100'
                     : 'bg-gray-50 text-gray-500 border-gray-200'
                 }`}>
-                  {(user as any).verification_status === 'verified' && <VerifiedBadge size={14} className="mr-2" />}
+                  {user.verification_status === 'verified' && <VerifiedBadge size={14} className="mr-2" />}
                   <span className="text-[10px] font-bold uppercase tracking-wider">
-                    {(user as any).verification_status === 'verified' 
+                    {user.verification_status === 'verified' 
                       ? 'Verified Vendor' 
-                      : `Verification: ${(user as any).verification_status}`}
+                      : `Verification: ${user.verification_status}`}
                   </span>
                 </div>
               )}
