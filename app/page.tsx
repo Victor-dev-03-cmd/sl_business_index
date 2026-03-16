@@ -84,7 +84,23 @@ export default function HomePage() {
   
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [businessSuggestions, setBusinessSuggestions] = useState<any[]>([]);
   const [geoData, setGeoData] = useState<any[]>([]);
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const [searchMode, setSearchMode] = useState<'location' | 'nearby' | null>(null);
+  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [isFetchingLocation, setIsFetchingLocation] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
 
   useEffect(() => {
     fetch('/srilanka.geojson')
@@ -102,27 +118,50 @@ export default function HomePage() {
   }), [geoData]);
 
   useEffect(() => {
-    if (searchQuery.trim().length > 1) {
-      const results = fuse.search(searchQuery).slice(0, 6);
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    if (debouncedSearchQuery.trim().length > 1) {
+      // 1. Get Location Suggestions from GeoJSON
+      const results = fuse.search(debouncedSearchQuery).slice(0, 4);
       setSuggestions(results.map(r => r.item));
+
+      // 2. Get Business Suggestions from Database
+      const fetchBusinesses = async () => {
+        try {
+          // If we have user location, use RPC for nearby businesses
+          if (userCoords) {
+            const { data, error } = await supabase.rpc('get_nearby_businesses', {
+              user_lat: userCoords.lat,
+              user_lng: userCoords.lng,
+              search_query: debouncedSearchQuery,
+              dist_limit: 10000 // 10km for autocomplete
+            });
+            if (data) setBusinessSuggestions(data.slice(0, 4));
+          } else {
+            // Otherwise just search globally
+            const { data, error } = await supabase
+              .from('businesses')
+              .select('id, name, category, address, image_url, logo_url, rating, latitude, longitude')
+              .ilike('name', `%${debouncedSearchQuery}%`)
+              .eq('status', 'approved')
+              .limit(4);
+            if (data) setBusinessSuggestions(data);
+          }
+        } catch (err) {
+          console.error("Error fetching business suggestions:", err);
+        }
+      };
+      fetchBusinesses();
     } else {
       setSuggestions([]);
+      setBusinessSuggestions([]);
     }
-  }, [searchQuery, fuse]);
-
-  const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
-  const [searchMode, setSearchMode] = useState<'location' | 'nearby' | null>(null);
-  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [isFetchingLocation, setIsFetchingLocation] = useState(false);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
-  const [isPaused, setIsPaused] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
+  }, [debouncedSearchQuery, fuse, userCoords]);
 
   const { data: categories = [], isLoading: categoriesLoading } = useQuery({
     queryKey: ['categories-home'],
@@ -443,29 +482,77 @@ export default function HomePage() {
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
+                      onFocus={() => setIsSearchFocused(true)}
+                      onBlur={() => {
+                        // Delay to allow clicking suggestions
+                        setTimeout(() => setIsSearchFocused(false), 200);
+                      }}
                       onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                       placeholder="Service or Business... (e.g. Hospital in Colombo)"
                       className="w-full bg-transparent outline-none text-gray-700 text-base placeholder:text-gray-400 font-normal"
                   />
                 </div>
 
-                {suggestions.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-[6px] shadow-2xl z-50 overflow-hidden text-left">
-                    {suggestions.map((feature, idx) => (
-                      <button
-                        key={feature.id || idx}
-                        onClick={() => handleSelectPlace(feature)}
-                        className="w-full px-5 py-3 hover:bg-gray-50 flex items-center gap-3 transition-colors border-b border-gray-50 last:border-0"
-                      >
-                        <MapPin size={14} className="text-gray-400" />
-                        <div className="flex flex-col">
-                          <span className="text-sm text-gray-700 font-medium">{feature.properties.name}</span>
-                          <span className="text-[10px] text-gray-400 leading-tight">
-                            {feature.properties.category} • {feature.properties.location || feature.properties.city || 'Sri Lanka'}
-                          </span>
-                        </div>
-                      </button>
-                    ))}
+                {isSearchFocused && (suggestions.length > 0 || businessSuggestions.length > 0) && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-[8px] shadow-2xl z-50 overflow-hidden text-left divide-y divide-gray-100 max-h-[400px] overflow-y-auto">
+                    {/* Business Section */}
+                    {businessSuggestions.length > 0 && (
+                      <div className="p-2">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] px-3 py-2">Businesses</p>
+                        {businessSuggestions.map((biz) => (
+                          <button
+                            key={biz.id}
+                            onClick={() => {
+                              router.push(`/business/${biz.id}`);
+                            }}
+                            className="w-full px-4 py-2.5 hover:bg-gray-50 flex items-center gap-3 transition-colors rounded-[4px]"
+                          >
+                            <div className="w-10 h-10 rounded bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-100">
+                              {biz.logo_url || biz.image_url ? (
+                                <img src={biz.logo_url || biz.image_url} alt={biz.name} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-gray-300">
+                                  <Building2 size={16} />
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-sm text-gray-700 font-semibold truncate">{biz.name}</span>
+                              <span className="text-[11px] text-gray-400 truncate">
+                                {biz.category} • {biz.address?.split(',').pop()?.trim()}
+                              </span>
+                            </div>
+                            <div className="ml-auto flex items-center gap-1 shrink-0">
+                                <Star size={10} className="text-brand-gold fill-brand-gold" />
+                                <span className="text-[11px] font-bold text-gray-500">{biz.rating || 'New'}</span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Location Section */}
+                    {suggestions.length > 0 && (
+                      <div className="p-2">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] px-3 py-2">Locations</p>
+                        {suggestions.map((feature, idx) => (
+                          <button
+                            key={feature.id || idx}
+                            onClick={() => handleSelectPlace(feature)}
+                            className="w-full px-4 py-3 hover:bg-gray-50 flex items-center gap-3 transition-colors rounded-[4px]"
+                          >
+                            <MapPin size={16} className="text-brand-dark" />
+                            <div className="flex flex-col">
+                              <span className="text-sm text-gray-700 font-medium">{feature.properties.name}</span>
+                              <span className="text-[10px] text-gray-400 leading-tight">
+                                {feature.properties.location || feature.properties.city || 'Sri Lanka'}
+                              </span>
+                            </div>
+                            <ChevronRight size={14} className="ml-auto text-gray-300" />
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
