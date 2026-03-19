@@ -666,9 +666,8 @@ function SplitScreenResultsContent() {
     return r < 100 ? r * 1000 : r;
   }, [initialRadius]);
 
-  const [selectedRadius, setSelectedRadius] = useState(radius);
   const [visualRadius, setVisualRadius] = useState(radius);
-  const memoizedVisualRadius = useMemo(() => [visualRadius], [visualRadius]);
+  const [selectedRadius, setSelectedRadius] = useState(radius);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(initialQuery);
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
@@ -732,9 +731,11 @@ function SplitScreenResultsContent() {
     }
   }, [lat, lng, district, findMyLocation]);
 
-  const formatDistance = (meters: number): string => {
-    if (meters < 1000) return `${Math.round(meters)} m`;
-    const km = meters / 1000;
+  const formatDistance = (meters: any): string => {
+    if (meters === undefined || meters === null || isNaN(Number(meters))) return '0 m';
+    const m = Number(meters);
+    if (m < 1000) return `${Math.round(m)} m`;
+    const km = m / 1000;
     // Show .5 if it's not a whole number (e.g., 1.5 km)
     return km % 1 === 0 ? `${km.toFixed(0)} km` : `${km.toFixed(1)} km`;
   };
@@ -888,7 +889,7 @@ function SplitScreenResultsContent() {
         user_lat: lat,
         user_lng: lng,
         search_query: debouncedSearchQuery || '',
-        dist_limit: selectedRadius
+        dist_limit: isNaN(selectedRadius) ? 5000 : selectedRadius
       });
 
       if (error) throw error;
@@ -1073,12 +1074,20 @@ function SplitScreenResultsContent() {
                   <span className="text-xs text-brand-dark bg-blue-50 px-2 py-0.5 rounded">{formatDistance(visualRadius)}</span>
                 </div>
                 <Slider
-                  value={memoizedVisualRadius}
+                  value={[visualRadius]}
                   max={50000}
                   min={500}
                   step={500}
-                  onValueChange={(value) => setVisualRadius(value[0])}
-                  onValueCommit={(value) => setSelectedRadius(value[0])}
+                  onValueChange={(value) => {
+                    if (value && value.length > 0) {
+                      setVisualRadius(value[0]);
+                    }
+                  }}
+                  onValueCommit={(value) => {
+                    if (value && value.length > 0) {
+                      setSelectedRadius(value[0]);
+                    }
+                  }}
                   className="py-4"
                 />
               </DropdownMenuContent>
@@ -1414,8 +1423,10 @@ function SplitScreenResultsContent() {
                 onMarkerClick={(business) => {
                   setSelectedBusiness(business);
                 }}
-                onMapMove={() => {
+                onMapMove={(lat, lng, zoom) => {
                   setIsMapManual(true);
+                  setMapCenter({ lat, lng });
+                  setMapZoom(zoom);
                 }}
               />
 
@@ -1424,8 +1435,11 @@ function SplitScreenResultsContent() {
                 <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[1000]">
                   <button 
                     onClick={() => {
-                      // Logic handled by useMemo
                       setIsMapManual(false);
+                      setCurrentLat(mapCenter.lat.toString());
+                      setCurrentLng(mapCenter.lng.toString());
+                      setSearchType('location');
+                      // The useQuery will automatically refetch because its key includes currentLat/currentLng
                     }}
                     className="bg-brand-dark text-white px-6 py-2.5 rounded-full shadow-2xl hover:bg-brand-blue transition-all font-normal flex items-center gap-2 border-2 border-white animate-in zoom-in-95"
                   >

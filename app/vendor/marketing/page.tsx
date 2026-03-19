@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import MarketingDesignEditor from './components/MarketingDesignEditor';
+import PromotionUploadForm from './components/PromotionUploadForm';
 import { 
   Calendar, 
   Share2, 
@@ -16,7 +17,8 @@ import {
   Loader2,
   CheckCircle2,
   Clock,
-  Sparkles
+  Sparkles,
+  Image as ImageIcon
 } from 'lucide-react';
 
 interface Business {
@@ -27,17 +29,21 @@ interface Business {
 interface Campaign {
   id: string;
   business_id: string;
-  banner_text: string;
-  banner_color: string;
-  platforms: string[];
+  banner_text?: string;
+  banner_color?: string;
+  image_url?: string;
+  caption?: string;
+  platforms?: string[];
+  social_platforms?: string[];
   scheduled_at: string | null;
   status: string;
   created_at: string;
   businesses: { name: string };
+  type: 'banner' | 'image';
 }
 
 export default function MarketingPage() {
-  const [activeTab, setActiveTab] = useState<'create' | 'schedule' | 'history'>('create');
+  const [activeTab, setActiveTab] = useState<'create' | 'image' | 'schedule' | 'history'>('create');
   const [showEditor, setShowEditor] = useState(false);
   const [bannerText, setBannerText] = useState('Special Offer!');
   const [bannerColor, setBannerColor] = useState('bg-emerald-600');
@@ -78,9 +84,17 @@ export default function MarketingPage() {
         .select('*, businesses(name)')
         .order('created_at', { ascending: false });
       
-      if (campaignData) {
-        setCampaigns(campaignData);
-      }
+      const { data: promotionData } = await supabase
+        .from('promotions')
+        .select('*, businesses(name)')
+        .order('created_at', { ascending: false });
+
+      const combined: Campaign[] = [
+        ...(campaignData || []).map(c => ({ ...c, type: 'banner' as const })),
+        ...(promotionData || []).map(p => ({ ...p, type: 'image' as const }))
+      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      
+      setCampaigns(combined);
     } catch (error) {
       console.error('Error fetching marketing data:', error);
     } finally {
@@ -160,11 +174,21 @@ export default function MarketingPage() {
             onClick={() => setActiveTab('create')}
             className={`whitespace-nowrap py-4 px-1 border-b-2 text-sm flex items-center gap-2 ${
               activeTab === 'create'
-                ? 'botext-brand-dark text-brand-dark'
+                ? 'border-brand-dark text-brand-dark'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
             <Palette size={18} /> Banner Creator
+          </button>
+          <button
+            onClick={() => setActiveTab('image')}
+            className={`whitespace-nowrap py-4 px-1 border-b-2 text-sm flex items-center gap-2 ${
+              activeTab === 'image'
+                ? 'border-brand-dark text-brand-dark'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <ImageIcon size={18} /> Image Promotion
           </button>
           <button
             onClick={() => setActiveTab('schedule')}
@@ -192,9 +216,19 @@ export default function MarketingPage() {
       {/* Content Area */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* Left: Editor / Controls */}
+        {/* Left: Editor / Controls / Upload Form */}
         <div className="lg:col-span-1 space-y-6">
-          {activeTab !== 'history' && (
+          {activeTab === 'image' && (
+            <PromotionUploadForm 
+              businesses={businesses} 
+              onSuccess={() => {
+                setActiveTab('history');
+                fetchData();
+              }} 
+            />
+          )}
+
+          {activeTab === 'create' && (
             <div className="bg-white p-6 rounded border border-gray-300 shadow-sm space-y-6">
               <div>
                 <label className="block text-sm text-brand-dark mb-2">Target Business</label>
@@ -252,21 +286,33 @@ export default function MarketingPage() {
                     <div key={c.id} className="p-4 hover:bg-gray-50 transition-colors">
                       <div className="flex justify-between items-start mb-2">
                         <span className="text-xs font-bold text-gray-900 truncate pr-2">{c.businesses?.name}</span>
-                        {c.status === 'posted' ? (
-                          <span className="text-[10px] bg-green-50 text-green-700 px-1.5 py-0.5 rounded flex items-center gap-1 border border-green-100">
-                            <CheckCircle2 size={10} /> Live
+                        <div className="flex items-center gap-1">
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded border ${
+                            c.type === 'banner' ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-purple-50 text-purple-700 border-purple-100'
+                          }`}>
+                            {c.type}
                           </span>
-                        ) : (
-                          <span className="text-[10px] bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded flex items-center gap-1 border border-amber-100">
-                            <Clock size={10} /> {c.status}
-                          </span>
-                        )}
+                          {c.status === 'posted' || c.status === 'approved' ? (
+                            <span className="text-[10px] bg-green-50 text-green-700 px-1.5 py-0.5 rounded flex items-center gap-1 border border-green-100">
+                              <CheckCircle2 size={10} /> Live
+                            </span>
+                          ) : (
+                            <span className="text-[10px] bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded flex items-center gap-1 border border-amber-100">
+                              <Clock size={10} /> {c.status}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <p className="text-sm text-gray-600 mb-2">&quot;{c.banner_text}&quot;</p>
+                      {c.type === 'image' && c.image_url && (
+                        <div className="aspect-video rounded bg-gray-100 mb-2 overflow-hidden border border-gray-200">
+                          <img src={c.image_url} alt="Promotion" className="w-full h-full object-cover" />
+                        </div>
+                      )}
+                      <p className="text-sm text-gray-600 mb-2">&quot;{c.type === 'banner' ? c.banner_text : c.caption}&quot;</p>
                       <div className="flex justify-between items-center">
                         <span className="text-[10px] text-gray-400">{new Date(c.created_at).toLocaleDateString()}</span>
                         <div className="flex gap-1">
-                          {c.platforms?.map((p: string) => (
+                          {(c.platforms || c.social_platforms)?.map((p: string) => (
                             <div key={p} className="w-4 h-4 text-gray-400">
                               {p === 'facebook' && <Facebook size={12} />}
                               {p === 'instagram' && <Instagram size={12} />}
@@ -282,8 +328,8 @@ export default function MarketingPage() {
             </div>
           )}
 
-          {/* Social Share Controls (Only for create/schedule) */}
-          {activeTab !== 'history' && (
+          {/* Social Share Controls (Only for banner creator/schedule) */}
+          {(activeTab === 'create' || activeTab === 'schedule') && (
             <div className="bg-white p-6 rounded border border-gray-300 shadow-sm space-y-4">
               <h3 className="text-sm text-brand-dark">Share to Social Media</h3>
               <div className="flex gap-3">

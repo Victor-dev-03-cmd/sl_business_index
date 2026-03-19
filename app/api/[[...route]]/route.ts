@@ -285,6 +285,125 @@ app.post('/reviews/moderate', async (c) => {
   }
 })
 
+// Social Media Publishing Endpoint (Meta Graph API)
+app.post('/social/publish', async (c) => {
+  const supabase = c.get('supabase')
+  const user = c.get('user')
+  
+  // Security check: Only admins/CEO can publish to social media
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user?.id)
+    .single()
+
+  if (!profile || !['admin', 'ceo'].includes(profile.role)) {
+    return c.json({ error: 'Unauthorized. Admin access required.' }, 403)
+  }
+
+  const { promotionId } = await c.req.json()
+  if (!promotionId) {
+    return c.json({ error: 'promotionId is required' }, 400)
+  }
+
+  // 1. Fetch promotion data
+  const { data: promotion, error: fetchError } = await supabase
+    .from('promotions')
+    .select('*')
+    .eq('id', promotionId)
+    .single()
+
+  if (fetchError || !promotion) {
+    return c.json({ error: 'Promotion not found' }, 404)
+  }
+
+  const { image_url, caption, social_platforms } = promotion
+  const FB_PAGE_ACCESS_TOKEN = process.env.FB_PAGE_ACCESS_TOKEN
+  const FB_PAGE_ID = process.env.FB_PAGE_ID
+  const IG_BUSINESS_ACCOUNT_ID = process.env.IG_BUSINESS_ACCOUNT_ID
+
+  const results: any = {
+    facebook: { success: false },
+    instagram: { success: false }
+  }
+
+  // 2. Publish to Facebook
+  if (social_platforms.includes('facebook')) {
+    if (!FB_PAGE_ACCESS_TOKEN || !FB_PAGE_ID) {
+      results.facebook = { success: false, error: 'Facebook API configuration missing' }
+    } else {
+      try {
+        const fbUrl = `https://graph.facebook.com/v21.0/${FB_PAGE_ID}/photos`
+        const fbResponse = await fetch(fbUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            url: image_url,
+            caption: caption,
+            access_token: FB_PAGE_ACCESS_TOKEN
+          })
+        })
+        const fbData = await fbResponse.json()
+        if (fbData.id) {
+          results.facebook = { success: true, id: fbData.id }
+        } else {
+          results.facebook = { success: false, error: fbData.error?.message || 'Unknown error' }
+        }
+      } catch (err: any) {
+        results.facebook = { success: false, error: err.message }
+      }
+    }
+  }
+
+  // 3. Publish to Instagram
+  if (social_platforms.includes('instagram')) {
+    if (!FB_PAGE_ACCESS_TOKEN || !IG_BUSINESS_ACCOUNT_ID) {
+      results.instagram = { success: false, error: 'Instagram API configuration missing' }
+    } else {
+      try {
+        // Step 1: Create media container
+        const igContainerUrl = `https://graph.facebook.com/v21.0/${IG_BUSINESS_ACCOUNT_ID}/media`
+        const containerResponse = await fetch(igContainerUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            image_url: image_url,
+            caption: caption,
+            access_token: FB_PAGE_ACCESS_TOKEN
+          })
+        })
+        const containerData = await containerResponse.json()
+        
+        if (containerData.id) {
+          // Step 2: Publish media
+          const igPublishUrl = `https://graph.facebook.com/v21.0/${IG_BUSINESS_ACCOUNT_ID}/media_publish`
+          const publishResponse = await fetch(igPublishUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              creation_id: containerData.id,
+              access_token: FB_PAGE_ACCESS_TOKEN
+            })
+          })
+          const publishData = await publishResponse.json()
+          
+          if (publishData.id) {
+            results.instagram = { success: true, id: publishData.id }
+          } else {
+            results.instagram = { success: false, error: publishData.error?.message || 'Publishing failed' }
+          }
+        } else {
+          results.instagram = { success: false, error: containerData.error?.message || 'Container creation failed' }
+        }
+      } catch (err: any) {
+        results.instagram = { success: false, error: err.message }
+      }
+    }
+  }
+
+  return c.json({ success: true, results })
+})
+
 export const GET = handle(app)
 export const POST = handle(app)
 export const PUT = handle(app)

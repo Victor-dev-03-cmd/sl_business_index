@@ -20,11 +20,13 @@ import {
   Clock,
   ExternalLink,
   ShieldCheck,
-  Download
+  Download,
+  Loader2
 } from 'lucide-react';
 import Image from 'next/image';
 import { Business } from '@/lib/types';
 import { VerificationWithBusiness } from '@/lib/admin-types';
+import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
@@ -33,9 +35,10 @@ import {
 export default function BusinessRequestsPage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
-  const [activeTab, setActiveTab] = useState<'registrations' | 'verifications'>('registrations');
+  const [activeTab, setActiveTab] = useState<'registrations' | 'verifications' | 'promotions'>('registrations');
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
   const [selectedVerification, setSelectedVerification] = useState<VerificationWithBusiness | null>(null);
+  const [selectedPromotion, setSelectedPromotion] = useState<any | null>(null);
 
   const [selectedIds, setSelectedIds] = useState<(string | number)[]>([]);
 
@@ -73,6 +76,62 @@ export default function BusinessRequestsPage() {
     enabled: activeTab === 'verifications'
   });
 
+  // Promotions Query
+  const { data: promotions = [], isLoading: promotionsLoading } = useQuery({
+    queryKey: ['admin-promotions-pending'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('promotions')
+        .select('*, businesses(name, logo_url)')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data as any[];
+    },
+    staleTime: 5 * 60 * 1000,
+    enabled: activeTab === 'promotions'
+  });
+
+  const updatePromotionMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string, status: 'approved' | 'rejected' }) => {
+      // 1. Update status in Supabase
+      const { error } = await supabase
+        .from('promotions')
+        .update({ status })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // 2. If approved, trigger social media publish
+      if (status === 'approved') {
+        const response = await fetch('/api/social/publish', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ promotionId: id })
+        });
+        
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to publish to social media');
+        }
+        return result;
+      }
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-promotions-pending'] });
+      setSelectedPromotion(null);
+      if (variables.status === 'approved') {
+        toast.success('Promotion Approved & Shared to Social Media!');
+      } else {
+        toast.success('Promotion rejected successfully');
+      }
+    },
+    onError: (err: Error) => {
+      toast.error(`Error: ${err.message}`);
+    }
+  });
+
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, owner_id, status }: { id: string | number, owner_id: string, status: 'approved' | 'rejected' }) => {
       const { error: businessError } = await supabase
@@ -94,10 +153,10 @@ export default function BusinessRequestsPage() {
       queryClient.invalidateQueries({ queryKey: ['admin-businesses-active'] });
       queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
       setSelectedBusiness(null);
-      alert(`Business application ${variables.status} successfully!`);
+      toast.success(`Business application ${variables.status} successfully!`);
     },
     onError: (err: Error) => {
-      alert(`Failed to update business status: ${err.message}`);
+      toast.error(`Failed to update business status: ${err.message}`);
     }
   });
 
@@ -123,10 +182,10 @@ export default function BusinessRequestsPage() {
       queryClient.invalidateQueries({ queryKey: ['admin-verifications-pending'] });
       queryClient.invalidateQueries({ queryKey: ['admin-businesses-active'] });
       setSelectedVerification(null);
-      alert(`Verification ${variables.status} successfully!`);
+      toast.success(`Verification ${variables.status} successfully!`);
     },
     onError: (err: Error) => {
-      alert(`Failed to update verification status: ${err.message}`);
+      toast.error(`Failed to update verification status: ${err.message}`);
     }
   });
 
@@ -159,7 +218,7 @@ export default function BusinessRequestsPage() {
       .in('id', selectedIds);
 
     if (error) {
-      alert(`Error updating ${selectedIds.length} businesses`);
+      toast.error(`Error updating ${selectedIds.length} businesses`);
     } else {
       if (status === 'approved') {
         const ownerIds = requests
@@ -176,7 +235,7 @@ export default function BusinessRequestsPage() {
       setSelectedIds([]);
       queryClient.invalidateQueries({ queryKey: ['admin-businesses-pending'] });
       queryClient.invalidateQueries({ queryKey: ['admin-businesses-active'] });
-      alert(`Successfully ${status} ${selectedIds.length} applications`);
+      toast.success(`Successfully ${status} ${selectedIds.length} applications`);
     }
   };
 
@@ -189,6 +248,11 @@ export default function BusinessRequestsPage() {
   const filteredVerifications = verifications.filter(v => 
     v.businesses.name.toLowerCase().includes(search.toLowerCase()) || 
     v.businesses.owner_name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const filteredPromotions = promotions.filter(p => 
+    p.businesses.name.toLowerCase().includes(search.toLowerCase()) ||
+    (p.caption || '').toLowerCase().includes(search.toLowerCase())
   );
 
   const renderSkeleton = () => (
@@ -237,6 +301,13 @@ export default function BusinessRequestsPage() {
             Verification Requests ({verifications.length})
             {activeTab === 'verifications' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-brand-dark animate-in fade-in" />}
           </button>
+          <button 
+            onClick={() => { setActiveTab('promotions'); setSelectedIds([]); }}
+            className={`pb-4 text-sm font-bold transition-all relative ${activeTab === 'promotions' ? 'text-brand-dark' : 'text-gray-400 hover:text-gray-600'}`}
+          >
+            Promotion Requests ({promotions.length})
+            {activeTab === 'promotions' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-brand-dark animate-in fade-in" />}
+          </button>
         </div>
 
         {/* Professional Action Bar */}
@@ -256,7 +327,11 @@ export default function BusinessRequestsPage() {
 
           <div className="flex items-center gap-3 w-full md:w-auto justify-end">
             <button 
-              onClick={() => activeTab === 'registrations' ? refetch() : queryClient.invalidateQueries({ queryKey: ['admin-verifications-pending'] })}
+              onClick={() => {
+                if (activeTab === 'registrations') refetch();
+                else if (activeTab === 'verifications') queryClient.invalidateQueries({ queryKey: ['admin-verifications-pending'] });
+                else queryClient.invalidateQueries({ queryKey: ['admin-promotions-pending'] });
+              }}
               className="p-2.5 text-gray-500 hover:text-brand-blue hover:bg-brand-blue/5 rounded-[6px] transition-all border border-gray-300 bg-white shadow-sm hover:border-brand-blue/20"
               title="Refresh Data"
             >
@@ -406,7 +481,7 @@ export default function BusinessRequestsPage() {
                 </div>
               )}
             </>
-          ) : (
+          ) : activeTab === 'verifications' ? (
             <>
               {verificationsLoading ? (
                 renderSkeleton()
@@ -457,6 +532,90 @@ export default function BusinessRequestsPage() {
                                 className="px-3 py-1.5 bg-white border border-gray-300 rounded-[6px] text-xs hover:bg-gray-50 flex items-center gap-2"
                               >
                                 <Eye size={14} /> Review Documents
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              {promotionsLoading ? (
+                renderSkeleton()
+              ) : filteredPromotions.length === 0 ? (
+                renderEmptyState('No pending promotion requests found.')
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-gray-200 border-b border-gray-300">
+                        <th className="px-8 py-5 text-[11px] text-gray-800 uppercase tracking-[0.2em]">Business</th>
+                        <th className="px-8 py-5 text-[11px] text-gray-800 uppercase tracking-[0.2em]">Promotion</th>
+                        <th className="px-8 py-5 text-[11px] text-gray-800 uppercase tracking-[0.2em]">Platforms</th>
+                        <th className="px-8 py-5 text-[11px] text-gray-800 uppercase tracking-[0.2em]">Submitted</th>
+                        <th className="px-8 py-5 text-[11px] text-gray-800 uppercase tracking-[0.2em] text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {filteredPromotions.map((p) => (
+                        <tr key={p.id} className="group hover:bg-gray-50/50 transition-colors">
+                          <td className="px-8 py-6">
+                            <div className="flex items-center gap-4">
+                              <div className="h-12 w-12 relative rounded-[3px] bg-gray-50 border border-gray-200 overflow-hidden flex-shrink-0 flex items-center justify-center shadow-sm">
+                                {p.businesses.logo_url ? (
+                                  <Image src={p.businesses.logo_url} alt="" fill className="object-cover" />
+                                ) : (
+                                  <Building2 className="h-6 w-6 text-gray-300" strokeWidth={1.5} />
+                                )}
+                              </div>
+                              <p className="text-brand-blue font-medium">{p.businesses.name}</p>
+                            </div>
+                          </td>
+                          <td className="px-8 py-6">
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 relative rounded border border-gray-200 overflow-hidden flex-shrink-0">
+                                <Image src={p.image_url} alt="" fill className="object-cover" />
+                              </div>
+                              <p className="text-xs text-gray-600 truncate max-w-[200px]">{p.caption}</p>
+                            </div>
+                          </td>
+                          <td className="px-8 py-6">
+                            <div className="flex gap-1">
+                              {p.social_platforms.map((plat: string) => (
+                                <span key={plat} className="text-[10px] bg-gray-100 px-1.5 py-0.5 rounded capitalize">
+                                  {plat}
+                                </span>
+                              ))}
+                            </div>
+                          </td>
+                          <td className="px-8 py-6 text-gray-500">
+                            {new Date(p.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="px-8 py-6 text-right">
+                            <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button 
+                                onClick={() => {
+                                  setSelectedPromotion(p);
+                                  updatePromotionMutation.mutate({ id: p.id, status: 'approved' });
+                                }}
+                                className="p-2 hover:bg-emerald-50 border border-transparent hover:border-emerald-200 rounded-[8px] transition-all text-emerald-600"
+                                title="Approve & Publish"
+                              >
+                                {updatePromotionMutation.isPending && selectedPromotion?.id === p.id ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle size={18} />}
+                              </button>
+                              <button 
+                                onClick={() => {
+                                  setSelectedPromotion(p);
+                                  updatePromotionMutation.mutate({ id: p.id, status: 'rejected' });
+                                }}
+                                className="p-2 hover:bg-red-50 border border-transparent hover:border-red-200 rounded-[8px] transition-all text-red-600"
+                                title="Reject"
+                              >
+                                <XCircle size={18} />
                               </button>
                             </div>
                           </td>

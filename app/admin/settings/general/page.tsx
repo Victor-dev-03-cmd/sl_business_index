@@ -55,9 +55,12 @@ export default function GeneralSettingsPage() {
 
   const saveMutation = useMutation({
     mutationFn: async (newSettings: SiteSettings) => {
+      // Remove id from the update payload
+      const { id, ...updateData } = newSettings;
+      
       const { error } = await supabase
         .from('site_settings')
-        .update(newSettings)
+        .update(updateData)
         .eq('id', 1);
 
       if (error) throw error;
@@ -79,12 +82,15 @@ export default function GeneralSettingsPage() {
     try {
       setIsUploading(true);
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = `brand/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('business-logos')
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
 
       if (uploadError) throw uploadError;
 

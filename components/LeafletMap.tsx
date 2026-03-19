@@ -48,28 +48,44 @@ interface LeafletMapProps {
   showUserLocation?: boolean;
 }
 
-// Custom SVG Marker Icon - Pin Shape
-const customIcon = L.divIcon({
+// Custom SVG Marker Icon - Pin Shape with Dynamic Color
+const getCustomIcon = (color: string = '#EA4335') => L.divIcon({
   html: `<div class="marker-pin-container">
-          <div class="marker-pin shadow-lg">
+          <div class="marker-pin shadow-lg" style="background-color: ${color};">
             <div class="marker-pin-inner"></div>
           </div>
          </div>`,
   className: 'custom-leaflet-icon',
-  iconSize: [32, 42],
-  iconAnchor: [16, 42],
-  popupAnchor: [0, -42],
+  iconSize: [30, 40],
+  iconAnchor: [15, 40],
+  popupAnchor: [0, -40],
 });
 
-// User Location Icon
+// Category to Color Mapping (Google Maps style)
+const getCategoryColor = (category: string = ''): string => {
+  const cat = category.toLowerCase();
+  if (cat.includes('food') || cat.includes('restaurant') || cat.includes('dining') || cat.includes('cafe')) return '#FF9800'; // Orange
+  if (cat.includes('health') || cat.includes('medical') || cat.includes('doctor') || cat.includes('hospital')) return '#F44336'; // Red
+  if (cat.includes('hotel') || cat.includes('accommodation') || cat.includes('resort')) return '#9C27B0'; // Purple
+  if (cat.includes('shopping') || cat.includes('retail') || cat.includes('store')) return '#4CAF50'; // Green
+  if (cat.includes('education') || cat.includes('school') || cat.includes('university')) return '#2196F3'; // Blue
+  if (cat.includes('finance') || cat.includes('bank') || cat.includes('legal')) return '#607D8B'; // Blue Grey
+  if (cat.includes('travel') || cat.includes('transport') || cat.includes('taxi')) return '#03A9F4'; // Light Blue
+  if (cat.includes('beauty') || cat.includes('salon') || cat.includes('spa')) return '#E91E63'; // Pink
+  if (cat.includes('agriculture') || cat.includes('farming')) return '#8BC34A'; // Light Green
+  if (cat.includes('construction') || cat.includes('hardware')) return '#795548'; // Brown
+  return '#EA4335'; // Default Google Red
+};
+
+// User Location Icon (Google Style Blue Dot)
 const userIcon = L.divIcon({
-  html: `<div class="relative flex h-5 w-5">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-5 w-5 bg-blue-600 border-2 border-white shadow-sm"></span>
+  html: `<div class="relative flex h-6 w-6">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-40"></span>
+          <span class="relative inline-flex rounded-full h-4 w-4 m-1 bg-[#4285F4] border-2 border-white shadow-md"></span>
          </div>`,
   className: 'user-location-icon',
-  iconSize: [20, 20],
-  iconAnchor: [10, 10],
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
 });
 
 function MapUpdater({ lat, lng, zoom }: { lat: number, lng: number, zoom: number }) {
@@ -164,8 +180,10 @@ export default React.memo(function LeafletMap({
         preferCanvas={true}
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+          attribution='&copy; Google Maps'
+          url="https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
+          subdomains={['mt0', 'mt1', 'mt2', 'mt3']}
+          maxZoom={20}
         />
         
         <ZoomControl position="bottomright" />
@@ -176,7 +194,7 @@ export default React.memo(function LeafletMap({
         {draggableMarker && (
           <Marker 
             position={center} 
-            icon={customIcon}
+            icon={getCustomIcon()}
             draggable={true}
             eventHandlers={eventHandlers}
           />
@@ -221,11 +239,13 @@ export default React.memo(function LeafletMap({
               
               if (!coords[1] || !coords[0]) return null;
 
+              const markerColor = getCategoryColor(props.category);
+
               return (
                 <Marker 
                   key={biz.id || idx} 
                   position={[coords[1], coords[0]]}
-                  icon={customIcon}
+                  icon={getCustomIcon(markerColor)}
                   eventHandlers={{
                     click: () => onMarkerClick?.(biz)
                   }}
@@ -278,14 +298,56 @@ export default React.memo(function LeafletMap({
             const coords = biz.geometry?.coordinates || [biz.longitude, biz.latitude];
             const props = biz.properties || biz;
             if (!coords[1] || !coords[0]) return null;
+            
+            const markerColor = getCategoryColor(props.category);
+            
             return (
               <Marker 
                 key={biz.id || idx} 
                 position={[coords[1], coords[0]]}
-                icon={customIcon}
+                icon={getCustomIcon(markerColor)}
+                eventHandlers={{
+                  click: () => onMarkerClick?.(biz)
+                }}
               >
-                <Popup>
-                  {/* ... same popup ... */}
+                <Popup className="business-popup">
+                  <div className="w-64 p-0">
+                    {props.image_url && (
+                      <div className="h-28 w-full relative mb-2">
+                        <img 
+                          src={props.image_url} 
+                          alt={props.name} 
+                          className="w-full h-full object-cover rounded-t-md"
+                        />
+                      </div>
+                    )}
+                    <div className="p-3">
+                      <div className="flex justify-between items-start mb-1 gap-2">
+                        <h3 className="font-bold text-gray-900 text-sm leading-tight line-clamp-2 flex items-center gap-1">
+                          {props.name}
+                          {(props.is_verified || props.verification_status === 'verified') && props.can_show_badge && <VerifiedBadge size={10} />}
+                        </h3>
+                        {(props.rating || 0) > 0 && (
+                          <div className="flex items-center gap-1 bg-amber-50 px-1.5 py-0.5 rounded-[4px] shrink-0">
+                            <Star size={10} className="text-amber-500 fill-amber-500" />
+                            <span className="text-[10px] font-bold text-amber-700">{props.rating}</span>
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-[#2a7db4] font-medium mb-1 uppercase tracking-wider">{props.category}</p>
+                      <p className="text-[11px] text-gray-500 line-clamp-2 mb-4 leading-relaxed flex items-start gap-1">
+                        <MapPin size={10} className="shrink-0 mt-0.5 text-[#2a7db4]" />
+                        <span>{props.address || props.location || 'Sri Lanka'}</span>
+                      </p>
+                      <a 
+                        href={`/business/${props.id}`}
+                        className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#2a7db4] text-white text-[11px] font-bold rounded-[6px] hover:bg-[#053765] transition-all shadow-sm"
+                      >
+                        View Details
+                        <ExternalLink size={10} />
+                      </a>
+                    </div>
+                  </div>
                 </Popup>
               </Marker>
             );
@@ -296,9 +358,9 @@ export default React.memo(function LeafletMap({
         .business-popup .leaflet-popup-content-wrapper {
           padding: 0;
           overflow: hidden;
-          border-radius: 8px;
+          border-radius: 12px;
           border: none;
-          box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
         }
         .business-popup .leaflet-popup-content {
           margin: 0;
@@ -313,38 +375,31 @@ export default React.memo(function LeafletMap({
         }
         .marker-pin-container {
           position: relative;
-          width: 32px;
-          height: 42px;
+          width: 30px;
+          height: 40px;
           display: flex;
           justify-content: center;
           align-items: center;
         }
         .marker-pin {
-          width: 28px;
-          height: 28px;
+          width: 26px;
+          height: 26px;
           border-radius: 50% 50% 50% 0;
-          background: #2a7db4;
+          background: #EA4335;
           position: absolute;
           transform: rotate(-45deg);
           left: 50%;
           top: 0;
-          margin: 0 0 0 -14px;
-          border: 2px solid #fff;
-          transition: all 0.2s ease;
-        }
-        .marker-pin::after {
-          content: "";
-          width: 22px;
-          height: 22px;
-          margin: 1px 0 0 1px;
-          background: #2a7db4;
-          position: absolute;
-          border-radius: 50%;
+          margin: 0 0 0 -13px;
+          border: 1px solid #fff;
+          transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
         .marker-pin-inner {
-          width: 10px;
-          height: 10px;
-          background: #fff;
+          width: 8px;
+          height: 8px;
+          background: #000;
+          opacity: 0.3;
           border-radius: 50%;
           position: absolute;
           top: 50%;
@@ -353,12 +408,26 @@ export default React.memo(function LeafletMap({
           z-index: 10;
         }
         .marker-pin-container:hover .marker-pin {
-          background: #053765;
-          transform: rotate(-45deg) scale(1.1);
+          background: #D32F2F;
+          transform: rotate(-45deg) scale(1.15);
+          box-shadow: 0 4px 8px rgba(0,0,0,0.3);
         }
-        /* Google Map Colors Saturation */
+        /* Modern Leaflet Styling */
         .leaflet-tile-pane {
-          filter: saturate(1.2) contrast(1.05);
+          filter: contrast(1.05) saturate(1.1);
+        }
+        .leaflet-container {
+          background: #f8f9fa;
+        }
+        /* Custom Marker Cluster Style */
+        .marker-cluster-small, .marker-cluster-medium, .marker-cluster-large {
+          background-color: rgba(66, 133, 244, 0.6) !important;
+        }
+        .marker-cluster-small div, .marker-cluster-medium div, .marker-cluster-large div {
+          background-color: rgba(66, 133, 244, 1) !important;
+          color: white !important;
+          font-weight: bold !important;
+          font-size: 12px !important;
         }
       `}</style>
     </div>

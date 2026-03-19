@@ -11,17 +11,13 @@ import {
 } from '@react-google-maps/api';
 import { MapPin, Navigation, Star, Building2, ExternalLink, Loader2 } from 'lucide-react';
 import { Business } from '@/lib/types';
+import { MODERN_MAP_STYLE } from '@/lib/mapStyles';
 
 const MAP_OPTIONS: google.maps.MapOptions = {
   disableDefaultUI: false,
   clickableIcons: false,
   mapId: process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID,
-  styles: [
-    {
-      "featureType": "poi",
-      "stylers": [{ "visibility": "off" }]
-    }
-  ]
+  styles: MODERN_MAP_STYLE
 };
 
 const CONTAINER_STYLE = {
@@ -30,13 +26,16 @@ const CONTAINER_STYLE = {
 };
 
 interface GoogleMapProps {
-  userLat: number;
-  userLng: number;
+  userLat?: number;
+  userLng?: number;
+  centerLat?: number;
+  centerLng?: number;
   businesses?: Business[];
   zoom?: number;
   height?: string;
   onMarkerDragEnd?: (lat: number, lng: number) => void;
   onMapClick?: (lat: number, lng: number) => void;
+  onMapMove?: () => void;
   draggableMarker?: boolean;
   radius?: number;
   enableClustering?: boolean;
@@ -45,11 +44,14 @@ interface GoogleMapProps {
 export default function GoogleMap({
   userLat,
   userLng,
+  centerLat,
+  centerLng,
   businesses = [],
   zoom = 12,
   height = '500px',
   onMarkerDragEnd,
   onMapClick,
+  onMapMove,
   draggableMarker = false,
   radius = 0,
   enableClustering = false
@@ -63,7 +65,12 @@ export default function GoogleMap({
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
 
-  const center = useMemo(() => ({ lat: userLat, lng: userLng }), [userLat, userLng]);
+  const center = useMemo(() => ({ 
+    lat: centerLat ?? userLat ?? 7.8731, 
+    lng: centerLng ?? userLng ?? 80.7718 
+  }), [centerLat, centerLng, userLat, userLng]);
+
+  const userPos = useMemo(() => (userLat && userLng) ? { lat: userLat, lng: userLng } : null, [userLat, userLng]);
 
   const onLoad = useCallback((map: google.maps.Map) => {
     setMap(map);
@@ -103,27 +110,30 @@ export default function GoogleMap({
         onLoad={onLoad}
         onUnmount={onUnmount}
         onClick={handleMapClick}
+        onDragEnd={onMapMove}
         options={MAP_OPTIONS}
       >
         {/* User's Current Location Marker */}
-        <Marker
-          position={center}
-          draggable={draggableMarker}
-          onDragEnd={handleMarkerDragEnd}
-          icon={{
-            path: google.maps.SymbolPath.CIRCLE,
-            fillColor: '#2a7db4',
-            fillOpacity: 1,
-            strokeColor: '#FFFFFF',
-            strokeWeight: 2,
-            scale: 8
-          }}
-        />
+        {userPos && (
+          <Marker
+            position={userPos}
+            draggable={draggableMarker}
+            onDragEnd={handleMarkerDragEnd}
+            icon={{
+              path: google.maps.SymbolPath.CIRCLE,
+              fillColor: '#2a7db4',
+              fillOpacity: 1,
+              strokeColor: '#FFFFFF',
+              strokeWeight: 2,
+              scale: 8
+            }}
+          />
+        )}
 
         {/* Radius Circle */}
-        {radius > 0 && (
+        {radius > 0 && userPos && (
           <Circle
-            center={center}
+            center={userPos}
             radius={radius}
             options={{
               fillColor: '#2a7db4',
