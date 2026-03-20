@@ -19,7 +19,7 @@ export default function ForgotPassword() {
     setError(null);
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+      redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent('/reset-password')}`,
     });
 
     setLoading(false);
@@ -44,7 +44,7 @@ export default function ForgotPassword() {
           >
             <div className="mb-10 flex justify-center">
               <Image
-                src="/sl-logo.png"
+                src="/logo.png"
                 alt="Logo"
                 width={180}
                 height={50}
@@ -62,6 +62,13 @@ export default function ForgotPassword() {
       {/* Right Side: Reset Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-md">
+          {/* Mobile Logo */}
+          <div className="lg:hidden flex justify-center mb-8">
+            <Link href="/">
+              <Image src="/logo.png" alt="Logo" width={140} height={45} />
+            </Link>
+          </div>
+
           <div className="mb-10">
             <Link href="/login" className="inline-flex items-center text-gray-400 hover:text-brand-dark text-xs uppercase tracking-widest transition-colors mb-8">
               <ArrowLeft size={14} className="mr-2" /> Back to Login

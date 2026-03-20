@@ -17,12 +17,12 @@ export default function ResetPassword() {
   const router = useRouter();
 
   useEffect(() => {
-    // Check if we have a session (Supabase sets this automatically from the hash fragment)
+    // Check if we have a session (exchanged via the callback route)
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        // If no session, it might be an invalid or expired link
-        // However, in some local dev setups or specific flows, it might take a moment
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) {
+        // If no user/session, it might be an invalid or expired link
+        console.warn('No active session found for password reset');
       }
     };
     checkSession();
@@ -66,7 +66,7 @@ export default function ResetPassword() {
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
         <div className="relative z-10 max-w-md w-full text-center">
           <div className="mb-10 flex justify-center">
-            <Image src="/sl-logo.png" alt="Logo" width={180} height={50} className="brightness-0 invert" />
+            <Image src="/logo.png" alt="Logo" width={180} height={50} className="brightness-0 invert" />
           </div>
           <h1 className="text-4xl font-normal text-white mb-6">Create New Password.</h1>
           <p className="text-brand-sand/80 text-sm">Set a strong password to protect your account and business data.</p>
@@ -76,6 +76,13 @@ export default function ResetPassword() {
       {/* Right Side */}
       <div className="w-full lg:w-1/2 flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-md">
+          {/* Mobile Logo */}
+          <div className="lg:hidden flex justify-center mb-8">
+            <Link href="/">
+              <Image src="/logo.png" alt="Logo" width={140} height={45} />
+            </Link>
+          </div>
+
           <div className="mb-10">
             <h2 className="text-2xl font-normal text-gray-900 mb-2">Update Password</h2>
             <p className="text-gray-400 text-sm">Please enter your new secure password below.</p>

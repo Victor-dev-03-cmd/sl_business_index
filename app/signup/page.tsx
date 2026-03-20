@@ -74,7 +74,7 @@ export default function SignUp() {
 
               <div className="mb-10">
                 <Image
-                    src="/sl-logo.png"
+                    src="/logo.png"
                     alt="Logo"
                     width={180}
                     height={50}
