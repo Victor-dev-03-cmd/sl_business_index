@@ -2,21 +2,17 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { usePathname } from 'next/navigation';
+import { motion } from 'framer-motion';
 
 export default function LoadingProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Set loading time to 1 second (1000ms)
-    const timer = setTimeout(() => setIsLoading(false), 1000);
+    // Adjust timing to allow the typing animation to complete
+    const timer = setTimeout(() => setIsLoading(false), 2500);
     return () => clearTimeout(timer);
   }, []);
-
-  useEffect(() => {
-    // This effect can be used to trigger the loader on subsequent page navigations if needed.
-    // Currently, it only runs on the initial load.
-  }, [pathname]);
 
   return (
     <Suspense fallback={<LoadingScreen />}>
@@ -26,13 +22,39 @@ export default function LoadingProvider({ children }: { children: React.ReactNod
 }
 
 function LoadingScreen() {
+  const text = "Sri Lanka Business Index";
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.05, delayChildren: 0.5 },
+    },
+  };
+
+  const letterVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 },
+  };
+
   return (
     <div className="flex items-center justify-center h-screen w-full bg-white">
       <div className="flex flex-col items-center">
         <h1 className="text-8xl font-medium tracking-widest animate-pulse text-brand-dark">
           SLBI
         </h1>
-        <p className="text-3xl font-medium tracking-widest animate-pulse">Sri Lanka Business Index</p>
+        <motion.p
+          className="text-3xl font-medium tracking-widest overflow-hidden"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          {text.split("").map((char, index) => (
+            <motion.span key={index} variants={letterVariants}>
+              {char}
+            </motion.span>
+          ))}
+        </motion.p>
       </div>
     </div>
   );
