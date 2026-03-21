@@ -29,6 +29,7 @@ import {
   Map,
   List,
   SlidersHorizontal,
+  ArrowRight,
 } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import { Slider } from "@/components/ui/slider";
@@ -1008,6 +1009,27 @@ function SplitScreenResultsContent() {
               wrapperClassName="h-full w-full overflow-hidden z-0"
             />
           </div>
+
+          {/* Mobile — businesses found pill (map view only) */}
+          {mobileView === "map" &&
+            !loadingBusinesses &&
+            businesses.length > 0 && (
+              <div className="md:hidden absolute bottom-4 left-1/2 -translate-x-1/2 z-[1001] pointer-events-auto">
+                <button
+                  onClick={() => setMobileView("list")}
+                  className="flex items-center gap-2.5 bg-white rounded-full shadow-lg border border-gray-200 pl-3 pr-4 py-2.5 active:scale-95 transition-transform"
+                >
+                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-brand-dark shrink-0">
+                    <List size={13} className="text-white" />
+                  </span>
+                  <span className="text-sm font-semibold text-gray-800 whitespace-nowrap">
+                    {businesses.length}{" "}
+                    {businesses.length === 1 ? "business" : "businesses"} found
+                  </span>
+                  <ArrowRight size={14} className="text-gray-400 shrink-0" />
+                </button>
+              </div>
+            )}
 
           {isMapManual && (
             <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[1000]">
