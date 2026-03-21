@@ -44,7 +44,7 @@ function LoadingScreen() {
           SLBI
         </h1>
         <motion.p
-          className="text-3xl font-medium tracking-widest overflow-hidden"
+          className="text-xl sm:text-3xl font-medium tracking-widest text-center px-4 overflow-hidden"
           variants={containerVariants}
           initial="hidden"
           animate="visible"

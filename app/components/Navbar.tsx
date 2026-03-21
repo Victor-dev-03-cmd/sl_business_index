@@ -97,7 +97,8 @@ export default function Navbar() {
             <div className="hidden sm:block">
               <LiveCounter />
             </div>
-            <NotificationBell />
+            {/* Show NotificationBell only if user is logged in */}
+            {fullUserData && <NotificationBell />}
             <AuthButton user={fullUserData} />
             <button
               onClick={() => setMobileMenuOpen(true)}
