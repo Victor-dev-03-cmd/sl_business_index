@@ -494,12 +494,18 @@ export default function HomePage() {
             </span>
             <h1 className="text-5xl md:text-6xl text-white mb-6 leading-tight tracking-tight">
               Find the best{' '}
-              <MorphingText
-                text={words}
-                loop
-                holdDelay={3000}
-                className="text-brand-sand"
-              />{' '}
+              <span className="inline-block min-w-[120px] md:min-w-[160px] h-[1.2em] overflow-hidden align-bottom text-left">
+                <MorphingText
+                  text={words}
+                  loop
+                  holdDelay={3000}
+                  className="text-brand-sand"
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: -20, opacity: 0 }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                />
+              </span>{' '}
               in <br />
               <span className="text-brand-sand">Sri Lanka</span>
             </h1>
