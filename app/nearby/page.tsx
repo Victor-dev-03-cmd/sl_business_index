@@ -28,6 +28,7 @@ import {
   Building2,
   Map,
   List,
+  SlidersHorizontal,
 } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import { Slider } from "@/components/ui/slider";
@@ -220,6 +221,8 @@ function SplitScreenResultsContent() {
   const [locationLoading, setLocationLoading] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [mobileView, setMobileView] = useState<"map" | "list">("map");
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+  const [mobileRadius, setMobileRadius] = useState(radius);
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(
     null,
   );
@@ -416,32 +419,295 @@ function SplitScreenResultsContent() {
 
   return (
     <div className="flex flex-col h-screen bg-white font-normal">
-      {/* Top Filter Bar */}
-      <div className="h-16 border-b border-gray-300 flex items-center justify-between px-4 bg-white z-10 gap-4">
-        <div className="flex items-center space-x-3 flex-shrink-0">
+      {/* ═══════════════════════════════════════════
+          MOBILE TOP BAR  (hidden on md+)
+      ═══════════════════════════════════════════ */}
+      <div className="flex md:hidden items-center gap-2 px-3 h-14 border-b border-gray-200 bg-white z-20 shrink-0">
+        {/* Back */}
+        <Link
+          href="/"
+          className="shrink-0 w-9 h-9 flex items-center justify-center rounded-md text-brand-dark hover:bg-gray-100 transition-colors"
+        >
+          <ArrowLeft size={20} strokeWidth={1.5} />
+        </Link>
+
+        {/* Search bar */}
+        <div className="flex-1 relative">
+          <div className="flex items-center bg-gray-50 border border-gray-200 rounded-md h-9 px-3 focus-within:bg-white focus-within:border-brand-dark transition-all shadow-sm">
+            <Search size={14} className="text-gray-400 mr-2 shrink-0" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => setIsSearchFocused(true)}
+              onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+              onKeyDown={(e) =>
+                e.key === "Enter" &&
+                handleLocationSearch(
+                  currentLat!,
+                  currentLng!,
+                  radius,
+                  searchQuery,
+                )
+              }
+              placeholder="Search businesses near you…"
+              className="flex-1 bg-transparent outline-none text-sm text-gray-700 min-w-0"
+            />
+            {searchQuery && (
+              <button
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  setSearchQuery("");
+                }}
+                className="shrink-0 ml-1 text-gray-400 hover:text-gray-600"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Find-Me */}
+        <button
+          onClick={findMyLocation}
+          className="shrink-0 w-9 h-9 border border-gray-200 rounded-md flex items-center justify-center bg-white hover:bg-gray-50 shadow-sm transition-colors"
+        >
+          <Navigation
+            size={16}
+            className={cn(
+              "text-brand-dark",
+              locationLoading && "animate-pulse",
+            )}
+          />
+        </button>
+
+        {/* Filters */}
+        <button
+          onClick={() => {
+            setMobileRadius(radius);
+            setIsMobileFilterOpen(true);
+          }}
+          className="shrink-0 w-9 h-9 border border-gray-200 rounded-md flex items-center justify-center bg-white hover:bg-gray-50 shadow-sm transition-colors relative"
+        >
+          <SlidersHorizontal size={16} className="text-brand-dark" />
+          {(selectedCategory || radius !== 5000) && (
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-brand-blue rounded-full border-2 border-white" />
+          )}
+        </button>
+      </div>
+
+      {/* Mobile — full-screen suggestions overlay */}
+      {isSearchFocused && (
+        <div className="md:hidden fixed inset-0 top-14 z-30 flex flex-col">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/20"
+            onMouseDown={() => setIsSearchFocused(false)}
+          />
+          {/* Panel */}
+          <div className="relative bg-white shadow-xl overflow-y-auto max-h-[70vh]">
+            {suggestions.length > 0 ? (
+              <>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] px-4 pt-4 pb-2">
+                  {searchQuery.trim() ? "Best Matches" : "Nearby Businesses"}
+                </p>
+                <div className="divide-y divide-gray-100">
+                  {suggestions.map((biz: any) => (
+                    <button
+                      key={biz.id}
+                      onMouseDown={() => {
+                        setSelectedBusiness(biz);
+                        setMapCenter({ lat: biz.latitude, lng: biz.longitude });
+                        setMapZoom(16);
+                        setSearchQuery(biz.name);
+                        setIsSearchFocused(false);
+                        setMobileView("map");
+                      }}
+                      className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 active:bg-gray-100 text-left transition-colors"
+                    >
+                      {/* Thumbnail */}
+                      <div className="w-10 h-10 rounded-md bg-gray-100 shrink-0 overflow-hidden border border-gray-200">
+                        {biz.logo_url || biz.image_url ? (
+                          <img
+                            src={biz.logo_url || biz.image_url}
+                            alt={biz.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-300">
+                            <Building2 size={16} />
+                          </div>
+                        )}
+                      </div>
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-800 truncate">
+                          {biz.name}
+                        </p>
+                        <p className="text-[11px] text-gray-500 truncate mt-0.5">
+                          {biz.category}
+                          {biz.address && (
+                            <> · {biz.address.split(",").pop()?.trim()}</>
+                          )}
+                        </p>
+                      </div>
+                      {/* Distance badge */}
+                      {biz.distanceText && (
+                        <span className="shrink-0 text-[10px] font-medium bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
+                          {biz.distanceText}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-gray-400 gap-2">
+                <Search size={28} strokeWidth={1.2} />
+                <p className="text-sm">
+                  {searchQuery.trim()
+                    ? "No matches found"
+                    : "Start typing to search…"}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Mobile — filter bottom sheet */}
+      {isMobileFilterOpen && (
+        <div className="md:hidden fixed inset-0 z-50 flex flex-col justify-end">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setIsMobileFilterOpen(false)}
+          />
+          {/* Sheet */}
+          <div className="relative bg-white rounded-t-2xl shadow-2xl pb-8">
+            {/* Handle */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 bg-gray-300 rounded-full" />
+            </div>
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <h3 className="font-semibold text-gray-800 text-base">Filters</h3>
+              <button
+                onClick={() => setIsMobileFilterOpen(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="px-5 pt-5 space-y-7 max-h-[60vh] overflow-y-auto">
+              {/* Radius */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-sm font-medium text-gray-700">
+                    Search Radius
+                  </span>
+                  <span className="text-sm font-semibold text-brand-dark bg-blue-50 px-2.5 py-0.5 rounded-full">
+                    {formatDistance(mobileRadius)}
+                  </span>
+                </div>
+                <Slider
+                  value={[mobileRadius]}
+                  max={50000}
+                  min={1000}
+                  step={1000}
+                  onValueChange={(val) => setMobileRadius(val[0])}
+                  className="py-2"
+                />
+                <div className="flex justify-between mt-2 text-[10px] text-gray-400">
+                  <span>1 km</span>
+                  <span>50 km</span>
+                </div>
+              </div>
+
+              {/* Category */}
+              <div>
+                <span className="text-sm font-medium text-gray-700 mb-3 block">
+                  Category
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setSelectedCategory(null)}
+                    className={cn(
+                      "px-3 py-1.5 rounded-full text-xs border font-medium transition-colors",
+                      !selectedCategory
+                        ? "bg-brand-dark text-white border-brand-dark"
+                        : "text-gray-600 border-gray-300 hover:border-brand-dark",
+                    )}
+                  >
+                    All
+                  </button>
+                  {categories.map((cat: any) => (
+                    <button
+                      key={cat.id}
+                      onClick={() =>
+                        setSelectedCategory(
+                          selectedCategory === cat.name ? null : cat.name,
+                        )
+                      }
+                      className={cn(
+                        "px-3 py-1.5 rounded-full text-xs border font-medium transition-colors",
+                        selectedCategory === cat.name
+                          ? "bg-brand-dark text-white border-brand-dark"
+                          : "text-gray-600 border-gray-300 hover:border-brand-dark",
+                      )}
+                    >
+                      {cat.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Apply */}
+            <div className="px-5 pt-6">
+              <button
+                onClick={() => {
+                  handleLocationSearch(currentLat!, currentLng!, mobileRadius);
+                  setIsMobileFilterOpen(false);
+                }}
+                className="w-full h-11 bg-brand-dark text-white rounded-md font-semibold text-sm hover:bg-brand-blue transition-colors"
+              >
+                Apply Filters
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════
+          DESKTOP TOP BAR  (hidden on mobile)
+      ═══════════════════════════════════════════ */}
+      <div className="hidden md:flex h-16 border-b border-gray-300 items-center justify-between px-4 bg-white z-10 gap-4 shrink-0">
+        <div className="flex items-center space-x-3 shrink-0">
           <Link
             href="/"
             className="text-brand-dark hover:text-brand-blue transition-colors"
           >
             <ArrowLeft size={20} strokeWidth={1.5} />
           </Link>
-          <div className="hidden md:flex items-center text-sm text-gray-600">
+          <div className="flex items-center text-sm text-gray-600">
             <MapPin size={16} className="mr-1.5 text-brand-dark" />
             <span>Nearby</span>
           </div>
         </div>
 
+        {/* Desktop search + suggestions */}
         <div className="flex-1 max-w-md relative">
-          <div className="flex items-center w-full px-3 bg-gray-50 rounded-[6px] border border-gray-300 focus-within:bg-white focus-within:border-brand-dark h-10 shadow-sm transition-all relative">
-            <Search size={16} className="text-gray-400 mr-2" />
+          <div className="flex items-center w-full px-3 bg-gray-50 rounded-[6px] border border-gray-300 focus-within:bg-white focus-within:border-brand-dark h-10 shadow-sm transition-all">
+            <Search size={16} className="text-gray-400 mr-2 shrink-0" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => setIsSearchFocused(true)}
-              onBlur={() => {
-                setTimeout(() => setIsSearchFocused(false), 200);
-              }}
+              onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
               onKeyDown={(e) =>
                 e.key === "Enter" &&
                 handleLocationSearch(
@@ -454,61 +720,100 @@ function SplitScreenResultsContent() {
               placeholder="Search businesses..."
               className="w-full bg-transparent outline-none text-sm text-gray-700 font-normal"
             />
+            {searchQuery && (
+              <button
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  setSearchQuery("");
+                }}
+                className="shrink-0 ml-1 text-gray-400 hover:text-gray-600"
+              >
+                <X size={14} />
+              </button>
+            )}
           </div>
 
-          {isSearchFocused && suggestions.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-[8px] shadow-2xl z-50 overflow-hidden text-left divide-y divide-gray-100 max-h-[400px] overflow-y-auto">
-              <div className="p-2">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] px-3 py-2">
-                  {searchQuery.trim()
-                    ? "Fuzzy Search for Suggestions"
-                    : "Top Businesses Near You"}
-                </p>
-                {suggestions.map((biz: any) => (
-                  <button
-                    key={biz.id}
-                    onClick={() => {
-                      setSelectedBusiness(biz);
-                      setMapCenter({ lat: biz.latitude, lng: biz.longitude });
-                      setMapZoom(16);
-                      setSearchQuery(biz.name);
-                    }}
-                    className="w-full px-4 py-2.5 hover:bg-gray-50 flex items-center gap-3 transition-colors rounded-[4px] text-left"
-                  >
-                    <div className="w-8 h-8 rounded bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-100">
-                      {biz.logo_url || biz.image_url ? (
-                        <img
-                          src={biz.logo_url || biz.image_url}
-                          alt={biz.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-300">
-                          <LucideIcons.Building2 size={14} />
+          {isSearchFocused && (
+            <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-[8px] shadow-2xl z-50 overflow-hidden text-left max-h-[420px] overflow-y-auto">
+              {suggestions.length > 0 ? (
+                <>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] px-4 pt-3 pb-2">
+                    {searchQuery.trim() ? "Best Matches" : "Nearby Businesses"}
+                  </p>
+                  <div className="divide-y divide-gray-100 pb-1">
+                    {suggestions.map((biz: any) => (
+                      <button
+                        key={biz.id}
+                        onMouseDown={() => {
+                          setSelectedBusiness(biz);
+                          setMapCenter({
+                            lat: biz.latitude,
+                            lng: biz.longitude,
+                          });
+                          setMapZoom(16);
+                          setSearchQuery(biz.name);
+                        }}
+                        className="w-full px-4 py-2.5 hover:bg-gray-50 flex items-center gap-3 transition-colors text-left"
+                      >
+                        <div className="w-9 h-9 rounded-md bg-gray-100 shrink-0 overflow-hidden border border-gray-100">
+                          {biz.logo_url || biz.image_url ? (
+                            <img
+                              src={biz.logo_url || biz.image_url}
+                              alt={biz.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-300">
+                              <Building2 size={15} />
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-sm text-gray-700 font-semibold truncate">
-                        {biz.name}
-                      </span>
-                      <span className="text-[11px] text-gray-400 truncate">
-                        {biz.category} • {biz.address?.split(",").pop()?.trim()}
-                      </span>
-                    </div>
-                  </button>
-                ))}
-              </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-800 truncate">
+                            {biz.name}
+                          </p>
+                          <p className="text-[11px] text-gray-400 truncate mt-0.5">
+                            {biz.category}
+                            {biz.address && (
+                              <> · {biz.address.split(",").pop()?.trim()}</>
+                            )}
+                          </p>
+                        </div>
+                        {biz.distanceText && (
+                          <span className="shrink-0 text-[10px] font-medium bg-gray-100 text-gray-500 px-2 py-1 rounded-full">
+                            {biz.distanceText}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-8 text-gray-400 gap-2">
+                  <Search size={24} strokeWidth={1.2} />
+                  <p className="text-xs">
+                    {searchQuery.trim()
+                      ? "No matches found"
+                      : "Start typing to search…"}
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>
 
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={findMyLocation}
             className="flex items-center gap-2 text-sm border border-gray-300 bg-white hover:bg-gray-50 rounded-[6px] px-3 h-10 transition-all shadow-sm"
           >
-            <Navigation size={14} className="text-brand-dark" />
+            <Navigation
+              size={14}
+              className={cn(
+                "text-brand-dark",
+                locationLoading && "animate-pulse",
+              )}
+            />
             <span className="hidden lg:inline text-gray-600">Find Me</span>
           </button>
 
@@ -549,7 +854,7 @@ function SplitScreenResultsContent() {
 
           <DropdownMenu open={isCategoryOpen} onOpenChange={setIsCategoryOpen}>
             <DropdownMenuTrigger asChild>
-              <button className="hidden md:flex items-center gap-2 text-sm border border-gray-300 bg-white hover:bg-gray-50 rounded-[6px] px-3 h-10 shadow-sm">
+              <button className="flex items-center gap-2 text-sm border border-gray-300 bg-white hover:bg-gray-50 rounded-[6px] px-3 h-10 shadow-sm">
                 <span className="text-gray-600">
                   {selectedCategory || "All Categories"}
                 </span>
@@ -734,36 +1039,34 @@ function SplitScreenResultsContent() {
             </div>
           )}
         </div>
+      </div>
 
-        {/* Mobile Map/List Toggle */}
-        <div className="md:hidden absolute bottom-6 left-1/2 -translate-x-1/2 z-[1000]">
-          <div className="flex bg-white rounded-full shadow-xl border border-gray-200 overflow-hidden">
-            <button
-              onClick={() => setMobileView("map")}
-              className={cn(
-                "px-5 py-2.5 text-sm font-medium flex items-center gap-2 transition-colors",
-                mobileView === "map"
-                  ? "bg-brand-dark text-white"
-                  : "text-gray-600 hover:bg-gray-50",
-              )}
-            >
-              <Map size={15} />
-              Map
-            </button>
-            <button
-              onClick={() => setMobileView("list")}
-              className={cn(
-                "px-5 py-2.5 text-sm font-medium flex items-center gap-2 transition-colors",
-                mobileView === "list"
-                  ? "bg-brand-dark text-white"
-                  : "text-gray-600 hover:bg-gray-50",
-              )}
-            >
-              <List size={15} />
-              List
-            </button>
-          </div>
-        </div>
+      {/* Mobile — bottom tab bar */}
+      <div className="md:hidden flex shrink-0 border-t border-gray-200 bg-white">
+        <button
+          onClick={() => setMobileView("map")}
+          className={cn(
+            "flex-1 flex flex-col items-center justify-center gap-1 h-14 transition-colors",
+            mobileView === "map" ? "text-brand-dark" : "text-gray-400",
+          )}
+        >
+          <Map size={20} strokeWidth={mobileView === "map" ? 2 : 1.5} />
+          <span className="text-[10px] font-semibold uppercase tracking-wide">
+            Map
+          </span>
+        </button>
+        <button
+          onClick={() => setMobileView("list")}
+          className={cn(
+            "flex-1 flex flex-col items-center justify-center gap-1 h-14 transition-colors",
+            mobileView === "list" ? "text-brand-dark" : "text-gray-400",
+          )}
+        >
+          <List size={20} strokeWidth={mobileView === "list" ? 2 : 1.5} />
+          <span className="text-[10px] font-semibold uppercase tracking-wide">
+            List
+          </span>
+        </button>
       </div>
     </div>
   );
