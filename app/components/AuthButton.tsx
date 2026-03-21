@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import { useUser, AuthUser } from '@/lib/hooks/useUser';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,62 +26,7 @@ interface AuthUser {
 
 export default function AuthButton({ user: initialUser }: { user: AuthUser | null }) {
   const router = useRouter();
-  const [user, setUser] = useState<AuthUser | null>(initialUser);
-  const [hasBusiness, setHasBusiness] = useState(false);
-  const [isChecking, setIsChecking] = useState(true);
-
-  // Profile and business check function
-  const fetchFullUserProfile = useCallback(async (userId: string) => {
-    try {
-      // 1. Get role and avatar from profiles table
-      const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', userId)
-          .single();
-
-      // 2. Check for business
-      const { count } = await supabase
-          .from('businesses')
-          .select('*', { count: 'exact', head: true })
-          .eq('owner_id', userId);
-
-      if (profile) {
-        setUser((prev) => (prev ? { ...prev, ...profile } : profile as AuthUser));
-      }
-      setHasBusiness((count || 0) > 0);
-    } catch (error) {
-      console.error("Error fetching profile:", error);
-    } finally {
-      setIsChecking(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (initialUser) {
-      fetchFullUserProfile(initialUser.id);
-    } else {
-      setIsChecking(false);
-    }
-  }, [initialUser, fetchFullUserProfile]);
-
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
-        fetchFullUserProfile(session.user.id);
-      } else {
-        setUser(null);
-        setHasBusiness(false);
-        setIsChecking(false);
-      }
-
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
-        router.refresh();
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [router, fetchFullUserProfile]);
+  const { data: user, isLoading } = useUser();
 
   const displayName = user?.full_name || user?.username || user?.email || 'User';
 
@@ -92,15 +37,13 @@ export default function AuthButton({ user: initialUser }: { user: AuthUser | nul
   };
 
   const isVendor = (role?: string) => {
-    // பிசினஸ் இருந்தாலும் அல்லது ரோல் 'vendor' ஆக இருந்தாலும் காட்டும்
-    if (hasBusiness) return true;
+    if (user?.hasBusiness) return true;
     if (!role) return false;
     const r = role.toLowerCase();
     return r === 'vendor';
   };
 
-  // லோடிங் ஆகும்போது ஒரு சிறிய அனிமேஷன்
-  if (isChecking) {
+  if (isLoading) {
     return <div className="h-10 w-10 rounded-full bg-gray-200 animate-pulse" />;
   }
 
@@ -131,7 +74,7 @@ export default function AuthButton({ user: initialUser }: { user: AuthUser | nul
 
             <DropdownMenuSeparator />
 
-            {/* Admin Dashboard - Approve & Marketing Page approve செய்ய இது முக்கியம் */}
+            {/* Admin Dashboard */}
             {isAdminOrCeo(user.role) && (
                 <DropdownMenuItem asChild className="cursor-pointer py-2.5">
                   <Link href="/admin/dashboard" className="flex items-center w-full">
@@ -160,7 +103,11 @@ export default function AuthButton({ user: initialUser }: { user: AuthUser | nul
 
             <DropdownMenuSeparator />
 
-            <button onClick={() => supabase.auth.signOut().then(() => router.push('/'))} className="w-full">
+            <button onClick={() => supabase.auth.signOut().then(() => {
+              // Invalidate user query on sign out
+              router.push('/');
+              router.refresh();
+            })} className="w-full">
               <DropdownMenuItem className="text-red-600 cursor-pointer py-2.5">
                 <LogOut className="mr-3 h-4 w-4 opacity-70" />
                 <span>Sign Out</span>

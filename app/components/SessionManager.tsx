@@ -22,6 +22,7 @@ export default function SessionManager({ children }: { children: React.ReactNode
   const router = useRouter();
   const [showWarning, setShowWarning] = useState(false);
   const [isLoggedOut, setIsLoggedOut] = useState(false);
+  const [hasSession, setHasSession] = useState(false);
   const logoutTimerRef = useRef<NodeJS.Timeout | null>(null);
   const warningTimerRef = useRef<NodeJS.Timeout | null>(null);
   const broadcastRef = useRef<BroadcastChannel | null>(null);
@@ -46,6 +47,7 @@ export default function SessionManager({ children }: { children: React.ReactNode
       
       setIsLoggedOut(true);
       setShowWarning(false);
+      setHasSession(false);
       router.push('/login');
     } catch (error) {
       console.error('Logout error:', error);
@@ -53,7 +55,7 @@ export default function SessionManager({ children }: { children: React.ReactNode
   }, [router]);
 
   const resetTimers = useCallback(() => {
-    if (isLoggedOut) return;
+    if (isLoggedOut || !hasSession) return;
 
     // Clear existing timers
     if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
@@ -70,17 +72,28 @@ export default function SessionManager({ children }: { children: React.ReactNode
     logoutTimerRef.current = setTimeout(() => {
       handleLogout(true);
     }, TIMEOUT_MS);
-  }, [handleLogout, isLoggedOut, showWarning]);
+  }, [handleLogout, isLoggedOut, showWarning, hasSession]);
 
   useEffect(() => {
-    // Check if user is logged in before starting timers
-    const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        resetTimers();
-      }
+    // Check initial session
+    const initSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setHasSession(!!session);
+      if (session) resetTimers();
     };
-    checkUser();
+    initSession();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setHasSession(!!session);
+      if (session) {
+        resetTimers();
+      } else {
+        // Clear timers if signed out
+        if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
+        if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
+      }
+    });
 
     // Setup sync across tabs
     if (typeof window !== 'undefined') {
@@ -88,26 +101,32 @@ export default function SessionManager({ children }: { children: React.ReactNode
       broadcastRef.current.onmessage = (event) => {
         if (event.data === 'logout') {
           setIsLoggedOut(true);
+          setHasSession(false);
           router.push('/login');
         }
       };
     }
 
-    // Activity listeners
+    // Activity listeners - Debounce these if possible, or just rely on state
     const events = ['mousedown', 'keydown', 'scroll', 'touchstart'];
+    const activityHandler = () => {
+      if (hasSession) resetTimers();
+    };
+
     events.forEach(event => {
-      window.addEventListener(event, resetTimers);
+      window.addEventListener(event, activityHandler);
     });
 
     return () => {
+      subscription.unsubscribe();
       if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
       if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
       events.forEach(event => {
-        window.removeEventListener(event, resetTimers);
+        window.removeEventListener(event, activityHandler);
       });
       broadcastRef.current?.close();
     };
-  }, [resetTimers, router]);
+  }, [resetTimers, router, hasSession]);
 
   return (
     <>
@@ -121,8 +140,8 @@ export default function SessionManager({ children }: { children: React.ReactNode
               <ShieldAlert className="h-6 w-6 text-amber-600" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-amber-900">Session Expiring</h3>
-              <p className="text-sm text-amber-700 font-medium">For your security, you'll be logged out shortly.</p>
+              <DialogTitle className="text-lg font-bold text-amber-900">Session Expiring</DialogTitle>
+              <DialogDescription className="text-sm text-amber-700 font-medium">For your security, you'll be logged out shortly.</DialogDescription>
             </div>
           </div>
 

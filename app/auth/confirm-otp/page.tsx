@@ -3,6 +3,8 @@
 import { useEffect, useState, Suspense } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import Image from 'next/image';
 import { KeyRound } from 'lucide-react';
 
 function OTPConfirmPage() {
@@ -49,6 +51,13 @@ function OTPConfirmPage() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50 px-4">
       <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg text-center">
+        {/* Logo Integration */}
+        <div className="flex justify-center mb-4">
+          <Link href="/">
+            <Image src="/logo.png" alt="Logo" width={140} height={45} />
+          </Link>
+        </div>
+
         <div className="flex justify-center">
           <KeyRound className="w-12 h-12 text-green-700" />
         </div>

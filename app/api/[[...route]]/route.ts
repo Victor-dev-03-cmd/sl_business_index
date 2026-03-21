@@ -2,22 +2,34 @@ import { Hono } from 'hono'
 import { handle } from 'hono/vercel'
 import { getCookie, setCookie, deleteCookie } from 'hono/cookie'
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
-import { User, SupabaseClient } from '@supabase/supabase-js'
+import { User, SupabaseClient, createClient } from '@supabase/supabase-js'
 
-export const runtime = 'edge'
+// export const runtime = 'edge'
 
 type Variables = {
   user: User | null
   supabase: SupabaseClient
 }
 
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
+console.log('API Init - Supabase URL:', supabaseUrl ? `${supabaseUrl.slice(0, 10)}...` : 'MISSING')
+
+// Global client for background tasks/logging to avoid TLS/cookie issues
+const supabaseAdmin = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: { persistSession: false }
+})
+
 const app = new Hono<{ Variables: Variables }>().basePath('/api')
 
 // Supabase Auth Middleware
 app.use('*', async (c, next) => {
+  const isAnalytics = c.req.path.endsWith('/analytics/log')
+  
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         get(name: string) {
@@ -39,10 +51,39 @@ app.use('*', async (c, next) => {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
-  c.set('user', user)
+  if (!isAnalytics) {
+    try {
+      // Don't call getUser if no session cookie exists (sb-xxx-auth-token)
+      // This avoids unnecessary network calls and potential TLS crashes in Edge
+      const allCookies = getCookie(c)
+      const hasAuthCookie = Object.keys(allCookies).some(name => name.includes('-auth-token'))
+      
+      if (hasAuthCookie) {
+        const { data: { user } } = await supabase.auth.getUser()
+        c.set('user', user)
+      } else {
+        c.set('user', null)
+      }
+    } catch (e) {
+      console.error('Middleware Auth Error:', e)
+      c.set('user', null)
+    }
+  } else {
+    c.set('user', null)
+  }
+  
   c.set('supabase', supabase)
   await next()
+})
+
+app.get('/test-fetch', async (c) => {
+  try {
+    const res = await fetch('https://www.google.com')
+    return c.json({ status: res.status, ok: res.ok })
+  } catch (err: any) {
+    console.error('Test Fetch Failed:', err)
+    return c.json({ error: err.message, details: err.stack }, 500)
+  }
 })
 
 // Existing API routes
@@ -211,7 +252,6 @@ app.post('/google-places/details', async (c) => {
 
 // Analytics Logging Endpoint
 app.post('/analytics/log', async (c) => {
-  const supabase = c.get('supabase')
   const user = c.get('user')
   const body = await c.req.json()
   const { business_id, event_type, city, metadata } = body
@@ -220,7 +260,7 @@ app.post('/analytics/log', async (c) => {
     return c.json({ error: 'business_id and event_type are required' }, 400)
   }
 
-  const { error } = await supabase
+  const { error } = await supabaseAdmin
     .from('analytics_logs')
     .insert({
       business_id,

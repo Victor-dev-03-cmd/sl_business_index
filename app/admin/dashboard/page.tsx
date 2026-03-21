@@ -27,6 +27,8 @@ import { Business } from '@/lib/types';
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 
 export default function AdminDashboard() {
@@ -404,12 +406,12 @@ export default function AdminDashboard() {
                   <div className="flex justify-between items-start mb-6">
                     <div>
                       <div className="flex items-center gap-3">
-                        <h2 className="text-2xl font-normal text-gray-900">{selectedBusiness.name}</h2>
+                        <DialogTitle className="text-2xl font-normal text-gray-900">{selectedBusiness.name}</DialogTitle>
                         {selectedBusiness.is_verified && (
                           <CheckCircle size={20} className="text-blue-500 fill-blue-50" />
                         )}
                       </div>
-                      <div className="flex items-center gap-4 mt-2">
+                      <DialogDescription className="flex items-center gap-4 mt-2">
                         <span className={`px-2.5 py-0.5 rounded-[6px] text-[10px] uppercase tracking-wider font-normal ${
                           selectedBusiness.status === 'approved' ? 'bg-brand-sand/20 text-brand-gold' :
                           selectedBusiness.status === 'rejected' ? 'bg-red-50 text-red-700' :
@@ -417,10 +419,10 @@ export default function AdminDashboard() {
                         }`}>
                           {selectedBusiness.status}
                         </span>
-                        <span className="text-xs text-gray-400 flex items-center gap-1.5">
+                        <span className="text-xs text-gray-400 flex items-center gap-1.5 font-normal">
                           <MapPin size={12} className="text-brand-blue" /> {selectedBusiness.address}
                         </span>
-                      </div>
+                      </DialogDescription>
                     </div>
 
                     <div className="flex gap-2">

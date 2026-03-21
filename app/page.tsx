@@ -85,6 +85,7 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [businessSuggestions, setBusinessSuggestions] = useState<any[]>([]);
+  const [fuzzyBusinessSuggestions, setFuzzyBusinessSuggestions] = useState<any[]>([]);
   const [geoData, setGeoData] = useState<any[]>([]);
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -125,32 +126,53 @@ export default function HomePage() {
   }, [searchQuery]);
 
   useEffect(() => {
-    if (debouncedSearchQuery.trim().length > 1) {
-      // 1. Get Location Suggestions from GeoJSON
-      const results = fuse.search(debouncedSearchQuery).slice(0, 4);
-      setSuggestions(results.map(r => r.item));
+    // 1. Immediate Local Search (GeoJSON)
+    if (searchQuery.trim().length > 0) {
+      const geoResults = fuse.search(searchQuery).slice(0, 4);
+      setSuggestions(geoResults.map(r => r.item));
+    } else {
+      setSuggestions([]);
+    }
 
-      // 2. Get Business Suggestions from Database
+    // 2. Database Fetch (Debounced)
+    if (debouncedSearchQuery.trim().length > 0) {
       const fetchBusinesses = async () => {
         try {
-          // If we have user location, use RPC for nearby businesses
           if (userCoords) {
-            const { data, error } = await supabase.rpc('get_nearby_businesses', {
+            const { data } = await supabase.rpc('get_nearby_businesses', {
               user_lat: userCoords.lat,
               user_lng: userCoords.lng,
               search_query: debouncedSearchQuery,
-              dist_limit: 10000 // 10km for autocomplete
+              dist_limit: 10000 
             });
-            if (data) setBusinessSuggestions(data.slice(0, 4));
+            if (data) {
+              setBusinessSuggestions(data.slice(0, 4));
+              const fuse = new Fuse(data, {
+                keys: ['name', 'category', 'address'],
+                threshold: 0.3,
+                distance: 100,
+              });
+              const fuzzyResults = fuse.search(debouncedSearchQuery).slice(0, 4);
+              setFuzzyBusinessSuggestions(fuzzyResults.map(r => r.item));
+            }
           } else {
-            // Otherwise just search globally
-            const { data, error } = await supabase
+            const { data } = await supabase
               .from('businesses')
               .select('id, name, category, address, image_url, logo_url, rating, latitude, longitude')
-              .ilike('name', `%${debouncedSearchQuery}%`)
+              .or(`name.ilike.%${debouncedSearchQuery}%,category.ilike.%${debouncedSearchQuery}%,address.ilike.%${debouncedSearchQuery}%`)
               .eq('status', 'approved')
-              .limit(4);
-            if (data) setBusinessSuggestions(data);
+              .limit(20);
+            
+            if (data) {
+              const fuse = new Fuse(data, {
+                keys: ['name', 'category', 'address'],
+                threshold: 0.3,
+                distance: 100,
+              });
+              const fuzzyResults = fuse.search(debouncedSearchQuery).slice(0, 4);
+              setFuzzyBusinessSuggestions(fuzzyResults.map(r => r.item));
+              setBusinessSuggestions(data.slice(0, 4));
+            }
           }
         } catch (err) {
           console.error("Error fetching business suggestions:", err);
@@ -158,10 +180,10 @@ export default function HomePage() {
       };
       fetchBusinesses();
     } else {
-      setSuggestions([]);
       setBusinessSuggestions([]);
+      setFuzzyBusinessSuggestions([]);
     }
-  }, [debouncedSearchQuery, fuse, userCoords]);
+  }, [debouncedSearchQuery, searchQuery, fuse, userCoords]);
 
   const { data: categories = [], isLoading: categoriesLoading } = useQuery({
     queryKey: ['categories-home'],
@@ -475,8 +497,8 @@ export default function HomePage() {
             {/* --- New Search Bar Design --- */}
             <div className="relative max-w-2xl mx-auto space-y-4">
               {/* Main Search Input */}
-              <div className="bg-white rounded-[6px] overflow-hidden shadow-lg border border-gray-300 relative">
-                <div className="flex items-center px-5 py-4 bg-white">
+              <div className="bg-white rounded-[6px] shadow-lg border border-gray-300 relative">
+                <div className="flex items-center px-5 py-4 bg-white rounded-[6px]">
                   <Search className="text-gray-400 mr-3" size={20} strokeWidth={1.5} />
                   <input
                       type="text"
@@ -493,13 +515,15 @@ export default function HomePage() {
                   />
                 </div>
 
-                {isSearchFocused && (suggestions.length > 0 || businessSuggestions.length > 0) && (
+                {isSearchFocused && (suggestions.length > 0 || businessSuggestions.length > 0 || fuzzyBusinessSuggestions.length > 0) && (
                   <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-[8px] shadow-2xl z-50 overflow-hidden text-left divide-y divide-gray-100 max-h-[400px] overflow-y-auto">
                     {/* Business Section */}
-                    {businessSuggestions.length > 0 && (
+                    {(fuzzyBusinessSuggestions.length > 0 || businessSuggestions.length > 0) && (
                       <div className="p-2">
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] px-3 py-2">Businesses</p>
-                        {businessSuggestions.map((biz) => (
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] px-3 py-2">
+                          Fuzzy Search for Suggestions
+                        </p>
+                        {(fuzzyBusinessSuggestions.length > 0 ? fuzzyBusinessSuggestions : businessSuggestions).map((biz) => (
                           <button
                             key={biz.id}
                             onClick={() => {

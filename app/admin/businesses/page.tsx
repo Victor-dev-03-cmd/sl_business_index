@@ -388,7 +388,7 @@ export default function AdminBusinessesPage() {
                 <div className="pt-16 px-10 pb-10">
                   <div className="flex justify-between items-start mb-8">
                     <div>
-                      <h2 className="text-3xl font-bold text-gray-900 tracking-tight">{selectedBusiness.name}</h2>
+                      <DialogTitle className="text-3xl font-bold text-gray-900 tracking-tight">{selectedBusiness.name}</DialogTitle>
                       <div className="flex items-center gap-4 mt-3">
                         <span className="px-3 py-1 bg-green-50 text-green-700 border border-green-100 rounded-full text-[10px] font-bold uppercase tracking-wider">
                           Verified Business

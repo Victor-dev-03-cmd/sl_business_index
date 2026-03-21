@@ -30,6 +30,8 @@ import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 
 export default function BusinessRequestsPage() {
@@ -640,8 +642,8 @@ export default function BusinessRequestsPage() {
                       <ShieldCheck className="h-8 w-8 text-brand-blue" />
                     </div>
                     <div>
-                      <h2 className="text-xl text-gray-900">Verification Review</h2>
-                      <p className="text-sm text-gray-500 mt-1">{selectedVerification.businesses.name}</p>
+                      <DialogTitle className="text-xl text-gray-900">Verification Review</DialogTitle>
+                      <DialogDescription className="text-sm text-gray-500 mt-1">{selectedVerification.businesses.name}</DialogDescription>
                     </div>
                   </div>
                 </div>
@@ -739,15 +741,15 @@ export default function BusinessRequestsPage() {
                 <div className="pt-14 px-8 pb-8">
                   <div className="flex justify-between items-start mb-6">
                     <div>
-                      <h2 className="text-2xl font-normal text-gray-900 ">{selectedBusiness.name}</h2>
-                      <div className="flex items-center gap-4 mt-2 font-normal">
+                      <DialogTitle className="text-2xl font-normal text-gray-900 ">{selectedBusiness.name}</DialogTitle>
+                      <DialogDescription className="flex items-center gap-4 mt-2 font-normal">
                         <span className="px-2.5 py-0.5 rounded-[6px] text-[10px] uppercase tracking-wider bg-brand-blue/10  text-brand-blue  border border-brand-blue/20 ">
                           Pending Approval
                         </span>
                         <span className="text-xs text-gray-400  flex items-center gap-1.5 font-normal">
                           <MapPin size={12} className="text-brand-blue" /> {selectedBusiness.address}
                         </span>
-                      </div>
+                      </DialogDescription>
                     </div>
 
                     <div className="flex gap-2">

@@ -1,7 +1,7 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -54,10 +54,21 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
   const { pathname } = request.nextUrl
+  const hasAuthCookie = request.cookies.getAll().some(c => c.name.includes('-auth-token'))
+  let user = null
 
-  if (pathname.startsWith('/admin') || pathname.startsWith('/vendor')) {
+  if ((pathname.startsWith('/admin') || pathname.startsWith('/vendor')) && hasAuthCookie) {
+    let authUser = null
+    try {
+      const { data } = await supabase.auth.getUser()
+      authUser = data.user
+    } catch (e) {
+      console.error('Middleware getUser error:', e)
+    }
+    
+    user = authUser
+
     if (!user) {
       const url = request.nextUrl.clone()
       url.pathname = '/login'
@@ -114,7 +125,7 @@ export async function proxy(request: NextRequest) {
   return response
 }
 
-export default proxy;
+export default middleware;
 
 export const config = {
   matcher: [

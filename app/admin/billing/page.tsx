@@ -30,6 +30,8 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 
 export default function AdminBillingPage() {
@@ -446,8 +448,8 @@ export default function AdminBillingPage() {
                 <div className="h-16 w-16 bg-brand-sand/30 rounded-full flex items-center justify-center mx-auto mb-4 text-brand-gold">
                   <Receipt size={32} />
                 </div>
-                <h3 className="text-xl font-normal">Invoice Details</h3>
-                <p className="text-sm text-gray-500 uppercase tracking-widest">ID: {selectedInvoice.id.slice(0, 12)}</p>
+                <DialogTitle className="text-xl font-normal">Invoice Details</DialogTitle>
+                <DialogDescription className="text-sm text-gray-500 uppercase tracking-widest">ID: {selectedInvoice.id.slice(0, 12)}</DialogDescription>
               </div>
               <div className="space-y-4">
                 <InfoRow label="Customer" value={selectedInvoice.subscriptions?.profiles?.full_name} />
@@ -475,8 +477,8 @@ export default function AdminBillingPage() {
         <DialogContent className="max-w-2xl bg-white border-gray-300 p-8 overflow-y-auto max-h-[90vh]">
           <div className="space-y-6">
             <div>
-              <h3 className="text-xl font-normal text-gray-900">{selectedPlan ? 'Edit Plan' : 'Create New Plan'}</h3>
-              <p className="text-sm text-gray-500">Define pricing and advanced feature limits.</p>
+              <DialogTitle className="text-xl font-normal text-gray-900">{selectedPlan ? 'Edit Plan' : 'Create New Plan'}</DialogTitle>
+              <DialogDescription className="text-sm text-gray-500">Define pricing and advanced feature limits.</DialogDescription>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -561,8 +563,8 @@ export default function AdminBillingPage() {
         <DialogContent className="max-w-md bg-white border-gray-300 p-8">
           <div className="space-y-6">
             <div>
-              <h3 className="text-xl font-normal text-gray-900">Push New Announcement</h3>
-              <p className="text-sm text-gray-500">Notify users immediately with a popup.</p>
+              <DialogTitle className="text-xl font-normal text-gray-900">Push New Announcement</DialogTitle>
+              <DialogDescription className="text-sm text-gray-500">Notify users immediately with a popup.</DialogDescription>
             </div>
 
             <div className="space-y-2">

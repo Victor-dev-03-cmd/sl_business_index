@@ -20,17 +20,7 @@ import {
 import AuthButton from '@/app/components/AuthButton';
 import NotificationBell from '@/app/components/NotificationBell';
 import VerifiedBadge from '@/app/components/VerifiedBadge';
-import { supabase } from '@/lib/supabaseClient';
-
-interface AuthUser {
-  id: string;
-  email?: string;
-  full_name?: string;
-  username?: string;
-  role?: string;
-  verification_status?: string;
-  avatar_url?: string;
-}
+import { useUser } from '@/lib/hooks/useUser';
 
 const vendorMenuItems = [
   { name: 'Dashboard', href: '/vendor/dashboard', icon: LayoutDashboard },
@@ -45,38 +35,13 @@ const vendorMenuItems = [
 export default function VendorLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const { data: user, isLoading } = useUser();
 
-  useEffect(() => {
-    const getUser = async () => {
-      try {
-        const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
-        if (authError) throw authError;
-        
-        if (authUser) {
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', authUser.id)
-            .single();
-          
-          if (profileError) {
-             console.error('Error fetching profile:', profileError);
-          }
-
-          const currentUser: AuthUser = {
-            ...authUser,
-            ...(profile || {}),
-          };
-          
-          setUser(currentUser);
-        }
-      } catch (err) {
-        console.error('Vendor layout auth error:', err);
-      }
-    };
-    getUser();
-  }, []);
+  if (isLoading) {
+    return <div className="flex h-screen items-center justify-center bg-white">
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
+    </div>;
+  }
 
   return (
     <div className="flex h-screen bg-gray-50/50 transition-colors duration-300">

@@ -64,16 +64,43 @@ const getCustomIcon = (color: string = '#EA4335') => L.divIcon({
 // Category to Color Mapping (Google Maps style)
 const getCategoryColor = (category: string = ''): string => {
   const cat = category.toLowerCase();
-  if (cat.includes('food') || cat.includes('restaurant') || cat.includes('dining') || cat.includes('cafe')) return '#FF9800'; // Orange
-  if (cat.includes('health') || cat.includes('medical') || cat.includes('doctor') || cat.includes('hospital')) return '#F44336'; // Red
-  if (cat.includes('hotel') || cat.includes('accommodation') || cat.includes('resort')) return '#9C27B0'; // Purple
-  if (cat.includes('shopping') || cat.includes('retail') || cat.includes('store')) return '#4CAF50'; // Green
-  if (cat.includes('education') || cat.includes('school') || cat.includes('university')) return '#2196F3'; // Blue
-  if (cat.includes('finance') || cat.includes('bank') || cat.includes('legal')) return '#607D8B'; // Blue Grey
-  if (cat.includes('travel') || cat.includes('transport') || cat.includes('taxi')) return '#03A9F4'; // Light Blue
-  if (cat.includes('beauty') || cat.includes('salon') || cat.includes('spa')) return '#E91E63'; // Pink
-  if (cat.includes('agriculture') || cat.includes('farming')) return '#8BC34A'; // Light Green
-  if (cat.includes('construction') || cat.includes('hardware')) return '#795548'; // Brown
+  
+  // Dining & Food (Orange)
+  if (cat.includes('food') || cat.includes('restaurant') || cat.includes('dining') || cat.includes('cafe') || cat.includes('bakery')) return '#FF9800';
+  
+  // Health & Medical (Red)
+  if (cat.includes('health') || cat.includes('medical') || cat.includes('doctor') || cat.includes('hospital') || cat.includes('clinic')) return '#F44336';
+  
+  // Lodging (Purple)
+  if (cat.includes('hotel') || cat.includes('accommodation') || cat.includes('resort') || cat.includes('guest house') || cat.includes('villa')) return '#9C27B0';
+  
+  // Shopping (Green)
+  if (cat.includes('shopping') || cat.includes('retail') || cat.includes('store') || cat.includes('supermarket') || cat.includes('mall')) return '#4CAF50';
+  
+  // Education (Indigo)
+  if (cat.includes('education') || cat.includes('school') || cat.includes('university') || cat.includes('college') || cat.includes('tuition')) return '#3F51B5';
+  
+  // Finance & Legal (Blue Grey)
+  if (cat.includes('finance') || cat.includes('bank') || cat.includes('legal') || cat.includes('law') || cat.includes('audit')) return '#607D8B';
+  
+  // Travel & Transport (Cyan)
+  if (cat.includes('travel') || cat.includes('transport') || cat.includes('taxi') || cat.includes('logistics')) return '#00BCD4';
+  
+  // Beauty & Wellness (Pink)
+  if (cat.includes('beauty') || cat.includes('salon') || cat.includes('spa') || cat.includes('parlour')) return '#E91E63';
+  
+  // Agriculture & Nature (Light Green)
+  if (cat.includes('agriculture') || cat.includes('farming') || cat.includes('garden')) return '#8BC34A';
+  
+  // Construction & Services (Brown)
+  if (cat.includes('construction') || cat.includes('hardware') || cat.includes('repair') || cat.includes('service')) return '#795548';
+  
+  // Government & Public (Deep Orange)
+  if (cat.includes('government') || cat.includes('police') || cat.includes('emergency')) return '#FF5722';
+  
+  // Arts & Leisure (Deep Purple)
+  if (cat.includes('art') || cat.includes('entertainment') || cat.includes('leisure') || cat.includes('music')) return '#673AB7';
+
   return '#EA4335'; // Default Google Red
 };
 

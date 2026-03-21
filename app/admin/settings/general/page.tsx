@@ -66,12 +66,13 @@ export default function GeneralSettingsPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['site-settings', 'general'] });
-      queryClient.invalidateQueries({ queryKey: ['site-settings', 'vars'] });
+      // Invalidate both general and common site setting queries
+      queryClient.invalidateQueries({ queryKey: ['site-settings'] });
       alert('Settings saved successfully');
     },
-    onError: () => {
-      alert('Error saving settings');
+    onError: (error: any) => {
+      console.error('Error saving settings:', error);
+      alert('Error saving settings: ' + (error.message || 'Unknown error'));
     },
   });
 
@@ -82,26 +83,40 @@ export default function GeneralSettingsPage() {
     try {
       setIsUploading(true);
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      // Keep it in a single "brand" folder but allow replacing the file
+      const fileName = `site-logo.${fileExt}`;
       const filePath = `brand/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('business-logos')
         .upload(filePath, file, {
-          cacheControl: '3600',
+          cacheControl: '0', // No cache during upload/testing
           upsert: true
         });
 
       if (uploadError) throw uploadError;
 
+      // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('business-logos')
         .getPublicUrl(filePath);
 
-      setLocalSettings(s => s ? { ...s, logo_url: publicUrl } : null);
-    } catch (error) {
+      // Add a timestamp to bypass browser cache
+      const uniqueUrl = `${publicUrl}?t=${Date.now()}`;
+
+      setLocalSettings(s => s ? { ...s, logo_url: uniqueUrl } : null);
+      
+      // Auto-save the logo URL to DB
+      await supabase
+        .from('site_settings')
+        .update({ logo_url: uniqueUrl })
+        .eq('id', 1);
+
+      queryClient.invalidateQueries({ queryKey: ['site-settings'] });
+      
+    } catch (error: any) {
       console.error('Error uploading logo:', error);
-      alert('Failed to upload logo');
+      alert('Failed to upload logo: ' + (error.message || 'Unknown error'));
     } finally {
       setIsUploading(false);
     }
