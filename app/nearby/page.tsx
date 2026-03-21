@@ -100,6 +100,8 @@ const CATEGORY_ALIASES: Record<string, string> = {
   'Hardware': 'Hardware Equipment'
 };
 
+const EMPTY_ARRAY: any[] = [];
+
 function SplitScreenResultsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -158,7 +160,7 @@ function SplitScreenResultsContent() {
   }, [searchQuery]);
 
   // React Query fetch
-  const { data: businessesData = [], isLoading: loadingBusinesses, isFetching, error } = useQuery({
+  const { data: businessesData = EMPTY_ARRAY, isLoading: loadingBusinesses, isFetching, error } = useQuery({
     queryKey: ['nearby-businesses', currentLat, currentLng, radius, searchQuery],
     queryFn: async () => {
       const lat = currentLat ? parseFloat(currentLat) : 7.8731;
@@ -193,10 +195,14 @@ function SplitScreenResultsContent() {
 
   useEffect(() => {
     if (searchQuery.trim().length > 0) {
-      const results = suggestionFuse.search(searchQuery).slice(0, 5);
-      setSuggestions(results.map(r => r.item));
+      const results = suggestionFuse.search(searchQuery).slice(0, 5).map(r => r.item);
+      // Only update if content changed to avoid render loops
+      setSuggestions(prev => {
+        if (JSON.stringify(prev) === JSON.stringify(results)) return prev;
+        return results;
+      });
     } else {
-      setSuggestions([]);
+      setSuggestions(prev => prev.length === 0 ? prev : EMPTY_ARRAY);
     }
   }, [searchQuery, suggestionFuse]);
 
@@ -453,7 +459,7 @@ function SplitScreenResultsContent() {
             centerLng={mapCenter.lng}
             userLat={currentLat ? parseFloat(currentLat) : undefined}
             userLng={currentLng ? parseFloat(currentLng) : undefined}
-            businesses={businesses.map(b => ({
+            businesses={businesses.map((b: any) => ({
               type: 'Feature',
               id: b.id,
               properties: { ...b },
