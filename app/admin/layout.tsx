@@ -19,7 +19,8 @@ import {
   LogOut,
   HelpCircle,
   Star,
-  CreditCard
+  CreditCard,
+  Home
 } from 'lucide-react';
 import AuthButton from '@/app/components/AuthButton';
 import NotificationBell from '@/app/components/NotificationBell';
@@ -27,6 +28,7 @@ import LiveCounter from '@/app/components/LiveCounter';
 import { useUser } from '@/lib/hooks/useUser';
 
 const adminMenuItems = [
+  { name: 'Home', href: '/', icon: Home },
   { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
   { name: 'Businesses', href: '/admin/businesses', icon: Building2 },
   { name: 'Requests', href: '/admin/requests', icon: ClipboardList },

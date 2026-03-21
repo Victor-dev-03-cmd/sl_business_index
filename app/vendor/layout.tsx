@@ -15,7 +15,8 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Briefcase,
-  HelpCircle
+  HelpCircle,
+  Home
 } from 'lucide-react';
 import AuthButton from '@/app/components/AuthButton';
 import NotificationBell from '@/app/components/NotificationBell';
@@ -23,6 +24,7 @@ import VerifiedBadge from '@/app/components/VerifiedBadge';
 import { useUser } from '@/lib/hooks/useUser';
 
 const vendorMenuItems = [
+  { name: 'Home', href: '/', icon: Home },
   { name: 'Dashboard', href: '/vendor/dashboard', icon: LayoutDashboard },
   { name: 'My Businesses', href: '/vendor/my-businesses', icon: Store },
   { name: 'Marketing', href: '/vendor/marketing', icon: Megaphone },
