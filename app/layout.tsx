@@ -13,6 +13,7 @@ import ClarityTracker from "./components/ClarityTracker";
 import LiveCounter from "./components/LiveCounter";
 import DynamicAppearance from "./components/DynamicAppearance";
 import SessionManager from "./components/SessionManager";
+import LoadingProvider from "./components/LoadingProvider"; // Import the provider
 import "./globals.css";
 
 const outfit = Outfit({
@@ -40,17 +41,19 @@ export default function RootLayout({
           <DynamicAppearance />
           <SessionManager>
             <ThemeProvider>
-              <AnnouncementWrapper>
-                <AnnouncementBar />
-              </AnnouncementWrapper>
-              <NavbarWrapper>
-                <Navbar />
-              </NavbarWrapper>
-              <main>{children}</main>
-              <GlobalAnnouncement />
-              <FooterWrapper>
-                <Footer />
-              </FooterWrapper>
+              <LoadingProvider> {/* Wrap the content with the loading provider */}
+                <AnnouncementWrapper>
+                  <AnnouncementBar />
+                </AnnouncementWrapper>
+                <NavbarWrapper>
+                  <Navbar />
+                </NavbarWrapper>
+                <main>{children}</main>
+                <GlobalAnnouncement />
+                <FooterWrapper>
+                  <Footer />
+                </FooterWrapper>
+              </LoadingProvider>
             </ThemeProvider>
           </SessionManager>
         </QueryProvider>
