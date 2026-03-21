@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Script from 'next/script';
+import { toast } from 'sonner';
 import { 
   Phone, 
   Mail, 
@@ -164,7 +165,7 @@ export default function ContactPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Form submitted:', { department, ...formData });
-    alert('Thank you! Your message has been sent.');
+    toast.success('Thank you! Your message has been sent.');
     setFormData({ name: '', email: '', subject: '', message: '', location: '' });
   };
 

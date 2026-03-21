@@ -41,6 +41,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { SL_TOWNS, Town } from '@/lib/towns';
 import VerifiedBadge from './components/VerifiedBadge';
+import { toast } from 'sonner';
 import Fuse from 'fuse.js';
 import { StarsBackground } from '@/components/animate-ui/components/backgrounds/stars';
 
@@ -327,7 +328,7 @@ export default function HomePage() {
         },
         (err) => {
           console.error("Error getting location: ", err.message);
-          alert("Could not get your location. Please grant permission.");
+          toast.error("Could not get your location. Please grant permission.");
           setIsFetchingLocation(false);
         },
         {
@@ -337,7 +338,7 @@ export default function HomePage() {
         }
       );
     } else {
-      alert("Geolocation is not supported by this browser.");
+      toast.error("Geolocation is not supported by this browser.");
     }
   };
 

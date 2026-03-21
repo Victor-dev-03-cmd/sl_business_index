@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
 import { 
   Wrench, 
   Save, 
@@ -55,10 +56,10 @@ export default function CustomizationSettingsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['site-settings', 'customization'] });
-      alert('Customization settings saved successfully');
+      toast.success('Customization settings saved successfully');
     },
     onError: () => {
-      alert('Error saving customization settings');
+      toast.error('Error saving customization settings');
     },
   });
 

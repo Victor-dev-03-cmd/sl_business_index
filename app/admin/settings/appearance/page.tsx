@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
 import { 
   Palette, 
   Save, 
@@ -63,10 +64,10 @@ export default function AppearanceSettingsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['site-settings', 'appearance'] });
       queryClient.invalidateQueries({ queryKey: ['site-settings', 'vars'] });
-      alert('Appearance settings saved successfully');
+      toast.success('Appearance settings saved successfully');
     },
     onError: () => {
-      alert('Error saving appearance settings');
+      toast.error('Error saving appearance settings');
     },
   });
 

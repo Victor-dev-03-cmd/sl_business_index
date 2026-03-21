@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
 import { 
   Search, 
   Plus,
@@ -198,10 +199,10 @@ export default function AdminCategoriesPage() {
       setEditingCategory(null);
       setParentCategory(null);
       setFormData({ name: '', icon: '', image_url: '', keywords: [], parent_id: null, keywordInput: '' });
-      alert(editingCategory ? 'Category updated successfully' : 'Category created successfully');
+      toast.success(editingCategory ? 'Category updated successfully' : 'Category created successfully');
     },
     onError: (error: any) => {
-      alert(error.message);
+      toast.error(error.message);
     }
   });
 
@@ -215,10 +216,10 @@ export default function AdminCategoriesPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
-      alert('Category deleted successfully');
+      toast.success('Category deleted successfully');
     },
     onError: (error: any) => {
-      alert(error.message);
+      toast.error(error.message);
     }
   });
 
@@ -232,10 +233,10 @@ export default function AdminCategoriesPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
-      alert('Category moved successfully');
+      toast.success('Category moved successfully');
     },
     onError: (error: any) => {
-      alert(error.message);
+      toast.error(error.message);
     }
   });
 
@@ -251,7 +252,7 @@ export default function AdminCategoriesPage() {
       queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
     },
     onError: (error: any) => {
-      alert(error.message);
+      toast.error(error.message);
     }
   });
 
@@ -377,9 +378,10 @@ export default function AdminCategoriesPage() {
       .in('id', selectedIds);
 
     if (error) {
-      alert('Error deleting categories');
+      toast.error('Error deleting categories');
     } else {
       setSelectedIds([]);
+      toast.success('Selected categories deleted successfully');
       queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
     }
   };

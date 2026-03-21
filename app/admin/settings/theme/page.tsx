@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
 import { 
   Palette, 
   Save, 
@@ -69,10 +70,10 @@ export default function ThemeSettingsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['site-settings', 'theme'] });
       queryClient.invalidateQueries({ queryKey: ['site-settings', 'vars'] });
-      alert('Theme colors saved successfully');
+      toast.success('Theme colors saved successfully');
     },
     onError: () => {
-      alert('Error saving theme colors');
+      toast.error('Error saving theme colors');
     },
   });
 

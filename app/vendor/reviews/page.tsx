@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Fragment } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import { toast } from 'sonner';
 import { Star, MessageSquare, Search, Reply, CheckCircle2, Clock, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface ReviewReply {
@@ -99,10 +100,10 @@ export default function ReviewsPage() {
       ));
       setExpandedReview(null);
       setReplyText('');
-      alert('Reply posted successfully!');
+      toast.success('Reply posted successfully!');
     } catch (error) {
       console.error('Error posting reply:', error);
-      alert('Failed to post reply.');
+      toast.error('Failed to post reply.');
     }
   };
 

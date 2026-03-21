@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
 import { 
   Search, 
   User,
@@ -78,9 +79,10 @@ export default function AdminUsersPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-profiles'] });
+      toast.success('User role updated successfully');
     },
     onError: () => {
-      alert('Error updating role');
+      toast.error('Error updating role');
     }
   });
 
@@ -107,9 +109,10 @@ export default function AdminUsersPage() {
       .in('id', selectedIds);
 
     if (error) {
-      alert(`Error updating users status to ${newStatus}`);
+      toast.error(`Error updating users status to ${newStatus}`);
     } else {
       setSelectedIds([]);
+      toast.success(`Successfully updated ${selectedIds.length} users to ${newStatus}`);
       queryClient.invalidateQueries({ queryKey: ['admin-profiles'] });
     }
   };

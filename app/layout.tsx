@@ -14,6 +14,7 @@ import LiveCounter from "./components/LiveCounter";
 import DynamicAppearance from "./components/DynamicAppearance";
 import { SessionProvider } from "./components/SessionContext"; // Corrected import
 import LoadingProvider from "./components/LoadingProvider";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -38,6 +39,7 @@ export default function RootLayout({
       >
         <ClarityTracker />
         <QueryProvider>
+          <Toaster richColors closeButton position="bottom-right" />
           <DynamicAppearance />
           <SessionProvider> {/* Changed from SessionManager */}
             <ThemeProvider>

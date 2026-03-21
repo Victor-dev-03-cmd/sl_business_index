@@ -5,6 +5,7 @@ import Toolbar from './Toolbar';
 import Sidebar from './Sidebar';
 import EditorCanvas from './EditorCanvas';
 import PropertiesPanel from './PropertiesPanel';
+import { toast } from 'sonner';
 import { useEditorStore } from '../store/useEditorStore';
 import { 
   Download, 
@@ -63,7 +64,7 @@ export default function MarketingDesignEditor({ onBackAction }: { onBackAction: 
       if (!canvas) return;
       setTimeout(() => {
         setIsSaving(false);
-        alert('Published to Business Marketing Feed successfully!');
+        toast.success('Published to Business Marketing Feed successfully!');
       }, 2000);
     } catch (error) {
       console.error(error);

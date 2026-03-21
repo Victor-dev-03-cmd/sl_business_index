@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
 import { 
   Globe, 
   Save, 
@@ -68,11 +69,11 @@ export default function GeneralSettingsPage() {
     onSuccess: () => {
       // Invalidate both general and common site setting queries
       queryClient.invalidateQueries({ queryKey: ['site-settings'] });
-      alert('Settings saved successfully');
+      toast.success('Settings saved successfully');
     },
     onError: (error: any) => {
       console.error('Error saving settings:', error);
-      alert('Error saving settings: ' + (error.message || 'Unknown error'));
+      toast.error('Error saving settings: ' + (error.message || 'Unknown error'));
     },
   });
 
@@ -116,7 +117,7 @@ export default function GeneralSettingsPage() {
       
     } catch (error: any) {
       console.error('Error uploading logo:', error);
-      alert('Failed to upload logo: ' + (error.message || 'Unknown error'));
+      toast.error('Failed to upload logo: ' + (error.message || 'Unknown error'));
     } finally {
       setIsUploading(false);
     }

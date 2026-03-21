@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import { toast } from 'sonner';
 import { 
   CreditCard, 
   CheckCircle2, 
@@ -134,11 +135,11 @@ export default function BillingPage() {
         status: 'paid'
       });
 
-      alert(`Successfully upgraded to ${plan.name} plan!`);
+      toast.success(`Successfully upgraded to ${plan.name} plan!`);
       fetchBillingData();
     } catch (error) {
       console.error('Error upgrading:', error);
-      alert('Failed to upgrade plan');
+      toast.error('Failed to upgrade plan');
     } finally {
       setSubmitting(false);
     }
@@ -228,7 +229,7 @@ export default function BillingPage() {
             </div>
           </div>
           <button 
-            onClick={() => alert('Secure payment portal integration is in progress. Please contact billing@slbusiness.com to update your details.')}
+            onClick={() => toast.info('Secure payment portal integration is in progress. Please contact billing@slbusiness.com to update your details.')}
             className="w-full py-2 mt-4 text-sm  text-gray-100 hover:text-gray-200 border border-gray-300 rounded bg-brand-dark transition-colors"
           >
             Update Payment Method
@@ -368,7 +369,7 @@ export default function BillingPage() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <button 
-                        onClick={() => alert(`Downloading PDF for invoice ${invoice.id}...`)}
+                        onClick={() => toast.info(`Downloading PDF for invoice ${invoice.id}...`)}
                         className="text-gray-400 hover:text-gray-600 transition-colors"
                       >
                         <Download size={16} />

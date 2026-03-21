@@ -1,5 +1,6 @@
 
 import { useEditorStore } from '../store/useEditorStore';
+import { toast } from 'sonner';
 import {
   Type, 
   AlignCenter, 
@@ -290,7 +291,7 @@ export default function PropertiesPanel() {
           <div className="h-4 w-px bg-slate-800" />
           <div className="flex items-center gap-2">
             <button
-              onClick={() => alert('Cropping functionality initialized...')}
+              onClick={() => toast.info('Cropping functionality initialized...')}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900/60 hover:bg-slate-800 border border-slate-800 rounded-lg text-[9px] font-bold uppercase tracking-wider text-slate-300 transition-all shadow-sm"
             >
               <Crop size={13} className="text-blue-400" /> Crop

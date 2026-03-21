@@ -16,6 +16,7 @@ import {
   Clock
 } from 'lucide-react';
 import { VerificationWithBusiness } from '@/lib/admin-types';
+import { toast } from 'sonner';
 
 // Extend the type to include owner_id which we need for profile updates
 interface ExtendedVerification extends VerificationWithBusiness {
@@ -97,11 +98,11 @@ export default function VerificationsPage() {
         if (profileError) console.error('Error updating profile status:', profileError);
       }
       
-      alert(`Verification ${status} successfully!`);
+      toast.success(`Verification ${status} successfully!`);
       fetchVerifications();
     } catch (error) {
       console.error('Error updating verification:', error);
-      alert('Failed to update verification status');
+      toast.error('Failed to update verification status');
     } finally {
       setSubmitting(null);
     }

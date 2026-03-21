@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
 import { 
   ShieldAlert, 
   Save, 
@@ -58,10 +59,10 @@ export default function WebBlockerSettingsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['site-settings', 'web-blocker'] });
-      alert('Security settings saved successfully');
+      toast.success('Security settings saved successfully');
     },
     onError: () => {
-      alert('Error saving security settings');
+      toast.error('Error saving security settings');
     },
   });
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import { toast } from 'sonner';
 import {
   User,
   ShieldCheck,
@@ -140,10 +141,10 @@ export default function SettingsPage() {
         .eq('id', user.id);
 
       if (error) throw error;
-      alert('Profile updated successfully!');
+      toast.success('Profile updated successfully!');
     } catch (error) {
       console.error('Error updating profile:', error);
-      alert('Failed to update profile');
+      toast.error('Failed to update profile');
     } finally {
       setSubmitting(false);
     }
@@ -163,10 +164,10 @@ export default function SettingsPage() {
         .eq('id', selectedBusinessId);
 
       if (error) throw error;
-      alert('Optimization settings saved!');
+      toast.success('Optimization settings saved!');
     } catch (error) {
       console.error('Error saving optimization:', error);
-      alert('Failed to save settings');
+      toast.error('Failed to save settings');
     } finally {
       setSubmitting(false);
     }
@@ -174,12 +175,12 @@ export default function SettingsPage() {
 
   const handleSubmitVerification = async () => {
     if (!verificationFile) {
-      alert('Please select a document to upload.');
+      toast.warning('Please select a document to upload.');
       return;
     }
 
     if (!selectedBusinessId) {
-      alert('Please select a business to verify from the "Radius & SEO" tab first.');
+      toast.warning('Please select a business to verify from the "Radius & SEO" tab first.');
       return;
     }
 
@@ -227,12 +228,12 @@ export default function SettingsPage() {
         throw profileError;
       }
 
-      alert('Your request is pending admin approval.');
+      toast.success('Your request is pending admin approval.');
       setVerificationFile(null);
       fetchData();
     } catch (error) {
       console.error('Error submitting verification:', error);
-      alert('Failed to submit verification');
+      toast.error('Failed to submit verification');
     } finally {
       setSubmitting(false);
     }

@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/command";
 import { Navigation, Loader2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import { toast } from 'sonner';
 
 const LeafletMap = dynamic(() => import('@/components/LeafletMap'), {
   ssr: false,
@@ -86,7 +87,7 @@ export default function AddressAutocomplete({
 
   const findMyLocation = () => {
     if (!navigator.geolocation) {
-      alert("Geolocation is not supported by your browser.");
+      toast.error("Geolocation is not supported by your browser.");
       return;
     }
 
@@ -113,7 +114,7 @@ export default function AddressAutocomplete({
       },
       (error) => {
         console.error("Error getting location:", error);
-        alert("Unable to retrieve your location. Please ensure location services are enabled.");
+        toast.error("Unable to retrieve your location. Please ensure location services are enabled.");
         setIsLocating(false);
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }

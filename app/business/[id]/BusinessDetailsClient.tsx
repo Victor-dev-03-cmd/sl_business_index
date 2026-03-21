@@ -186,10 +186,10 @@ export default function BusinessDetailsClient({ business }: Props) {
       await logEvent(business.id, 'lead_form_submit', business.address?.split(',').pop()?.trim());
 
       setEnquiryForm({ name: '', email: '', phone: '', message: '' });
-      alert('Enquiry sent successfully! The business will contact you soon.');
+      toast.success('Enquiry sent successfully! The business will contact you soon.');
     } catch (error) {
       console.error('Error sending enquiry:', error);
-      alert('Failed to send enquiry.');
+      toast.error('Failed to send enquiry.');
     } finally {
       setSubmittingEnquiry(false);
     }

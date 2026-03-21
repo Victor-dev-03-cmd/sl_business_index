@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
 import { 
   Bell, 
   Save, 
@@ -56,10 +57,10 @@ export default function NotificationSettingsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['site-settings', 'notification'] });
-      alert('Notification settings saved successfully');
+      toast.success('Notification settings saved successfully');
     },
     onError: () => {
-      alert('Error saving notification settings');
+      toast.error('Error saving notification settings');
     },
   });
 

@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
 import { 
   CheckCircle, 
   XCircle, 
@@ -120,11 +121,11 @@ export default function AdminDashboard() {
       console.log('Toggle success, invalidating queries...');
       queryClient.invalidateQueries({ queryKey: ['admin-featured-ids'] });
       queryClient.invalidateQueries({ queryKey: ['featured-businesses-home'] });
-      alert('Featured status updated successfully!');
+      toast.success('Featured status updated successfully!');
     },
     onError: (err: Error) => {
       console.error('Mutation error:', err);
-      alert(`Failed to update: ${err.message || 'Unknown error'}`);
+      toast.error(`Failed to update: ${err.message || 'Unknown error'}`);
     }
   });
 

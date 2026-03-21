@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
 import { 
   Search, 
   Star,
@@ -76,7 +77,7 @@ export default function AdminFeaturedPage() {
       queryClient.invalidateQueries({ queryKey: ['featured-businesses-home'] });
     },
     onError: (err: any) => {
-      alert(`Error updating status: ${err.message}`);
+      toast.error(`Error updating status: ${err.message}`);
     }
   });
 

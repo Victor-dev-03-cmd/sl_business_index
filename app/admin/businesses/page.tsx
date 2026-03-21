@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
 import { 
   Search, 
   Building2, 
@@ -122,9 +123,10 @@ export default function AdminBusinessesPage() {
       .in('id', selectedIds);
 
     if (error) {
-      alert('Error deleting businesses');
+      toast.error('Error deleting businesses');
     } else {
       setSelectedIds([]);
+      toast.success('Selected businesses deleted successfully');
       queryClient.invalidateQueries({ queryKey: ['admin-businesses-active'] });
     }
   };

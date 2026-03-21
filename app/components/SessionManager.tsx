@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
-import { toast, Toaster } from 'sonner';
+import { toast } from 'sonner';
 import { 
   Dialog, 
   DialogContent, 
@@ -130,7 +130,6 @@ export default function SessionManager({ children }: { children: React.ReactNode
 
   return (
     <>
-      <Toaster richColors closeButton position="top-center" />
       {children}
 
       <Dialog open={showWarning} onOpenChange={setShowWarning}>

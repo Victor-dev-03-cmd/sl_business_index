@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import { toast } from 'sonner';
 import MarketingDesignEditor from './components/MarketingDesignEditor';
 import PromotionUploadForm from './components/PromotionUploadForm';
 import { 
@@ -112,12 +113,12 @@ export default function MarketingPage() {
 
   const handleCampaignAction = async (isSchedule: boolean) => {
     if (!selectedBusinessId) {
-      alert('Please select a business');
+      toast.warning('Please select a business');
       return;
     }
 
     if (isSchedule && !scheduledAt) {
-      alert('Please select a schedule date');
+      toast.warning('Please select a schedule date');
       return;
     }
 
@@ -136,12 +137,12 @@ export default function MarketingPage() {
 
       if (error) throw error;
 
-      alert(isSchedule ? 'Campaign scheduled successfully!' : 'Campaign posted successfully!');
+      toast.success(isSchedule ? 'Campaign scheduled successfully!' : 'Campaign posted successfully!');
       setActiveTab('history');
       fetchData();
     } catch (error) {
       console.error('Error saving campaign:', error);
-      alert('Failed to save campaign');
+      toast.error('Failed to save campaign');
     } finally {
       setSubmitting(false);
     }
@@ -402,7 +403,7 @@ export default function MarketingPage() {
 
           <div className="mt-4 flex justify-end">
             <button 
-              onClick={() => alert('Banner download functionality is currently being optimized. Please use the "Post Now" feature to go live immediately.')}
+              onClick={() => toast.info('Banner download functionality is currently being optimized. Please use the "Post Now" feature to go live immediately.')}
               className="text-sm text-gray-500 hover:text-[#053765] flex items-center gap-1 transition-colors"
             >
               <Download size={16} /> Download Preview
