@@ -608,7 +608,7 @@ export default function HomePage() {
                   className="flex items-center gap-2 w-1/2 sm:w-auto px-5 py-3 text-gray-200 bg-white/5 hover:bg-white/10 border border-white/10 font-normal transition-all disabled:opacity-50 text-base rounded-[6px]"
               >
                 <Navigation size={16} strokeWidth={1.5} className={cn(isFetchingLocation && "animate-pulse")} />
-                {isFetchingLocation ? 'Locating...' : 'Search near me'}
+                {isFetchingLocation ? 'Locating...' : 'Near me'}
               </button>
 
               <button

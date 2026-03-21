@@ -5,7 +5,12 @@ import Image from 'next/image';
 import { ChevronDown, Search, X, Tags } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 
-export default function CategoriesMenu({ initialCategories = [] }: { initialCategories?: any[] }) {
+interface CategoriesMenuProps {
+  initialCategories?: any[];
+  isMobile?: boolean;
+}
+
+export default function CategoriesMenu({ initialCategories = [], isMobile = false }: CategoriesMenuProps) {
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -32,6 +37,34 @@ export default function CategoriesMenu({ initialCategories = [] }: { initialCate
       .replace(/,/g, '');
   };
 
+  // Mobile View: A simple vertical list
+  if (isMobile) {
+    return (
+      <div className="w-full">
+        <h3 className="text-lg font-medium text-gray-800 mb-2">Categories</h3>
+        <div className="flex flex-col space-y-1">
+          {categories.map((category) => (
+            <Link
+              key={category.name}
+              href={`/categories/${slugify(category.name)}`}
+              className="flex items-center group py-2 text-base text-gray-600 hover:text-brand-gold-light transition-all"
+            >
+              <span className="w-8 h-8 rounded-md bg-gray-100 flex items-center justify-center mr-3 flex-shrink-0">
+                {category.image_url ? (
+                  <Image src={category.image_url} alt={category.name} width={20} height={20} />
+                ) : (
+                  <IconComponent name={category.icon} size={18} />
+                )}
+              </span>
+              <span>{category.name}</span>
+            </Link>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Desktop View: The original mega-menu
   return (
     <div className="relative h-full flex items-center">
       <button
@@ -47,7 +80,6 @@ export default function CategoriesMenu({ initialCategories = [] }: { initialCate
           <div className="fixed inset-0 top-30 z-[30] bg-black/5 backdrop-blur-[2px]" onClick={() => setIsMegaMenuOpen(false)}></div>
           <div className="absolute top-[calc(100%+0.5rem)] left-1/2 -translate-x-1/2 w-[95vw] max-w-7xl bg-white shadow-2xl p-8 border border-gray-200 rounded-xl z-[40] animate-in fade-in slide-in-from-top-4 duration-300">
             <div className="max-w-full mx-auto">
-              {/* Search Header */}
               <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-300 pb-6">
                 <div>
                   <h3 className="text-xl font-normal text-gray-900">Browse by Category</h3>
@@ -74,7 +106,6 @@ export default function CategoriesMenu({ initialCategories = [] }: { initialCate
                 </div>
               </div>
 
-              {/* Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-10 gap-y-2 max-h-[60vh] overflow-y-auto pr-4 custom-scrollbar">
                 {filteredCategories.length > 0 ? (
                   filteredCategories.map((category) => (
