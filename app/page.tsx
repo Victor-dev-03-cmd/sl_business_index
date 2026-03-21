@@ -42,6 +42,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { SL_TOWNS, Town } from '@/lib/towns';
 import VerifiedBadge from './components/VerifiedBadge';
 import Fuse from 'fuse.js';
+import { StarsBackground } from '@/components/animate-ui/components/backgrounds/stars';
 
 
 const sriLankanDistricts = [
@@ -102,6 +103,48 @@ export default function HomePage() {
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
+
+  const { data: categories = [], isLoading: categoriesLoading } = useQuery({
+    queryKey: ['categories-home'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .is('parent_id', null)
+        .order('name', { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: featuredBusinesses = [], isLoading: featuredLoading, error: featuredError } = useQuery({
+    queryKey: ['featured-businesses-home'],
+    queryFn: async () => {
+      // Fetch from featured_listings table which references businesses
+      const { data, error } = await supabase
+        .from('featured_listings')
+        .select(`
+          business_id,
+          businesses (
+            id, name, category, address, image_url, logo_url, rating, is_verified, status, can_show_badge
+          )
+        `)
+        .order('order_index', { ascending: true })
+        .limit(4);
+      
+      if (error) {
+        console.error('Featured listings fetch error:', error);
+        throw error;
+      }
+      
+      // Flatten the data and ensure we only have businesses that actually exist and are approved
+      return (data as any[])
+        .map(item => item.businesses)
+        .filter(b => b && b.status === 'approved') as any[];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   useEffect(() => {
     fetch('/srilanka.geojson')
@@ -180,52 +223,11 @@ export default function HomePage() {
       };
       fetchBusinesses();
     } else {
-      setBusinessSuggestions([]);
+      // Auto-show featured businesses when focused but empty
+      setBusinessSuggestions(featuredBusinesses.slice(0, 4));
       setFuzzyBusinessSuggestions([]);
     }
-  }, [debouncedSearchQuery, searchQuery, fuse, userCoords]);
-
-  const { data: categories = [], isLoading: categoriesLoading } = useQuery({
-    queryKey: ['categories-home'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('categories')
-        .select('*')
-        .is('parent_id', null)
-        .order('name', { ascending: true });
-      if (error) throw error;
-      return data;
-    },
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const { data: featuredBusinesses = [], isLoading: featuredLoading, error: featuredError } = useQuery({
-    queryKey: ['featured-businesses-home'],
-    queryFn: async () => {
-      // Fetch from featured_listings table which references businesses
-      const { data, error } = await supabase
-        .from('featured_listings')
-        .select(`
-          business_id,
-          businesses (
-            id, name, category, address, image_url, logo_url, rating, is_verified, status, can_show_badge
-          )
-        `)
-        .order('order_index', { ascending: true })
-        .limit(4);
-      
-      if (error) {
-        console.error('Featured listings fetch error:', error);
-        throw error;
-      }
-      
-      // Flatten the data and ensure we only have businesses that actually exist and are approved
-      return (data as any[])
-        .map(item => item.businesses)
-        .filter(b => b && b.status === 'approved') as any[];
-    },
-    staleTime: 5 * 60 * 1000,
-  });
+  }, [debouncedSearchQuery, searchQuery, fuse, userCoords, featuredBusinesses]);
 
   const IconComponent = ({ name, className }: { name: string | null, className?: string }) => {
     if (!name) return <Tags className={className} />;
@@ -480,7 +482,7 @@ export default function HomePage() {
       <div className="min-h-screen bg-white font-normal">
         {/* --- HERO SECTION --- */}
         <section className="relative h-[78vh] flex items-center justify-center overflow-hidden bg-brand-dark">
-          <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
+          <StarsBackground className="absolute inset-0 z-0" />
 
           <div className="relative z-10 max-w-5xl px-6 text-center">
             <span className="inline-block px-4 py-1.5 mb-6 text-[11px] tracking-[0.15em] uppercase text-brand-sand border border-brand-sand/20 rounded-md">
@@ -521,7 +523,7 @@ export default function HomePage() {
                     {(fuzzyBusinessSuggestions.length > 0 || businessSuggestions.length > 0) && (
                       <div className="p-2">
                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] px-3 py-2">
-                          Fuzzy Search for Suggestions
+                          {searchQuery.trim() ? "Fuzzy Search for Suggestions" : "Recommended for You"}
                         </p>
                         {(fuzzyBusinessSuggestions.length > 0 ? fuzzyBusinessSuggestions : businessSuggestions).map((biz) => (
                           <button

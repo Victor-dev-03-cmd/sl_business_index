@@ -201,10 +201,17 @@ function SplitScreenResultsContent() {
         if (JSON.stringify(prev) === JSON.stringify(results)) return prev;
         return results;
       });
+    } else if (isSearchFocused) {
+      // Auto-show nearby businesses when focused but empty
+      const results = businessesData.slice(0, 5);
+      setSuggestions(prev => {
+        if (JSON.stringify(prev) === JSON.stringify(results)) return prev;
+        return results;
+      });
     } else {
       setSuggestions(prev => prev.length === 0 ? prev : EMPTY_ARRAY);
     }
-  }, [searchQuery, suggestionFuse]);
+  }, [searchQuery, suggestionFuse, businessesData, isSearchFocused]);
 
   // 3. UI Helpers
   const findMyLocation = useCallback(() => {
@@ -320,7 +327,9 @@ function SplitScreenResultsContent() {
           {isSearchFocused && suggestions.length > 0 && (
             <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-[8px] shadow-2xl z-50 overflow-hidden text-left divide-y divide-gray-100 max-h-[400px] overflow-y-auto">
               <div className="p-2">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] px-3 py-2">Fuzzy Search for Suggestions</p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] px-3 py-2">
+                  {searchQuery.trim() ? "Fuzzy Search for Suggestions" : "Top Businesses Near You"}
+                </p>
                 {suggestions.map((biz: any) => (
                   <button
                     key={biz.id}

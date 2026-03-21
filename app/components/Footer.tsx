@@ -147,21 +147,21 @@ const Footer = () => {
             © 2026 SL Business Index | <span className="text-gray-400">The Heart of Sri Lankan Commerce</span>
           </div>
 
-          { /* <div className="flex flex-col items-center md:items-end gap-3">
+          <div className="flex flex-col items-center md:items-end gap-3">
             <div className="flex items-center gap-1.5 text-xs text-gray-400">
               Built with <Heart size={12} className="text-red-500 fill-red-500" /> in Sri Lanka by 
-              <span className="text-emerald-400 hover:underline cursor-pointer">Laxsan-Victor</span>
+              <a href="https://laxsan-dev.vercel.app/" target="_blank" rel="noopener noreferrer" className="text-brand-blue hover:underline cursor-pointer"> Laxsan Victor</a>
             </div>
             <div className="flex items-center gap-4 text-gray-600">
               <div title="Next.js" className="hover:text-white transition-colors"><Zap size={14} /></div>
               <div title="Tailwind CSS" className="hover:text-emerald-400 transition-colors"><Wind size={14} /></div>
               <div title="Supabase" className="hover:text-emerald-600 transition-colors"><Database size={14} /></div>
               <div title="Mapbox" className="hover:text-blue-400 transition-colors"><Layers size={14} /></div>
-              <a href="https://github.com/Victor-dev-03-cmd" target="_blank" rel="noopener noreferrer" title="GitHub" className="hover:text-white transition-colors ml-2">
+              <a href="https://laxsan-dev.vercel.app/" target="_blank" rel="noopener noreferrer" title="GitHub" className="hover:text-white transition-colors ml-2">
                 <Github size={14} />
               </a>
             </div>
-          </div> */}
+          </div>
         </div>
       </div>
 
