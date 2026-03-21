@@ -418,7 +418,7 @@ function SplitScreenResultsContent() {
   }, [selectedCategory]);
 
   return (
-    <div className="flex flex-col h-screen bg-white font-normal">
+    <div className="flex flex-col h-dvh overflow-hidden bg-white font-normal">
       {/* ═══════════════════════════════════════════
           MOBILE TOP BAR  (hidden on md+)
       ═══════════════════════════════════════════ */}
@@ -480,25 +480,11 @@ function SplitScreenResultsContent() {
             )}
           />
         </button>
-
-        {/* Filters */}
-        <button
-          onClick={() => {
-            setMobileRadius(radius);
-            setIsMobileFilterOpen(true);
-          }}
-          className="shrink-0 w-9 h-9 border border-gray-200 rounded-md flex items-center justify-center bg-white hover:bg-gray-50 shadow-sm transition-colors relative"
-        >
-          <SlidersHorizontal size={16} className="text-brand-dark" />
-          {(selectedCategory || radius !== 5000) && (
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-brand-blue rounded-full border-2 border-white" />
-          )}
-        </button>
       </div>
 
       {/* Mobile — full-screen suggestions overlay */}
       {isSearchFocused && (
-        <div className="md:hidden fixed inset-0 top-14 z-30 flex flex-col">
+        <div className="md:hidden fixed inset-0 top-14 z-[9998] flex flex-col">
           {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/20"
@@ -577,7 +563,7 @@ function SplitScreenResultsContent() {
 
       {/* Mobile — filter bottom sheet */}
       {isMobileFilterOpen && (
-        <div className="md:hidden fixed inset-0 z-50 flex flex-col justify-end">
+        <div className="md:hidden fixed inset-0 z-[9999] flex flex-col justify-end">
           {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/40"
@@ -734,7 +720,7 @@ function SplitScreenResultsContent() {
           </div>
 
           {isSearchFocused && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-[8px] shadow-2xl z-50 overflow-hidden text-left max-h-[420px] overflow-y-auto">
+            <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-[8px] shadow-2xl z-[9999] overflow-hidden text-left max-h-[420px] overflow-y-auto">
               {suggestions.length > 0 ? (
                 <>
                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] px-4 pt-3 pb-2">
@@ -829,7 +815,7 @@ function SplitScreenResultsContent() {
                 <ChevronDown size={14} className="text-gray-400" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="p-4 w-64 bg-white shadow-xl border border-gray-300 rounded-[6px]">
+            <DropdownMenuContent className="p-4 w-64 bg-white shadow-xl border border-gray-300 rounded-[6px] z-[9999]">
               <div className="mb-4 flex justify-between">
                 <span className="text-xs text-gray-500 uppercase">
                   Search Radius
@@ -861,7 +847,7 @@ function SplitScreenResultsContent() {
                 <ChevronDown size={14} className="text-gray-400" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-64 p-0 bg-white shadow-2xl border border-gray-200 rounded-[6px] overflow-hidden">
+            <DropdownMenuContent className="w-64 p-0 bg-white shadow-2xl border border-gray-200 rounded-[6px] overflow-hidden z-[9999]">
               <Command>
                 <CommandInput
                   placeholder="Filter category..."
@@ -899,10 +885,10 @@ function SplitScreenResultsContent() {
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden relative">
+      <div className="flex flex-1 overflow-hidden min-h-0">
         {/* Business List */}
         <div
-          className={`${mobileView === "list" ? "flex" : "hidden"} md:flex flex-col w-full md:w-96 lg:w-[450px] bg-gray-50 border-r border-gray-300 h-full overflow-hidden`}
+          className={`${mobileView === "list" ? "flex" : "hidden"} md:flex flex-col w-full md:w-96 lg:w-[450px] bg-gray-50 border-r border-gray-300 min-h-0 overflow-hidden`}
         >
           <div className="p-4 bg-gray-50 border-b border-gray-300 flex justify-between items-center">
             <p className="text-xs text-gray-500 uppercase tracking-widest">
@@ -988,37 +974,40 @@ function SplitScreenResultsContent() {
 
         {/* Map */}
         <div
-          className={`${mobileView === "map" ? "flex" : "hidden"} md:flex flex-1 relative bg-gray-100`}
+          className={`${mobileView === "map" ? "flex" : "hidden"} md:flex flex-col flex-1 min-h-0 relative bg-gray-100`}
         >
-          <LeafletMap
-            centerLat={mapCenter.lat}
-            centerLng={mapCenter.lng}
-            userLat={currentLat ? parseFloat(currentLat) : undefined}
-            userLng={currentLng ? parseFloat(currentLng) : undefined}
-            businesses={businesses.map((b: any) => ({
-              type: "Feature",
-              id: b.id,
-              properties: { ...b },
-              geometry: {
-                type: "Point",
-                coordinates: [b.longitude, b.latitude],
-              },
-            }))}
-            zoom={mapZoom}
-            height="100%"
-            radius={radius}
-            onMarkerClick={setSelectedBusiness}
-            onMapMove={(lat, lng, zoom) => {
-              setMapCenter({ lat, lng });
-              setMapZoom(zoom);
-              setIsMapManual(true);
-            }}
-            onMapClick={(lat, lng) => {
-              setMapCenter({ lat, lng });
-              handleLocationSearch(lat.toString(), lng.toString(), radius);
-              setIsMapManual(false);
-            }}
-          />
+          <div className="absolute inset-0">
+            <LeafletMap
+              centerLat={mapCenter.lat}
+              centerLng={mapCenter.lng}
+              userLat={currentLat ? parseFloat(currentLat) : undefined}
+              userLng={currentLng ? parseFloat(currentLng) : undefined}
+              businesses={businesses.map((b: any) => ({
+                type: "Feature",
+                id: b.id,
+                properties: { ...b },
+                geometry: {
+                  type: "Point",
+                  coordinates: [b.longitude, b.latitude],
+                },
+              }))}
+              zoom={mapZoom}
+              height="100%"
+              radius={radius}
+              onMarkerClick={setSelectedBusiness}
+              onMapMove={(lat, lng, zoom) => {
+                setMapCenter({ lat, lng });
+                setMapZoom(zoom);
+                setIsMapManual(true);
+              }}
+              onMapClick={(lat, lng) => {
+                setMapCenter({ lat, lng });
+                handleLocationSearch(lat.toString(), lng.toString(), radius);
+                setIsMapManual(false);
+              }}
+              wrapperClassName="h-full w-full overflow-hidden z-0"
+            />
+          </div>
 
           {isMapManual && (
             <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[1000]">
@@ -1042,7 +1031,10 @@ function SplitScreenResultsContent() {
       </div>
 
       {/* Mobile — bottom tab bar */}
-      <div className="md:hidden flex shrink-0 border-t border-gray-200 bg-white">
+      <div
+        className="md:hidden flex shrink-0 border-t border-gray-200 bg-white"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      >
         <button
           onClick={() => setMobileView("map")}
           className={cn(
@@ -1065,6 +1057,29 @@ function SplitScreenResultsContent() {
           <List size={20} strokeWidth={mobileView === "list" ? 2 : 1.5} />
           <span className="text-[10px] font-semibold uppercase tracking-wide">
             List
+          </span>
+        </button>
+        <button
+          onClick={() => {
+            setMobileRadius(radius);
+            setIsMobileFilterOpen(true);
+          }}
+          className={cn(
+            "flex-1 flex flex-col items-center justify-center gap-1 h-14 transition-colors relative",
+            isMobileFilterOpen ? "text-brand-dark" : "text-gray-400",
+          )}
+        >
+          <div className="relative">
+            <SlidersHorizontal
+              size={20}
+              strokeWidth={isMobileFilterOpen ? 2 : 1.5}
+            />
+            {(selectedCategory || radius !== 5000) && (
+              <span className="absolute -top-1 -right-1 w-2 h-2 bg-brand-blue rounded-full border border-white" />
+            )}
+          </div>
+          <span className="text-[10px] font-semibold uppercase tracking-wide">
+            Filters
           </span>
         </button>
       </div>

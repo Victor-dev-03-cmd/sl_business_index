@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Navbar from "./components/Navbar";
 import NavbarWrapper from "./components/NavbarWrapper";
 import Footer from "./components/Footer";
@@ -21,21 +21,29 @@ export const metadata: Metadata = {
   description: "The heart of Sri Lankan commerce.",
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="light" style={{ colorScheme: 'light' }}>
-      <body
-        className="antialiased"
-      >
+    <html lang="en" className="light" style={{ colorScheme: "light" }}>
+      <body className="antialiased">
         <ClarityTracker />
         <QueryProvider>
           <Toaster richColors closeButton position="bottom-right" />
           <DynamicAppearance />
-          <SessionProvider> {/* Changed from SessionManager */}
+          <SessionProvider>
+            {" "}
+            {/* Changed from SessionManager */}
             <ThemeProvider>
               <LoadingProvider>
                 <AnnouncementWrapper>
