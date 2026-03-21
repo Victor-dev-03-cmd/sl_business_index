@@ -601,11 +601,11 @@ export default function HomePage() {
               </div>
 
             {/* Location and Action Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+            <div className="flex flex-row items-center justify-center gap-2">
               <button
                   onClick={() => handleUseCurrentLocation(true)}
                   disabled={isFetchingLocation}
-                  className="flex items-center gap-2 w-full sm:w-auto px-5 py-3 text-gray-200 bg-white/5 hover:bg-white/10 border border-white/10 font-normal transition-all disabled:opacity-50 text-base rounded-[6px]"
+                  className="flex items-center gap-2 w-1/2 sm:w-auto px-5 py-3 text-gray-200 bg-white/5 hover:bg-white/10 border border-white/10 font-normal transition-all disabled:opacity-50 text-base rounded-[6px]"
               >
                 <Navigation size={16} strokeWidth={1.5} className={cn(isFetchingLocation && "animate-pulse")} />
                 {isFetchingLocation ? 'Locating...' : 'Search near me'}
@@ -613,7 +613,7 @@ export default function HomePage() {
 
               <button
                   onClick={handleSearch}
-                  className="w-full sm:w-auto bg-brand-gold hover:bg-brand-gold-light text-white text-base font-normal px-10 py-3 shadow-lg shadow-brand-gold/20 transition-all rounded-[6px]"
+                  className="w-1/2 sm:w-auto bg-brand-gold hover:bg-brand-gold-light text-white text-base font-normal px-10 py-3 shadow-lg shadow-brand-gold/20 transition-all rounded-[6px]"
               >
                 Search
               </button>
