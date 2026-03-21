@@ -39,7 +39,7 @@ export default function VendorLayout({ children }: { children: React.ReactNode }
 
   if (isLoading) {
     return <div className="flex h-screen items-center justify-center bg-white">
-      <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
+      <div className="h-8 w-8 animate-spin rounded-full border-1 border-brand-dark border-t-transparent" />
     </div>;
   }
 
@@ -111,7 +111,7 @@ export default function VendorLayout({ children }: { children: React.ReactNode }
             {/* Sidebar Toggle */}
             <button 
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2.5 rounded-xl bg-gray-50 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all border border-transparent hover:border-emerald-100 mr-4"
+              className="p-2.5 rounded-xl bg-gray-50 text-gray-400 hover:text-blue-500 transition-all border border-transparent mr-4"
               title={sidebarOpen ? "Collapse Sidebar" : "Expand Sidebar"}
             >
               {sidebarOpen ? (
@@ -124,11 +124,11 @@ export default function VendorLayout({ children }: { children: React.ReactNode }
             {/* Centered Search */}
             <div className="flex-1 flex justify-center">
               <div className="relative w-full max-w-md group hidden md:block">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-emerald-600 transition-colors" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
                 <input 
                   type="text" 
                   placeholder="Search your businesses, reviews, leads..." 
-                  className="w-full pl-10 pr-4 py-2 bg-gray-100/50 border-gray-300 focus:bg-white border focus:border-emerald-200 rounded-[6px] text-sm outline-none transition-all placeholder:text-gray-400"
+                  className="w-full pl-10 pr-4 py-2 bg-gray-100/50 border-gray-300 focus:bg-white border focus:border-blue-200 rounded-[6px] text-sm outline-none transition-all placeholder:text-gray-400"
                 />
               </div>
             </div>

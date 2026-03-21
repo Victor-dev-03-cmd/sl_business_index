@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabaseClient';
-import { MapPin, ArrowLeft, Star, Navigation, Menu, X, ChevronDown, Search, Check, Clock, Zap, Tags } from 'lucide-react';
+import { MapPin, ArrowLeft, Star, Navigation, Menu, X, ChevronDown, Search, Check, Clock, Zap, Tags, Building2 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { Slider } from "@/components/ui/slider";
 import { useQuery } from '@tanstack/react-query';
@@ -443,17 +443,28 @@ function SplitScreenResultsContent() {
                 <div 
                   key={b.id} 
                   onClick={() => { setSelectedBusiness(b); setMapCenter({ lat: b.latitude, lng: b.longitude }); setMapZoom(16); }}
-                  className={cn("p-4 bg-white border border-gray-300 rounded-[6px] cursor-pointer hover:border-brand-dark transition-all", selectedBusiness?.id === b.id && "border-brand-dark ring-1 ring-brand-dark")}
+                  className={cn("p-4 bg-white border border-gray-300 rounded-[6px] cursor-pointer hover:border-brand-dark transition-all flex gap-4", selectedBusiness?.id === b.id && "border-brand-dark")}
                 >
-                  <h3 className="text-sm font-medium text-gray-900">{b.name}</h3>
-                  <p className="text-xs text-brand-blue uppercase mt-1">{b.category}</p>
-                  <div className="flex items-center gap-1 mt-2 text-xs text-gray-500">
-                    <MapPin size={12} className="text-brand-gold" />
-                    <span className="truncate">{b.address}</span>
+                  <div className="w-16 h-16 rounded-md bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-200">
+                    {b.logo_url ? (
+                      <img src={b.logo_url} alt={`${b.name} logo`} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-300 bg-gray-50">
+                        <Building2 size={24} />
+                      </div>
+                    )}
                   </div>
-                  <div className="mt-3 flex items-center justify-between">
-                    <span className="text-[10px] px-2 py-1 bg-gray-100 rounded-full">{b.distanceText}</span>
-                    <Link href={`/business/${b.id}`} className="text-[10px] text-brand-dark font-bold hover:underline">View Profile</Link>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm font-medium text-gray-900 truncate">{b.name}</h3>
+                    <p className="text-xs text-brand-blue uppercase mt-1">{b.category}</p>
+                    <div className="flex items-center gap-1 mt-2 text-xs text-gray-500">
+                      <MapPin size={12} className="text-brand-gold flex-shrink-0" />
+                      <span className="truncate">{b.address}</span>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between">
+                      <span className="text-[10px] px-2 py-1 bg-gray-100 rounded-full">{b.distanceText}</span>
+                      <Link href={`/business/${b.id}`} className="text-[10px] text-brand-dark font-bold hover:underline">View Profile</Link>
+                    </div>
                   </div>
                 </div>
               ))
@@ -494,7 +505,7 @@ function SplitScreenResultsContent() {
             <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[1000]">
               <button 
                 onClick={() => { handleLocationSearch(mapCenter.lat.toString(), mapCenter.lng.toString(), radius); setIsMapManual(false); }}
-                className="bg-brand-dark text-white px-6 py-2.5 rounded-full shadow-xl hover:bg-brand-blue transition-all flex items-center gap-2 border-2 border-white"
+                className="bg-brand-dark text-white px-6 py-2.5 rounded-full shadow-xl hover:bg-brand-blue transition-all flex items-center gap-2"
               >
                 <Search size={18} />
                 Search this area

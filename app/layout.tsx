@@ -12,8 +12,8 @@ import GlobalAnnouncement from "@/components/GlobalAnnouncement";
 import ClarityTracker from "./components/ClarityTracker";
 import LiveCounter from "./components/LiveCounter";
 import DynamicAppearance from "./components/DynamicAppearance";
-import SessionManager from "./components/SessionManager";
-import LoadingProvider from "./components/LoadingProvider"; // Import the provider
+import { SessionProvider } from "./components/SessionContext"; // Corrected import
+import LoadingProvider from "./components/LoadingProvider";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -39,9 +39,9 @@ export default function RootLayout({
         <ClarityTracker />
         <QueryProvider>
           <DynamicAppearance />
-          <SessionManager>
+          <SessionProvider> {/* Changed from SessionManager */}
             <ThemeProvider>
-              <LoadingProvider> {/* Wrap the content with the loading provider */}
+              <LoadingProvider>
                 <AnnouncementWrapper>
                   <AnnouncementBar />
                 </AnnouncementWrapper>
@@ -55,7 +55,7 @@ export default function RootLayout({
                 </FooterWrapper>
               </LoadingProvider>
             </ThemeProvider>
-          </SessionManager>
+          </SessionProvider>
         </QueryProvider>
       </body>
     </html>
