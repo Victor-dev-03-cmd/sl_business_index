@@ -37,14 +37,16 @@ export default function DynamicAppearance() {
     if (settings.primary_font) {
       root.style.setProperty('--font-sans', `'${settings.primary_font}', sans-serif`);
       
-      // Inject Google Font if not already present
-      const fontId = `google-font-${settings.primary_font.replace(/\s+/g, '-').toLowerCase()}`;
-      if (!document.getElementById(fontId)) {
-        const link = document.createElement('link');
-        link.id = fontId;
-        link.rel = 'stylesheet';
-        link.href = `https://fonts.googleapis.com/css2?family=${settings.primary_font.replace(/\s/g, '+')}:wght@300;400;500;600;700&display=swap`;
-        document.head.appendChild(link);
+      // Inject Google Font if not already present (skip for local BrandFont)
+      if (settings.primary_font !== 'BrandFont') {
+        const fontId = `google-font-${settings.primary_font.replace(/\s+/g, '-').toLowerCase()}`;
+        if (!document.getElementById(fontId)) {
+          const link = document.createElement('link');
+          link.id = fontId;
+          link.rel = 'stylesheet';
+          link.href = `https://fonts.googleapis.com/css2?family=${settings.primary_font.replace(/\s/g, '+')}:wght@300;400;500;600;700&display=swap`;
+          document.head.appendChild(link);
+        }
       }
     }
 

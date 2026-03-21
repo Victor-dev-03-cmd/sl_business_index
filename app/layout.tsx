@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Outfit } from "next/font/google";
 import Navbar from "./components/Navbar";
 import NavbarWrapper from "./components/NavbarWrapper";
 import Footer from "./components/Footer";
@@ -17,11 +16,6 @@ import LoadingProvider from "./components/LoadingProvider";
 import { Toaster } from "sonner";
 import "./globals.css";
 
-const outfit = Outfit({
-  subsets: ["latin"],
-  variable: '--font-sans',
-});
-
 export const metadata: Metadata = {
   title: "SL Business Index",
   description: "The heart of Sri Lankan commerce.",
@@ -35,7 +29,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="light" style={{ colorScheme: 'light' }}>
       <body
-        className={`${outfit.variable} antialiased`}
+        className="antialiased"
       >
         <ClarityTracker />
         <QueryProvider>

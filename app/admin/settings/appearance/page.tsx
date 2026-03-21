@@ -20,6 +20,7 @@ interface SiteSettings {
 }
 
 const FONTS = [
+  { name: 'Brand Font', value: 'BrandFont' },
   { name: 'Inter', value: 'Inter' },
   { name: 'Outfit', value: 'Outfit' },
   { name: 'Poppins', value: 'Poppins' },

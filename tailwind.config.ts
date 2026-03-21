@@ -9,6 +9,10 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['BrandFont', 'ui-sans-serif', 'system-ui'],
+        brand: ['BrandFont'],
+      },
       colors: {
         primary: 'var(--primary)',
         secondary: 'var(--secondary)',
