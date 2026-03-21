@@ -14,17 +14,7 @@ import {
 import { User as UserIcon, LogOut, LayoutDashboard, Briefcase } from 'lucide-react';
 import VerifiedBadge from './VerifiedBadge';
 
-interface AuthUser {
-  id: string;
-  email?: string;
-  full_name?: string;
-  username?: string;
-  role?: string;
-  verification_status?: string;
-  avatar_url?: string;
-}
-
-export default function AuthButton({ user: initialUser }: { user: AuthUser | null }) {
+export default function AuthButton({ user: initialUser }: { user?: AuthUser | null }) {
   const router = useRouter();
   const { data: user, isLoading } = useUser();
 
