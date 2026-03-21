@@ -27,11 +27,13 @@ export default function LoadingProvider({ children }: { children: React.ReactNod
 
 function LoadingScreen() {
   return (
-    <div className="flex items-center justify-center h-screen w-full bg-white text-brand-dark">
-      {/* Replace SVG with animated text */}
-      <h1 className="text-6xl font-bold tracking-widest animate-pulse">
-        SLBI
-      </h1>
+    <div className="flex items-center justify-center h-screen w-full bg-white">
+      <div className="flex flex-col items-center">
+        <h1 className="text-8xl font-medium tracking-widest animate-pulse text-brand-dark">
+          SLBI
+        </h1>
+        <p className="text-3xl font-medium tracking-widest animate-pulse">Sri Lanka Business Index</p>
+      </div>
     </div>
   );
 }
