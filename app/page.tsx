@@ -4,7 +4,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { MorphingText } from '@/components/animate-ui/primitives/texts/morphing';
 import { supabase } from '@/lib/supabaseClient';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -52,6 +53,8 @@ const sriLankanDistricts = [
   "Mannar", "Matale", "Matara", "Monaragala", "Mullaitivu", "Nuwara Eliya",
   "Polonnaruwa", "Puttalam", "Ratnapura", "Trincomalee", "Vavuniya"
 ];
+
+const words = ["businesses", "Enterprises", "Owners"];
 
 const districtCoordinates: Record<string, { lat: number; lng: number }> = {
   "Ampara": { lat: 7.2912, lng: 81.6724 },
@@ -490,7 +493,14 @@ export default function HomePage() {
               Sri Lanka Business Index
             </span>
             <h1 className="text-5xl md:text-6xl text-white mb-6 leading-tight tracking-tight">
-              Find the best businesses in <br />
+              Find the best{' '}
+              <MorphingText
+                text={words}
+                loop
+                holdDelay={3000}
+                className="text-brand-sand"
+              />{' '}
+              in <br />
               <span className="text-brand-sand">Sri Lanka</span>
             </h1>
             <p className="text-blue-100/70 text-base mb-10 max-w-xl mx-auto leading-relaxed">
