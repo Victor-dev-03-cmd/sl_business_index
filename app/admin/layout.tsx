@@ -21,6 +21,8 @@ import {
   Home,
   Menu,
   X,
+  QrCode,
+  Link as LinkIcon,
 } from "lucide-react";
 import AuthButton from "@/app/components/AuthButton";
 import NotificationBell from "@/app/components/NotificationBell";
@@ -31,6 +33,8 @@ const adminMenuItems = [
   { name: "Home", href: "/", icon: Home },
   { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { name: "Businesses", href: "/admin/businesses", icon: Building2 },
+  { name: "QR Generator", href: "/admin/qr-generator", icon: QrCode },
+  { name: "Link QR", href: "/admin/link-qr", icon: LinkIcon },
   { name: "Requests", href: "/admin/requests", icon: ClipboardList },
   { name: "Verifications", href: "/admin/verifications", icon: ShieldCheck },
   { name: "Featured", href: "/admin/featured", icon: Star },
