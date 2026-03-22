@@ -220,6 +220,25 @@ export default function HomePage() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  /* On mobile: when the keyboard opens it shrinks the visible viewport.
+     Scroll the search bar just below the sticky navbar so it stays visible. */
+  const handleSearchFocus = () => {
+    setIsSearchFocused(true);
+
+    if (typeof window === "undefined" || window.innerWidth >= 768) return;
+
+    setTimeout(() => {
+      if (!searchBarRef.current) return;
+      const rect = searchBarRef.current.getBoundingClientRect();
+      const navbarH = 80; // sticky navbar height (h-20)
+      const gap = 12;
+      const offset = rect.top - navbarH - gap;
+      if (Math.abs(offset) > 4) {
+        window.scrollBy({ top: offset, behavior: "smooth" });
+      }
+    }, 80);
+  };
+
   /* Track search bar position so the fixed suggestions panel stays aligned */
   useEffect(() => {
     const updatePos = () => {
@@ -630,7 +649,7 @@ export default function HomePage() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  onFocus={() => setIsSearchFocused(true)}
+                  onFocus={handleSearchFocus}
                   onBlur={() =>
                     setTimeout(() => setIsSearchFocused(false), 200)
                   }
