@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useState, useMemo } from 'react';
-import { supabase } from '@/lib/supabaseClient';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from 'sonner';
-import { 
-  Search, 
+import { useState, useMemo } from "react";
+import { supabase } from "@/lib/supabaseClient";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
+import {
+  Search,
   Plus,
   MoreVertical,
   Trash2,
@@ -18,19 +18,81 @@ import {
   ChevronDown,
   X,
   Filter,
-  RefreshCw
-} from 'lucide-react';
-import * as LucideIcons from 'lucide-react';
+  RefreshCw,
+} from "lucide-react";
+import * as LucideIcons from "lucide-react";
 
 const COMMON_ICONS = [
-  'Hotel', 'Car', 'Utensils', 'Home', 'Briefcase', 'Heart', 'User', 'Factory', 'Wrench', 
-  'Clapperboard', 'Plane', 'Palette', 'Stethoscope', 'Building', 'Landmark', 'Banknote', 
-  'Bus', 'Hammer', 'Phone', 'Dog', 'Tv', 'ShoppingCart', 'Dumbbell', 'Rss', 'Tractor', 
-  'Laptop', 'School', 'Baby', 'Building2', 'HardHat', 'PiggyBank', 'HeartPulse', 'Plug', 
-  'Siren', 'Shield', 'Tags', 'Image', 'Layers', 'Search', 'Star', 'MapPin', 'Globe', 
-  'Clock', 'Coffee', 'Music', 'Camera', 'Book', 'Gift', 'Smile', 'Sun', 'Moon', 'Cloud',
-  'Mic', 'Headphones', 'Speaker', 'Monitor', 'Cpu', 'Database', 'Cloud', 'Trash', 'Bell',
-  'Flag', 'Anchor', 'Wind', 'Zap', 'Flame', 'Droplet', 'Leaf', 'Flower2', 'Sprout'
+  "Hotel",
+  "Car",
+  "Utensils",
+  "Home",
+  "Briefcase",
+  "Heart",
+  "User",
+  "Factory",
+  "Wrench",
+  "Clapperboard",
+  "Plane",
+  "Palette",
+  "Stethoscope",
+  "Building",
+  "Landmark",
+  "Banknote",
+  "Bus",
+  "Hammer",
+  "Phone",
+  "Dog",
+  "Tv",
+  "ShoppingCart",
+  "Dumbbell",
+  "Rss",
+  "Tractor",
+  "Laptop",
+  "School",
+  "Baby",
+  "Building2",
+  "HardHat",
+  "PiggyBank",
+  "HeartPulse",
+  "Plug",
+  "Siren",
+  "Shield",
+  "Tags",
+  "Image",
+  "Layers",
+  "Search",
+  "Star",
+  "MapPin",
+  "Globe",
+  "Clock",
+  "Coffee",
+  "Music",
+  "Camera",
+  "Book",
+  "Gift",
+  "Smile",
+  "Sun",
+  "Moon",
+  "Cloud",
+  "Mic",
+  "Headphones",
+  "Speaker",
+  "Monitor",
+  "Cpu",
+  "Database",
+  "Cloud",
+  "Trash",
+  "Bell",
+  "Flag",
+  "Anchor",
+  "Wind",
+  "Zap",
+  "Flame",
+  "Droplet",
+  "Leaf",
+  "Flower2",
+  "Sprout",
 ].sort();
 import {
   DropdownMenu,
@@ -57,14 +119,28 @@ interface Category {
   subcategories?: Category[];
 }
 
-const IconPicker = ({ value, onChange }: { value: string, onChange: (val: string) => void }) => {
-  const [search, setSearch] = useState('');
-  
+const IconPicker = ({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+}) => {
+  const [search, setSearch] = useState("");
+
   const filteredIcons = useMemo(() => {
-    return COMMON_ICONS.filter(icon => icon.toLowerCase().includes(search.toLowerCase()));
+    return COMMON_ICONS.filter((icon) =>
+      icon.toLowerCase().includes(search.toLowerCase()),
+    );
   }, [search]);
 
-  const IconComponent = ({ name, size = 18 }: { name: string, size?: number }) => {
+  const IconComponent = ({
+    name,
+    size = 18,
+  }: {
+    name: string;
+    size?: number;
+  }) => {
     const Icon = (LucideIcons as any)[name];
     return Icon ? <Icon size={size} /> : <Tags size={size} />;
   };
@@ -73,22 +149,24 @@ const IconPicker = ({ value, onChange }: { value: string, onChange: (val: string
     <div className="border border-gray-300 rounded-[6px] overflow-hidden bg-white shadow-sm">
       <div className="p-2 border-b border-gray-100 flex items-center bg-gray-50/50">
         <Search size={14} className="text-gray-400 mr-2" />
-        <input 
-          type="text" 
-          placeholder="Search icons..." 
+        <input
+          type="text"
+          placeholder="Search icons..."
           className="bg-transparent border-none focus:ring-0 text-xs w-full outline-none"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
-      <div className="grid grid-cols-6 gap-1 p-2 max-h-[160px] overflow-y-auto custom-scrollbar">
-        {filteredIcons.map(icon => (
+      <div className="grid grid-cols-6 sm:grid-cols-8 gap-1 p-2 max-h-48 overflow-y-auto custom-scrollbar">
+        {filteredIcons.map((icon) => (
           <button
             key={icon}
             type="button"
             onClick={() => onChange(icon)}
             className={`p-2 rounded-[4px] flex items-center justify-center transition-all ${
-              value === icon ? 'bg-brand-dark text-white shadow-md scale-105' : 'hover:bg-gray-100 text-gray-500'
+              value === icon
+                ? "bg-brand-dark text-white shadow-md scale-105"
+                : "hover:bg-gray-100 text-gray-500"
             }`}
             title={icon}
           >
@@ -102,39 +180,47 @@ const IconPicker = ({ value, onChange }: { value: string, onChange: (val: string
 
 export default function AdminCategoriesPage() {
   const queryClient = useQueryClient();
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [parentCategory, setParentCategory] = useState<Category | null>(null);
-  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
-  const [filterLevel, setFilterLevel] = useState<'all' | 'root' | 'sub'>('all');
+  const [expandedCategories, setExpandedCategories] = useState<
+    Record<string, boolean>
+  >({});
+  const [filterLevel, setFilterLevel] = useState<"all" | "root" | "sub">("all");
 
   // Form states
   const [formData, setFormData] = useState({
-    name: '',
-    icon: '',
-    image_url: '',
+    name: "",
+    icon: "",
+    image_url: "",
     keywords: [] as string[],
     parent_id: null as string | null,
-    keywordInput: '',
+    keywordInput: "",
   });
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
-  const { data: categories = [], isLoading: loading, isFetching, refetch, error: queryError } = useQuery({
-    queryKey: ['admin-categories'],
+  const {
+    data: categories = [],
+    isLoading: loading,
+    isFetching,
+    refetch,
+    error: queryError,
+  } = useQuery({
+    queryKey: ["admin-categories"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('categories')
-        .select('*')
-        .order('sort_order', { ascending: true })
-        .order('name', { ascending: true });
+        .from("categories")
+        .select("*")
+        .order("sort_order", { ascending: true })
+        .order("name", { ascending: true });
 
       if (error) {
-        console.error('Supabase error:', error);
+        console.error("Supabase error:", error);
         throw error;
       }
-      
+
       // Build hierarchy
       const categoryMap: Record<string, Category> = {};
       const rootCategories: Category[] = [];
@@ -157,11 +243,11 @@ export default function AdminCategoriesPage() {
 
   // Flattened categories for parent selection (excluding self and children if editing)
   const flatCategories = useMemo(() => {
-    const list: { id: string, name: string }[] = [];
+    const list: { id: string; name: string }[] = [];
     const flatten = (cats: Category[], depth = 0) => {
-      cats.forEach(cat => {
+      cats.forEach((cat) => {
         if (editingCategory && cat.id === editingCategory.id) return;
-        list.push({ id: cat.id, name: `${'—'.repeat(depth)} ${cat.name}` });
+        list.push({ id: cat.id, name: `${"—".repeat(depth)} ${cat.name}` });
         if (cat.subcategories) flatten(cat.subcategories, depth + 1);
       });
     };
@@ -173,87 +259,107 @@ export default function AdminCategoriesPage() {
     mutationFn: async (newData: any) => {
       if (editingCategory) {
         const { error } = await supabase
-          .from('categories')
+          .from("categories")
           .update(newData)
-          .eq('id', editingCategory.id);
+          .eq("id", editingCategory.id);
         if (error) throw error;
       } else {
         // Get max sort_order
         const { data: maxSort } = await supabase
-          .from('categories')
-          .select('sort_order')
-          .order('sort_order', { ascending: false })
+          .from("categories")
+          .select("sort_order")
+          .order("sort_order", { ascending: false })
           .limit(1);
-        
+
         const nextSort = (maxSort?.[0]?.sort_order || 0) + 1;
 
         const { error } = await supabase
-          .from('categories')
+          .from("categories")
           .insert([{ ...newData, sort_order: nextSort }]);
         if (error) throw error;
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
+      queryClient.invalidateQueries({ queryKey: ["admin-categories"] });
       setIsAddModalOpen(false);
       setEditingCategory(null);
       setParentCategory(null);
-      setFormData({ name: '', icon: '', image_url: '', keywords: [], parent_id: null, keywordInput: '' });
-      toast.success(editingCategory ? 'Category updated successfully' : 'Category created successfully');
+      setFormData({
+        name: "",
+        icon: "",
+        image_url: "",
+        keywords: [],
+        parent_id: null,
+        keywordInput: "",
+      });
+      toast.success(
+        editingCategory
+          ? "Category updated successfully"
+          : "Category created successfully",
+      );
     },
     onError: (error: any) => {
       toast.error(error.message);
-    }
+    },
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('categories')
-        .delete()
-        .eq('id', id);
+      const { error } = await supabase.from("categories").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
-      toast.success('Category deleted successfully');
+      queryClient.invalidateQueries({ queryKey: ["admin-categories"] });
+      toast.success("Category deleted successfully");
     },
     onError: (error: any) => {
       toast.error(error.message);
-    }
+    },
   });
 
   const moveMutation = useMutation({
-    mutationFn: async ({ id, parent_id }: { id: string, parent_id: string | null }) => {
+    mutationFn: async ({
+      id,
+      parent_id,
+    }: {
+      id: string;
+      parent_id: string | null;
+    }) => {
       const { error } = await supabase
-        .from('categories')
+        .from("categories")
         .update({ parent_id })
-        .eq('id', id);
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
-      toast.success('Category moved successfully');
+      queryClient.invalidateQueries({ queryKey: ["admin-categories"] });
+      toast.success("Category moved successfully");
     },
     onError: (error: any) => {
       toast.error(error.message);
-    }
+    },
   });
 
   const reorderMutation = useMutation({
-    mutationFn: async ({ id, sort_order }: { id: string, sort_order: number }) => {
+    mutationFn: async ({
+      id,
+      sort_order,
+    }: {
+      id: string;
+      sort_order: number;
+    }) => {
       const { error } = await supabase
-        .from('categories')
+        .from("categories")
         .update({ sort_order })
-        .eq('id', id);
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
+      queryClient.invalidateQueries({ queryKey: ["admin-categories"] });
     },
     onError: (error: any) => {
       toast.error(error.message);
-    }
+    },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -272,11 +378,11 @@ export default function AdminCategoriesPage() {
     setEditingCategory(category);
     setFormData({
       name: category.name,
-      icon: category.icon || '',
-      image_url: category.image_url || '',
+      icon: category.icon || "",
+      image_url: category.image_url || "",
       keywords: category.keywords || [],
       parent_id: category.parent_id,
-      keywordInput: '',
+      keywordInput: "",
     });
     setIsAddModalOpen(true);
   };
@@ -284,34 +390,38 @@ export default function AdminCategoriesPage() {
   const handleAddSubcategory = (parent: Category) => {
     setParentCategory(parent);
     setEditingCategory(null);
-    setFormData({ 
-      name: '', 
-      icon: '', 
-      image_url: '', 
-      keywords: [], 
+    setFormData({
+      name: "",
+      icon: "",
+      image_url: "",
+      keywords: [],
       parent_id: parent.id,
-      keywordInput: ''
+      keywordInput: "",
     });
     setIsAddModalOpen(true);
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this category? All subcategories will also be deleted.')) {
+    if (
+      confirm(
+        "Are you sure you want to delete this category? All subcategories will also be deleted.",
+      )
+    ) {
       deleteMutation.mutate(id);
     }
   };
 
   const toggleExpand = (id: string) => {
-    setExpandedCategories(prev => ({ ...prev, [id]: !prev[id] }));
+    setExpandedCategories((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
   const filteredCategories = useMemo(() => {
     let result = categories;
 
-    if (filterLevel === 'root') {
+    if (filterLevel === "root") {
       // In hierarchy view, root categories are already at top level, but we clear subcategories for "root only"
-      result = categories.map(cat => ({ ...cat, subcategories: [] }));
-    } else if (filterLevel === 'sub') {
+      result = categories.map((cat) => ({ ...cat, subcategories: [] }));
+    } else if (filterLevel === "sub") {
       // Show only categories that have a parent
       const getAllSubs = (cats: Category[]): Category[] => {
         return cats.reduce((acc: Category[], cat) => {
@@ -324,13 +434,16 @@ export default function AdminCategoriesPage() {
     }
 
     if (!search) return result;
-    
+
     const filter = (cats: Category[]): Category[] => {
       return cats.reduce((acc: Category[], cat) => {
-        const matches = cat.name.toLowerCase().includes(search.toLowerCase()) || 
-                       cat.keywords?.some(k => k.toLowerCase().includes(search.toLowerCase()));
+        const matches =
+          cat.name.toLowerCase().includes(search.toLowerCase()) ||
+          cat.keywords?.some((k) =>
+            k.toLowerCase().includes(search.toLowerCase()),
+          );
         const subMatches = cat.subcategories ? filter(cat.subcategories) : [];
-        
+
         if (matches || subMatches.length > 0) {
           acc.push({ ...cat, subcategories: subMatches });
         }
@@ -343,7 +456,11 @@ export default function AdminCategoriesPage() {
 
   const totalCategories = useMemo(() => {
     const count = (cats: Category[]): number => {
-      return cats.reduce((acc, cat) => acc + 1 + (cat.subcategories ? count(cat.subcategories) : 0), 0);
+      return cats.reduce(
+        (acc, cat) =>
+          acc + 1 + (cat.subcategories ? count(cat.subcategories) : 0),
+        0,
+      );
     };
     return count(categories);
   }, [categories]);
@@ -364,49 +481,75 @@ export default function AdminCategoriesPage() {
   };
 
   const handleSelectOne = (id: string) => {
-    setSelectedIds(prev => 
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
   };
 
   const handleBulkDelete = async () => {
-    if (!confirm(`Are you sure you want to delete ${selectedIds.length} categories? All subcategories will also be deleted.`)) return;
-    
+    if (
+      !confirm(
+        `Are you sure you want to delete ${selectedIds.length} categories? All subcategories will also be deleted.`,
+      )
+    )
+      return;
+
     const { error } = await supabase
-      .from('categories')
+      .from("categories")
       .delete()
-      .in('id', selectedIds);
+      .in("id", selectedIds);
 
     if (error) {
-      toast.error('Error deleting categories');
+      toast.error("Error deleting categories");
     } else {
       setSelectedIds([]);
-      toast.success('Selected categories deleted successfully');
-      queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
+      toast.success("Selected categories deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["admin-categories"] });
     }
   };
 
-  const IconComponent = ({ name, size = 16, className = "" }: { name: string | null, size?: number, className?: string }) => {
+  const IconComponent = ({
+    name,
+    size = 16,
+    className = "",
+  }: {
+    name: string | null;
+    size?: number;
+    className?: string;
+  }) => {
     if (!name) return <Tags size={size} className={className} />;
     const Icon = (LucideIcons as any)[name];
-    return Icon ? <Icon size={size} className={className} /> : <Tags size={size} className={className} />;
+    return Icon ? (
+      <Icon size={size} className={className} />
+    ) : (
+      <Tags size={size} className={className} />
+    );
   };
 
-  const CategoryRow = ({ category, depth = 0, siblings = [] }: { category: Category, depth?: number, siblings?: Category[] }) => {
+  const CategoryRow = ({
+    category,
+    depth = 0,
+    siblings = [],
+  }: {
+    category: Category;
+    depth?: number;
+    siblings?: Category[];
+  }) => {
     const isExpanded = expandedCategories[category.id];
-    const hasSubcategories = category.subcategories && category.subcategories.length > 0;
+    const hasSubcategories =
+      category.subcategories && category.subcategories.length > 0;
     const [isOver, setIsOver] = useState(false);
 
-    const index = siblings.findIndex(s => s.id === category.id);
+    const index = siblings.findIndex((s) => s.id === category.id);
 
     const handleDragStart = (e: React.DragEvent) => {
-      e.dataTransfer.setData('categoryId', category.id);
-      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData("categoryId", category.id);
+      e.dataTransfer.effectAllowed = "move";
     };
 
     const handleDragOver = (e: React.DragEvent) => {
       e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
+      e.dataTransfer.dropEffect = "move";
       setIsOver(true);
     };
 
@@ -417,17 +560,17 @@ export default function AdminCategoriesPage() {
     const handleDrop = (e: React.DragEvent) => {
       e.preventDefault();
       setIsOver(false);
-      const draggedId = e.dataTransfer.getData('categoryId');
-      
+      const draggedId = e.dataTransfer.getData("categoryId");
+
       if (draggedId && draggedId !== category.id) {
         moveMutation.mutate({ id: draggedId, parent_id: category.id });
       }
     };
 
-    const moveOrder = (direction: 'up' | 'down') => {
-      const otherIndex = direction === 'up' ? index - 1 : index + 1;
+    const moveOrder = (direction: "up" | "down") => {
+      const otherIndex = direction === "up" ? index - 1 : index + 1;
       if (otherIndex < 0 || otherIndex >= siblings.length) return;
-      
+
       const other = siblings[otherIndex];
       const currentSort = (category as any).sort_order || 0;
       const otherSort = (other as any).sort_order || 0;
@@ -439,8 +582,8 @@ export default function AdminCategoriesPage() {
 
     return (
       <>
-        <tr 
-          className={`group transition-all duration-200 border-b border-gray-200 ${isOver ? 'bg-brand-blue/5 scale-[1.005] shadow-sm' : selectedIds.includes(category.id) ? 'bg-brand-blue/5' : 'hover:bg-gray-50/50'}`}
+        <tr
+          className={`group transition-all duration-200 border-b border-gray-200 ${isOver ? "bg-brand-blue/5 scale-[1.005] shadow-sm" : selectedIds.includes(category.id) ? "bg-brand-blue/5" : "hover:bg-gray-50/50"}`}
           draggable
           onDragStart={handleDragStart}
           onDragOver={handleDragOver}
@@ -448,42 +591,73 @@ export default function AdminCategoriesPage() {
           onDrop={handleDrop}
         >
           <td className="px-8 py-6 w-10">
-            <input 
-              type="checkbox" 
+            <input
+              type="checkbox"
               className="rounded-[4px] border-gray-300 text-brand-blue focus:ring-brand-blue/20 cursor-pointer"
               checked={selectedIds.includes(category.id)}
               onChange={() => handleSelectOne(category.id)}
             />
           </td>
           <td className="px-8 py-6">
-            <div className="flex items-center gap-4" style={{ paddingLeft: `${depth * 32}px` }}>
+            <div
+              className="flex items-center gap-4"
+              style={{ paddingLeft: `${depth * 32}px` }}
+            >
               <div className="flex items-center gap-3">
                 <div className="cursor-grab active:cursor-grabbing text-brand-blue group-hover:text-gray-300 p-1.5 hover:bg-white rounded transition-colors">
                   <Layers size={14} />
                 </div>
                 {hasSubcategories ? (
-                  <button onClick={() => toggleExpand(category.id)} className="p-1.5 hover:bg-white rounded shadow-sm border border-gray-300 transition-all flex items-center justify-center w-7 h-7">
-                    {isExpanded ? <ChevronDown size={14} className="text-brand-blue" /> : <ChevronRight size={14} />}
+                  <button
+                    onClick={() => toggleExpand(category.id)}
+                    className="p-1.5 hover:bg-white rounded shadow-sm border border-gray-300 transition-all flex items-center justify-center w-7 h-7"
+                  >
+                    {isExpanded ? (
+                      <ChevronDown size={14} className="text-brand-blue" />
+                    ) : (
+                      <ChevronRight size={14} />
+                    )}
                   </button>
                 ) : (
                   <div className="w-7" />
                 )}
-                <div className={`h-11 w-11 relative rounded-[10px] border transition-all flex-shrink-0 flex items-center justify-center ${
-                  isExpanded ? 'bg-brand-dark border-brand-dark shadow-lg scale-110' : 'bg-white border-gray-200 group-hover:border-brand-sand shadow-sm'
-                }`}>
-                  <IconComponent name={category.icon} size={20} className={isExpanded ? 'text-white' : 'text-gray-400 group-hover:text-brand-dark'} />
+                <div
+                  className={`h-11 w-11 relative rounded-[10px] border transition-all flex-shrink-0 flex items-center justify-center ${
+                    isExpanded
+                      ? "bg-brand-dark border-brand-dark shadow-lg scale-110"
+                      : "bg-white border-gray-200 group-hover:border-brand-sand shadow-sm"
+                  }`}
+                >
+                  <IconComponent
+                    name={category.icon}
+                    size={20}
+                    className={
+                      isExpanded
+                        ? "text-white"
+                        : "text-gray-400 group-hover:text-brand-dark"
+                    }
+                  />
                 </div>
               </div>
               <div className="min-w-0">
-                <p className={`text-sm truncate transition-colors ${isExpanded ? 'text-brand-dark' : 'text-brand-blue'}`}>
+                <p
+                  className={`text-sm truncate transition-colors ${isExpanded ? "text-brand-dark" : "text-brand-blue"}`}
+                >
                   {category.name}
                 </p>
                 <div className="flex flex-wrap gap-1 mt-1.5">
-                  {category.keywords?.slice(0, 3).map(kw => (
-                    <span key={kw} className="text-[9px] px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded-md font-medium uppercase tracking-wider">{kw}</span>
+                  {category.keywords?.slice(0, 3).map((kw) => (
+                    <span
+                      key={kw}
+                      className="text-[9px] px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded-md font-medium uppercase tracking-wider"
+                    >
+                      {kw}
+                    </span>
                   ))}
                   {(category.keywords?.length || 0) > 3 && (
-                    <span className="text-[9px] px-1.5 py-0.5 text-gray-400 font-medium">+{category.keywords!.length - 3}</span>
+                    <span className="text-[9px] px-1.5 py-0.5 text-gray-400 font-medium">
+                      +{category.keywords!.length - 3}
+                    </span>
                   )}
                 </div>
               </div>
@@ -491,33 +665,39 @@ export default function AdminCategoriesPage() {
           </td>
           <td className="px-8 py-6 hidden lg:table-cell">
             <span className="text-xs text-gray-500 font-normal">
-              {new Date(category.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+              {new Date(category.created_at).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })}
             </span>
           </td>
           <td className="px-8 py-6">
             <div className="flex items-center gap-2">
-              <span className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border ${
-                hasSubcategories 
-                  ? 'bg-blue-50 text-blue-700 border-blue-100' 
-                  : 'bg-gray-50 text-gray-400 border-gray-200'
-              }`}>
+              <span
+                className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border ${
+                  hasSubcategories
+                    ? "bg-blue-50 text-blue-700 border-blue-100"
+                    : "bg-gray-50 text-gray-400 border-gray-200"
+                }`}
+              >
                 {category.subcategories?.length || 0} Sub-items
               </span>
             </div>
           </td>
           <td className="px-8 py-6">
             <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button 
+              <button
                 disabled={index === 0}
-                onClick={() => moveOrder('up')}
+                onClick={() => moveOrder("up")}
                 className="p-1.5 hover:bg-white border border-transparent hover:border-gray-200 rounded-md text-gray-400 hover:text-brand-dark disabled:opacity-20 transition-all"
                 title="Move Up"
               >
                 <ChevronDown size={14} className="rotate-180" />
               </button>
-              <button 
+              <button
                 disabled={index === siblings.length - 1}
-                onClick={() => moveOrder('down')}
+                onClick={() => moveOrder("down")}
                 className="p-1.5 hover:bg-white border border-transparent hover:border-gray-200 rounded-md text-gray-400 hover:text-brand-dark disabled:opacity-20 transition-all"
                 title="Move Down"
               >
@@ -527,13 +707,13 @@ export default function AdminCategoriesPage() {
           </td>
           <td className="px-8 py-6 text-right">
             <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button 
+              <button
                 onClick={() => handleAddSubcategory(category)}
                 className="px-3 py-1.5 bg-brand-blue/5 hover:bg-brand-blue/10 border border-brand-blue/10 rounded-[4px] transition-all text-xs font-semibold text-brand-blue flex items-center gap-1.5"
               >
                 <Plus size={14} /> Sub
               </button>
-              <button 
+              <button
                 onClick={() => handleEdit(category)}
                 className="p-2 hover:bg-white border border-transparent hover:border-gray-200 rounded-[8px] transition-all text-gray-400 hover:text-brand-dark"
                 title="Edit"
@@ -544,15 +724,21 @@ export default function AdminCategoriesPage() {
                 <DropdownMenuTrigger className="p-2 hover:bg-white border border-transparent hover:border-gray-200 rounded-[8px] transition-all outline-none group-hover:shadow-sm">
                   <MoreVertical size={16} className="text-gray-400" />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-white border-gray-200 p-1.5 shadow-2xl rounded-[12px] animate-in fade-in slide-in-from-top-2 duration-200">
-                  <DropdownMenuItem 
-                    onClick={() => moveMutation.mutate({ id: category.id, parent_id: null })}
+                <DropdownMenuContent
+                  align="end"
+                  className="w-56 bg-white border-gray-200 p-1.5 shadow-2xl rounded-[12px] animate-in fade-in slide-in-from-top-2 duration-200"
+                >
+                  <DropdownMenuItem
+                    onClick={() =>
+                      moveMutation.mutate({ id: category.id, parent_id: null })
+                    }
                     className="flex items-center gap-2.5 cursor-pointer py-3 px-3 text-[13px] font-medium focus:bg-gray-50 rounded-[8px] transition-colors"
                   >
-                    <Layers size={14} className="text-gray-400" /> Move to Root Level
+                    <Layers size={14} className="text-gray-400" /> Move to Root
+                    Level
                   </DropdownMenuItem>
                   <div className="h-px bg-gray-100 my-1" />
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     onClick={() => handleDelete(category.id)}
                     className="flex items-center gap-2.5 cursor-pointer py-3 px-3 text-[13px] font-medium text-red-600 focus:bg-red-50 focus:text-red-700 rounded-[8px] transition-colors"
                   >
@@ -563,20 +749,133 @@ export default function AdminCategoriesPage() {
             </div>
           </td>
         </tr>
-        {isExpanded && category.subcategories?.map(sub => (
-          <CategoryRow key={sub.id} category={sub} depth={depth + 1} siblings={category.subcategories} />
-        ))}
+        {isExpanded &&
+          category.subcategories?.map((sub) => (
+            <CategoryRow
+              key={sub.id}
+              category={sub}
+              depth={depth + 1}
+              siblings={category.subcategories}
+            />
+          ))}
       </>
     );
   };
+
+  const MobileCategoryItem = ({
+    category,
+    depth = 0,
+  }: {
+    category: Category;
+    depth?: number;
+  }) => (
+    <>
+      <div
+        className={`p-4 ${selectedIds.includes(category.id) ? "bg-brand-blue/5" : ""}`}
+      >
+        <div className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            className="rounded-[4px] border-gray-300 text-brand-blue focus:ring-brand-blue/20 cursor-pointer flex-shrink-0"
+            checked={selectedIds.includes(category.id)}
+            onChange={() => handleSelectOne(category.id)}
+          />
+          <div
+            className="flex items-center gap-3 flex-1 min-w-0"
+            style={{ paddingLeft: `${depth * 16}px` }}
+          >
+            <div className="h-9 w-9 rounded-[8px] border border-gray-200 flex items-center justify-center bg-white flex-shrink-0">
+              <IconComponent
+                name={category.icon}
+                size={16}
+                className="text-gray-400"
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-brand-blue truncate">
+                {category.name}
+              </p>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {category.keywords?.slice(0, 2).map((kw) => (
+                  <span
+                    key={kw}
+                    className="text-[9px] px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded-md font-medium uppercase tracking-wider"
+                  >
+                    {kw}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <span
+              className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-full border flex-shrink-0 ${
+                category.subcategories?.length
+                  ? "bg-blue-50 text-blue-700 border-blue-100"
+                  : "bg-gray-50 text-gray-400 border-gray-200"
+              }`}
+            >
+              {category.subcategories?.length || 0} Sub
+            </span>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger className="h-10 w-10 flex items-center justify-center hover:bg-gray-100 rounded-[8px] transition-all outline-none flex-shrink-0">
+              <MoreVertical size={16} className="text-gray-400" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="w-56 bg-white border-gray-200 p-1.5 shadow-2xl rounded-[12px]"
+            >
+              <DropdownMenuItem
+                onClick={() => handleAddSubcategory(category)}
+                className="flex items-center gap-2.5 cursor-pointer py-2.5 px-3 text-[13px] font-medium focus:bg-gray-50 rounded-[8px]"
+              >
+                <Plus size={14} className="text-gray-400" /> Add Subcategory
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleEdit(category)}
+                className="flex items-center gap-2.5 cursor-pointer py-2.5 px-3 text-[13px] font-medium focus:bg-gray-50 rounded-[8px]"
+              >
+                <Edit size={14} className="text-gray-400" /> Edit Category
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() =>
+                  moveMutation.mutate({ id: category.id, parent_id: null })
+                }
+                className="flex items-center gap-2.5 cursor-pointer py-2.5 px-3 text-[13px] font-medium focus:bg-gray-50 rounded-[8px]"
+              >
+                <Layers size={14} className="text-gray-400" /> Move to Root
+              </DropdownMenuItem>
+              <div className="h-px bg-gray-100 my-1" />
+              <DropdownMenuItem
+                onClick={() => handleDelete(category.id)}
+                className="flex items-center gap-2.5 cursor-pointer py-2.5 px-3 text-[13px] font-medium text-red-600 focus:bg-red-50 focus:text-red-700 rounded-[8px]"
+              >
+                <Trash2 size={14} /> Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+      {category.subcategories?.map((sub) => (
+        <MobileCategoryItem key={sub.id} category={sub} depth={depth + 1} />
+      ))}
+    </>
+  );
 
   return (
     <div className="min-h-full bg-gray-50/30 transition-colors">
       <main className="max-w-[1600px] mx-auto px-6 md:px-12 py-10">
         <div className="flex justify-between items-center mb-12">
           <div>
-            <h1 className="text-2xl text-gray-900 tracking-tight">Category Architecture</h1>
-            <p className="text-base text-gray-500 mt-2">Design and organize your business taxonomy with multi-level nesting. <span className="text-brand-dark ml-2">{totalCategories} active categories</span></p>
+            <h1 className="text-2xl text-gray-900 tracking-tight">
+              Category Architecture
+            </h1>
+            <p className="text-base text-gray-500 mt-2">
+              Design and organize your business taxonomy with multi-level
+              nesting.{" "}
+              <span className="text-brand-dark ml-2">
+                {totalCategories} active categories
+              </span>
+            </p>
           </div>
         </div>
 
@@ -593,10 +892,10 @@ export default function AdminCategoriesPage() {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            
+
             <div className="relative group w-full md:w-auto">
               <Filter className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-brand-blue transition-colors pointer-events-none" />
-              <select 
+              <select
                 value={filterLevel}
                 onChange={(e) => setFilterLevel(e.target.value as any)}
                 className="bg-white border border-gray-300 rounded-[6px] pl-10 pr-10 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-brand-blue/5 focus:border-gray-400 appearance-none cursor-pointer hover:border-gray-300 transition-all min-w-[200px] shadow-sm w-full md:w-auto"
@@ -610,22 +909,31 @@ export default function AdminCategoriesPage() {
           </div>
 
           <div className="flex items-center gap-3 w-full md:w-auto justify-end">
-            <button 
+            <button
               onClick={() => refetch()}
               disabled={isFetching}
-              className={`p-2.5 text-gray-500 rounded-[6px] transition-all border border-gray-300 bg-white shadow-sm hover:border-brand-blue/20 ${isFetching ? 'opacity-50' : 'active:scale-95'}`}
+              className={`p-2.5 text-gray-500 rounded-[6px] transition-all border border-gray-300 bg-white shadow-sm hover:border-brand-blue/20 ${isFetching ? "opacity-50" : "active:scale-95"}`}
               title="Refresh Data"
             >
-              <RefreshCw className={`h-5 w-5 ${isFetching ? 'animate-spin' : ''}`} />
+              <RefreshCw
+                className={`h-5 w-5 ${isFetching ? "animate-spin" : ""}`}
+              />
             </button>
 
             <div className="h-8 w-px bg-gray-200 hidden md:block" />
 
-            <button 
+            <button
               onClick={() => {
                 setEditingCategory(null);
                 setParentCategory(null);
-                setFormData({ name: '', icon: '', image_url: '', keywords: [], parent_id: null, keywordInput: '' });
+                setFormData({
+                  name: "",
+                  icon: "",
+                  image_url: "",
+                  keywords: [],
+                  parent_id: null,
+                  keywordInput: "",
+                });
                 setIsAddModalOpen(true);
               }}
               className="flex items-center gap-2 bg-brand-dark text-white px-6 py-2.5 rounded-[6px] text-sm hover:bg-brand-dark/90 transition-all shadow-lg hover:-translate-y-0.5 active:scale-95 whitespace-nowrap"
@@ -644,13 +952,13 @@ export default function AdminCategoriesPage() {
                 {selectedIds.length} categories selected
               </span>
               <div className="flex items-center gap-3">
-                <button 
+                <button
                   onClick={handleBulkDelete}
                   className="flex items-center gap-2 bg-red-50 text-red-600 px-4 py-1.5 rounded-[6px] text-xs font-bold hover:bg-red-600 hover:text-white transition-all border border-red-100 shadow-sm"
                 >
                   <Trash2 size={14} /> Delete Selected
                 </button>
-                <button 
+                <button
                   onClick={() => setSelectedIds([])}
                   className="text-xs font-medium text-gray-500 hover:text-gray-700"
                 >
@@ -665,10 +973,13 @@ export default function AdminCategoriesPage() {
                 <X className="h-5 w-5 bg-white/20 rounded-full p-1" />
                 <div className="flex flex-col">
                   <span className="text-sm font-bold">Connection Error</span>
-                  <span className="text-[11px] opacity-90">{(queryError as any).message || 'Failed to sync with database'}</span>
+                  <span className="text-[11px] opacity-90">
+                    {(queryError as any).message ||
+                      "Failed to sync with database"}
+                  </span>
                 </div>
               </div>
-              <button 
+              <button
                 onClick={() => refetch()}
                 className="bg-white text-red-600 px-4 py-1.5 rounded-[6px] text-xs font-bold hover:bg-gray-100 transition-colors shadow-sm"
               >
@@ -676,7 +987,7 @@ export default function AdminCategoriesPage() {
               </button>
             </div>
           )}
-          
+
           {loading && categories.length === 0 ? (
             <div className="p-8 space-y-6">
               {[...Array(6)].map((_, i) => (
@@ -692,120 +1003,213 @@ export default function AdminCategoriesPage() {
               <div className="h-20 w-20 bg-white rounded-2xl shadow-sm border border-gray-100 flex items-center justify-center mx-auto mb-6">
                 <Tags className="text-gray-200 h-10 w-10" strokeWidth={1} />
               </div>
-              <p className="text-gray-500 font-semibold text-lg italic">No categories found matching your criteria.</p>
-              <button onClick={() => setSearch('')} className="mt-4 text-brand-blue hover:underline font-bold text-sm">Clear all filters</button>
+              <p className="text-gray-500 font-semibold text-lg italic">
+                No categories found matching your criteria.
+              </p>
+              <button
+                onClick={() => setSearch("")}
+                className="mt-4 text-brand-blue hover:underline font-bold text-sm"
+              >
+                Clear all filters
+              </button>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-gray-200 border-b border-gray-300">
-                    <th className="px-8 py-5 w-10">
-                      <input 
-                        type="checkbox" 
-                        className="rounded-[4px] border-gray-300 text-brand-blue focus:ring-brand-blue/20 cursor-pointer"
-                        onChange={handleSelectAll}
-                        checked={selectedIds.length > 0 && selectedIds.length === (function getAllCount(cats: Category[]): number {
-                          return cats.reduce((acc, cat) => acc + 1 + (cat.subcategories ? getAllCount(cat.subcategories) : 0), 0);
-                        })(filteredCategories)}
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[900px] text-left border-collapse">
+                  <thead>
+                    <tr className="bg-gray-200 border-b border-gray-300">
+                      <th className="px-8 py-5 w-10">
+                        <input
+                          type="checkbox"
+                          className="rounded-[4px] border-gray-300 text-brand-blue focus:ring-brand-blue/20 cursor-pointer"
+                          onChange={handleSelectAll}
+                          checked={
+                            selectedIds.length > 0 &&
+                            selectedIds.length ===
+                              (function getAllCount(cats: Category[]): number {
+                                return cats.reduce(
+                                  (acc, cat) =>
+                                    acc +
+                                    1 +
+                                    (cat.subcategories
+                                      ? getAllCount(cat.subcategories)
+                                      : 0),
+                                  0,
+                                );
+                              })(filteredCategories)
+                          }
+                        />
+                      </th>
+                      <th className="px-8 py-5 text-[11px] text-gray-800 uppercase tracking-[0.2em]">
+                        Structure & Details
+                      </th>
+                      <th className="px-8 py-5 text-[11px] text-gray-800 uppercase tracking-[0.2em] hidden lg:table-cell">
+                        Created
+                      </th>
+                      <th className="px-8 py-5 text-[11px] text-gray-800 uppercase tracking-[0.2em]">
+                        Hierarchy
+                      </th>
+                      <th className="px-8 py-5 text-[11px] text-gray-800 uppercase tracking-[0.2em]">
+                        Sort
+                      </th>
+                      <th className="px-8 py-5 text-[11px] text-gray-800 uppercase tracking-[0.2em] text-right">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {filteredCategories.map((category) => (
+                      <CategoryRow
+                        key={category.id}
+                        category={category}
+                        siblings={categories}
                       />
-                    </th>
-                    <th className="px-8 py-5 text-[11px] text-gray-800 uppercase tracking-[0.2em]">Structure & Details</th>
-                    <th className="px-8 py-5 text-[11px] text-gray-800 uppercase tracking-[0.2em] hidden lg:table-cell">Created</th>
-                    <th className="px-8 py-5 text-[11px] text-gray-800 uppercase tracking-[0.2em]">Hierarchy</th>
-                    <th className="px-8 py-5 text-[11px] text-gray-800 uppercase tracking-[0.2em]">Sort</th>
-                    <th className="px-8 py-5 text-[11px] text-gray-800 uppercase tracking-[0.2em] text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {filteredCategories.map((category) => (
-                    <CategoryRow key={category.id} category={category} siblings={categories} />
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
 
         {/* Add/Edit Category Modal */}
         <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-          <DialogContent className="sm:max-w-[425px] bg-white border-gray-300">
+          <DialogContent className="w-[95vw] max-w-lg bg-white border-gray-300">
             <DialogHeader>
               <DialogTitle className="text-xl font-normal text-gray-900">
-                {editingCategory ? 'Edit Category' : parentCategory ? `Add Subcategory to ${parentCategory.name}` : 'Add New Category'}
+                {editingCategory
+                  ? "Edit Category"
+                  : parentCategory
+                    ? `Add Subcategory to ${parentCategory.name}`
+                    : "Add New Category"}
               </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4 py-4">
               <div className="space-y-2">
-                <label htmlFor="name" className="block text-xs font-normal text-gray-500 uppercase tracking-wider">Name</label>
-                <input 
-                  id="name" 
-                  value={formData.name} 
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                <label
+                  htmlFor="name"
+                  className="block text-xs font-normal text-gray-500 uppercase tracking-wider"
+                >
+                  Name
+                </label>
+                <input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, name: e.target.value }))
+                  }
                   placeholder="e.g., Electronics"
                   className="w-full px-3 py-2 bg-white border border-gray-300 rounded-[6px] focus:outline-none focus:ring-1 focus:ring-brand-blue transition-all font-normal text-sm"
                   required
                 />
               </div>
               <div className="space-y-2">
-                <label htmlFor="parent_id" className="block text-xs font-normal text-gray-500 uppercase tracking-wider">Parent Category</label>
-                <select 
-                  id="parent_id" 
-                  value={formData.parent_id || ''} 
-                  onChange={(e) => setFormData(prev => ({ ...prev, parent_id: e.target.value || null }))}
+                <label
+                  htmlFor="parent_id"
+                  className="block text-xs font-normal text-gray-500 uppercase tracking-wider"
+                >
+                  Parent Category
+                </label>
+                <select
+                  id="parent_id"
+                  value={formData.parent_id || ""}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      parent_id: e.target.value || null,
+                    }))
+                  }
                   className="w-full px-3 py-2 bg-white border border-gray-300 rounded-[6px] focus:outline-none focus:ring-1 focus:ring-brand-blue transition-all font-normal text-sm"
                 >
                   <option value="">None (Root Category)</option>
-                  {flatCategories.map(cat => (
-                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  {flatCategories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
                   ))}
                 </select>
               </div>
               <div className="space-y-2">
-                <label htmlFor="icon" className="block text-xs font-normal text-gray-500 uppercase tracking-wider">Select Category Icon</label>
-                <IconPicker 
-                  value={formData.icon} 
-                  onChange={(icon) => setFormData(prev => ({ ...prev, icon }))} 
+                <label
+                  htmlFor="icon"
+                  className="block text-xs font-normal text-gray-500 uppercase tracking-wider"
+                >
+                  Select Category Icon
+                </label>
+                <IconPicker
+                  value={formData.icon}
+                  onChange={(icon) =>
+                    setFormData((prev) => ({ ...prev, icon }))
+                  }
                 />
               </div>
               <div className="space-y-2">
-                <label htmlFor="image_url" className="block text-xs font-normal text-gray-500 uppercase tracking-wider">Image URL (Optional)</label>
-                <input 
-                  id="image_url" 
-                  value={formData.image_url} 
-                  onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
+                <label
+                  htmlFor="image_url"
+                  className="block text-xs font-normal text-gray-500 uppercase tracking-wider"
+                >
+                  Image URL (Optional)
+                </label>
+                <input
+                  id="image_url"
+                  value={formData.image_url}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      image_url: e.target.value,
+                    }))
+                  }
                   placeholder="/icons/category.png"
                   className="w-full px-3 py-2 bg-white border border-gray-300 rounded-[6px] focus:outline-none focus:ring-1 focus:ring-brand-blue transition-all font-normal text-sm"
                 />
               </div>
               <div className="space-y-2">
-                <label htmlFor="keywords" className="block text-xs font-normal text-gray-500 uppercase tracking-wider">Keywords</label>
+                <label
+                  htmlFor="keywords"
+                  className="block text-xs font-normal text-gray-500 uppercase tracking-wider"
+                >
+                  Keywords
+                </label>
                 <div className="flex flex-wrap gap-1.5 p-2 bg-gray-50 border border-gray-300 rounded-[6px] min-h-[40px]">
-                  {formData.keywords.map(kw => (
-                    <span key={kw} className="flex items-center gap-1 px-2 py-0.5 bg-white border border-gray-300 rounded-full text-xs text-gray-600">
+                  {formData.keywords.map((kw) => (
+                    <span
+                      key={kw}
+                      className="flex items-center gap-1 px-2 py-0.5 bg-white border border-gray-300 rounded-full text-xs text-gray-600"
+                    >
                       {kw}
-                      <button 
-                        type="button" 
-                        onClick={() => setFormData(prev => ({ ...prev, keywords: prev.keywords.filter(k => k !== kw) }))}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            keywords: prev.keywords.filter((k) => k !== kw),
+                          }))
+                        }
                         className="hover:text-red-500"
                       >
                         <X size={10} />
                       </button>
                     </span>
                   ))}
-                  <input 
-                    id="keywords" 
-                    value={formData.keywordInput} 
-                    onChange={(e) => setFormData(prev => ({ ...prev, keywordInput: e.target.value }))}
+                  <input
+                    id="keywords"
+                    value={formData.keywordInput}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        keywordInput: e.target.value,
+                      }))
+                    }
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
+                      if (e.key === "Enter") {
                         e.preventDefault();
                         const val = formData.keywordInput.trim();
                         if (val && !formData.keywords.includes(val)) {
-                          setFormData(prev => ({ 
-                            ...prev, 
+                          setFormData((prev) => ({
+                            ...prev,
                             keywords: [...prev.keywords, val],
-                            keywordInput: ''
+                            keywordInput: "",
                           }));
                         }
                       }
@@ -816,11 +1220,23 @@ export default function AdminCategoriesPage() {
                 </div>
               </div>
               <div className="pt-4 flex justify-end gap-3">
-                <button type="button" onClick={() => setIsAddModalOpen(false)} className="px-4 py-2 border border-gray-300 rounded-[6px] text-sm font-normal hover:bg-gray-50 transition-colors">
+                <button
+                  type="button"
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-[6px] text-sm font-normal hover:bg-gray-50 transition-colors"
+                >
                   Cancel
                 </button>
-                <button type="submit" disabled={mutation.isPending} className="px-4 py-2 bg-brand-dark hover:bg-brand-dark/90 text-white rounded-[6px] text-sm font-normal transition-colors disabled:opacity-50">
-                  {mutation.isPending ? 'Saving...' : editingCategory ? 'Save Changes' : 'Create Category'}
+                <button
+                  type="submit"
+                  disabled={mutation.isPending}
+                  className="px-4 py-2 bg-brand-dark hover:bg-brand-dark/90 text-white rounded-[6px] text-sm font-normal transition-colors disabled:opacity-50"
+                >
+                  {mutation.isPending
+                    ? "Saving..."
+                    : editingCategory
+                      ? "Save Changes"
+                      : "Create Category"}
                 </button>
               </div>
             </form>

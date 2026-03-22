@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { 
-  LayoutDashboard, 
-  Building2, 
-  Users, 
-  BarChart3, 
+import React, { useState, useEffect, startTransition } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  LayoutDashboard,
+  Building2,
+  Users,
+  BarChart3,
   Settings,
   Search,
   PanelLeftClose,
@@ -15,52 +15,69 @@ import {
   ShieldCheck,
   Tags,
   ClipboardList,
-  Bell,
-  LogOut,
   HelpCircle,
   Star,
   CreditCard,
-  Home
-} from 'lucide-react';
-import AuthButton from '@/app/components/AuthButton';
-import NotificationBell from '@/app/components/NotificationBell';
-import LiveCounter from '@/app/components/LiveCounter';
-import { useUser } from '@/lib/hooks/useUser';
+  Home,
+  Menu,
+  X,
+} from "lucide-react";
+import AuthButton from "@/app/components/AuthButton";
+import NotificationBell from "@/app/components/NotificationBell";
+import LiveCounter from "@/app/components/LiveCounter";
+import { useUser } from "@/lib/hooks/useUser";
 
 const adminMenuItems = [
-  { name: 'Home', href: '/', icon: Home },
-  { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
-  { name: 'Businesses', href: '/admin/businesses', icon: Building2 },
-  { name: 'Requests', href: '/admin/requests', icon: ClipboardList },
-  { name: 'Verifications', href: '/admin/verifications', icon: ShieldCheck },
-  { name: 'Featured', href: '/admin/featured', icon: Star },
-  { name: 'Billing', href: '/admin/billing', icon: CreditCard },
-  { name: 'Categories', href: '/admin/categories', icon: Tags },
-  { name: 'Users', href: '/admin/users', icon: Users },
-  { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
-  { name: 'Site Settings', href: '/admin/settings', icon: Settings },
+  { name: "Home", href: "/", icon: Home },
+  { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+  { name: "Businesses", href: "/admin/businesses", icon: Building2 },
+  { name: "Requests", href: "/admin/requests", icon: ClipboardList },
+  { name: "Verifications", href: "/admin/verifications", icon: ShieldCheck },
+  { name: "Featured", href: "/admin/featured", icon: Star },
+  { name: "Billing", href: "/admin/billing", icon: CreditCard },
+  { name: "Categories", href: "/admin/categories", icon: Tags },
+  { name: "Users", href: "/admin/users", icon: Users },
+  { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
+  { name: "Site Settings", href: "/admin/settings", icon: Settings },
 ];
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+const mobileQuickNav = [
+  { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+  { name: "Businesses", href: "/admin/businesses", icon: Building2 },
+  { name: "Requests", href: "/admin/requests", icon: ClipboardList },
+  { name: "Settings", href: "/admin/settings", icon: Settings },
+];
+
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const { data: user, isLoading } = useUser();
 
-  // Redirect if not admin/ceo? We can add that if needed, 
-  // but for now let's just use the cached user.
-  
+  useEffect(() => {
+    startTransition(() => {
+      setMobileDrawerOpen(false);
+    });
+  }, [pathname]);
+
   if (isLoading) {
-    return <div className="flex h-screen items-center justify-center bg-white">
-      <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-dark border-t-transparent" />
-    </div>;
+    return (
+      <div className="flex h-screen items-center justify-center bg-white">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-dark border-t-transparent" />
+      </div>
+    );
   }
 
   return (
-    <div className="flex h-screen bg-gray-50/50  transition-colors duration-300">
-      {/* Sidebar */}
-      <aside 
+    <div className="flex h-screen bg-gray-50/50 transition-colors duration-300">
+      {/* ── Desktop Sidebar (hidden on mobile, visible md+) ───────────────── */}
+      <aside
         className={`${
-          sidebarOpen ? 'w-64' : 'w-20'
+          sidebarOpen ? "w-64" : "w-20"
         } fixed inset-y-0 left-0 z-50 bg-white border-r border-gray-300 transition-all duration-300 ease-in-out hidden md:flex flex-col`}
       >
         <div className="flex items-center h-20 px-6 border-b border-gray-300">
@@ -69,8 +86,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
           {sidebarOpen && (
             <div className="flex flex-col">
-              <span className="font-bold text-gray-900 text-sm tracking-tight uppercase">SL business</span>
-              <span className="text-[10px] font-bold text-gray-400 tracking-widest uppercase">Admin Panel</span>
+              <span className="font-bold text-gray-900 text-sm tracking-tight uppercase">
+                SL business
+              </span>
+              <span className="text-[10px] font-bold text-gray-400 tracking-widest uppercase">
+                Admin Panel
+              </span>
             </div>
           )}
         </div>
@@ -79,20 +100,34 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {adminMenuItems.map((item) => {
             const isActive = pathname === item.href;
             const Icon = item.icon;
-            
             return (
               <Link
                 key={item.name}
                 href={item.href}
                 className={`flex items-center px-4 py-3 rounded transition-all duration-200 group relative ${
-                  isActive 
-                    ? 'bg-brand-dark text-white shadow-lg shadow-brand-dark/10'
-                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                  isActive
+                    ? "bg-brand-dark text-white shadow-lg shadow-brand-dark/10"
+                    : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
                 }`}
               >
-                <Icon className={`h-[18px] w-[18px] shrink-0 transition-colors ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-brand-dark'}`} strokeWidth={isActive ? 2 : 1.5} />
+                <Icon
+                  className={`h-[18px] w-[18px] shrink-0 transition-colors ${
+                    isActive
+                      ? "text-white"
+                      : "text-gray-400 group-hover:text-brand-dark"
+                  }`}
+                  strokeWidth={isActive ? 2 : 1.5}
+                />
                 {sidebarOpen && (
-                  <span className={`ml-3 text-[13px] font-bold tracking-tight ${isActive ? 'text-white' : 'text-gray-500 group-hover:text-gray-900'}`}>{item.name}</span>
+                  <span
+                    className={`ml-3 text-[13px] font-bold tracking-tight ${
+                      isActive
+                        ? "text-white"
+                        : "text-gray-500 group-hover:text-gray-900"
+                    }`}
+                  >
+                    {item.name}
+                  </span>
                 )}
                 {isActive && !sidebarOpen && (
                   <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-brand-dark rounded-l-full" />
@@ -105,22 +140,133 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="p-4 border-t border-gray-100 space-y-2">
           {sidebarOpen && (
             <button className="flex items-center w-full px-4 py-3 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-all text-[13px] font-bold">
-              <HelpCircle className="h-[18px] w-[18px] mr-3" strokeWidth={1.5} />
+              <HelpCircle
+                className="h-[18px] w-[18px] mr-3"
+                strokeWidth={1.5}
+              />
               Support Center
             </button>
           )}
         </div>
       </aside>
 
-      {/* Main Content Area */}
-      <div className={`flex-1 flex flex-col ${sidebarOpen ? 'md:ml-64' : 'md:ml-20'} transition-all duration-300`}>
-        {/* Topbar */}
-        <header className="h-20 bg-white/80  backdrop-blur-md border-b border-gray-300  sticky top-0 z-40 transition-colors duration-300">
+      {/* ── Mobile Slide-in Drawer (md:hidden) ───────────────────────────── */}
+      <div className="md:hidden">
+        {/* Backdrop */}
+        {mobileDrawerOpen && (
+          <div
+            className="fixed inset-0 bg-black/40 z-[60]"
+            onClick={() => setMobileDrawerOpen(false)}
+          />
+        )}
+
+        {/* Drawer Panel */}
+        <div
+          className={`fixed top-0 left-0 h-full w-72 bg-white z-[70] shadow-2xl flex flex-col transition-transform duration-300 ${
+            mobileDrawerOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
+        >
+          {/* Drawer Header */}
+          <div className="flex items-center h-16 px-4 border-b border-gray-200 shrink-0">
+            <div className="h-9 w-9 bg-brand-dark rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-brand-dark/20">
+              <ShieldCheck className="h-5 w-5 text-white" strokeWidth={2} />
+            </div>
+            <div className="flex flex-col ml-3 flex-1 min-w-0">
+              <span className="font-bold text-gray-900 text-sm tracking-tight uppercase">
+                SL Business
+              </span>
+              <span className="text-[10px] font-bold text-gray-400 tracking-widest uppercase">
+                Admin Panel
+              </span>
+            </div>
+            <button
+              onClick={() => setMobileDrawerOpen(false)}
+              className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-500 shrink-0 ml-2"
+            >
+              <X className="h-5 w-5" strokeWidth={1.5} />
+            </button>
+          </div>
+
+          {/* Drawer Nav */}
+          <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
+            {adminMenuItems.map((item) => {
+              const isActive = pathname === item.href;
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={`flex items-center px-4 py-3 rounded transition-all duration-200 group relative ${
+                    isActive
+                      ? "bg-brand-dark text-white shadow-lg shadow-brand-dark/10"
+                      : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+                  }`}
+                >
+                  <Icon
+                    className={`h-[18px] w-[18px] shrink-0 transition-colors ${
+                      isActive
+                        ? "text-white"
+                        : "text-gray-400 group-hover:text-brand-dark"
+                    }`}
+                    strokeWidth={isActive ? 2 : 1.5}
+                  />
+                  <span
+                    className={`ml-3 text-[13px] font-bold tracking-tight ${
+                      isActive
+                        ? "text-white"
+                        : "text-gray-500 group-hover:text-gray-900"
+                    }`}
+                  >
+                    {item.name}
+                  </span>
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Drawer Bottom – user info */}
+          <div className="p-4 border-t border-gray-100 shrink-0">
+            <div className="flex items-center gap-3 px-2 py-2">
+              <div className="h-8 w-8 rounded-full bg-brand-dark/10 flex items-center justify-center shrink-0">
+                <span className="text-xs font-bold text-brand-dark">
+                  {user?.email?.charAt(0).toUpperCase() ?? "A"}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-gray-900 truncate">
+                  {user?.email ?? "Admin"}
+                </p>
+                <span className="inline-block text-[10px] font-bold tracking-widest uppercase text-brand-dark bg-brand-dark/10 px-2 py-0.5 rounded-full mt-0.5">
+                  Admin
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Main Content Area ─────────────────────────────────────────────── */}
+      <div
+        className={`flex-1 flex flex-col ${
+          sidebarOpen ? "md:ml-64" : "md:ml-20"
+        } transition-all duration-300`}
+      >
+        {/* ── Topbar ── */}
+        <header className="h-16 md:h-20 bg-white/80 backdrop-blur-md border-b border-gray-300 sticky top-0 z-40 transition-colors duration-300">
           <div className="h-full px-4 md:px-8 flex items-center">
-            {/* Sidebar Toggle */}
-            <button 
+            {/* Mobile: hamburger button */}
+            <button
+              onClick={() => setMobileDrawerOpen(true)}
+              className="md:hidden p-2.5 rounded-xl bg-gray-50 text-gray-400 hover:text-brand-dark hover:bg-brand-blue/5 transition-all border border-transparent hover:border-brand-blue/10 mr-3 shrink-0"
+              title="Open Menu"
+            >
+              <Menu className="h-5 w-5" strokeWidth={1.5} />
+            </button>
+
+            {/* Desktop: sidebar collapse toggle */}
+            <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2.5 rounded-xl bg-gray-50 text-gray-400 hover:text-brand-dark hover:bg-brand-blue/5 transition-all border border-transparent hover:border-brand-blue/10 mr-4"
+              className="hidden md:flex items-center justify-center p-2.5 rounded-xl bg-gray-50 text-gray-400 hover:text-brand-dark hover:bg-brand-blue/5 transition-all border border-transparent hover:border-brand-blue/10 mr-4 shrink-0"
               title={sidebarOpen ? "Collapse Sidebar" : "Expand Sidebar"}
             >
               {sidebarOpen ? (
@@ -130,34 +276,68 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               )}
             </button>
 
-            {/* Centered Search */}
-            <div className="flex-1 flex justify-center">
-              <div className="relative w-full max-w-md group hidden md:block">
+            {/* Mobile: centered "Admin" title */}
+            <div className="flex-1 flex justify-center md:hidden">
+              <span className="font-bold text-gray-900 text-sm tracking-tight uppercase">
+                Admin
+              </span>
+            </div>
+
+            {/* Desktop: centered search bar */}
+            <div className="flex-1 hidden md:flex justify-center">
+              <div className="relative w-full max-w-md group">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-brand-blue transition-colors" />
-                <input 
-                  type="text" 
-                  placeholder="Search analytics, users, businesses..." 
-                  className="w-full pl-10 pr-4 py-2 bg-gray-100/50  border-gray-300 focus:bg-white  border focus:border-brand-blue/30 rounded-[6px] text-sm outline-none transition-all placeholder:text-gray-400 "
+                <input
+                  type="text"
+                  placeholder="Search analytics, users, businesses..."
+                  className="w-full pl-10 pr-4 py-2 bg-gray-100/50 border-gray-300 focus:bg-white border focus:border-brand-blue/30 rounded-[6px] text-sm outline-none transition-all placeholder:text-gray-400"
                 />
               </div>
             </div>
 
-            <div className="flex items-center space-x-4 ml-4">
+            {/* Right-side actions */}
+            <div className="flex items-center space-x-2 md:space-x-4 ml-3 md:ml-4 shrink-0">
               <div className="hidden sm:block">
                 <LiveCounter />
               </div>
               <NotificationBell />
-              <div className="h-8 w-px bg-gray-300  mx-2" />
+              <div className="h-8 w-px bg-gray-300 mx-1 md:mx-2" />
               <AuthButton user={user} />
             </div>
           </div>
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto">
-          {children}
-        </main>
+        <main className="flex-1 overflow-y-auto pb-16 md:pb-0">{children}</main>
       </div>
+
+      {/* ── Mobile Bottom Quick-Nav Bar (md:hidden) ───────────────────────── */}
+      <nav
+        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 flex items-stretch h-16"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      >
+        {mobileQuickNav.map((item) => {
+          const isActive = pathname === item.href;
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.name}
+              href={item.href}
+              className={`flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors ${
+                isActive ? "text-brand-dark" : "text-gray-400"
+              }`}
+            >
+              <Icon
+                className="h-5 w-5 shrink-0"
+                strokeWidth={isActive ? 2 : 1.5}
+              />
+              <span className="text-[10px] font-bold tracking-tight">
+                {item.name}
+              </span>
+            </Link>
+          );
+        })}
+      </nav>
     </div>
   );
 }
