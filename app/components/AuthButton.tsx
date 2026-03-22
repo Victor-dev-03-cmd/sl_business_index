@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useSession } from "./SessionContext"; // Import the session hook
@@ -56,9 +57,11 @@ export default function AuthButton({ user }: { user?: AuthUser | null }) {
         <DropdownMenuTrigger asChild>
           <button className="avatar flex items-center justify-center h-10 w-10 bg-brand-dark text-white rounded-full font-normal text-sm focus:outline-none hover:bg-brand-blue transition-all border-2 border-transparent hover:border-brand-sand shadow-sm uppercase overflow-hidden">
             {user.avatar_url ? (
-              <img
+              <Image
                 src={user.avatar_url}
                 alt={displayName}
+                width={40}
+                height={40}
                 className="h-full w-full object-cover"
               />
             ) : (

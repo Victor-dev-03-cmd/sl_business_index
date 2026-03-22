@@ -418,12 +418,34 @@ function SplitScreenResultsContent() {
     return [];
   }, [selectedCategory]);
 
+  /* ── Town fuzzy search for mobile suggestions overlay ── */
+  const townFuse = useMemo(
+    () =>
+      new Fuse(SL_TOWNS, {
+        keys: ["name", "district"],
+        threshold: 0.35,
+        distance: 80,
+      }),
+    [],
+  );
+
+  const townSuggestions = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    return townFuse
+      .search(searchQuery)
+      .slice(0, 4)
+      .map((r) => r.item);
+  }, [searchQuery, townFuse]);
+
   return (
     <div className="flex flex-col h-dvh overflow-hidden bg-white font-normal">
       {/* ═══════════════════════════════════════════
           MOBILE TOP BAR  (hidden on md+)
       ═══════════════════════════════════════════ */}
-      <div className="flex md:hidden items-center gap-2 px-3 h-14 border-b border-gray-200 bg-white z-20 shrink-0">
+      <div
+        className="flex md:hidden items-center gap-2 px-3 h-14 border-b border-gray-200 bg-white z-20 shrink-0"
+        style={{ willChange: "transform", transform: "translateZ(0)" }}
+      >
         {/* Back */}
         <Link
           href="/"
@@ -452,7 +474,13 @@ function SplitScreenResultsContent() {
                 )
               }
               placeholder="Search businesses near you…"
-              className="flex-1 bg-transparent outline-none text-sm text-gray-700 min-w-0"
+              inputMode="search"
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
+              className="flex-1 bg-transparent outline-none text-[16px] leading-none text-gray-700 min-w-0"
+              style={{ fontSize: "16px" }}
             />
             {searchQuery && (
               <button
@@ -467,20 +495,6 @@ function SplitScreenResultsContent() {
             )}
           </div>
         </div>
-
-        {/* Find-Me */}
-        <button
-          onClick={findMyLocation}
-          className="shrink-0 w-9 h-9 border border-gray-200 rounded-md flex items-center justify-center bg-white hover:bg-gray-50 shadow-sm transition-colors"
-        >
-          <Navigation
-            size={16}
-            className={cn(
-              "text-brand-dark",
-              locationLoading && "animate-pulse",
-            )}
-          />
-        </button>
       </div>
 
       {/* Mobile — full-screen suggestions overlay */}
@@ -493,7 +507,8 @@ function SplitScreenResultsContent() {
           />
           {/* Panel */}
           <div className="relative bg-white shadow-xl overflow-y-auto max-h-[70vh]">
-            {suggestions.length > 0 ? (
+            {/* ── Businesses ── */}
+            {suggestions.length > 0 && (
               <>
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] px-4 pt-4 pb-2">
                   {searchQuery.trim() ? "Best Matches" : "Nearby Businesses"}
@@ -548,7 +563,59 @@ function SplitScreenResultsContent() {
                   ))}
                 </div>
               </>
-            ) : (
+            )}
+
+            {/* ── Towns & Districts ── */}
+            {townSuggestions.length > 0 && (
+              <div
+                className={
+                  suggestions.length > 0 ? "border-t border-gray-100" : ""
+                }
+              >
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] px-4 pt-3 pb-2">
+                  Towns & Districts
+                </p>
+                <div className="divide-y divide-gray-100">
+                  {townSuggestions.map((town) => (
+                    <button
+                      key={`${town.name}-${town.district}`}
+                      onMouseDown={() => {
+                        setMapCenter({ lat: town.lat, lng: town.lon });
+                        setMapZoom(13);
+                        handleLocationSearch(
+                          town.lat.toString(),
+                          town.lon.toString(),
+                          radius,
+                          searchQuery,
+                        );
+                        setSearchQuery(town.name);
+                        setIsSearchFocused(false);
+                        setMobileView("map");
+                      }}
+                      className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 active:bg-gray-100 text-left transition-colors"
+                    >
+                      <div className="w-9 h-9 rounded-full bg-brand-dark/10 flex items-center justify-center shrink-0">
+                        <MapPin size={15} className="text-brand-dark" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-800 truncate">
+                          {town.name}
+                        </p>
+                        <p className="text-[11px] text-gray-400 mt-0.5">
+                          {town.district} District
+                        </p>
+                      </div>
+                      <span className="shrink-0 text-[10px] font-medium bg-gray-100 text-gray-500 px-2 py-1 rounded-full capitalize">
+                        {town.type}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── Empty state ── */}
+            {suggestions.length === 0 && townSuggestions.length === 0 && (
               <div className="flex flex-col items-center justify-center py-12 text-gray-400 gap-2">
                 <Search size={28} strokeWidth={1.2} />
                 <p className="text-sm">
@@ -1030,6 +1097,22 @@ function SplitScreenResultsContent() {
                 </button>
               </div>
             )}
+
+          {/* Mobile — Find Me button on right side of map */}
+          <div className="md:hidden absolute right-3 bottom-28 z-[1001]">
+            <button
+              onClick={findMyLocation}
+              className="w-11 h-11 bg-white rounded-full shadow-lg border border-gray-200 flex items-center justify-center active:scale-95 transition-transform"
+            >
+              <Navigation
+                size={18}
+                className={cn(
+                  "text-brand-dark",
+                  locationLoading && "animate-pulse",
+                )}
+              />
+            </button>
+          </div>
 
           {isMapManual && (
             <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[1000]">
