@@ -30,4 +30,5 @@ export interface Business {
   admin_notes?: string;
   facilities?: string[];
   can_show_badge?: boolean;
+  detailed_address?: string;
 }

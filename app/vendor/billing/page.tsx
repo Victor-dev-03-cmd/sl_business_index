@@ -41,6 +41,8 @@ interface SubscriptionPlan {
   advanced_analytics: boolean;
   has_social_sharing: boolean;
   featured_boost: boolean;
+  advanced_feature_access: boolean;
+  functional_features?: Record<string, boolean>;
 }
 
 export default function BillingPage() {
@@ -51,10 +53,23 @@ export default function BillingPage() {
   const [businessCount, setBusinessCount] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
+  const [featureDefinitions, setFeatureDefinitions] = useState<{ id: string; label: string }[]>([]);
 
   useEffect(() => {
     fetchBillingData();
+    fetchFeatureDefinitions();
   }, []);
+
+  const fetchFeatureDefinitions = async () => {
+    const { data, error } = await supabase
+      .from('app_settings')
+      .select('value')
+      .eq('key', 'advanced_feature_definitions')
+      .single();
+    if (!error && data) {
+      setFeatureDefinitions(data.value as { id: string; label: string }[]);
+    }
+  };
 
   const fetchBillingData = async () => {
     setLoading(true);
@@ -301,12 +316,22 @@ export default function BillingPage() {
                 </div>
 
                 <ul className="space-y-3 mb-8">
-                  {plan.features.map((feature, i) => (
+                  {plan.features?.map((feature, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
                       <CheckCircle2 size={16} className="text-brand-gold mt-0.5 shrink-0" />
                       {feature}
                     </li>
                   ))}
+                  {featureDefinitions.map((f) => {
+                    const isEnabled = plan.functional_features?.[f.id] || (plan as any)[f.id];
+                    if (!isEnabled) return null;
+                    return (
+                      <li key={f.id} className="flex items-start gap-2 text-sm text-brand-blue font-bold">
+                        <CheckCircle2 size={16} className="text-brand-gold mt-0.5 shrink-0" />
+                        {f.label}
+                      </li>
+                    );
+                  })}
                 </ul>
 
                 <button 

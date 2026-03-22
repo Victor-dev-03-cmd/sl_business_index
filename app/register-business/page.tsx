@@ -33,6 +33,7 @@ export default function RegisterBusinessPage() {
   const [brNumber, setBrNumber] = useState('');
   const [nicNumber, setNicNumber] = useState('');
   const [location, setLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
+  const [detailedAddress, setDetailedAddress] = useState('');
 
   const [loading, setLoading] = useState(false);
   const [isUnauthenticated, setIsUnauthenticated] = useState(false);
@@ -165,6 +166,7 @@ export default function RegisterBusinessPage() {
           owner_id: user.id,
           location: `POINT(${location.lng} ${location.lat})`,
           address: location.address,
+          detailed_address: detailedAddress,
           latitude: location.lat,
           longitude: location.lng,
           status: 'pending'
@@ -460,8 +462,11 @@ export default function RegisterBusinessPage() {
                 </div>
 
                 <div className="md:col-span-2">
-                  <AddressAutocomplete onLocationSelectAction={handleLocationSelect} />
-                  <p className="mt-2 text-[11px] text-gray-400 font-normal italic">* Select from the dropdown for accurate map pinning.</p>
+                  <AddressAutocomplete 
+                    onLocationSelectAction={handleLocationSelect} 
+                    detailedAddress={detailedAddress}
+                    onDetailedAddressChange={setDetailedAddress}
+                  />
                 </div>
               </div>
             </div>

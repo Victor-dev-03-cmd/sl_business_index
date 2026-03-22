@@ -29,6 +29,7 @@ export default function EditBusinessForm({ business }: { business: Business }) {
   const [websiteUrl, setWebsiteUrl] = useState(business.website_url || '');
   const [workingHours, setWorkingHours] = useState(business.working_hours || '');
   const [ownerName, setOwnerName] = useState(business.owner_name || '');
+  const [detailedAddress, setDetailedAddress] = useState(business.detailed_address || '');
   
   // Location State
   const [location, setLocation] = useState<{ lat: number; lng: number; address: string } | null>({
@@ -111,6 +112,7 @@ export default function EditBusinessForm({ business }: { business: Business }) {
           working_hours: workingHours,
           owner_name: ownerName,
           address: location?.address,
+          detailed_address: detailedAddress,
           latitude: location?.lat,
           longitude: location?.lng,
           location: location ? `POINT(${location.lng} ${location.lat})` : business.location,
@@ -230,7 +232,12 @@ export default function EditBusinessForm({ business }: { business: Business }) {
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm" />
           </div>
           <div className="md:col-span-2">
-            <AddressAutocomplete onLocationSelectAction={handleLocationSelect} initialAddress={location?.address} />
+            <AddressAutocomplete 
+              onLocationSelectAction={handleLocationSelect} 
+              initialAddress={location?.address} 
+              detailedAddress={detailedAddress}
+              onDetailedAddressChange={setDetailedAddress}
+            />
           </div>
         </div>
       </div>

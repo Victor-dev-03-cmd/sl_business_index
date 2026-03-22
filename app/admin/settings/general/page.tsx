@@ -110,12 +110,15 @@ export default function GeneralSettingsPage() {
       setLocalSettings((s) => (s ? { ...s, logo_url: uniqueUrl } : null));
 
       // Auto-save the logo URL to DB
-      await supabase
+      const { error: dbError } = await supabase
         .from("site_settings")
         .update({ logo_url: uniqueUrl })
         .eq("id", 1);
 
+      if (dbError) throw dbError;
+
       queryClient.invalidateQueries({ queryKey: ["site-settings"] });
+      toast.success("Logo uploaded and saved successfully");
     } catch (error: any) {
       console.error("Error uploading logo:", error);
       toast.error(

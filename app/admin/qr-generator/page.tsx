@@ -116,15 +116,15 @@ export default function QRGeneratorPage() {
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-12 bg-gray-50/30 min-h-screen">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-8 rounded-2xl border border-gray-200 shadow-sm">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-8 rounded border border-gray-300 shadow-sm">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-brand-dark/5 rounded-lg">
               <QrCode className="h-6 w-6 text-brand-dark" />
             </div>
-            <h1 className="text-3xl font-black tracking-tight text-gray-900 uppercase">QR Center</h1>
+            <h1 className="text-2xl tracking-tight text-brand-dark uppercase">QR Center</h1>
           </div>
-          <p className="text-gray-500 font-medium">Professional bulk generator for business posters.</p>
+          <p className="text-gray-500">Professional bulk generator for business posters.</p>
         </div>
         <div className="flex items-center gap-3">
           {generatedQRs.length > 0 && (

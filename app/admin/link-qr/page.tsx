@@ -164,22 +164,22 @@ export default function LinkQRPage() {
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Link QR Poster</h1>
+        <h1 className="text-2xl tracking-tight text-brand-dark">Link QR Poster</h1>
         <p className="text-gray-500 mt-1">Connect a printed QR poster to a registered business.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="space-y-6">
-          <div className="bg-white border border-gray-200 rounded-[6px] shadow-sm overflow-hidden">
+          <div className="bg-white border border-gray-300 rounded-[6px] shadow-sm overflow-hidden">
             <div className="p-6 border-b border-gray-100 flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-bold text-gray-900">Step 1: Enter Serial ID</h2>
+                <h2 className="text-xl text-gray-800">Step 1: Enter Serial ID</h2>
                 <p className="text-sm text-gray-500">Enter or generate a new poster ID.</p>
               </div>
               <button
                 onClick={generateNewQr}
                 disabled={isGenerating}
-                className="text-xs font-bold text-brand-dark bg-brand-dark/5 px-3 py-1.5 rounded-[6px] hover:bg-brand-dark/10 transition-all flex items-center gap-2"
+                className="text-xs font-medium text-brand-dark bg-brand-dark/5 px-3 py-1.5 rounded-[6px] hover:bg-brand-dark/10 transition-all flex items-center gap-2"
               >
                 {isGenerating ? (
                   <Loader2 className="h-3 w-3 animate-spin" />
@@ -191,7 +191,7 @@ export default function LinkQRPage() {
             </div>
             <div className="p-6 space-y-4">
               <div className="space-y-2">
-                <label htmlFor="serial-id" className="text-sm font-medium text-gray-700">Serial ID</label>
+                <label htmlFor="serial-id" className="text-sm font-medium text-brand-blue">Serial ID</label>
                 <div className="relative">
                   <input
                     id="serial-id"
@@ -212,7 +212,7 @@ export default function LinkQRPage() {
                     <>
                       <CheckCircle2 className="h-5 w-5 mt-0.5" />
                       <div>
-                        <p className="font-bold">Available</p>
+                        <p className="font-medium">Available</p>
                         <p className="text-sm">This QR is currently unassigned and ready to be linked.</p>
                       </div>
                     </>
@@ -220,7 +220,7 @@ export default function LinkQRPage() {
                     <>
                       <AlertCircle className="h-5 w-5 mt-0.5" />
                       <div>
-                        <p className="font-bold">Already Assigned</p>
+                        <p className="font-medium">Already Assigned</p>
                         <p className="text-sm text-amber-600">Currently linked to: <strong>{qrInfo.business_name}</strong>. Linking will re-assign it.</p>
                       </div>
                     </>
@@ -230,14 +230,14 @@ export default function LinkQRPage() {
             </div>
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-[6px] shadow-sm overflow-hidden">
+          <div className="bg-white border border-gray-300 rounded-[6px] shadow-sm overflow-hidden">
             <div className="p-6 border-b border-gray-100">
-              <h2 className="text-xl font-bold text-gray-900">Step 2: Select Business</h2>
+              <h2 className="text-xl text-gray-900">Step 2: Select Business</h2>
               <p className="text-sm text-gray-500">Search for the business you want to link.</p>
             </div>
             <div className="p-6 space-y-4">
               <div className="space-y-2">
-                <label htmlFor="search-business" className="text-sm font-medium text-gray-700">Search Business</label>
+                <label htmlFor="search-business" className="text-sm font-medium text-brand-blue">Search Business</label>
                 <div className="relative">
                   <input
                     id="search-business"
@@ -267,7 +267,7 @@ export default function LinkQRPage() {
                         <Building2 className="h-5 w-5" />
                       </div>
                       <div className="min-w-0">
-                        <p className="font-bold text-gray-900 truncate">{b.name}</p>
+                        <p className="text-gray-900 truncate">{b.name}</p>
                         <p className="text-xs text-gray-500 truncate">{b.category} • {b.address}</p>
                       </div>
                     </button>
@@ -317,9 +317,9 @@ export default function LinkQRPage() {
         </div>
 
         <div className="hidden lg:block">
-          <div className="bg-gray-50/50 border border-gray-200 rounded-[6px] shadow-sm h-full overflow-hidden">
+          <div className="bg-gray-50/50 border border-gray-300 rounded-[6px] shadow-sm h-full overflow-hidden">
             <div className="p-6 border-b border-gray-100">
-              <h2 className="text-xl font-bold text-gray-900">Instructions</h2>
+              <h2 className="text-xl text-gray-900">Instructions</h2>
             </div>
             <div className="p-6 space-y-6">
               <div className="space-y-4">

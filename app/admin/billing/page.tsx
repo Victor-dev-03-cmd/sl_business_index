@@ -34,6 +34,10 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 
+const DEFAULT_FEATURES = [
+  { id: "advanced_feature_access", label: "Advanced Feature Access" },
+];
+
 export default function AdminBillingPage() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<
@@ -44,6 +48,8 @@ export default function AdminBillingPage() {
   const [showPlanDialog, setShowPlanDialog] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<any | null>(null);
   const [showAnnouncementDialog, setShowAnnouncementDialog] = useState(false);
+  const [showFeatureSettings, setShowFeatureSettings] = useState(false);
+  const [newFeatureLabel, setNewFeatureLabel] = useState("");
 
   // Form States for Plan
   const [planForm, setPlanForm] = useState({
@@ -53,11 +59,7 @@ export default function AdminBillingPage() {
     price_yearly: 0,
     features: [] as string[],
     max_listings: 1,
-    show_verified_badge: false,
-    priority_support: false,
-    advanced_analytics: false,
-    has_social_sharing: false,
-    featured_boost: false,
+    functional_features: {} as Record<string, boolean>,
     discount_percentage: 0,
   });
 
@@ -78,11 +80,9 @@ export default function AdminBillingPage() {
         price_yearly: plan.price_yearly || 0,
         features: plan.features || [],
         max_listings: plan.max_listings || 1,
-        show_verified_badge: plan.show_verified_badge || false,
-        priority_support: plan.priority_support || false,
-        advanced_analytics: plan.advanced_analytics || false,
-        has_social_sharing: plan.has_social_sharing || false,
-        featured_boost: plan.featured_boost || false,
+        functional_features: plan.functional_features || {
+          advanced_feature_access: plan.advanced_feature_access || false,
+        },
         discount_percentage: plan.discount_percentage || 0,
       });
       setSelectedPlan(plan);
@@ -94,11 +94,7 @@ export default function AdminBillingPage() {
         price_yearly: 0,
         features: [],
         max_listings: 1,
-        show_verified_badge: false,
-        priority_support: false,
-        advanced_analytics: false,
-        has_social_sharing: false,
-        featured_boost: false,
+        functional_features: {},
         discount_percentage: 0,
       });
       setSelectedPlan(null);
@@ -144,6 +140,19 @@ export default function AdminBillingPage() {
     },
   });
 
+  const { data: featureDefinitions = DEFAULT_FEATURES } = useQuery({
+    queryKey: ["advanced-feature-definitions"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("app_settings")
+        .select("value")
+        .eq("key", "advanced_feature_definitions")
+        .single();
+      if (error || !data?.value) return DEFAULT_FEATURES;
+      return data.value as { id: string; label: string }[];
+    },
+  });
+
   const { data: announcements = [], isLoading: announcementsLoading } =
     useQuery({
       queryKey: ["admin-announcements"],
@@ -159,18 +168,42 @@ export default function AdminBillingPage() {
 
   // --- MUTATIONS ---
 
+  const updateFeatureDefinitionsMutation = useMutation({
+    mutationFn: async (newDefinitions: { id: string; label: string }[]) => {
+      const { error } = await supabase
+        .from("app_settings")
+        .upsert({
+          key: "advanced_feature_definitions",
+          value: newDefinitions,
+        });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["advanced-feature-definitions"],
+      });
+    },
+  });
+
   const savePlanMutation = useMutation({
     mutationFn: async (formData: any) => {
+      // Functional features are primarily stored in functional_features JSONB
+      // Keep legacy advanced_feature_access sync'd for backend logic
+      const dataToSave = {
+        ...formData,
+        advanced_feature_access: formData.functional_features?.advanced_feature_access || false,
+      };
+
       if (selectedPlan) {
         const { error } = await supabase
           .from("subscription_plans")
-          .update(formData)
+          .update(dataToSave)
           .eq("id", selectedPlan.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("subscription_plans")
-          .insert(formData);
+          .insert(dataToSave);
         if (error) throw error;
       }
     },
@@ -414,31 +447,39 @@ export default function AdminBillingPage() {
                   Configure what vendors see and pay.
                 </p>
               </div>
-              <button
-                onClick={() => resetPlanForm()}
-                className="flex items-center gap-2 bg-brand-dark text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-brand-blue transition-all shadow-lg self-start sm:self-auto"
-              >
-                <Plus size={18} /> Create New Plan
-              </button>
+              <div className="flex gap-3 self-start sm:self-auto">
+                <button
+                  onClick={() => setShowFeatureSettings(true)}
+                  className="flex items-center gap-2 bg-gray-100 text-gray-600 px-6 py-3 rounded text-sm hover:bg-gray-200 transition-all font-bold"
+                >
+                  <Filter size={18} /> Manage Access Types
+                </button>
+                <button
+                  onClick={() => resetPlanForm()}
+                  className="flex items-center gap-2 bg-brand-dark text-white px-6 py-3 rounded text-sm hover:bg-brand-blue transition-all shadow-lg"
+                >
+                  <Plus size={18} /> Create New Plan
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {plansLoading
                 ? [...Array(3)].map((_, i) => (
-                    <Skeleton key={i} className="h-64 w-full rounded-2xl" />
+                    <Skeleton key={i} className="h-64 w-full rounded" />
                   ))
                 : plans.map((plan) => (
                     <div
                       key={plan.id}
-                      className={`bg-white rounded-2xl border-2 transition-all p-8 relative overflow-hidden ${plan.is_active ? "border-gray-200" : "border-dashed border-gray-300 opacity-60"}`}
+                      className={`bg-white rounded-2xl border-2 transition-all p-8 relative overflow-hidden ${plan.is_active ? "border-gray-300" : "border-dashed border-gray-300 opacity-60"}`}
                     >
                       {!plan.is_active && (
-                        <div className="absolute top-4 right-4 bg-gray-500 text-white text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded">
+                        <div className="absolute top-4 right-4 bg-gray-500 text-white text-[9px] uppercase tracking-widest px-2 py-1 rounded">
                           Inactive
                         </div>
                       )}
                       {plan.discount_percentage > 0 && (
-                        <div className="absolute top-0 left-0 bg-brand-gold text-white text-[10px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-br-xl shadow-md">
+                        <div className="absolute top-0 left-0 bg-brand-gold text-white text-[10px] uppercase tracking-widest px-4 py-1.5 rounded-br-xl shadow-md">
                           {plan.discount_percentage}% OFF
                         </div>
                       )}
@@ -477,6 +518,20 @@ export default function AdminBillingPage() {
                             <span>{f}</span>
                           </div>
                         ))}
+                        {featureDefinitions.map((f: any) => 
+                          plan.functional_features?.[f.id] && (
+                            <div
+                              key={f.id}
+                              className="flex items-start gap-2 text-sm text-brand-blue font-bold"
+                            >
+                              <Sparkles
+                                className="text-brand-gold shrink-0 mt-0.5"
+                                size={14}
+                              />
+                              <span>{f.label}</span>
+                            </div>
+                          )
+                        )}
                       </div>
 
                       <div className="flex gap-3 pt-6 border-t border-gray-100">
@@ -739,24 +794,21 @@ export default function AdminBillingPage() {
                 Advanced Feature Access
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {[
-                  { id: "show_verified_badge", label: "Verified Badge" },
-                  { id: "priority_support", label: "Priority Support" },
-                  { id: "advanced_analytics", label: "Advanced Analytics" },
-                  { id: "has_social_sharing", label: "Social Sharing" },
-                  { id: "featured_boost", label: "Featured Listing Boost" },
-                ].map((feature) => (
+                {featureDefinitions.map((feature: any) => (
                   <label
                     key={feature.id}
                     className="flex items-center gap-3 p-3 border border-gray-100 rounded-lg hover:bg-gray-50 cursor-pointer group"
                   >
                     <input
                       type="checkbox"
-                      checked={(planForm as any)[feature.id]}
+                      checked={planForm.functional_features[feature.id] || false}
                       onChange={(e) =>
                         setPlanForm({
                           ...planForm,
-                          [feature.id]: e.target.checked,
+                          functional_features: {
+                            ...planForm.functional_features,
+                            [feature.id]: e.target.checked,
+                          },
                         })
                       }
                       className="h-4 w-4 rounded border-gray-300 text-brand-blue focus:ring-brand-blue"
@@ -778,6 +830,72 @@ export default function AdminBillingPage() {
                 ? "Saving..."
                 : "Save Subscription Plan"}
             </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Feature Definitions Settings Dialog */}
+      <Dialog
+        open={showFeatureSettings}
+        onOpenChange={setShowFeatureSettings}
+      >
+        <DialogContent className="w-[95vw] max-w-md bg-white border-gray-300 p-6 sm:p-8 max-h-[90dvh] overflow-y-auto">
+          <div className="space-y-6">
+            <div>
+              <DialogTitle className="text-xl font-normal text-gray-900">
+                Advanced Access Types
+              </DialogTitle>
+              <DialogDescription className="text-sm text-gray-500">
+                Manage which checkboxes are available for subscription plans.
+              </DialogDescription>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="e.g. Real-time Leads"
+                  value={newFeatureLabel}
+                  onChange={(e) => setNewFeatureLabel(e.target.value)}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-[6px] text-sm outline-none"
+                />
+                <button
+                  onClick={() => {
+                    if (!newFeatureLabel) return;
+                    const id = newFeatureLabel.toLowerCase().replace(/\s+/g, "_");
+                    const exists = featureDefinitions.find((f: any) => f.id === id);
+                    if (exists) return;
+                    
+                    updateFeatureDefinitionsMutation.mutate([
+                      ...featureDefinitions,
+                      { id, label: newFeatureLabel }
+                    ]);
+                    setNewFeatureLabel("");
+                  }}
+                  className="bg-brand-dark text-white px-4 py-2 rounded font-bold text-xs"
+                >
+                  Add
+                </button>
+              </div>
+
+              <div className="divide-y divide-gray-100 border border-gray-100 rounded-lg overflow-hidden">
+                {featureDefinitions.map((f: any) => (
+                  <div key={f.id} className="p-3 flex items-center justify-between bg-white group">
+                    <span className="text-sm font-medium text-gray-700">{f.label}</span>
+                    <button
+                      onClick={() => {
+                        updateFeatureDefinitionsMutation.mutate(
+                          featureDefinitions.filter((item: any) => item.id !== f.id)
+                        );
+                      }}
+                      className="text-gray-300 hover:text-red-500 transition-colors"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

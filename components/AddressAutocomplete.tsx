@@ -31,11 +31,21 @@ const defaultCenter = { lat: 6.9271, lng: 79.8612 };
 interface AddressAutocompleteProps {
   onLocationSelectAction: (lat: number, lng: number, address: string) => void;
   initialAddress?: string;
+  hideMap?: boolean;
+  hideLabel?: boolean;
+  placeholder?: string;
+  detailedAddress?: string;
+  onDetailedAddressChange?: (value: string) => void;
 }
 
 export default function AddressAutocomplete({
   onLocationSelectAction,
-  initialAddress
+  initialAddress,
+  hideMap = false,
+  hideLabel = false,
+  placeholder = "Type your shop address...",
+  detailedAddress,
+  onDetailedAddressChange
 }: AddressAutocompleteProps) {
   const {
     ready,
@@ -122,63 +132,104 @@ export default function AddressAutocomplete({
   };
 
   return (
-    <div className="w-full space-y-4">
-      <div>
-        <div className="flex justify-between items-center mb-2">
-          <label className="block text-sm font-normal text-gray-600">Business Address</label>
-          <button
-            type="button"
-            onClick={findMyLocation}
-            disabled={isLocating}
-            className="flex items-center gap-1.5 text-xs font-medium text-[#2a7db4] transition-colors bg-blue-50 px-2.5 py-1.5 rounded-lg border border-blue-100 disabled:opacity-50"
-          >
-            {isLocating ? <Loader2 size={14} className="animate-spin" /> : <Navigation size={14} />}
-            {isLocating ? "Locating..." : "Find My Location"}
-          </button>
-        </div>
-        <Command className="border border-gray-300 rounded-[6px]" shouldFilter={false}>
-          <CommandInput
-            placeholder="Type your shop address..."
-            value={value}
-            onValueChange={setValue}
-            disabled={!ready}
-            className="text-base"
-          />
-          <CommandList>
-            {status === "OK" && (
-              <CommandGroup>
-                {data.map(({ place_id, description }) => (
-                  <CommandItem
-                    key={place_id}
-                    onSelect={() => handleSelect(description)}
-                    className="cursor-pointer font-normal text-sm py-3"
-                  >
-                    {description}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
+    <div className="w-full">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+        <div className="space-y-4">
+          <div>
+            {!hideLabel && (
+              <div className="flex justify-between items-center mb-2">
+                <label className="block text-sm font-normal text-gray-600">Business Address</label>
+                <button
+                  type="button"
+                  onClick={findMyLocation}
+                  disabled={isLocating}
+                  className="flex items-center gap-1.5 text-xs font-medium text-[#2a7db4] transition-colors bg-blue-50 px-2.5 py-1.5 rounded-lg border border-blue-100 disabled:opacity-50"
+                >
+                  {isLocating ? <Loader2 size={14} className="animate-spin" /> : <Navigation size={14} />}
+                  {isLocating ? "Locating..." : "Find My Location"}
+                </button>
+              </div>
             )}
-            {value.length > 2 && status === "ZERO_RESULTS" && (
-              <CommandEmpty className="py-6 text-sm text-gray-400 font-normal text-center">No address found in Sri Lanka.</CommandEmpty>
-            )}
-          </CommandList>
-        </Command>
-        <p className="mt-2 text-[11px] text-gray-400 font-normal italic">
-          * Select from the dropdown for accurate map pinning. Biased to Sri Lanka.
-        </p>
-      </div>
+            <div className="relative">
+              {hideLabel && (
+                <button
+                  type="button"
+                  onClick={findMyLocation}
+                  disabled={isLocating}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex items-center gap-1.5 text-[10px] font-medium text-[#2a7db4] bg-blue-50/80 hover:bg-blue-100 px-2 py-1 rounded transition-colors disabled:opacity-50"
+                  title="Find my location"
+                >
+                  {isLocating ? <Loader2 size={12} className="animate-spin" /> : <Navigation size={12} />}
+                  {isLocating ? "" : "Locate Me"}
+                </button>
+              )}
+              <Command className="border border-gray-300 rounded-[6px]" shouldFilter={false}>
+                <CommandInput
+                  placeholder={placeholder}
+                  value={value}
+                  onValueChange={setValue}
+                  disabled={!ready}
+                  className="text-base"
+                />
+                <CommandList>
+                  {status === "OK" && (
+                    <CommandGroup>
+                      {data.map(({ place_id, description }) => (
+                        <CommandItem
+                          key={place_id}
+                          onSelect={() => handleSelect(description)}
+                          className="cursor-pointer font-normal text-sm py-3"
+                        >
+                          {description}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  )}
+                  {value.length > 2 && status === "ZERO_RESULTS" && (
+                    <CommandEmpty className="py-6 text-sm text-gray-400 font-normal text-center">No address found in Sri Lanka.</CommandEmpty>
+                  )}
+                </CommandList>
+              </Command>
+            </div>
+          </div>
 
-      <div className="h-64 w-full rounded-[6px] overflow-hidden border border-gray-300">
-        <LeafletMap
-          centerLat={mapCenter.lat}
-          centerLng={mapCenter.lng}
-          zoom={zoom}
-          height="100%"
-          draggableMarker={true}
-          onMarkerDragEnd={handleMarkerDragEnd}
-          onMapClick={handleMarkerDragEnd}
-          showUserLocation={false}
-        />
+          {onDetailedAddressChange && (
+            <div>
+              <label className="block text-xs font-medium text-gray-400 mb-1 uppercase tracking-widest">Detailed Address</label>
+              <textarea
+                value={detailedAddress}
+                onChange={(e) => onDetailedAddressChange(e.target.value)}
+                placeholder="Shop No, Floor, Street Name, Landmark..."
+                className="w-full px-4 py-3 rounded-[6px] border border-gray-300 bg-gray-50/50 focus:bg-white focus:ring-1 focus:ring-blue-900 outline-none transition-all font-normal text-sm"
+                rows={3}
+              />
+            </div>
+          )}
+
+          {!hideLabel && (
+            <p className="text-[11px] text-gray-400 font-normal italic">
+              * Select from the dropdown for accurate map pinning. Biased to Sri Lanka.
+            </p>
+          )}
+        </div>
+
+        {!hideMap && (
+          <div className="flex flex-col h-full min-h-[240px] lg:min-h-full">
+            <span className="block text-xs font-medium text-gray-400 mb-2 uppercase tracking-widest">Nearby Map View</span>
+            <div className="flex-1 rounded-[8px] overflow-hidden border border-gray-300 relative">
+               <LeafletMap
+                centerLat={mapCenter.lat}
+                centerLng={mapCenter.lng}
+                zoom={zoom}
+                height="100%"
+                draggableMarker={true}
+                onMarkerDragEnd={handleMarkerDragEnd}
+                onMapClick={handleMarkerDragEnd}
+                showUserLocation={false}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

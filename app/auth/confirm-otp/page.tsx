@@ -50,7 +50,7 @@ function OTPConfirmPage() {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50 px-4">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg text-center">
+      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded shadow-lg text-center">
         {/* Logo Integration */}
         <div className="flex justify-center mb-4">
           <Link href="/">
@@ -59,9 +59,9 @@ function OTPConfirmPage() {
         </div>
 
         <div className="flex justify-center">
-          <KeyRound className="w-12 h-12 text-green-700" />
+          <KeyRound className="w-12 h-12 text-brand-dark" />
         </div>
-        <h1 className="text-2xl font-bold text-gray-800">Enter Verification Code</h1>
+        <h1 className="text-2xl text-gray-800">Enter Verification Code</h1>
         <p className="text-gray-600">
           An 8-digit code has been sent to <span className="font-semibold">{email}</span>.
         </p>
@@ -79,7 +79,7 @@ function OTPConfirmPage() {
               required
               maxLength={8}
               placeholder="_ _ _ _ _ _ _ _"
-              className="w-full px-4 py-3 text-center text-2xl tracking-[0.3em] font-mono text-gray-800 bg-gray-100 border-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full px-4 py-3 text-center text-2xl tracking-[0.3em] font-mono text-gray-800 bg-gray-100 border-transparent rounded-lg focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
           
@@ -89,7 +89,7 @@ function OTPConfirmPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full px-4 py-3 text-sm font-bold text-white bg-green-700 rounded-lg hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
+              className="w-full px-4 py-3 text-sm text-white bg-brand-dark rounded  focus:ring-primary disabled:opacity-50"
             >
               {loading ? 'Verifying...' : 'Verify Account'}
             </button>
