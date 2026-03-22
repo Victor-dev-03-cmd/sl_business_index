@@ -56,7 +56,12 @@ export default function AdminLayout({
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { data: user, isLoading } = useUser();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     startTransition(() => {
@@ -73,7 +78,7 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="flex h-screen bg-gray-50/50 transition-colors duration-300">
+    <div className="flex h-screen bg-gray-50/50 transition-colors duration-300 overflow-hidden">
       {/* ── Desktop Sidebar (hidden on mobile, visible md+) ───────────────── */}
       <aside
         className={`${
@@ -248,16 +253,16 @@ export default function AdminLayout({
       {/* ── Main Content Area ─────────────────────────────────────────────── */}
       <div
         className={`flex-1 flex flex-col ${
-          sidebarOpen ? "md:ml-64" : "md:ml-20"
-        } transition-all duration-300`}
+          mounted && sidebarOpen ? "md:ml-64" : mounted && !sidebarOpen ? "md:ml-20" : ""
+        } transition-all duration-300 min-w-0`}
       >
         {/* ── Topbar ── */}
         <header className="h-16 md:h-20 bg-white/80 backdrop-blur-md border-b border-gray-300 sticky top-0 z-40 transition-colors duration-300">
-          <div className="h-full px-4 md:px-8 flex items-center">
+          <div className="h-full px-3 md:px-8 flex items-center">
             {/* Mobile: hamburger button */}
             <button
               onClick={() => setMobileDrawerOpen(true)}
-              className="md:hidden p-2.5 rounded-xl bg-gray-50 text-gray-400 hover:text-brand-dark hover:bg-brand-blue/5 transition-all border border-transparent hover:border-brand-blue/10 mr-3 shrink-0"
+              className="md:hidden p-2 rounded-xl bg-gray-50 text-gray-400 hover:text-brand-dark hover:bg-brand-blue/5 transition-all border border-transparent hover:border-brand-blue/10 mr-2 shrink-0"
               title="Open Menu"
             >
               <Menu className="h-5 w-5" strokeWidth={1.5} />
@@ -277,9 +282,9 @@ export default function AdminLayout({
             </button>
 
             {/* Mobile: centered "Admin" title */}
-            <div className="flex-1 flex justify-center md:hidden">
-              <span className="font-bold text-gray-900 text-sm tracking-tight uppercase">
-                Admin
+            <div className="flex-1 flex justify-center md:hidden overflow-hidden">
+              <span className="font-bold text-gray-900 text-xs sm:text-sm tracking-tight uppercase truncate px-1">
+                Admin Panel
               </span>
             </div>
 

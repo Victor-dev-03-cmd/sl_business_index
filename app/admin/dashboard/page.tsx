@@ -218,96 +218,95 @@ export default function AdminDashboard() {
   }, [businesses, search]);
 
   return (
-    <div className="min-h-full bg-gray-50/50 transition-colors">
-      <main className="max-w-7xl mx-auto px-4 md:px-8 py-8">
+    <div className="min-h-full bg-gray-50/50 transition-colors overflow-hidden">
+      <main className="max-w-7xl mx-auto px-4 md:px-8 py-8 min-w-0">
         {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-normal text-brand-dark">Overview</h1>
-          <p className="text-sm text-gray-500 mt-1">
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-xl md:text-2xl font-normal text-brand-dark">Overview</h1>
+          <p className="text-xs md:text-sm text-gray-500 mt-1">
             Manage your platform&apos;s businesses and requests.
           </p>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-8">
           <div
-            className="bg-white p-6 rounded-[6px] border border-gray-300 shadow-sm cursor-pointer hover:border-brand-blue transition-all"
+            className="bg-white p-4 md:p-6 rounded-[6px] border border-gray-300 shadow-sm cursor-pointer hover:border-brand-blue transition-all"
             onClick={() => router.push("/admin/requests")}
           >
-            <p className="text-xs font-normal text-gray-400 uppercase tracking-wider">
+            <p className="text-[10px] md:text-xs font-normal text-gray-400 uppercase tracking-wider">
               Pending Approvals
             </p>
             {loading ? (
-              <Skeleton className="h-9 w-12 mt-2" />
+              <Skeleton className="h-7 md:h-9 w-10 md:w-12 mt-2" />
             ) : (
-              <h2 className="text-3xl font-medium text-brand-dark mt-2">
+              <h2 className="text-xl md:text-3xl font-medium text-brand-dark mt-1 md:mt-2">
                 {stats.pending}
               </h2>
             )}
           </div>
           <div
-            className="bg-white p-6 rounded-[6px] border border-gray-300 shadow-sm cursor-pointer hover:border-brand-blue transition-all"
+            className="bg-white p-4 md:p-6 rounded-[6px] border border-gray-300 shadow-sm cursor-pointer hover:border-brand-blue transition-all"
             onClick={() => router.push("/admin/verifications")}
           >
-            <p className="text-xs font-normal text-gray-400 uppercase tracking-wider">
+            <p className="text-[10px] md:text-xs font-normal text-gray-400 uppercase tracking-wider">
               Pending Verifications
             </p>
             {loading ? (
-              <Skeleton className="h-9 w-12 mt-2" />
+              <Skeleton className="h-7 md:h-9 w-10 md:w-12 mt-2" />
             ) : (
-              <h2 className="text-3xl font-medium text-brand-dark mt-2">
+              <h2 className="text-xl md:text-3xl font-medium text-brand-dark mt-1 md:mt-2">
                 {stats.pendingVerifications}
               </h2>
             )}
           </div>
-          <div className="bg-white p-6 rounded-[6px] border border-gray-300 shadow-sm">
-            <p className="text-xs font-normal text-gray-400 uppercase tracking-wider">
+          <div className="bg-white p-4 md:p-6 rounded-[6px] border border-gray-300 shadow-sm">
+            <p className="text-[10px] md:text-xs font-normal text-gray-400 uppercase tracking-wider">
               Total Businesses
             </p>
             {loading ? (
-              <Skeleton className="h-9 w-12 mt-2" />
+              <Skeleton className="h-7 md:h-9 w-10 md:w-12 mt-2" />
             ) : (
-              <h2 className="text-3xl font-medium text-gray-900 mt-2">
+              <h2 className="text-xl md:text-3xl font-medium text-gray-900 mt-1 md:mt-2">
                 {stats.total}
               </h2>
             )}
           </div>
           <div
-            className="bg-brand-dark p-6 rounded-[6px] border border-brand-dark shadow-lg cursor-pointer hover:bg-brand-blue transition-all"
+            className="bg-brand-dark p-4 md:p-6 rounded-[6px] border border-brand-dark shadow-lg cursor-pointer hover:bg-brand-blue transition-all col-span-2 lg:col-span-1"
             onClick={() => router.push("/admin/billing")}
           >
-            <p className="text-xs font-normal text-white/60 uppercase tracking-wider">
+            <p className="text-[10px] md:text-xs font-normal text-white/60 uppercase tracking-wider">
               Billing & Revenue
             </p>
-            <div className="flex items-center justify-between mt-2">
-              <h2 className="text-2xl font-medium text-white">Management</h2>
-              <ShieldCheck className="text-brand-sand" size={24} />
+            <div className="flex items-center justify-between mt-1 md:mt-2">
+              <h2 className="text-lg md:text-2xl font-medium text-white">Management</h2>
+              <ShieldCheck className="text-brand-sand h-5 w-5 md:h-6 md:w-6" />
             </div>
           </div>
         </div>
 
         {/* Controls Bar */}
-        <div className="flex flex-col lg:flex-row gap-4 mb-8">
+        <div className="flex flex-col lg:flex-row gap-4 mb-6 md:mb-8">
           <div className="relative flex-grow group">
             <Search
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-blue transition-colors"
-              size={18}
+              className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-blue transition-colors h-4 w-4 md:h-[18px] md:w-[18px]"
             />
             <input
               type="text"
               placeholder="Search by business or owner name..."
-              className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-[6px] focus:outline-none focus:ring-1 focus:ring-brand-blue transition-all font-normal text-sm shadow-sm"
+              className="w-full pl-10 md:pl-12 pr-4 py-2.5 md:py-3 bg-white border border-gray-300 rounded-[6px] focus:outline-none focus:ring-1 focus:ring-brand-blue transition-all font-normal text-xs md:text-sm shadow-sm"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
 
-          <div className="flex gap-2 overflow-x-auto pb-2 lg:pb-0">
+          <div className="flex gap-2 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide">
             {(["pending", "approved", "rejected", "all"] as const).map((s) => (
               <button
                 key={s}
                 onClick={() => setFilter(s)}
-                className={`px-5 py-3 rounded-[6px] text-sm font-normal capitalize transition-all border whitespace-nowrap ${
+                className={`px-4 md:px-5 py-2.5 md:py-3 rounded-[6px] text-xs md:text-sm font-normal capitalize transition-all border whitespace-nowrap ${
                   filter === s
                     ? "bg-brand-dark text-white border-brand-dark shadow-lg shadow-brand-dark/10"
                     : "bg-white text-gray-500 border-gray-300 hover:bg-gray-50"
@@ -356,13 +355,13 @@ export default function AdminDashboard() {
             filteredBusinesses.map((business) => (
               <div
                 key={business.id}
-                className="bg-white border border-gray-300 rounded-[6px] p-6 hover:shadow-xl hover:shadow-brand-dark/5 transition-all group"
+                className="bg-white border border-gray-300 rounded-[6px] p-4 md:p-6 hover:shadow-xl hover:shadow-brand-dark/5 transition-all group"
               >
                 <div className="flex flex-col gap-4">
                   {/* Top row: logo + info + date */}
-                  <div className="flex items-start gap-4">
+                  <div className="flex items-start gap-3 md:gap-4">
                     {/* Logo */}
-                    <div className="w-16 h-16 relative flex-shrink-0 bg-gray-50 rounded-[6px] border border-gray-300 overflow-hidden flex items-center justify-center">
+                    <div className="w-12 h-12 md:w-16 md:h-16 relative flex-shrink-0 bg-gray-50 rounded-[6px] border border-gray-300 overflow-hidden flex items-center justify-center">
                       {business.logo_url ? (
                         <Image
                           src={business.logo_url}
@@ -371,14 +370,14 @@ export default function AdminDashboard() {
                           className="object-cover"
                         />
                       ) : (
-                        <Building2 className="text-gray-300" size={28} />
+                        <Building2 className="text-gray-300 h-6 w-6 md:h-7 md:w-7" />
                       )}
                     </div>
 
                     {/* Name + status + address */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex flex-wrap items-center gap-2 mb-1">
-                        <h3 className="text-base font-semibold text-gray-900 truncate">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1">
+                        <h3 className="text-sm md:text-base font-semibold text-gray-900 truncate max-w-[150px] md:max-w-none">
                           {business.name}
                         </h3>
                         {business.is_verified && (
@@ -388,7 +387,7 @@ export default function AdminDashboard() {
                           />
                         )}
                         <span
-                          className={`px-2 py-0.5 rounded text-[10px] uppercase tracking-wider font-normal shrink-0 ${
+                          className={`px-1.5 py-0.5 rounded text-[9px] md:text-[10px] uppercase tracking-wider font-normal shrink-0 ${
                             business.status === "approved"
                               ? "bg-brand-sand/20 text-brand-gold"
                               : business.status === "rejected"
@@ -399,10 +398,10 @@ export default function AdminDashboard() {
                           {business.status}
                         </span>
                       </div>
-                      <p className="text-xs text-gray-400 font-normal flex items-center gap-1 truncate">
+                      <p className="text-[10px] md:text-xs text-gray-400 font-normal flex items-center gap-1 truncate">
                         <MapPin
-                          size={11}
-                          className="text-brand-blue shrink-0"
+                          size={10}
+                          className="text-brand-blue shrink-0 md:size-[11px]"
                         />
                         {business.address}
                       </p>
@@ -421,25 +420,25 @@ export default function AdminDashboard() {
                   </p>
 
                   {/* Contact row */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 border-t border-gray-200 pt-3">
-                    <div className="flex items-center gap-2 text-xs text-gray-600">
-                      <User size={13} className="text-gray-300 shrink-0" />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2 border-t border-gray-100 pt-3">
+                    <div className="flex items-center gap-2 text-[11px] md:text-xs text-gray-600">
+                      <User size={12} className="text-gray-300 shrink-0 md:size-[13px]" />
                       <span className="truncate">{business.owner_name}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-gray-600">
-                      <Phone size={13} className="text-gray-300 shrink-0" />
+                    <div className="flex items-center gap-2 text-[11px] md:text-xs text-gray-600">
+                      <Phone size={12} className="text-gray-300 shrink-0 md:size-[13px]" />
                       <span className="truncate">{business.phone}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-gray-600">
-                      <Mail size={13} className="text-gray-300 shrink-0" />
+                    <div className="flex items-center gap-2 text-[11px] md:text-xs text-gray-600">
+                      <Mail size={12} className="text-gray-300 shrink-0 md:size-[13px]" />
                       <span className="truncate">{business.email}</span>
                     </div>
                   </div>
 
                   {/* Actions row — full width on mobile */}
-                  <div className="flex flex-wrap gap-2 pt-1">
+                  <div className="flex flex-col sm:flex-row gap-2 pt-1">
                     {business.status === "pending" && (
-                      <>
+                      <div className="flex gap-2 flex-1">
                         <button
                           onClick={() =>
                             handleUpdateStatus(
@@ -448,9 +447,9 @@ export default function AdminDashboard() {
                               "approved",
                             )
                           }
-                          className="flex-1 min-w-[100px] py-2.5 bg-brand-dark text-white rounded-[6px] text-xs font-normal hover:bg-brand-blue flex items-center justify-center gap-1.5 transition-all shadow-md shadow-brand-dark/10"
+                          className="flex-1 min-w-0 py-2 md:py-2.5 bg-brand-dark text-white rounded-[6px] text-[11px] md:text-xs font-normal hover:bg-brand-blue flex items-center justify-center gap-1.5 transition-all shadow-md shadow-brand-dark/10"
                         >
-                          <CheckCircle size={13} /> Approve
+                          <CheckCircle size={12} className="md:size-[13px]" /> Approve
                         </button>
                         <button
                           onClick={() =>
@@ -460,17 +459,17 @@ export default function AdminDashboard() {
                               "rejected",
                             )
                           }
-                          className="flex-1 min-w-[100px] py-2.5 bg-white border border-red-100 text-red-600 rounded-[6px] text-xs font-normal hover:bg-red-50 flex items-center justify-center gap-1.5 transition-all"
+                          className="flex-1 min-w-0 py-2 md:py-2.5 bg-white border border-red-100 text-red-600 rounded-[6px] text-[11px] md:text-xs font-normal hover:bg-red-50 flex items-center justify-center gap-1.5 transition-all"
                         >
-                          <XCircle size={13} /> Reject
+                          <XCircle size={12} className="md:size-[13px]" /> Reject
                         </button>
-                      </>
+                      </div>
                     )}
                     <button
                       onClick={() => setSelectedBusiness(business)}
-                      className="flex-1 min-w-[110px] py-2.5 bg-gray-50 text-gray-500 rounded-[6px] text-xs font-normal hover:bg-gray-100 flex items-center justify-center gap-1.5 transition-all border border-gray-300"
+                      className="flex-1 min-w-0 py-2 md:py-2.5 bg-gray-50 text-gray-500 rounded-[6px] text-[11px] md:text-xs font-normal hover:bg-gray-100 flex items-center justify-center gap-1.5 transition-all border border-gray-300"
                     >
-                      <Eye size={13} /> View Details
+                      <Eye size={12} className="md:size-[13px]" /> View Details
                     </button>
                     {business.status === "approved" && (
                       <button
@@ -483,7 +482,7 @@ export default function AdminDashboard() {
                             isFeatured: isCurrentlyFeatured,
                           });
                         }}
-                        className={`flex-1 min-w-[120px] py-2.5 rounded-[6px] text-xs font-normal flex items-center justify-center gap-1.5 transition-all border ${
+                        className={`flex-1 min-w-0 py-2 md:py-2.5 rounded-[6px] text-[11px] md:text-xs font-normal flex items-center justify-center gap-1.5 transition-all border ${
                           featuredIds.some(
                             (fid) => String(fid) === String(business.id),
                           )
@@ -492,14 +491,14 @@ export default function AdminDashboard() {
                         }`}
                       >
                         <Star
-                          size={13}
-                          className={
+                          size={12}
+                          className={`md:size-[13px] ${
                             featuredIds.some(
                               (fid) => String(fid) === String(business.id),
                             )
                               ? "fill-amber-600"
                               : ""
-                          }
+                          }`}
                         />
                         {featuredIds.some(
                           (fid) => String(fid) === String(business.id),
@@ -523,7 +522,7 @@ export default function AdminDashboard() {
           <DialogContent className="w-[95vw] max-w-3xl max-h-[90dvh] overflow-y-auto bg-white border-gray-300 p-0 overflow-hidden">
             {selectedBusiness && (
               <>
-                <div className="relative h-48 w-full bg-gray-100 border-b border-gray-300 flex items-center justify-center">
+                <div className="relative h-32 md:h-48 w-full bg-gray-100 border-b border-gray-300 flex items-center justify-center">
                   {selectedBusiness.image_url ? (
                     <Image
                       src={selectedBusiness.image_url}
@@ -533,12 +532,11 @@ export default function AdminDashboard() {
                     />
                   ) : (
                     <Building2
-                      size={64}
-                      className="text-gray-300"
+                      className="text-gray-300 h-12 w-12 md:h-16 md:w-16"
                       strokeWidth={1}
                     />
                   )}
-                  <div className="absolute -bottom-10 left-8 h-20 w-20 bg-white rounded-[6px] border border-gray-300 shadow-xl p-3 flex items-center justify-center">
+                  <div className="absolute -bottom-8 md:-bottom-10 left-4 md:left-8 h-16 w-16 md:h-20 md:w-20 bg-white rounded-[6px] border border-gray-300 shadow-xl p-2 md:p-3 flex items-center justify-center">
                     {selectedBusiness.logo_url ? (
                       <Image
                         src={selectedBusiness.logo_url}
@@ -548,28 +546,28 @@ export default function AdminDashboard() {
                         className="object-contain"
                       />
                     ) : (
-                      <Building2 size={32} className="text-gray-300" />
+                      <Building2 className="text-gray-300 h-8 w-8 md:h-10 md:w-10" />
                     )}
                   </div>
                 </div>
 
-                <div className="pt-14 px-8 pb-8">
-                  <div className="flex justify-between items-start mb-6">
-                    <div>
-                      <div className="flex items-center gap-3">
-                        <DialogTitle className="text-2xl font-normal text-gray-900">
+                <div className="pt-10 md:pt-14 px-4 md:px-8 pb-8">
+                  <div className="flex flex-col md:flex-row justify-between items-start mb-6 gap-4">
+                    <div className="w-full">
+                      <div className="flex items-center gap-2 md:gap-3">
+                        <DialogTitle className="text-xl md:text-2xl font-normal text-gray-900 truncate">
                           {selectedBusiness.name}
                         </DialogTitle>
                         {selectedBusiness.is_verified && (
                           <CheckCircle
-                            size={20}
-                            className="text-blue-500 fill-blue-50"
+                            size={18}
+                            className="text-blue-500 fill-blue-50 md:size-5"
                           />
                         )}
                       </div>
-                      <DialogDescription className="flex items-center gap-4 mt-2">
+                      <DialogDescription className="flex flex-wrap items-center gap-2 md:gap-4 mt-2">
                         <span
-                          className={`px-2.5 py-0.5 rounded-[6px] text-[10px] uppercase tracking-wider font-normal ${
+                          className={`px-2 py-0.5 rounded-[6px] text-[9px] md:text-[10px] uppercase tracking-wider font-normal ${
                             selectedBusiness.status === "approved"
                               ? "bg-brand-sand/20 text-brand-gold"
                               : selectedBusiness.status === "rejected"
@@ -579,7 +577,7 @@ export default function AdminDashboard() {
                         >
                           {selectedBusiness.status}
                         </span>
-                        <span className="text-xs text-gray-400 flex items-center gap-1.5 font-normal">
+                        <span className="text-[11px] md:text-xs text-gray-400 flex items-center gap-1.5 font-normal">
                           <MapPin size={12} className="text-brand-blue" />{" "}
                           {selectedBusiness.address}
                         </span>

@@ -12,7 +12,6 @@ import {
   Trash2,
   Edit,
   Tags,
-  Image as ImageIcon,
   Layers,
   ChevronRight,
   ChevronDown,
@@ -105,7 +104,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 
 interface Category {
@@ -115,6 +113,7 @@ interface Category {
   image_url: string | null;
   parent_id: string | null;
   keywords: string[] | null;
+  sort_order: number;
   created_at: string;
   subcategories?: Category[];
 }
@@ -141,7 +140,7 @@ const IconPicker = ({
     name: string;
     size?: number;
   }) => {
-    const Icon = (LucideIcons as any)[name];
+    const Icon = (LucideIcons as unknown as Record<string, React.ComponentType<{ size?: number; className?: string }>>)[name];
     return Icon ? <Icon size={size} /> : <Tags size={size} />;
   };
 
@@ -256,7 +255,7 @@ export default function AdminCategoriesPage() {
   }, [categories, editingCategory]);
 
   const mutation = useMutation({
-    mutationFn: async (newData: any) => {
+    mutationFn: async (newData: Partial<Category>) => {
       if (editingCategory) {
         const { error } = await supabase
           .from("categories")
@@ -298,7 +297,7 @@ export default function AdminCategoriesPage() {
           : "Category created successfully",
       );
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message);
     },
   });
@@ -312,7 +311,7 @@ export default function AdminCategoriesPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-categories"] });
       toast.success("Category deleted successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message);
     },
   });
@@ -335,7 +334,7 @@ export default function AdminCategoriesPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-categories"] });
       toast.success("Category moved successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message);
     },
   });
@@ -357,7 +356,7 @@ export default function AdminCategoriesPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-categories"] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message);
     },
   });
@@ -518,7 +517,7 @@ export default function AdminCategoriesPage() {
     className?: string;
   }) => {
     if (!name) return <Tags size={size} className={className} />;
-    const Icon = (LucideIcons as any)[name];
+    const Icon = (LucideIcons as unknown as Record<string, React.ComponentType<{ size?: number; className?: string }>>)[name];
     return Icon ? (
       <Icon size={size} className={className} />
     ) : (
@@ -572,8 +571,8 @@ export default function AdminCategoriesPage() {
       if (otherIndex < 0 || otherIndex >= siblings.length) return;
 
       const other = siblings[otherIndex];
-      const currentSort = (category as any).sort_order || 0;
-      const otherSort = (other as any).sort_order || 0;
+      const currentSort = category.sort_order || 0;
+      const otherSort = other.sort_order || 0;
 
       // Swap sort_orders
       reorderMutation.mutate({ id: category.id, sort_order: otherSort });
@@ -598,19 +597,19 @@ export default function AdminCategoriesPage() {
               onChange={() => handleSelectOne(category.id)}
             />
           </td>
-          <td className="px-8 py-6">
+          <td className="px-4 py-4 md:px-8 md:py-6">
             <div
-              className="flex items-center gap-4"
-              style={{ paddingLeft: `${depth * 32}px` }}
+              className="flex items-center gap-3 md:gap-4"
+              style={{ paddingLeft: `${depth * (typeof window !== 'undefined' && window.innerWidth < 768 ? 16 : 32)}px` }}
             >
-              <div className="flex items-center gap-3">
-                <div className="cursor-grab active:cursor-grabbing text-brand-blue group-hover:text-gray-300 p-1.5 hover:bg-white rounded transition-colors">
+              <div className="flex items-center gap-2 md:gap-3">
+                <div className="cursor-grab active:cursor-grabbing text-brand-blue group-hover:text-gray-300 p-1 md:p-1.5 hover:bg-white rounded transition-colors hidden sm:block">
                   <Layers size={14} />
                 </div>
                 {hasSubcategories ? (
                   <button
                     onClick={() => toggleExpand(category.id)}
-                    className="p-1.5 hover:bg-white rounded shadow-sm border border-gray-300 transition-all flex items-center justify-center w-7 h-7"
+                    className="p-1 md:p-1.5 hover:bg-white rounded shadow-sm border border-gray-300 transition-all flex items-center justify-center w-6 h-6 md:w-7 md:h-7"
                   >
                     {isExpanded ? (
                       <ChevronDown size={14} className="text-brand-blue" />
@@ -619,18 +618,18 @@ export default function AdminCategoriesPage() {
                     )}
                   </button>
                 ) : (
-                  <div className="w-7" />
+                  <div className="w-6 md:w-7" />
                 )}
                 <div
-                  className={`h-11 w-11 relative rounded-[10px] border transition-all flex-shrink-0 flex items-center justify-center ${
+                  className={`h-9 w-9 md:h-11 md:w-11 relative rounded-[8px] md:rounded-[10px] border transition-all flex-shrink-0 flex items-center justify-center ${
                     isExpanded
-                      ? "bg-brand-dark border-brand-dark shadow-lg scale-110"
+                      ? "bg-brand-dark border-brand-dark shadow-lg scale-105 md:scale-110"
                       : "bg-white border-gray-200 group-hover:border-brand-sand shadow-sm"
                   }`}
                 >
                   <IconComponent
                     name={category.icon}
-                    size={20}
+                    size={16}
                     className={
                       isExpanded
                         ? "text-white"
@@ -641,24 +640,19 @@ export default function AdminCategoriesPage() {
               </div>
               <div className="min-w-0">
                 <p
-                  className={`text-sm truncate transition-colors ${isExpanded ? "text-brand-dark" : "text-brand-blue"}`}
+                  className={`text-sm truncate transition-colors font-medium ${isExpanded ? "text-brand-dark" : "text-brand-blue"}`}
                 >
                   {category.name}
                 </p>
-                <div className="flex flex-wrap gap-1 mt-1.5">
-                  {category.keywords?.slice(0, 3).map((kw) => (
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {category.keywords?.slice(0, 2).map((kw) => (
                     <span
                       key={kw}
-                      className="text-[9px] px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded-md font-medium uppercase tracking-wider"
+                      className="text-[8px] md:text-[9px] px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded-md font-medium uppercase tracking-wider"
                     >
                       {kw}
                     </span>
                   ))}
-                  {(category.keywords?.length || 0) > 3 && (
-                    <span className="text-[9px] px-1.5 py-0.5 text-gray-400 font-medium">
-                      +{category.keywords!.length - 3}
-                    </span>
-                  )}
                 </div>
               </div>
             </div>
@@ -768,111 +762,115 @@ export default function AdminCategoriesPage() {
   }: {
     category: Category;
     depth?: number;
-  }) => (
-    <>
-      <div
-        className={`p-4 ${selectedIds.includes(category.id) ? "bg-brand-blue/5" : ""}`}
-      >
-        <div className="flex items-center gap-3">
-          <input
-            type="checkbox"
-            className="rounded-[4px] border-gray-300 text-brand-blue focus:ring-brand-blue/20 cursor-pointer flex-shrink-0"
-            checked={selectedIds.includes(category.id)}
-            onChange={() => handleSelectOne(category.id)}
-          />
+  }) => {
+    const isExpanded = expandedCategories[category.id];
+    const hasSubcategories =
+      category.subcategories && category.subcategories.length > 0;
+
+    return (
+      <div className="flex flex-col">
+        <div
+          className={`p-4 flex items-center gap-3 transition-colors ${selectedIds.includes(category.id) ? "bg-brand-blue/5" : "bg-white"}`}
+        >
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <input
+              type="checkbox"
+              className="rounded-[4px] border-gray-300 text-brand-blue focus:ring-brand-blue/20 cursor-pointer"
+              checked={selectedIds.includes(category.id)}
+              onChange={() => handleSelectOne(category.id)}
+            />
+            {hasSubcategories ? (
+              <button
+                onClick={() => toggleExpand(category.id)}
+                className="p-1 hover:bg-gray-100 rounded border border-gray-200 transition-all flex items-center justify-center w-6 h-6"
+              >
+                {isExpanded ? (
+                  <ChevronDown size={14} className="text-brand-blue" />
+                ) : (
+                  <ChevronRight size={14} />
+                )}
+              </button>
+            ) : (
+              <div className="w-6" />
+            )}
+          </div>
+          
           <div
             className="flex items-center gap-3 flex-1 min-w-0"
-            style={{ paddingLeft: `${depth * 16}px` }}
+            style={{ paddingLeft: `${depth * 12}px` }}
           >
-            <div className="h-9 w-9 rounded-[8px] border border-gray-200 flex items-center justify-center bg-white flex-shrink-0">
+            <div className={`h-9 w-9 rounded-lg border flex items-center justify-center flex-shrink-0 transition-all ${isExpanded ? "bg-brand-dark border-brand-dark shadow-sm" : "bg-gray-50 border-gray-100"}`}>
               <IconComponent
                 name={category.icon}
                 size={16}
-                className="text-gray-400"
+                className={isExpanded ? "text-white" : "text-gray-400"}
               />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-brand-blue truncate">
+              <p className={`text-sm font-bold truncate ${isExpanded ? "text-brand-dark" : "text-brand-blue"}`}>
                 {category.name}
               </p>
-              <div className="flex flex-wrap gap-1 mt-1">
-                {category.keywords?.slice(0, 2).map((kw) => (
-                  <span
-                    key={kw}
-                    className="text-[9px] px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded-md font-medium uppercase tracking-wider"
-                  >
-                    {kw}
-                  </span>
-                ))}
+              <div className="flex flex-wrap gap-1 mt-0.5">
+                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tight">
+                  {category.subcategories?.length || 0} Sub-items
+                </span>
               </div>
             </div>
-            <span
-              className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-full border flex-shrink-0 ${
-                category.subcategories?.length
-                  ? "bg-blue-50 text-blue-700 border-blue-100"
-                  : "bg-gray-50 text-gray-400 border-gray-200"
-              }`}
-            >
-              {category.subcategories?.length || 0} Sub
-            </span>
           </div>
+
           <DropdownMenu>
-            <DropdownMenuTrigger className="h-10 w-10 flex items-center justify-center hover:bg-gray-100 rounded-[8px] transition-all outline-none flex-shrink-0">
-              <MoreVertical size={16} className="text-gray-400" />
+            <DropdownMenuTrigger asChild>
+              <button className="h-10 w-10 flex items-center justify-center hover:bg-gray-100 rounded-full transition-all outline-none flex-shrink-0">
+                <MoreVertical size={16} className="text-gray-400" />
+              </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="w-56 bg-white border-gray-200 p-1.5 shadow-2xl rounded-[12px]"
+              className="w-52 bg-white border-gray-100 p-2 shadow-xl rounded-xl"
             >
               <DropdownMenuItem
                 onClick={() => handleAddSubcategory(category)}
-                className="flex items-center gap-2.5 cursor-pointer py-2.5 px-3 text-[13px] font-medium focus:bg-gray-50 rounded-[8px]"
+                className="flex items-center gap-3 px-3 py-2.5 text-xs font-medium text-gray-700 hover:bg-gray-50 cursor-pointer rounded-lg"
               >
-                <Plus size={14} className="text-gray-400" /> Add Subcategory
+                <Plus size={14} className="text-brand-blue" /> Add Subcategory
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => handleEdit(category)}
-                className="flex items-center gap-2.5 cursor-pointer py-2.5 px-3 text-[13px] font-medium focus:bg-gray-50 rounded-[8px]"
+                className="flex items-center gap-3 px-3 py-2.5 text-xs font-medium text-gray-700 hover:bg-gray-50 cursor-pointer rounded-lg"
               >
-                <Edit size={14} className="text-gray-400" /> Edit Category
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() =>
-                  moveMutation.mutate({ id: category.id, parent_id: null })
-                }
-                className="flex items-center gap-2.5 cursor-pointer py-2.5 px-3 text-[13px] font-medium focus:bg-gray-50 rounded-[8px]"
-              >
-                <Layers size={14} className="text-gray-400" /> Move to Root
+                <Edit size={14} className="text-brand-dark" /> Edit Details
               </DropdownMenuItem>
               <div className="h-px bg-gray-100 my-1" />
               <DropdownMenuItem
                 onClick={() => handleDelete(category.id)}
-                className="flex items-center gap-2.5 cursor-pointer py-2.5 px-3 text-[13px] font-medium text-red-600 focus:bg-red-50 focus:text-red-700 rounded-[8px]"
+                className="flex items-center gap-3 px-3 py-2.5 text-xs font-bold text-red-600 hover:bg-red-50 cursor-pointer rounded-lg"
               >
-                <Trash2 size={14} /> Delete
+                <Trash2 size={14} /> Remove
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+        
+        {isExpanded &&
+          category.subcategories?.map((sub) => (
+            <MobileCategoryItem key={sub.id} category={sub} depth={depth + 1} />
+          ))}
       </div>
-      {category.subcategories?.map((sub) => (
-        <MobileCategoryItem key={sub.id} category={sub} depth={depth + 1} />
-      ))}
-    </>
-  );
+    );
+  };
 
   return (
-    <div className="min-h-full bg-gray-50/30 transition-colors">
-      <main className="max-w-[1600px] mx-auto px-6 md:px-12 py-10">
-        <div className="flex justify-between items-center mb-12">
+    <div className="min-h-full bg-gray-50/30 transition-colors overflow-hidden">
+      <main className="max-w-[1600px] mx-auto px-4 sm:px-6 md:px-12 py-6 md:py-10 min-w-0">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 md:mb-12 gap-4">
           <div>
-            <h1 className="text-2xl text-gray-900 tracking-tight">
+            <h1 className="text-xl md:text-2xl text-gray-900 tracking-tight">
               Category Architecture
             </h1>
-            <p className="text-base text-gray-500 mt-2">
+            <p className="text-sm md:text-base text-gray-500 mt-1 md:mt-2">
               Design and organize your business taxonomy with multi-level
               nesting.{" "}
-              <span className="text-brand-dark ml-2">
+              <span className="text-brand-dark md:ml-2 block md:inline">
                 {totalCategories} active categories
               </span>
             </p>
@@ -880,14 +878,14 @@ export default function AdminCategoriesPage() {
         </div>
 
         {/* Professional Action Bar */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-white p-4 rounded-[6px] shadow-sm border border-gray-100 mb-12">
-          <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-            <div className="relative w-full md:w-96 group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 transition-colors" />
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-4 bg-white p-3 md:p-4 rounded-[6px] shadow-sm border border-gray-100 mb-8 md:mb-12">
+          <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 w-full lg:w-auto">
+            <div className="relative w-full lg:w-96 group">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-brand-blue transition-colors" />
               <input
                 type="text"
                 placeholder="Search categories or keywords..."
-                className="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-300 rounded-[6px] text-sm focus:outline-none focus:ring-1 focus:border-gray-400 focus:bg-white transition-all"
+                className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-300 rounded-[6px] text-xs md:text-sm focus:outline-none focus:ring-1 focus:ring-brand-blue/10 focus:border-brand-blue focus:bg-white transition-all"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -897,8 +895,8 @@ export default function AdminCategoriesPage() {
               <Filter className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-brand-blue transition-colors pointer-events-none" />
               <select
                 value={filterLevel}
-                onChange={(e) => setFilterLevel(e.target.value as any)}
-                className="bg-white border border-gray-300 rounded-[6px] pl-10 pr-10 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-brand-blue/5 focus:border-gray-400 appearance-none cursor-pointer hover:border-gray-300 transition-all min-w-[200px] shadow-sm w-full md:w-auto"
+                onChange={(e) => setFilterLevel(e.target.value as "all" | "root" | "sub")}
+                className="bg-white border border-gray-300 rounded-[6px] pl-10 pr-10 py-2 text-xs md:text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-brand-blue/5 focus:border-brand-blue appearance-none cursor-pointer hover:border-gray-300 transition-all shadow-sm w-full md:min-w-[200px]"
               >
                 <option value="all">Structure: All Levels</option>
                 <option value="root">Structure: Root Only</option>
@@ -908,19 +906,19 @@ export default function AdminCategoriesPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3 w-full md:w-auto justify-end">
+          <div className="flex items-center gap-2 md:gap-3 w-full lg:w-auto justify-between lg:justify-end">
             <button
               onClick={() => refetch()}
               disabled={isFetching}
-              className={`p-2.5 text-gray-500 rounded-[6px] transition-all border border-gray-300 bg-white shadow-sm hover:border-brand-blue/20 ${isFetching ? "opacity-50" : "active:scale-95"}`}
+              className={`p-2 md:p-2.5 text-gray-500 hover:text-brand-blue hover:bg-brand-blue/5 rounded-[6px] transition-all border border-gray-300 bg-white shadow-sm hover:border-brand-blue/20 ${isFetching ? "opacity-50" : "active:scale-95"}`}
               title="Refresh Data"
             >
               <RefreshCw
-                className={`h-5 w-5 ${isFetching ? "animate-spin" : ""}`}
+                className={`h-4 w-4 md:h-5 md:w-5 ${isFetching ? "animate-spin" : ""}`}
               />
             </button>
 
-            <div className="h-8 w-px bg-gray-200 hidden md:block" />
+            <div className="h-8 w-px bg-gray-200 hidden lg:block" />
 
             <button
               onClick={() => {
@@ -936,31 +934,31 @@ export default function AdminCategoriesPage() {
                 });
                 setIsAddModalOpen(true);
               }}
-              className="flex items-center gap-2 bg-brand-dark text-white px-6 py-2.5 rounded-[6px] text-sm hover:bg-brand-dark/90 transition-all shadow-lg hover:-translate-y-0.5 active:scale-95 whitespace-nowrap"
+              className="flex-1 lg:flex-none flex items-center justify-center gap-2 bg-brand-dark text-white px-4 md:px-6 py-2 md:py-2.5 rounded-[6px] text-xs md:text-sm hover:bg-brand-dark transition-all shadow-lg shadow-brand-dark/10 hover:-translate-y-0.5 active:scale-95 whitespace-nowrap"
             >
-              <Plus size={16} strokeWidth={3} />
+              <Plus size={14} className="md:size-4" strokeWidth={3} />
               Add Category
             </button>
           </div>
         </div>
 
-        {/* Categories Table */}
+        {/* Categories Table/List View */}
         <div className="bg-white rounded-[6px] border border-gray-300 shadow-xl overflow-hidden relative">
           {selectedIds.length > 0 && (
-            <div className="bg-brand-dark/5 border-b border-gray-200 px-8 py-3 flex items-center justify-between animate-in fade-in slide-in-from-top-2">
-              <span className="text-sm font-medium text-brand-dark">
-                {selectedIds.length} categories selected
+            <div className="bg-brand-dark/5 border-b border-gray-200 px-4 md:px-8 py-3 flex items-center justify-between animate-in fade-in slide-in-from-top-2">
+              <span className="text-xs md:text-sm font-medium text-brand-dark">
+                {selectedIds.length} <span className="hidden sm:inline">categories</span> selected
               </span>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 md:gap-3">
                 <button
                   onClick={handleBulkDelete}
-                  className="flex items-center gap-2 bg-red-50 text-red-600 px-4 py-1.5 rounded-[6px] text-xs font-bold hover:bg-red-600 hover:text-white transition-all border border-red-100 shadow-sm"
+                  className="flex items-center gap-2 bg-red-50 text-red-600 px-3 md:px-4 py-1.5 rounded-[6px] text-[10px] md:text-xs font-bold hover:bg-red-600 hover:text-white transition-all border border-red-100 shadow-sm"
                 >
-                  <Trash2 size={14} /> Delete Selected
+                  <Trash2 size={12} className="md:size-[14px]" /> <span className="hidden xs:inline">Delete Selected</span><span className="xs:hidden">Delete</span>
                 </button>
                 <button
                   onClick={() => setSelectedIds([])}
-                  className="text-xs font-medium text-gray-500 hover:text-gray-700"
+                  className="text-[10px] md:text-xs font-medium text-gray-500 hover:text-gray-700"
                 >
                   Clear Selection
                 </button>
@@ -968,54 +966,58 @@ export default function AdminCategoriesPage() {
             </div>
           )}
           {queryError && (
-            <div className="absolute top-0 left-0 right-0 z-50 bg-red-600 text-white px-6 py-3 flex items-center justify-between shadow-lg animate-in slide-in-from-top duration-300">
+            <div className="absolute top-0 left-0 right-0 z-50 bg-red-600 text-white px-4 md:px-6 py-3 flex items-center justify-between shadow-lg animate-in slide-in-from-top duration-300">
               <div className="flex items-center gap-3">
                 <X className="h-5 w-5 bg-white/20 rounded-full p-1" />
                 <div className="flex flex-col">
-                  <span className="text-sm font-bold">Connection Error</span>
-                  <span className="text-[11px] opacity-90">
-                    {(queryError as any).message ||
+                  <span className="text-xs md:text-sm font-bold">Connection Error</span>
+                  <span className="text-[10px] md:text-[11px] opacity-90">
+                    {(queryError as Error).message ||
                       "Failed to sync with database"}
                   </span>
                 </div>
               </div>
               <button
                 onClick={() => refetch()}
-                className="bg-white text-red-600 px-4 py-1.5 rounded-[6px] text-xs font-bold hover:bg-gray-100 transition-colors shadow-sm"
+                className="bg-white text-red-600 px-3 md:px-4 py-1.5 rounded-md text-[10px] md:text-xs  hover:bg-gray-100 transition-colors shadow-sm"
               >
-                Retry Sync
+                Retry
               </button>
             </div>
           )}
 
           {loading && categories.length === 0 ? (
-            <div className="p-8 space-y-6">
+            <div className="p-4 md:p-8 space-y-4 md:space-y-6">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="flex gap-6 items-center">
-                  <Skeleton className="h-12 w-12 rounded-lg" />
-                  <Skeleton className="h-6 flex-1" />
-                  <Skeleton className="h-6 w-32" />
+                <div key={i} className="flex gap-4 md:gap-6 items-center">
+                  <Skeleton className="h-10 w-10 md:h-12 md:w-12 rounded-lg" />
+                  <Skeleton className="h-4 md:h-6 flex-1" />
+                  <Skeleton className="h-4 md:h-6 w-20 md:w-32" />
                 </div>
               ))}
             </div>
           ) : filteredCategories.length === 0 ? (
-            <div className="text-center py-32 bg-gray-50/50">
-              <div className="h-20 w-20 bg-white rounded-2xl shadow-sm border border-gray-100 flex items-center justify-center mx-auto mb-6">
-                <Tags className="text-gray-200 h-10 w-10" strokeWidth={1} />
+            <div className="text-center py-20 md:py-32 bg-gray-50/50">
+              <div className="h-16 w-16 md:h-20 md:w-20 bg-white rounded-2xl shadow-sm border border-gray-100 flex items-center justify-center mx-auto mb-4 md:mb-6">
+                <Tags
+                  className="text-gray-200 h-8 w-8 md:h-10 md:w-10"
+                  strokeWidth={1}
+                />
               </div>
-              <p className="text-gray-500 font-semibold text-lg italic">
+              <p className="text-gray-500 font-semibold text-base md:text-lg italic px-4">
                 No categories found matching your criteria.
               </p>
               <button
                 onClick={() => setSearch("")}
-                className="mt-4 text-brand-blue hover:underline font-bold text-sm"
+                className="mt-3 md:mt-4 text-brand-blue hover:underline font-bold text-xs md:text-sm"
               >
                 Clear all filters
               </button>
             </div>
           ) : (
             <>
-              <div className="overflow-x-auto">
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full min-w-[900px] text-left border-collapse">
                   <thead>
                     <tr className="bg-gray-200 border-b border-gray-300">
@@ -1068,6 +1070,13 @@ export default function AdminCategoriesPage() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Mobile List View */}
+              <div className="md:hidden divide-y divide-gray-100">
+                {filteredCategories.map((category) => (
+                  <MobileCategoryItem key={category.id} category={category} />
+                ))}
               </div>
             </>
           )}

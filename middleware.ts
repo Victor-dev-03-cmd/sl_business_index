@@ -2,6 +2,14 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error('Middleware: Supabase environment variables are missing')
+    return NextResponse.next()
+  }
+
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -9,8 +17,8 @@ export async function middleware(request: NextRequest) {
   })
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         get(name: string) {
@@ -82,43 +90,55 @@ export async function middleware(request: NextRequest) {
       return redirectResponse
     }
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
+    try {
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
 
-    const role = profile?.role?.toLowerCase()
-
-    const { count: businessCount } = await supabase
-      .from('businesses')
-      .select('*', { count: 'exact', head: true })
-      .eq('owner_id', user.id)
-
-    const isBusinessOwner = (businessCount || 0) > 0
-
-    if (pathname.startsWith('/admin')) {
-      if (role !== 'admin' && role !== 'ceo') {
-        const url = request.nextUrl.clone()
-        url.pathname = '/'
-        const redirectResponse = NextResponse.redirect(url)
-        response.cookies.getAll().forEach((cookie) => {
-          redirectResponse.cookies.set(cookie.name, cookie.value)
-        })
-        return redirectResponse
+      if (profileError) {
+        console.error('Middleware profile error:', profileError)
       }
-    }
 
-    if (pathname.startsWith('/vendor')) {
-      if (role !== 'vendor' && role !== 'admin' && role !== 'ceo' && !isBusinessOwner) {
-        const url = request.nextUrl.clone()
-        url.pathname = '/'
-        const redirectResponse = NextResponse.redirect(url)
-        response.cookies.getAll().forEach((cookie) => {
-          redirectResponse.cookies.set(cookie.name, cookie.value)
-        })
-        return redirectResponse
+      const role = profile?.role?.toLowerCase()
+
+      const { count: businessCount, error: businessError } = await supabase
+        .from('businesses')
+        .select('*', { count: 'exact', head: true })
+        .eq('owner_id', user.id)
+
+      if (businessError) {
+        console.error('Middleware business error:', businessError)
       }
+
+      const isBusinessOwner = (businessCount || 0) > 0
+
+      if (pathname.startsWith('/admin')) {
+        if (role !== 'admin' && role !== 'ceo') {
+          const url = request.nextUrl.clone()
+          url.pathname = '/'
+          const redirectResponse = NextResponse.redirect(url)
+          response.cookies.getAll().forEach((cookie) => {
+            redirectResponse.cookies.set(cookie.name, cookie.value)
+          })
+          return redirectResponse
+        }
+      }
+
+      if (pathname.startsWith('/vendor')) {
+        if (role !== 'vendor' && role !== 'admin' && role !== 'ceo' && !isBusinessOwner) {
+          const url = request.nextUrl.clone()
+          url.pathname = '/'
+          const redirectResponse = NextResponse.redirect(url)
+          response.cookies.getAll().forEach((cookie) => {
+            redirectResponse.cookies.set(cookie.name, cookie.value)
+          })
+          return redirectResponse
+        }
+      }
+    } catch (error) {
+      console.error('Middleware db fetch error:', error)
     }
   }
 
