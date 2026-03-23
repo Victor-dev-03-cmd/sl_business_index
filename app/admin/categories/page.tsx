@@ -18,8 +18,17 @@ import {
   X,
   Filter,
   RefreshCw,
+  Upload,
+  Image as ImageIcon,
+  Loader2,
 } from "lucide-react";
 import * as LucideIcons from "lucide-react";
+
+const ALL_LUCIDE_ICONS = Object.keys(LucideIcons).filter(
+  (key) =>
+    typeof (LucideIcons as any)[key] === "function" ||
+    (typeof (LucideIcons as any)[key] === "object" && (LucideIcons as any)[key].$$typeof),
+);
 
 const COMMON_ICONS = [
   "Hotel",
@@ -80,8 +89,6 @@ const COMMON_ICONS = [
   "Monitor",
   "Cpu",
   "Database",
-  "Cloud",
-  "Trash",
   "Bell",
   "Flag",
   "Anchor",
@@ -128,8 +135,11 @@ const IconPicker = ({
   const [search, setSearch] = useState("");
 
   const filteredIcons = useMemo(() => {
-    return COMMON_ICONS.filter((icon) =>
-      icon.toLowerCase().includes(search.toLowerCase()),
+    const s = search.toLowerCase();
+    if (!s) return COMMON_ICONS;
+    return ALL_LUCIDE_ICONS.filter((icon) => icon.toLowerCase().includes(s)).slice(
+      0,
+      50,
     );
   }, [search]);
 
@@ -140,7 +150,7 @@ const IconPicker = ({
     name: string;
     size?: number;
   }) => {
-    const Icon = (LucideIcons as unknown as Record<string, React.ComponentType<{ size?: number; className?: string }>>)[name];
+    const Icon = (LucideIcons as any)[name];
     return Icon ? <Icon size={size} /> : <Tags size={size} />;
   };
 
@@ -150,7 +160,7 @@ const IconPicker = ({
         <Search size={14} className="text-gray-400 mr-2" />
         <input
           type="text"
-          placeholder="Search icons..."
+          placeholder="Search all icons..."
           className="bg-transparent border-none focus:ring-0 text-xs w-full outline-none"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -172,6 +182,11 @@ const IconPicker = ({
             <IconComponent name={icon} />
           </button>
         ))}
+        {filteredIcons.length === 0 && (
+          <div className="col-span-full py-4 text-center text-[10px] text-gray-400 italic">
+            No icons found
+          </div>
+        )}
       </div>
     </div>
   );
@@ -199,6 +214,36 @@ export default function AdminCategoriesPage() {
   });
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+      const filePath = `category-icons/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("category-images")
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from("category-images")
+        .getPublicUrl(filePath);
+
+      setFormData((prev) => ({ ...prev, image_url: data.publicUrl }));
+      toast.success("Image uploaded successfully");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to upload image");
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const {
     data: categories = [],
@@ -1155,13 +1200,52 @@ export default function AdminCategoriesPage() {
               </div>
               <div className="space-y-2">
                 <label
-                  htmlFor="image_url"
                   className="block text-xs font-normal text-gray-500 uppercase tracking-wider"
                 >
-                  Image URL (Optional)
+                  Category Branding Image
                 </label>
+                <div className="flex items-center gap-4 p-4 bg-gray-50 border border-dashed border-gray-300 rounded-[6px] transition-all hover:bg-white hover:border-brand-blue/30 group">
+                  <div className="h-16 w-16 bg-white rounded-[8px] border border-gray-200 shadow-sm overflow-hidden flex items-center justify-center flex-shrink-0 relative">
+                    {formData.image_url ? (
+                      <>
+                        <img
+                          src={formData.image_url}
+                          alt="Category preview"
+                          className="h-full w-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, image_url: "" }))}
+                          className="absolute top-0.5 right-0.5 bg-red-500 text-white rounded-full p-0.5 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X size={10} />
+                        </button>
+                      </>
+                    ) : (
+                      <ImageIcon className="text-gray-300" size={24} />
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-1.5">
+                    <p className="text-[10px] text-gray-400 font-medium uppercase tracking-tight">Upload Category Banner or Icon Image</p>
+                    <label className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-300 rounded-[4px] text-xs font-semibold text-gray-700 cursor-pointer hover:bg-gray-50 transition-colors shadow-sm">
+                      {isUploading ? (
+                        <Loader2 size={14} className="animate-spin text-brand-blue" />
+                      ) : (
+                        <Upload size={14} className="text-brand-blue" />
+                      )}
+                      {isUploading ? "Uploading..." : "Choose Image"}
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        disabled={isUploading}
+                      />
+                    </label>
+                  </div>
+                </div>
                 <input
-                  id="image_url"
+                  type="text"
                   value={formData.image_url}
                   onChange={(e) =>
                     setFormData((prev) => ({
@@ -1169,8 +1253,8 @@ export default function AdminCategoriesPage() {
                       image_url: e.target.value,
                     }))
                   }
-                  placeholder="/icons/category.png"
-                  className="w-full px-3 py-2 bg-white border border-gray-300 rounded-[6px] focus:outline-none focus:ring-1 focus:ring-brand-blue transition-all font-normal text-sm"
+                  placeholder="Or paste external URL..."
+                  className="w-full px-3 py-1.5 bg-white border border-gray-300 rounded-[6px] focus:outline-none focus:ring-1 focus:ring-brand-blue transition-all font-normal text-[10px] text-gray-400 italic mt-2"
                 />
               </div>
               <div className="space-y-2">

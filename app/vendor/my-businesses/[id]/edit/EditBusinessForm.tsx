@@ -235,6 +235,8 @@ export default function EditBusinessForm({ business }: { business: Business }) {
             <AddressAutocomplete 
               onLocationSelectAction={handleLocationSelect} 
               initialAddress={location?.address} 
+              initialLat={location?.lat}
+              initialLng={location?.lng}
               detailedAddress={detailedAddress}
               onDetailedAddressChange={setDetailedAddress}
             />

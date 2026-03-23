@@ -31,6 +31,8 @@ const defaultCenter = { lat: 6.9271, lng: 79.8612 };
 interface AddressAutocompleteProps {
   onLocationSelectAction: (lat: number, lng: number, address: string) => void;
   initialAddress?: string;
+  initialLat?: number;
+  initialLng?: number;
   hideMap?: boolean;
   hideLabel?: boolean;
   placeholder?: string;
@@ -41,6 +43,8 @@ interface AddressAutocompleteProps {
 export default function AddressAutocomplete({
   onLocationSelectAction,
   initialAddress,
+  initialLat,
+  initialLng,
   hideMap = false,
   hideLabel = false,
   placeholder = "Type your shop address...",
@@ -62,9 +66,13 @@ export default function AddressAutocomplete({
   });
 
   const [isLocating, setIsLocating] = useState(false);
-  const [markerPosition, setMarkerPosition] = useState<{ lat: number; lng: number } | null>(null);
-  const [mapCenter, setMapCenter] = useState(defaultCenter);
-  const [zoom, setZoom] = useState(10);
+  const [markerPosition, setMarkerPosition] = useState<{ lat: number; lng: number } | null>(
+    initialLat && initialLng ? { lat: initialLat, lng: initialLng } : null
+  );
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>(
+    initialLat && initialLng ? { lat: initialLat, lng: initialLng } : defaultCenter
+  );
+  const [zoom, setZoom] = useState(initialLat && initialLng ? 16 : 10);
 
   const handleSelect = useCallback(async (description: string) => {
     setValue(description, false);
@@ -85,6 +93,7 @@ export default function AddressAutocomplete({
 
   const handleMarkerDragEnd = useCallback(async (lat: number, lng: number) => {
     setMarkerPosition({ lat, lng });
+    setMapCenter({ lat, lng });
     try {
       const results = await getGeocode({ location: { lat, lng } });
       const address = results[0].formatted_address;
