@@ -228,74 +228,77 @@ export default function QRGeneratorPage() {
                 {generatedQRs.map((qr) => (
                   <div 
                     key={qr.id}
-                    className="relative bg-white border border-gray-100 rounded-3xl overflow-hidden flex flex-col items-center shadow-2xl print:shadow-none print:border-none print:w-[210mm] print:h-[297mm] print:m-0 print:page-break-after-always"
+                    className="relative bg-white border border-gray-200 rounded-[40px] overflow-hidden flex flex-col items-center shadow-2xl print:shadow-none print:border-none print:w-[210mm] print:h-[297mm] print:m-0 print:page-break-after-always"
                   >
-                    {/* Catalog Style Design */}
-                    <div className="w-full h-24 bg-brand-dark flex items-center px-12 relative overflow-hidden print:h-32">
-                      <div className="absolute top-0 right-0 w-64 h-full bg-brand-gold/10 transform skew-x-[-35deg] translate-x-12"></div>
-                      <div className="absolute top-0 right-16 w-32 h-full bg-brand-gold/20 transform skew-x-[-35deg] translate-x-12"></div>
-                      <div className="relative flex items-center gap-6">
+                    {/* Top Branding - Clean & Minimal */}
+                    <div className="w-full pt-16 pb-8 flex flex-col items-center gap-4">
+                      <div className="w-20 h-20 bg-brand-dark rounded-[24px] flex items-center justify-center shadow-xl shadow-brand-dark/10">
                         <img src="/logo.png" alt="Logo" className="h-12 w-12 object-contain brightness-0 invert" />
-                        <div className="flex flex-col">
-                          <span className="text-white font-black text-xl tracking-[0.2em] uppercase print:text-3xl">SL Business</span>
-                          <span className="text-brand-gold text-[10px] font-bold tracking-[0.4em] uppercase">Verified Index</span>
+                      </div>
+                      <div className="text-center">
+                        <h2 className="text-2xl font-black text-brand-dark tracking-[0.1em] uppercase">Sri Lanka</h2>
+                        <p className="text-brand-gold text-sm font-bold tracking-[0.3em] uppercase">Business Index</p>
+                      </div>
+                    </div>
+
+                    <div className="flex-1 flex flex-col items-center justify-center px-12 w-full space-y-12">
+                      {/* Main Message */}
+                      <div className="text-center space-y-2">
+                        <h3 className="text-5xl font-black text-gray-900 tracking-tight leading-none print:text-7xl">DISCOVER MORE</h3>
+                        <p className="text-lg text-gray-500 font-medium tracking-wide">View our verified profile & services</p>
+                      </div>
+
+                      {/* QR Frame - The centerpiece */}
+                      <div className="relative group">
+                        {/* Decorative Corners */}
+                        <div className="absolute -top-4 -left-4 w-12 h-12 border-t-4 border-l-4 border-brand-gold rounded-tl-2xl"></div>
+                        <div className="absolute -top-4 -right-4 w-12 h-12 border-t-4 border-r-4 border-brand-gold rounded-tr-2xl"></div>
+                        <div className="absolute -bottom-4 -left-4 w-12 h-12 border-b-4 border-l-4 border-brand-gold rounded-bl-2xl"></div>
+                        <div className="absolute -bottom-4 -right-4 w-12 h-12 border-b-4 border-r-4 border-brand-gold rounded-br-2xl"></div>
+
+                        <div className="p-10 bg-white rounded-[40px] shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] border border-gray-100 flex items-center justify-center">
+                          <QRCodeSVG 
+                            value={`${window.location.origin}${qr.short_link}`}
+                            size={320}
+                            level="H"
+                            imageSettings={{
+                              src: "/logo.png",
+                              x: undefined,
+                              y: undefined,
+                              height: 64,
+                              width: 64,
+                              excavate: true,
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Instructions */}
+                      <div className="flex flex-col items-center gap-6">
+                        <div className="flex items-center gap-4 bg-gray-50 px-8 py-4 rounded-full border border-gray-100">
+                          <QrCode className="h-5 w-5 text-brand-dark" />
+                          <span className="text-sm font-bold text-gray-700 tracking-tight">Open camera to scan this code</span>
+                        </div>
+                        
+                        <div className="flex gap-2">
+                          {[1, 2, 3].map(i => (
+                            <div key={i} className="w-2 h-2 rounded-full bg-brand-gold/30"></div>
+                          ))}
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex-1 flex flex-col items-center justify-center p-12 space-y-16 print:p-24 print:space-y-24">
-                      {/* Decorative Pattern Background (Visual only, simple dots) */}
-                      <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#053765 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
-
-                      <div className="text-center space-y-6 relative">
-                        <h3 className="text-4xl font-black text-brand-dark tracking-tighter print:text-7xl">CONNECT WITH US</h3>
-                        <div className="flex items-center justify-center gap-4">
-                          <div className="h-1 w-12 bg-brand-gold rounded-full"></div>
-                          <div className="h-2 w-2 bg-brand-gold rounded-full"></div>
-                          <div className="h-1 w-12 bg-brand-gold rounded-full"></div>
-                        </div>
-                      </div>
-
-                      <div className="relative p-10 bg-white rounded-[40px] shadow-[0_32px_64px_-16px_rgba(5,55,101,0.2)] border-2 border-brand-gold/10 flex items-center justify-center print:p-16 print:rounded-[60px]">
-                        <div className="absolute -inset-4 border border-brand-gold/5 rounded-[50px] -z-10 animate-pulse"></div>
-                        <QRCodeSVG 
-                          value={`${window.location.origin}${qr.short_link}`}
-                          size={280}
-                          level="H"
-                          imageSettings={{
-                            src: "/logo.png",
-                            x: undefined,
-                            y: undefined,
-                            height: 56,
-                            width: 56,
-                            excavate: true,
-                          }}
-                        />
-                      </div>
-
-                      <div className="text-center space-y-6 max-w-sm relative">
-                        <p className="text-2xl font-bold text-brand-dark print:text-4xl italic px-4">Scan for business details, location & offers</p>
-                        <div className="flex justify-center gap-2">
-                          <span className="h-1.5 w-1.5 bg-brand-gold rounded-full"></span>
-                          <span className="h-1.5 w-1.5 bg-brand-gold rounded-full opacity-50"></span>
-                          <span className="h-1.5 w-1.5 bg-brand-gold rounded-full opacity-20"></span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="w-full bg-gray-50/80 backdrop-blur-sm border-t border-gray-100 p-8 flex items-center justify-between print:p-12 relative z-10">
+                    {/* Footer - Professional ID Bar */}
+                    <div className="w-full bg-brand-dark p-10 flex items-center justify-between">
                       <div className="flex flex-col">
-                        <span className="text-[10px] font-black text-brand-gold uppercase tracking-[0.3em] mb-1 print:text-xs">Serial ID</span>
-                        <span className="text-2xl font-mono font-black text-brand-dark tracking-tighter print:text-4xl">{qr.serial_id}</span>
+                        <span className="text-brand-gold text-[10px] font-black uppercase tracking-[0.2em] mb-1">Official Serial ID</span>
+                        <span className="text-3xl font-mono font-bold text-white tracking-tighter">{qr.serial_id}</span>
                       </div>
-                      <div className="text-right flex flex-col items-end">
-                        <img src="/logo.png" alt="Logo" className="h-6 w-6 object-contain mb-2 opacity-20 grayscale" />
-                        <p className="text-[10px] text-gray-400 font-bold print:text-xs tracking-tight uppercase">slbusinessindex.com</p>
+                      <div className="text-right">
+                        <p className="text-white/40 text-xs font-bold tracking-widest uppercase">Verified Listing</p>
+                        <p className="text-white text-sm font-bold">slbusinessindex.com</p>
                       </div>
                     </div>
-
-                    {/* Accent Borders */}
-                    <div className="absolute left-0 top-0 bottom-0 w-2 bg-brand-gold"></div>
                   </div>
                 ))}
               </div>
