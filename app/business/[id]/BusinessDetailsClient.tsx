@@ -279,7 +279,7 @@ export default function BusinessDetailsClient({ business }: Props) {
                 <div className="flex items-center gap-1.5">
                   <MapPin size={14} className="text-brand-gold shrink-0" />
                   <span className="text-xs md:text-base line-clamp-1">
-                    {business.address}
+                    {business.detailed_address || business.address}
                   </span>
                 </div>
                 {business.rating && (
@@ -399,6 +399,20 @@ export default function BusinessDetailsClient({ business }: Props) {
               </div>
 
               <div className="space-y-4 lg:space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 lg:p-3 bg-gray-50 rounded text-brand-blue border border-gray-100 shrink-0">
+                    <MapPin size={15} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-0.5">
+                      Full Address
+                    </p>
+                    <p className="text-brand-blue text-sm break-words">
+                      {business.detailed_address || business.address || "Not provided"}
+                    </p>
+                  </div>
+                </div>
+
                 <div className="flex items-center gap-3">
                   <div className="p-2 lg:p-3 bg-gray-50 rounded text-brand-blue border border-gray-100 shrink-0">
                     <Phone size={15} />

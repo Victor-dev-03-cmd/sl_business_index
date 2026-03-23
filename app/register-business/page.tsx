@@ -410,7 +410,9 @@ export default function RegisterBusinessPage() {
 
               <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-1">
-                  <label className="block text-sm font-normal text-gray-600 mb-2">Business Name</label>
+                  <label className="block text-sm font-normal text-gray-600 mb-2">
+                    Business Name <span className="text-red-500">*</span>
+                  </label>
                   <input type="text" value={businessName} onChange={(e) => setBusinessName(e.target.value)} required className="w-full px-4 py-3.5 rounded-[6px] border border-gray-300 bg-gray-50/50 focus:bg-white focus:ring-1 focus:ring-blue-900 outline-none transition-all font-normal text-sm" />
                 </div>
                 <div className="md:col-span-1">
@@ -449,15 +451,21 @@ export default function RegisterBusinessPage() {
 
               <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-normal text-gray-600 mb-2">Owner Name</label>
+                  <label className="block text-sm font-normal text-gray-600 mb-2">
+                    Owner Name <span className="text-red-500">*</span>
+                  </label>
                   <input type="text" value={ownerName} onChange={(e) => setOwnerName(e.target.value)} required className="w-full px-4 py-3.5 rounded-[6px] border border-gray-300 bg-gray-50/50 focus:bg-white focus:ring-1 focus:ring-blue-900 outline-none transition-all font-normal text-sm" />
                 </div>
                 <div>
-                  <label className="block text-sm font-normal text-gray-600 mb-2">Contact Number</label>
+                  <label className="block text-sm font-normal text-gray-600 mb-2">
+                    Contact Number <span className="text-red-500">*</span>
+                  </label>
                   <input type="tel" value={contactNumber} onChange={(e) => setContactNumber(e.target.value)} required className="w-full px-4 py-3.5 rounded-[6px] border border-gray-300 bg-gray-50/50 focus:bg-white focus:ring-1 focus:ring-blue-900 outline-none transition-all font-normal text-sm" />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-normal text-gray-600 mb-2">Business Email</label>
+                  <label className="block text-sm font-normal text-gray-600 mb-2">
+                    Business Email <span className="text-red-500">*</span>
+                  </label>
                   <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full px-4 py-3.5 rounded-[6px] border border-gray-300 bg-gray-50/50 focus:bg-white focus:ring-1 focus:ring-blue-900 outline-none transition-all font-normal text-sm" />
                 </div>
 
@@ -492,12 +500,16 @@ export default function RegisterBusinessPage() {
                 <div className="animate-in fade-in duration-500">
                   {registrationType === 'registered' ? (
                       <div>
-                        <label className="block text-sm font-normal text-gray-600 mb-2">BR Number</label>
+                        <label className="block text-sm font-normal text-gray-600 mb-2">
+                          BR Number <span className="text-red-500">*</span>
+                        </label>
                         <input type="text" value={brNumber} onChange={(e) => setBrNumber(e.target.value)} className="w-full px-4 py-3.5 rounded-[6px] border border-gray-300 bg-white focus:ring-1 focus:ring-blue-900 outline-none transition-all font-normal text-sm" placeholder="Enter Registration Number" />
                       </div>
                   ) : (
                       <div>
-                        <label className="block text-sm font-normal text-gray-600 mb-2">NIC or Passport Number</label>
+                        <label className="block text-sm font-normal text-gray-600 mb-2">
+                          NIC or Passport Number <span className="text-red-500">*</span>
+                        </label>
                         <input type="text" value={nicNumber} onChange={(e) => setNicNumber(e.target.value)} className="w-full px-4 py-3.5 rounded-[6px] border border-gray-300 bg-white focus:ring-1 focus:ring-blue-900 outline-none transition-all font-normal text-sm" placeholder="Enter NIC Number" />
                       </div>
                   )}

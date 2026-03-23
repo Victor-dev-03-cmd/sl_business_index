@@ -210,7 +210,6 @@ function MapUpdater({
     const currentCenter = map.getCenter();
     const currentZoom = map.getZoom();
 
-    // Only update if the target is significantly different or zoom changed
     const isSame =
       Math.abs(currentCenter.lat - lat) < 0.0001 &&
       Math.abs(currentCenter.lng - lng) < 0.0001 &&
@@ -226,23 +225,30 @@ function MapUpdater({
 function MapEvents({
   onMapClick,
   onMapMove,
+  map,
 }: {
   onMapClick?: (lat: number, lng: number) => void;
   onMapMove?: (lat: number, lng: number, zoom: number) => void;
+  map: L.Map;
 }) {
-  const map = useMapEvents({
+  useMapEvents({
     click(e) {
       if (onMapClick) {
         onMapClick(e.latlng.lat, e.latlng.lng);
       }
     },
-    dragstart() {
+    dblclick(e) {
+      if (onMapClick) {
+        onMapClick(e.latlng.lat, e.latlng.lng);
+      }
+    },
+    dragend() {
       if (onMapMove) {
         const center = map.getCenter();
         onMapMove(center.lat, center.lng, map.getZoom());
       }
     },
-    zoomstart() {
+    zoomend() {
       if (onMapMove) {
         const center = map.getCenter();
         onMapMove(center.lat, center.lng, map.getZoom());
@@ -252,14 +258,13 @@ function MapEvents({
   return null;
 }
 
-export default React.memo(function LeafletMap({
+function MapContent({
   centerLat,
   centerLng,
   userLat,
   userLng,
   businesses = [],
   zoom = 8,
-  height = "500px",
   radius = 0,
   enableClustering = true,
   onMarkerClick,
@@ -268,11 +273,8 @@ export default React.memo(function LeafletMap({
   onMapClick,
   onMapMove,
   showUserLocation = true,
-  wrapperClassName,
 }: LeafletMapProps) {
-  useEffect(() => {
-    fixLeafletIcon();
-  }, []);
+  const map = useMap();
 
   const center: [number, number] = useMemo(
     () => [centerLat, centerLng],
@@ -297,169 +299,73 @@ export default React.memo(function LeafletMap({
   );
 
   return (
-    <div
-      style={{ height, width: "100%" }}
-      className={
-        wrapperClassName ??
-        "rounded-[8px] overflow-hidden border border-gray-200 z-0 relative shadow-md"
-      }
-    >
-      <MapContainer
-        center={center}
-        zoom={zoom}
-        scrollWheelZoom={true}
-        className="h-full w-full"
-        zoomControl={false}
-        preferCanvas={true}
+    <>
+      <TileLayer
+        attribution="&copy; Google Maps"
+        url="https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
+        subdomains={["mt0", "mt1", "mt2", "mt3"]}
         maxZoom={22}
-        zoomSnap={0.5}
-        wheelPxPerZoomLevel={60}
-      >
-        <TileLayer
-          attribution="&copy; Google Maps"
-          url="https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
-          subdomains={["mt0", "mt1", "mt2", "mt3"]}
-          maxZoom={22}
-          tileSize={256}
-          detectRetina={true}
-          keepBuffer={6}
-          updateWhenZooming={false}
-          crossOrigin="anonymous"
+        tileSize={256}
+        detectRetina={true}
+        keepBuffer={6}
+        updateWhenZooming={false}
+        crossOrigin="anonymous"
+      />
+
+      <ZoomControl position="bottomright" />
+      <MapUpdater lat={centerLat} lng={centerLng} zoom={zoom} />
+      <MapEvents onMapClick={onMapClick} onMapMove={onMapMove} map={map} />
+
+      {/* Draggable Marker for Registration */}
+      {draggableMarker && (
+        <Marker
+          position={center}
+          icon={getCustomIcon()}
+          draggable={true}
+          eventHandlers={eventHandlers}
         />
+      )}
 
-        <ZoomControl position="bottomright" />
-        <MapUpdater lat={centerLat} lng={centerLng} zoom={zoom} />
-        <MapEvents onMapClick={onMapClick} onMapMove={onMapMove} />
+      {/* User Location Marker (Blue Dot) */}
+      {showUserLocation && userPosition && (
+        <Marker position={userPosition} icon={userIcon}>
+          <Popup>
+            <div className="text-sm font-semibold">Your Location</div>
+          </Popup>
+        </Marker>
+      )}
 
-        {/* Draggable Marker for Registration */}
-        {draggableMarker && (
-          <Marker
-            position={center}
-            icon={getCustomIcon()}
-            draggable={true}
-            eventHandlers={eventHandlers}
-          />
-        )}
+      {/* Radius Circle */}
+      {radius > 0 && (
+        <Circle
+          center={center}
+          radius={radius}
+          pathOptions={{
+            fillColor: "#2a7db4",
+            fillOpacity: 0.1,
+            color: "#2a7db4",
+            weight: 1,
+            dashArray: "5, 5",
+          }}
+        />
+      )}
 
-        {/* User Location Marker (Blue Dot) */}
-        {showUserLocation && userPosition && (
-          <Marker position={userPosition} icon={userIcon}>
-            <Popup>
-              <div className="text-sm font-semibold">Your Location</div>
-            </Popup>
-          </Marker>
-        )}
-
-        {/* Radius Circle */}
-        {radius > 0 && (
-          <Circle
-            center={center}
-            radius={radius}
-            pathOptions={{
-              fillColor: "#2a7db4",
-              fillOpacity: 0.1,
-              color: "#2a7db4",
-              weight: 1,
-              dashArray: "5, 5",
-            }}
-          />
-        )}
-
-        {/* Business Markers */}
-        {enableClustering ? (
-          <MarkerClusterGroup
-            chunkedLoading
-            maxClusterRadius={60}
-            spiderfyOnMaxZoom={true}
-            showCoverageOnHover={false}
-            disableClusteringAtZoom={16}
-          >
-            {businesses.map((biz, idx) => {
-              const coords = biz.geometry?.coordinates || [
-                biz.longitude,
-                biz.latitude,
-              ];
-              const props = biz.properties || biz;
-
-              if (!coords[1] || !coords[0]) return null;
-
-              const markerColor = getCategoryColor(props.category);
-
-              return (
-                <Marker
-                  key={biz.id || idx}
-                  position={[coords[1], coords[0]]}
-                  icon={getCustomIcon(markerColor)}
-                  eventHandlers={{
-                    click: () => onMarkerClick?.(biz),
-                  }}
-                >
-                  <Popup className="business-popup">
-                    <div className="w-64 p-0">
-                      {props.image_url && (
-                        <div className="h-28 w-full relative mb-2">
-                          <img
-                            src={props.image_url}
-                            alt={props.name}
-                            className="w-full h-full object-cover rounded-t-md"
-                          />
-                        </div>
-                      )}
-                      <div className="p-3">
-                        <div className="flex justify-between items-start mb-1 gap-2">
-                          <h3 className="font-bold text-gray-900 text-sm leading-tight line-clamp-2 flex items-center gap-1">
-                            {props.name}
-                            {(props.is_verified ||
-                              props.verification_status === "verified") &&
-                              props.can_show_badge && (
-                                <VerifiedBadge size={10} />
-                              )}
-                          </h3>
-                          {(props.rating || 0) > 0 && (
-                            <div className="flex items-center gap-1 bg-amber-50 px-1.5 py-0.5 rounded-[4px] shrink-0">
-                              <Star
-                                size={10}
-                                className="text-amber-500 fill-amber-500"
-                              />
-                              <span className="text-[10px] font-bold text-amber-700">
-                                {props.rating}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                        <p className="text-[11px] text-[#2a7db4] font-medium mb-1 uppercase tracking-wider">
-                          {props.category}
-                        </p>
-                        <p className="text-[11px] text-gray-500 line-clamp-2 mb-4 leading-relaxed flex items-start gap-1">
-                          <MapPin
-                            size={10}
-                            className="shrink-0 mt-0.5 text-[#2a7db4]"
-                          />
-                          <span>
-                            {props.address || props.location || "Sri Lanka"}
-                          </span>
-                        </p>
-                        <a
-                          href={`/business/${props.id}`}
-                          className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#2a7db4] text-white text-[11px] font-bold rounded-[6px] hover:bg-[#053765] transition-all shadow-sm"
-                        >
-                          View Details
-                          <ExternalLink size={10} />
-                        </a>
-                      </div>
-                    </div>
-                  </Popup>
-                </Marker>
-              );
-            })}
-          </MarkerClusterGroup>
-        ) : (
-          businesses.map((biz, idx) => {
+      {/* Business Markers */}
+      {enableClustering ? (
+        <MarkerClusterGroup
+          chunkedLoading
+          maxClusterRadius={60}
+          spiderfyOnMaxZoom={true}
+          showCoverageOnHover={false}
+          disableClusteringAtZoom={16}
+        >
+          {businesses.map((biz, idx) => {
             const coords = biz.geometry?.coordinates || [
               biz.longitude,
               biz.latitude,
             ];
             const props = biz.properties || biz;
+
             if (!coords[1] || !coords[0]) return null;
 
             const markerColor = getCategoryColor(props.category);
@@ -490,7 +396,9 @@ export default React.memo(function LeafletMap({
                           {props.name}
                           {(props.is_verified ||
                             props.verification_status === "verified") &&
-                            props.can_show_badge && <VerifiedBadge size={10} />}
+                            props.can_show_badge && (
+                              <VerifiedBadge size={10} />
+                            )}
                         </h3>
                         {(props.rating || 0) > 0 && (
                           <div className="flex items-center gap-1 bg-amber-50 px-1.5 py-0.5 rounded-[4px] shrink-0">
@@ -528,8 +436,115 @@ export default React.memo(function LeafletMap({
                 </Popup>
               </Marker>
             );
-          })
-        )}
+          })}
+        </MarkerClusterGroup>
+      ) : (
+        businesses.map((biz, idx) => {
+          const coords = biz.geometry?.coordinates || [
+            biz.longitude,
+            biz.latitude,
+          ];
+          const props = biz.properties || biz;
+          if (!coords[1] || !coords[0]) return null;
+
+          const markerColor = getCategoryColor(props.category);
+
+          return (
+            <Marker
+              key={biz.id || idx}
+              position={[coords[1], coords[0]]}
+              icon={getCustomIcon(markerColor)}
+              eventHandlers={{
+                click: () => onMarkerClick?.(biz),
+              }}
+            >
+              <Popup className="business-popup">
+                <div className="w-64 p-0">
+                  {props.image_url && (
+                    <div className="h-28 w-full relative mb-2">
+                      <img
+                        src={props.image_url}
+                        alt={props.name}
+                        className="w-full h-full object-cover rounded-t-md"
+                      />
+                    </div>
+                  )}
+                  <div className="p-3">
+                    <div className="flex justify-between items-start mb-1 gap-2">
+                      <h3 className="font-bold text-gray-900 text-sm leading-tight line-clamp-2 flex items-center gap-1">
+                        {props.name}
+                        {(props.is_verified ||
+                          props.verification_status === "verified") &&
+                          props.can_show_badge && <VerifiedBadge size={10} />}
+                      </h3>
+                      {(props.rating || 0) > 0 && (
+                        <div className="flex items-center gap-1 bg-amber-50 px-1.5 py-0.5 rounded-[4px] shrink-0">
+                          <Star
+                            size={10}
+                            className="text-amber-500 fill-amber-500"
+                          />
+                          <span className="text-[10px] font-bold text-amber-700">
+                            {props.rating}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-[#2a7db4] font-medium mb-1 uppercase tracking-wider">
+                      {props.category}
+                    </p>
+                    <p className="text-[11px] text-gray-500 line-clamp-2 mb-4 leading-relaxed flex items-start gap-1">
+                      <MapPin
+                        size={10}
+                        className="shrink-0 mt-0.5 text-[#2a7db4]"
+                      />
+                      <span>
+                        {props.address || props.location || "Sri Lanka"}
+                      </span>
+                    </p>
+                    <a
+                      href={`/business/${props.id}`}
+                      className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#2a7db4] text-white text-[11px] font-bold rounded-[6px] hover:bg-[#053765] transition-all shadow-sm"
+                    >
+                      View Details
+                      <ExternalLink size={10} />
+                    </a>
+                  </div>
+                </div>
+              </Popup>
+            </Marker>
+          );
+        })
+      )}
+    </>
+  );
+}
+
+export default React.memo(function LeafletMap(props: LeafletMapProps) {
+  const { height, wrapperClassName, centerLat, centerLng, zoom } = props;
+  useEffect(() => {
+    fixLeafletIcon();
+  }, []);
+
+  return (
+    <div
+      style={{ height: height || "500px", width: "100%" }}
+      className={
+        wrapperClassName ??
+        "rounded-[8px] overflow-hidden border border-gray-200 z-0 relative shadow-md"
+      }
+    >
+      <MapContainer
+        center={[centerLat, centerLng]}
+        zoom={zoom}
+        scrollWheelZoom={true}
+        className="h-full w-full"
+        zoomControl={false}
+        preferCanvas={true}
+        maxZoom={22}
+        zoomSnap={0.5}
+        wheelPxPerZoomLevel={60}
+      >
+        <MapContent {...props} />
       </MapContainer>
       <style jsx global>{`
         .business-popup .leaflet-popup-content-wrapper {
@@ -611,6 +626,10 @@ export default React.memo(function LeafletMap({
           color: white !important;
           font-weight: bold !important;
           font-size: 12px !important;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
       `}</style>
     </div>

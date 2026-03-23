@@ -150,7 +150,7 @@ const Footer = () => {
           <div className="flex flex-col items-center md:items-end gap-3">
             <div className="flex items-center gap-1.5 text-xs text-gray-400">
               Built with <Heart size={12} className="text-red-500 fill-red-500" /> in Sri Lanka by 
-              <a href="https://laxsan-dev.vercel.app/" target="_blank" rel="noopener noreferrer" className="text-brand-blue hover:underline cursor-pointer"> Laxsan Victor</a>
+              <a href="https://laxsan-dev.vercel.app/" target="_blank" rel="noopener noreferrer" className="text-brand-blue hover:underline cursor-pointer"> Laxsan Dev</a>
             </div>
             <div className="flex items-center gap-4 text-gray-600">
               <div title="Next.js" className="hover:text-white transition-colors"><Zap size={14} /></div>

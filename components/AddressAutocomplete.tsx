@@ -147,7 +147,9 @@ export default function AddressAutocomplete({
           <div>
             {!hideLabel && (
               <div className="flex justify-between items-center mb-2">
-                <label className="block text-sm font-normal text-gray-600">Business Address</label>
+                <label className="block text-sm font-normal text-gray-600">
+                  Business Address <span className="text-red-500">*</span>
+                </label>
                 <button
                   type="button"
                   onClick={findMyLocation}
@@ -177,6 +179,7 @@ export default function AddressAutocomplete({
                   placeholder={placeholder}
                   value={value}
                   onValueChange={setValue}
+                  onChange={(e) => setValue(e.target.value)}
                   disabled={!ready}
                   className="text-base"
                 />
@@ -216,9 +219,16 @@ export default function AddressAutocomplete({
           )}
 
           {!hideLabel && (
-            <p className="text-[11px] text-gray-400 font-normal italic">
-              * Select from the dropdown for accurate map pinning. Biased to Sri Lanka.
-            </p>
+            <div className="flex flex-col gap-1 mt-4 p-4 bg-brand-blue/5 rounded-lg border border-brand-blue/10">
+              <p className="text-[11px] text-gray-600 font-medium flex items-center gap-2">
+                <span className="w-4 h-4 rounded-full bg-brand-blue text-white flex items-center justify-center text-[8px]">1</span>
+                Type address to find general location
+              </p>
+              <p className="text-[11px] text-gray-600 font-medium flex items-center gap-2">
+                <span className="w-4 h-4 rounded-full bg-brand-blue text-white flex items-center justify-center text-[8px]">2</span>
+                Click or Drag the map pin for exact position
+              </p>
+            </div>
           )}
         </div>
 

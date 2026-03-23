@@ -16,7 +16,8 @@ import {
   PanelLeftOpen,
   Briefcase,
   HelpCircle,
-  Home
+  Home,
+  QrCode
 } from 'lucide-react';
 import AuthButton from '@/app/components/AuthButton';
 import NotificationBell from '@/app/components/NotificationBell';
@@ -28,6 +29,7 @@ const vendorMenuItems = [
   { name: 'Home', href: '/', icon: Home },
   { name: 'Dashboard', href: '/vendor/dashboard', icon: LayoutDashboard },
   { name: 'My Businesses', href: '/vendor/my-businesses', icon: Store },
+  { name: 'QR Code', href: '/vendor/qr-code', icon: QrCode },
   { name: 'Marketing', href: '/vendor/marketing', icon: Megaphone },
   { name: 'Reviews', href: '/vendor/reviews', icon: MessageSquare },
   { name: 'Leads', href: '/vendor/leads', icon: Users },
