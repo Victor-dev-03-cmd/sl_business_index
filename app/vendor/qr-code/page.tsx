@@ -12,7 +12,8 @@ import {
   CheckCircle2,
   Building2,
   Share2,
-  ExternalLink
+  ExternalLink,
+  Loader2
 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { Business } from '@/lib/types';
@@ -22,12 +23,36 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function VendorQRCodePage() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
+  const [assignedQR, setAssignedQR] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const [requestingQR, setRequestingQR] = useState(false);
   const qrRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchBusinesses();
   }, []);
+
+  useEffect(() => {
+    if (selectedBusiness) {
+      checkAssignedQR(selectedBusiness.id);
+    }
+  }, [selectedBusiness]);
+
+  const checkAssignedQR = async (businessId: string | number) => {
+    try {
+      const { data, error } = await supabase
+        .from('qr_inventory')
+        .select('*')
+        .eq('business_id', businessId)
+        .maybeSingle();
+
+      if (!error) {
+        setAssignedQR(data);
+      }
+    } catch (err) {
+      console.error('Error checking assigned QR:', err);
+    }
+  };
 
   const fetchBusinesses = async () => {
     try {
@@ -50,6 +75,34 @@ export default function VendorQRCodePage() {
       toast.error('Failed to load businesses');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRequestQR = async () => {
+    if (!selectedBusiness) return;
+    
+    setRequestingQR(true);
+    try {
+      const response = await fetch('/api/qr/request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ business_id: selectedBusiness.id }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setAssignedQR(data.qr);
+        toast.success('Professional QR Code generated successfully!');
+      } else {
+        toast.error(data.error || 'Failed to generate QR code');
+      }
+    } catch (err) {
+      console.error('Error requesting QR:', err);
+      toast.error('An unexpected error occurred');
+    } finally {
+      setRequestingQR(false);
     }
   };
 
@@ -160,7 +213,9 @@ export default function VendorQRCodePage() {
   }
 
   const businessUrl = typeof window !== 'undefined' 
-    ? `${window.location.origin}/business/${selectedBusiness?.id}`
+    ? assignedQR 
+      ? `${window.location.origin}/q/${assignedQR.serial_id}`
+      : `${window.location.origin}/business/${selectedBusiness?.id}`
     : '';
 
   return (
@@ -174,18 +229,31 @@ export default function VendorQRCodePage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button 
-            onClick={handlePrint}
-            className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-[6px] text-sm font-bold hover:bg-gray-50 transition-all"
-          >
-            <Printer size={18} /> Print
-          </button>
-          <button 
-            onClick={handleDownload}
-            className="flex items-center gap-2 px-5 py-2.5 bg-brand-dark text-white rounded-[6px] text-sm font-bold hover:bg-brand-blue transition-all shadow-lg shadow-brand-dark/10"
-          >
-            <Download size={18} /> Download PNG
-          </button>
+          {assignedQR ? (
+            <>
+              <button 
+                onClick={handlePrint}
+                className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-[6px] text-sm font-bold hover:bg-gray-50 transition-all"
+              >
+                <Printer size={18} /> Print
+              </button>
+              <button 
+                onClick={handleDownload}
+                className="flex items-center gap-2 px-5 py-2.5 bg-brand-dark text-white rounded-[6px] text-sm font-bold hover:bg-brand-blue transition-all shadow-lg shadow-brand-dark/10"
+              >
+                <Download size={18} /> Download PNG
+              </button>
+            </>
+          ) : (
+            <button 
+              onClick={handleRequestQR}
+              disabled={requestingQR}
+              className="flex items-center gap-2 px-6 py-3 bg-brand-dark text-white rounded-[6px] text-sm font-bold hover:bg-brand-blue transition-all shadow-lg shadow-brand-dark/10 disabled:opacity-50"
+            >
+              {requestingQR ? <Loader2 className="animate-spin" size={18} /> : <QrCode size={18} />}
+              Request Professional QR
+            </button>
+          )}
         </div>
       </div>
 
@@ -259,76 +327,123 @@ export default function VendorQRCodePage() {
 
         {/* Right Column: QR Preview */}
         <div className="lg:col-span-8">
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm h-full overflow-hidden flex flex-col">
-            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-              <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Professional Preview</h2>
-              <div className="flex items-center gap-2 px-3 py-1 bg-green-50 text-green-700 rounded-full text-[10px] font-bold uppercase">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                Live Preview
-              </div>
-            </div>
-            
-            <div className="flex-1 p-8 md:p-12 flex flex-col items-center justify-center bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:20px_20px]">
-              {/* This is the printable area */}
-              <div 
-                id="printable-qr"
-                ref={qrRef}
-                className="bg-white p-12 rounded-3xl shadow-2xl border border-gray-100 flex flex-col items-center text-center max-w-sm w-full transition-transform hover:scale-[1.02] duration-500"
-              >
-                <div className="mb-8 w-full flex flex-col items-center">
-                  <div className="w-16 h-16 bg-brand-dark rounded-2xl flex items-center justify-center mb-4 shadow-lg">
-                    <QrCode className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 line-clamp-1 px-4">{selectedBusiness?.name}</h3>
-                  <p className="text-xs text-gray-500 uppercase tracking-widest mt-1">Official Directory Listing</p>
-                </div>
-
-                <div className="relative group p-4 bg-white rounded-2xl border-4 border-gray-50">
-                  <QRCodeCanvas
-                    value={businessUrl}
-                    size={240}
-                    level="H"
-                    includeMargin={false}
-                    imageSettings={{
-                      src: "/logo.png", // Assuming there's a logo at this path
-                      x: undefined,
-                      y: undefined,
-                      height: 40,
-                      width: 40,
-                      excavate: true,
-                    }}
-                  />
-                </div>
-
-                <div className="mt-10 space-y-2">
-                  <p className="text-sm font-bold text-brand-dark">Scan to Explore</p>
-                  <div className="flex items-center justify-center gap-2 py-2 px-4 bg-gray-50 rounded-full border border-gray-100">
-                    <span className="text-[10px] font-medium text-gray-400 font-mono tracking-tighter">slbusinessindex.com/b/{selectedBusiness?.id?.toString().slice(0, 8)}</span>
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm h-full overflow-hidden flex flex-col min-h-[600px]">
+            {assignedQR ? (
+              <>
+                <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                  <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Professional Preview</h2>
+                  <div className="flex items-center gap-2 px-3 py-1 bg-green-50 text-green-700 rounded-full text-[10px] font-bold uppercase">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                    Professional Index
                   </div>
                 </div>
-              </div>
+                
+                <div className="flex-1 p-8 md:p-12 flex flex-col items-center justify-center bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:20px_20px]">
+                  {/* This is the printable area */}
+                  <div 
+                    id="printable-qr"
+                    ref={qrRef}
+                    className="bg-white p-12 rounded-3xl shadow-2xl border border-gray-100 flex flex-col items-center text-center max-w-sm w-full transition-transform hover:scale-[1.02] duration-500"
+                  >
+                    <div className="mb-8 w-full flex flex-col items-center">
+                      <div className="w-16 h-16 bg-brand-dark rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+                        <QrCode className="w-8 h-8 text-white" />
+                      </div>
+                      <h3 className="text-xl font-bold text-gray-900 line-clamp-1 px-4">{selectedBusiness?.name}</h3>
+                      <p className="text-xs text-gray-500 uppercase tracking-widest mt-1">Official Directory Listing</p>
+                    </div>
 
-              {/* Quick Actions */}
-              <div className="mt-12 flex flex-wrap justify-center gap-4 no-print">
+                    <div className="relative group p-4 bg-white rounded-2xl border-4 border-gray-50">
+                      <QRCodeCanvas
+                        value={businessUrl}
+                        size={240}
+                        level="H"
+                        includeMargin={false}
+                        imageSettings={{
+                          src: "/logo.png",
+                          x: undefined,
+                          y: undefined,
+                          height: 40,
+                          width: 40,
+                          excavate: true,
+                        }}
+                      />
+                    </div>
+
+                    <div className="mt-10 space-y-2">
+                      <p className="text-sm font-bold text-brand-dark">Scan to Explore</p>
+                      <div className="flex items-center justify-center gap-2 py-2 px-4 bg-gray-50 rounded-full border border-gray-100">
+                        <span className="text-[10px] font-medium text-gray-400 font-mono tracking-tighter">
+                          slbusinessindex.com/q/{assignedQR.serial_id}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-8 flex flex-col items-center text-center no-print">
+                      <span className="text-[10px] font-black text-brand-gold uppercase tracking-[0.3em] mb-1">Serial ID</span>
+                      <span className="text-2xl font-mono font-black text-brand-dark tracking-tighter">{assignedQR.serial_id}</span>
+                  </div>
+
+                  {/* Quick Actions */}
+                  <div className="mt-12 flex flex-wrap justify-center gap-4 no-print">
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText(businessUrl);
+                        toast.success('Link copied to clipboard');
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-full text-xs font-bold hover:border-brand-blue hover:text-brand-blue transition-all"
+                    >
+                      <Share2 size={14} /> Copy Link
+                    </button>
+                    <a 
+                      href={businessUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-full text-xs font-bold hover:border-brand-blue hover:text-brand-blue transition-all"
+                    >
+                      <ExternalLink size={14} /> View Live
+                    </a>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center p-12 text-center space-y-8">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-brand-blue/10 rounded-full animate-pulse scale-150"></div>
+                  <div className="relative w-24 h-24 bg-brand-blue/10 rounded-full flex items-center justify-center">
+                    <QrCode className="w-12 h-12 text-brand-blue" />
+                  </div>
+                </div>
+                
+                <div className="max-w-md space-y-4">
+                  <h2 className="text-2xl font-normal text-gray-900 tracking-tight">No Professional QR Assigned</h2>
+                  <p className="text-gray-500 leading-relaxed">
+                    Link your business to our professional indexing system to generate a serial-numbered QR code. This allows for better tracking and a more professional storefront presence.
+                  </p>
+                </div>
+
                 <button 
-                  onClick={() => {
-                    navigator.clipboard.writeText(businessUrl);
-                    toast.success('Link copied to clipboard');
-                  }}
-                  className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-full text-xs font-bold hover:border-brand-blue hover:text-brand-blue transition-all"
+                  onClick={handleRequestQR}
+                  disabled={requestingQR}
+                  className="flex items-center gap-3 px-8 py-4 bg-brand-dark text-white rounded-xl font-bold hover:bg-brand-blue transition-all shadow-xl shadow-brand-dark/10 disabled:opacity-50 group"
                 >
-                  <Share2 size={14} /> Copy Link
+                  {requestingQR ? <Loader2 className="animate-spin" size={20} /> : <QrCode size={20} className="group-hover:rotate-12 transition-transform" />}
+                  Generate Professional QR Code
                 </button>
-                <a 
-                  href={businessUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-full text-xs font-bold hover:border-brand-blue hover:text-brand-blue transition-all"
-                >
-                  <ExternalLink size={14} /> View Live
-                </a>
+
+                <div className="grid grid-cols-2 gap-4 w-full max-w-sm mt-8">
+                  <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Benefit 1</p>
+                    <p className="text-xs font-bold text-gray-700">Trackable Scans</p>
+                  </div>
+                  <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Benefit 2</p>
+                    <p className="text-xs font-bold text-gray-700">Serial Indexing</p>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

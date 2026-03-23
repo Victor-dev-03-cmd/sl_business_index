@@ -13,11 +13,12 @@ type Variables = {
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
 console.log('API Init - Supabase URL:', supabaseUrl ? `${supabaseUrl.slice(0, 10)}...` : 'MISSING')
 
-// Global client for background tasks/logging to avoid TLS/cookie issues
-const supabaseAdmin = createClient(supabaseUrl, supabaseAnonKey, {
+// Global client for administrative tasks (bypasses RLS)
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey || supabaseAnonKey, {
   auth: { persistSession: false }
 })
 
@@ -442,6 +443,115 @@ app.post('/social/publish', async (c) => {
   }
 
   return c.json({ success: true, results })
+})
+
+// QR Auto-Assign Endpoint
+app.post('/qr/request', async (c) => {
+  try {
+    const user = c.get('user')
+    const supabase = c.get('supabase') // User's authenticated client
+    const { business_id } = await c.req.json()
+
+    if (!user) {
+      return c.json({ error: 'Unauthorized' }, 401)
+    }
+
+    if (!business_id) {
+      return c.json({ error: 'business_id is required' }, 400)
+    }
+
+    // 1. Verify user owns this business
+    const { data: business, error: bizError } = await supabase
+      .from('businesses')
+      .select('id, name')
+      .eq('id', business_id)
+      .single()
+
+    if (bizError || !business) {
+      console.error('Ownership check failed:', bizError)
+      return c.json({ error: 'Business not found or unauthorized' }, 404)
+    }
+
+    // 2. Check if already assigned
+    const { data: existingQR } = await supabase
+      .from('qr_inventory')
+      .select('*')
+      .eq('business_id', business_id)
+      .maybeSingle()
+
+    if (existingQR) {
+      return c.json({ success: true, qr: existingQR })
+    }
+
+    // 3. Find an unassigned QR
+    // We use supabaseAdmin just for finding unassigned QRs if the public view isn't enough,
+    // but the actual update/insert will use the user's client.
+    const { data: availableQR, error: qrError } = await supabase
+      .from('qr_inventory')
+      .select('*')
+      .eq('status', 'unassigned')
+      .limit(1)
+      .maybeSingle()
+
+    if (availableQR) {
+      // Assign it using the vendor's client
+      const { data: updatedQR, error: updateError } = await supabase
+        .from('qr_inventory')
+        .update({
+          business_id,
+          status: 'assigned',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', availableQR.id)
+        .select()
+        .single()
+
+      if (updateError) {
+        console.error('Update QR Error:', updateError)
+        return c.json({ error: 'Failed to assign QR', details: updateError.message }, 500)
+      }
+
+      return c.json({ success: true, qr: updatedQR })
+    }
+
+    // 4. If no available QR, generate a new one on the fly
+    // Get last serial to continue sequence (Publicly viewable)
+    const { data: lastQR } = await supabase
+      .from('qr_inventory')
+      .select('serial_id')
+      .order('serial_id', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    let nextNum = 5000; 
+    if (lastQR) {
+      const num = parseInt(lastQR.serial_id.replace('SLB-', ''))
+      if (!isNaN(num)) nextNum = num + 1
+    }
+
+    const serialId = `SLB-${nextNum}`
+    const { data: newQR, error: insertError } = await supabase
+      .from('qr_inventory')
+      .insert({
+        serial_id: serialId,
+        short_link: `/q/${serialId}`,
+        business_id,
+        status: 'assigned',
+        batch_name: 'AUTO_GENERATED'
+      })
+      .select()
+      .single()
+
+    if (insertError) {
+      console.error('Insert QR Error:', insertError)
+      return c.json({ error: 'Failed to generate new QR', details: insertError.message }, 500)
+    }
+
+    return c.json({ success: true, qr: newQR })
+  } catch (err: any) {
+    console.error('QR Request Unexpected Error:', err)
+    return c.json({ error: 'Internal Server Error', details: err.message }, 500)
+  }
 })
 
 export const GET = handle(app)
