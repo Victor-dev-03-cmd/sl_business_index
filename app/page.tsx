@@ -44,7 +44,6 @@ import { SL_TOWNS, Town } from "@/lib/towns";
 import VerifiedBadge from "./components/VerifiedBadge";
 import { toast } from "sonner";
 import Fuse from "fuse.js";
-import { StarsBackground } from "@/components/animate-ui/components/backgrounds/stars";
 
 const sriLankanDistricts = [
   "Ampara",
@@ -603,21 +602,52 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-white font-normal">
       {/* --- HERO SECTION --- */}
-      <section className="relative h-[78vh] flex items-center justify-center overflow-hidden bg-brand-dark">
-        <StarsBackground className="absolute inset-0 z-0" />
+      <section className="relative h-[78vh] flex items-center justify-center overflow-hidden bg-white">
+        {/* Animated Blue Background Elements */}
+        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden ">
+          <motion.div
+            animate={{
+              scale: [1, 1.2, 1],
+              x: [0, 100, 0],
+              y: [0, 50, 0],
+            }}
+            transition={{
+              duration: 20,
+              repeat: Infinity,
+              ease: "linear",
+            }}
+            className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-brand-blue/10 blur-[120px] rounded-full"
+          />
+          <motion.div
+            animate={{
+              scale: [1, 1.3, 1],
+              x: [0, -120, 0],
+              y: [0, -80, 0],
+            }}
+            transition={{
+              duration: 25,
+              repeat: Infinity,
+              ease: "linear",
+            }}
+            className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-brand-blue/10 blur-[150px] rounded-full"
+          />
+        </div>
+
+        {/* Glass Morphism Overlay */}
+        <div className="absolute inset-0 bg-white/20 backdrop-blur-[100px] z-0 border-b border-gray-300" />
 
         <div className="relative z-10 max-w-5xl px-6 text-center">
-          <span className="inline-block px-4 py-1.5 mb-6 text-[11px] tracking-[0.15em] uppercase text-brand-sand border border-brand-sand/20 rounded-md">
+          <span className="inline-block px-4 py-1.5 mb-6 text-[11px] tracking-[0.15em] uppercase text-brand-blue border border-gray-300 rounded">
             Sri Lanka Business Index
           </span>
-          <h1 className="text-5xl md:text-6xl text-white mb-6 leading-tight tracking-tight">
+          <h1 className="text-5xl md:text-6xl text-gray-900 mb-6 leading-tight tracking-tight">
             Find the best{" "}
             <span className="inline-block min-w-[120px] md:min-w-[160px] h-[1.2em] overflow-hidden align-bottom text-left">
               <MorphingText
                 text={words}
                 loop
                 holdDelay={3000}
-                className="text-brand-sand"
+                className="text-brand-blue"
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: -20, opacity: 0 }}
@@ -625,9 +655,9 @@ export default function HomePage() {
               />
             </span>{" "}
             in <br />
-            <span className="text-brand-sand">Sri Lanka</span>
+            <span className="text-brand-blue">Sri Lanka</span>
           </h1>
-          <p className="text-blue-100/70 text-base mb-10 max-w-xl mx-auto leading-relaxed">
+          <p className="text-gray-600 text-base mb-10 max-w-xl mx-auto leading-relaxed">
             Explore verified local businesses, clinics, and luxury villas across
             the island.
           </p>
@@ -861,19 +891,19 @@ export default function HomePage() {
               <button
                 onClick={() => handleUseCurrentLocation(true)}
                 disabled={isFetchingLocation}
-                className="flex items-center gap-2 w-1/2 sm:w-auto px-5 py-3 text-gray-200 bg-white/5 hover:bg-white/10 border border-white/10 font-normal transition-all disabled:opacity-50 text-base rounded-[6px]"
+                className="flex items-center gap-2 w-1/2 sm:w-auto px-5 py-3 text-gray-700 bg-gray-50 hover:bg-brand-blue border border-gray-300 font-normal transition-all disabled:opacity-50 text-base rounded-[6px]"
               >
                 <Navigation
                   size={16}
                   strokeWidth={1.5}
-                  className={cn(isFetchingLocation && "animate-pulse")}
+                  className={cn("text-brand-blue", isFetchingLocation && "animate-pulse")}
                 />
                 {isFetchingLocation ? "Locating..." : "Near me"}
               </button>
 
               <button
                 onClick={handleSearch}
-                className="w-1/2 sm:w-auto bg-brand-gold hover:bg-brand-gold-light text-white text-base font-normal px-10 py-3 shadow-lg shadow-brand-gold/20 transition-all rounded-[6px]"
+                className="w-1/2 sm:w-auto bg-brand-blue hover:bg-brand-blue/90 text-white text-base font-normal px-10 py-3 shadow-lg shadow-brand-blue/10 transition-all rounded-[6px]"
               >
                 Search
               </button>
