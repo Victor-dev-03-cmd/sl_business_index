@@ -109,8 +109,50 @@ export default function RegisterBusinessPage() {
       nicNumber
     });
 
+    if (!businessName.trim()) {
+      setError('Business Name is required.');
+      setLoading(false);
+      return;
+    }
+
+    if (!category) {
+      setError('Please select a category for your business.');
+      setLoading(false);
+      return;
+    }
+
     if (!location) {
       setError('Please select a valid business address.');
+      setLoading(false);
+      return;
+    }
+
+    if (!ownerName.trim()) {
+      setError('Owner Name is required.');
+      setLoading(false);
+      return;
+    }
+
+    if (!contactNumber.trim()) {
+      setError('Contact Number is required.');
+      setLoading(false);
+      return;
+    }
+
+    if (!email.trim()) {
+      setError('Business Email is required.');
+      setLoading(false);
+      return;
+    }
+
+    if (registrationType === 'registered' && !brNumber.trim()) {
+      setError('BR Number is required for registered companies.');
+      setLoading(false);
+      return;
+    }
+
+    if (registrationType === 'unregistered' && !nicNumber.trim()) {
+      setError('NIC or Passport Number is required.');
       setLoading(false);
       return;
     }

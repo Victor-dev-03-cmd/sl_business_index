@@ -56,7 +56,7 @@ export default function CategorySelector({ value, onChange }: CategorySelectorPr
 
   return (
     <div className="w-full">
-      <label className="block text-sm font-normal text-gray-600 mb-2">Category</label>
+      <label className="block text-sm font-normal text-gray-600 mb-2">Category <span className="text-red-500">*</span></label>
       <div className="relative">
         <button
           type="button"

@@ -179,7 +179,6 @@ export default function AddressAutocomplete({
                   placeholder={placeholder}
                   value={value}
                   onValueChange={setValue}
-                  onChange={(e) => setValue(e.target.value)}
                   disabled={!ready}
                   className="text-base"
                 />
