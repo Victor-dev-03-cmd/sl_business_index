@@ -561,7 +561,7 @@ function SplitScreenResultsContent() {
                           radius,
                           cat.name,
                         );
-                        setSearchQuery("");
+                        setSearchQuery(cat.name);
                         setIsSearchFocused(false);
                         setMobileView("list");
                       }}
@@ -895,7 +895,7 @@ function SplitScreenResultsContent() {
                                 radius,
                                 cat.name,
                               );
-                              setSearchQuery("");
+                              setSearchQuery(cat.name);
                               setIsSearchFocused(false);
                             }}
                             className="w-full px-4 py-2.5 hover:bg-gray-50 flex items-center gap-3 transition-colors text-left"

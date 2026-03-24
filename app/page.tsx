@@ -140,6 +140,7 @@ export default function HomePage() {
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
+  const [showAllCategories, setShowAllCategories] = useState(false);
 
   const { data: categories = [], isLoading: categoriesLoading } = useQuery({
     queryKey: ["categories-home"],
@@ -609,7 +610,6 @@ export default function HomePage() {
     }
 
     params.set("q", categoryName);
-    setSearchQuery(""); // Reset search bar on category selection
     router.push(`/nearby?${params.toString()}`);
   };
 
@@ -1002,10 +1002,18 @@ export default function HomePage() {
             </div>
             <Link
               href="/categories"
-              className="text-sm text-brand-gold flex items-center hover:underline font-normal"
+              className="hidden md:flex text-sm text-brand-gold items-center hover:underline font-normal"
             >
               View All
             </Link>
+            {!showAllCategories && (
+              <button
+                onClick={() => setShowAllCategories(true)}
+                className="md:hidden text-sm text-brand-gold flex items-center hover:underline font-normal"
+              >
+                View All
+              </button>
+            )}
           </div>
         </div>
 
@@ -1018,48 +1026,56 @@ export default function HomePage() {
           onMouseUp={handleMouseUpOrLeave}
           onMouseLeave={handleMouseUpOrLeave}
           className={cn(
-            "flex gap-6 px-2 overflow-x-auto no-scrollbar pb-8 cursor-grab active:cursor-grabbing select-none",
+            "grid grid-cols-4 gap-2 md:flex md:gap-6 px-2 md:overflow-x-auto no-scrollbar pb-8 select-none",
             isDragging && "cursor-grabbing",
           )}
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {categoriesLoading
-            ? [...Array(8)].map((_, i) => (
+            ? [...Array(16)].map((_, i) => (
                 <div
                   key={i}
-                  className="flex-shrink-0 w-44 md:w-48 flex flex-col items-center p-8 bg-white border border-gray-200 rounded-[12px]"
+                  className="flex flex-col items-center p-3 md:p-8 bg-white border border-gray-200 rounded-[8px] md:rounded-[12px] md:flex-shrink-0 md:w-48"
                 >
-                  <Skeleton className="w-20 h-20 rounded-full mb-4" />
-                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="w-10 h-10 md:w-20 md:h-20 rounded-full mb-2 md:mb-4" />
+                  <Skeleton className="h-2 w-3/4" />
                 </div>
               ))
-            : categories.map((cat, idx) => (
-                <div
-                  key={cat.id || idx}
-                  onClick={() => handleCategoryClick(cat.name)}
-                  className="flex-shrink-0 w-44 md:w-48 group cursor-pointer flex flex-col items-center p-8 bg-white border border-gray-200 rounded-[12px] hover:border-brand-gold hover:shadow-xl hover:-translate-y-1 transition-all duration-300 select-none"
-                  onContextMenu={(e) => e.preventDefault()}
-                >
-                  <div className="relative w-20 h-20 mb-4 transition-transform group-hover:scale-110 pointer-events-none flex items-center justify-center">
-                    {cat.image_url ? (
-                      <Image
-                        src={encodeURI(cat.image_url)}
-                        alt={cat.name}
-                        fill
-                        className="object-contain"
-                        draggable={false}
-                      />
-                    ) : (
-                      <div className="text-brand-gold scale-[2]">
-                        <IconComponent name={cat.icon} />
+            : categories
+                .slice(0, showAllCategories ? categories.length : 1000) // Fallback for desktop
+                .map((cat, idx) => {
+                  // On mobile, if not showAllCategories, only show first 16 (4 rows of 4)
+                  if (!showAllCategories && typeof window !== 'undefined' && window.innerWidth < 768 && idx >= 16) {
+                    return null;
+                  }
+                  return (
+                    <div
+                      key={cat.id || idx}
+                      onClick={() => handleCategoryClick(cat.name)}
+                      className="group cursor-pointer flex flex-col items-center p-3 md:p-8 bg-white border border-gray-200 rounded-[8px] md:rounded-[12px] md:flex-shrink-0 md:w-48 hover:border-brand-gold hover:shadow-xl hover:-translate-y-1 transition-all duration-300 select-none"
+                      onContextMenu={(e) => e.preventDefault()}
+                    >
+                      <div className="relative w-10 h-10 md:w-20 md:h-20 mb-2 md:mb-4 transition-transform group-hover:scale-110 pointer-events-none flex items-center justify-center">
+                        {cat.image_url ? (
+                          <Image
+                            src={encodeURI(cat.image_url)}
+                            alt={cat.name}
+                            fill
+                            className="object-contain"
+                            draggable={false}
+                          />
+                        ) : (
+                          <div className="text-brand-gold scale-[1] md:scale-[2]">
+                            <IconComponent name={cat.icon} />
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                  <span className="text-gray-700 text-[11px] font-medium text-center group-hover:text-brand-gold transition-colors leading-tight line-clamp-2">
-                    {cat.name}
-                  </span>
-                </div>
-              ))}
+                      <span className="text-gray-700 text-[10px] md:text-[11px] font-medium text-center group-hover:text-brand-gold transition-colors leading-tight line-clamp-2">
+                        {cat.name}
+                      </span>
+                    </div>
+                  );
+                })}
         </div>
       </section>
 
