@@ -651,12 +651,12 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-white/20 backdrop-blur-[100px] z-0 border-b border-gray-300" />
 
         <div className="relative z-10 max-w-5xl px-6 text-center">
-          <span className="inline-block px-4 py-1.5 mb-6 text-[11px] tracking-[0.15em] uppercase text-brand-blue border border-gray-300 rounded">
+          <span className="inline-block px-4 py-1.5 mb-6 text-[11px] md:text-[13px] tracking-[0.15em] uppercase text-brand-blue border border-gray-300 rounded">
             Sri Lanka Business Index
           </span>
-          <h1 className="text-5xl md:text-6xl text-gray-900 mb-6 leading-tight tracking-tight">
+          <h1 className="text-4xl md:text-7xl text-gray-900 mb-6 leading-tight tracking-tight">
             Find the best{" "}
-            <span className="inline-block min-w-[120px] md:min-w-[160px] h-[1.2em] overflow-hidden align-bottom text-left">
+            <span className="inline-block min-w-[100px] md:min-w-[160px] h-[1.2em] overflow-hidden align-bottom text-left">
               <MorphingText
                 text={words}
                 loop
@@ -671,9 +671,8 @@ export default function HomePage() {
             in <br />
             <span className="text-brand-blue">Sri Lanka</span>
           </h1>
-          <p className="text-gray-600 text-base mb-10 max-w-xl mx-auto leading-relaxed">
-            Explore verified local businesses, clinics, and luxury villas across
-            the island.
+          <p className="text-gray-600 text-base md:text-lg mb-10 max-w-xl mx-auto leading-relaxed">
+            Explore verified local businesses, clinics, and luxury villas across Sri Lanka. Discover premium services and authentic island experiences through our directory.
           </p>
 
           {/* --- New Search Bar Design --- */}
