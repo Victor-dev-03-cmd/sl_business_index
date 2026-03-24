@@ -47,6 +47,7 @@ async function getBusinessDetails(id: string): Promise<Business | null> {
     is_registered: data.is_registered,
     working_hours: data.working_hours,
     facilities: data.facilities,
+    detailed_address: data.detailed_address,
   };
 
   return business;

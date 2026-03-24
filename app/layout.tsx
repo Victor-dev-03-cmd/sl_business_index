@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Outfit } from "next/font/google";
 import Navbar from "./components/Navbar";
 import NavbarWrapper from "./components/NavbarWrapper";
 import Footer from "./components/Footer";
@@ -15,6 +16,11 @@ import { SessionProvider } from "./components/SessionContext"; // Corrected impo
 import LoadingProvider from "./components/LoadingProvider";
 import { Toaster } from "sonner";
 import "./globals.css";
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-outfit",
+});
 
 export const metadata: Metadata = {
   title: "SL Business Index",
@@ -35,7 +41,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="light" style={{ colorScheme: "light" }}>
+    <html lang="en" className={`${outfit.variable} light`} style={{ colorScheme: "light" }}>
       <body className="antialiased">
         <ClarityTracker />
         <QueryProvider>

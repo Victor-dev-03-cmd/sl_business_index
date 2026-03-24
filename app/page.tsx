@@ -112,6 +112,7 @@ export default function HomePage() {
   const [fuzzyBusinessSuggestions, setFuzzyBusinessSuggestions] = useState<
     any[]
   >([]);
+  const [categorySuggestions, setCategorySuggestions] = useState<any[]>([]);
   const [geoData, setGeoData] = useState<any[]>([]);
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -260,8 +261,20 @@ export default function HomePage() {
     if (searchQuery.trim().length > 0) {
       const geoResults = fuse.search(searchQuery).slice(0, 4);
       setSuggestions(geoResults.map((r) => r.item));
+
+      // Update category suggestions
+      const query = searchQuery.toLowerCase();
+      const filteredCats = categories
+        .filter(
+          (cat: any) =>
+            cat.name.toLowerCase().includes(query) ||
+            cat.keywords?.some((kw: string) => kw.toLowerCase().includes(query)),
+        )
+        .slice(0, 5);
+      setCategorySuggestions(filteredCats);
     } else {
       setSuggestions([]);
+      setCategorySuggestions([]);
     }
 
     // 2. Database Fetch (Debounced)
@@ -596,6 +609,7 @@ export default function HomePage() {
     }
 
     params.set("q", categoryName);
+    setSearchQuery(""); // Reset search bar on category selection
     router.push(`/nearby?${params.toString()}`);
   };
 
@@ -706,7 +720,8 @@ export default function HomePage() {
               {isSearchFocused &&
                 (suggestions.length > 0 ||
                   businessSuggestions.length > 0 ||
-                  fuzzyBusinessSuggestions.length > 0) &&
+                  fuzzyBusinessSuggestions.length > 0 ||
+                  categorySuggestions.length > 0) &&
                 panelPos.width > 0 && (
                   <motion.div
                     key="suggestions"
@@ -725,6 +740,53 @@ export default function HomePage() {
                       overflowY: "auto",
                     }}
                   >
+                    {/* ── Categories section ── */}
+                    {categorySuggestions.length > 0 && (
+                      <div className="border-b border-gray-100 last:border-0">
+                        <div className="px-4 pt-3 pb-2">
+                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">
+                            Categories
+                          </span>
+                        </div>
+                        {categorySuggestions.map((cat) => (
+                          <button
+                            key={cat.id}
+                            onMouseDown={() => handleCategoryClick(cat.name)}
+                            className="w-full px-4 py-3 hover:bg-gray-50 active:bg-gray-100 flex items-center gap-3 transition-colors border-b border-gray-50 last:border-0"
+                          >
+                            <div className="w-9 h-9 rounded-xl bg-brand-gold/10 flex items-center justify-center shrink-0 border border-brand-gold/20">
+                              {cat.image_url ? (
+                                <img
+                                  src={cat.image_url}
+                                  alt={cat.name}
+                                  className="w-5 h-5 object-contain"
+                                />
+                              ) : (
+                                <IconComponent
+                                  name={cat.icon}
+                                  className="w-5 h-5 text-brand-gold"
+                                />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0 text-left">
+                              <p className="text-sm font-medium text-gray-800 truncate">
+                                {cat.name}
+                              </p>
+                              {cat.keywords && cat.keywords.length > 0 && (
+                                <p className="text-[10px] text-gray-400 mt-0.5 truncate">
+                                  {cat.keywords.join(", ")}
+                                </p>
+                              )}
+                            </div>
+                            <ChevronRight
+                              size={14}
+                              className="text-gray-300 shrink-0"
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
                     {/* ── Businesses section ── */}
                     {(fuzzyBusinessSuggestions.length > 0 ||
                       businessSuggestions.length > 0) && (

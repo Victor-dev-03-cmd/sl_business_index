@@ -10,8 +10,8 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['BrandFont', 'ui-sans-serif', 'system-ui'],
-        brand: ['BrandFont'],
+        sans: ["var(--font-outfit)", "ui-sans-serif", "system-ui"],
+        outfit: ["var(--font-outfit)"],
       },
       colors: {
         primary: 'var(--primary)',

@@ -188,6 +188,22 @@ function SplitScreenResultsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
+  const IconComponent = ({
+    name,
+    className,
+  }: {
+    name: string | null;
+    className?: string;
+  }) => {
+    if (!name) return <Tags className={className} />;
+    const Icon = (LucideIcons as any)[name];
+    return Icon ? (
+      <Icon className={className} />
+    ) : (
+      <Tags className={className} />
+    );
+  };
+
   // 1. Core States
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
@@ -228,6 +244,22 @@ function SplitScreenResultsContent() {
     null,
   );
   const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [categorySuggestions, setCategorySuggestions] = useState<any[]>([]);
+
+  // Fetch categories for search suggestions
+  const { data: categories = [] } = useQuery({
+    queryKey: ["categories-nearby"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("categories")
+        .select("*")
+        .is("parent_id", null)
+        .order("name", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   // 2. Core Search Logic (The sync function)
   const handleLocationSearch = useCallback(
@@ -258,6 +290,23 @@ function SplitScreenResultsContent() {
     }, 300);
     return () => clearTimeout(timer);
   }, [searchQuery]);
+
+  // Update category suggestions
+  useEffect(() => {
+    if (searchQuery.trim().length > 0) {
+      const query = searchQuery.toLowerCase();
+      const filteredCats = categories
+        .filter(
+          (cat: any) =>
+            cat.name.toLowerCase().includes(query) ||
+            cat.keywords?.some((kw: string) => kw.toLowerCase().includes(query)),
+        )
+        .slice(0, 5);
+      setCategorySuggestions(filteredCats);
+    } else {
+      setCategorySuggestions([]);
+    }
+  }, [searchQuery, categories]);
 
   // React Query fetch
   const {
@@ -400,18 +449,6 @@ function SplitScreenResultsContent() {
     };
   }, [businessesData, selectedCategory, debouncedSearchQuery]);
 
-  const { data: categories = [] } = useQuery({
-    queryKey: ["categories-nearby"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("categories")
-        .select("*")
-        .order("name");
-      if (error) throw error;
-      return data;
-    },
-  });
-
   const activeSubgroups = useMemo(() => {
     if (selectedCategory && CATEGORY_SUBGROUPS[selectedCategory])
       return CATEGORY_SUBGROUPS[selectedCategory];
@@ -507,6 +544,56 @@ function SplitScreenResultsContent() {
           />
           {/* Panel */}
           <div className="relative bg-white shadow-xl overflow-y-auto max-h-[70vh]">
+            {/* ── Categories ── */}
+            {categorySuggestions.length > 0 && (
+              <div className="border-b border-gray-100 last:border-0">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] px-4 pt-4 pb-2">
+                  Categories
+                </p>
+                <div className="divide-y divide-gray-100">
+                  {categorySuggestions.map((cat) => (
+                    <button
+                      key={cat.id}
+                      onMouseDown={() => {
+                        handleLocationSearch(
+                          currentLat!,
+                          currentLng!,
+                          radius,
+                          cat.name,
+                        );
+                        setSearchQuery("");
+                        setIsSearchFocused(false);
+                        setMobileView("list");
+                      }}
+                      className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 active:bg-gray-100 text-left transition-colors"
+                    >
+                      <div className="w-10 h-10 rounded-md bg-brand-gold/10 flex items-center justify-center shrink-0 border border-brand-gold/20 text-brand-gold">
+                        {cat.image_url ? (
+                          <img
+                            src={cat.image_url}
+                            alt={cat.name}
+                            className="w-6 h-6 object-contain"
+                          />
+                        ) : (
+                          <IconComponent name={cat.icon} className="w-6 h-6" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-800 truncate">
+                          {cat.name}
+                        </p>
+                        {cat.keywords && cat.keywords.length > 0 && (
+                          <p className="text-[11px] text-gray-400 truncate mt-0.5">
+                            {cat.keywords.join(", ")}
+                          </p>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* ── Businesses ── */}
             {suggestions.length > 0 && (
               <>
@@ -789,58 +876,117 @@ function SplitScreenResultsContent() {
 
           {isSearchFocused && (
             <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-[8px] shadow-2xl z-[9999] overflow-hidden text-left max-h-[420px] overflow-y-auto">
-              {suggestions.length > 0 ? (
+              {categorySuggestions.length > 0 || suggestions.length > 0 ? (
                 <>
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] px-4 pt-3 pb-2">
-                    {searchQuery.trim() ? "Best Matches" : "Nearby Businesses"}
-                  </p>
-                  <div className="divide-y divide-gray-100 pb-1">
-                    {suggestions.map((biz: any) => (
-                      <button
-                        key={biz.id}
-                        onMouseDown={() => {
-                          setSelectedBusiness(biz);
-                          setMapCenter({
-                            lat: biz.latitude,
-                            lng: biz.longitude,
-                          });
-                          setMapZoom(16);
-                          setSearchQuery(biz.name);
-                        }}
-                        className="w-full px-4 py-2.5 hover:bg-gray-50 flex items-center gap-3 transition-colors text-left"
-                      >
-                        <div className="w-9 h-9 rounded-md bg-gray-100 shrink-0 overflow-hidden border border-gray-100">
-                          {biz.logo_url || biz.image_url ? (
-                            <img
-                              src={biz.logo_url || biz.image_url}
-                              alt={biz.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-300">
-                              <Building2 size={15} />
+                  {/* Categories Section */}
+                  {categorySuggestions.length > 0 && (
+                    <div className="border-b border-gray-100 last:border-0">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] px-4 pt-3 pb-2">
+                        Categories
+                      </p>
+                      <div className="divide-y divide-gray-100 pb-1">
+                        {categorySuggestions.map((cat) => (
+                          <button
+                            key={cat.id}
+                            onMouseDown={() => {
+                              handleLocationSearch(
+                                currentLat!,
+                                currentLng!,
+                                radius,
+                                cat.name,
+                              );
+                              setSearchQuery("");
+                              setIsSearchFocused(false);
+                            }}
+                            className="w-full px-4 py-2.5 hover:bg-gray-50 flex items-center gap-3 transition-colors text-left"
+                          >
+                            <div className="w-8 h-8 rounded-md bg-brand-gold/10 flex items-center justify-center shrink-0 border border-brand-gold/20 text-brand-gold">
+                              {cat.image_url ? (
+                                <img
+                                  src={cat.image_url}
+                                  alt={cat.name}
+                                  className="w-5 h-5 object-contain"
+                                />
+                              ) : (
+                                <IconComponent
+                                  name={cat.icon}
+                                  className="w-5 h-5"
+                                />
+                              )}
                             </div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-800 truncate">
-                            {biz.name}
-                          </p>
-                          <p className="text-[11px] text-gray-400 truncate mt-0.5">
-                            {biz.category}
-                            {biz.address && (
-                              <> · {biz.address.split(",").pop()?.trim()}</>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-gray-800 truncate">
+                                {cat.name}
+                              </p>
+                              {cat.keywords && cat.keywords.length > 0 && (
+                                <p className="text-[11px] text-gray-400 truncate mt-0.5">
+                                  {cat.keywords.join(", ")}
+                                </p>
+                              )}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Businesses Section */}
+                  {suggestions.length > 0 && (
+                    <>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] px-4 pt-3 pb-2">
+                        {searchQuery.trim()
+                          ? "Best Matches"
+                          : "Nearby Businesses"}
+                      </p>
+                      <div className="divide-y divide-gray-100 pb-1">
+                        {suggestions.map((biz: any) => (
+                          <button
+                            key={biz.id}
+                            onMouseDown={() => {
+                              setSelectedBusiness(biz);
+                              setMapCenter({
+                                lat: biz.latitude,
+                                lng: biz.longitude,
+                              });
+                              setMapZoom(16);
+                              setSearchQuery(biz.name);
+                            }}
+                            className="w-full px-4 py-2.5 hover:bg-gray-50 flex items-center gap-3 transition-colors text-left"
+                          >
+                            <div className="w-9 h-9 rounded-md bg-gray-100 shrink-0 overflow-hidden border border-gray-100">
+                              {biz.logo_url || biz.image_url ? (
+                                <img
+                                  src={biz.logo_url || biz.image_url}
+                                  alt={biz.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-gray-300">
+                                  <Building2 size={15} />
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-gray-800 truncate">
+                                {biz.name}
+                              </p>
+                              <p className="text-[11px] text-gray-400 truncate mt-0.5">
+                                {biz.category}
+                                {biz.address && (
+                                  <> · {biz.address.split(",").pop()?.trim()}</>
+                                )}
+                              </p>
+                            </div>
+                            {biz.distanceText && (
+                              <span className="shrink-0 text-[10px] font-medium bg-gray-100 text-gray-500 px-2 py-1 rounded-full">
+                                {biz.distanceText}
+                              </span>
                             )}
-                          </p>
-                        </div>
-                        {biz.distanceText && (
-                          <span className="shrink-0 text-[10px] font-medium bg-gray-100 text-gray-500 px-2 py-1 rounded-full">
-                            {biz.distanceText}
-                          </span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </>
               ) : (
                 <div className="flex flex-col items-center justify-center py-8 text-gray-400 gap-2">
