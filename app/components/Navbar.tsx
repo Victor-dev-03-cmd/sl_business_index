@@ -161,15 +161,15 @@ export default function Navbar() {
             >
               Home
             </Link>
-            <CategoriesMenu initialCategories={categories} />
             {showRegister && (
               <Link
                 href="/register-business"
                 className="text-gray-600 hover:text-[#2a7db4] transition-colors"
-              >
+                >
                 Register Business
               </Link>
             )}
+            <CategoriesMenu initialCategories={categories} />
             <Link
               href="/about"
               className="text-gray-600 hover:text-[#2a7db4] transition-colors"

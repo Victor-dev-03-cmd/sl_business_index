@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { 
   Facebook, 
@@ -22,11 +22,36 @@ import {
   Layers
 } from 'lucide-react';
 import LogoLink from './LogoLink';
+import { useSession } from './SessionContext';
+import { supabase } from '@/lib/supabaseClient';
 
 const Footer = () => {
+  const { user } = useSession();
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      if (user) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+        if (!error && data) {
+          setUserRole(data.role);
+        }
+      } else {
+        setUserRole(null);
+      }
+    };
+    fetchUserRole();
+  }, [user]);
+
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const pricingHref = userRole === 'vendor' ? '/vendor/billing' : '/pricing-plans';
 
   return (
     <footer className="bg-gray-950 text-gray-300 pt-16 pb-8 border-t border-brand-dark/30">
@@ -96,7 +121,7 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link href="#" className="flex items-center gap-3 hover:text-brand-blue transition-colors group">
+                <Link href={pricingHref} className="flex items-center gap-3 hover:text-brand-blue transition-colors group">
                   <CreditCard size={16} className="text-brand-blue transition-transform" />
                   Pricing & Plans
                 </Link>
@@ -111,14 +136,14 @@ const Footer = () => {
               <li>
                 <a href="mailto:developerconsole03@gmail.com" className="flex items-center gap-3 hover:text-brand-blue transition-colors group">
                   <Mail size={16} className="text-brand-blue transition-transform" />
-                  developerconsole03@gmail.com
+                  slbusinessindex@gmail.com
                 </a>
               </li>
               <li>
-                <Link href="#" className="hover:text-brand-blue transition-colors">Privacy Policy</Link>
+                <Link href="/privacy-policy" className="hover:text-brand-blue transition-colors">Privacy Policy</Link>
               </li>
               <li>
-                <Link href="#" className="hover:text-brand-blue transition-colors">Terms of Service</Link>
+                <Link href="/terms-of-service" className="hover:text-brand-blue transition-colors">Terms of Service</Link>
               </li>
               <li>
                 <div className="flex items-center gap-2 mt-4 text-xs text-gray-500 bg-gray-900/50 w-fit px-3 py-1.5 rounded-full border border-gray-800">
