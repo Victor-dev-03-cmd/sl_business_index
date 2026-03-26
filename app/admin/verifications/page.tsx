@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { VerificationWithBusiness } from "@/lib/admin-types";
 import { toast } from "sonner";
+import { approveVerificationAction, rejectVerificationAction } from "@/app/actions/verifications";
 
 // Extend the type to include owner_id which we need for profile updates
 interface ExtendedVerification extends VerificationWithBusiness {
@@ -75,44 +76,28 @@ export default function VerificationsPage() {
     business_id: string,
     owner_id: string,
     status: "approved" | "rejected",
+    businessName: string
   ) => {
     setSubmitting(id);
     try {
-      // 1. Update Verification Status
-      const { error: verificationError } = await supabase
-        .from("verifications")
-        .update({ status })
-        .eq("id", id);
-
-      if (verificationError) throw verificationError;
-
-      // 2. Update Business Verified Status (if approved)
-      if (status === "approved" && business_id) {
-        const { error: businessError } = await supabase
-          .from("businesses")
-          .update({ is_verified: true })
-          .eq("id", business_id);
-
-        if (businessError) throw businessError;
-      }
-
-      // 3. Update Profile Verification Status (for the badge)
-      if (owner_id) {
-        const profileStatus = status === "approved" ? "verified" : "unverified";
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .update({ verification_status: profileStatus })
-          .eq("id", owner_id);
-
-        if (profileError)
-          console.error("Error updating profile status:", profileError);
+      if (status === "approved") {
+        const result = await approveVerificationAction(
+          id,
+          business_id,
+          owner_id,
+          businessName
+        );
+        if (!result.success) throw new Error(result.error);
+      } else {
+        const result = await rejectVerificationAction(id, owner_id);
+        if (!result.success) throw new Error(result.error);
       }
 
       toast.success(`Verification ${status} successfully!`);
       fetchVerifications();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating verification:", error);
-      toast.error("Failed to update verification status");
+      toast.error(error.message || "Failed to update verification status");
     } finally {
       setSubmitting(null);
     }
@@ -306,6 +291,7 @@ export default function VerificationsPage() {
                                   v.business_id,
                                   v.businesses.owner_id,
                                   "approved",
+                                  v.businesses.name
                                 )
                               }
                               disabled={submitting === v.id}
@@ -321,6 +307,7 @@ export default function VerificationsPage() {
                                   v.business_id,
                                   v.businesses.owner_id,
                                   "rejected",
+                                  v.businesses.name
                                 )
                               }
                               disabled={submitting === v.id}

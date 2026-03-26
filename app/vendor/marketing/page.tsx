@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Script from 'next/script';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import MarketingDesignEditor from './components/MarketingDesignEditor';
@@ -148,27 +149,36 @@ export default function MarketingPage() {
     }
   };
 
-  if (showEditor) {
-    return <MarketingDesignEditor onBackAction={() => setShowEditor(false)} />;
-  }
-
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl text-brand-dark">Marketing & Automation</h1>
-          <p className="text-gray-500 mt-1">Create, schedule, and automate your business promotions.</p>
-        </div>
-        <button 
-          onClick={() => setShowEditor(true)}
-          className="flex items-center gap-2 px-6 py-3 bg-brand-dark text-white text-sm rounded shadow transition-all"
-        >
-          <Sparkles size={16} /> Open Pro Design Editor
-        </button>
-      </div>
+    <>
+      <Script src="https://js.puter.com/v2/" strategy="afterInteractive" />
+      {showEditor ? (
+        <MarketingDesignEditor 
+          onBackAction={() => setShowEditor(false)} 
+          businesses={businesses}
+          onPublishSuccess={() => {
+            setShowEditor(false);
+            setActiveTab('history');
+            fetchData();
+          }}
+        />
+      ) : (
+        <div className="space-y-8">
+          {/* Header */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl text-brand-dark">Marketing & Automation</h1>
+              <p className="text-gray-500 mt-1">Create, schedule, and automate your business promotions.</p>
+            </div>
+            <button 
+              onClick={() => setShowEditor(true)}
+              className="flex items-center gap-2 px-6 py-3 bg-brand-dark text-white text-sm rounded shadow transition-all"
+            >
+              <Sparkles size={16} /> Open Pro Design Editor
+            </button>
+          </div>
 
-      {/* Tabs */}
+          {/* Tabs */}
       <div className="border-b border-gray-300">
         <nav className="-mb-px flex space-x-8">
           <button
@@ -410,8 +420,9 @@ export default function MarketingPage() {
             </button>
           </div>
         </div>
-
       </div>
     </div>
-  );
+  )}
+</>
+);
 }

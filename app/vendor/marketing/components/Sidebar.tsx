@@ -1,5 +1,6 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { 
   Layers, 
   Sparkles, 
@@ -12,20 +13,27 @@ import {
   Search,
   Plus,
   Upload,
-  MousePointer2,
   Box,
   Shapes,
-  History,
   Info,
-  Type
+  Type,
+  Sliders
 } from 'lucide-react';
 import { useEditorStore } from '../store/useEditorStore';
 import * as fabric from 'fabric';
+import PropertiesPanel from './PropertiesPanel';
 
 export default function Sidebar() {
-  const [activeTab, setActiveTab] = useState<'layers' | 'ai' | 'templates' | 'elements' | 'uploads'>('layers');
+  const [activeTab, setActiveTab] = useState<'layers' | 'ai' | 'templates' | 'elements' | 'uploads' | 'adjust'>('layers');
   const { layers, canvas, updateLayers, saveHistory, activeObject, setActiveObject } = useEditorStore();
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Auto-switch to adjust tab when an object is selected
+  useEffect(() => {
+    if (activeObject && activeTab !== 'adjust') {
+      setActiveTab('adjust');
+    }
+  }, [activeObject, activeTab]);
 
   const toggleVisibility = (obj: fabric.FabricObject) => {
     obj.set('visible', !obj.visible);
@@ -50,6 +58,7 @@ export default function Sidebar() {
     <div className="w-[340px] bg-[#0F172A] border-l border-slate-800 flex flex-row-reverse h-full text-slate-300 shadow-2xl z-10 shrink-0">
       {/* Vertical Tab Bar on the Right */}
       <div className="w-[68px] flex flex-col items-center py-4 gap-2 border-l border-slate-800 bg-[#0F172A] z-20">
+        <TabButton active={activeTab === 'adjust'} onClick={() => setActiveTab('adjust')} icon={<Sliders size={20} />} label="Adjust" />
         <TabButton active={activeTab === 'layers'} onClick={() => setActiveTab('layers')} icon={<Layers size={20} />} label="Layers" />
         <TabButton active={activeTab === 'templates'} onClick={() => setActiveTab('templates')} icon={<Layout size={20} />} label="Design" />
         <TabButton active={activeTab === 'elements'} onClick={() => setActiveTab('elements')} icon={<Shapes size={20} />} label="Shapes" />
@@ -65,6 +74,7 @@ export default function Sidebar() {
         {/* Header */}
         <div className="p-4 border-b border-slate-800 flex items-center justify-between">
           <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
+            {activeTab === 'adjust' && <Sliders size={14} className="text-blue-400" />}
             {activeTab === 'layers' && <Layers size={14} className="text-blue-400" />}
             {activeTab === 'templates' && <Layout size={14} className="text-purple-400" />}
             {activeTab === 'elements' && <Shapes size={14} className="text-orange-400" />}
@@ -79,7 +89,7 @@ export default function Sidebar() {
         </div>
 
         {/* Search Bar (Optional for some tabs) */}
-        {activeTab !== 'layers' && (
+        {activeTab !== 'layers' && activeTab !== 'adjust' && (
           <div className="px-4 py-3 border-b border-slate-800/50">
             <div className="relative group">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors" />
@@ -121,6 +131,8 @@ export default function Sidebar() {
             </div>
           )}
 
+          {activeTab === 'adjust' && <PropertiesPanel />}
+
           {activeTab === 'elements' && <ElementsPanel />}
           {activeTab === 'ai' && <AIMagicPanel />}
           {activeTab === 'templates' && <TemplatesPanel />}
@@ -131,7 +143,14 @@ export default function Sidebar() {
   );
 }
 
-function LayerItem({ obj, index, isActive, onClick, onToggleVisibility, onToggleLock }: any) {
+function LayerItem({ obj, index, isActive, onClick, onToggleVisibility, onToggleLock }: { 
+  obj: fabric.FabricObject, 
+  index: number, 
+  isActive: boolean, 
+  onClick: () => void, 
+  onToggleVisibility: () => void, 
+  onToggleLock: () => void 
+}) {
   const isText = obj.type === 'i-text';
   const isImage = obj.type === 'image' || obj.type === 'FabricImage';
   
@@ -145,7 +164,7 @@ function LayerItem({ obj, index, isActive, onClick, onToggleVisibility, onToggle
       </div>
       <div className="flex-1 min-w-0">
         <div className={`text-[11px] font-bold truncate ${isActive ? 'text-blue-300' : 'text-slate-300'}`}>
-          {isText ? (obj as any).text : obj.type.charAt(0).toUpperCase() + obj.type.slice(1)}
+          {isText ? (obj as fabric.IText).text : obj.type.charAt(0).toUpperCase() + obj.type.slice(1)}
         </div>
         <div className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">L{index}</div>
       </div>
@@ -219,19 +238,30 @@ function AIMagicPanel() {
     if (!prompt) return;
     setLoading(true);
     try {
-      // Simulation of high-quality AI generation
-      setTimeout(async () => {
-        const img = await fabric.FabricImage.fromURL('https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=1000&auto=format&fit=crop');
-        img.scaleToWidth(500);
-        canvas?.add(img);
-        canvas?.centerObject(img);
-        canvas?.setActiveObject(img);
-        saveHistory();
+      const puter = (window as any).puter;
+      if (!puter) {
+        toast.error('Puter.js is still initializing. Please wait 2-3 seconds and try again.');
         setLoading(false);
-        setPrompt('');
-      }, 2000);
+        return;
+      }
+
+      // Use Puter.js AI to generate an image
+      const result = await puter.ai.txt2img(prompt);
+      
+      const imageUrl = URL.createObjectURL(result);
+      
+      const img = await fabric.FabricImage.fromURL(imageUrl);
+      img.scaleToWidth(500);
+      canvas?.add(img);
+      canvas?.centerObject(img);
+      canvas?.setActiveObject(img);
+      saveHistory();
+      setLoading(false);
+      setPrompt('');
+      toast.success('AI Magic completed!');
     } catch (e) {
       console.error(e);
+      toast.error('AI Generation failed. Try again.');
       setLoading(false);
     }
   };
@@ -248,10 +278,10 @@ function AIMagicPanel() {
               <Sparkles size={16} className="text-blue-400" />
            </div>
            <div>
-              <span className="text-[10px] font-black text-blue-300 uppercase tracking-[0.2em]">Gemini Nano</span>
+              <span className="text-[10px] font-black text-blue-300 uppercase tracking-[0.2em]">Puter AI Engine</span>
               <div className="flex items-center gap-1">
                  <div className="w-1 h-1 rounded-full bg-blue-400 animate-pulse" />
-                 <span className="text-[8px] font-bold text-blue-400/60 uppercase tracking-widest">Enterprise AI</span>
+                 <span className="text-[8px] font-bold text-blue-400/60 uppercase tracking-widest">Powered by Puter.js</span>
               </div>
            </div>
         </div>
@@ -341,7 +371,7 @@ function ElementsPanel() {
   );
 }
 
-function ShapeBtn({ onClick, icon, label }: any) {
+function ShapeBtn({ onClick, icon, label }: { onClick: () => void, icon: React.ReactNode, label: string }) {
   return (
     <button 
       onClick={onClick} 

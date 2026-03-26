@@ -4,9 +4,9 @@ import { useState } from 'react';
 import Toolbar from './Toolbar';
 import Sidebar from './Sidebar';
 import EditorCanvas from './EditorCanvas';
-import PropertiesPanel from './PropertiesPanel';
 import { toast } from 'sonner';
 import { useEditorStore } from '../store/useEditorStore';
+import { supabase } from '@/lib/supabaseClient';
 import { 
   Download, 
   ChevronLeft,
@@ -17,14 +17,32 @@ import {
   Image as ImageIcon,
   FileText,
   ChevronDown,
-  Zap
+  Zap,
+  X,
+  Loader2,
+  Building
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 
-export default function MarketingDesignEditor({ onBackAction }: { onBackAction: () => void }) {
+interface Business {
+  id: string;
+  name: string;
+}
+
+interface EditorProps {
+  onBackAction: () => void;
+  businesses: Business[];
+  onPublishSuccess: () => void;
+}
+
+export default function MarketingDesignEditor({ onBackAction, businesses, onPublishSuccess }: EditorProps) {
   const { canvas, undo, redo, historyIndex, history, layers, projectName, setProjectName, canvasWidth, canvasHeight } = useEditorStore();
   const [isSaving, setIsSaving] = useState(false);
   const [showExportOptions, setShowExportOptions] = useState(false);
+  const [showPublishDialog, setShowPublishDialog] = useState(false);
+  const [selectedBusinessId, setSelectedBusinessId] = useState<string>(businesses[0]?.id || '');
+  const [caption, setCaption] = useState('Check out our new design!');
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(['facebook', 'instagram']);
 
   const exportAsImage = (format: 'png' | 'jpeg', transparent: boolean = false) => {
     if (!canvas) return;
@@ -59,15 +77,58 @@ export default function MarketingDesignEditor({ onBackAction }: { onBackAction: 
   };
 
   const publishToFeed = async () => {
+    if (!canvas) return;
+    if (!selectedBusinessId) {
+      toast.error('Please select a business first');
+      return;
+    }
+
     setIsSaving(true);
     try {
-      if (!canvas) return;
-      setTimeout(() => {
-        setIsSaving(false);
-        toast.success('Published to Business Marketing Feed successfully!');
-      }, 2000);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      // 1. Capture Canvas as Blob
+      const dataURL = canvas.toDataURL({ format: 'png', quality: 1, multiplier: 2 });
+      const blob = await (await fetch(dataURL)).blob();
+      const file = new File([blob], `${projectName || 'design'}.png`, { type: 'image/png' });
+
+      // 2. Upload to Storage
+      const fileName = `${selectedBusinessId}-${Date.now()}.png`;
+      const filePath = `${user.id}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('promotions')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // 3. Get Public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('promotions')
+        .getPublicUrl(filePath);
+
+      // 4. Insert into promotions table
+      const { error: insertError } = await supabase
+        .from('promotions')
+        .insert({
+          vendor_id: user.id,
+          business_id: selectedBusinessId,
+          image_url: publicUrl,
+          caption: caption,
+          social_platforms: selectedPlatforms,
+          status: 'pending' // Design editor items usually need review
+        });
+
+      if (insertError) throw insertError;
+
+      toast.success('Design published and submitted for approval!');
+      setIsSaving(false);
+      setShowPublishDialog(false);
+      onPublishSuccess();
     } catch (error) {
-      console.error(error);
+      console.error('Error publishing design:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to publish design');
       setIsSaving(false);
     }
   };
@@ -165,7 +226,7 @@ export default function MarketingDesignEditor({ onBackAction }: { onBackAction: 
           </div>
 
           <button
-            onClick={publishToFeed}
+            onClick={() => setShowPublishDialog(true)}
             disabled={isSaving}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg transition-all disabled:opacity-60 shadow-lg shadow-blue-500/40 hover:shadow-blue-500/60"
           >
@@ -183,7 +244,6 @@ export default function MarketingDesignEditor({ onBackAction }: { onBackAction: 
       <div className="flex-1 flex overflow-hidden">
         <Toolbar />
         <div className="flex-1 flex flex-col overflow-hidden">
-          <PropertiesPanel />
           <EditorCanvas />
         </div>
         <Sidebar />
@@ -204,6 +264,97 @@ export default function MarketingDesignEditor({ onBackAction }: { onBackAction: 
           <span>SL Business Pro Design</span>
         </div>
       </footer>
+
+      {/* Publish Dialog */}
+      {showPublishDialog && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col">
+            <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/50">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                  <Send size={16} className="text-blue-400" />
+                </div>
+                <h3 className="text-sm font-bold text-slate-200">Publish Design</h3>
+              </div>
+              <button onClick={() => setShowPublishDialog(false)} className="p-1 text-slate-500 hover:text-white transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-5">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1 flex items-center gap-1.5">
+                  <Building size={12} /> Target Business
+                </label>
+                <select 
+                  value={selectedBusinessId}
+                  onChange={(e) => setSelectedBusinessId(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-200 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all"
+                >
+                  {businesses.map(b => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Promotion Caption</label>
+                <textarea 
+                  value={caption}
+                  onChange={(e) => setCaption(e.target.value)}
+                  placeholder="Write something about this promotion..."
+                  rows={3}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-200 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all resize-none"
+                />
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Social Platforms</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <PlatformBtn 
+                    label="Facebook" 
+                    active={selectedPlatforms.includes('facebook')} 
+                    onClick={() => setSelectedPlatforms(prev => prev.includes('facebook') ? prev.filter(p => p !== 'facebook') : [...prev, 'facebook'])} 
+                  />
+                  <PlatformBtn 
+                    label="Instagram" 
+                    active={selectedPlatforms.includes('instagram')} 
+                    onClick={() => setSelectedPlatforms(prev => prev.includes('instagram') ? prev.filter(p => p !== 'instagram') : [...prev, 'instagram'])} 
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-slate-800/30 border-t border-slate-800 flex gap-3">
+              <button 
+                onClick={() => setShowPublishDialog(false)}
+                className="flex-1 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition-all"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={publishToFeed}
+                disabled={isSaving || selectedPlatforms.length === 0}
+                className="flex-[2] py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold shadow-lg shadow-blue-500/20 transition-all flex items-center justify-center gap-2"
+              >
+                {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                {isSaving ? 'Publishing...' : 'Confirm & Publish'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+function PlatformBtn({ label, active, onClick }: { label: string, active: boolean, onClick: () => void }) {
+  return (
+    <button 
+      onClick={onClick}
+      className={`py-2 rounded-lg border text-[10px] font-bold transition-all ${active ? 'bg-blue-500/10 border-blue-500 text-blue-400' : 'bg-slate-800 border-slate-700 text-slate-500 hover:border-slate-600'}`}
+    >
+      {label}
+    </button>
   );
 }
