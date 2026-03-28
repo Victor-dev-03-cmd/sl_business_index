@@ -175,7 +175,7 @@ export default function HomePage() {
         `,
         )
         .order("order_index", { ascending: true })
-        .limit(4);
+        .limit(10);
 
       if (error) {
         console.error("Featured listings fetch error:", error);
@@ -1104,22 +1104,17 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             {featuredLoading ? (
-              [...Array(4)].map((_, i) => (
+              [...Array(10)].map((_, i) => (
                 <div
                   key={i}
                   className="bg-white rounded-[6px] overflow-hidden border border-gray-300 shadow-sm flex flex-col h-full"
                 >
-                  <Skeleton className="h-48 w-full" />
+                  <Skeleton className="aspect-square w-full" />
                   <div className="p-4 flex flex-col flex-1 space-y-3">
                     <Skeleton className="h-3 w-1/2" />
                     <Skeleton className="h-4 w-3/4" />
-                    <Skeleton className="h-3 w-full" />
-                    <div className="flex justify-between pt-4 mt-auto">
-                      <Skeleton className="h-3 w-20" />
-                      <Skeleton className="h-3 w-20" />
-                    </div>
                   </div>
                 </div>
               ))
@@ -1135,7 +1130,7 @@ export default function HomePage() {
                   className="group bg-white rounded-[6px] overflow-hidden border border-gray-300 hover:border-brand-gold/40 shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col h-full relative"
                 >
                   {/* Image Section */}
-                  <div className="relative h-52 w-full overflow-hidden bg-gray-100">
+                  <div className="relative aspect-square w-full overflow-hidden bg-gray-100">
                     {business.image_url ? (
                       <Image
                         src={business.image_url}
@@ -1149,21 +1144,13 @@ export default function HomePage() {
                       </div>
                     )}
 
-                    {/* Logo Overlay on Hover */}
-                    {business.logo_url && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500 backdrop-blur-[2px]">
-                        <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-white/50 shadow-2xl transform scale-50 group-hover:scale-100 transition-transform duration-500">
-                          <Image
-                            src={business.logo_url}
-                            alt={`${business.name} logo`}
-                            fill
-                            className="object-cover bg-white"
-                          />
-                        </div>
-                      </div>
-                    )}
+                    {/*Overlay on Hover */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-500 backdrop-blur-[2px] p-4 text-center z-20">
+                      <p className="text-white font-bold text-sm mb-1">{business.name}</p>
+                      <p className="text-gray-300 text-[10px] font-medium uppercase tracking-wider">{business.category}</p>
+                    </div>
 
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60 group-hover:opacity-0 transition-opacity" />
 
                     {business.is_verified && business.can_show_badge && (
                       <div className="absolute top-3 left-3 z-10">
@@ -1195,42 +1182,7 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  {/* Content Section */}
-                  <div className="p-5 flex flex-col flex-1 font-normal bg-white">
-                    <div className="mb-4">
-                      <p className="text-[10px] font-bold text-brand-blue uppercase tracking-[0.15em] mb-2 opacity-80">
-                        {business.category}
-                      </p>
-                      <h3 className="text-base text-gray-900 font-normal group-hover:text-brand-gold transition-colors duration-300 line-clamp-1 leading-tight">
-                        {business.name}
-                      </h3>
-                    </div>
-
-                    <div className="flex items-start text-gray-500 mb-6 flex-1">
-                      <MapPin
-                        size={14}
-                        strokeWidth={1.5}
-                        className="mr-2 mt-0.5 flex-shrink-0 text-brand-gold"
-                      />
-                      <p className="text-[12px] leading-relaxed line-clamp-2 font-normal text-gray-600">
-                        {business.address}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-auto">
-                      <span className="text-[10px] font-normal text-gray-400 font-mono tracking-tighter">
-                        ID: {business.id.toString().slice(0, 8)}
-                      </span>
-                      <div className="text-[11px] font-bold text-brand-dark flex items-center gap-1 group/btn px-3 py-1.5 bg-gray-50 rounded-[4px] group-hover:bg-brand-gold group-hover:text-white transition-all duration-300">
-                        Explore
-                        <ChevronRight
-                          size={14}
-                          strokeWidth={2}
-                          className="group-hover/btn:translate-x-1 transition-transform"
-                        />
-                      </div>
-                    </div>
-                  </div>
+                  
                 </Link>
               ))
             ) : (

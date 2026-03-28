@@ -92,7 +92,7 @@ export default function CategoriesMenu({ initialCategories = [], isMobile = fals
                     placeholder="Find a category..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-10 py-2.5 bg-gray-50 border border-gray-300 rounded-[6px] focus:bg-white focus:ring-1 focus:ring-brand-dark outline-none transition-all text-sm font-normal"
+                    className="w-full pl-10 pr-10 py-2.5 bg-gray-50 border border-gray-300 rounded-[6px] focus:bg-white focus:ring-1 focus:ring-brand-dark outline-none transition-all text-sm font-normal text-gray-900"
                     autoFocus
                   />
                   {searchQuery && (

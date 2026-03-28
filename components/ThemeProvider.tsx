@@ -10,8 +10,6 @@ type ThemeSettings = {
 
 type ThemeContextType = {
   settings: ThemeSettings;
-  isDarkMode: boolean;
-  toggleDarkMode: () => void;
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -22,14 +20,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     theme_accent_color: '#b4863b',  // Golden Accent 1
   });
 
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
   useEffect(() => {
-    // Force Light Mode: Remove any dark class and set theme to light
-    document.documentElement.classList.remove('dark');
-    document.documentElement.classList.add('light');
-    localStorage.setItem('theme', 'light');
-    
     // Initial fetch for site settings
     const fetchSettings = async () => {
       try {
@@ -69,11 +60,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const toggleDarkMode = () => {
-    // Dark mode disabled
-    console.log("Dark mode is disabled");
-  };
-
   const updateCSSVariables = (theme: ThemeSettings) => {
     if (typeof document !== 'undefined') {
       const root = document.documentElement;
@@ -83,7 +69,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <ThemeContext.Provider value={{ settings, isDarkMode, toggleDarkMode }}>
+    <ThemeContext.Provider value={{ settings }}>
       {children}
     </ThemeContext.Provider>
   );

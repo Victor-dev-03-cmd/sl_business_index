@@ -190,29 +190,30 @@ export default function Navbar() {
               <LiveCounter />
             </div>
             {fullUserData && <NotificationBell />}
+            
             <AuthButton user={fullUserData} />
 
             {/* ── Animated hamburger toggle ── */}
             <button
               onClick={() => setMobileMenuOpen((v) => !v)}
               aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-              className="md:hidden relative w-10 h-10 flex flex-col items-center justify-center gap-[5px] rounded-[8px] border border-gray-200 bg-white shadow-sm hover:border-brand-dark hover:shadow-md active:scale-95 transition-all duration-200"
+              className="md:hidden relative w-10 h-10 flex flex-col items-center justify-center gap-[5px] rounded-[8px] border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm hover:border-brand-dark hover:shadow-md active:scale-95 transition-all duration-200"
             >
               <span
                 className={cn(
-                  "block w-[18px] h-[1.5px] bg-brand-dark rounded-full transition-all duration-300 origin-center",
+                  "block w-[18px] h-[1.5px] bg-brand-dark dark:bg-gray-300 rounded-full transition-all duration-300 origin-center",
                   mobileMenuOpen && "rotate-45 translate-y-[6.5px]",
                 )}
               />
               <span
                 className={cn(
-                  "block w-[18px] h-[1.5px] bg-brand-dark rounded-full transition-all duration-300",
+                  "block w-[18px] h-[1.5px] bg-brand-dark dark:bg-gray-300 rounded-full transition-all duration-300",
                   mobileMenuOpen && "opacity-0 scale-x-0",
                 )}
               />
               <span
                 className={cn(
-                  "block w-[18px] h-[1.5px] bg-brand-dark rounded-full transition-all duration-300 origin-center",
+                  "block w-[18px] h-[1.5px] bg-brand-dark dark:bg-gray-300 rounded-full transition-all duration-300 origin-center",
                   mobileMenuOpen && "-rotate-45 -translate-y-[6.5px]",
                 )}
               />
@@ -245,18 +246,20 @@ export default function Navbar() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", stiffness: 320, damping: 32 }}
-              className="fixed top-0 right-0 z-[100] h-full w-full max-w-[320px] bg-white shadow-2xl flex flex-col"
+              className="fixed top-0 right-0 z-[100] h-full w-full max-w-[320px] bg-white dark:bg-slate-900 shadow-2xl flex flex-col"
             >
               {/* ── Panel header ── */}
-              <div className="flex items-center justify-between h-16 px-5 border-b border-gray-100 shrink-0">
+              <div className="flex items-center justify-between h-16 px-5 border-b border-gray-100 dark:border-slate-800 shrink-0">
                 <LogoLink />
-                <button
-                  onClick={close}
-                  aria-label="Close menu"
-                  className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-red-50 hover:text-red-500 text-gray-500 transition-colors"
-                >
-                  <X size={16} strokeWidth={2} />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={close}
+                    aria-label="Close menu"
+                    className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 text-gray-500 dark:text-gray-400 transition-colors"
+                  >
+                    <X size={16} strokeWidth={2} />
+                  </button>
+                </div>
               </div>
 
               {/* ── User card ── */}
@@ -276,7 +279,7 @@ export default function Navbar() {
               {/* Show card as soon as session user is confirmed */}
               {!sessionLoading && user && (
                 <div className="mx-4 mt-4 shrink-0">
-                  <div className="flex items-center gap-3 p-3.5 bg-brand-dark/5 rounded-xl border border-brand-dark/10">
+                  <div className="flex items-center gap-3 p-3.5 bg-brand-dark/5 dark:bg-slate-800/50 rounded-xl border border-brand-dark/10 dark:border-slate-700">
                     {/* Avatar */}
                     <div className="w-10 h-10 rounded-full bg-brand-dark flex items-center justify-center text-white text-sm font-semibold overflow-hidden shrink-0">
                       {profileData?.avatar_url ? (
@@ -295,7 +298,7 @@ export default function Navbar() {
 
                     {/* Name + role */}
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-gray-800 truncate">
+                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
                         {profileData?.full_name ||
                           profileData?.username ||
                           user.email?.split("@")[0] ||
@@ -312,7 +315,7 @@ export default function Navbar() {
                       <Link
                         href="/admin/dashboard"
                         onClick={close}
-                        className="ml-auto shrink-0 p-2 bg-white rounded-lg border border-gray-200 text-brand-dark hover:bg-brand-dark hover:text-white transition-colors"
+                        className="ml-auto shrink-0 p-2 bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-700 text-brand-dark dark:text-gray-300 hover:bg-brand-dark hover:text-white transition-colors"
                       >
                         <LayoutDashboard size={15} />
                       </Link>
@@ -321,7 +324,7 @@ export default function Navbar() {
                       <Link
                         href="/vendor/dashboard"
                         onClick={close}
-                        className="ml-auto shrink-0 p-2 bg-white rounded-lg border border-gray-200 text-brand-dark hover:bg-brand-dark hover:text-white transition-colors"
+                        className="ml-auto shrink-0 p-2 bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-700 text-brand-dark dark:text-gray-300 hover:bg-brand-dark hover:text-white transition-colors"
                       >
                         <Briefcase size={15} />
                       </Link>
@@ -389,9 +392,9 @@ export default function Navbar() {
                 <motion.div variants={itemVariants}>
                   <button
                     onClick={() => setCategOpen((v) => !v)}
-                    className="w-full flex items-center gap-3 px-3 py-3.5 rounded-xl text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                    className="w-full flex items-center gap-3 px-3 py-3.5 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 active:bg-gray-100 dark:active:bg-slate-700 transition-colors"
                   >
-                    <span className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-brand-blue shrink-0">
+                    <span className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-brand-blue shrink-0">
                       <LayoutGrid size={16} />
                     </span>
                     <span className="flex-1 text-sm font-medium text-left">
@@ -421,9 +424,9 @@ export default function Navbar() {
                               key={String(cat.name)}
                               href={`/categories/${slugify(String(cat.name))}`}
                               onClick={close}
-                              className="flex items-center gap-2 px-2.5 py-2 bg-gray-50 hover:bg-brand-dark/5 border border-gray-100 rounded-lg transition-colors"
+                              className="flex items-center gap-2 px-2.5 py-2 bg-gray-50 dark:bg-slate-800/50 hover:bg-brand-dark/5 dark:hover:bg-slate-700 border border-gray-100 dark:border-slate-800 rounded-lg transition-colors"
                             >
-                              <span className="w-6 h-6 rounded-md bg-white border border-gray-200 flex items-center justify-center overflow-hidden shrink-0">
+                              <span className="w-6 h-6 rounded-md bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 flex items-center justify-center overflow-hidden shrink-0">
                                 {cat.image_url ? (
                                   <Image
                                     src={String(cat.image_url)}
@@ -439,7 +442,7 @@ export default function Navbar() {
                                   />
                                 )}
                               </span>
-                              <span className="text-[11px] text-gray-700 font-medium truncate leading-tight">
+                              <span className="text-[11px] text-gray-700 dark:text-gray-300 font-medium truncate leading-tight">
                                 {String(cat.name)}
                               </span>
                             </Link>
@@ -449,7 +452,7 @@ export default function Navbar() {
                             <Link
                               href="/categories"
                               onClick={close}
-                              className="col-span-2 flex items-center justify-center gap-1.5 py-2.5 bg-brand-dark/5 hover:bg-brand-dark/10 rounded-lg text-xs font-semibold text-brand-dark transition-colors border border-brand-dark/10"
+                              className="col-span-2 flex items-center justify-center gap-1.5 py-2.5 bg-brand-dark/5 dark:bg-slate-800/50 hover:bg-brand-dark/10 dark:hover:bg-slate-800 rounded-lg text-xs font-semibold text-brand-dark dark:text-gray-300 transition-colors border border-brand-dark/10 dark:border-slate-700"
                             >
                               View all {categories.length} categories
                               <ChevronRight size={13} />
@@ -464,7 +467,7 @@ export default function Navbar() {
 
               {/* ── Auth footer ── */}
               <div
-                className="shrink-0 px-4 py-4 border-t border-gray-100 space-y-2"
+                className="shrink-0 px-4 py-4 border-t border-gray-100 dark:border-slate-800 space-y-2"
                 style={{
                   paddingBottom: "calc(env(safe-area-inset-bottom) + 1rem)",
                 }}
@@ -476,7 +479,7 @@ export default function Navbar() {
                       close();
                       window.location.href = "/";
                     }}
-                    className="w-full flex items-center justify-center gap-2 h-11 border border-red-200 text-red-500 rounded-[6px] text-sm font-semibold hover:bg-red-50 active:bg-red-100 transition-colors"
+                    className="w-full flex items-center justify-center gap-2 h-11 border border-red-200 dark:border-red-900/30 text-red-500 rounded-[6px] text-sm font-semibold hover:bg-red-50 dark:hover:bg-red-900/20 active:bg-red-100 transition-colors"
                   >
                     <LogOut size={16} />
                     Sign Out
@@ -494,7 +497,7 @@ export default function Navbar() {
                     <Link
                       href="/signup"
                       onClick={close}
-                      className="w-full flex items-center justify-center gap-2 h-11 border border-gray-300 text-gray-700 rounded-[6px] text-sm font-medium hover:bg-gray-50 transition-colors"
+                      className="w-full flex items-center justify-center gap-2 h-11 border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-gray-300 rounded-[6px] text-sm font-medium hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
                     >
                       Create Account
                     </Link>
@@ -535,8 +538,8 @@ function MobileNavLink({
         className={cn(
           "flex items-center gap-3 px-3 py-3.5 rounded-xl transition-colors active:scale-[0.98]",
           highlight
-            ? "bg-brand-dark/5 hover:bg-brand-dark/10 border border-brand-dark/10"
-            : "hover:bg-gray-50 active:bg-gray-100",
+            ? "bg-brand-dark/5 dark:bg-slate-800/50 hover:bg-brand-dark/10 dark:hover:bg-slate-800 border border-brand-dark/10 dark:border-slate-700"
+            : "hover:bg-gray-50 dark:hover:bg-slate-800 active:bg-gray-100 dark:active:bg-slate-700",
         )}
       >
         <span
@@ -544,7 +547,7 @@ function MobileNavLink({
             "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
             highlight
               ? "bg-brand-dark text-white"
-              : "bg-gray-100 text-brand-dark",
+              : "bg-gray-100 dark:bg-slate-800 text-brand-dark dark:text-gray-300",
           )}
         >
           <Icon size={16} />
@@ -552,12 +555,12 @@ function MobileNavLink({
         <span
           className={cn(
             "text-sm font-medium",
-            highlight ? "text-brand-dark" : "text-gray-700",
+            highlight ? "text-brand-dark dark:text-gray-200" : "text-gray-700 dark:text-gray-300",
           )}
         >
           {label}
         </span>
-        <ChevronRight size={14} className="ml-auto text-gray-300" />
+        <ChevronRight size={14} className="ml-auto text-gray-300 dark:text-gray-600" />
       </Link>
     </motion.div>
   );

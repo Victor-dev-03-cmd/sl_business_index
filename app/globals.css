@@ -6,15 +6,14 @@ html {
 
 :root {
   --font-sans: var(--font-outfit), ui-sans-serif, system-ui;
-  color-scheme: light !important;
   --background: 0 0% 100%;
   --foreground: 222.2 84% 4.9%;
   --card: 0 0% 100%;
   --card-foreground: 222.2 84% 4.9%;
   --popover: 0 0% 100%;
   --popover-foreground: 222.2 84% 4.9%;
-  --primary: 142.1 76.2% 36.3%;
-  --primary-foreground: 355.7 100% 97.3%;
+  --primary: 221.2 83.2% 53.3%;
+  --primary-foreground: 210 40% 98%;
   --secondary: 210 40% 96.1%;
   --secondary-foreground: 222.2 47.4% 11.2%;
   --muted: 210 40% 96.1%;
@@ -25,7 +24,8 @@ html {
   --destructive-foreground: 210 40% 98%;
   --border: 214.3 31.8% 91.4%;
   --input: 214.3 31.8% 91.4%;
-  --ring: 215 20.2% 65.1%;
+  --ring: 221.2 83.2% 53.3%;
+  --radius: 0.5rem;
 
   /* Live Theme Variables */
   --brand-dark: #053765;
@@ -78,19 +78,20 @@ select,
 .text-brand-text { color: var(--brand-text); }
 .bg-brand-text { background-color: var(--brand-text); }
 
-/* Force Light Mode for Inputs */
+/* Force Light Mode for Inputs - only when explicitly needed, but let's make it smarter */
 @layer base {
   input, textarea, select {
-    background-color: white !important;
-    color: black !important;
+    background-color: transparent;
+    color: inherit;
   }
 }
 
 body {
   background: hsl(var(--background));
-  color: var(--text-color);
+  color: hsl(var(--foreground));
   font-family: var(--font-sans);
   overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Custom Webkit Scrollbar */

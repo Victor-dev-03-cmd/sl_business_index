@@ -190,14 +190,14 @@ const Footer = () => {
         </div>
       </div>
 
-      {/* Back to Top Arrow */}
+      {/* Back to Top Arrow
       <button 
         onClick={scrollToTop}
-        className="fixed bottom-8 right-8 p-3 bg-brand-dark hover:bg-brand-blue text-white rounded-full shadow-2xl shadow-brand-dark/40 z-50 transition-all hover:-translate-y-1 active:scale-95 border-2 border-white/20"
+        className="fixed bottom-8 right-8 w-12 h-12 flex items-center justify-center bg-brand-dark hover:bg-brand-blue text-white shadow-2xl rounded-full shadow-brand-dark/40 z-50 transition-all hover:-translate-y-1 active:scale-95 border-2 border-white/20"
         aria-label="Back to top"
       >
         <ArrowUp size={20} />
-      </button>
+      </button>  */}
     </footer>
   );
 };

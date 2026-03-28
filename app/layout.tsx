@@ -41,7 +41,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${outfit.variable} light`} style={{ colorScheme: "light" }}>
+    <html lang="en" className={`${outfit.variable}`} suppressHydrationWarning>
       <body className="antialiased">
         <ClarityTracker />
         <QueryProvider>
