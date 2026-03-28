@@ -2,24 +2,32 @@
 
 import { useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, Mail, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Lock, CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-export default function ForgotPassword() {
-  const [email, setEmail] = useState('');
+export default function UpdatePassword() {
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const router = useRouter();
 
-  const handleResetRequest = async (e: React.FormEvent) => {
+  const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'https://slbusinessindex.com/update-password',
+    const { error } = await supabase.auth.updateUser({
+      password: password,
     });
 
     setLoading(false);
@@ -27,6 +35,9 @@ export default function ForgotPassword() {
       setError(error.message);
     } else {
       setSuccess(true);
+      setTimeout(() => {
+        router.push('/login');
+      }, 3000);
     }
   };
 
@@ -51,15 +62,15 @@ export default function ForgotPassword() {
                 className="brightness-0 invert"
               />
             </div>
-            <h1 className="text-4xl font-normal text-white mb-6">Security & Recovery.</h1>
+            <h1 className="text-4xl font-normal text-white mb-6">Reset Your Security.</h1>
             <p className="text-brand-sand/80 text-sm leading-relaxed">
-              We&apos;ll help you get back into your account securely. Just enter your email and follow the instructions.
+              Choose a strong, unique password to keep your account safe and secure.
             </p>
           </motion.div>
         </div>
       </div>
 
-      {/* Right Side: Reset Form */}
+      {/* Right Side: Update Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-md">
           {/* Mobile Logo */}
@@ -74,8 +85,8 @@ export default function ForgotPassword() {
               <ArrowLeft size={14} className="mr-2" /> Back to Login
             </Link>
             
-            <h2 className="text-2xl font-normal text-gray-900 mb-2">Password Recovery</h2>
-            <p className="text-gray-400 text-sm">Enter your email address to receive a reset link.</p>
+            <h2 className="text-2xl font-normal text-gray-900 mb-2">Create New Password</h2>
+            <p className="text-gray-400 text-sm">Enter your new secure password below.</p>
           </div>
 
           {success ? (
@@ -89,9 +100,9 @@ export default function ForgotPassword() {
                   <CheckCircle2 size={24} />
                 </div>
               </div>
-              <h3 className="text-emerald-900 font-bold mb-2">Check your Email</h3>
+              <h3 className="text-emerald-900 font-bold mb-2">Password Updated</h3>
               <p className="text-emerald-700 text-sm mb-6">
-                We&apos;ve sent a password reset link to <span className="font-bold">{email}</span>.
+                Your password has been successfully reset. Redirecting you to login...
               </p>
               <Link 
                 href="/login"
@@ -101,17 +112,32 @@ export default function ForgotPassword() {
               </Link>
             </motion.div>
           ) : (
-            <form onSubmit={handleResetRequest} className="space-y-6">
+            <form onSubmit={handleUpdatePassword} className="space-y-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-normal text-gray-400 uppercase tracking-[0.2em] block ml-1">Email Address</label>
+                <label className="text-[10px] font-normal text-gray-400 uppercase tracking-[0.2em] block ml-1">New Password</label>
                 <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <input
-                    type="email"
+                    type="password"
                     required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="e.g. victor@example.com"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full pl-11 pr-4 py-3.5 text-gray-900 bg-gray-50 border border-gray-100 rounded-[6px] focus:outline-none focus:ring-1 focus:ring-brand-dark focus:bg-white transition-all text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-normal text-gray-400 uppercase tracking-[0.2em] block ml-1">Confirm Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="password"
+                    required
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••"
                     className="w-full pl-11 pr-4 py-3.5 text-gray-900 bg-gray-50 border border-gray-100 rounded-[6px] focus:outline-none focus:ring-1 focus:ring-brand-dark focus:bg-white transition-all text-sm"
                   />
                 </div>
@@ -128,7 +154,7 @@ export default function ForgotPassword() {
                 disabled={loading}
                 className="w-full py-4 px-6 bg-brand-dark text-white font-normal rounded-[6px] hover:bg-brand-blue shadow-lg shadow-brand-dark/10 transition-all transform active:scale-[0.98] disabled:opacity-50 text-sm"
               >
-                {loading ? 'Processing...' : 'Send Recovery Link'}
+                {loading ? 'Updating...' : 'Reset Password'}
               </button>
             </form>
           )}
