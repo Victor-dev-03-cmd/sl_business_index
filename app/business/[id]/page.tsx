@@ -65,7 +65,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   // Extract city from address if possible, otherwise use a default
-  const city = business.address.split(',').pop()?.trim() || 'Sri Lanka';
+  const city = business.address ? business.address.split(',').pop()?.trim() : 'Sri Lanka';
 
   return {
     title: business.name,
@@ -97,8 +97,8 @@ export default async function BusinessDetailPage({ params }: Props) {
     telephone: business.phone,
     address: {
       '@type': 'PostalAddress',
-      streetAddress: business.address,
-      addressLocality: business.address.split(',').pop()?.trim() || 'Sri Lanka',
+      streetAddress: business.address || '',
+      addressLocality: business.address ? business.address.split(',').pop()?.trim() : 'Sri Lanka',
       addressCountry: 'LK',
     },
     geo: {
