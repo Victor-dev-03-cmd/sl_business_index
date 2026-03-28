@@ -1,20 +1,42 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, Lock, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Lock, CheckCircle2, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function UpdatePassword() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [sessionLoading, setSessionLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [noSession, setNoSession] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        // Wait a bit and try again, sometimes the URL fragment takes a moment to be processed
+        setTimeout(async () => {
+          const { data: { session: retrySession } } = await supabase.auth.getSession();
+          if (!retrySession) {
+            setNoSession(true);
+          }
+          setSessionLoading(false);
+        }, 1000);
+      } else {
+        setSessionLoading(false);
+      }
+    };
+
+    checkSession();
+  }, []);
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,7 +111,34 @@ export default function UpdatePassword() {
             <p className="text-gray-400 text-sm">Enter your new secure password below.</p>
           </div>
 
-          {success ? (
+          {sessionLoading ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="w-8 h-8 border-4 border-brand-dark border-t-transparent rounded-full animate-spin mb-4"></div>
+              <p className="text-gray-400 text-sm">Validating recovery session...</p>
+            </div>
+          ) : noSession ? (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-amber-50 border border-amber-100 p-8 rounded-[6px] text-center"
+            >
+              <div className="flex justify-center mb-4">
+                <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center">
+                  <AlertCircle size={24} />
+                </div>
+              </div>
+              <h3 className="text-amber-900 font-bold mb-2">Session Expired or Missing</h3>
+              <p className="text-amber-700 text-sm mb-6">
+                Your password reset link may have expired or is invalid. Please request a new recovery link.
+              </p>
+              <Link 
+                href="/forgot-password"
+                className="block w-full py-3 bg-brand-dark text-white rounded-[6px] text-sm font-bold hover:bg-brand-blue transition-colors"
+              >
+                Request New Link
+              </Link>
+            </motion.div>
+          ) : success ? (
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
