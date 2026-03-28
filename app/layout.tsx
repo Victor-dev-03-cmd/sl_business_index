@@ -23,8 +23,40 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "SL Business Index",
-  description: "The heart of Sri Lankan commerce.",
+  title: {
+    template: "%s | SL Business Index",
+    default: "SL Business Index | The Heart of Sri Lankan Commerce",
+  },
+  description: "Discover and connect with the best local businesses in Sri Lanka. Your most advanced digital business directory.",
+  keywords: ["Sri Lanka", "Business Directory", "Local Services", "Commerce", "Colombo Businesses"],
+  authors: [{ name: "SL Business Index" }],
+  metadataBase: new URL("https://slbusinessindex.com"),
+  openGraph: {
+    type: "website",
+    locale: "en_LK",
+    url: "https://slbusinessindex.com",
+    siteName: "SL Business Index",
+    title: "SL Business Index | The Heart of Sri Lankan Commerce",
+    description: "Discover and connect with the best local businesses in Sri Lanka. Your most advanced digital business directory.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "SL Business Index",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "SL Business Index | The Heart of Sri Lankan Commerce",
+    description: "Discover and connect with the best local businesses in Sri Lanka. Your most advanced digital business directory.",
+    images: ["/og-image.png"],
+  },
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export const viewport: Viewport = {

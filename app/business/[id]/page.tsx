@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 import { Business } from '@/lib/types';
 import BusinessDetailsClient from './BusinessDetailsClient';
+import { Metadata } from 'next';
 
 type Props = {
   params: Promise<{
@@ -53,6 +54,30 @@ async function getBusinessDetails(id: string): Promise<Business | null> {
   return business;
 }
 
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const business = await getBusinessDetails(id);
+
+  if (!business) {
+    return {
+      title: 'Business Not Found',
+    };
+  }
+
+  // Extract city from address if possible, otherwise use a default
+  const city = business.address.split(',').pop()?.trim() || 'Sri Lanka';
+
+  return {
+    title: business.name,
+    description: `Contact ${business.name} in ${city}. Category: ${business.category}. ${business.description?.substring(0, 150)}...`,
+    openGraph: {
+      title: `${business.name} | ${business.category} in ${city}`,
+      description: business.description || `Discover ${business.name} on SL Business Index.`,
+      images: business.image_url ? [business.image_url] : [],
+    },
+  };
+}
+
 export default async function BusinessDetailPage({ params }: Props) {
   const { id } = await params;
   const business = await getBusinessDetails(id);
@@ -61,5 +86,42 @@ export default async function BusinessDetailPage({ params }: Props) {
     notFound();
   }
 
-  return <BusinessDetailsClient business={business} />;
+  // JSON-LD LocalBusiness Schema
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    name: business.name,
+    image: business.image_url,
+    '@id': `https://slbusinessindex.com/business/${business.id}`,
+    url: `https://slbusinessindex.com/business/${business.id}`,
+    telephone: business.phone,
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: business.address,
+      addressLocality: business.address.split(',').pop()?.trim() || 'Sri Lanka',
+      addressCountry: 'LK',
+    },
+    geo: {
+      '@type': 'GeoCoordinates',
+      latitude: business.latitude,
+      longitude: business.longitude,
+    },
+    openingHoursSpecification: business.working_hours ? Object.entries(business.working_hours).map(([day, hours]) => ({
+      '@type': 'OpeningHoursSpecification',
+      dayOfWeek: day,
+      opens: (hours as any).open,
+      closes: (hours as any).close,
+    })) : [],
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <BusinessDetailsClient business={business} />
+    </>
+  );
 }
+
