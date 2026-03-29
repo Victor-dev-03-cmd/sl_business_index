@@ -385,7 +385,7 @@ function SplitScreenResultsContent() {
       currentLat,
       currentLng,
       radius,
-      searchQuery,
+      debouncedSearchQuery,
       selectedCategory,
     ],
     queryFn: async () => {
@@ -395,7 +395,7 @@ function SplitScreenResultsContent() {
       const { data, error } = await supabase.rpc("get_nearby_businesses", {
         user_lat: lat,
         user_lng: lng,
-        search_query: searchQuery || "",
+        search_query: debouncedSearchQuery || "",
         dist_limit: radius,
         category_filter: selectedCategory || "",
       });
@@ -1058,8 +1058,8 @@ function SplitScreenResultsContent() {
                               </p>
                               <p className="text-[11px] text-gray-400 truncate mt-0.5">
                                 {biz.category}
-                                {biz.address && (
-                                  <> · {biz.address.split(",").pop()?.trim()}</>
+                                {(biz.detailed_address || biz.address) && (
+                                  <> · { (biz.detailed_address || biz.address).split(",").pop()?.trim() }</>
                                 )}
                               </p>
                             </div>
@@ -1346,7 +1346,7 @@ function SplitScreenResultsContent() {
                         size={12}
                         className="text-brand-gold flex-shrink-0"
                       />
-                      <span className="truncate">{b.address}</span>
+                      <span className="truncate">{b.detailed_address || b.address}</span>
                     </div>
                     <div className="mt-3 flex items-center justify-between">
                       <span className="text-[10px] px-2 py-1 bg-gray-100 rounded-full">

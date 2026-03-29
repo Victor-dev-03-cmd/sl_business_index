@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabaseClient';
@@ -16,6 +16,7 @@ import Image from 'next/image';
 
 export default function RegisterBusinessPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [businessName, setBusinessName] = useState('');
   const [description, setDescription] = useState('');
   const [logo, setLogo] = useState<File | null>(null);
@@ -34,6 +35,20 @@ export default function RegisterBusinessPage() {
   const [nicNumber, setNicNumber] = useState('');
   const [location, setLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
   const [detailedAddress, setDetailedAddress] = useState('');
+
+  useEffect(() => {
+    const lat = searchParams.get('lat');
+    const lng = searchParams.get('lng');
+    const address = searchParams.get('address');
+
+    if (lat && lng && address) {
+      setLocation({
+        lat: parseFloat(lat),
+        lng: parseFloat(lng),
+        address: address
+      });
+    }
+  }, [searchParams]);
 
   const [loading, setLoading] = useState(false);
   const [isUnauthenticated, setIsUnauthenticated] = useState(false);
@@ -516,6 +531,9 @@ export default function RegisterBusinessPage() {
                     onLocationSelectAction={handleLocationSelect} 
                     detailedAddress={detailedAddress}
                     onDetailedAddressChange={setDetailedAddress}
+                    initialAddress={location?.address}
+                    initialLat={location?.lat}
+                    initialLng={location?.lng}
                   />
                 </div>
               </div>

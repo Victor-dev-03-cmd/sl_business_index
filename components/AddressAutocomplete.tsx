@@ -16,6 +16,7 @@ import {
 import { Navigation, Loader2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { toast } from 'sonner';
+import { supabase } from '@/lib/supabaseClient';
 
 const LeafletMap = dynamic(() => import('@/components/LeafletMap'), {
   ssr: false,
@@ -73,6 +74,27 @@ export default function AddressAutocomplete({
     initialLat && initialLng ? { lat: initialLat, lng: initialLng } : defaultCenter
   );
   const [zoom, setZoom] = useState(initialLat && initialLng ? 16 : 10);
+  const [nearbyBusinesses, setNearbyBusinesses] = useState<any[]>([]);
+
+  const fetchNearbyBusinesses = useCallback(async (lat: number, lng: number) => {
+    try {
+      const { data, error } = await supabase.rpc('get_nearby_businesses', {
+        user_lat: lat,
+        user_lng: lng,
+        dist_limit: 2000 // 2km radius for duplicates check
+      });
+      if (error) throw error;
+      setNearbyBusinesses(data || []);
+    } catch (err) {
+      console.error('Error fetching nearby businesses:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (markerPosition) {
+      fetchNearbyBusinesses(markerPosition.lat, markerPosition.lng);
+    }
+  }, [markerPosition, fetchNearbyBusinesses]);
 
   const handleSelect = useCallback(async (description: string) => {
     setValue(description, false);
@@ -206,7 +228,37 @@ export default function AddressAutocomplete({
 
           {onDetailedAddressChange && (
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1 uppercase tracking-widest">Detailed Address</label>
+              <div className="flex justify-between items-center mb-1">
+                <label className="block text-xs font-medium text-gray-400 uppercase tracking-widest">Detailed Address</label>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!markerPosition) {
+                      toast.error("Please select a location on the map first.");
+                      return;
+                    }
+                    try {
+                      const results = await getGeocode({ location: markerPosition });
+                      const components = results[0].address_components;
+                      const parts = components
+                        .filter(c => c.types.includes('route') || c.types.includes('sublocality') || c.types.includes('neighborhood'))
+                        .map(c => c.long_name);
+                      
+                      if (parts.length > 0) {
+                        onDetailedAddressChange(parts.join(', '));
+                        toast.success("Detailed address updated based on location.");
+                      } else {
+                        toast.error("Could not fetch more details for this specific point.");
+                      }
+                    } catch (error) {
+                      toast.error("Failed to fetch location details.");
+                    }
+                  }}
+                  className="text-[10px] text-brand-blue font-medium hover:underline"
+                >
+                  Fetch Area Details
+                </button>
+              </div>
               <textarea
                 value={detailedAddress}
                 onChange={(e) => onDetailedAddressChange(e.target.value)}
@@ -244,8 +296,14 @@ export default function AddressAutocomplete({
                 onMarkerDragEnd={handleMarkerDragEnd}
                 onMapClick={handleMarkerDragEnd}
                 showUserLocation={false}
+                businesses={nearbyBusinesses}
               />
             </div>
+            {nearbyBusinesses.length > 0 && (
+              <p className="mt-2 text-[10px] text-gray-500 font-normal">
+                📍 Showing {nearbyBusinesses.length} registered businesses nearby to avoid duplicates.
+              </p>
+            )}
           </div>
         )}
       </div>
