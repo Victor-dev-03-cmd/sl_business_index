@@ -130,7 +130,7 @@ export default function PrivacyPolicyPage() {
               <div className="space-y-4">
                 <div className="flex items-center gap-3 text-gray-600">
                   <Mail size={18} className="text-brand-blue" />
-                  <span>Email: contact@slbusinessindex.com</span>
+                  <span>Email: slbusinessindex@gmail.com</span>
                 </div>
                 <div className="flex items-center gap-3 text-gray-600">
                   <MapPin size={18} className="text-brand-blue" />
