@@ -209,8 +209,8 @@ function SplitScreenResultsContent() {
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [radius, setRadius] = useState(() => {
-    const r = parseInt(searchParams.get("radius") || "5000");
-    return isNaN(r) ? 5000 : r;
+    const r = parseInt(searchParams.get("radius") || "10000");
+    return isNaN(r) ? 10000 : r;
   });
 
   // URL parameters
@@ -233,7 +233,9 @@ function SplitScreenResultsContent() {
         : 80.7718,
   });
   const [mapZoom, setMapZoom] = useState(initialLat || district ? 14 : 8);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(
+    searchParams.get("category"),
+  );
   const [isMapManual, setIsMapManual] = useState(false);
   const [locationLoading, setLocationLoading] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
@@ -263,13 +265,22 @@ function SplitScreenResultsContent() {
 
   // 2. Core Search Logic (The sync function)
   const handleLocationSearch = useCallback(
-    (lat: string, lng: string, rad: number, q: string = searchQuery) => {
+    (
+      lat: string,
+      lng: string,
+      rad: number,
+      q: string = searchQuery,
+      cat: string | null = selectedCategory,
+    ) => {
       const params = new URLSearchParams(window.location.search);
       params.set("lat", lat);
       params.set("lng", lng);
       params.set("radius", rad.toString());
       if (q) params.set("q", q);
       else params.delete("q");
+
+      if (cat) params.set("category", cat);
+      else params.delete("category");
 
       // URL Update triggers React Query re-fetch via key change
       router.replace(`${window.location.pathname}?${params.toString()}`, {
@@ -279,8 +290,56 @@ function SplitScreenResultsContent() {
       setCurrentLat(lat);
       setCurrentLng(lng);
       setRadius(rad);
+      setSelectedCategory(cat);
     },
-    [router, searchQuery],
+    [router, searchQuery, selectedCategory],
+  );
+
+  /* ── Town fuzzy search for mobile suggestions overlay ── */
+  const townFuse = useMemo(
+    () =>
+      new Fuse(SL_TOWNS, {
+        keys: ["name", "district"],
+        threshold: 0.35,
+        distance: 80,
+      }),
+    [],
+  );
+
+  const handleSmartSearch = useCallback(
+    (query: string = searchQuery) => {
+      if (!query.trim()) {
+        handleLocationSearch(currentLat!, currentLng!, radius, "");
+        return;
+      }
+
+      // 1. Check if query matches a town (high confidence)
+      const townMatches = townFuse.search(query);
+      if (
+        townMatches.length > 0 &&
+        (townMatches[0].score || 1) < 0.25 &&
+        townMatches[0].item.name.toLowerCase() === query.toLowerCase().trim()
+      ) {
+        const town = townMatches[0].item;
+        setMapCenter({ lat: town.lat, lng: town.lon });
+        setMapZoom(13);
+        handleLocationSearch(
+          town.lat.toString(),
+          town.lon.toString(),
+          radius,
+          "",
+        );
+        setSearchQuery(town.name);
+        setIsSearchFocused(false);
+        setIsMapManual(false);
+        return;
+      }
+
+      // 2. Default: search near current location
+      handleLocationSearch(currentLat!, currentLng!, radius, query);
+      setIsSearchFocused(false);
+    },
+    [currentLat, currentLng, radius, townFuse, handleLocationSearch, searchQuery],
   );
 
   // Handle Debounce
@@ -291,22 +350,28 @@ function SplitScreenResultsContent() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  const categoryFuse = useMemo(
+    () =>
+      new Fuse(categories, {
+        keys: ["name", "keywords"],
+        threshold: 0.35,
+        distance: 80,
+      }),
+    [categories],
+  );
+
   // Update category suggestions
   useEffect(() => {
     if (searchQuery.trim().length > 0) {
-      const query = searchQuery.toLowerCase();
-      const filteredCats = categories
-        .filter(
-          (cat: any) =>
-            cat.name.toLowerCase().includes(query) ||
-            cat.keywords?.some((kw: string) => kw.toLowerCase().includes(query)),
-        )
-        .slice(0, 5);
-      setCategorySuggestions(filteredCats);
+      const results = categoryFuse
+        .search(searchQuery)
+        .slice(0, 5)
+        .map((r) => r.item);
+      setCategorySuggestions(results);
     } else {
       setCategorySuggestions([]);
     }
-  }, [searchQuery, categories]);
+  }, [searchQuery, categoryFuse]);
 
   // React Query fetch
   const {
@@ -321,6 +386,7 @@ function SplitScreenResultsContent() {
       currentLng,
       radius,
       searchQuery,
+      selectedCategory,
     ],
     queryFn: async () => {
       const lat = currentLat ? parseFloat(currentLat) : 7.8731;
@@ -331,6 +397,7 @@ function SplitScreenResultsContent() {
         user_lng: lng,
         search_query: searchQuery || "",
         dist_limit: radius,
+        category_filter: selectedCategory || "",
       });
 
       if (error) throw error;
@@ -354,8 +421,8 @@ function SplitScreenResultsContent() {
     () =>
       new Fuse(businessesData, {
         keys: ["name", "category", "address"],
-        threshold: 0.3,
-        distance: 100,
+        threshold: 0.45,
+        distance: 150,
       }),
     [businessesData],
   );
@@ -392,22 +459,49 @@ function SplitScreenResultsContent() {
           const { latitude, longitude } = position.coords;
           setMapCenter({ lat: latitude, lng: longitude });
           setMapZoom(14);
-          handleLocationSearch(latitude.toString(), longitude.toString(), 5000);
+          handleLocationSearch(latitude.toString(), longitude.toString(), radius);
           setLocationLoading(false);
           setIsMapManual(false);
         },
-        () => setLocationLoading(false),
+        (error) => {
+          console.error("Geolocation error:", error);
+          setLocationLoading(false);
+          // Fallback to Colombo if geolocation fails
+          if (!currentLat || !currentLng) {
+            handleLocationSearch("6.9271", "79.8612", radius);
+          }
+        },
         { enableHighAccuracy: true, timeout: 10000 },
       );
+    } else {
+      // Geolocation not supported, fallback to Colombo
+      if (!currentLat || !currentLng) {
+        handleLocationSearch("6.9271", "79.8612", radius);
+      }
     }
-  }, [handleLocationSearch]);
+  }, [handleLocationSearch, radius, currentLat, currentLng]);
+
+  const hasInitialized = useRef(false);
 
   // Initial Load
   useEffect(() => {
-    if (!initialLat && !initialLng && !district) {
-      findMyLocation();
+    if (hasInitialized.current) return;
+    
+    if (!initialLat && !initialLng) {
+      if (district && districtCoordinates[district]) {
+        const coords = districtCoordinates[district];
+        handleLocationSearch(coords.lat.toString(), coords.lng.toString(), radius);
+        hasInitialized.current = true;
+      } else {
+        findMyLocation();
+        // findMyLocation calls handleLocationSearch, so we can consider it initialized
+        // but we only set true if it actually succeeds or we want to prevent multiple prompts
+        hasInitialized.current = true;
+      }
+    } else {
+      hasInitialized.current = true;
     }
-  }, [initialLat, initialLng, district, findMyLocation]);
+  }, [initialLat, initialLng, district, findMyLocation, handleLocationSearch, radius]);
 
   const formatDistance = (meters: number) => {
     return meters < 1000 ? `${meters} m` : `${(meters / 1000).toFixed(0)} km`;
@@ -415,18 +509,19 @@ function SplitScreenResultsContent() {
 
   const { businesses, isFuzzyResults } = useMemo(() => {
     let filtered = businessesData;
-    if (selectedCategory) {
-      filtered = filtered.filter((b: any) => b.category === selectedCategory);
-    }
-
+    
+    // Server already handles category and search query filtering,
+    // so we only use Fuse.js here for client-side re-ranking or 
+    // further filtering if businessesData was stale.
+    
     if (!debouncedSearchQuery.trim()) {
       return { businesses: filtered, isFuzzyResults: false };
     }
 
     const fuse = new Fuse(filtered, {
       keys: ["name", "category", "address"],
-      threshold: 0.3,
-      distance: 100,
+      threshold: 0.45,
+      distance: 150,
     });
 
     const results = fuse.search(debouncedSearchQuery);
@@ -435,36 +530,23 @@ function SplitScreenResultsContent() {
       return { businesses: results.map((r) => r.item), isFuzzyResults: false };
     }
 
-    // If no good matches, try a broader search (higher threshold)
-    const broadFuse = new Fuse(filtered, {
-      keys: ["name", "category", "address"],
-      threshold: 0.5,
-      distance: 100,
-    });
-    const broadResults = broadFuse.search(debouncedSearchQuery);
+    // Fallback: If Fuse.js filtered out everything (due to threshold),
+    // but businessesData HAS items (from RPC search), show the original items.
+    if (filtered.length > 0) {
+      return { businesses: filtered, isFuzzyResults: false };
+    }
 
     return {
-      businesses: broadResults.map((r) => r.item),
-      isFuzzyResults: broadResults.length > 0,
+      businesses: [],
+      isFuzzyResults: false,
     };
-  }, [businessesData, selectedCategory, debouncedSearchQuery]);
+  }, [businessesData, debouncedSearchQuery]);
 
   const activeSubgroups = useMemo(() => {
     if (selectedCategory && CATEGORY_SUBGROUPS[selectedCategory])
       return CATEGORY_SUBGROUPS[selectedCategory];
     return [];
   }, [selectedCategory]);
-
-  /* ── Town fuzzy search for mobile suggestions overlay ── */
-  const townFuse = useMemo(
-    () =>
-      new Fuse(SL_TOWNS, {
-        keys: ["name", "district"],
-        threshold: 0.35,
-        distance: 80,
-      }),
-    [],
-  );
 
   const townSuggestions = useMemo(() => {
     if (!searchQuery.trim()) return [];
@@ -480,7 +562,7 @@ function SplitScreenResultsContent() {
           MOBILE TOP BAR  (hidden on md+)
       ═══════════════════════════════════════════ */}
       <div
-        className="flex md:hidden items-center gap-2 px-3 h-14 border-b border-gray-200 bg-white z-20 shrink-0"
+        className="flex md:hidden items-center gap-2 px-3 h-14 border-b border-gray-200 bg-white z-[10001] shrink-0"
         style={{ willChange: "transform", transform: "translateZ(0)" }}
       >
         {/* Back */}
@@ -502,13 +584,7 @@ function SplitScreenResultsContent() {
               onFocus={() => setIsSearchFocused(true)}
               onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
               onKeyDown={(e) =>
-                e.key === "Enter" &&
-                handleLocationSearch(
-                  currentLat!,
-                  currentLng!,
-                  radius,
-                  searchQuery,
-                )
+                e.key === "Enter" && handleSmartSearch(searchQuery)
               }
               placeholder="Search businesses near you…"
               inputMode="search"
@@ -536,7 +612,7 @@ function SplitScreenResultsContent() {
 
       {/* Mobile — full-screen suggestions overlay */}
       {isSearchFocused && (
-        <div className="md:hidden fixed inset-0 top-14 z-[9998] flex flex-col">
+        <div className="md:hidden fixed inset-0 top-14 z-[10001] flex flex-col">
           {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/20"
@@ -559,9 +635,10 @@ function SplitScreenResultsContent() {
                           currentLat!,
                           currentLng!,
                           radius,
+                          "",
                           cat.name,
                         );
-                        setSearchQuery(cat.name);
+                        setSearchQuery("");
                         setIsSearchFocused(false);
                         setMobileView("list");
                       }}
@@ -707,9 +784,21 @@ function SplitScreenResultsContent() {
                 <Search size={28} strokeWidth={1.2} />
                 <p className="text-sm">
                   {searchQuery.trim()
-                    ? "No matches found"
+                    ? "No nearby matches"
                     : "Start typing to search…"}
                 </p>
+                {searchQuery.trim() && (
+                  <button
+                    onMouseDown={() => {
+                      router.push(
+                        `/search?q=${encodeURIComponent(searchQuery)}`,
+                      );
+                    }}
+                    className="mt-1 text-xs text-brand-blue font-bold hover:underline"
+                  >
+                    Search across all Sri Lanka
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -825,7 +914,7 @@ function SplitScreenResultsContent() {
       {/* ═══════════════════════════════════════════
           DESKTOP TOP BAR  (hidden on mobile)
       ═══════════════════════════════════════════ */}
-      <div className="hidden md:flex h-16 border-b border-gray-300 items-center justify-between px-4 bg-white z-10 gap-4 shrink-0">
+      <div className="hidden md:flex h-16 border-b border-gray-300 items-center justify-between px-4 bg-white z-[10002] gap-4 shrink-0">
         <div className="flex items-center space-x-3 shrink-0">
           <Link
             href="/"
@@ -850,13 +939,7 @@ function SplitScreenResultsContent() {
               onFocus={() => setIsSearchFocused(true)}
               onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
               onKeyDown={(e) =>
-                e.key === "Enter" &&
-                handleLocationSearch(
-                  currentLat!,
-                  currentLng!,
-                  radius,
-                  searchQuery,
-                )
+                e.key === "Enter" && handleSmartSearch(searchQuery)
               }
               placeholder="Search businesses..."
               className="w-full bg-transparent outline-none text-sm text-gray-700 font-normal"
@@ -876,7 +959,9 @@ function SplitScreenResultsContent() {
 
           {isSearchFocused && (
             <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-[8px] shadow-2xl z-[9999] overflow-hidden text-left max-h-[420px] overflow-y-auto">
-              {categorySuggestions.length > 0 || suggestions.length > 0 ? (
+              {categorySuggestions.length > 0 ||
+              suggestions.length > 0 ||
+              townSuggestions.length > 0 ? (
                 <>
                   {/* Categories Section */}
                   {categorySuggestions.length > 0 && (
@@ -893,9 +978,10 @@ function SplitScreenResultsContent() {
                                 currentLat!,
                                 currentLng!,
                                 radius,
+                                "",
                                 cat.name,
                               );
-                              setSearchQuery(cat.name);
+                              setSearchQuery("");
                               setIsSearchFocused(false);
                             }}
                             className="w-full px-4 py-2.5 hover:bg-gray-50 flex items-center gap-3 transition-colors text-left"
@@ -987,15 +1073,71 @@ function SplitScreenResultsContent() {
                       </div>
                     </>
                   )}
+
+                  {/* Towns & Districts Section */}
+                  {townSuggestions.length > 0 && (
+                    <div className="border-t border-gray-100">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] px-4 pt-3 pb-2">
+                        Towns & Districts
+                      </p>
+                      <div className="divide-y divide-gray-100 pb-1">
+                        {townSuggestions.map((town) => (
+                          <button
+                            key={`${town.name}-${town.district}`}
+                            onMouseDown={() => {
+                              setMapCenter({ lat: town.lat, lng: town.lon });
+                              setMapZoom(13);
+                              handleLocationSearch(
+                                town.lat.toString(),
+                                town.lon.toString(),
+                                radius,
+                                searchQuery,
+                              );
+                              setSearchQuery(town.name);
+                              setIsSearchFocused(false);
+                            }}
+                            className="w-full px-4 py-2.5 hover:bg-gray-50 flex items-center gap-3 transition-colors text-left"
+                          >
+                            <div className="w-8 h-8 rounded-full bg-brand-dark/10 flex items-center justify-center shrink-0">
+                              <MapPin size={14} className="text-brand-dark" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-gray-800 truncate">
+                                {town.name}
+                              </p>
+                              <p className="text-[11px] text-gray-400 mt-0.5">
+                                {town.district} District
+                              </p>
+                            </div>
+                            <span className="shrink-0 text-[10px] font-medium bg-gray-100 text-gray-500 px-2 py-1 rounded-full capitalize">
+                              {town.type}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </>
               ) : (
                 <div className="flex flex-col items-center justify-center py-8 text-gray-400 gap-2">
                   <Search size={24} strokeWidth={1.2} />
                   <p className="text-xs">
                     {searchQuery.trim()
-                      ? "No matches found"
+                      ? "No nearby matches"
                       : "Start typing to search…"}
                   </p>
+                  {searchQuery.trim() && (
+                    <button
+                      onMouseDown={() => {
+                        router.push(
+                          `/search?q=${encodeURIComponent(searchQuery)}`,
+                        );
+                      }}
+                      className="mt-1 text-[10px] text-brand-blue font-bold hover:underline"
+                    >
+                      Search across all Sri Lanka
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -1082,11 +1224,12 @@ function SplitScreenResultsContent() {
                     {categories.map((cat: any) => (
                       <CommandItem
                         key={cat.id}
+                        value={cat.name}
                         onSelect={() => {
                           setSelectedCategory(cat.name);
                           setIsCategoryOpen(false);
                         }}
-                        className="flex items-center px-4 py-2 hover:bg-blue-50 cursor-pointer"
+                        className="flex items-center px-4 py-2 hover:bg-blue-50 cursor-pointer text-sm"
                       >
                         {cat.name}
                       </CommandItem>
@@ -1122,10 +1265,47 @@ function SplitScreenResultsContent() {
                 <Skeleton key={i} className="h-32 w-full rounded-[6px]" />
               ))
             ) : businesses.length === 0 ? (
-              <div className="text-center py-10 bg-white rounded-[6px] border border-gray-200">
-                <p className="text-sm text-gray-500">
-                  No results in this area.
+              <div className="text-center py-10 px-6 bg-white rounded-[6px] border border-gray-200">
+                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Search className="text-gray-300" size={32} />
+                </div>
+                <h3 className="text-sm font-bold text-gray-900 mb-1">
+                  No results in this area
+                </h3>
+                <p className="text-xs text-gray-500 mb-6 max-w-[240px] mx-auto leading-relaxed">
+                  We couldn't find any {selectedCategory || "businesses"} within{" "}
+                  {formatDistance(radius)}. Try expanding your search area.
                 </p>
+                <div className="flex flex-col gap-2">
+                  {radius < 50000 && (
+                    <button
+                      onClick={() => {
+                        const newRad = Math.min(radius + 10000, 50000);
+                        handleLocationSearch(currentLat!, currentLng!, newRad);
+                      }}
+                      className="w-full py-2.5 bg-brand-dark text-white rounded-[6px] text-xs font-bold hover:bg-brand-blue transition-all"
+                    >
+                      Search within{" "}
+                      {formatDistance(Math.min(radius + 10000, 50000))}
+                    </button>
+                  )}
+                  {selectedCategory && (
+                    <button
+                      onClick={() => {
+                        handleLocationSearch(
+                          currentLat!,
+                          currentLng!,
+                          radius,
+                          "",
+                          null,
+                        );
+                      }}
+                      className="w-full py-2.5 bg-white border border-gray-300 text-gray-700 rounded-[6px] text-xs font-bold hover:bg-gray-50 transition-all"
+                    >
+                      Clear Category Filter
+                    </button>
+                  )}
+                </div>
               </div>
             ) : (
               businesses.map((b: any) => (
@@ -1173,7 +1353,7 @@ function SplitScreenResultsContent() {
                         {b.distanceText}
                       </span>
                       <Link
-                        href={`/business/${b.id}`}
+                        href={`/business/${b.slug || b.id}`}
                         className="text-[10px] text-brand-dark font-bold hover:underline"
                       >
                         View Profile

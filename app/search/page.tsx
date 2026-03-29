@@ -27,6 +27,7 @@ const LeafletMap = dynamic(() => import('@/components/LeafletMap'), {
 
 interface BusinessSearchResult {
     id: string;
+    slug?: string;
     name: string;
     category: string;
     description: string;
@@ -72,7 +73,8 @@ function SearchResults() {
                 user_lat: userLat,
                 user_lng: userLng,
                 search_query: query,
-                dist_limit: 10000 // 10km
+                dist_limit: 10000, // 10km
+                category_filter: ""
             });
 
             if (error) throw error;
@@ -128,7 +130,7 @@ function SearchResults() {
                             businesses.map(business => (
                                 <Link 
                                     key={business.id} 
-                                    href={`/business/${business.id}`}
+                                    href={`/business/${business.slug || business.id}`}
                                     className="block p-6 hover:bg-gray-50 transition-all border-l-4 border-transparent hover:border-brand-blue group"
                                 >
                                     <div className="flex gap-5">

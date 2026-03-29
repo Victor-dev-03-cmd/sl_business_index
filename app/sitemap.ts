@@ -8,11 +8,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Fetch all approved businesses
   const { data: businesses } = await supabase
     .from('businesses')
-    .select('id, updated_at')
+    .select('id, slug, updated_at')
     .eq('status', 'approved');
 
   const businessEntries: MetadataRoute.Sitemap = (businesses || []).map((business) => ({
-    url: `${baseUrl}/business/${business.id}`,
+    url: `${baseUrl}/business/${business.slug || business.id}`,
     lastModified: business.updated_at || new Date().toISOString(),
     changeFrequency: 'weekly',
     priority: 0.7,

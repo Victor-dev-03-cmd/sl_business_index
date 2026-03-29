@@ -20,6 +20,7 @@ import Image from "next/image";
 
 interface Business {
   id: string;
+  slug?: string;
   name: string;
   logo_url: string;
   category: string;
@@ -38,7 +39,7 @@ export default function AdminFeaturedPage() {
         .from("businesses")
         .select(
           `
-          id, name, logo_url, category, status, is_featured,
+          id, slug, name, logo_url, category, status, is_featured,
           featured_listings (id)
         `,
         )
@@ -55,6 +56,7 @@ export default function AdminFeaturedPage() {
           
         return {
           id: b.id,
+          slug: b.slug,
           name: b.name,
           logo_url: b.logo_url,
           category: b.category,
@@ -260,7 +262,7 @@ export default function AdminFeaturedPage() {
                             {business.name}
                           </p>
                           <a 
-                            href={`/business/${business.id}`} 
+                            href={`/business/${business.slug || business.id}`} 
                             target="_blank" 
                             className="text-[10px] font-medium text-gray-400 hover:text-brand-blue transition-colors flex items-center gap-1 mt-1 uppercase"
                           >

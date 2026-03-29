@@ -425,7 +425,7 @@ function MapContent({
                         </span>
                       </p>
                       <a
-                        href={`/business/${props.id}`}
+                        href={`/business/${props.slug || props.id}`}
                         className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#2a7db4] text-white text-[11px] font-bold rounded-[6px] hover:bg-[#053765] transition-all shadow-sm"
                       >
                         View Details
@@ -502,7 +502,7 @@ function MapContent({
                       </span>
                     </p>
                     <a
-                      href={`/business/${props.id}`}
+                      href={`/business/${props.slug || props.id}`}
                       className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#2a7db4] text-white text-[11px] font-bold rounded-[6px] hover:bg-[#053765] transition-all shadow-sm"
                     >
                       View Details

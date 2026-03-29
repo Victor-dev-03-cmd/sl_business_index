@@ -215,7 +215,7 @@ export default function VendorQRCodePage() {
   const businessUrl = typeof window !== 'undefined' 
     ? assignedQR 
       ? `${window.location.origin}/q/${assignedQR.serial_id}`
-      : `${window.location.origin}/business/${selectedBusiness?.id}`
+      : `${window.location.origin}/business/${selectedBusiness?.slug || selectedBusiness?.id}`
     : '';
 
   return (

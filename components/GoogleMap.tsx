@@ -214,7 +214,7 @@ export default function GoogleMap({
                 </div>
                 <p className="text-[11px] text-gray-500 line-clamp-1 mb-3">{selectedBusiness.address}</p>
                 <button 
-                  onClick={() => window.location.href = `/business/${selectedBusiness.id}`}
+                  onClick={() => window.location.href = `/business/${selectedBusiness.slug || selectedBusiness.id}`}
                   className="w-full py-2 bg-[#2a7db4] text-white text-[10px] font-bold rounded-[4px] hover:bg-[#053765] transition-all"
                 >
                   View Profile

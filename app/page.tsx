@@ -170,7 +170,7 @@ export default function HomePage() {
           `
           business_id,
           businesses (
-            id, name, category, address, image_url, logo_url, rating, is_verified, status, can_show_badge
+            id, slug, name, category, address, image_url, logo_url, rating, is_verified, status, can_show_badge
           )
         `,
         )
@@ -288,6 +288,7 @@ export default function HomePage() {
               user_lng: userCoords.lng,
               search_query: debouncedSearchQuery,
               dist_limit: 10000,
+              category_filter: "",
             });
             if (data) {
               setBusinessSuggestions(data.slice(0, 4));
@@ -305,7 +306,7 @@ export default function HomePage() {
             const { data } = await supabase
               .from("businesses")
               .select(
-                "id, name, category, address, image_url, logo_url, rating, latitude, longitude",
+                "id, slug, name, category, address, image_url, logo_url, rating, latitude, longitude",
               )
               .or(
                 `name.ilike.%${debouncedSearchQuery}%,category.ilike.%${debouncedSearchQuery}%,address.ilike.%${debouncedSearchQuery}%`,
@@ -815,7 +816,7 @@ export default function HomePage() {
                           <button
                             key={biz.id}
                             onMouseDown={() =>
-                              router.push(`/business/${biz.id}`)
+                              router.push(`/business/${biz.slug || biz.id}`)
                             }
                             className="w-full px-4 py-3 hover:bg-gray-50 active:bg-gray-100 flex items-center gap-3 transition-colors border-b border-gray-50 last:border-0"
                           >
@@ -1126,7 +1127,7 @@ export default function HomePage() {
               featuredBusinesses.map((business) => (
                 <Link
                   key={business.id}
-                  href={`/business/${business.id}`}
+                  href={`/business/${business.slug || business.id}`}
                   className="group bg-white rounded-[6px] overflow-hidden border border-gray-300 hover:border-brand-gold/40 shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col h-full relative"
                 >
                   {/* Image Section */}

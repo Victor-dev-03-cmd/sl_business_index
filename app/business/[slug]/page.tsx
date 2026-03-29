@@ -1,31 +1,54 @@
 import { createClient } from '@/lib/supabase/server';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { Business } from '@/lib/types';
 import BusinessDetailsClient from './BusinessDetailsClient';
 import { Metadata } from 'next';
 
 type Props = {
   params: Promise<{
-    id: string;
+    slug: string;
   }>;
 };
 
-async function getBusinessDetails(id: string): Promise<Business | null> {
+/**
+ * Robust business details fetcher that handles:
+ * 1. Exact slug match
+ * 2. ID match (with UUID/Numeric validation)
+ */
+async function getBusinessDetails(slugOrId: string): Promise<Business | null> {
   const supabase = await createClient();
   
-  const { data, error } = await supabase
+  // 1. First attempt: Fetch by slug
+  const { data: slugData } = await supabase
     .from('businesses')
     .select('*')
-    .eq('id', id)
+    .eq('slug', slugOrId)
     .single();
 
-  if (error || !data) {
-    console.error('Error fetching business details:', error);
-    return null;
+  if (slugData) return mapBusinessData(slugData);
+
+  // 2. Second attempt: Fallback to ID
+  // Validate if input is a valid UUID or Integer to prevent Postgres casting errors
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slugOrId);
+  const isNumeric = /^\d+$/.test(slugOrId);
+
+  if (isUUID || isNumeric) {
+    const { data: idData } = await supabase
+      .from('businesses')
+      .select('*')
+      .eq('id', slugOrId)
+      .single();
+    
+    if (idData) return mapBusinessData(idData);
   }
-  
-  const business: Business = {
+
+  return null;
+}
+
+function mapBusinessData(data: any): Business {
+  return {
     id: data.id,
+    slug: data.slug,
     name: data.name,
     category: data.category,
     description: data.description,
@@ -50,50 +73,50 @@ async function getBusinessDetails(id: string): Promise<Business | null> {
     facilities: data.facilities,
     detailed_address: data.detailed_address,
   };
-
-  return business;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = await params;
-  const business = await getBusinessDetails(id);
+  const { slug } = await params;
+  const business = await getBusinessDetails(slug);
 
-  if (!business) {
-    return {
-      title: 'Business Not Found',
-    };
+  if (!business) return { title: 'Business Not Found' };
+
+  // If accessed via ID, redirect to slug for SEO
+  if (business.slug && business.slug !== slug) {
+    redirect(`/business/${business.slug}`);
   }
 
-  // Extract city from address if possible, otherwise use a default
   const city = business.address ? business.address.split(',').pop()?.trim() : 'Sri Lanka';
 
   return {
     title: business.name,
-    description: `Contact ${business.name} in ${city}. Category: ${business.category}. ${business.description?.substring(0, 150)}...`,
+    description: `Contact ${business.name} in ${city}. ${business.description?.substring(0, 150)}...`,
     openGraph: {
-      title: `${business.name} | ${business.category} in ${city}`,
-      description: business.description || `Discover ${business.name} on SL Business Index.`,
+      title: `${business.name} | ${business.category}`,
+      description: business.description,
       images: business.image_url ? [business.image_url] : [],
     },
   };
 }
 
 export default async function BusinessDetailPage({ params }: Props) {
-  const { id } = await params;
-  const business = await getBusinessDetails(id);
+  const { slug } = await params;
+  const business = await getBusinessDetails(slug);
 
-  if (!business) {
-    notFound();
+  if (!business) notFound();
+
+  // If accessed via ID, redirect to slug for SEO
+  if (business.slug && business.slug !== slug) {
+    redirect(`/business/${business.slug}`);
   }
 
-  // JSON-LD LocalBusiness Schema
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
     name: business.name,
     image: business.image_url,
-    '@id': `https://slbusinessindex.com/business/${business.id}`,
-    url: `https://slbusinessindex.com/business/${business.id}`,
+    '@id': `https://slbusinessindex.com/business/${business.slug || business.id}`,
+    url: `https://slbusinessindex.com/business/${business.slug || business.id}`,
     telephone: business.phone,
     address: {
       '@type': 'PostalAddress',
@@ -106,12 +129,6 @@ export default async function BusinessDetailPage({ params }: Props) {
       latitude: business.latitude,
       longitude: business.longitude,
     },
-    openingHoursSpecification: business.working_hours ? Object.entries(business.working_hours).map(([day, hours]) => ({
-      '@type': 'OpeningHoursSpecification',
-      dayOfWeek: day,
-      opens: (hours as any).open,
-      closes: (hours as any).close,
-    })) : [],
   };
 
   return (
@@ -124,4 +141,3 @@ export default async function BusinessDetailPage({ params }: Props) {
     </>
   );
 }
-
