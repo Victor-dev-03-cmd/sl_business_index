@@ -32,5 +32,6 @@ export interface Business {
   facilities?: string[];
   can_show_badge?: boolean;
   detailed_address?: string;
+  city?: string;
   is_marketed?: boolean;
 }

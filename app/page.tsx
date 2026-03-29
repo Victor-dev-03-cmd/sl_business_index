@@ -280,58 +280,25 @@ export default function HomePage() {
 
     // 2. Database Fetch (Debounced)
     if (debouncedSearchQuery.trim().length > 0) {
-      const fetchBusinesses = async () => {
+      const fetchSuggestions = async () => {
         try {
-          if (userCoords) {
-            const { data } = await supabase.rpc("get_nearby_businesses", {
-              user_lat: userCoords.lat,
-              user_lng: userCoords.lng,
+          const { data, error } = await supabase.rpc(
+            "get_global_search_suggestions",
+            {
               search_query: debouncedSearchQuery,
-              dist_limit: 10000,
-              category_filter: "",
-            });
-            if (data) {
-              setBusinessSuggestions(data.slice(0, 4));
-              const fuse = new Fuse(data, {
-                keys: ["name", "category", "address"],
-                threshold: 0.3,
-                distance: 100,
-              });
-              const fuzzyResults = fuse
-                .search(debouncedSearchQuery)
-                .slice(0, 4);
-              setFuzzyBusinessSuggestions(fuzzyResults.map((r) => r.item));
-            }
-          } else {
-            const { data } = await supabase
-              .from("businesses")
-              .select(
-                "id, slug, name, category, address, image_url, logo_url, rating, latitude, longitude",
-              )
-              .or(
-                `name.ilike.%${debouncedSearchQuery}%,category.ilike.%${debouncedSearchQuery}%,address.ilike.%${debouncedSearchQuery}%`,
-              )
-              .eq("status", "approved")
-              .limit(20);
-
-            if (data) {
-              const fuse = new Fuse(data, {
-                keys: ["name", "category", "address"],
-                threshold: 0.3,
-                distance: 100,
-              });
-              const fuzzyResults = fuse
-                .search(debouncedSearchQuery)
-                .slice(0, 4);
-              setFuzzyBusinessSuggestions(fuzzyResults.map((r) => r.item));
-              setBusinessSuggestions(data.slice(0, 4));
-            }
+              suggestion_limit: 5,
+            },
+          );
+          if (error) throw error;
+          if (data) {
+            setFuzzyBusinessSuggestions(data);
+            setBusinessSuggestions(data);
           }
         } catch (err) {
-          console.error("Error fetching business suggestions:", err);
+          console.error("Error fetching suggestions:", err);
         }
       };
-      fetchBusinesses();
+      fetchSuggestions();
     } else {
       // Auto-show featured businesses when focused but empty
       setBusinessSuggestions(featuredBusinesses.slice(0, 4));

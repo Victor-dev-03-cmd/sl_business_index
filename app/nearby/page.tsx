@@ -327,7 +327,7 @@ function SplitScreenResultsContent() {
           town.lat.toString(),
           town.lon.toString(),
           radius,
-          "",
+          query,
         );
         setSearchQuery(town.name);
         setIsSearchFocused(false);
@@ -416,39 +416,34 @@ function SplitScreenResultsContent() {
     staleTime: 60 * 1000,
   });
 
-  // Fuzzy Search for Suggestions
-  const suggestionFuse = useMemo(
-    () =>
-      new Fuse(businessesData, {
-        keys: ["name", "category", "address"],
-        threshold: 0.45,
-        distance: 150,
-      }),
-    [businessesData],
-  );
-
+  // Global Suggestions Fetch (Debounced)
   useEffect(() => {
-    if (searchQuery.trim().length > 0) {
-      const results = suggestionFuse
-        .search(searchQuery)
-        .slice(0, 5)
-        .map((r) => r.item);
-      // Only update if content changed to avoid render loops
-      setSuggestions((prev) => {
-        if (JSON.stringify(prev) === JSON.stringify(results)) return prev;
-        return results;
-      });
+    if (debouncedSearchQuery.trim().length > 0) {
+      const fetchGlobalSuggestions = async () => {
+        try {
+          const { data, error } = await supabase.rpc(
+            "get_global_search_suggestions",
+            {
+              search_query: debouncedSearchQuery,
+              suggestion_limit: 5,
+            },
+          );
+          if (error) throw error;
+          if (data) {
+            setSuggestions(data);
+          }
+        } catch (err) {
+          console.error("Error fetching global suggestions:", err);
+        }
+      };
+      fetchGlobalSuggestions();
     } else if (isSearchFocused) {
       // Auto-show nearby businesses when focused but empty
-      const results = businessesData.slice(0, 5);
-      setSuggestions((prev) => {
-        if (JSON.stringify(prev) === JSON.stringify(results)) return prev;
-        return results;
-      });
+      setSuggestions(businessesData.slice(0, 5));
     } else {
-      setSuggestions((prev) => (prev.length === 0 ? prev : EMPTY_ARRAY));
+      setSuggestions(EMPTY_ARRAY);
     }
-  }, [searchQuery, suggestionFuse, businessesData, isSearchFocused]);
+  }, [debouncedSearchQuery, businessesData, isSearchFocused]);
 
   // 3. UI Helpers
   const findMyLocation = useCallback(() => {
@@ -519,7 +514,7 @@ function SplitScreenResultsContent() {
     }
 
     const fuse = new Fuse(filtered, {
-      keys: ["name", "category", "address"],
+      keys: ["name", "category", "address", "city", "detailed_address"],
       threshold: 0.45,
       distance: 150,
     });
