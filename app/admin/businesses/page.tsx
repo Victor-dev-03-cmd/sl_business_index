@@ -211,7 +211,7 @@ export default function AdminBusinessesPage() {
             <div className="h-8 w-px bg-gray-200 hidden lg:block" />
 
             <button
-              onClick={() => (window.location.href = "/register")}
+              onClick={() => (window.location.href = "/register-business")}
               className="flex-1 lg:flex-none flex items-center justify-center gap-2 bg-brand-dark text-white px-4 md:px-6 py-2 md:py-2.5 rounded-[6px] text-xs md:text-sm hover:bg-brand-dark transition-all shadow-lg shadow-brand-dark/10 hover:-translate-y-0.5 active:scale-95 whitespace-nowrap"
             >
               <Plus size={14} className="md:size-4" strokeWidth={3} />

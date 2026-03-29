@@ -445,6 +445,92 @@ app.post('/social/publish', async (c) => {
   return c.json({ success: true, results })
 })
 
+// Contact Form Submission Endpoint
+app.post('/contact/send', async (c) => {
+  try {
+    const { name, email, subject, department, message, location } = await c.req.json()
+
+    if (!name || !email || !message) {
+      return c.json({ error: 'Name, email, and message are required' }, 400)
+    }
+
+    // 1. Save to Database
+    const { error: dbError } = await supabaseAdmin
+      .from('contact_submissions')
+      .insert({
+        name,
+        email,
+        subject,
+        department,
+        message,
+        location
+      })
+
+    if (dbError) {
+      console.error('Database Error:', dbError)
+      // We continue even if DB save fails, to try sending email
+    }
+
+    // 2. Fetch Admin Email from Settings
+    const { data: settings } = await supabaseAdmin
+      .from('site_settings')
+      .select('admin_email, email_notifications')
+      .eq('id', 1)
+      .single()
+
+    const adminEmail = settings?.admin_email || 'admin@slbusinessindex.com'
+    const emailEnabled = settings?.email_notifications ?? true
+
+    // 3. Send Email (via Resend fetch)
+    const RESEND_API_KEY = process.env.RESEND_API_KEY
+    
+    if (emailEnabled && RESEND_API_KEY) {
+      try {
+        const resendResponse = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${RESEND_API_KEY}`,
+          },
+          body: JSON.stringify({
+            from: 'SL Business Index <onboarding@resend.dev>',
+            to: [adminEmail],
+            reply_to: email,
+            subject: `Contact Form [${department}]: ${subject || 'New Message'}`,
+            html: `
+              <div style="font-family: sans-serif; padding: 20px; color: #333;">
+                <h2 style="color: #053765;">New Contact Form Submission</h2>
+                <p><strong>Department:</strong> ${department}</p>
+                <p><strong>Name:</strong> ${name}</p>
+                <p><strong>Email:</strong> ${email}</p>
+                <p><strong>Subject:</strong> ${subject || 'N/A'}</p>
+                <p><strong>Location:</strong> ${location || 'Not provided'}</p>
+                <hr style="border: 1px solid #eee; margin: 20px 0;" />
+                <p><strong>Message:</strong></p>
+                <div style="background: #f9f9f9; padding: 15px; border-radius: 5px;">
+                  ${message.replace(/\n/g, '<br/>')}
+                </div>
+              </div>
+            `,
+          }),
+        })
+
+        const resendData = await resendResponse.json()
+        if (!resendResponse.ok) {
+          console.error('Resend API Error:', resendData)
+        }
+      } catch (emailErr) {
+        console.error('Email Sending Error:', emailErr)
+      }
+    }
+
+    return c.json({ success: true })
+  } catch (err: any) {
+    console.error('Contact Request Unexpected Error:', err)
+    return c.json({ error: 'Internal Server Error', details: err.message }, 500)
+  }
+})
+
 // QR Auto-Assign Endpoint
 app.post('/qr/request', async (c) => {
   try {

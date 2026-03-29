@@ -162,18 +162,44 @@ export default function ContactPage() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted:', { department, ...formData });
-    toast.success('Thank you! Your message has been sent.');
-    setFormData({ name: '', email: '', subject: '', message: '', location: '' });
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch("/api/contact/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ department, ...formData }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to send message");
+      }
+
+      toast.success("Thank you! Your message has been sent.");
+      setFormData({
+        name: "",
+        email: "",
+        subject: "",
+        message: "",
+        location: "",
+      });
+    } catch (err) {
+      console.error("Submission error:", err);
+      toast.error("Failed to send message. Please try again later.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "GovernmentOrganization",
     "name": "SL Business Index - Public Services",
-    "url": "https://slbusinessindex.lk/contact",
+    "url": "https://slbusinessindex.com/contact",
     "description": "Verified public service and emergency contacts for Sri Lanka including CEB, NWSDB, and Health services.",
     "contactPoint": publicServices.flatMap(cat => cat.services).map(s => ({
       "@type": "ContactPoint",
@@ -382,11 +408,16 @@ export default function ContactPage() {
 
                 <button 
                   type="submit"
-                  className="w-full py-4 bg-brand-dark  text-white rounded-[6px] shadow-lg shadow-emerald-900/10 transition-all font-normal flex items-center justify-center gap-2 group"
+                  disabled={isSubmitting}
+                  className="w-full py-4 bg-brand-dark text-white rounded-[6px] shadow-lg shadow-emerald-900/10 transition-all font-normal flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  <MessageSquare size={18} strokeWidth={1.5} />
-                  Send Message
-                  <ChevronRight size={16} strokeWidth={1.5} className="group-hover:translate-x-0.5 transition-transform" />
+                  {isSubmitting ? (
+                    <div className="h-5 w-5 border-2 border-white/30 border-t-white animate-spin rounded-full" />
+                  ) : (
+                    <MessageSquare size={18} strokeWidth={1.5} />
+                  )}
+                  {isSubmitting ? 'Sending...' : 'Send Message'}
+                  {!isSubmitting && <ChevronRight size={16} strokeWidth={1.5} className="group-hover:translate-x-0.5 transition-transform" />}
                 </button>
 
                 <div className="pt-6 border-t border-gray-50">
@@ -400,8 +431,8 @@ export default function ContactPage() {
                       WhatsApp
                     </a>
                     <a 
-                      href="slbusinessindex@gmail.com"
-                      className="flex items-center justify-center gap-2 py-2.5  text-brand-dark rounded-[6px] transition-all text-xs font-normal"
+                      href="mailto:slbusinessindex@gmail.com"
+                      className="flex items-center justify-center gap-2 py-2.5  text-brand-dark rounded-[6px] transition-all text-xs font-normal hover:text-brand-blue transition-colors"
                     >
                       Email Us
                     </a>
