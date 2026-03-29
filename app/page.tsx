@@ -623,21 +623,8 @@ export default function HomePage() {
             Sri Lanka Business Index
           </span>
           <h1 className="text-4xl md:text-7xl text-gray-900 mb-6 leading-tight tracking-tight">
-            Find the best{" "}
-            <span className="inline-block min-w-[100px] md:min-w-[160px] h-[1.2em] overflow-hidden align-bottom text-left">
-              <MorphingText
-                text={words}
-                loop
-                holdDelay={3000}
-                className="text-brand-blue"
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: -20, opacity: 0 }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
-              />
-            </span>{" "}
-            in <br />
-            <span className="text-brand-blue">Sri Lanka</span>
+            The Ultimate Directory for <br />
+            <span className="text-brand-blue">Businesses in Sri Lanka (SLBI)</span>
           </h1>
           <p className="text-gray-600 text-base md:text-lg mb-10 max-w-xl mx-auto leading-relaxed">
             Explore verified local businesses, clinics, and luxury villas across Sri Lanka. Discover premium services and authentic island experiences through our directory.

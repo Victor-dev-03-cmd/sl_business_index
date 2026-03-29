@@ -24,11 +24,11 @@ const outfit = Outfit({
 
 export const metadata: Metadata = {
   title: {
-    template: "%s | SL Business Index",
-    default: "SL Business Index | The Heart of Sri Lankan Commerce",
+    template: "%s | SLBI - SL Business Index",
+    default: "SLBI - SL Business Index | Businesses in Sri Lanka",
   },
-  description: "Discover and connect with the best local businesses in Sri Lanka. Your most advanced digital business directory.",
-  keywords: ["Sri Lanka", "Business Directory", "Local Services", "Commerce", "Colombo Businesses"],
+  description: "SLBI (SL Business Index) is the ultimate directory for businesses in Sri Lanka. Discover and connect with verified local businesses, services, and SL business opportunities across the island.",
+  keywords: ["SLBI", "SL Business Index", "SL Business", "Businesses in Sri Lanka", "Sri Lanka Business Directory", "Local Services", "Commerce", "Colombo Businesses"],
   authors: [{ name: "SL Business Index" }],
   metadataBase: new URL("https://slbusinessindex.com"),
   openGraph: {

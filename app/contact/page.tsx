@@ -198,9 +198,11 @@ export default function ContactPage() {
 
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "GovernmentOrganization",
-    "name": "SL Business Index - Public Services",
-    "url": "https://slbusinessindex.com/contact",
+    "@type": "Organization",
+    "name": "SL Business Index",
+    "alternateName": "SLBI",
+    "url": "https://slbusinessindex.com",
+    "logo": "https://slbusinessindex.com/logo.png",
     "description": "Verified public service and emergency contacts for Sri Lanka including CEB, NWSDB, and Health services.",
     "contactPoint": publicServices.flatMap(cat => cat.services).map(s => ({
       "@type": "ContactPoint",

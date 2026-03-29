@@ -43,7 +43,7 @@ export default function LogoLink() {
       {settings?.logo_url ? (
         <Image
           src={settings.logo_url}
-          alt={settings.logo_text || "SL Business Index Logo"}
+          alt={settings.logo_text || "SLBI - SL Business Index Logo"}
           width={settings.logo_width || 180}
           height={settings.logo_height || 60}
           className="drop-shadow-md object-contain"
@@ -59,7 +59,7 @@ export default function LogoLink() {
       ) : (
         <Image
           src="/logo.png"
-          alt="SL Business Index Logo"
+          alt="SLBI - SL Business Index Logo"
           width={180}
           height={60}
           className="drop-shadow-md object-contain"

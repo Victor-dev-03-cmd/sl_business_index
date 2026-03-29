@@ -63,9 +63,12 @@ const Footer = () => {
             <div className="-ml-2">
               <LogoLink />
             </div>
-            <p className="text-sm leading-relaxed text-gray-400">
-              The heart of Sri Lankan commerce. Connecting customers with verified local businesses across the island.
-            </p>
+            <div className="space-y-4">
+              <h4 className="text-gray-200 text-sm font-semibold uppercase tracking-wider">About SLBI</h4>
+              <p className="text-sm leading-relaxed text-gray-400">
+                SLBI (SL Business Index) is the heart of <strong>Sri Lankan Commerce</strong>. We provide a comprehensive directory of <strong>verified businesses in Sri Lanka</strong>, helping you find the right <strong>SL business</strong> for your needs.
+              </p>
+            </div>
             <div className="flex gap-4">
               <a href="#" className="p-2 rounded-lg bg-gray-900 hover:bg-brand-dark/30 hover:text-brand-blue transition-all border border-gray-800">
                 <Facebook size={18} />
