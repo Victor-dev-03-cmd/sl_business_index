@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import Script from 'next/script';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { 
   Phone, 
@@ -30,68 +31,68 @@ const publicServices = [
     category: "Emergency Services",
     icon: <AlertCircle size={20} strokeWidth={1.5} />,
     services: [
-      { name: "Suwa Seriya Ambulance", number: "1990", description: "24/7 Free Emergency Ambulance Service", lat: 6.9271, lng: 79.8612 },
-      { name: "Police Emergency", number: "119", description: "National Police Hotline", lat: 6.9271, lng: 79.8612 },
-      { name: "Fire & Rescue (Colombo)", number: "110", description: "General Fire Service", lat: 6.9319, lng: 79.8478 },
-      { name: "Accident Service (General Hospital)", number: "0112691111", description: "National Hospital Accident Service", lat: 6.9189, lng: 79.8694 }
+      { name: "Suwa Seriya Ambulance 1990 Sri Lanka", number: "1990", description: "24/7 Free Emergency Ambulance Service", lat: 6.9271, lng: 79.8612 },
+      { name: "Police Emergency 119 Sri Lanka", number: "119", description: "National Police Hotline", lat: 6.9271, lng: 79.8612 },
+      { name: "Fire & Rescue (Colombo) Hotline", number: "110", description: "General Fire Service", lat: 6.9319, lng: 79.8478 },
+      { name: "National Hospital Accident Service", number: "0112691111", description: "Accident & Emergency Care", lat: 6.9189, lng: 79.8694 }
     ]
   },
   {
     category: "Electricity & Water (Utilities)",
     icon: <Zap size={20} strokeWidth={1.5} />,
     services: [
-      { name: "CEB (Electricity) Breakdown", number: "1987", description: "National Electricity Complaint Center", lat: 6.9271, lng: 79.8612 },
-      { name: "Vavuniya EB Office", number: "0242222244", description: "Local Electricity Board - Vavuniya", lat: 8.7514, lng: 80.4971 },
-      { name: "Jaffna EB Office", number: "0212222271", description: "Local Electricity Board - Jaffna", lat: 9.6615, lng: 80.0070 },
-      { name: "Water Board (NWSDB)", number: "1939", description: "National Water & Drainage Board Complaints", lat: 6.8912, lng: 79.9242 }
+      { name: "CEB Electricity Breakdown Contact 1987", number: "1987", description: "National Electricity Complaint Center", lat: 6.9271, lng: 79.8612 },
+      { name: "CEB Vavuniya Electricity Board Office", number: "0242222244", description: "Local Breakdown Support", lat: 8.7514, lng: 80.4971 },
+      { name: "CEB Jaffna Electricity Board Office", number: "0212222271", description: "Local Breakdown Support", lat: 9.6615, lng: 80.0070 },
+      { name: "NWSDB Water Board Complaints 1939", number: "1939", description: "National Water Supply & Drainage Board", lat: 6.8912, lng: 79.9242 }
     ]
   },
   {
     category: "Education (Regional Offices)",
     icon: <GraduationCap size={20} strokeWidth={1.5} />,
     services: [
-      { name: "Northern Province Education Dept", number: "0212222434", description: "Main Office - Jaffna", lat: 9.6615, lng: 80.0070 },
-      { name: "Zonal Education Office - Vavuniya", number: "0242222340", description: "Vavuniya Education Management", lat: 8.7514, lng: 80.4971 },
-      { name: "Zonal Education Office - Jaffna", number: "0212222384", description: "Jaffna City Education Inquiries", lat: 9.6615, lng: 80.0070 },
-      { name: "University of Jaffna (General)", number: "0212222294", description: "Main Switchboard", lat: 9.6848, lng: 80.0214 }
+      { name: "Northern Province Education Department", number: "0212222434", description: "Main Office - Jaffna", lat: 9.6615, lng: 80.0070 },
+      { name: "Zonal Education Office Vavuniya", number: "0242222340", description: "Vavuniya Education Management", lat: 8.7514, lng: 80.4971 },
+      { name: "Zonal Education Office Jaffna", number: "0212222384", description: "Jaffna City Education Inquiries", lat: 9.6615, lng: 80.0070 },
+      { name: "University of Jaffna General Hotline", number: "0212222294", description: "Main Switchboard", lat: 9.6848, lng: 80.0214 }
     ]
   },
   {
     category: "Health (Regional Hospitals)",
     icon: <Stethoscope size={20} strokeWidth={1.5} />,
     services: [
-      { name: "Jaffna Teaching Hospital", number: "0212222261", description: "Main General Hospital Jaffna", lat: 9.6658, lng: 80.0209 },
-      { name: "Vavuniya General Hospital", number: "0242222261", description: "Main General Hospital Vavuniya", lat: 8.7542, lng: 80.4982 },
-      { name: "Kilinochchi District Hospital", number: "0212285327", description: "General Health Inquiries", lat: 9.3872, lng: 80.3948 },
-      { name: "Mullaitivu District Hospital", number: "0212290261", description: "General Health Inquiries", lat: 9.2671, lng: 80.8144 }
+      { name: "Jaffna Teaching Hospital Contact", number: "0212222261", description: "Main General Hospital Jaffna", lat: 9.6658, lng: 80.0209 },
+      { name: "Vavuniya General Hospital Contact", number: "0242222261", description: "Main General Hospital Vavuniya", lat: 8.7542, lng: 80.4982 },
+      { name: "Kilinochchi District Hospital Contact", number: "0212285327", description: "General Health Inquiries", lat: 9.3872, lng: 80.3948 },
+      { name: "Mullaitivu District Hospital Contact", number: "0212290261", description: "General Health Inquiries", lat: 9.2671, lng: 80.8144 }
     ]
   },
   {
     category: "General Public Inquiries",
     icon: <Info size={20} strokeWidth={1.5} />,
     services: [
-      { name: "Government Information Center", number: "1919", description: "General info on Govt. services", lat: 6.9271, lng: 79.8612 },
-      { name: "Sri Lanka Railways", number: "1971", description: "Train schedules and seat booking", lat: 6.9344, lng: 79.8501 },
-      { name: "Department of Immigration", number: "0112101500", description: "Passport and Visa inquiries", lat: 6.8912, lng: 79.8543 }
+      { name: "1919 Government Information Center", number: "1919", description: "General info on Govt. services", lat: 6.9271, lng: 79.8612 },
+      { name: "Sri Lanka Railways Hotline 1971", number: "1971", description: "Train schedules and seat booking", lat: 6.9344, lng: 79.8501 },
+      { name: "Department of Immigration Sri Lanka", number: "0112101500", description: "Passport and Visa inquiries", lat: 6.8912, lng: 79.8543 }
     ]
   },
   {
     category: "Banking & Finance (Head Offices)",
     icon: <Globe size={20} strokeWidth={1.5} />,
     services: [
-      { name: "Bank of Ceylon (BOC)", number: "+94112446790", description: "Head Office - Colombo 01", lat: 6.9367, lng: 79.8448 },
-      { name: "People's Bank", number: "+94112481481", description: "Head Office - Colombo 02", lat: 6.9272, lng: 79.8562 },
-      { name: "Commercial Bank", number: "+94112486000", description: "Head Office - Colombo 01", lat: 6.9342, lng: 79.8431 },
-      { name: "Hatton National Bank (HNB)", number: "+94112664664", description: "Head Office - Colombo 10", lat: 6.9201, lng: 79.8702 },
-      { name: "Sampath Bank", number: "+94114730630", description: "Head Office - Colombo 02", lat: 6.9168, lng: 79.8541 },
-      { name: "Seylan Bank", number: "+94112456789", description: "Head Office - Colombo 03", lat: 6.9142, lng: 79.8512 },
-      { name: "National Development Bank (NDB)", number: "+94112448448", description: "Head Office - Colombo 02", lat: 6.9234, lng: 79.8512 },
-      { name: "Nations Trust Bank (NTB)", number: "+94114313131", description: "Head Office - Colombo 02", lat: 6.9189, lng: 79.8567 },
-      { name: "DFCC Bank", number: "+94112442442", description: "Head Office - Colombo 03", lat: 6.9172, lng: 79.8492 },
-      { name: "Pan Asia Bank (PABC)", number: "+94112565565", description: "Head Office - Colombo 03", lat: 6.9082, lng: 79.8514 },
-      { name: "Amana Bank", number: "+94117756000", description: "Head Office - Colombo 03", lat: 6.9112, lng: 79.8521 },
-      { name: "Union Bank", number: "+94112374100", description: "Head Office - Colombo 03", lat: 6.9145, lng: 79.8502 },
-      { name: "Cargills Bank", number: "+94117640640", description: "Head Office - Colombo 03", lat: 6.9156, lng: 79.8498 }
+      { name: "Bank of Ceylon (BOC) Head Office", number: "+94112446790", description: "Head Office - Colombo 01", lat: 6.9367, lng: 79.8448 },
+      { name: "People's Bank Head Office Colombo", number: "+94112481481", description: "Head Office - Colombo 02", lat: 6.9272, lng: 79.8562 },
+      { name: "Commercial Bank Head Office Colombo", number: "+94112486000", description: "Head Office - Colombo 01", lat: 6.9342, lng: 79.8431 },
+      { name: "Hatton National Bank (HNB) Head Office", number: "+94112664664", description: "Head Office - Colombo 10", lat: 6.9201, lng: 79.8702 },
+      { name: "Sampath Bank Head Office Colombo", number: "+94114730630", description: "Head Office - Colombo 02", lat: 6.9168, lng: 79.8541 },
+      { name: "Seylan Bank Head Office Colombo", number: "+94112456789", description: "Head Office - Colombo 03", lat: 6.9142, lng: 79.8512 },
+      { name: "National Development Bank (NDB) Head Office", number: "+94112448448", description: "Head Office - Colombo 02", lat: 6.9234, lng: 79.8512 },
+      { name: "Nations Trust Bank (NTB) Head Office", number: "+94114313131", description: "Head Office - Colombo 02", lat: 6.9189, lng: 79.8567 },
+      { name: "DFCC Bank Head Office Colombo", number: "+94112442442", description: "Head Office - Colombo 03", lat: 6.9172, lng: 79.8492 },
+      { name: "Pan Asia Bank (PABC) Head Office", number: "+94112565565", description: "Head Office - Colombo 03", lat: 6.9082, lng: 79.8514 },
+      { name: "Amana Bank Head Office Colombo", number: "+94117756000", description: "Head Office - Colombo 03", lat: 6.9112, lng: 79.8521 },
+      { name: "Union Bank Head Office Colombo", number: "+94112374100", description: "Head Office - Colombo 03", lat: 6.9145, lng: 79.8502 },
+      { name: "Cargills Bank Head Office Colombo", number: "+94117640640", description: "Head Office - Colombo 03", lat: 6.9156, lng: 79.8498 }
     ]
   }
 ];
