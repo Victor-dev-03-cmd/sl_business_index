@@ -889,7 +889,7 @@ export default function HomePage() {
                     {searchQuery.trim() && (
                       <div className="border-t border-gray-100 px-4 py-3 bg-gray-50/50">
                         <button
-                          onMouseDown={handleSearch}
+                          onMouseDown={() => handleSearch()}
                           className="w-full flex items-center gap-2 text-sm font-medium text-brand-dark hover:text-brand-blue transition-colors group"
                         >
                           <Search
@@ -927,7 +927,7 @@ export default function HomePage() {
               </button>
 
               <button
-                onClick={handleSearch}
+                onClick={() => handleSearch()}
                 className="w-1/2 sm:w-auto bg-brand-blue hover:bg-brand-blue/90 text-white text-base font-normal px-10 py-3 shadow-lg shadow-brand-blue/10 transition-all rounded-[6px]"
               >
                 Search

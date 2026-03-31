@@ -39,7 +39,7 @@ const containerVariants = {
   },
 };
 
-const cardVariants: Variants = {
+const cardVariants = {
   hidden: { opacity: 0, scale: 0.95, y: 20 },
   visible: {
     opacity: 1,
