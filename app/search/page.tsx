@@ -58,6 +58,17 @@ function SearchResults() {
     const [businesses, setBusinesses] = useState<BusinessSearchResult[]>([]);
     const [loading, setLoading] = useState(true);
 
+    const itemListSchema = {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        "itemListElement": businesses.map((business, index) => ({
+            "@type": "ListItem",
+            "position": index + 1,
+            "url": `https://slbusinessindex.com/business/${business.slug || business.id}`,
+            "name": business.name
+        }))
+    };
+
     // Default to Colombo if no coordinates
     const userLat = lat ? parseFloat(lat) : 6.9271;
     const userLng = lng ? parseFloat(lng) : 79.8612;
@@ -88,6 +99,12 @@ function SearchResults() {
 
     return (
         <div className="bg-gray-50/50 min-h-screen">
+            {businesses.length > 0 && (
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }}
+                />
+            )}
             <div className="max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-12 h-[calc(100vh-80px)] overflow-hidden">
                 
                 {/* Search Results List */}

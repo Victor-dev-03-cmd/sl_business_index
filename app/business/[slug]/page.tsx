@@ -115,6 +115,7 @@ export default async function BusinessDetailPage({ params }: Props) {
     '@type': 'LocalBusiness',
     name: business.name,
     image: business.image_url,
+    description: business.description,
     '@id': `https://slbusinessindex.com/business/${business.slug || business.id}`,
     url: `https://slbusinessindex.com/business/${business.slug || business.id}`,
     telephone: business.phone,
@@ -129,6 +130,19 @@ export default async function BusinessDetailPage({ params }: Props) {
       latitude: business.latitude,
       longitude: business.longitude,
     },
+    aggregateRating: business.reviews_count > 0 ? {
+      '@type': 'AggregateRating',
+      ratingValue: business.rating,
+      reviewCount: business.reviews_count,
+    } : undefined,
+    category: business.category,
+    priceRange: '$$',
+    openingHoursSpecification: business.working_hours ? Object.entries(business.working_hours).map(([day, hours]: [string, any]) => ({
+      '@type': 'OpeningHoursSpecification',
+      dayOfWeek: day,
+      opens: hours.open || '09:00',
+      closes: hours.close || '17:00',
+    })) : undefined,
   };
 
   return (

@@ -1401,7 +1401,43 @@ export default function HomePage() {
             </div>
           </motion.div>
         </div>
-          <Testimonials />
+
+        {/* --- CONTEXTUAL SNIPPETS (AI Overview Optimization) --- */}
+        <section className="py-24 bg-gray-50/50 border-t border-gray-200">
+          <div className="max-w-4xl mx-auto px-6 text-center">
+            <h2 className="text-3xl text-gray-900 mb-12 tracking-tight font-normal">
+              Common Questions about Businesses in Sri Lanka
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
+              <div className="space-y-4">
+                <h3 className="text-lg font-bold text-brand-dark">What is the SL Business Index (SLBI)?</h3>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  SLBI is a comprehensive digital directory designed to connect consumers with verified businesses across Sri Lanka. From luxury villas in Galle to specialized clinics in Colombo, we provide a centralized platform for reliable local discovery.
+                </p>
+              </div>
+              <div className="space-y-4">
+                <h3 className="text-lg font-bold text-brand-dark">How do I find verified businesses in Sri Lanka?</h3>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  You can use our real-time search and map features to find businesses nearby. Look for the "Verified" badge on listings, which indicates that the business has been manually reviewed and authenticated by our team.
+                </p>
+              </div>
+              <div className="space-y-4">
+                <h3 className="text-lg font-bold text-brand-dark">Where are the best service providers located?</h3>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  Top-rated service providers are spread across major hubs like Colombo, Kandy, and Jaffna. SLBI allows you to filter by district and town to find the highest-rated businesses in your specific area.
+                </p>
+              </div>
+              <div className="space-y-4">
+                <h3 className="text-lg font-bold text-brand-dark">How can I register my Sri Lankan business on SLBI?</h3>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  Business owners can register by clicking the "Register Business" button in the menu. After providing your details and verification documents (like BR), your business will be indexed and made discoverable to thousands of monthly users.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <Testimonials />
       </section>
     </div>
   );
