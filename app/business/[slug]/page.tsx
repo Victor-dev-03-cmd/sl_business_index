@@ -130,10 +130,10 @@ export default async function BusinessDetailPage({ params }: Props) {
       latitude: business.latitude,
       longitude: business.longitude,
     },
-    aggregateRating: business.reviews_count > 0 ? {
+    aggregateRating: (business.reviews_count ?? 0) > 0 ? {
       '@type': 'AggregateRating',
-      ratingValue: business.rating,
-      reviewCount: business.reviews_count,
+      ratingValue: business.rating ?? 0,
+      reviewCount: business.reviews_count ?? 0,
     } : undefined,
     category: business.category,
     priceRange: '$$',

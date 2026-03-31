@@ -644,10 +644,10 @@ export default function HomePage() {
               ref={searchBarRef}
               className="bg-white rounded-[6px] shadow-lg border border-gray-300"
             >
-              <div className="flex items-center px-5 py-4 bg-white rounded-[6px] gap-3">
+              <div className="flex items-center px-4 py-3 md:px-5 md:py-4 bg-white rounded-[6px] gap-2 md:gap-3">
                 <Search
                   className="text-gray-400 shrink-0"
-                  size={20}
+                  size={18}
                   strokeWidth={1.5}
                 />
                 <input
@@ -660,7 +660,7 @@ export default function HomePage() {
                   }
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                   placeholder="Service or Business… (e.g. Hospital in Colombo)"
-                  className="flex-1 min-w-0 bg-transparent outline-none text-gray-700 text-base placeholder:text-gray-400 font-normal"
+                  className="flex-1 min-w-0 bg-transparent outline-none text-gray-700 text-sm md:text-base placeholder:text-gray-400 font-normal"
                 />
                 {searchQuery && (
                   <button
@@ -912,23 +912,25 @@ export default function HomePage() {
             </AnimatePresence>
 
             {/* Location and Action Buttons */}
-            <div className="flex flex-row items-center justify-center gap-2">
+            <div className="flex flex-row items-center justify-center gap-2 px-1">
               <button
                 onClick={() => handleUseCurrentLocation(true)}
                 disabled={isFetchingLocation}
-                className="flex items-center gap-2 w-1/2 sm:w-auto px-5 py-3 text-gray-700 bg-gray-50 hover:bg-brand-blue border border-gray-300 font-normal transition-all disabled:opacity-50 text-base rounded-[6px]"
+                className="flex items-center justify-center gap-2 flex-1 md:flex-none md:w-auto px-4 md:px-6 py-3 text-gray-700 bg-gray-50 hover:bg-brand-blue border border-gray-300 font-normal transition-all disabled:opacity-50 text-sm md:text-base rounded-[6px]"
               >
                 <Navigation
                   size={16}
                   strokeWidth={1.5}
                   className={cn("text-brand-blue", isFetchingLocation && "animate-pulse")}
                 />
-                {isFetchingLocation ? "Locating..." : "Near me"}
+                <span className="whitespace-nowrap">
+                  {isFetchingLocation ? "Locating..." : "Near me"}
+                </span>
               </button>
 
               <button
                 onClick={() => handleSearch()}
-                className="w-1/2 sm:w-auto bg-brand-blue hover:bg-brand-blue/90 text-white text-base font-normal px-10 py-3 shadow-lg shadow-brand-blue/10 transition-all rounded-[6px]"
+                className="flex-1 md:flex-none md:w-auto bg-brand-blue hover:bg-brand-blue/90 text-white text-sm md:text-base font-normal px-6 md:px-12 py-3 shadow-lg shadow-brand-blue/10 transition-all rounded-[6px]"
               >
                 Search
               </button>
