@@ -43,6 +43,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SL_TOWNS, Town } from "@/lib/towns";
 import VerifiedBadge from "./components/VerifiedBadge";
 import Testimonials from "./components/Testimonials";
+import VoiceSearch from "./components/VoiceSearch";
 import { toast } from "sonner";
 import Fuse from "fuse.js";
 
@@ -156,6 +157,11 @@ export default function HomePage() {
     },
     staleTime: 5 * 60 * 1000,
   });
+
+  const handleVoiceResult = (text: string) => {
+    setSearchQuery(text);
+    handleSearch(text);
+  };
 
   const {
     data: featuredBusinesses = [],
@@ -436,14 +442,14 @@ export default function HomePage() {
     }
   };
 
-  const handleSearch = () => {
-    let finalQuery = searchQuery;
+  const handleSearch = (query?: string) => {
+    let finalQuery = query ?? searchQuery;
     let finalDistrict = selectedLocation;
     let finalCategory = selectedCategory;
     let finalSearchMode = searchMode;
 
     // --- SMART PARSING ---
-    let lowerQuery = searchQuery.toLowerCase().trim();
+    let lowerQuery = (query ?? searchQuery).toLowerCase().trim();
     let finalLat = "";
     let finalLng = "";
     let extractedTown: Town | null = null;
@@ -667,6 +673,8 @@ export default function HomePage() {
                     ✕
                   </button>
                 )}
+                <div className="w-[1px] h-6 bg-gray-200 mx-1 shrink-0" />
+                <VoiceSearch onResult={handleVoiceResult} className="shrink-0" />
               </div>
             </div>
 
