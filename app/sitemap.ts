@@ -67,19 +67,31 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.5,
     },
     {
-      url: `${baseUrl}/terms`,
+      url: `${baseUrl}/terms-of-service`,
       lastModified: new Date().toISOString(),
       changeFrequency: 'yearly',
       priority: 0.5,
     },
     {
-      url: `${baseUrl}/privacy`,
+      url: `${baseUrl}/privacy-policy`,
       lastModified: new Date().toISOString(),
       changeFrequency: 'yearly',
       priority: 0.5,
     },
     {
       url: `${baseUrl}/contact`,
+      lastModified: new Date().toISOString(),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/pricing-plans`,
+      lastModified: new Date().toISOString(),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/faq`,
       lastModified: new Date().toISOString(),
       changeFrequency: 'monthly',
       priority: 0.8,
