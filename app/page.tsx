@@ -42,6 +42,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { SL_TOWNS, Town } from "@/lib/towns";
 import VerifiedBadge from "./components/VerifiedBadge";
+import Testimonials from "./components/Testimonials";
 import { toast } from "sonner";
 import Fuse from "fuse.js";
 
@@ -365,7 +366,7 @@ export default function HomePage() {
 
   const scroll = (direction: "left" | "right") => {
     if (scrollContainerRef.current) {
-      const scrollAmount = 300;
+      const scrollAmount = 600; // Increased for two-row scrolling
       scrollContainerRef.current.scrollBy({
         left: direction === "left" ? -scrollAmount : scrollAmount,
         behavior: "smooth",
@@ -947,13 +948,17 @@ export default function HomePage() {
               <button
                 onClick={() => scroll("left")}
                 disabled={!canScrollLeft}
-                className="p-2 border border-gray-200 rounded-full hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-              ></button>
+                className="p-2 border border-gray-200 rounded-full hover:bg-brand-blue hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all text-gray-600"
+              >
+                <ChevronLeft size={20} strokeWidth={2} />
+              </button>
               <button
                 onClick={() => scroll("right")}
                 disabled={!canScrollRight}
-                className="p-2 border border-gray-200 rounded-full hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-              ></button>
+                className="p-2 border border-gray-200 rounded-full hover:bg-brand-blue hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all text-gray-600"
+              >
+                <ChevronRight size={20} strokeWidth={2} />
+              </button>
             </div>
             <Link
               href="/categories"
@@ -981,7 +986,7 @@ export default function HomePage() {
           onMouseUp={handleMouseUpOrLeave}
           onMouseLeave={handleMouseUpOrLeave}
           className={cn(
-            "grid grid-cols-4 gap-2 md:flex md:gap-6 px-2 md:overflow-x-auto no-scrollbar pb-8 select-none",
+            "grid grid-cols-4 gap-2 md:grid md:grid-cols-none md:grid-rows-2 md:grid-flow-col md:auto-cols-max md:gap-x-6 md:gap-y-6 px-2 md:overflow-x-auto md:min-h-[450px] no-scrollbar pb-8 select-none",
             isDragging && "cursor-grabbing",
           )}
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
@@ -990,7 +995,7 @@ export default function HomePage() {
             ? [...Array(16)].map((_, i) => (
                 <div
                   key={i}
-                  className="flex flex-col items-center p-3 md:p-8 bg-white border border-gray-200 rounded-[8px] md:rounded-[12px] md:flex-shrink-0 md:w-48"
+                  className="flex flex-col items-center justify-center p-3 md:p-8 bg-white border border-gray-200 rounded-[8px] md:rounded-[12px] md:min-w-[200px] md:h-full"
                 >
                   <Skeleton className="w-10 h-10 md:w-20 md:h-20 rounded-full mb-2 md:mb-4" />
                   <Skeleton className="h-2 w-3/4" />
@@ -1007,7 +1012,7 @@ export default function HomePage() {
                     <div
                       key={cat.id || idx}
                       onClick={() => handleCategoryClick(cat.name)}
-                      className="group cursor-pointer flex flex-col items-center p-3 md:p-8 bg-white border border-gray-200 rounded-[8px] md:rounded-[12px] md:flex-shrink-0 md:w-48 hover:border-brand-gold hover:shadow-xl hover:-translate-y-1 transition-all duration-300 select-none"
+                      className="group cursor-pointer flex flex-col items-center justify-center p-3 md:p-8 bg-white border border-gray-300 rounded md:rounded-[12px] md:min-w-[200px] md:h-full hover:border-brand-gold hover:shadow-xl hover:-translate-y-1 transition-all duration-300 select-none"
                       onContextMenu={(e) => e.preventDefault()}
                     >
                       <div className="relative w-10 h-10 md:w-20 md:h-20 mb-2 md:mb-4 transition-transform group-hover:scale-110 pointer-events-none flex items-center justify-center">
@@ -1025,7 +1030,7 @@ export default function HomePage() {
                           </div>
                         )}
                       </div>
-                      <span className="text-gray-700 text-[10px] md:text-[11px] font-medium text-center group-hover:text-brand-gold transition-colors leading-tight line-clamp-2">
+                      <span className="text-gray-700 text-[10px] md:text-[12px] font-medium text-center group-hover:text-brand-gold transition-colors leading-tight line-clamp-2">
                         {cat.name}
                       </span>
                     </div>
@@ -1035,7 +1040,7 @@ export default function HomePage() {
       </section>
 
       {/* --- LISTINGS (4-Column Modern Grid) --- */}
-      <section className="py-24 bg-gray-50/50 border-t border-gray-300">
+      <section className="py-24 bg-[#f5f5f5] border-t border-gray-300">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-14 gap-4">
             <div>
@@ -1351,6 +1356,8 @@ export default function HomePage() {
             </motion.div>
           </div>
 
+        
+
           {/* Final Conversion CTA */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -1386,6 +1393,7 @@ export default function HomePage() {
             </div>
           </motion.div>
         </div>
+          <Testimonials />
       </section>
     </div>
   );
