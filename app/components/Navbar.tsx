@@ -23,6 +23,7 @@ import {
   LayoutDashboard,
   Briefcase,
   MapPin,
+  HelpCircle as HelpIcon,
 } from "lucide-react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import Image from "next/image";
@@ -175,6 +176,12 @@ export default function Navbar() {
               className="text-gray-600 hover:text-[#2a7db4] transition-colors"
             >
               About
+            </Link>
+            <Link
+              href="/faq"
+              className="text-gray-600 hover:text-[#2a7db4] transition-colors"
+            >
+              FAQ
             </Link>
             <Link
               href="/contact"
@@ -363,6 +370,15 @@ export default function Navbar() {
                   href="/about"
                   icon={Info}
                   label="About"
+                  onClick={close}
+                  variants={itemVariants}
+                />
+
+                {/* FAQ */}
+                <MobileNavLink
+                  href="/faq"
+                  icon={HelpIcon}
+                  label="FAQ"
                   onClick={close}
                   variants={itemVariants}
                 />

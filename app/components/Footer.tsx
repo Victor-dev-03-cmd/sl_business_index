@@ -19,7 +19,8 @@ import {
   Database,
   Zap,
   Wind,
-  Layers
+  Layers,
+  HelpCircle
 } from 'lucide-react';
 import LogoLink from './LogoLink';
 import { useSession } from './SessionContext';
@@ -102,6 +103,12 @@ const Footer = () => {
                 <Link href="/nearby" className="flex items-center gap-3 hover:text-brand-blue transition-colors group">
                   <Sliders size={16} className="text-brand-blue transition-transform" />
                   Advanced Filters
+                </Link>
+              </li>
+              <li>
+                <Link href="/faq" className="flex items-center gap-3 hover:text-brand-blue transition-colors group">
+                  <HelpCircle size={16} className="text-brand-blue transition-transform" />
+                  Help & FAQ
                 </Link>
               </li>
             </ul>
