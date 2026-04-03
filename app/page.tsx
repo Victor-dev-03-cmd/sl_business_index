@@ -77,6 +77,8 @@ const sriLankanDistricts = [
 
 const words = ["businesses", "Enterprises", "Owners"];
 
+const EMPTY_ARRAY: any[] = [];
+
 const districtCoordinates: Record<string, { lat: number; lng: number }> = {
   Ampara: { lat: 7.2912, lng: 81.6724 },
   Anuradhapura: { lat: 8.3122, lng: 80.4131 },
@@ -144,7 +146,7 @@ export default function HomePage() {
   const [scrollLeft, setScrollLeft] = useState(0);
   const [showAllCategories, setShowAllCategories] = useState(false);
 
-  const { data: categories = [], isLoading: categoriesLoading } = useQuery({
+  const { data: categories = EMPTY_ARRAY, isLoading: categoriesLoading } = useQuery({
     queryKey: ["categories-home"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -164,7 +166,7 @@ export default function HomePage() {
   };
 
   const {
-    data: featuredBusinesses = [],
+    data: featuredBusinesses = EMPTY_ARRAY,
     isLoading: featuredLoading,
     error: featuredError,
   } = useQuery({
@@ -311,7 +313,7 @@ export default function HomePage() {
       setBusinessSuggestions(featuredBusinesses.slice(0, 4));
       setFuzzyBusinessSuggestions([]);
     }
-  }, [debouncedSearchQuery, searchQuery, fuse, userCoords, featuredBusinesses]);
+  }, [debouncedSearchQuery, searchQuery, fuse, userCoords, featuredBusinesses, categories]);
 
   const IconComponent = ({
     name,
