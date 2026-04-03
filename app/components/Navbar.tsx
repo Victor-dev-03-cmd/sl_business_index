@@ -120,9 +120,9 @@ export default function Navbar() {
         : null;
 
   const isVendorOrAdmin =
-    profileData?.role === "vendor" ||
-    profileData?.role === "admin" ||
-    profileData?.role === "ceo";
+    profileData?.role?.toLowerCase() === "vendor" ||
+    profileData?.role?.toLowerCase() === "admin" ||
+    profileData?.role?.toLowerCase() === "ceo";
 
   const showRegister = !user || !isVendorOrAdmin;
 

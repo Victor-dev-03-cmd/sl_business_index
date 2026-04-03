@@ -916,7 +916,7 @@ export default function HomePage() {
               <button
                 onClick={() => handleUseCurrentLocation(true)}
                 disabled={isFetchingLocation}
-                className="flex items-center justify-center gap-2 flex-1 md:flex-none md:w-auto px-4 md:px-6 py-3 text-gray-700 bg-gray-50 hover:bg-brand-blue border border-gray-300 font-normal transition-all disabled:opacity-50 text-sm md:text-base rounded-[6px]"
+                className="flex items-center justify-center gap-2 flex-1 md:flex-none md:w-auto px-4 md:px-6 py-3 text-gray-700 bg-gray-50 hover:bg-brand-blue border border-brand-blue font-normal transition-all disabled:opacity-50 text-sm md:text-base rounded-[6px]"
               >
                 <Navigation
                   size={16}

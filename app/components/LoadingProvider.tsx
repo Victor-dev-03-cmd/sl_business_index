@@ -7,12 +7,18 @@ import { motion } from 'framer-motion';
 export default function LoadingProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     // Adjust timing to allow the typing animation to complete
     const timer = setTimeout(() => setIsLoading(false), 2500);
     return () => clearTimeout(timer);
   }, []);
+
+  if (!mounted) {
+    return <LoadingScreen />;
+  }
 
   return (
     <Suspense fallback={<LoadingScreen />}>
@@ -21,7 +27,7 @@ export default function LoadingProvider({ children }: { children: React.ReactNod
   );
 }
 
-function LoadingScreen() {
+export function LoadingScreen() {
   const text = "Sri Lanka Business Index";
 
   const containerVariants = {
@@ -38,7 +44,7 @@ function LoadingScreen() {
   };
 
   return (
-    <div className="flex items-center justify-center h-screen w-full bg-white">
+    <div className="fixed inset-0 flex items-center justify-center min-h-[100dvh] w-full bg-white z-[9999]">
       <div className="flex flex-col items-center">
         <h1 className="text-8xl font-medium tracking-widest animate-pulse text-brand-dark">
           SLBI

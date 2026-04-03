@@ -49,8 +49,9 @@ export default function AuthButton({ user }: { user?: AuthUser | null }) {
 
   if (user) {
     const displayName = user.full_name || user.username || user.email || "User";
-    const isAdminOrCeo = user.role === "admin" || user.role === "ceo";
-    const isVendor = user.role === "vendor" || user.hasBusiness;
+    const userRole = user.role?.toLowerCase();
+    const isAdminOrCeo = userRole === "admin" || userRole === "ceo";
+    const isVendor = userRole === "vendor" || user.hasBusiness;
 
     return (
       <DropdownMenu>

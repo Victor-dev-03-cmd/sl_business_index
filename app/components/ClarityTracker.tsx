@@ -19,6 +19,8 @@ export default function ClarityTracker() {
       return
     }
 
+    if (typeof window === 'undefined') return;
+
     // Standard Clarity tracking code
     // @ts-ignore
     (function(c,l,a,r,i,t,y){
