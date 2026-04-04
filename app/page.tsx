@@ -4,8 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
-import { MorphingText } from "@/components/animate-ui/primitives/texts/morphing";
+import { motion } from "framer-motion";
 import { supabase } from "@/lib/supabaseClient";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -244,17 +243,25 @@ export default function HomePage() {
       const gap = 12;
       const offset = rect.top - navbarH - gap;
       if (Math.abs(offset) > 4) {
-        window.scrollBy({ top: offset, behavior: "smooth" });
+        // Use behavior "auto" on mobile to prevent jank/crash with keyboard opening
+        window.scrollBy({ top: offset, behavior: "auto" });
       }
     }, 80);
   };
 
   /* Track search bar position so the fixed suggestions panel stays aligned */
   useEffect(() => {
+    let ticking = false;
     const updatePos = () => {
-      if (searchBarRef.current) {
-        const r = searchBarRef.current.getBoundingClientRect();
-        setPanelPos({ top: r.bottom + 8, left: r.left, width: r.width });
+      if (searchBarRef.current && !ticking) {
+        window.requestAnimationFrame(() => {
+          if (searchBarRef.current) {
+            const r = searchBarRef.current.getBoundingClientRect();
+            setPanelPos({ top: r.bottom + 8, left: r.left, width: r.width });
+          }
+          ticking = false;
+        });
+        ticking = true;
       }
     };
     if (isSearchFocused) updatePos();
@@ -267,12 +274,9 @@ export default function HomePage() {
   }, [isSearchFocused]);
 
   useEffect(() => {
-    // 1. Immediate Local Search (GeoJSON)
+    // 1. Local Search (GeoJSON) - Moved inside debounced check if searchQuery is long
+    // Update category suggestions immediately (lightweight)
     if (searchQuery.trim().length > 0) {
-      const geoResults = fuse.search(searchQuery).slice(0, 4);
-      setSuggestions(geoResults.map((r) => r.item));
-
-      // Update category suggestions
       const query = searchQuery.toLowerCase();
       const filteredCats = categories
         .filter(
@@ -283,12 +287,15 @@ export default function HomePage() {
         .slice(0, 5);
       setCategorySuggestions(filteredCats);
     } else {
-      setSuggestions([]);
       setCategorySuggestions([]);
     }
 
-    // 2. Database Fetch (Debounced)
+    // 2. Database Fetch & Heavy Fuse Search (Debounced)
     if (debouncedSearchQuery.trim().length > 0) {
+      // Immediate Fuse search on debounced query
+      const geoResults = fuse.search(debouncedSearchQuery).slice(0, 4);
+      setSuggestions(geoResults.map((r) => r.item));
+
       const fetchSuggestions = async () => {
         try {
           const { data, error } = await supabase.rpc(
@@ -309,6 +316,7 @@ export default function HomePage() {
       };
       fetchSuggestions();
     } else {
+      setSuggestions([]);
       // Auto-show featured businesses when focused but empty
       setBusinessSuggestions(featuredBusinesses.slice(0, 4));
       setFuzzyBusinessSuggestions([]);
@@ -336,7 +344,8 @@ export default function HomePage() {
     const scrollStep = 0.3; // Slower speed (was 0.5)
 
     const autoScroll = () => {
-      if (scrollContainerRef.current && !isPaused && !isDragging) {
+      // Disable autoscroll when search is focused to save performance on mobile
+      if (scrollContainerRef.current && !isPaused && !isDragging && !isSearchFocused) {
         const {
           scrollLeft: sLeft,
           scrollWidth,
@@ -355,7 +364,7 @@ export default function HomePage() {
 
     animationId = requestAnimationFrame(autoScroll);
     return () => cancelAnimationFrame(animationId);
-  }, [isPaused, isDragging]);
+  }, [isPaused, isDragging, isSearchFocused]);
 
   const checkScroll = () => {
     if (scrollContainerRef.current) {
@@ -597,7 +606,7 @@ export default function HomePage() {
         {/* Animated Blue Background Elements */}
         <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden ">
           <motion.div
-            animate={{
+            animate={isSearchFocused && typeof window !== 'undefined' && window.innerWidth < 768 ? {} : {
               scale: [1, 1.2, 1],
               x: [0, 100, 0],
               y: [0, 50, 0],
@@ -610,7 +619,7 @@ export default function HomePage() {
             className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-brand-blue/10 blur-[120px] rounded-full"
           />
           <motion.div
-            animate={{
+            animate={isSearchFocused && typeof window !== 'undefined' && window.innerWidth < 768 ? {} : {
               scale: [1, 1.3, 1],
               x: [0, -120, 0],
               y: [0, -80, 0],
@@ -625,7 +634,15 @@ export default function HomePage() {
         </div>
 
         {/* Glass Morphism Overlay */}
-        <div className="absolute inset-0 bg-white/20 backdrop-blur-[100px] z-0 border-b border-gray-300" />
+        <div 
+          className={cn(
+            "absolute inset-0 bg-white/20 z-0 border-b border-gray-300",
+            // Reduce blur on mobile focus to save GPU
+            isSearchFocused && typeof window !== 'undefined' && window.innerWidth < 768 
+              ? "backdrop-blur-[20px]" 
+              : "backdrop-blur-[100px]"
+          )} 
+        />
 
         <div className="relative z-10 max-w-5xl px-6 text-center">
           <span className="inline-block px-4 py-1.5 mb-6 text-[11px] md:text-[13px] tracking-[0.15em] uppercase text-brand-blue border border-gray-300 rounded">
@@ -681,30 +698,24 @@ export default function HomePage() {
             </div>
 
             {/* ── Fixed suggestions panel — escapes hero's overflow-hidden ── */}
-            <AnimatePresence>
-              {isSearchFocused &&
-                (suggestions.length > 0 ||
-                  businessSuggestions.length > 0 ||
-                  fuzzyBusinessSuggestions.length > 0 ||
-                  categorySuggestions.length > 0) &&
-                panelPos.width > 0 && (
-                  <motion.div
-                    key="suggestions"
-                    initial={{ opacity: 0, y: -6, scale: 0.98 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -4, scale: 0.98 }}
-                    transition={{ duration: 0.16, ease: "easeOut" }}
-                    className="bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden text-left"
-                    style={{
-                      position: "fixed",
-                      top: panelPos.top,
-                      left: panelPos.left,
-                      width: panelPos.width,
-                      zIndex: 9999,
-                      maxHeight: "65vh",
-                      overflowY: "auto",
-                    }}
-                  >
+            {isSearchFocused &&
+              (suggestions.length > 0 ||
+                businessSuggestions.length > 0 ||
+                fuzzyBusinessSuggestions.length > 0 ||
+                categorySuggestions.length > 0) &&
+              panelPos.width > 0 && (
+                <div
+                  className="bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden text-left"
+                  style={{
+                    position: "fixed",
+                    top: panelPos.top,
+                    left: panelPos.left,
+                    width: panelPos.width,
+                    zIndex: 9999,
+                    maxHeight: "65vh",
+                    overflowY: "auto",
+                  }}
+                >
                     {/* ── Categories section ── */}
                     {categorySuggestions.length > 0 && (
                       <div className="border-b border-gray-100 last:border-0">
@@ -909,9 +920,8 @@ export default function HomePage() {
                         </button>
                       </div>
                     )}
-                  </motion.div>
+                  </div>
                 )}
-            </AnimatePresence>
 
             {/* Location and Action Buttons */}
             <div className="flex flex-row items-center justify-center gap-2 px-1">
