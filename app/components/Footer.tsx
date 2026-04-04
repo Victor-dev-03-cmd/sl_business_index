@@ -177,13 +177,17 @@ const Footer = () => {
         </div>
 
         {/* Bottom Bar: Copyright & Developer Signature */}
-        <div className="border-t border-gray-900 pt-8 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="text-xs text-gray-500">
+        <div className="border-t border-gray-900 pt-8 flex flex-col md:grid md:grid-cols-3 items-center gap-6">
+          <div className="text-[10px] md:text-xs text-gray-400 text-center md:text-left order-2 md:order-1">
+            Graphic design by <a href="https://arud-portfolio.vercel.app/" target="_blank" rel="noopener noreferrer" className="text-brand-blue transition-all underline decoration-gray-800 underline-offset-4">Arud Graphics</a>
+          </div>
+
+          <div className="text-[10px] md:text-xs text-gray-500 text-center order-1 md:order-2">
             © 2026 SL Business Index | <span className="text-gray-400">The Heart of Sri Lankan Commerce</span>
           </div>
 
-          <div className="flex flex-col items-center md:items-end gap-3">
-            <div className="flex items-center gap-1.5 text-xs text-gray-400">
+          <div className="flex flex-col items-center md:items-end gap-3 order-3">
+            <div className="flex items-center gap-1.5 text-[10px] md:text-xs text-gray-400">
               Built with <Heart size={12} className="text-red-500 fill-red-500" /> in Sri Lanka by 
               <a href="https://laxsan-dev.vercel.app/" target="_blank" rel="noopener noreferrer" className="text-brand-blue hover:underline cursor-pointer"> Laxsan Dev</a>
             </div>
@@ -199,15 +203,6 @@ const Footer = () => {
           </div>
         </div>
       </div>
-
-      {/* Back to Top Arrow
-      <button 
-        onClick={scrollToTop}
-        className="fixed bottom-8 right-8 w-12 h-12 flex items-center justify-center bg-brand-dark hover:bg-brand-blue text-white shadow-2xl rounded-full shadow-brand-dark/40 z-50 transition-all hover:-translate-y-1 active:scale-95 border-2 border-white/20"
-        aria-label="Back to top"
-      >
-        <ArrowUp size={20} />
-      </button>  */}
     </footer>
   );
 };

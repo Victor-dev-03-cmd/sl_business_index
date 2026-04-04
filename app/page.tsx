@@ -8,135 +8,51 @@ import { motion } from "framer-motion";
 import { supabase } from "@/lib/supabaseClient";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Search,
-  MapPin,
   ChevronLeft,
   ChevronRight,
-  ChevronDown,
-  Navigation,
-  Check,
-  LayoutGrid,
-  Star,
-  Phone,
-  Clock,
-  Tags,
   Building2,
+  Star,
+  Tags,
+  Navigation,
+  Search,
+  MapPin,
 } from "lucide-react";
 import * as LucideIcons from "lucide-react";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import { cn, expandSearchQuery } from "@/lib/utils";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-import { SL_TOWNS, Town } from "@/lib/towns";
+import HeroSearch from "./components/HeroSearch";
 import VerifiedBadge from "./components/VerifiedBadge";
 import Testimonials from "./components/Testimonials";
-import VoiceSearch from "./components/VoiceSearch";
-import { toast } from "sonner";
-import Fuse from "fuse.js";
-
-const sriLankanDistricts = [
-  "Ampara",
-  "Anuradhapura",
-  "Badulla",
-  "Batticaloa",
-  "Colombo",
-  "Galle",
-  "Gampaha",
-  "Hambantota",
-  "Jaffna",
-  "Kalutara",
-  "Kandy",
-  "Kegalle",
-  "Kilinochchi",
-  "Kurunegala",
-  "Mannar",
-  "Matale",
-  "Matara",
-  "Monaragala",
-  "Mullaitivu",
-  "Nuwara Eliya",
-  "Polonnaruwa",
-  "Puttalam",
-  "Ratnapura",
-  "Trincomalee",
-  "Vavuniya",
-];
-
-const words = ["businesses", "Enterprises", "Owners"];
 
 const EMPTY_ARRAY: any[] = [];
-
-const districtCoordinates: Record<string, { lat: number; lng: number }> = {
-  Ampara: { lat: 7.2912, lng: 81.6724 },
-  Anuradhapura: { lat: 8.3122, lng: 80.4131 },
-  Badulla: { lat: 6.9899, lng: 81.0569 },
-  Batticaloa: { lat: 7.7102, lng: 81.6924 },
-  Colombo: { lat: 6.9271, lng: 79.8612 },
-  Galle: { lat: 6.0535, lng: 80.221 },
-  Gampaha: { lat: 7.0873, lng: 79.9925 },
-  Hambantota: { lat: 6.1429, lng: 81.1212 },
-  Jaffna: { lat: 9.6615, lng: 80.007 },
-  Kalutara: { lat: 6.5854, lng: 79.9607 },
-  Kandy: { lat: 7.2906, lng: 80.6337 },
-  Kegalle: { lat: 7.2513, lng: 80.3464 },
-  Kilinochchi: { lat: 9.3872, lng: 80.3948 },
-  Kurunegala: { lat: 7.4863, lng: 80.3647 },
-  Mannar: { lat: 8.981, lng: 79.9044 },
-  Matale: { lat: 7.4675, lng: 80.6234 },
-  Matara: { lat: 5.9496, lng: 80.5469 },
-  Monaragala: { lat: 6.8718, lng: 81.3496 },
-  Mullaitivu: { lat: 9.2671, lng: 80.8144 },
-  "Nuwara Eliya": { lat: 6.9697, lng: 80.7672 },
-  Polonnaruwa: { lat: 7.9403, lng: 81.0188 },
-  Puttalam: { lat: 8.033, lng: 79.8259 },
-  Ratnapura: { lat: 6.6828, lng: 80.3992 },
-  Trincomalee: { lat: 8.5874, lng: 81.2152 },
-  Vavuniya: { lat: 8.7514, lng: 80.4971 },
-};
 
 export default function HomePage() {
   const router = useRouter();
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [suggestions, setSuggestions] = useState<any[]>([]);
-  const [businessSuggestions, setBusinessSuggestions] = useState<any[]>([]);
-  const [fuzzyBusinessSuggestions, setFuzzyBusinessSuggestions] = useState<
-    any[]
-  >([]);
-  const [categorySuggestions, setCategorySuggestions] = useState<any[]>([]);
-  const [geoData, setGeoData] = useState<any[]>([]);
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const IconComponent = ({
+    name,
+    className,
+  }: {
+    name: string | null;
+    className?: string;
+  }) => {
+    if (!name) return <Tags className={className} />;
+    const Icon = (LucideIcons as any)[name];
+    return Icon ? (
+      <Icon className={className} />
+    ) : (
+      <Tags className={className} />
+    );
+  };
+
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
-  const [searchMode, setSearchMode] = useState<"location" | "nearby" | null>(
-    null,
-  );
   const [userCoords, setUserCoords] = useState<{
     lat: number;
     lng: number;
   } | null>(null);
   const [isFetchingLocation, setIsFetchingLocation] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const searchBarRef = useRef<HTMLDivElement>(null);
-  const [panelPos, setPanelPos] = useState<{
-    top: number;
-    left: number;
-    width: number;
-  }>({ top: 0, left: 0, width: 0 });
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
@@ -159,11 +75,6 @@ export default function HomePage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const handleVoiceResult = (text: string) => {
-    setSearchQuery(text);
-    handleSearch(text);
-  };
-
   const {
     data: featuredBusinesses = EMPTY_ARRAY,
     isLoading: featuredLoading,
@@ -171,7 +82,6 @@ export default function HomePage() {
   } = useQuery({
     queryKey: ["featured-businesses-home"],
     queryFn: async () => {
-      // Fetch from featured_listings table which references businesses
       const { data, error } = await supabase
         .from("featured_listings")
         .select(
@@ -190,7 +100,6 @@ export default function HomePage() {
         throw error;
       }
 
-      // Flatten the data and ensure we only have businesses that actually exist and are approved
       return (data as any[])
         .map((item) => item.businesses)
         .filter((b) => b && b.status === "approved") as any[];
@@ -199,160 +108,17 @@ export default function HomePage() {
   });
 
   useEffect(() => {
-    fetch("/srilanka.geojson")
-      .then((res) => res.json())
-      .then((data) => {
-        setGeoData(data.features || []);
-      })
-      .catch((err) => console.error("Error loading GeoJSON:", err));
-  }, []);
-
-  const fuse = React.useMemo(
-    () =>
-      new Fuse(geoData, {
-        keys: [
-          "properties.name",
-          "properties.category",
-          "properties.location",
-          "properties.address",
-        ],
-        threshold: 0.3,
-        distance: 100,
-      }),
-    [geoData],
-  );
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-
-  /* On mobile: when the keyboard opens it shrinks the visible viewport.
-     Scroll the search bar just below the sticky navbar so it stays visible. */
-  const handleSearchFocus = () => {
-    setIsSearchFocused(true);
-
-    if (typeof window === "undefined" || window.innerWidth >= 768) return;
-
-    setTimeout(() => {
-      if (!searchBarRef.current) return;
-      const rect = searchBarRef.current.getBoundingClientRect();
-      const navbarH = 80; // sticky navbar height (h-20)
-      const gap = 12;
-      const offset = rect.top - navbarH - gap;
-      if (Math.abs(offset) > 4) {
-        // Use behavior "auto" on mobile to prevent jank/crash with keyboard opening
-        window.scrollBy({ top: offset, behavior: "auto" });
-      }
-    }, 80);
-  };
-
-  /* Track search bar position so the fixed suggestions panel stays aligned */
-  useEffect(() => {
-    let ticking = false;
-    const updatePos = () => {
-      if (searchBarRef.current && !ticking) {
-        window.requestAnimationFrame(() => {
-          if (searchBarRef.current) {
-            const r = searchBarRef.current.getBoundingClientRect();
-            setPanelPos({ top: r.bottom + 8, left: r.left, width: r.width });
-          }
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-    if (isSearchFocused) updatePos();
-    window.addEventListener("resize", updatePos);
-    window.addEventListener("scroll", updatePos, { passive: true });
-    return () => {
-      window.removeEventListener("resize", updatePos);
-      window.removeEventListener("scroll", updatePos);
-    };
-  }, [isSearchFocused]);
-
-  useEffect(() => {
-    // 1. Local Search (GeoJSON) - Moved inside debounced check if searchQuery is long
-    // Update category suggestions immediately (lightweight)
-    if (searchQuery.trim().length > 0) {
-      const query = searchQuery.toLowerCase();
-      const filteredCats = categories
-        .filter(
-          (cat: any) =>
-            cat.name.toLowerCase().includes(query) ||
-            cat.keywords?.some((kw: string) => kw.toLowerCase().includes(query)),
-        )
-        .slice(0, 5);
-      setCategorySuggestions(filteredCats);
-    } else {
-      setCategorySuggestions([]);
-    }
-
-    // 2. Database Fetch & Heavy Fuse Search (Debounced)
-    if (debouncedSearchQuery.trim().length > 0) {
-      // Immediate Fuse search on debounced query
-      const geoResults = fuse.search(debouncedSearchQuery).slice(0, 4);
-      setSuggestions(geoResults.map((r) => r.item));
-
-      const fetchSuggestions = async () => {
-        try {
-          const { data, error } = await supabase.rpc(
-            "get_global_search_suggestions",
-            {
-              search_query: debouncedSearchQuery,
-              suggestion_limit: 5,
-            },
-          );
-          if (error) throw error;
-          if (data) {
-            setFuzzyBusinessSuggestions(data);
-            setBusinessSuggestions(data);
-          }
-        } catch (err) {
-          console.error("Error fetching suggestions:", err);
-        }
-      };
-      fetchSuggestions();
-    } else {
-      setSuggestions([]);
-      // Auto-show featured businesses when focused but empty
-      setBusinessSuggestions(featuredBusinesses.slice(0, 4));
-      setFuzzyBusinessSuggestions([]);
-    }
-  }, [debouncedSearchQuery, searchQuery, fuse, userCoords, featuredBusinesses, categories]);
-
-  const IconComponent = ({
-    name,
-    className,
-  }: {
-    name: string | null;
-    className?: string;
-  }) => {
-    if (!name) return <Tags className={className} />;
-    const Icon = (LucideIcons as any)[name];
-    return Icon ? (
-      <Icon className={className} />
-    ) : (
-      <Tags className={className} />
-    );
-  };
-
-  useEffect(() => {
     let animationId: number;
-    const scrollStep = 0.3; // Slower speed (was 0.5)
+    const scrollStep = 0.3;
 
     const autoScroll = () => {
-      // Disable autoscroll when search is focused to save performance on mobile
-      if (scrollContainerRef.current && !isPaused && !isDragging && !isSearchFocused) {
+      if (scrollContainerRef.current && !isPaused && !isDragging) {
         const {
           scrollLeft: sLeft,
           scrollWidth,
           clientWidth,
         } = scrollContainerRef.current;
 
-        // If we reached the end, reset to start or stop (resetting to start for continuous)
         if (sLeft >= scrollWidth - clientWidth - 5) {
           scrollContainerRef.current.scrollLeft = 0;
         } else {
@@ -364,7 +130,7 @@ export default function HomePage() {
 
     animationId = requestAnimationFrame(autoScroll);
     return () => cancelAnimationFrame(animationId);
-  }, [isPaused, isDragging, isSearchFocused]);
+  }, [isPaused, isDragging]);
 
   const checkScroll = () => {
     if (scrollContainerRef.current) {
@@ -383,7 +149,7 @@ export default function HomePage() {
 
   const scroll = (direction: "left" | "right") => {
     if (scrollContainerRef.current) {
-      const scrollAmount = 600; // Increased for two-row scrolling
+      const scrollAmount = 600;
       scrollContainerRef.current.scrollBy({
         left: direction === "left" ? -scrollAmount : scrollAmount,
         behavior: "smooth",
@@ -402,7 +168,7 @@ export default function HomePage() {
     if (!isDragging || !scrollContainerRef.current) return;
     e.preventDefault();
     const x = e.pageX - scrollContainerRef.current.offsetLeft;
-    const walk = (x - startX) * 2; // Scroll speed multiplier
+    const walk = (x - startX) * 2;
     scrollContainerRef.current.scrollLeft = scrollLeft - walk;
     checkScroll();
   };
@@ -420,18 +186,12 @@ export default function HomePage() {
           const { latitude, longitude } = position.coords;
           const coords = { lat: latitude, lng: longitude };
           setUserCoords(coords);
-          setSearchMode("nearby");
-          setSelectedLocation("Current Location");
           setIsFetchingLocation(false);
 
           if (autoSearch) {
-            const finalQuery = [searchQuery, selectedCategory]
-              .filter(Boolean)
-              .join(" ");
             const params = new URLSearchParams({
               lat: coords.lat.toString(),
               lng: coords.lng.toString(),
-              q: finalQuery,
               radius: "5000",
             });
             router.push(`/nearby?${params.toString()}`);
@@ -439,7 +199,6 @@ export default function HomePage() {
         },
         (err) => {
           console.error("Error getting location: ", err.message);
-          toast.error("Could not get your location. Please grant permission.");
           setIsFetchingLocation(false);
         },
         {
@@ -448,153 +207,16 @@ export default function HomePage() {
           maximumAge: 0,
         },
       );
-    } else {
-      toast.error("Geolocation is not supported by this browser.");
     }
-  };
-
-  const handleSearch = (query?: string) => {
-    let finalQuery = query ?? searchQuery;
-    let finalDistrict = selectedLocation;
-    let finalCategory = selectedCategory;
-    let finalSearchMode = searchMode;
-
-    // --- SMART PARSING ---
-    let lowerQuery = (query ?? searchQuery).toLowerCase().trim();
-    let finalLat = "";
-    let finalLng = "";
-    let extractedTown: Town | null = null;
-
-    // Detect Town from search string (High Priority)
-    // We check for "in [town]" or just "[town]"
-    for (const town of SL_TOWNS) {
-      const townName = town.name.toLowerCase();
-      // Match "in Colombo", "at Colombo", or just "Colombo" at the end/start
-      const patterns = [
-        ` in ${townName}`,
-        ` at ${townName}`,
-        ` near ${townName}`,
-        `${townName} `,
-        ` ${townName}`,
-      ];
-
-      if (lowerQuery === townName) {
-        extractedTown = town;
-        lowerQuery = "";
-        break;
-      }
-
-      let found = false;
-      for (const pattern of patterns) {
-        if (lowerQuery.includes(pattern)) {
-          extractedTown = town;
-          lowerQuery = lowerQuery.replace(pattern, " ").trim();
-          found = true;
-          break;
-        }
-      }
-      if (found) break;
-    }
-
-    if (extractedTown) {
-      finalLat = extractedTown.lat.toString();
-      finalLng = extractedTown.lon.toString();
-      finalSearchMode = "nearby";
-    }
-
-    // Detect District from search string (if no town found)
-    if (!finalLat) {
-      for (const district of sriLankanDistricts) {
-        const dLower = district.toLowerCase();
-        const patterns = [
-          ` in ${dLower}`,
-          ` at ${dLower}`,
-          ` near ${dLower}`,
-          `${dLower} `,
-          ` ${dLower}`,
-        ];
-
-        if (lowerQuery === dLower) {
-          finalDistrict = district;
-          finalSearchMode = "location";
-          lowerQuery = "";
-          break;
-        }
-
-        let found = false;
-        for (const pattern of patterns) {
-          if (lowerQuery.includes(pattern)) {
-            finalDistrict = district;
-            finalSearchMode = "location";
-            lowerQuery = lowerQuery.replace(pattern, " ").trim();
-            found = true;
-            break;
-          }
-        }
-        if (found) break;
-      }
-    }
-
-    // Default to Current Location if no explicit location found and query is not empty
-    if (!finalLat && !finalDistrict && !finalSearchMode) {
-      if (!userCoords && !searchQuery.trim()) {
-        handleUseCurrentLocation(true);
-        return;
-      }
-      // If we have no location but have a query, search near current location if available
-      if (userCoords) {
-        finalSearchMode = "nearby";
-      }
-    }
-
-    const searchParams = new URLSearchParams();
-    searchParams.set("q", expandSearchQuery(lowerQuery || searchQuery));
-    if (selectedCategory) searchParams.set("category", selectedCategory);
-
-    if (finalLat && finalLng) {
-      searchParams.set("lat", finalLat);
-      searchParams.set("lng", finalLng);
-      searchParams.set("radius", "3000");
-    } else if (
-      (finalSearchMode === "nearby" || (!finalDistrict && userCoords)) &&
-      userCoords
-    ) {
-      searchParams.set("lat", userCoords.lat.toString());
-      searchParams.set("lng", userCoords.lng.toString());
-      searchParams.set("radius", "5000");
-    } else if (finalDistrict) {
-      searchParams.set("district", finalDistrict);
-    }
-
-    router.push(`/nearby?${searchParams.toString()}`);
-  };
-
-  const handleSelectPlace = (feature: any) => {
-    const { name } = feature.properties;
-    const [lng, lat] = feature.geometry.coordinates;
-
-    setSearchQuery(name);
-    setSuggestions([]);
-
-    const searchParams = new URLSearchParams();
-    searchParams.set("q", name);
-    searchParams.set("lat", lat.toString());
-    searchParams.set("lng", lng.toString());
-    searchParams.set("radius", "5000");
-    router.push(`/nearby?${searchParams.toString()}`);
   };
 
   const handleCategoryClick = (categoryName: string) => {
     const params = new URLSearchParams();
-
-    if (searchMode === "nearby" && userCoords) {
+    if (userCoords) {
       params.set("lat", userCoords.lat.toString());
       params.set("lng", userCoords.lng.toString());
       params.set("radius", "5000");
-    } else if (searchMode === "location" && selectedLocation) {
-      params.set("district", selectedLocation);
     }
-
     params.set("q", categoryName);
     router.push(`/nearby?${params.toString()}`);
   };
@@ -602,7 +224,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-white font-normal">
       {/* --- HERO SECTION --- */}
-      <section className="relative h-[78vh] flex items-center justify-center overflow-hidden bg-white">
+      <section className="relative h-[78vh] flex items-center justify-center bg-white">
         {/* Animated Blue Background Elements */}
         <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden ">
           <motion.div
@@ -656,298 +278,14 @@ export default function HomePage() {
             Explore verified local businesses, clinics, and luxury villas across Sri Lanka. Discover premium services and authentic island experiences through our directory.
           </p>
 
-          {/* --- New Search Bar Design --- */}
-          <div className="relative max-w-2xl mx-auto space-y-4">
-            {/* Main Search Input */}
-            <div
-              ref={searchBarRef}
-              className="bg-white rounded-[6px] shadow-lg border border-gray-300"
-            >
-              <div className="flex items-center px-4 py-3 md:px-5 md:py-4 bg-white rounded-[6px] gap-2 md:gap-3">
-                <Search
-                  className="text-gray-400 shrink-0"
-                  size={18}
-                  strokeWidth={1.5}
-                />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onFocus={handleSearchFocus}
-                  onBlur={() =>
-                    setTimeout(() => setIsSearchFocused(false), 200)
-                  }
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  placeholder="Service or Business… (e.g. Hospital in Colombo)"
-                  className="flex-1 min-w-0 bg-transparent outline-none text-gray-700 text-sm md:text-base placeholder:text-gray-400 font-normal"
-                />
-                {searchQuery && (
-                  <button
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      setSearchQuery("");
-                    }}
-                    className="shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
-                  >
-                    ✕
-                  </button>
-                )}
-                <div className="w-[1px] h-6 bg-gray-200 mx-1 shrink-0" />
-                <VoiceSearch onResult={handleVoiceResult} className="shrink-0" />
-              </div>
-            </div>
-
-            {/* ── Fixed suggestions panel — escapes hero's overflow-hidden ── */}
-            {isSearchFocused &&
-              (suggestions.length > 0 ||
-                businessSuggestions.length > 0 ||
-                fuzzyBusinessSuggestions.length > 0 ||
-                categorySuggestions.length > 0) &&
-              panelPos.width > 0 && (
-                <div
-                  className="bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden text-left"
-                  style={{
-                    position: "fixed",
-                    top: panelPos.top,
-                    left: panelPos.left,
-                    width: panelPos.width,
-                    zIndex: 9999,
-                    maxHeight: "65vh",
-                    overflowY: "auto",
-                  }}
-                >
-                    {/* ── Categories section ── */}
-                    {categorySuggestions.length > 0 && (
-                      <div className="border-b border-gray-100 last:border-0">
-                        <div className="px-4 pt-3 pb-2">
-                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">
-                            Categories
-                          </span>
-                        </div>
-                        {categorySuggestions.map((cat) => (
-                          <button
-                            key={cat.id}
-                            onMouseDown={() => handleCategoryClick(cat.name)}
-                            className="w-full px-4 py-3 hover:bg-gray-50 active:bg-gray-100 flex items-center gap-3 transition-colors border-b border-gray-50 last:border-0"
-                          >
-                            <div className="w-9 h-9 rounded-xl bg-brand-gold/10 flex items-center justify-center shrink-0 border border-brand-gold/20">
-                              {cat.image_url ? (
-                                <img
-                                  src={cat.image_url}
-                                  alt={cat.name}
-                                  className="w-5 h-5 object-contain"
-                                />
-                              ) : (
-                                <IconComponent
-                                  name={cat.icon}
-                                  className="w-5 h-5 text-brand-gold"
-                                />
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0 text-left">
-                              <p className="text-sm font-medium text-gray-800 truncate">
-                                {cat.name}
-                              </p>
-                              {cat.keywords && cat.keywords.length > 0 && (
-                                <p className="text-[10px] text-gray-400 mt-0.5 truncate">
-                                  {cat.keywords.join(", ")}
-                                </p>
-                              )}
-                            </div>
-                            <ChevronRight
-                              size={14}
-                              className="text-gray-300 shrink-0"
-                            />
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* ── Businesses section ── */}
-                    {(fuzzyBusinessSuggestions.length > 0 ||
-                      businessSuggestions.length > 0) && (
-                      <div>
-                        {/* Section header */}
-                        <div className="flex items-center justify-between px-4 pt-3 pb-2">
-                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">
-                            {searchQuery.trim()
-                              ? "Best Matches"
-                              : "Recommended for You"}
-                          </span>
-                          <span className="text-[10px] text-gray-300">
-                            {fuzzyBusinessSuggestions.length ||
-                              businessSuggestions.length}{" "}
-                            result
-                            {(fuzzyBusinessSuggestions.length ||
-                              businessSuggestions.length) !== 1
-                              ? "s"
-                              : ""}
-                          </span>
-                        </div>
-
-                        {(fuzzyBusinessSuggestions.length > 0
-                          ? fuzzyBusinessSuggestions
-                          : businessSuggestions
-                        ).map((biz) => (
-                          <button
-                            key={biz.id}
-                            onMouseDown={() =>
-                              router.push(`/business/${biz.slug || biz.id}`)
-                            }
-                            className="w-full px-4 py-3 hover:bg-gray-50 active:bg-gray-100 flex items-center gap-3 transition-colors border-b border-gray-50 last:border-0"
-                          >
-                            {/* Thumbnail */}
-                            <div className="w-11 h-11 rounded-xl bg-gray-100 shrink-0 overflow-hidden border border-gray-200">
-                              {biz.logo_url || biz.image_url ? (
-                                <img
-                                  src={biz.logo_url || biz.image_url}
-                                  alt={biz.name}
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center text-gray-300">
-                                  <Building2 size={18} />
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Info */}
-                            <div className="flex-1 min-w-0 text-left">
-                              <p className="text-sm font-semibold text-gray-800 truncate leading-tight">
-                                {biz.name}
-                              </p>
-                              <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                                <span className="text-[10px] font-medium text-brand-blue bg-blue-50 px-2 py-0.5 rounded-full shrink-0">
-                                  {biz.category}
-                                </span>
-                                {biz.address && (
-                                  <span className="text-[10px] text-gray-400 truncate">
-                                    · {biz.address.split(",").pop()?.trim()}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Rating + arrow */}
-                            <div className="shrink-0 flex items-center gap-2">
-                              {biz.rating ? (
-                                <div className="flex items-center gap-0.5">
-                                  <Star
-                                    size={11}
-                                    className="text-amber-400 fill-amber-400"
-                                  />
-                                  <span className="text-xs font-semibold text-gray-600">
-                                    {biz.rating}
-                                  </span>
-                                </div>
-                              ) : (
-                                <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">
-                                  New
-                                </span>
-                              )}
-                              <ChevronRight
-                                size={14}
-                                className="text-gray-300"
-                              />
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* ── Locations section ── */}
-                    {suggestions.length > 0 && (
-                      <div
-                        className={cn(
-                          (fuzzyBusinessSuggestions.length > 0 ||
-                            businessSuggestions.length > 0) &&
-                            "border-t border-gray-100",
-                        )}
-                      >
-                        <div className="px-4 pt-3 pb-2">
-                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">
-                            Locations
-                          </span>
-                        </div>
-
-                        {suggestions.map((feature, idx) => (
-                          <button
-                            key={feature.id || idx}
-                            onMouseDown={() => handleSelectPlace(feature)}
-                            className="w-full px-4 py-3 hover:bg-gray-50 active:bg-gray-100 flex items-center gap-3 transition-colors border-b border-gray-50 last:border-0"
-                          >
-                            <div className="w-9 h-9 rounded-full bg-brand-dark/8 flex items-center justify-center shrink-0">
-                              <MapPin size={15} className="text-brand-dark" />
-                            </div>
-                            <div className="flex-1 min-w-0 text-left">
-                              <p className="text-sm font-medium text-gray-800 truncate">
-                                {feature.properties.name}
-                              </p>
-                              <p className="text-[10px] text-gray-400 mt-0.5">
-                                {feature.properties.location ||
-                                  feature.properties.city ||
-                                  "Sri Lanka"}
-                              </p>
-                            </div>
-                            <ChevronRight
-                              size={14}
-                              className="text-gray-300 shrink-0"
-                            />
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* ── Footer: search all results ── */}
-                    {searchQuery.trim() && (
-                      <div className="border-t border-gray-100 px-4 py-3 bg-gray-50/50">
-                        <button
-                          onMouseDown={() => handleSearch()}
-                          className="w-full flex items-center gap-2 text-sm font-medium text-brand-dark hover:text-brand-blue transition-colors group"
-                        >
-                          <Search
-                            size={14}
-                            className="shrink-0 text-gray-400 group-hover:text-brand-blue transition-colors"
-                          />
-                          Search all results for&nbsp;
-                          <span className="font-semibold truncate max-w-[180px]">
-                            &ldquo;{searchQuery}&rdquo;
-                          </span>
-                          <ChevronRight
-                            size={14}
-                            className="ml-auto text-gray-300 shrink-0"
-                          />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-            {/* Location and Action Buttons */}
-            <div className="flex flex-row items-center justify-center gap-2 px-1">
-              <button
-                onClick={() => handleUseCurrentLocation(true)}
-                disabled={isFetchingLocation}
-                className="flex items-center justify-center gap-2 flex-1 md:flex-none md:w-auto px-4 md:px-6 py-3 text-gray-700 bg-gray-50 hover:bg-brand-blue border border-brand-blue font-normal transition-all disabled:opacity-50 text-sm md:text-base rounded-[6px]"
-              >
-                <Navigation
-                  size={16}
-                  strokeWidth={1.5}
-                  className={cn("text-brand-blue", isFetchingLocation && "animate-pulse")}
-                />
-                <span className="whitespace-nowrap">
-                  {isFetchingLocation ? "Locating..." : "Near me"}
-                </span>
-              </button>
-
-              <button
-                onClick={() => handleSearch()}
-                className="flex-1 md:flex-none md:w-auto bg-brand-blue hover:bg-brand-blue/90 text-white text-sm md:text-base font-normal px-6 md:px-12 py-3 shadow-lg shadow-brand-blue/10 transition-all rounded-[6px]"
-              >
-                Search
-              </button>
-            </div>
-          </div>
+          <HeroSearch
+            categories={categories}
+            featuredBusinesses={featuredBusinesses}
+            userCoords={userCoords}
+            isFetchingLocation={isFetchingLocation}
+            handleUseCurrentLocation={handleUseCurrentLocation}
+            onFocusChange={setIsSearchFocused}
+          />
 
           {/* Overlay to close category dropdown */}
           {isCategoryOpen && (
