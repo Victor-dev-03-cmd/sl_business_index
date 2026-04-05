@@ -1,32 +1,65 @@
-import { createClient } from '@/lib/supabase/server';
-import { notFound, redirect } from 'next/navigation';
+'use client';
+
+import React from 'react';
+import { useUser } from '@/lib/hooks/useUser';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabaseClient';
+import { notFound, useRouter, useParams } from 'next/navigation';
 import EditBusinessForm from './EditBusinessForm';
+import { Loader2 } from 'lucide-react';
 
-export default async function EditBusinessPage({ params }: { params: Promise<{ id: string }> }) {
-  const supabase = await createClient();
-  const { id } = await params;
+export default function EditBusinessPage() {
+  const router = useRouter();
+  const params = useParams();
+  const id = params.id as string;
+  const { data: user, isLoading: userLoading } = useUser();
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: business, isLoading: businessLoading, error: businessError } = useQuery({
+    queryKey: ['edit-business', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('businesses')
+        .select('*')
+        .eq('id', id)
+        .single();
 
-  if (!user) {
-    redirect('/login');
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id,
+  });
+
+  if (userLoading || (id && businessLoading)) {
+    return (
+      <div className="flex h-[calc(100vh-160px)] items-center justify-center bg-white">
+        <Loader2 className="h-8 w-8 animate-spin text-brand-dark" />
+      </div>
+    );
   }
 
-  // Fetch business details
-  const { data: business, error } = await supabase
-    .from('businesses')
-    .select('*')
-    .eq('id', id)
-    .single();
+  if (!user) {
+    router.push('/login');
+    return null;
+  }
 
-  if (error || !business) {
-    notFound();
+  if (businessError || !business) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-160px)]">
+        <p className="text-red-500 mb-4">Error loading business details. It may not exist.</p>
+        <button 
+          onClick={() => router.push('/vendor/my-businesses')}
+          className="px-4 py-2 bg-brand-dark text-white rounded text-sm"
+        >
+          Go Back
+        </button>
+      </div>
+    );
   }
 
   // Check if the user is the owner
   if (business.owner_id !== user.id) {
-    // In a real app, you might want to show a 403 Forbidden page
-    redirect('/vendor/my-businesses');
+    router.push('/vendor/my-businesses');
+    return null;
   }
 
   return (

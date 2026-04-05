@@ -1,12 +1,78 @@
-import { createClient } from '@/lib/supabase/server';
+'use client';
+
+import { useUser } from '@/lib/hooks/useUser';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabaseClient';
 import Link from 'next/link';
-import { Store, Plus, Edit, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Store, Plus, Edit, CheckCircle2, AlertCircle, Clock, Loader2 } from 'lucide-react';
 import { Business } from '@/lib/types';
 
-export default async function MyBusinessesPage() {
-  const supabase = await createClient();
+export default function MyBusinessesPage() {
+  const router = useRouter();
+  const { data: user, isLoading: userLoading } = useUser();
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const handleEditClick = (e: React.MouseEvent, businessId: string | number) => {
+    e.stopPropagation();
+    router.push(`/vendor/my-businesses/${businessId}/edit`);
+  };
+
+  const { data: businesses, isLoading: businessesLoading, error: businessesError } = useQuery({
+    queryKey: ['my-businesses', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data, error } = await supabase
+        .from('businesses')
+        .select('*')
+        .eq('owner_id', user.id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data as Business[];
+    },
+    enabled: !!user?.id,
+  });
+
+  const { data: subscription } = useQuery({
+    queryKey: ['my-subscription', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data } = await supabase
+        .from('subscriptions')
+        .select('plan_name')
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  const planName = subscription?.plan_name || 'Basic';
+
+  const { data: planDetails } = useQuery({
+    queryKey: ['plan-details', planName],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('subscription_plans')
+        .select('max_listings')
+        .eq('name', planName)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!planName,
+  });
+
+  const maxListings = planDetails?.max_listings || 1;
+  const currentCount = businesses?.length || 0;
+  const isLimitReached = currentCount >= maxListings;
+
+  if (userLoading || (user && businessesLoading)) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-160px)]">
+        <Loader2 className="h-8 w-8 animate-spin text-brand-dark" />
+      </div>
+    );
+  }
 
   if (!user) {
     return (
@@ -16,34 +82,8 @@ export default async function MyBusinessesPage() {
     );
   }
 
-  const { data: businesses, error } = await supabase
-    .from('businesses')
-    .select('*')
-    .eq('owner_id', user.id)
-    .order('created_at', { ascending: false });
-
-  // Fetch active subscription and plan limits
-  const { data: subscription } = await supabase
-    .from('subscriptions')
-    .select('plan_name')
-    .eq('user_id', user.id)
-    .eq('status', 'active')
-    .maybeSingle();
-
-  const planName = subscription?.plan_name || 'Basic';
-  
-  const { data: planDetails } = await supabase
-    .from('subscription_plans')
-    .select('max_listings')
-    .eq('name', planName)
-    .maybeSingle();
-
-  const maxListings = planDetails?.max_listings || 1;
-  const currentCount = businesses?.length || 0;
-  const isLimitReached = currentCount >= maxListings;
-
-  if (error) {
-    console.error('Error fetching businesses:', error);
+  if (businessesError) {
+    console.error('Error fetching businesses:', businessesError);
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-160px)]">
         <p className="text-red-500">Error loading your businesses. Please try again.</p>
@@ -90,7 +130,11 @@ export default async function MyBusinessesPage() {
         <div className="bg-white rounded border border-gray-300 shadow-sm overflow-hidden">
           <div className="divide-y divide-gray-100">
             {businesses?.map((business: Business) => (
-              <div key={business.id} className="p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:bg-gray-50 transition-colors">
+              <div 
+                key={business.id} 
+                onClick={(e) => handleEditClick(e, business.id)}
+                className="p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:bg-gray-50 transition-colors cursor-pointer"
+              >
                 <div className="flex items-center gap-4 flex-grow">
                   <div className="h-16 w-16 rounded bg-gray-100 overflow-hidden border border-gray-300 flex-shrink-0">
                     {business.logo_url ? (
@@ -123,12 +167,12 @@ export default async function MyBusinessesPage() {
                 </div>
                 
                 <div className="flex-shrink-0">
-                  <Link 
-                    href={`/vendor/my-businesses/${business.id}/edit`}
+                  <button 
+                    onClick={(e) => handleEditClick(e, business.id)}
                     className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
                   >
                     <Edit size={16} /> Edit Details
-                  </Link>
+                  </button>
                 </div>
               </div>
             ))}

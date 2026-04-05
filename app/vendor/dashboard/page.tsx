@@ -332,7 +332,7 @@ export default function VendorDashboard() {
                     </button>
                     
                     <Link 
-                      href={`/vendor/my-businesses/${business.id}`}
+                      href={`/vendor/my-businesses/${business.id}/edit`}
                       className="p-2 text-gray-400 hover:bg-emerald-50 rounded transition-colors"
                     >
                       <Edit size={16} />
