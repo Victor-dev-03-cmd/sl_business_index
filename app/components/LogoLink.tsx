@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
 import { useQuery } from '@tanstack/react-query';
 
-export default function LogoLink() {
+export default function LogoLink({ className = "" }: { className?: string }) {
   const { data: settings } = useQuery({
     queryKey: ['site-settings', 'general'],
     queryFn: async () => {

@@ -16,6 +16,10 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get('next') || '/';
+  
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+  };
 
   const handleLogIn = async (e: React.FormEvent) => {
     e.preventDefault();

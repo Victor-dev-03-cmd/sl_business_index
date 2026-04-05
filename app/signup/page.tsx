@@ -16,6 +16,10 @@ export default function SignUp() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);

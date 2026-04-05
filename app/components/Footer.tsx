@@ -62,7 +62,7 @@ const Footer = () => {
           {/* Column 1: Brand & Socials */}
           <div className="space-y-6">
             <div className="-ml-2">
-              <LogoLink />
+              <LogoLink className="brightness-0 invert" />
             </div>
             <div className="space-y-4">
               <h4 className="text-gray-200 text-sm font-semibold uppercase tracking-wider">About SLBI</h4>

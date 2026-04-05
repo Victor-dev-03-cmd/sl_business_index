@@ -198,6 +198,7 @@ export default function BusinessDetailsClient({ business }: Props) {
     e.preventDefault();
     setSubmittingEnquiry(true);
     try {
+      // 1. Save lead to Supabase for tracking
       const { error } = await supabase.from("leads").insert({
         business_id: business.id,
         name: enquiryForm.name,
@@ -209,6 +210,22 @@ export default function BusinessDetailsClient({ business }: Props) {
 
       if (error) throw error;
 
+      // 2. Construct Free WhatsApp URL and open in new tab
+      if (business.phone) {
+        // Format Owner Phone: remove non-digits, replace leading 0 with 94
+        const formattedOwnerPhone = business.phone.replace(/\D/g, "");
+        const finalOwnerPhone = formattedOwnerPhone.startsWith("0")
+          ? "94" + formattedOwnerPhone.substring(1)
+          : formattedOwnerPhone.startsWith("94") 
+            ? formattedOwnerPhone 
+            : "94" + formattedOwnerPhone;
+
+        const whatsappText = `New Enquiry from SLBI:\n\nName: ${enquiryForm.name}\nPhone: ${enquiryForm.phone}\nMessage: ${enquiryForm.message}`;
+        const whatsappUrl = `https://wa.me/${finalOwnerPhone}?text=${encodeURIComponent(whatsappText)}`;
+        
+        window.open(whatsappUrl, "_blank");
+      }
+
       // Log analytics event
       await logEvent(
         business.id,
@@ -218,7 +235,10 @@ export default function BusinessDetailsClient({ business }: Props) {
 
       setEnquiryForm({ name: "", email: "", phone: "", message: "" });
       toast.success(
-        "Enquiry sent successfully! The business will contact you soon.",
+        "Message Sent",
+        {
+          description: "Opening WhatsApp to send your enquiry..."
+        }
       );
     } catch (error) {
       console.error("Error sending enquiry:", error);
