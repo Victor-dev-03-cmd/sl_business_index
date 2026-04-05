@@ -40,7 +40,7 @@ const adminMenuItems = [
   { name: "Verifications", href: "/admin/verifications", icon: ShieldCheck },
   { name: "Featured", href: "/admin/featured", icon: Star },
   { name: "Billing", href: "/admin/billing", icon: CreditCard },
-  { name: "Categories", href: "/category", icon: Tags },
+  { name: "Categories", href: "/admin/categories", icon: Tags },
   { name: "Users", href: "/admin/users", icon: Users },
   { name: "Testimonials", href: "/admin/testimonials", icon: Quote },
   { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
