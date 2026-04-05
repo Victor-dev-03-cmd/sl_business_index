@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import Script from "next/script";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { supabase } from "@/lib/supabaseClient";
@@ -60,6 +61,8 @@ export default function HomePage() {
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
   const [showAllCategories, setShowAllCategories] = useState(false);
+  const [vantaEffect, setVantaEffect] = useState<any>(null);
+  const vantaRef = useRef<HTMLDivElement>(null);
 
   const { data: categories = EMPTY_ARRAY, isLoading: categoriesLoading } = useQuery({
     queryKey: ["categories-home"],
@@ -221,50 +224,62 @@ export default function HomePage() {
     router.push(`/nearby?${params.toString()}`);
   };
 
+  useEffect(() => {
+    let vantaInstance: any = null;
+
+    const initVanta = () => {
+      const VANTA = (window as any).VANTA;
+      if (VANTA && VANTA.NET && vantaRef.current && !vantaInstance) {
+        try {
+          vantaInstance = VANTA.NET({
+            el: vantaRef.current,
+            mouseControls: true,
+            touchControls: true,
+            gyroControls: false,
+            minHeight: 200.0,
+            minWidth: 200.0,
+            scale: 1.0,
+            scaleMobile: 1.0,
+            color: 0x2a7db4,
+            backgroundColor: 0xffffff,
+            points: 10.0,
+            maxDistance: 20.0,
+            spacing: 16.0,
+          });
+          setVantaEffect(vantaInstance);
+        } catch (err) {
+          console.error("Vanta initialization failed:", err);
+        }
+      }
+    };
+
+    const interval = setInterval(() => {
+      if ((window as any).VANTA && (window as any).VANTA.NET) {
+        initVanta();
+        clearInterval(interval);
+      }
+    }, 100);
+
+    return () => {
+      if (vantaInstance) vantaInstance.destroy();
+      if (vantaEffect) vantaEffect.destroy();
+      clearInterval(interval);
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-white font-normal">
       {/* --- HERO SECTION --- */}
-      <section className="relative h-[78vh] flex items-center justify-center bg-white">
-        {/* Animated Blue Background Elements */}
-        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden ">
-          <motion.div
-            animate={isSearchFocused && typeof window !== 'undefined' && window.innerWidth < 768 ? {} : {
-              scale: [1, 1.2, 1],
-              x: [0, 100, 0],
-              y: [0, 50, 0],
-            }}
-            transition={{
-              duration: 20,
-              repeat: Infinity,
-              ease: "linear",
-            }}
-            className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-brand-blue/10 blur-[120px] rounded-full"
-          />
-          <motion.div
-            animate={isSearchFocused && typeof window !== 'undefined' && window.innerWidth < 768 ? {} : {
-              scale: [1, 1.3, 1],
-              x: [0, -120, 0],
-              y: [0, -80, 0],
-            }}
-            transition={{
-              duration: 25,
-              repeat: Infinity,
-              ease: "linear",
-            }}
-            className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-brand-blue/10 blur-[150px] rounded-full"
-          />
-        </div>
-
-        {/* Glass Morphism Overlay */}
+      <section className="relative h-[78vh] flex items-center justify-center overflow-hidden">
+        {/* Vanta Animation Background */}
         <div 
-          className={cn(
-            "absolute inset-0 bg-white/20 z-0 border-b border-gray-300",
-            // Reduce blur on mobile focus to save GPU
-            isSearchFocused && typeof window !== 'undefined' && window.innerWidth < 768 
-              ? "backdrop-blur-[20px]" 
-              : "backdrop-blur-[100px]"
-          )} 
+          id="vanta-canvas" 
+          ref={vantaRef} 
+          className="absolute inset-0 z-0 w-full h-full"
         />
+
+        {/* Blur Overlay to improve content visibility */}
+        <div className="absolute inset-0 z-[1] backdrop-blur-[2px] bg-white/40" />
 
         <div className="relative z-10 max-w-5xl px-6 text-center">
           <span className="inline-block px-4 py-1.5 mb-6 text-[11px] md:text-[13px] tracking-[0.15em] uppercase text-brand-blue border border-gray-300 rounded">
