@@ -129,9 +129,11 @@ export default function Navbar() {
   const slugify = (name: string) =>
     name
       .toLowerCase()
+      .trim()
       .replace(/ & /g, "-")
       .replace(/ /g, "-")
-      .replace(/,/g, "");
+      .replace(/,/g, "")
+      .replace(/[^\w-]+/g, "");
 
   /* ── stagger variants ── */
   const listVariants = {
@@ -436,7 +438,7 @@ export default function Navbar() {
                           {categories.slice(0, 10).map((cat) => (
                             <Link
                               key={String(cat.name)}
-                              href={`/categories/${slugify(String(cat.name))}`}
+                              href={`/category/${slugify(String(cat.name))}`}
                               onClick={close}
                               className="flex items-center gap-2 px-2.5 py-2 bg-gray-50 hover:bg-brand-dark/5 border border-gray-100 rounded-lg transition-colors"
                             >
@@ -464,7 +466,7 @@ export default function Navbar() {
 
                           {categories.length > 10 && (
                             <Link
-                              href="/categories"
+                              href="/category"
                               onClick={close}
                               className="col-span-2 flex items-center justify-center gap-1.5 py-2.5 bg-brand-dark/5 hover:bg-brand-dark/10 rounded-lg text-xs font-semibold text-brand-dark transition-colors border border-brand-dark/10"
                             >

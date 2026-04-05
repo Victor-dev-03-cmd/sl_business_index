@@ -2,9 +2,8 @@ import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import Link from 'next/link';
-import Image from 'next/image';
-import { Star, MapPin, Building2, ShieldCheck, ChevronRight } from 'lucide-react';
-import VerifiedBadge from '@/app/components/VerifiedBadge';
+import { ChevronRight } from 'lucide-react';
+import CategoryContent from './CategoryContent';
 
 type Props = {
   params: Promise<{
@@ -41,7 +40,7 @@ async function getCategoryData(slug: string) {
       .eq('status', 'approved');
     
     const uniqueCats = Array.from(new Set((businesses || []).map(b => b.category).filter(Boolean)));
-    const dynamicCat = uniqueCats.find(c => slugify(c) === slug);
+    const dynamicCat = uniqueCats.find(c => slugify(c as string) === slug);
     
     if (!dynamicCat) return null;
     return { name: dynamicCat, id: null };
@@ -50,16 +49,12 @@ async function getCategoryData(slug: string) {
   return category;
 }
 
-async function getBusinessesByCategory(categoryName: string) {
+async function getAllCategories() {
   const supabase = await createClient();
   const { data } = await supabase
-    .from('businesses')
+    .from('categories')
     .select('*')
-    .eq('category', categoryName)
-    .eq('status', 'approved')
-    .order('rating', { ascending: false })
-    .limit(50);
-    
+    .order('name', { ascending: true });
   return data || [];
 }
 
@@ -79,113 +74,43 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function CategoryPage({ params }: Props) {
   const { slug } = await params;
   const category = await getCategoryData(slug);
+  const allCategories = await getAllCategories();
 
   if (!category) notFound();
 
-  const businesses = await getBusinessesByCategory(category.name);
-
   return (
-    <div className="min-h-screen bg-gray-50/50">
-      <header className="bg-brand-dark py-16 px-6 border-b border-gray-300">
-        <div className="max-w-7xl mx-auto">
-          <nav className="flex items-center gap-2 text-brand-sand text-xs uppercase tracking-widest mb-6">
+    <div className="min-h-screen bg-white">
+      {/* Enhanced Minimalist Header */}
+      <header className="bg-brand-dark py-12 md:py-20 px-6 overflow-hidden relative">
+        {/* Subtle decorative elements */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-brand-blue/10 rounded-full blur-3xl -mr-32 -mt-32" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-brand-sand/5 rounded-full blur-3xl -ml-24 -mb-24" />
+        
+        <div className="max-w-7xl mx-auto relative z-10">
+          <nav className="flex items-center gap-2 text-brand-sand text-xs uppercase tracking-widest mb-8">
             <Link href="/" className="hover:text-white transition-colors">Home</Link>
-            <ChevronRight size={12} />
-            <span>Categories</span>
-            <ChevronRight size={12} />
+            <ChevronRight size={10} strokeWidth={3} className="text-brand-sand/40" />
+            <Link href="/category" className="hover:text-white transition-colors">Categories</Link>
+            <ChevronRight size={10} strokeWidth={3} className="text-brand-sand/40" />
             <span className="text-white">{category.name}</span>
           </nav>
-          <h1 className="text-4xl md:text-5xl text-white mb-4 tracking-tight">
-            Best {category.name} in Sri Lanka
-          </h1>
-          <p className="text-brand-sand max-w-2xl leading-relaxed">
-            Discover {businesses.length} verified {category.name} across Sri Lanka. 
-            SLBI (SL Business Index) helps you connect with top-rated local businesses for all your needs.
-          </p>
+          
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div className="max-w-2xl">
+              <h1 className="text-4xl md:text-6xl text-white mb-6 tracking-tight">
+                {category.name}
+              </h1>
+              <p className="text-brand-sand text-lg leading-relaxed font-medium">
+                Find the most trusted and verified {category.name} services across Sri Lanka. 
+                Everything you need to connect with top-rated professionals.
+              </p>
+            </div>
+          </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-16">
-        <div className="flex items-center justify-between mb-10">
-          <h2 className="text-2xl font-normal text-gray-900">
-            Top Rated {category.name}
-          </h2>
-          <div className="text-sm text-gray-400">
-            Showing {businesses.length} results
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {businesses.map((business) => (
-            <Link 
-              key={business.id} 
-              href={`/business/${business.slug || business.id}`}
-              className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-xl transition-all group flex flex-col"
-            >
-              <div className="aspect-video bg-gray-100 relative overflow-hidden">
-                {business.image_url ? (
-                  <Image src={business.image_url} alt={business.name} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-300">
-                    <Building2 size={48} strokeWidth={1} />
-                  </div>
-                )}
-                {business.is_verified && (
-                  <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-2 py-1 rounded shadow-sm flex items-center gap-1.5 border border-blue-100">
-                    <ShieldCheck size={14} className="text-blue-500" />
-                    <span className="text-[10px] font-bold text-blue-600 uppercase">Verified</span>
-                  </div>
-                )}
-              </div>
-              <div className="p-6 flex-1 flex flex-col">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="text-xl font-bold text-gray-900 group-hover:text-brand-blue transition-colors line-clamp-1">
-                    {business.name}
-                  </h3>
-                  {business.can_show_badge && <VerifiedBadge size={14} />}
-                </div>
-                
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="flex items-center gap-0.5">
-                    {[...Array(5)].map((_, i) => (
-                      <Star 
-                        key={i} 
-                        size={12} 
-                        className={i < (business.rating || 0) ? "text-amber-400 fill-amber-400" : "text-gray-200"} 
-                      />
-                    ))}
-                  </div>
-                  <span className="text-xs text-gray-400 font-bold">({business.reviews_count || 0})</span>
-                </div>
-
-                <p className="text-sm text-gray-500 line-clamp-2 mb-6 flex-1">
-                  {business.description || 'Verified business in Sri Lanka directory.'}
-                </p>
-
-                <div className="pt-4 border-t border-gray-100 flex items-center justify-between text-xs font-medium">
-                  <div className="flex items-center gap-1.5 text-gray-400">
-                    <MapPin size={14} className="text-brand-blue" />
-                    <span className="line-clamp-1">{business.city || 'Sri Lanka'}</span>
-                  </div>
-                  <div className="text-brand-blue flex items-center gap-1">
-                    View Profile <ChevronRight size={14} />
-                  </div>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-
-        {businesses.length === 0 && (
-          <div className="text-center py-20 bg-white border border-dashed border-gray-300 rounded-xl">
-            <Building2 size={48} className="mx-auto text-gray-200 mb-4" strokeWidth={1} />
-            <h3 className="text-lg font-medium text-gray-900">No businesses found in this category</h3>
-            <p className="text-gray-400 mt-2">Check back later or explore other categories.</p>
-            <Link href="/" className="inline-block mt-8 text-brand-blue hover:underline">
-              Back to Home
-            </Link>
-          </div>
-        )}
+      <main>
+        <CategoryContent category={category} allCategories={allCategories} />
       </main>
     </div>
   );

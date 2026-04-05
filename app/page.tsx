@@ -321,7 +321,7 @@ export default function HomePage() {
               </button>
             </div>
             <Link
-              href="/categories"
+              href="/category"
               className="hidden md:flex text-sm text-brand-gold items-center hover:underline font-normal"
             >
               View All
@@ -791,6 +791,26 @@ export default function HomePage() {
 
         <Testimonials />
 
+        {/* --- MOBILE BANNER --- */}
+        <div 
+          className="md:hidden px-4 pt-12 pb-4 select-none" 
+          onContextMenu={(e) => e.preventDefault()}
+          onDragStart={(e) => e.preventDefault()}
+        >
+          <div className="w-full relative">
+            <Image
+              src="/mobile.jpeg"
+              alt="SLBI Mobile Banner"
+              width={1080}
+              height={1920}
+              className="w-full h-auto pointer-events-none select-none rounded-[6px]"
+              priority
+              draggable={false}
+            />
+          </div>
+        </div>
+
+        {/* --- DESKTOP BANNER --- */}
         <div 
           className="hidden md:block max-w-7xl mx-auto px-4 pt-12 pb-4 select-none" 
           onContextMenu={(e) => e.preventDefault()}

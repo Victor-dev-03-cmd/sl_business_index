@@ -32,9 +32,11 @@ export default function CategoriesMenu({ initialCategories = [], isMobile = fals
 
   const slugify = (name: string) => {
     return name.toLowerCase()
+      .trim()
       .replace(/ & /g, '-')
       .replace(/ /g, '-')
-      .replace(/,/g, '');
+      .replace(/,/g, '')
+      .replace(/[^\w-]+/g, '');
   };
 
   // Mobile View: A simple vertical list
@@ -46,7 +48,7 @@ export default function CategoriesMenu({ initialCategories = [], isMobile = fals
           {categories.map((category) => (
             <Link
               key={category.name}
-              href={`/categories/${slugify(category.name)}`}
+              href={`/category/${slugify(category.name)}`}
               className="flex items-center group py-2 text-base text-gray-600 hover:text-brand-gold-light transition-all"
             >
               <span className="w-8 h-8 rounded-md bg-gray-100 flex items-center justify-center mr-3 flex-shrink-0">
@@ -111,7 +113,7 @@ export default function CategoriesMenu({ initialCategories = [], isMobile = fals
                   filteredCategories.map((category) => (
                     <Link
                       key={category.name}
-                      href={`/categories/${slugify(category.name)}`}
+                      href={`/category/${slugify(category.name)}`}
                       className="flex items-center group py-2 text-sm text-gray-600 hover:text-brand-gold-light transition-all"
                       onClick={() => setIsMegaMenuOpen(false)}
                     >
