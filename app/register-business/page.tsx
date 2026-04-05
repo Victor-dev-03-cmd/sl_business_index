@@ -55,6 +55,19 @@ export default function RegisterBusinessPage() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
+  // Sri Lankan NIC Validation
+  const validateNIC = (nic: string): boolean => {
+    const oldNicRegex = /^[5-9][0-9]{8}[vVxX]$/;
+    const newNicRegex = /^(19|20)[0-9]{10}$/;
+    return oldNicRegex.test(nic) || newNicRegex.test(nic);
+  };
+
+  // Sri Lankan Business Registration (BR) Validation
+  const validateBR = (br: string): boolean => {
+    const brRegex = /^(PV|PB|PC|GA|GB|WP|W|CP|C|SP|S|NP|N|EP|E|NW|NC|UVA|U|SG)(\s|\/)?\d+$/i;
+    return brRegex.test(br);
+  };
+
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['user'],
     queryFn: async () => {
@@ -160,16 +173,32 @@ export default function RegisterBusinessPage() {
       return;
     }
 
-    if (registrationType === 'registered' && !brNumber.trim()) {
-      setError('BR Number is required for registered companies.');
-      setLoading(false);
-      return;
+    if (registrationType === 'registered') {
+      if (!brNumber.trim()) {
+        setError('BR Number is required for registered companies.');
+        setLoading(false);
+        return;
+      }
+      if (!validateBR(brNumber)) {
+        setError('Invalid BR Number format. (e.g., PV 1234, WP/1234)');
+        setLoading(false);
+        return;
+      }
     }
 
-    if (registrationType === 'unregistered' && !nicNumber.trim()) {
-      setError('NIC or Passport Number is required.');
-      setLoading(false);
-      return;
+    if (registrationType === 'unregistered') {
+      if (!nicNumber.trim()) {
+        setError('NIC or Passport Number is required.');
+        setLoading(false);
+        return;
+      }
+      // If it looks like an NIC (10 or 12 chars), validate it. 
+      // If it's a passport, we might allow it, but the user specifically asked for NIC validation rules.
+      if (!validateNIC(nicNumber)) {
+        setError('Invalid Sri Lankan NIC format.');
+        setLoading(false);
+        return;
+      }
     }
 
     try {
@@ -563,7 +592,8 @@ export default function RegisterBusinessPage() {
                         <label className="block text-sm font-normal text-gray-600 mb-2">
                           BR Number <span className="text-red-500">*</span>
                         </label>
-                        <input type="text" value={brNumber} onChange={(e) => setBrNumber(e.target.value)} className="w-full px-4 py-3.5 rounded-[6px] border border-gray-300 bg-white focus:ring-1 focus:ring-blue-900 outline-none transition-all font-normal text-sm" placeholder="Enter Registration Number" />
+                        <input type="text" value={brNumber} onChange={(e) => setBrNumber(e.target.value)} className="w-full px-4 py-3.5 rounded-[6px] border border-gray-300 bg-white focus:ring-1 focus:ring-blue-900 outline-none transition-all font-normal text-sm" placeholder="e.g. PV 1234 or WP/1234" />
+                        <p className="mt-1.5 text-[10px] text-gray-400 font-normal">Format: Prefix (PV, PB, WP, etc.) followed by number.</p>
                       </div>
                   ) : (
                       <div>
@@ -571,6 +601,7 @@ export default function RegisterBusinessPage() {
                           NIC or Passport Number <span className="text-red-500">*</span>
                         </label>
                         <input type="text" value={nicNumber} onChange={(e) => setNicNumber(e.target.value)} className="w-full px-4 py-3.5 rounded-[6px] border border-gray-300 bg-white focus:ring-1 focus:ring-blue-900 outline-none transition-all font-normal text-sm" placeholder="Enter NIC Number" />
+                        <p className="mt-1.5 text-[10px] text-gray-400 font-normal">Old NIC: 9 digits + V/X. New NIC: 12 digits.</p>
                       </div>
                   )}
                 </div>
