@@ -16,7 +16,6 @@ import DynamicAppearance from "./components/DynamicAppearance";
 import { SessionProvider } from "./components/SessionContext";
 import LoadingProvider, { LoadingScreen } from "./components/LoadingProvider";
 import { Toaster } from "sonner";
-import Script from "next/script";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -38,14 +37,6 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${outfit.variable}`} suppressHydrationWarning>
       <body className="antialiased" suppressHydrationWarning>
-        <Script
-          src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"
-          strategy="beforeInteractive"
-        />
-        <Script
-          src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"
-          strategy="beforeInteractive"
-        />
         {!mounted ? (
           <LoadingScreen />
         ) : (

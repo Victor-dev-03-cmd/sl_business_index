@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import { Search, MapPin, ChevronRight, Building2, Star, Tags } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import { cn, expandSearchQuery } from "@/lib/utils";
@@ -253,7 +254,7 @@ export default function HeroSearch({
   };
 
   return (
-    <div className="relative max-w-2xl mx-auto space-y-4">
+    <div className="relative max-w-2xl mx-auto">
       {/* Main Search Input */}
       <div ref={searchBarRef} className="bg-white rounded-[6px] shadow-lg border border-gray-300">
         <div className="flex items-center px-4 py-3 md:px-5 md:py-4 bg-white rounded-[6px] gap-2 md:gap-3">
@@ -291,7 +292,7 @@ export default function HeroSearch({
           fuzzyBusinessSuggestions.length > 0 ||
           categorySuggestions.length > 0) && (
           <div
-            className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden text-left"
+            className="absolute top-full left-0 right-0 mt-1 bg-white rounded-[6px] shadow-2xl border border-gray-300 overflow-hidden text-left"
             style={{
               zIndex: 9999,
               maxHeight: "65vh",
@@ -424,7 +425,7 @@ export default function HeroSearch({
         )}
 
       {/* Action Buttons */}
-      <div className="flex flex-row items-center justify-center gap-2 px-1">
+      <div className="flex flex-row items-center justify-center gap-2 px-1 mt-4">
         <button
           onClick={() => handleUseCurrentLocation(true)}
           disabled={isFetchingLocation}

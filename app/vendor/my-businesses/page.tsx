@@ -92,38 +92,38 @@ export default function MyBusinessesPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-6 md:space-y-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl text-gray-900">My Businesses</h1>
-          <p className="text-gray-500 mt-1">
-            Manage your listings. Plan limit: <span className="font-bold text-brand-dark">{currentCount}/{maxListings}</span>
+          <h1 className="text-xl md:text-2xl text-gray-900 font-bold tracking-tight">My Businesses</h1>
+          <p className="text-sm text-gray-500 mt-1 uppercase tracking-widest text-[10px] md:text-xs font-bold">
+            Listing limit: <span className="text-brand-dark">{currentCount}/{maxListings}</span>
           </p>
         </div>
         {isLimitReached ? (
           <Link 
             href="/vendor/billing" 
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-gold text-white rounded text-sm transition-colors shadow-sm animate-pulse"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-gold text-white rounded-[6px] text-xs font-bold transition-all shadow-lg shadow-brand-gold/20 animate-pulse uppercase tracking-widest"
           >
             Upgrade Plan to Add More
           </Link>
         ) : (
           <Link 
             href="/register-business" 
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-dark text-white rounded text-sm transition-colors shadow-sm"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-dark text-white rounded-[6px] text-xs font-bold transition-all shadow-lg shadow-brand-dark/20 hover:scale-[1.02] active:scale-[0.98] uppercase tracking-widest"
           >
-            <Plus size={18} /> Register New Business
+            <Plus size={18} /> Register Business
           </Link>
         )}
       </div>
 
       {businesses && businesses.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-12 text-center">
-          <Store className="mx-auto h-16 w-16 text-gray-300 mb-4" />
-          <h3 className="text-xl font-bold text-gray-900">No Businesses Registered Yet</h3>
-          <p className="text-gray-500 mt-2 mb-6">It looks like you haven't registered any businesses. Get started now!</p>
-          <Link href="/register-business" className="px-6 py-3 bg-emerald-600 text-white rounded-lg text-base font-medium hover:bg-emerald-700 transition-colors">
-            <Plus size={18} className="inline-block mr-2" /> Register Your First Business
+        <div className="bg-white rounded-[6px] border border-gray-300 shadow-sm p-12 text-center">
+          <Store className="mx-auto h-20 w-20 text-gray-100 mb-6" strokeWidth={1} />
+          <h3 className="text-lg font-bold text-gray-900 tracking-tight uppercase text-xs sm:text-sm">No Businesses Registered Yet</h3>
+          <p className="text-gray-400 text-xs sm:text-sm mt-2 mb-8 max-w-sm mx-auto font-medium leading-relaxed">It looks like you haven't registered any businesses. Start by creating your first listing to reach more customers.</p>
+          <Link href="/register-business" className="inline-flex items-center px-8 py-3 bg-brand-dark text-white rounded-[6px] text-xs sm:text-sm font-bold shadow-xl shadow-brand-dark/10 transition-transform hover:scale-105 uppercase tracking-widest">
+            <Plus size={18} className="mr-2" /> Register Your First Business
           </Link>
         </div>
       ) : (
@@ -133,32 +133,32 @@ export default function MyBusinessesPage() {
               <div 
                 key={business.id} 
                 onClick={(e) => handleEditClick(e, business.id)}
-                className="p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                className="p-5 md:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 hover:bg-gray-50/50 transition-colors cursor-pointer group"
               >
-                <div className="flex items-center gap-4 flex-grow">
-                  <div className="h-16 w-16 rounded bg-gray-100 overflow-hidden border border-gray-300 flex-shrink-0">
+                <div className="flex items-center gap-5 flex-grow min-w-0 w-full">
+                  <div className="h-16 w-16 md:h-20 md:w-20 rounded-xl bg-gray-50 overflow-hidden border border-gray-200 group-hover:border-brand-dark/20 transition-colors shrink-0">
                     {business.logo_url ? (
                       <img src={business.logo_url} alt={business.name} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400">
-                        <Store size={24} />
+                      <div className="w-full h-full flex items-center justify-center text-gray-300">
+                        <Store size={28} strokeWidth={1.5} />
                       </div>
                     )}
                   </div>
-                  <div className="flex-grow">
-                    <h3 className=" text-lg text-brand-blue">{business.name}</h3>
-                    <p className="text-sm text-gray-500 mt-1">{business.address}</p>
-                    <div className="flex items-center gap-2 mt-2">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-base md:text-lg font-bold text-gray-900 truncate tracking-tight group-hover:text-brand-dark transition-colors">{business.name}</h3>
+                    <p className="text-xs md:text-sm text-gray-400 mt-1 truncate font-medium">{business.address}</p>
+                    <div className="flex items-center gap-2 mt-3">
                       {business.status === 'approved' ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-100">
-                          <CheckCircle2 size={10} /> Approved
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-green-50 text-green-700 border border-green-100/50">
+                          <CheckCircle2 size={10} /> Live
                         </span>
                       ) : business.status === 'pending' ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-100">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-100/50">
                           <Clock size={10} /> Pending
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-100">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-red-50 text-red-700 border border-red-100/50">
                           <AlertCircle size={10} /> Rejected
                         </span>
                       )}
@@ -166,10 +166,10 @@ export default function MyBusinessesPage() {
                   </div>
                 </div>
                 
-                <div className="flex-shrink-0">
+                <div className="shrink-0 w-full sm:w-auto">
                   <button 
                     onClick={(e) => handleEditClick(e, business.id)}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-white border border-gray-300 rounded-[6px] text-xs font-bold text-gray-700 hover:bg-gray-50 transition-all shadow-sm group-hover:border-gray-400 uppercase tracking-widest"
                   >
                     <Edit size={16} /> Edit Details
                   </button>

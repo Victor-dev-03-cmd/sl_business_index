@@ -157,26 +157,26 @@ export default function VendorDashboard() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
       {/* Welcome Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl text-gray-900">Dashboard Overview</h1>
-          <p className="text-gray-500 mt-1">Welcome back! Here&apos;s what&apos;s happening with your businesses today.</p>
+          <h1 className="text-xl md:text-2xl text-gray-900 font-bold tracking-tight">Dashboard Overview</h1>
+          <p className="text-sm text-gray-500 mt-1">Welcome back! Here&apos;s what&apos;s happening with your businesses today.</p>
         </div>
         <Link 
           href="/vendor/marketing" 
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-dark text-white rounded text-sm transition-colors shadow-sm "
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-dark text-white rounded-[6px] text-sm transition-all hover:bg-brand-dark/90 shadow-sm font-bold"
         >
           <Plus size={18} /> Create Promotion
         </Link>
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-gray-300">
+      <div className="flex border-b border-gray-300 overflow-x-auto no-scrollbar">
         <button
           onClick={() => setActiveTab('overview')}
-          className={`px-6 py-3 text-sm font-bold tracking-tight transition-all relative ${
+          className={`px-4 md:px-6 py-3 text-xs md:text-sm font-bold tracking-tight transition-all relative whitespace-nowrap ${
             activeTab === 'overview' ? 'text-brand-dark' : 'text-gray-500 hover:text-gray-900'
           }`}
         >
@@ -187,7 +187,7 @@ export default function VendorDashboard() {
         </button>
         <button
           onClick={() => setActiveTab('performance')}
-          className={`px-6 py-3 text-sm font-bold tracking-tight transition-all relative ${
+          className={`px-4 md:px-6 py-3 text-xs md:text-sm font-bold tracking-tight transition-all relative whitespace-nowrap ${
             activeTab === 'performance' ? 'text-brand-dark' : 'text-gray-500 hover:text-gray-900'
           }`}
         >
@@ -201,190 +201,199 @@ export default function VendorDashboard() {
       {activeTab === 'overview' ? (
         <>
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-6 rounded border border-gray-300 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-blue-100 rounded-lg text-blue-600">
-              <Eye size={20} />
-            </div>
-            {planLimits?.advanced_analytics ? (
-              <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full flex items-center gap-1">
-                <TrendingUp size={12} /> +12%
-              </span>
-            ) : (
-              <Link href="/vendor/billing" className="text-[10px] font-bold text-brand-gold bg-brand-sand/20 px-2 py-1 rounded flex items-center gap-1">
-                <Lock size={10} /> Upgrade
-              </Link>
-            )}
-          </div>
-          <h3 className="text-2xl text-gray-900">{stats.views}</h3>
-          <p className="text-sm text-gray-500">Total Profile Views</p>
-        </div>
-
-        <div className="bg-white p-6 rounded border border-gray-300 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-emerald-100 rounded-lg text-emerald-600">
-              <Phone size={20} />
-            </div>
-            {planLimits?.advanced_analytics ? (
-              <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full flex items-center gap-1">
-                <TrendingUp size={12} /> +5%
-              </span>
-            ) : (
-              <Link href="/vendor/billing" className="text-[10px] font-bold text-brand-gold bg-brand-sand/20 px-2 py-1 rounded flex items-center gap-1">
-                <Lock size={10} /> Upgrade
-              </Link>
-            )}
-          </div>
-          <h3 className="text-2xl text-gray-900">{stats.calls}</h3>
-          <p className="text-sm text-gray-500">Click to Calls</p>
-        </div>
-
-        <div className="bg-white p-6 rounded border border-gray-300 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-amber-100 rounded-lg text-amber-600">
-              <Star size={20} />
-            </div>
-            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-              4.8 Avg
-            </span>
-          </div>
-          <h3 className="text-2xl text-gray-900">{stats.reviews}</h3>
-          <p className="text-sm text-gray-500">New Reviews</p>
-        </div>
-
-        <div className="bg-white p-6 rounded border border-gray-300 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-purple-100 rounded-lg text-purple-600">
-              <MessageSquare size={20} />
-            </div>
-            {planLimits?.advanced_analytics ? (
-              <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full flex items-center gap-1">
-                <TrendingUp size={12} /> +2
-              </span>
-            ) : (
-              <Link href="/vendor/billing" className="text-[10px] font-bold text-brand-gold bg-brand-sand/20 px-2 py-1 rounded flex items-center gap-1">
-                <Lock size={10} /> Upgrade
-              </Link>
-            )}
-          </div>
-          <h3 className="text-2xl text-gray-900">{stats.leads}</h3>
-          <p className="text-sm text-gray-500">Active Leads</p>
-        </div>
-      </div>
-
-      {/* My Businesses Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Business List */}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-gray-300 shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-gray-300 flex items-center justify-between">
-            <h2 className="text-lg text-gray-900">My Businesses</h2>
-            <Link href="/vendor/my-businesses" className="text-sm text-brand-dark ">
-              View All
-            </Link>
-          </div>
-          
-          {loading ? (
-            <div className="p-8 text-center text-gray-500">Loading businesses...</div>
-          ) : businesses.length === 0 ? (
-            <div className="p-12 text-center">
-              <Store className="mx-auto h-12 w-12 text-gray-300 mb-3" />
-              <h3 className="text-lg text-gray-900">No businesses yet</h3>
-              <p className="text-gray-500 text-sm mt-1 mb-6">Start by registering your first business location.</p>
-              <Link href="/register-business" className="px-4 py-2 bg-brand-dark text-white rounded text-sm ">
-                Register Business
-              </Link>
-            </div>
-          ) : (
-            <div className="divide-y divide-gray-200">
-              {businesses.map((business) => (
-                <div key={business.id} className="p-6 flex items-center justify-between hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded bg-gray-300 overflow-hidden border border-gray-200">
-                      {business.logo_url ? (
-                        <img src={business.logo_url} alt={business.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-blue-500">
-                          <Store size={20} />
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <h3 className="text-gray-900">{business.name}</h3>
-                      <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
-                        <span className={`w-1.5 h-1.5 rounded-full ${business.status === 'approved' ? 'bg-green-500' : 'bg-amber-500'}`}></span>
-                        {business.status === 'approved' ? 'Live' : 'Pending Review'}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-3">
-                    <button 
-                      onClick={() => toggleBusinessStatus(business.id, business.is_open)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all flex items-center gap-1.5 ${
-                        business.is_open 
-                          ? 'bg-green-50 text-blue-500 border-green-200 hover:bg-green-100' 
-                          : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200'
-                      }`}
-                    >
-                      <Clock size={12} />
-                      {business.is_open ? 'Open Now' : 'Closed'}
-                    </button>
-                    
-                    <Link 
-                      href={`/vendor/my-businesses/${business.id}/edit`}
-                      className="p-2 text-gray-400 hover:bg-emerald-50 rounded transition-colors"
-                    >
-                      <Edit size={16} />
-                    </Link>
-                  </div>
+          <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white p-5 md:p-6 rounded-[6px] border border-gray-300 shadow-sm transition-all hover:shadow-md">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-2.5 bg-blue-50 rounded-xl text-blue-600 border border-blue-100/50">
+                  <Eye size={20} strokeWidth={1.5} />
                 </div>
-              ))}
+                {planLimits?.advanced_analytics ? (
+                  <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full flex items-center gap-1 border border-green-100/50">
+                    <TrendingUp size={12} /> +12%
+                  </span>
+                ) : (
+                  <Link href="/vendor/billing" className="text-[10px] font-bold text-brand-gold bg-brand-gold/10 px-2 py-1 rounded flex items-center gap-1 border border-brand-gold/20">
+                    <Lock size={10} /> Upgrade
+                  </Link>
+                )}
+              </div>
+              <h3 className="text-xl md:text-2xl font-bold text-gray-900 tracking-tight">{stats.views}</h3>
+              <p className="text-[11px] md:text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Profile Views</p>
             </div>
-          )}
-        </div>
 
-        {/* Quick Actions & Tips */}
-        <div className="space-y-6">
-          <div className="bg-brand-dark rounded p-6 text-white shadow">
-            <h3 className="text-lg mb-2">Boost Your Reach</h3>
-            <p className="text-brand-sand text-sm mb-6">Create a new promotion banner to attract more customers this weekend.</p>
-            <Link 
-              href="/vendor/marketing"
-              className="block w-full py-2.5 bg-white text-brand-dark text-center rounded text-sm  transition-colors"
-            >
-              Create Banner
-            </Link>
+            <div className="bg-white p-5 md:p-6 rounded-[6px] border border-gray-300 shadow-sm transition-all hover:shadow-md">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-2.5 bg-emerald-50 rounded-xl text-emerald-600 border border-emerald-100/50">
+                  <Phone size={20} strokeWidth={1.5} />
+                </div>
+                {planLimits?.advanced_analytics ? (
+                  <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full flex items-center gap-1 border border-green-100/50">
+                    <TrendingUp size={12} /> +5%
+                  </span>
+                ) : (
+                  <Link href="/vendor/billing" className="text-[10px] font-bold text-brand-gold bg-brand-gold/10 px-2 py-1 rounded flex items-center gap-1 border border-brand-gold/20">
+                    <Lock size={10} /> Upgrade
+                  </Link>
+                )}
+              </div>
+              <h3 className="text-xl md:text-2xl font-bold text-gray-900 tracking-tight">{stats.calls}</h3>
+              <p className="text-[11px] md:text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Click to Calls</p>
+            </div>
+
+            <div className="bg-white p-5 md:p-6 rounded-[6px] border border-gray-300 shadow-sm transition-all hover:shadow-md">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-2.5 bg-amber-50 rounded-xl text-amber-600 border border-amber-100/50">
+                  <Star size={20} strokeWidth={1.5} />
+                </div>
+                <span className="text-[10px] font-bold text-gray-500 bg-gray-50 px-2 py-1 rounded-full border border-gray-200/50">
+                  4.8 AVG
+                </span>
+              </div>
+              <h3 className="text-xl md:text-2xl font-bold text-gray-900 tracking-tight">{stats.reviews}</h3>
+              <p className="text-[11px] md:text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Total Reviews</p>
+            </div>
+
+            <div className="bg-white p-5 md:p-6 rounded-[6px] border border-gray-300 shadow-sm transition-all hover:shadow-md">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-2.5 bg-purple-50 rounded-xl text-purple-600 border border-purple-100/50">
+                  <MessageSquare size={20} strokeWidth={1.5} />
+                </div>
+                {planLimits?.advanced_analytics ? (
+                  <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full flex items-center gap-1 border border-green-100/50">
+                    <TrendingUp size={12} /> +2
+                  </span>
+                ) : (
+                  <Link href="/vendor/billing" className="text-[10px] font-bold text-brand-gold bg-brand-gold/10 px-2 py-1 rounded flex items-center gap-1 border border-brand-gold/20">
+                    <Lock size={10} /> Upgrade
+                  </Link>
+                )}
+              </div>
+              <h3 className="text-xl md:text-2xl font-bold text-gray-900 tracking-tight">{stats.leads}</h3>
+              <p className="text-[11px] md:text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Active Leads</p>
+            </div>
           </div>
 
-          <div className="bg-white rounded border border-gray-300 shadow-sm p-6">
-            <h3 className="text-gray-900 mb-4">Recent Activity</h3>
-            <div className="space-y-4">
-              {activities.length === 0 ? (
-                <p className="text-sm text-gray-500 italic">No recent activity.</p>
+          {/* My Businesses Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+            {/* Business List */}
+            <div className="lg:col-span-2 bg-white rounded-[6px] border border-gray-300 shadow-sm overflow-hidden flex flex-col">
+              <div className="p-5 md:p-6 border-b border-gray-300 flex items-center justify-between">
+                <h2 className="text-lg font-bold text-gray-900 tracking-tight uppercase text-xs sm:text-sm">My Businesses</h2>
+                <Link href="/vendor/my-businesses" className="text-[11px] font-bold text-brand-dark uppercase tracking-wider hover:underline">
+                  View All
+                </Link>
+              </div>
+              
+              {loading ? (
+                <div className="p-12 text-center">
+                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-dark border-t-transparent mx-auto" />
+                  <p className="text-gray-400 text-sm mt-4 font-medium tracking-tight">Loading businesses...</p>
+                </div>
+              ) : businesses.length === 0 ? (
+                <div className="p-12 text-center">
+                  <Store className="mx-auto h-16 w-16 text-gray-200 mb-4" strokeWidth={1} />
+                  <h3 className="text-lg font-bold text-gray-900 tracking-tight uppercase text-xs sm:text-sm">No businesses yet</h3>
+                  <p className="text-gray-400 text-xs sm:text-sm mt-1 mb-8 max-w-xs mx-auto font-medium">Start by registering your first business location to reach more customers.</p>
+                  <Link href="/register-business" className="inline-flex items-center px-6 py-3 bg-brand-dark text-white rounded-[6px] text-xs sm:text-sm font-bold shadow-lg shadow-brand-dark/10 transition-transform hover:scale-105">
+                    Register Business
+                  </Link>
+                </div>
               ) : (
-                activities.map((activity) => (
-                  <div key={activity.id} className="flex gap-3 items-start">
-                    <div className="mt-1 p-1.5 bg-blue-50 text-blue-500 rounded-full shrink-0">
-                      <MessageSquare size={12} />
+                <div className="divide-y divide-gray-100 flex-1 overflow-y-auto max-h-[400px]">
+                  {businesses.map((business) => (
+                    <div key={business.id} className="p-5 md:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-gray-50/50 transition-colors group">
+                      <div className="flex items-center gap-4">
+                        <div className="h-12 w-12 md:h-14 md:w-14 rounded-xl bg-gray-50 overflow-hidden border border-gray-200 group-hover:border-brand-dark/20 transition-colors shrink-0">
+                          {business.logo_url ? (
+                            <img src={business.logo_url} alt={business.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-300">
+                              <Store size={24} strokeWidth={1.5} />
+                            </div>
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <h3 className="text-sm md:text-base font-bold text-gray-900 truncate tracking-tight">{business.name}</h3>
+                          <p className="text-[10px] md:text-xs font-bold text-gray-400 flex items-center gap-1.5 mt-1 uppercase tracking-widest">
+                            <span className={`w-1.5 h-1.5 rounded-full ${business.status === 'approved' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]'}`}></span>
+                            {business.status === 'approved' ? 'Live' : 'Under Review'}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-3 w-full sm:w-auto">
+                        <button 
+                          onClick={() => toggleBusinessStatus(business.id, business.is_open)}
+                          className={`flex-1 sm:flex-none px-4 py-2 rounded-xl text-[11px] font-bold border transition-all flex items-center justify-center gap-2 tracking-tight ${
+                            business.is_open 
+                              ? 'bg-green-50 text-green-600 border-green-200/50 hover:bg-green-100' 
+                              : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'
+                          }`}
+                        >
+                          <Clock size={12} strokeWidth={2} />
+                          {business.is_open ? 'Open' : 'Closed'}
+                        </button>
+                        
+                        <Link 
+                          href={`/vendor/my-businesses/${business.id}/edit`}
+                          className="p-2.5 text-gray-400 hover:text-brand-dark hover:bg-brand-blue/5 rounded-xl transition-all border border-transparent hover:border-brand-blue/10"
+                        >
+                          <Edit size={16} strokeWidth={2} />
+                        </Link>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm text-gray-800">{activity.message}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">{activity.date}</p>
-                    </div>
-                  </div>
-                ))
+                  ))}
+                </div>
               )}
             </div>
-            <Link href="/vendor/reviews" className="block mt-4 text-center text-sm text-brand-dark ">
-              View All Activity
-            </Link>
+
+            {/* Quick Actions & Tips */}
+            <div className="space-y-6">
+              <div className="bg-brand-dark rounded-[6px] p-6 text-white shadow-xl shadow-brand-dark/10 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
+                  <TrendingUp size={80} />
+                </div>
+                <h3 className="text-lg font-bold tracking-tight mb-2 relative z-10">Boost Your Reach</h3>
+                <p className="text-brand-gold text-[13px] font-medium mb-6 leading-relaxed relative z-10">Create a new promotion banner to attract more customers this weekend and increase visibility.</p>
+                <Link 
+                  href="/vendor/marketing"
+                  className="block w-full py-3 bg-white text-brand-dark text-center rounded-[6px] text-xs font-bold uppercase tracking-widest transition-transform hover:scale-[1.02] active:scale-[0.98] relative z-10 shadow-lg"
+                >
+                  Create Banner
+                </Link>
+              </div>
+
+              <div className="bg-white rounded-[6px] border border-gray-300 shadow-sm p-6">
+                <h3 className="text-gray-900 font-bold tracking-tight uppercase text-xs sm:text-sm mb-6">Recent Activity</h3>
+                <div className="space-y-5">
+                  {activities.length === 0 ? (
+                    <div className="py-8 text-center">
+                      <Clock className="mx-auto h-10 w-10 text-gray-100 mb-3" />
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">No recent activity</p>
+                    </div>
+                  ) : (
+                    activities.map((activity) => (
+                      <div key={activity.id} className="flex gap-4 items-start group">
+                        <div className="mt-0.5 p-2 bg-blue-50 text-blue-500 rounded-xl border border-blue-100/50 group-hover:scale-110 transition-transform shrink-0">
+                          <MessageSquare size={14} strokeWidth={2} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs md:text-sm font-medium text-gray-800 leading-relaxed">{activity.message}</p>
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1.5">{activity.date}</p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+                <Link href="/vendor/reviews" className="block mt-8 text-center text-[11px] font-bold text-brand-dark uppercase tracking-wider hover:underline border-t border-gray-100 pt-5">
+                  View All Activity
+                </Link>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-    </>
-  ) : (
-        <div className="space-y-8">
+        </>
+      ) : (
+        <div className="space-y-6 md:space-y-8">
           <VendorAnalytics businessIds={businesses.map(b => b.id)} />
         </div>
       )}

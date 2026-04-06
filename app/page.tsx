@@ -3,7 +3,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import Script from "next/script";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { supabase } from "@/lib/supabaseClient";
@@ -61,8 +60,6 @@ export default function HomePage() {
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
   const [showAllCategories, setShowAllCategories] = useState(false);
-  const [vantaEffect, setVantaEffect] = useState<any>(null);
-  const vantaRef = useRef<HTMLDivElement>(null);
 
   const { data: categories = EMPTY_ARRAY, isLoading: categoriesLoading } = useQuery({
     queryKey: ["categories-home"],
@@ -224,59 +221,22 @@ export default function HomePage() {
     router.push(`/nearby?${params.toString()}`);
   };
 
-  useEffect(() => {
-    let vantaInstance: any = null;
-
-    const initVanta = () => {
-      const VANTA = (window as any).VANTA;
-      if (VANTA && VANTA.NET && vantaRef.current && !vantaInstance) {
-        try {
-          vantaInstance = VANTA.NET({
-            el: vantaRef.current,
-            mouseControls: true,
-            touchControls: true,
-            gyroControls: false,
-            minHeight: 200.0,
-            minWidth: 200.0,
-            scale: 1.0,
-            scaleMobile: 1.0,
-            color: 0x2a7db4,
-            backgroundColor: 0xffffff,
-            points: 10.0,
-            maxDistance: 20.0,
-            spacing: 16.0,
-          });
-          setVantaEffect(vantaInstance);
-        } catch (err) {
-          console.error("Vanta initialization failed:", err);
-        }
-      }
-    };
-
-    const interval = setInterval(() => {
-      if ((window as any).VANTA && (window as any).VANTA.NET) {
-        initVanta();
-        clearInterval(interval);
-      }
-    }, 100);
-
-    return () => {
-      if (vantaInstance) vantaInstance.destroy();
-      if (vantaEffect) vantaEffect.destroy();
-      clearInterval(interval);
-    };
-  }, []);
-
   return (
     <div className="min-h-screen bg-white font-normal">
       {/* --- HERO SECTION --- */}
-      <section className="relative h-[78vh] flex items-center justify-center overflow-hidden">
-        {/* Vanta Animation Background */}
-        <div 
-          id="vanta-canvas" 
-          ref={vantaRef} 
-          className="absolute inset-0 z-0 w-full h-full"
-        />
+      <section className="relative h-[78vh] flex items-center justify-center z-20">
+        {/* Hero Background Image with Blur */}
+        <div className="absolute inset-0 z-0 w-full h-full overflow-hidden">
+          <Image
+            src="/hero.jpg"
+            alt="Hero Background"
+            fill
+            priority
+            className="object-cover blur-[8px] scale-105"
+          />
+          {/* Overlay to ensure text readability */}
+          <div className="absolute inset-0 bg-white/20" />
+        </div>
 
         <div className="relative z-10 max-w-5xl px-6 py-12 text-center mx-4">
           {/* Soft Glow Effect behind text */}
