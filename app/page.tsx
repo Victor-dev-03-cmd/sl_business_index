@@ -278,11 +278,11 @@ export default function HomePage() {
           className="absolute inset-0 z-0 w-full h-full"
         />
 
-        {/* Blur Overlay to improve content visibility */}
-        <div className="absolute inset-0 z-[1] backdrop-blur-[2px] bg-white/40" />
-
-        <div className="relative z-10 max-w-5xl px-6 text-center">
-          <span className="inline-block px-4 py-1.5 mb-6 text-[11px] md:text-[13px] tracking-[0.15em] uppercase text-brand-blue border border-gray-300 rounded">
+        <div className="relative z-10 max-w-5xl px-6 py-12 text-center mx-4">
+          {/* Soft Glow Effect behind text */}
+          <div className="absolute inset-0 -z-10 bg-white/60 blur-[60px] rounded-full scale-90" />
+          
+          <span className="inline-block px-4 py-1.5 mb-6 text-[11px] md:text-[13px] tracking-[0.15em] uppercase text-brand-blue border border-gray-300 rounded bg-white/80">
             Sri Lanka Business Index
           </span>
           <h1 className="text-3xl md:text-7xl text-gray-900 mb-6 leading-tight tracking-tight">

@@ -55,8 +55,15 @@ function LoginForm() {
 
         {/* Mobile Logo */}
         <div className="lg:hidden flex justify-center mb-8">
-          <Link href="/">
-            <Image src="/logo.png" alt="Logo" width={140} height={45} />
+          <Link href="/" onContextMenu={handleContextMenu}>
+            <Image 
+              src="/logo.png" 
+              alt="Logo" 
+              width={140} 
+              height={45} 
+              draggable={false}
+              onContextMenu={handleContextMenu}
+            />
           </Link>
         </div>
 
@@ -169,6 +176,8 @@ export default function LogIn() {
                     width={180}
                     height={50}
                     className="brightness-0 invert opacity-100"
+                    draggable={false}
+                    onContextMenu={(e) => e.preventDefault()}
                 />
               </div>
 

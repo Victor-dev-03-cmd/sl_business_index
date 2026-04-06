@@ -46,7 +46,7 @@ export default function LogoLink({ className = "" }: { className?: string }) {
           alt={settings.logo_text || "SLBI - SL Business Index Logo"}
           width={settings.logo_width || 180}
           height={settings.logo_height || 60}
-          className="drop-shadow-md object-contain"
+          className={`drop-shadow-md object-contain ${className}`}
           style={{ 
             maxWidth: '100%', 
             height: 'auto',
@@ -62,7 +62,7 @@ export default function LogoLink({ className = "" }: { className?: string }) {
           alt="SLBI - SL Business Index Logo"
           width={180}
           height={60}
-          className="drop-shadow-md object-contain"
+          className={`drop-shadow-md object-contain ${className}`}
           priority
           draggable={false}
           onContextMenu={handleContextMenu}
