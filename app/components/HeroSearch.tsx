@@ -247,6 +247,15 @@ export default function HeroSearch({
     router.push(`/nearby?${params.toString()}`);
   };
 
+  const handleMouseDown = (e: React.MouseEvent) => {
+    // This is often used to prevent blur when clicking suggestions
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSearch();
+  };
+
   const IconComponent = ({ name, className }: { name: string | null; className?: string }) => {
     if (!name) return <Tags className={className} />;
     const Icon = (LucideIcons as any)[name];
@@ -256,7 +265,11 @@ export default function HeroSearch({
   return (
     <div className="relative max-w-2xl mx-auto">
       {/* Main Search Input */}
-      <div ref={searchBarRef} className="bg-white rounded-[6px] shadow-lg border border-gray-300">
+      <form 
+        onSubmit={handleSubmit}
+        ref={searchBarRef} 
+        className="bg-white rounded-[6px] shadow-lg border border-gray-300"
+      >
         <div className="flex items-center px-4 py-3.5 md:px-5 md:py-4 bg-white rounded-[6px] gap-2 md:gap-3 min-h-[44px]">
           <Search className="text-gray-400 shrink-0" size={20} strokeWidth={1.5} />
           <input
@@ -265,12 +278,12 @@ export default function HeroSearch({
             onChange={(e) => setSearchQuery(e.target.value)}
             onFocus={() => setIsSearchFocused(true)}
             onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             placeholder="Service or Business… (e.g. Hospital in Colombo)"
             className="flex-1 min-w-0 bg-transparent outline-none text-gray-700 text-sm md:text-base placeholder:text-gray-400 font-normal"
           />
           {searchQuery && (
             <button
+              type="button"
               onMouseDown={(e) => {
                 e.preventDefault();
                 setSearchQuery("");
@@ -282,8 +295,9 @@ export default function HeroSearch({
           )}
           <div className="w-[1px] h-6 bg-gray-200 mx-1 shrink-0" />
           <VoiceSearch onResult={(text) => { setSearchQuery(text); handleSearch(text); }} className="shrink-0" />
+          <button type="submit" className="hidden">Search</button>
         </div>
-      </div>
+      </form>
 
       {/* Suggestions panel */}
       {isSearchFocused &&

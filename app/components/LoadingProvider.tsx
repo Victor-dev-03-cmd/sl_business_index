@@ -28,7 +28,33 @@ export default function LoadingProvider({ children }: { children: React.ReactNod
 }
 
 export function LoadingScreen() {
+  const [isLegacy, setIsLegacy] = useState(false);
   const text = "Sri Lanka Business Index";
+
+  useEffect(() => {
+    // Check for older iOS/Safari (iOS 12.5.7 uses Version/12)
+    const ua = navigator.userAgent;
+    if (ua.includes('iPad') && ua.includes('Version/12')) {
+      setIsLegacy(true);
+    }
+    // Also check for motion support or other features if needed
+  }, []);
+
+  if (isLegacy) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center min-h-[100dvh] w-full bg-white z-[9999]">
+        <div className="flex flex-col items-center">
+          <h1 className="text-6xl font-medium tracking-widest text-brand-dark mb-4">
+            SLBI
+          </h1>
+          <p className="text-lg font-medium tracking-widest text-center px-4 text-gray-600">
+            {text}
+          </p>
+          <div className="mt-8 w-12 h-12 border-4 border-brand-blue border-t-transparent rounded-full animate-spin" />
+        </div>
+      </div>
+    );
+  }
 
   const containerVariants = {
     hidden: { opacity: 0 },
