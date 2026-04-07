@@ -84,7 +84,7 @@ export default function PricingPlansPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 pb-20">
+    <div className="min-h-[100dvh] bg-slate-50 text-slate-900 pb-20">
       {/* Header Section */}
       <section className="bg-white border-b border-slate-300 pt-16 pb-24">
         <div className="max-w-7xl mx-auto px-6">

@@ -168,7 +168,7 @@ export default function MarketingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 -m-6 md:-m-8 p-6 md:p-8">
+    <div className="min-h-[100dvh] bg-slate-50 text-slate-900 -m-6 md:-m-8 p-6 md:p-8">
       <Script src="https://js.puter.com/v2/" strategy="afterInteractive" />
       
       <div className="max-w-7xl mx-auto space-y-10">

@@ -212,7 +212,7 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white font-normal text-gray-900">
+    <div className="min-h-[100dvh] bg-white font-normal text-gray-900">
       <Script
         id="contact-schema"
         type="application/ld+json"

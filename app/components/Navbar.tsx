@@ -208,7 +208,7 @@ export default function Navbar() {
               onClick={() => setMobileMenuOpen((v) => !v)}
               aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
               className={cn(
-                "md:hidden relative w-10 h-10 flex flex-col items-center justify-center gap-[5.5px] rounded-[8px] border transition-all duration-300 active:scale-95 z-[110]",
+                "md:hidden relative w-11 h-11 flex flex-col items-center justify-center gap-[5.5px] rounded-[8px] border transition-all duration-300 active:scale-95 z-[110]",
                 mobileMenuOpen 
                   ? "bg-brand-dark border-brand-dark shadow-inner" 
                   : "bg-white border-gray-200 shadow-sm hover:border-brand-dark"
@@ -248,7 +248,7 @@ export default function Navbar() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.25 }}
-              className="fixed inset-0 z-[99] bg-black/40 backdrop-blur-sm"
+              className="fixed inset-0 z-[99] bg-black/40"
               onClick={close}
             />
 
@@ -322,18 +322,18 @@ export default function Navbar() {
                       <Link
                         href="/admin/dashboard"
                         onClick={close}
-                        className="ml-auto shrink-0 p-2 bg-white rounded-lg border border-gray-200 text-brand-dark hover:bg-brand-dark hover:text-white transition-colors"
+                        className="ml-auto shrink-0 p-3 bg-white rounded-lg border border-gray-200 text-brand-dark hover:bg-brand-dark hover:text-white transition-colors flex items-center justify-center min-w-[44px] min-h-[44px]"
                       >
-                        <LayoutDashboard size={15} />
+                        <LayoutDashboard size={20} />
                       </Link>
                     )}
                     {profileData?.role === "vendor" && (
                       <Link
                         href="/vendor/dashboard"
                         onClick={close}
-                        className="ml-auto shrink-0 p-2 bg-white rounded-lg border border-gray-200 text-brand-dark hover:bg-brand-dark hover:text-white transition-colors"
+                        className="ml-auto shrink-0 p-3 bg-white rounded-lg border border-gray-200 text-brand-dark hover:bg-brand-dark hover:text-white transition-colors flex items-center justify-center min-w-[44px] min-h-[44px]"
                       >
-                        <Briefcase size={15} />
+                        <Briefcase size={20} />
                       </Link>
                     )}
                   </div>

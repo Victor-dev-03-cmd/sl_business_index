@@ -98,14 +98,14 @@ function SearchResults() {
     };
 
     return (
-        <div className="bg-gray-50/50 min-h-screen">
+        <div className="bg-gray-50/50 min-h-[100dvh]">
             {businesses.length > 0 && (
                 <script
                     type="application/ld+json"
                     dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }}
                 />
             )}
-            <div className="max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-12 h-[calc(100vh-80px)] overflow-hidden">
+            <div className="max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-12 h-[calc(100dvh-80px)] overflow-hidden">
                 
                 {/* Search Results List */}
                 <div className="lg:col-span-5 xl:col-span-4 bg-white border-r border-gray-200 flex flex-col h-full overflow-hidden shadow-2xl z-10">
@@ -228,7 +228,7 @@ function SearchResults() {
 export default function SearchPage() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen flex items-center justify-center bg-white">
+            <div className="min-h-[100dvh] flex items-center justify-center bg-white">
                 <div className="text-center">
                     <Loader2 className="animate-spin mx-auto text-brand-dark mb-4" size={48} />
                     <p className="text-gray-500 text-lg font-normal">Loading Search Center...</p>

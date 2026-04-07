@@ -36,7 +36,7 @@ type Particle = {
 };
 
 function GravityStarsBackground({
-  starsCount = 75,
+  starsCount: initialStarsCount = 75,
   starsSize = 2,
   starsOpacity = 0.75,
   glowIntensity = 15,
@@ -50,6 +50,21 @@ function GravityStarsBackground({
   className,
   ...props
 }: GravityStarsProps) {
+  const [starsCount, setStarsCount] = React.useState(initialStarsCount);
+
+  React.useEffect(() => {
+    const updateCount = () => {
+      if (window.innerWidth < 1024) {
+        setStarsCount(Math.min(initialStarsCount, 30));
+      } else {
+        setStarsCount(initialStarsCount);
+      }
+    };
+    updateCount();
+    window.addEventListener('resize', updateCount);
+    return () => window.removeEventListener('resize', updateCount);
+  }, [initialStarsCount]);
+
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
   const animRef = React.useRef<number | null>(null);

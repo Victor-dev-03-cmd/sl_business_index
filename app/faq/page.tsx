@@ -144,7 +144,7 @@ export default function FAQPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50/50 py-20 px-4">
+    <div className="min-h-[100dvh] bg-gray-50/50 py-20 px-4">
       {/* SEO Schema */}
       <script
         type="application/ld+json"

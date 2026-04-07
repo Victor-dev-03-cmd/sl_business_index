@@ -201,7 +201,7 @@ export default function TestimonialsManagement() {
   };
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 min-h-screen bg-gray-50/50">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 min-h-[100dvh] bg-gray-50/50">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Reviews & Testimonials</h1>

@@ -56,13 +56,13 @@ export default function AuthButton({ user }: { user?: AuthUser | null }) {
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className="avatar flex items-center justify-center h-10 w-10 bg-brand-dark text-white rounded-full font-normal text-sm focus:outline-none hover:bg-brand-blue transition-all border-2 border-transparent hover:border-brand-sand shadow-sm uppercase overflow-hidden">
+          <button className="avatar flex items-center justify-center h-11 w-11 bg-brand-dark text-white rounded-full font-normal text-sm focus:outline-none hover:bg-brand-blue transition-all border-2 border-transparent hover:border-brand-sand shadow-sm uppercase overflow-hidden">
             {user.avatar_url ? (
               <Image
                 src={user.avatar_url}
                 alt={displayName}
-                width={40}
-                height={40}
+                width={44}
+                height={44}
                 className="h-full w-full object-cover"
               />
             ) : (
@@ -97,35 +97,35 @@ export default function AuthButton({ user }: { user?: AuthUser | null }) {
           <DropdownMenuSeparator />
 
           {isAdminOrCeo && (
-            <DropdownMenuItem asChild className="cursor-pointer py-2.5">
+            <DropdownMenuItem asChild className="cursor-pointer py-3">
               <Link
                 href="/admin/dashboard"
-                className="flex items-center w-full"
+                className="flex items-center w-full min-h-[44px]"
               >
-                <LayoutDashboard className="mr-3 h-4 w-4 opacity-70" />
+                <LayoutDashboard className="mr-3 h-5 w-5 opacity-70" />
                 <span>Admin Control Center</span>
               </Link>
             </DropdownMenuItem>
           )}
 
           {isVendor && (
-            <DropdownMenuItem asChild className="cursor-pointer py-2.5">
+            <DropdownMenuItem asChild className="cursor-pointer py-3">
               <Link
                 href="/vendor/dashboard"
-                className="flex items-center w-full"
+                className="flex items-center w-full min-h-[44px]"
               >
-                <Briefcase className="mr-3 h-4 w-4 opacity-70" />
+                <Briefcase className="mr-3 h-5 w-5 opacity-70" />
                 <span>Vendor Dashboard</span>
               </Link>
             </DropdownMenuItem>
           )}
 
-          <DropdownMenuItem asChild className="cursor-pointer py-2.5">
+          <DropdownMenuItem asChild className="cursor-pointer py-3">
             <Link
               href={isAdminOrCeo ? "/admin/settings" : "/vendor/settings"}
-              className="flex items-center w-full"
+              className="flex items-center w-full min-h-[44px]"
             >
-              <UserIcon className="mr-3 h-4 w-4 opacity-70" />
+              <UserIcon className="mr-3 h-5 w-5 opacity-70" />
               <span>Settings</span>
             </Link>
           </DropdownMenuItem>
@@ -133,8 +133,8 @@ export default function AuthButton({ user }: { user?: AuthUser | null }) {
           <DropdownMenuSeparator />
 
           <button onClick={handleSignOut} className="w-full">
-            <DropdownMenuItem className="text-red-600 cursor-pointer py-2.5">
-              <LogOut className="mr-3 h-4 w-4 opacity-70" />
+            <DropdownMenuItem className="text-red-600 cursor-pointer py-3">
+              <LogOut className="mr-3 h-5 w-5 opacity-70" />
               <span>Sign Out</span>
             </DropdownMenuItem>
           </button>
@@ -146,7 +146,7 @@ export default function AuthButton({ user }: { user?: AuthUser | null }) {
   return (
     <Link
       href="/login"
-      className="px-6 py-2.5 text-sm text-white bg-brand-dark rounded-[6px] hover:bg-brand-blue transition-colors"
+      className="px-6 h-11 flex items-center justify-center text-sm text-white bg-brand-dark rounded-[6px] hover:bg-brand-blue transition-colors min-w-[100px]"
     >
       Sign In
     </Link>

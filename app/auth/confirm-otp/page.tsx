@@ -49,7 +49,7 @@ function OTPConfirmPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50 px-4">
+    <div className="flex items-center justify-center min-h-[100dvh] bg-gray-50 px-4">
       <div className="w-full max-w-md p-8 space-y-6 bg-white rounded shadow-lg text-center">
         {/* Logo Integration */}
         <div className="flex justify-center mb-4">

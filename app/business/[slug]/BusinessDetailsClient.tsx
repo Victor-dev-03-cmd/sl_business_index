@@ -259,9 +259,9 @@ export default function BusinessDetailsClient({ business }: Props) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50/50 pb-24 lg:pb-20">
+    <div className="min-h-[100dvh] bg-gray-50/50 pb-24 lg:pb-20">
       {/* ── Hero ── */}
-      <div className="relative h-[38vh] md:h-[50vh] w-full overflow-hidden">
+      <div className="relative h-[38dvh] md:h-[50dvh] w-full overflow-hidden">
         {business.image_url ? (
           <Image
             src={business.image_url}

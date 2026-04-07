@@ -18,7 +18,7 @@ import {
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-[100dvh] bg-white">
       {/* --- HERO SECTION --- */}
       <section className="relative py-32 flex items-center justify-center overflow-hidden bg-brand-dark">
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>

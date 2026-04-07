@@ -70,7 +70,7 @@ export default function Sidebar() {
       </div>
 
       {/* Panel Content */}
-      <div className="flex-1 flex flex-col overflow-hidden bg-[#0F172A]/40 backdrop-blur-sm">
+      <div className="flex-1 flex flex-col overflow-hidden bg-[#0F172A]">
         {/* Header */}
         <div className="p-4 border-b border-slate-800 flex items-center justify-between">
           <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">

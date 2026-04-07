@@ -61,7 +61,7 @@ export default function ResetPassword() {
   };
 
   return (
-    <div className="flex min-h-screen bg-white">
+    <div className="flex min-h-[100dvh] bg-white">
       {/* Left Side */}
       <div className="hidden lg:flex lg:w-1/2 bg-brand-dark relative overflow-hidden items-center justify-center p-12">
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>

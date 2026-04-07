@@ -89,6 +89,21 @@ function StarsBackground({
   pointerEvents = true,
   ...props
 }: StarsBackgroundProps) {
+  const [starCounts, setStarCounts] = React.useState({ layer1: 1000, layer2: 400, layer3: 200 });
+
+  React.useEffect(() => {
+    const updateCounts = () => {
+      if (window.innerWidth < 1024) {
+        setStarCounts({ layer1: 300, layer2: 100, layer3: 50 });
+      } else {
+        setStarCounts({ layer1: 1000, layer2: 400, layer3: 200 });
+      }
+    };
+    updateCounts();
+    window.addEventListener('resize', updateCounts);
+    return () => window.removeEventListener('resize', updateCounts);
+  }, []);
+
   const offsetX = useMotionValue(1);
   const offsetY = useMotionValue(1);
 
@@ -123,13 +138,13 @@ function StarsBackground({
         className={cn({ 'pointer-events-none': !pointerEvents })}
       >
         <StarLayer
-          count={1000}
+          count={starCounts.layer1}
           size={1}
           transition={{ repeat: Infinity, duration: speed, ease: 'linear' }}
           starColor={starColor}
         />
         <StarLayer
-          count={400}
+          count={starCounts.layer2}
           size={2}
           transition={{
             repeat: Infinity,
@@ -139,7 +154,7 @@ function StarsBackground({
           starColor={starColor}
         />
         <StarLayer
-          count={200}
+          count={starCounts.layer3}
           size={3}
           transition={{
             repeat: Infinity,

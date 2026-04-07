@@ -6,7 +6,7 @@ export default function PrivacyPolicyPage() {
   const effectiveDate = "March 25, 2026";
 
   return (
-    <div className="min-h-screen bg-white font-normal">
+    <div className="min-h-[100dvh] bg-white font-normal">
       {/* Header */}
       <section className="relative py-20 bg-gray-50 border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-6">

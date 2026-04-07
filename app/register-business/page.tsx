@@ -274,7 +274,7 @@ export default function RegisterBusinessPage() {
 
   if (fetchingStatus) {
     return (
-      <div className="min-h-screen bg-gray-50/50 py-12 px-6">
+      <div className="min-h-[100dvh] bg-gray-50/50 py-12 px-6">
         <div className="max-w-6xl mx-auto bg-white p-8 md:p-12 border border-gray-300 shadow-sm rounded-[6px] space-y-12">
           {/* Header Skeleton */}
           <div className="border-b border-gray-50 pb-8 space-y-4">
@@ -319,7 +319,7 @@ export default function RegisterBusinessPage() {
 
   if (isUnauthenticated) {
     return (
-      <div className="min-h-screen bg-gray-50/50 flex items-center justify-center py-12 px-6">
+      <div className="min-h-[100dvh] bg-gray-50/50 flex items-center justify-center py-12 px-6">
         <div className="max-w-2xl w-full bg-white p-10 md:p-16 border border-gray-300 shadow-2xl rounded-[6px] text-center transition-all animate-in fade-in zoom-in duration-500">
           <div className="flex justify-center mb-8">
             <div className="p-6 rounded-[6px] bg-brand-sand/20 text-brand-dark">
@@ -345,7 +345,7 @@ export default function RegisterBusinessPage() {
 
   if (existingBusiness && (existingBusiness.status === 'pending' || existingBusiness.status === 'approved') && !isSubmitted) {
     return (
-      <div className="min-h-screen bg-gray-50/50 flex items-center justify-center py-12 px-6">
+      <div className="min-h-[100dvh] bg-gray-50/50 flex items-center justify-center py-12 px-6">
         <div className="max-w-2xl w-full bg-white p-10 md:p-16 border border-gray-300 shadow-2xl rounded-[6px] text-center transition-all animate-in fade-in zoom-in duration-500">
           <div className="flex justify-center mb-8">
             <div className={`p-6 rounded-[6px] ${existingBusiness.status === 'approved' ? 'bg-brand-sand/20 text-brand-dark' : 'bg-amber-50 text-amber-600'}`}>
@@ -377,7 +377,7 @@ export default function RegisterBusinessPage() {
 
   if (isSubmitted) {
     return (
-      <div className="min-h-screen bg-gray-50/50 flex items-center justify-center py-12 px-6">
+      <div className="min-h-[100dvh] bg-gray-50/50 flex items-center justify-center py-12 px-6">
         <div className="max-w-2xl w-full bg-white p-10 md:p-16 border border-gray-300 shadow-2xl rounded-[6px] text-center">
           <div className="flex justify-center mb-8">
             <div className="relative">
@@ -425,7 +425,7 @@ export default function RegisterBusinessPage() {
   }
 
   return (
-      <div className="min-h-screen bg-gray-50/50 py-12 px-6">
+      <div className="min-h-[100dvh] bg-gray-50/50 py-12 px-6">
         <div className="max-w-6xl mx-auto bg-white p-8 md:p-12 border border-gray-300 shadow-sm rounded-[6px]">
 
           <div className="mb-12 border-b border-gray-50 pb-8 text-center md:text-left">

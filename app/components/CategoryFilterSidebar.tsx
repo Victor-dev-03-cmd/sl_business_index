@@ -282,7 +282,7 @@ export default function CategoryFilterSidebar({
       
       {/* Mobile Drawer (Bottom Sheet Style) */}
       <div 
-        className={`fixed inset-x-0 bottom-0 bg-white z-[101] p-8 shadow-2xl transition-transform duration-500 ease-out lg:hidden rounded-t-[32px] max-h-[90vh] overflow-y-auto ${
+        className={`fixed inset-x-0 bottom-0 bg-white z-[101] p-8 shadow-2xl transition-transform duration-500 ease-out lg:hidden rounded-t-[32px] max-h-[90dvh] overflow-y-auto ${
           isOpen ? 'translate-y-0' : 'translate-y-full'
         }`}
       >

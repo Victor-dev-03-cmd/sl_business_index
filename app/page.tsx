@@ -20,9 +20,14 @@ import {
 import * as LucideIcons from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-import HeroSearch from "./components/HeroSearch";
+import dynamic from "next/dynamic";
 import VerifiedBadge from "./components/VerifiedBadge";
 import Testimonials from "./components/Testimonials";
+
+const HeroSearch = dynamic(() => import("./components/HeroSearch"), {
+  ssr: false,
+  loading: () => <div className="h-16 w-full max-w-2xl mx-auto bg-white/10 animate-pulse rounded-[6px]" />,
+});
 
 const EMPTY_ARRAY: any[] = [];
 
@@ -222,9 +227,9 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-white font-normal">
+    <div className="min-h-[100dvh] bg-white font-normal">
       {/* --- HERO SECTION --- */}
-      <section className="relative h-[78vh] flex items-center justify-center z-20">
+      <section className="relative h-[78dvh] flex items-center justify-center z-20">
         {/* Hero Background Image with Blur */}
         <div className="absolute inset-0 z-0 w-full h-full overflow-hidden">
           <Image
@@ -440,7 +445,7 @@ export default function HomePage() {
                     )}
 
                     {/*Overlay on Hover */}
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-500 backdrop-blur-[2px] p-4 text-center z-20">
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-500 p-4 text-center z-20">
                       <p className="text-white font-bold text-sm mb-1">{business.name}</p>
                       <p className="text-gray-300 text-[10px] font-medium uppercase tracking-wider">{business.category}</p>
                     </div>
@@ -464,7 +469,7 @@ export default function HomePage() {
                     )}
 
                     <div className="absolute bottom-3 right-3 z-10">
-                      <div className="flex items-center gap-1.5 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-[4px] shadow-lg text-gray-900 border border-white/50">
+                      <div className="flex items-center gap-1.5 bg-white/90 px-2.5 py-1 rounded-[4px] shadow-lg text-gray-900 border border-white/50">
                         <Star
                           size={12}
                           strokeWidth={2}

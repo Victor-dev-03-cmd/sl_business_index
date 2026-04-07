@@ -39,7 +39,7 @@ export default async function CategoriesPage() {
   const categories = await getCategories();
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-[100dvh] bg-white">
       {/* Enhanced Minimalist Header */}
       <header className="bg-brand-dark py-12 md:py-20 px-6 overflow-hidden relative">
         <div className="absolute top-0 right-0 w-64 h-64 bg-brand-blue/10 rounded-full blur-3xl -mr-32 -mt-32" />

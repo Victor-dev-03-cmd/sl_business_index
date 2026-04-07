@@ -68,7 +68,7 @@ export default function MyBusinessesPage() {
 
   if (userLoading || (user && businessesLoading)) {
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-160px)]">
+      <div className="flex items-center justify-center min-h-[calc(100dvh-160px)]">
         <Loader2 className="h-8 w-8 animate-spin text-brand-dark" />
       </div>
     );
@@ -76,7 +76,7 @@ export default function MyBusinessesPage() {
 
   if (!user) {
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-160px)]">
+      <div className="flex items-center justify-center min-h-[calc(100dvh-160px)]">
         <p className="text-gray-500">Please log in to manage your businesses.</p>
       </div>
     );
@@ -85,7 +85,7 @@ export default function MyBusinessesPage() {
   if (businessesError) {
     console.error('Error fetching businesses:', businessesError);
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-160px)]">
+      <div className="flex items-center justify-center min-h-[calc(100dvh-160px)]">
         <p className="text-red-500">Error loading your businesses. Please try again.</p>
       </div>
     );

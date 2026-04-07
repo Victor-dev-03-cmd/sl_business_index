@@ -88,7 +88,7 @@ export default function AgriculturePage() {
   }, [searchQuery]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-[100dvh] bg-gray-50 flex">
       {/* Sidebar Navigation */}
       <div className="w-64 bg-white border-r border-gray-200 hidden md:flex flex-col">
         <div className="p-6 border-b border-gray-200">
@@ -126,7 +126,7 @@ export default function AgriculturePage() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+      <div className="flex-1 flex flex-col h-[100dvh] overflow-hidden">
         {/* Header */}
         <header className="bg-white border-b border-gray-200 p-4 md:p-6 sticky top-0 z-10">
           <div className="max-w-6xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">

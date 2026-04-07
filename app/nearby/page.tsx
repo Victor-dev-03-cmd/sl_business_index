@@ -614,7 +614,7 @@ function SplitScreenResultsContent() {
             onMouseDown={() => setIsSearchFocused(false)}
           />
           {/* Panel */}
-          <div className="relative bg-white shadow-xl overflow-y-auto max-h-[70vh]">
+          <div className="relative bg-white shadow-xl overflow-y-auto max-h-[70dvh]">
             {/* ── Categories ── */}
             {categorySuggestions.length > 0 && (
               <div className="border-b border-gray-100 last:border-0">
@@ -826,7 +826,7 @@ function SplitScreenResultsContent() {
               </button>
             </div>
 
-            <div className="px-5 pt-5 space-y-7 max-h-[60vh] overflow-y-auto">
+            <div className="px-5 pt-5 space-y-7 max-h-[60dvh] overflow-y-auto">
               {/* Radius */}
               <div>
                 <div className="flex items-center justify-between mb-4">
@@ -1517,7 +1517,7 @@ export default function NearbyPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center justify-center h-screen">
+        <div className="flex items-center justify-center h-[100dvh]">
           Loading...
         </div>
       }

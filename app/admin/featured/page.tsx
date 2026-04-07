@@ -151,7 +151,7 @@ export default function AdminFeaturedPage() {
   }, [businesses]);
 
   return (
-    <div className="p-4 md:p-8 max-w-[1600px] mx-auto space-y-8 bg-gray-50/30 min-h-screen font-sans">
+    <div className="p-4 md:p-8 max-w-[1600px] mx-auto space-y-8 bg-gray-50/30 min-h-[100dvh] font-sans">
       {/* Premium Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-8 rounded border border-gray-300 shadow-sm relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-full bg-brand-gold/5 transform skew-x-[-35deg] translate-x-32"></div>

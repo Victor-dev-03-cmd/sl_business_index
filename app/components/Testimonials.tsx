@@ -156,7 +156,7 @@ const Testimonials = () => {
               className={cn(
                 "relative rounded overflow-hidden group transition-all duration-300 h-full",
                 bentoClasses[idx] || "md:col-span-1 md:row-span-1",
-                item.type === 'testimonial' ? "p-6 md:p-8 border border-gray-300 bg-white/70 backdrop-blur-xl shadow-sm flex flex-col" : ""
+                item.type === 'testimonial' ? "p-6 md:p-8 border border-gray-300 bg-white/70 shadow-sm flex flex-col" : ""
               )}
             >
               {item.type === 'testimonial' ? (

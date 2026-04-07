@@ -16,13 +16,31 @@ type HoleBackgroundProps = React.ComponentProps<'div'> & {
 
 function HoleBackground({
   strokeColor = '#737373',
-  numberOfLines = 50,
-  numberOfDiscs = 50,
+  numberOfLines: initialLines = 50,
+  numberOfDiscs: initialDiscs = 50,
   particleRGBColor = [255, 255, 255],
   className,
   children,
   ...props
 }: HoleBackgroundProps) {
+  const [numberOfLines, setNumberOfLines] = React.useState(initialLines);
+  const [numberOfDiscs, setNumberOfDiscs] = React.useState(initialDiscs);
+
+  React.useEffect(() => {
+    const updateCounts = () => {
+      if (window.innerWidth < 1024) {
+        setNumberOfLines(Math.min(initialLines, 25));
+        setNumberOfDiscs(Math.min(initialDiscs, 25));
+      } else {
+        setNumberOfLines(initialLines);
+        setNumberOfDiscs(initialDiscs);
+      }
+    };
+    updateCounts();
+    window.addEventListener('resize', updateCounts);
+    return () => window.removeEventListener('resize', updateCounts);
+  }, [initialLines, initialDiscs]);
+
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const animationFrameIdRef = React.useRef<number>(0);
   const stateRef = React.useRef<any>({

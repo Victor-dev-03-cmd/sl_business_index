@@ -136,7 +136,7 @@ export default function MarketingDesignEditor({ onBackAction, businesses, onPubl
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-[#0F172A] to-[#1E293B] z-50 flex flex-col overflow-hidden font-sans">
       {/* Top Header Bar */}
-      <header className="h-12 border-b border-slate-700 flex items-center justify-between px-3 bg-[#0F172A]/80 backdrop-blur-sm z-20 shrink-0">
+      <header className="h-12 border-b border-slate-700 flex items-center justify-between px-3 bg-[#0F172A] z-20 shrink-0">
         {/* Left: Back + File Name */}
         <div className="flex items-center gap-2 min-w-0">
           <button
@@ -201,7 +201,7 @@ export default function MarketingDesignEditor({ onBackAction, businesses, onPubl
             {showExportOptions && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setShowExportOptions(false)} />
-                <div className="absolute right-0 mt-2 w-52 bg-[#1E293B]/90 backdrop-blur-xl border border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden py-1.5">
+                <div className="absolute right-0 mt-2 w-52 bg-[#1E293B] border border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden py-1.5">
                   <div className="px-3 py-1.5 text-[9px] font-bold text-slate-500 uppercase tracking-widest border-b border-slate-800 mb-1">
                     Export Format
                   </div>
@@ -250,7 +250,7 @@ export default function MarketingDesignEditor({ onBackAction, businesses, onPubl
       </div>
 
       {/* Status Bar */}
-      <footer className="h-7 border-t border-slate-800 bg-[#0F172A]/80 backdrop-blur-sm flex items-center justify-between px-4 shrink-0">
+      <footer className="h-7 border-t border-slate-800 bg-[#0F172A] flex items-center justify-between px-4 shrink-0">
         <div className="flex items-center gap-4 text-[10px] text-slate-400 font-medium">
           <span className="flex items-center gap-1.5">
             <Layers size={11} className="text-blue-400/60" />
@@ -267,7 +267,7 @@ export default function MarketingDesignEditor({ onBackAction, businesses, onPubl
 
       {/* Publish Dialog */}
       {showPublishDialog && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col">
             <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/50">
               <div className="flex items-center gap-2">

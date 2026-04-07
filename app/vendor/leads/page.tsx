@@ -161,7 +161,7 @@ export default function LeadsPage() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-120px)] gap-6">
+    <div className="flex h-[calc(100dvh-120px)] gap-6">
       
       {/* Left: Leads List */}
       <div className={`flex-1 flex flex-col bg-white rounded border border-gray-300 overflow-hidden ${selectedLead ? 'hidden lg:flex' : 'flex'}`}>

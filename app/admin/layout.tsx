@@ -77,14 +77,14 @@ export default function AdminLayout({
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-white">
+      <div className="flex h-[100dvh] items-center justify-center bg-white">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-dark border-t-transparent" />
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen bg-gray-50/50 transition-colors duration-300 overflow-hidden">
+    <div className="flex h-[100dvh] bg-gray-50/50 transition-colors duration-300 overflow-hidden">
       {/* ── Desktop Sidebar (hidden on mobile, visible md+) ───────────────── */}
       <aside
         className={`${

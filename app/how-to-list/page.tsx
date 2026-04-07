@@ -66,7 +66,7 @@ const steps = [
 
 export default function HowToListPage() {
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-[100dvh] bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-16">
           <h1 className="text-4xl text-brand-dark sm:text-5xl">

@@ -74,7 +74,7 @@ export default async function CityPage({ params }: Props) {
   const businesses = await getBusinessesByCity(city.name);
 
   return (
-    <div className="min-h-screen bg-gray-50/50">
+    <div className="min-h-[100dvh] bg-gray-50/50">
       <header className="bg-brand-dark py-16 px-6 border-b border-gray-300">
         <div className="max-w-7xl mx-auto">
           <nav className="flex items-center gap-2 text-brand-sand text-xs uppercase tracking-widest mb-6">

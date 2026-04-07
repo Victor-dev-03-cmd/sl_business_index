@@ -114,7 +114,7 @@ export default function QRGeneratorPage() {
   };
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-12 bg-gray-50/30 min-h-screen">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-12 bg-gray-50/30 min-h-[100dvh]">
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-8 rounded border border-gray-300 shadow-sm">
         <div className="space-y-1">

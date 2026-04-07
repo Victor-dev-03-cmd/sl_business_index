@@ -22,7 +22,7 @@ export default async function QRRedirectPage({ params }: Props) {
 
   if (error || !qr) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="min-h-[100dvh] bg-gray-50 flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white border border-gray-200 rounded-[6px] shadow-sm overflow-hidden text-center">
           <div className="p-6">
             <div className="mx-auto bg-red-50 p-3 rounded-full w-fit mb-4 text-red-500">
@@ -54,7 +54,7 @@ export default async function QRRedirectPage({ params }: Props) {
 
   // 3. Otherwise, show a message that it's unassigned
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div className="min-h-[100dvh] bg-gray-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white border border-gray-200 rounded-[6px] shadow-xl overflow-hidden text-center">
         <div className="bg-brand-dark py-12 flex flex-col items-center space-y-4">
           <div className="relative w-20 h-20">

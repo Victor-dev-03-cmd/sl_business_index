@@ -151,7 +151,7 @@ function LoginForm() {
 
 export default function LogIn() {
   return (
-      <div className="flex min-h-screen bg-white">
+      <div className="flex min-h-[100dvh] bg-white">
         {/* Left Side: Branding Panel (English & Optimized Spacing) */}
         <div className="hidden lg:flex lg:w-1/2 bg-brand-dark relative overflow-hidden items-center justify-center p-12">
           {/* Professional Background Effects */}

@@ -257,8 +257,8 @@ export default function HeroSearch({
     <div className="relative max-w-2xl mx-auto">
       {/* Main Search Input */}
       <div ref={searchBarRef} className="bg-white rounded-[6px] shadow-lg border border-gray-300">
-        <div className="flex items-center px-4 py-3 md:px-5 md:py-4 bg-white rounded-[6px] gap-2 md:gap-3">
-          <Search className="text-gray-400 shrink-0" size={18} strokeWidth={1.5} />
+        <div className="flex items-center px-4 py-3.5 md:px-5 md:py-4 bg-white rounded-[6px] gap-2 md:gap-3 min-h-[44px]">
+          <Search className="text-gray-400 shrink-0" size={20} strokeWidth={1.5} />
           <input
             type="text"
             value={searchQuery}
@@ -295,7 +295,7 @@ export default function HeroSearch({
             className="absolute top-full left-0 right-0 mt-1 bg-white rounded-[6px] shadow-2xl border border-gray-300 overflow-hidden text-left"
             style={{
               zIndex: 9999,
-              maxHeight: "65vh",
+              maxHeight: "65dvh",
               overflowY: "auto",
             }}
           >

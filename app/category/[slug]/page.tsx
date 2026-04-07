@@ -79,7 +79,7 @@ export default async function CategoryPage({ params }: Props) {
   if (!category) notFound();
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-[100dvh] bg-white">
       {/* Enhanced Minimalist Header */}
       <header className="bg-brand-dark py-12 md:py-20 px-6 overflow-hidden relative">
         {/* Subtle decorative elements */}

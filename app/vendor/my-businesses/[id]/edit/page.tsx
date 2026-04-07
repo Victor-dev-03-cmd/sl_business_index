@@ -31,7 +31,7 @@ export default function EditBusinessPage() {
 
   if (userLoading || (id && businessLoading)) {
     return (
-      <div className="flex h-[calc(100vh-160px)] items-center justify-center bg-white">
+      <div className="flex h-[calc(100dvh-160px)] items-center justify-center bg-white">
         <Loader2 className="h-8 w-8 animate-spin text-brand-dark" />
       </div>
     );
@@ -44,7 +44,7 @@ export default function EditBusinessPage() {
 
   if (businessError || !business) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-160px)]">
+      <div className="flex flex-col items-center justify-center min-h-[calc(100dvh-160px)]">
         <p className="text-red-500 mb-4">Error loading business details. It may not exist.</p>
         <button 
           onClick={() => router.push('/vendor/my-businesses')}
