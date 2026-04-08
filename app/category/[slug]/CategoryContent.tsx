@@ -124,8 +124,8 @@ export default function CategoryContent({ category, allCategories }: CategoryCon
     placeholderData: (previousData) => previousData,
   });
 
-  const businesses = data?.businesses || [];
-  const totalCount = data?.totalCount || 0;
+  const businesses = data.businesses || [];
+  const totalCount = data.totalCount || 0;
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
   return (

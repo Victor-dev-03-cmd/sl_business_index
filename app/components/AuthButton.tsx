@@ -49,7 +49,7 @@ export default function AuthButton({ user }: { user?: AuthUser | null }) {
 
   if (user) {
     const displayName = user.full_name || user.username || user.email || "User";
-    const userRole = user.role?.toLowerCase();
+    const userRole = user.role.toLowerCase();
     const isAdminOrCeo = userRole === "admin" || userRole === "ceo";
     const isVendor = userRole === "vendor" || user.hasBusiness;
 

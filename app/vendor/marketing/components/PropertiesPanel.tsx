@@ -74,7 +74,7 @@ export default function PropertiesPanel() {
     // eslint-disable-next-line react-hooks/immutability
     activeObject.set(key as any, value);
     activeObject.setCoords();
-    canvas?.renderAll();
+    canvas.renderAll();
     saveHistory();
     setLocalProps(prev => ({ ...prev, [key]: value }));
   };
@@ -114,7 +114,7 @@ export default function PropertiesPanel() {
               <button
                 key={color}
                 onClick={() => setCanvasBg(color)}
-                className={`aspect-square rounded-lg border-2 transition-all ${canvas?.backgroundColor === color ? 'border-blue-500 scale-110' : 'border-slate-800 hover:border-slate-600'}`}
+                className={`aspect-square rounded-lg border-2 transition-all ${canvas.backgroundColor === color ? 'border-blue-500 scale-110' : 'border-slate-800 hover:border-slate-600'}`}
                 style={{ backgroundColor: color }}
               />
             ))}
@@ -122,7 +122,7 @@ export default function PropertiesPanel() {
                <div className="w-full h-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 opacity-50" />
                <input
                   type="color"
-                  value={canvas?.backgroundColor as string || '#0F172A'}
+                  value={canvas.backgroundColor as string || '#0F172A'}
                   onChange={(e) => setCanvasBg(e.target.value)}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 />
@@ -150,12 +150,12 @@ export default function PropertiesPanel() {
          </div>
          <div>
             <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-200">
-               {activeObject.type?.replace('i-text', 'Text Element').replace('FabricImage', 'Image')}
+               {activeObject.type.replace('i-text', 'Text Element').replace('FabricImage', 'Image')}
             </h4>
             <p className="text-[9px] text-slate-500 font-bold uppercase tracking-tight mt-0.5">Active Layer Adjustment</p>
          </div>
          <button 
-           onClick={() => { canvas?.remove(activeObject); canvas?.discardActiveObject(); canvas?.renderAll(); updateLayers(); saveHistory(); }}
+           onClick={() => { canvas.remove(activeObject); canvas.discardActiveObject(); canvas.renderAll(); updateLayers(); saveHistory(); }}
            className="ml-auto p-2 text-slate-600 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all"
          >
            <Trash2 size={16} />
@@ -218,7 +218,7 @@ export default function PropertiesPanel() {
                   <button
                     key={color}
                     onClick={() => updateProperty('fill', color)}
-                    className={`aspect-square rounded-lg border transition-all ${ (activeObject.fill as string)?.toLowerCase() === color.toLowerCase() ? 'border-blue-500 scale-110 shadow-lg shadow-blue-500/20' : 'border-slate-800 hover:border-slate-600' }`}
+                    className={`aspect-square rounded-lg border transition-all ${ (activeObject.fill as string).toLowerCase() === color.toLowerCase() ? 'border-blue-500 scale-110 shadow-lg shadow-blue-500/20' : 'border-slate-800 hover:border-slate-600' }`}
                     style={{ backgroundColor: color }}
                   />
                 ))}
@@ -297,13 +297,13 @@ export default function PropertiesPanel() {
         <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-4">Arrangement</h3>
         <div className="grid grid-cols-2 gap-2">
           <button
-            onClick={() => { canvas?.bringObjectForward(activeObject); canvas?.renderAll(); updateLayers(); saveHistory(); }}
+            onClick={() => { canvas.bringObjectForward(activeObject); canvas.renderAll(); updateLayers(); saveHistory(); }}
             className="flex items-center justify-center gap-2 py-3 bg-slate-900/60 hover:bg-slate-800 border border-slate-800 rounded-xl text-[10px] font-bold text-slate-300 transition-all"
           >
             <ArrowUp size={14} /> Bring Forward
           </button>
           <button
-            onClick={() => { canvas?.sendObjectBackwards(activeObject); canvas?.renderAll(); updateLayers(); saveHistory(); }}
+            onClick={() => { canvas.sendObjectBackwards(activeObject); canvas.renderAll(); updateLayers(); saveHistory(); }}
             className="flex items-center justify-center gap-2 py-3 bg-slate-900/60 hover:bg-slate-800 border border-slate-800 rounded-xl text-[10px] font-bold text-slate-300 transition-all"
           >
             <ArrowDown size={14} /> Send Backward

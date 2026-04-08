@@ -43,7 +43,7 @@ export default async function Image({ params }: { params: { id: string } }) {
     );
   }
 
-  const city = business.address?.split(',').pop()?.trim() || 'Sri Lanka';
+  const city = business.address.split(',').pop().trim() || 'Sri Lanka';
 
   return new ImageResponse(
     (

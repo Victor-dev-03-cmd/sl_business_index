@@ -13,7 +13,14 @@ export default function LoadingProvider({ children }: { children: React.ReactNod
     setMounted(true);
     // Adjust timing to allow the typing animation to complete
     const timer = setTimeout(() => setIsLoading(false), 2500);
-    return () => clearTimeout(timer);
+    
+    // Safety Net: Force hide loader after 5 seconds
+    const safetyTimer = setTimeout(() => setIsLoading(false), 5000);
+
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(safetyTimer);
+    };
   }, []);
 
   if (!mounted) {

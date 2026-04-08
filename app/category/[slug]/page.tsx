@@ -30,7 +30,7 @@ async function getCategoryData(slug: string) {
     .from('categories')
     .select('*');
 
-  const category = categories?.find(c => slugify(c.name) === slug);
+  const category = categories.find(c => slugify(c.name) === slug);
   
   if (!category) {
     // Check if it's a category from businesses table that doesn't exist in categories table

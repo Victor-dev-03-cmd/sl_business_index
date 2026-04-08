@@ -119,7 +119,7 @@ export default function AdminFeaturedPage() {
     },
     onError: (err: Error, variables, context) => {
       // Rollback on error
-      if (context?.previousBusinesses) {
+      if (context.previousBusinesses) {
         queryClient.setQueryData(["admin-approved-businesses"], context.previousBusinesses);
       }
       toast.error(`Error updating status: ${err.message}`);
@@ -287,7 +287,7 @@ export default function AdminFeaturedPage() {
                         onClick={() => handleToggleFeatured(business.id, business.is_featured)}
                         disabled={
                           toggleFeaturedMutation.isPending &&
-                          toggleFeaturedMutation.variables?.businessId === business.id
+                          toggleFeaturedMutation.variables.businessId === business.id
                         }
                         className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all w-44 justify-center mx-auto disabled:opacity-50 active:scale-95
                           ${
@@ -296,7 +296,7 @@ export default function AdminFeaturedPage() {
                               : "bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600"
                           }`}
                       >
-                        {toggleFeaturedMutation.isPending && toggleFeaturedMutation.variables?.businessId === business.id ? (
+                        {toggleFeaturedMutation.isPending && toggleFeaturedMutation.variables.businessId === business.id ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : business.is_featured ? (
                           <CheckCircle2 className="h-4 w-4" />

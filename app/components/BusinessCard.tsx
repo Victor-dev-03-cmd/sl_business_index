@@ -23,6 +23,7 @@ export default function BusinessCard({ business }: BusinessCardProps) {
             src={business.image_url} 
             alt={business.name} 
             fill 
+            unoptimized={business.image_url.includes('supabase.co')}
             className="object-cover transition-transform duration-700 " 
           />
         ) : (

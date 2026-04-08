@@ -23,7 +23,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       const { data, error } = await supabase.auth.getSession();
       if (error) throw error;
       setSession(data.session);
-      setUser(data.session?.user ?? null);
+      setUser(data.session.user || null);
     } catch (error) {
       console.error('Error fetching session:', error);
     } finally {
@@ -36,7 +36,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      setUser(session?.user ?? null);
+      setUser(session.user || null);
       setLoading(false);
     });
 

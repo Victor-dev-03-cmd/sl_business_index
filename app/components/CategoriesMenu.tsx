@@ -26,7 +26,7 @@ export default function CategoriesMenu({ initialCategories = [], isMobile = fals
     const query = searchQuery.toLowerCase();
     return categories.filter((cat: any) =>
       cat.name.toLowerCase().includes(query) ||
-      cat.keywords?.some((kw: string) => kw.toLowerCase().includes(query))
+      cat.keywords.some((kw: string) => kw.toLowerCase().includes(query))
     );
   }, [categories, searchQuery]);
 

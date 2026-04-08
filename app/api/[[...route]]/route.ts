@@ -140,10 +140,10 @@ app.post('/google-distance', async (c) => {
   }
 
   const rows = data.rows[0].elements.map((element: any) => ({
-    distance: element.distance?.value || 0,
-    distanceText: element.distance?.text || 'Unknown',
-    duration: element.duration?.value || 0,
-    durationText: element.duration?.text || 'Unknown',
+    distance: element.distance.value || 0,
+    distanceText: element.distance.text || 'Unknown',
+    duration: element.duration.value || 0,
+    durationText: element.duration.text || 'Unknown',
     status: element.status,
   }))
 
@@ -191,7 +191,7 @@ app.post('/google-places/nearby', async (c) => {
     return c.json({ error: `Google Places API error: ${data.status}` }, 500)
   }
 
-  const places = data.results?.map((result: any) => ({
+  const places = data.results.map((result: any) => ({
     id: result.place_id,
     name: result.name,
     address: result.vicinity,
@@ -266,7 +266,7 @@ app.post('/analytics/log', async (c) => {
     .insert({
       business_id,
       event_type,
-      user_id: user?.id || null,
+      user_id: user.id || null,
       city,
       metadata: metadata || {}
     })
@@ -335,7 +335,7 @@ app.post('/social/publish', async (c) => {
   const { data: profile } = await supabase
     .from('profiles')
     .select('role')
-    .eq('id', user?.id)
+    .eq('id', user.id)
     .single()
 
   if (!profile || !['admin', 'ceo'].includes(profile.role)) {
@@ -388,7 +388,7 @@ app.post('/social/publish', async (c) => {
         if (fbData.id) {
           results.facebook = { success: true, id: fbData.id }
         } else {
-          results.facebook = { success: false, error: fbData.error?.message || 'Unknown error' }
+          results.facebook = { success: false, error: fbData.error.message || 'Unknown error' }
         }
       } catch (err: any) {
         results.facebook = { success: false, error: err.message }
@@ -431,10 +431,10 @@ app.post('/social/publish', async (c) => {
           if (publishData.id) {
             results.instagram = { success: true, id: publishData.id }
           } else {
-            results.instagram = { success: false, error: publishData.error?.message || 'Publishing failed' }
+            results.instagram = { success: false, error: publishData.error.message || 'Publishing failed' }
           }
         } else {
-          results.instagram = { success: false, error: containerData.error?.message || 'Container creation failed' }
+          results.instagram = { success: false, error: containerData.error.message || 'Container creation failed' }
         }
       } catch (err: any) {
         results.instagram = { success: false, error: err.message }
@@ -478,8 +478,8 @@ app.post('/contact/send', async (c) => {
       .eq('id', 1)
       .single()
 
-    const adminEmail = settings?.admin_email || 'admin@slbusinessindex.com'
-    const emailEnabled = settings?.email_notifications ?? true
+    const adminEmail = settings.admin_email || 'admin@slbusinessindex.com'
+    const emailEnabled = settings.email_notifications || true
 
     // 3. Send Email (via Resend fetch)
     const RESEND_API_KEY = process.env.RESEND_API_KEY

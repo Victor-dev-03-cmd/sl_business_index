@@ -40,7 +40,7 @@ export default function MarketingDesignEditor({ onBackAction, businesses, onPubl
   const [isSaving, setIsSaving] = useState(false);
   const [showExportOptions, setShowExportOptions] = useState(false);
   const [showPublishDialog, setShowPublishDialog] = useState(false);
-  const [selectedBusinessId, setSelectedBusinessId] = useState<string>(businesses[0]?.id || '');
+  const [selectedBusinessId, setSelectedBusinessId] = useState<string>(businesses[0].id || '');
   const [caption, setCaption] = useState('Check out our new design!');
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(['facebook', 'instagram']);
 

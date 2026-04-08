@@ -253,8 +253,8 @@ export default function SettingsPage() {
   };
 
   // Determine display status
-  const displayStatus = verification?.status === 'approved' ? 'verified' : 
-                        verification?.status === 'pending' ? 'pending' : 
+  const displayStatus = verification.status === 'approved' ? 'verified' : 
+                        verification.status === 'pending' ? 'pending' : 
                         profile.verification_status;
 
   const isVerified = displayStatus === 'verified';
@@ -432,16 +432,16 @@ export default function SettingsPage() {
                     />
                     <Upload size={24} className="mb-2" />
                     <p className="text-sm">
-                        {verificationFile ? verificationFile.name : (verification?.br_document_url || profile.verification_image_url) ? 'Document uploaded' : 'Click to upload or drag and drop'}
+                        {verificationFile ? verificationFile.name : (verification.br_document_url || profile.verification_image_url) ? 'Document uploaded' : 'Click to upload or drag and drop'}
                     </p>
                     <p className="text-xs text-gray-400 mt-1">PNG, JPG up to 10MB</p>
                   </div>
-                  {(verification?.br_document_url || profile.verification_image_url) && !verificationFile && (
+                  {(verification.br_document_url || profile.verification_image_url) && !verificationFile && (
                     <div className="mt-4">
                         <p className="text-xs text-gray-500 mb-2">Current document:</p>
                         <div className="h-48 w-full max-w-md rounded border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center">
                             <img
-                              src={verification?.br_document_url || profile.verification_image_url}
+                              src={verification.br_document_url || profile.verification_image_url}
                               alt="Verification Document"
                               className="max-h-full max-w-full object-contain"
                             />

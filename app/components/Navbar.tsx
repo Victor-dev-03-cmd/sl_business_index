@@ -54,6 +54,16 @@ export default function Navbar() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [categOpen, setCategOpen] = useState(false);
+  const [isLegacy, setIsLegacy] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const ua = navigator.userAgent;
+      if (ua.indexOf("iPad") !== -1 && ua.indexOf("Version/12") !== -1) {
+        setIsLegacy(true);
+      }
+    }
+  }, []);
 
   /* ── lock body scroll when panel is open ── */
   useEffect(() => {
@@ -114,15 +124,15 @@ export default function Navbar() {
         ? {
             id: user.id,
             email: user.email,
-            full_name: user.user_metadata?.full_name as string | undefined,
-            avatar_url: user.user_metadata?.avatar_url as string | undefined,
+            full_name: (user.user_metadata && user.user_metadata.full_name) as string | undefined,
+            avatar_url: (user.user_metadata && user.user_metadata.avatar_url) as string | undefined,
           }
         : null;
 
   const isVendorOrAdmin =
-    profileData?.role?.toLowerCase() === "vendor" ||
-    profileData?.role?.toLowerCase() === "admin" ||
-    profileData?.role?.toLowerCase() === "ceo";
+    (profileData && profileData.role && profileData.role.toLowerCase() === "vendor") ||
+    (profileData && profileData.role && profileData.role.toLowerCase() === "admin") ||
+    (profileData && profileData.role && profileData.role.toLowerCase() === "ceo");
 
   const showRegister = !user || !isVendorOrAdmin;
 
@@ -238,10 +248,40 @@ export default function Navbar() {
       {/* ════════════════════════════════════
           MOBILE SLIDE PANEL
       ════════════════════════════════════ */}
-      <AnimatePresence>
-        {mobileMenuOpen && (
-          <>
-            {/* Backdrop */}
+      {isLegacy ? (
+        mobileMenuOpen && (
+          <div className="fixed inset-0 z-[100] flex">
+            <div className="fixed inset-0 bg-black opacity-40" onClick={close}></div>
+            <div className="relative ml-auto h-full w-full max-w-[320px] bg-white shadow-2xl flex flex-col overflow-y-auto">
+              <div className="flex items-center justify-between h-16 px-5 border-b border-gray-100 shrink-0">
+                <LogoLink />
+              </div>
+              
+              <nav className="flex-1 px-4 py-3 space-y-2">
+                <Link href="/" onClick={close} className="flex items-center gap-3 p-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                  <Home size={20} /> <span className="font-medium">Home</span>
+                </Link>
+                <Link href="/nearby" onClick={close} className="flex items-center gap-3 p-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                  <MapPin size={20} /> <span className="font-medium">Nearby</span>
+                </Link>
+                <Link href="/about" onClick={close} className="flex items-center gap-3 p-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                  <Info size={20} /> <span className="font-medium">About</span>
+                </Link>
+                <Link href="/faq" onClick={close} className="flex items-center gap-3 p-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                  <HelpIcon size={20} /> <span className="font-medium">FAQ</span>
+                </Link>
+                <Link href="/contact" onClick={close} className="flex items-center gap-3 p-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                  <Phone size={20} /> <span className="font-medium">Contact</span>
+                </Link>
+              </nav>
+            </div>
+          </div>
+        )
+      ) : (
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <>
+              {/* Backdrop */}
             <motion.div
               key="backdrop"
               initial={{ opacity: 0 }}
@@ -289,16 +329,16 @@ export default function Navbar() {
                   <div className="flex items-center gap-3 p-3.5 bg-brand-dark/5 rounded-xl border border-brand-dark/10">
                     {/* Avatar */}
                     <div className="w-10 h-10 rounded-full bg-brand-dark flex items-center justify-center text-white text-sm font-semibold overflow-hidden shrink-0">
-                      {profileData?.avatar_url ? (
+                      {(profileData && profileData.avatar_url) ? (
                         <img
                           src={profileData.avatar_url}
                           alt="avatar"
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        (profileData?.full_name ||
-                          profileData?.username ||
-                          user.email ||
+                        (profileData && profileData.full_name ||
+                          (profileData && profileData.username) ||
+                          (user && user.email) ||
                           "U")[0].toUpperCase()
                       )}
                     </div>
@@ -306,19 +346,19 @@ export default function Navbar() {
                     {/* Name + role */}
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold text-gray-800 truncate">
-                        {profileData?.full_name ||
-                          profileData?.username ||
-                          user.email?.split("@")[0] ||
+                        {(profileData && profileData.full_name) ||
+                          (profileData && profileData.username) ||
+                          (user && user.email && user.email.split("@")[0]) ||
                           "User"}
                       </p>
                       <span className="inline-flex items-center px-1.5 py-0.5 bg-brand-dark text-white text-[9px] uppercase tracking-widest rounded-full mt-0.5">
-                        {profileData?.role || "customer"}
+                        {(profileData && profileData.role) || "customer"}
                       </span>
                     </div>
 
                     {/* Dashboard shortcut */}
-                    {(profileData?.role === "admin" ||
-                      profileData?.role === "ceo") && (
+                    {((profileData && profileData.role === "admin") ||
+                      (profileData && profileData.role === "ceo")) && (
                       <Link
                         href="/admin/dashboard"
                         onClick={close}
@@ -327,7 +367,7 @@ export default function Navbar() {
                         <LayoutDashboard size={20} />
                       </Link>
                     )}
-                    {profileData?.role === "vendor" && (
+                    {(profileData && profileData.role === "vendor") && (
                       <Link
                         href="/vendor/dashboard"
                         onClick={close}

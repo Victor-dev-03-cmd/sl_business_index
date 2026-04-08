@@ -289,8 +289,8 @@ export default function BusinessRequestsPage() {
   const filteredRequests = requests.filter(
     (r) =>
       r.name.toLowerCase().includes(search.toLowerCase()) ||
-      (r.owner_name?.toLowerCase() || "").includes(search.toLowerCase()) ||
-      (r.registration_number?.toLowerCase() || "").includes(
+      (r.owner_name.toLowerCase() || "").includes(search.toLowerCase()) ||
+      (r.registration_number.toLowerCase() || "").includes(
         search.toLowerCase(),
       ),
   );
@@ -806,7 +806,7 @@ export default function BusinessRequestsPage() {
                                   title="Approve & Publish"
                                 >
                                   {updatePromotionMutation.isPending &&
-                                  selectedPromotion?.id === p.id ? (
+                                  selectedPromotion.id === p.id ? (
                                     <Loader2
                                       size={18}
                                       className="animate-spin"

@@ -160,9 +160,9 @@ export default function BillingPage() {
     }
   };
 
-  const currentPlan = subscription?.plan_name || 'Free';
+  const currentPlan = subscription.plan_name || 'Free';
   const activePlanDetails = plans.find(p => p.name === currentPlan);
-  const planLimit = activePlanDetails?.max_listings || (currentPlan === 'Enterprise' ? 9999 : (currentPlan === 'Professional' ? 3 : 1));
+  const planLimit = activePlanDetails.max_listings || (currentPlan === 'Enterprise' ? 9999 : (currentPlan === 'Professional' ? 3 : 1));
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
@@ -192,11 +192,11 @@ export default function BillingPage() {
                     {currentPlan} Plan <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded-full border border-emerald-500/30">Active</span>
                   </h2>
                   <p className="text-gray-400 text-sm mt-2">
-                    {subscription?.renews_at ? `Renews on ${new Date(subscription.renews_at).toLocaleDateString()}` : 'Free forever'}
+                    {subscription.renews_at ? `Renews on ${new Date(subscription.renews_at).toLocaleDateString()}` : 'Free forever'}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-3xl font-bold">LKR {subscription?.price || 0}<span className="text-lg text-gray-400 font-normal">/{subscription?.billing_cycle === 'yearly' ? 'yr' : 'mo'}</span></p>
+                  <p className="text-3xl font-bold">LKR {subscription.price || 0}<span className="text-lg text-gray-400 font-normal">/{subscription.billing_cycle === 'yearly' ? 'yr' : 'mo'}</span></p>
                 </div>
               </div>
 
@@ -316,14 +316,14 @@ export default function BillingPage() {
                 </div>
 
                 <ul className="space-y-3 mb-8">
-                  {plan.features?.map((feature, i) => (
+                  {plan.features.map((feature, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
                       <CheckCircle2 size={16} className="text-brand-gold mt-0.5 shrink-0" />
                       {feature}
                     </li>
                   ))}
                   {featureDefinitions.map((f) => {
-                    const isEnabled = plan.functional_features?.[f.id] || (plan as any)[f.id];
+                    const isEnabled = plan.functional_features.[f.id] || (plan as any)[f.id];
                     if (!isEnabled) return null;
                     return (
                       <li key={f.id} className="flex items-start gap-2 text-sm text-brand-blue font-bold">

@@ -136,7 +136,7 @@ export default function CustomizationSettingsPage() {
             </div>
             <textarea
               rows={10}
-              value={localSettings?.custom_css || ""}
+              value={localSettings.custom_css || ""}
               onChange={(e) =>
                 setLocalSettings((s) =>
                   s ? { ...s, custom_css: e.target.value } : null,
@@ -164,7 +164,7 @@ export default function CustomizationSettingsPage() {
             </div>
             <textarea
               rows={10}
-              value={localSettings?.custom_js || ""}
+              value={localSettings.custom_js || ""}
               onChange={(e) =>
                 setLocalSettings((s) =>
                   s ? { ...s, custom_js: e.target.value } : null,

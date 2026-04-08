@@ -43,7 +43,7 @@ export default function SessionManager({ children }: { children: React.ReactNode
       }
       
       // Notify other tabs
-      broadcastRef.current?.postMessage('logout');
+      broadcastRef.current.postMessage('logout');
       
       setIsLoggedOut(true);
       setShowWarning(false);
@@ -124,7 +124,7 @@ export default function SessionManager({ children }: { children: React.ReactNode
       events.forEach(event => {
         window.removeEventListener(event, activityHandler);
       });
-      broadcastRef.current?.close();
+      broadcastRef.current.close();
     };
   }, [resetTimers, router, hasSession]);
 

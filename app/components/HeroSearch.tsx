@@ -41,7 +41,7 @@ export default function HeroSearch({
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   useEffect(() => {
-    onFocusChange?.(isSearchFocused);
+    onFocusChange.(isSearchFocused);
   }, [isSearchFocused, onFocusChange]);
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [businessSuggestions, setBusinessSuggestions] = useState<any[]>([]);
@@ -106,7 +106,7 @@ export default function HeroSearch({
         .filter(
           (cat: any) =>
             cat.name.toLowerCase().includes(query) ||
-            cat.keywords?.some((kw: string) => kw.toLowerCase().includes(query))
+            cat.keywords.some((kw: string) => kw.toLowerCase().includes(query))
         )
         .slice(0, 5);
       setCategorySuggestions(filteredCats);
@@ -142,7 +142,7 @@ export default function HeroSearch({
   }, [debouncedSearchQuery, searchQuery, fuse, featuredBusinesses, categories]);
 
   const handleSearch = (query?: string) => {
-    const finalQuery = query ?? searchQuery;
+    const finalQuery = query || searchQuery;
     let lowerQuery = finalQuery.toLowerCase().trim();
     let finalLat = "";
     let finalLng = "";
@@ -375,7 +375,7 @@ export default function HeroSearch({
                         </span>
                         {biz.address && (
                           <span className="text-[10px] text-gray-400 truncate">
-                            · {biz.address.split(",").pop()?.trim()}
+                            · {biz.address.split(",").pop().trim()}
                           </span>
                         )}
                       </div>

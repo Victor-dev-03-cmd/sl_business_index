@@ -217,7 +217,7 @@ export default function AdminCategoriesPage() {
   const [isUploading, setIsUploading] = useState(false);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const file = e.target.files.[0];
     if (!file) return;
 
     setIsUploading(true);
@@ -275,7 +275,7 @@ export default function AdminCategoriesPage() {
 
       data.forEach((cat) => {
         if (cat.parent_id && categoryMap[cat.parent_id]) {
-          categoryMap[cat.parent_id].subcategories?.push(categoryMap[cat.id]);
+          categoryMap[cat.parent_id].subcategories.push(categoryMap[cat.id]);
         } else {
           rootCategories.push(categoryMap[cat.id]);
         }
@@ -315,7 +315,7 @@ export default function AdminCategoriesPage() {
           .order("sort_order", { ascending: false })
           .limit(1);
 
-        const nextSort = (maxSort?.[0]?.sort_order || 0) + 1;
+        const nextSort = (maxSort.[0].sort_order || 0) + 1;
 
         const { error } = await supabase
           .from("categories")
@@ -483,7 +483,7 @@ export default function AdminCategoriesPage() {
       return cats.reduce((acc: Category[], cat) => {
         const matches =
           cat.name.toLowerCase().includes(search.toLowerCase()) ||
-          cat.keywords?.some((k) =>
+          cat.keywords.some((k) =>
             k.toLowerCase().includes(search.toLowerCase()),
           );
         const subMatches = cat.subcategories ? filter(cat.subcategories) : [];
@@ -690,7 +690,7 @@ export default function AdminCategoriesPage() {
                   {category.name}
                 </p>
                 <div className="flex flex-wrap gap-1 mt-1">
-                  {category.keywords?.slice(0, 2).map((kw) => (
+                  {category.keywords.slice(0, 2).map((kw) => (
                     <span
                       key={kw}
                       className="text-[8px] md:text-[9px] px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded-md font-medium uppercase tracking-wider"
@@ -720,7 +720,7 @@ export default function AdminCategoriesPage() {
                     : "bg-gray-50 text-gray-400 border-gray-200"
                 }`}
               >
-                {category.subcategories?.length || 0} Sub-items
+                {category.subcategories.length || 0} Sub-items
               </span>
             </div>
           </td>
@@ -789,7 +789,7 @@ export default function AdminCategoriesPage() {
           </td>
         </tr>
         {isExpanded &&
-          category.subcategories?.map((sub) => (
+          category.subcategories.map((sub) => (
             <CategoryRow
               key={sub.id}
               category={sub}
@@ -857,7 +857,7 @@ export default function AdminCategoriesPage() {
               </p>
               <div className="flex flex-wrap gap-1 mt-0.5">
                 <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tight">
-                  {category.subcategories?.length || 0} Sub-items
+                  {category.subcategories.length || 0} Sub-items
                 </span>
               </div>
             </div>
@@ -897,7 +897,7 @@ export default function AdminCategoriesPage() {
         </div>
         
         {isExpanded &&
-          category.subcategories?.map((sub) => (
+          category.subcategories.map((sub) => (
             <MobileCategoryItem key={sub.id} category={sub} depth={depth + 1} />
           ))}
       </div>

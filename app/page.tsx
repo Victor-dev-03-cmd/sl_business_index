@@ -363,6 +363,7 @@ export default function HomePage() {
                             fill
                             className="object-contain"
                             draggable={false}
+                            unoptimized={cat.image_url.includes('supabase.co')}
                           />
                         ) : (
                           <div className="text-brand-gold scale-[1] md:scale-[2]">

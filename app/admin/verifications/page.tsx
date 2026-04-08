@@ -105,8 +105,8 @@ export default function VerificationsPage() {
 
   const filteredVerifications = verifications.filter(
     (v) =>
-      v.businesses.name?.toLowerCase().includes(search.toLowerCase()) ||
-      v.businesses.email?.toLowerCase().includes(search.toLowerCase()),
+      v.businesses.name.toLowerCase().includes(search.toLowerCase()) ||
+      v.businesses.email.toLowerCase().includes(search.toLowerCase()),
   );
 
   return (

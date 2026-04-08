@@ -40,7 +40,7 @@ export default function LogoLink({ className = "" }: { className?: string }) {
       aria-label="Home"
       prefetch={true}
     >
-      {settings?.logo_url ? (
+      {settings.logo_url ? (
         <Image
           src={settings.logo_url}
           alt={settings.logo_text || "SLBI - SL Business Index Logo"}

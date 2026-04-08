@@ -142,7 +142,7 @@ export default function TestimonialsManagement() {
   const filteredReviews = reviews.filter((r: any) => 
     (r.user_name || "").toLowerCase().includes(search.toLowerCase()) || 
     (r.comment || "").toLowerCase().includes(search.toLowerCase()) ||
-    (r.businesses?.name || "").toLowerCase().includes(search.toLowerCase())
+    (r.businesses.name || "").toLowerCase().includes(search.toLowerCase())
   );
 
   const handleEdit = (testimonial: any) => {
@@ -165,7 +165,7 @@ export default function TestimonialsManagement() {
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const file = e.target.files.[0];
     if (!file) return;
 
     // Validate file size (e.g., 5MB)
@@ -358,13 +358,13 @@ export default function TestimonialsManagement() {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden relative">
-                            {r.businesses?.logo_url ? (
+                            {r.businesses.logo_url ? (
                               <Image src={r.businesses.logo_url} alt={r.businesses.name} fill className="object-cover" />
                             ) : (
                               <Building2 className="w-4 h-4 text-gray-300" />
                             )}
                           </div>
-                          <span className="text-sm font-medium text-gray-900">{r.businesses?.name}</span>
+                          <span className="text-sm font-medium text-gray-900">{r.businesses.name}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4">
@@ -436,9 +436,9 @@ export default function TestimonialsManagement() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[500px] bg-white">
           <DialogHeader>
-            <DialogTitle>{editingTestimonial?.id ? "Edit Testimonial" : "Add New Testimonial"}</DialogTitle>
+            <DialogTitle>{editingTestimonial.id ? "Edit Testimonial" : "Add New Testimonial"}</DialogTitle>
             <DialogDescription>
-              {editingTestimonial?.type === 'testimonial' 
+              {editingTestimonial.type === 'testimonial' 
                 ? "Fill in the details for the curated testimonial."
                 : "Upload an image for the success stories section."
               }
@@ -451,7 +451,7 @@ export default function TestimonialsManagement() {
                 onClick={() => setEditingTestimonial({ ...editingTestimonial, type: "testimonial" })}
                 className={cn(
                   "flex-1 py-1.5 text-xs font-bold rounded-md transition-all",
-                  editingTestimonial?.type === 'testimonial' ? "bg-white shadow-sm text-brand-dark" : "text-gray-400"
+                  editingTestimonial.type === 'testimonial' ? "bg-white shadow-sm text-brand-dark" : "text-gray-400"
                 )}
               >
                 Testimonial
@@ -460,7 +460,7 @@ export default function TestimonialsManagement() {
                 onClick={() => setEditingTestimonial({ ...editingTestimonial, type: "image" })}
                 className={cn(
                   "flex-1 py-1.5 text-xs font-bold rounded-md transition-all",
-                  editingTestimonial?.type === 'image' ? "bg-white shadow-sm text-brand-dark" : "text-gray-400"
+                  editingTestimonial.type === 'image' ? "bg-white shadow-sm text-brand-dark" : "text-gray-400"
                 )}
               >
                 Image Only
@@ -471,7 +471,7 @@ export default function TestimonialsManagement() {
               <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Image</label>
               <div className="flex items-center gap-4">
                 <div className="relative w-16 h-16 rounded-lg bg-gray-50 border border-gray-200 overflow-hidden flex items-center justify-center shrink-0">
-                  {editingTestimonial?.image_url ? (
+                  {editingTestimonial.image_url ? (
                     <Image src={editingTestimonial.image_url} alt="Preview" fill className="object-cover" />
                   ) : (
                     <ImageIcon className="w-6 h-6 text-gray-300" />
@@ -487,7 +487,7 @@ export default function TestimonialsManagement() {
                     <input
                       type="text"
                       className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                      value={editingTestimonial?.image_url || ""}
+                      value={editingTestimonial.image_url || ""}
                       onChange={(e) => setEditingTestimonial({ ...editingTestimonial, image_url: e.target.value })}
                       placeholder="URL or upload image..."
                     />
@@ -501,7 +501,7 @@ export default function TestimonialsManagement() {
               </div>
             </div>
 
-            {editingTestimonial?.type === 'testimonial' && (
+            {editingTestimonial.type === 'testimonial' && (
               <>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -509,7 +509,7 @@ export default function TestimonialsManagement() {
                     <input
                       type="text"
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                      value={editingTestimonial?.name || ""}
+                      value={editingTestimonial.name || ""}
                       onChange={(e) => setEditingTestimonial({ ...editingTestimonial, name: e.target.value })}
                     />
                   </div>
@@ -518,7 +518,7 @@ export default function TestimonialsManagement() {
                     <input
                       type="text"
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                      value={editingTestimonial?.role || ""}
+                      value={editingTestimonial.role || ""}
                       onChange={(e) => setEditingTestimonial({ ...editingTestimonial, role: e.target.value })}
                     />
                   </div>
@@ -529,7 +529,7 @@ export default function TestimonialsManagement() {
                   <textarea
                     rows={3}
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none"
-                    value={editingTestimonial?.quote || ""}
+                    value={editingTestimonial.quote || ""}
                     onChange={(e) => setEditingTestimonial({ ...editingTestimonial, quote: e.target.value })}
                   />
                 </div>
@@ -539,7 +539,7 @@ export default function TestimonialsManagement() {
                     <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Rating</label>
                     <select
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                      value={editingTestimonial?.rating || 5}
+                      value={editingTestimonial.rating || 5}
                       onChange={(e) => setEditingTestimonial({ ...editingTestimonial, rating: parseInt(e.target.value) })}
                     >
                       {[1, 2, 3, 4, 5].map(num => <option key={num} value={num}>{num} Stars</option>)}
@@ -550,7 +550,7 @@ export default function TestimonialsManagement() {
                       type="checkbox"
                       id="is_verified"
                       className="w-4 h-4 rounded border-gray-300 text-brand-dark focus:ring-brand-dark"
-                      checked={editingTestimonial?.is_verified || false}
+                      checked={editingTestimonial.is_verified || false}
                       onChange={(e) => setEditingTestimonial({ ...editingTestimonial, is_verified: e.target.checked })}
                     />
                     <label htmlFor="is_verified" className="text-sm text-gray-600">Verified User</label>
@@ -564,7 +564,7 @@ export default function TestimonialsManagement() {
               <input
                 type="number"
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                value={editingTestimonial?.display_order ?? 0}
+                value={editingTestimonial.display_order || 0}
                 onChange={(e) => setEditingTestimonial({ ...editingTestimonial, display_order: parseInt(e.target.value) })}
               />
             </div>

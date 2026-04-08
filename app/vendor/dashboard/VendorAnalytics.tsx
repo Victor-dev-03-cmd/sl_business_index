@@ -66,7 +66,7 @@ export default function VendorAnalytics({ businessIds }: { businessIds: string[]
         dailyBuckets[dateStr] = { date: dateStr, views: 0, calls: 0, leads: 0 }
       }
 
-      logs?.forEach(log => {
+      logs.forEach(log => {
         const dateStr = log.created_at.split('T')[0]
         if (dailyBuckets[dateStr]) {
           if (log.event_type === 'view') dailyBuckets[dateStr].views++

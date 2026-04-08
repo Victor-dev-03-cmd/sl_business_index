@@ -103,8 +103,8 @@ export default function AdminBusinessesPage() {
     return businesses.filter((b) => {
       const matchesSearch =
         b.name.toLowerCase().includes(search.toLowerCase()) ||
-        (b.owner_name?.toLowerCase() || "").includes(search.toLowerCase()) ||
-        (b.category?.toLowerCase() || "").includes(search.toLowerCase());
+        (b.owner_name.toLowerCase() || "").includes(search.toLowerCase()) ||
+        (b.category.toLowerCase() || "").includes(search.toLowerCase());
       const matchesCategory =
         filterCategory === "all" || b.category === filterCategory;
       return matchesSearch && matchesCategory;

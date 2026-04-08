@@ -137,10 +137,10 @@ export default function NotificationSettingsPage() {
                       : null,
                   )
                 }
-                className={`w-14 h-7 rounded-full transition-colors relative shrink-0 ${localSettings?.email_notifications ? "bg-brand-blue" : "bg-gray-200"}`}
+                className={`w-14 h-7 rounded-full transition-colors relative shrink-0 ${localSettings.email_notifications ? "bg-brand-blue" : "bg-gray-200"}`}
               >
                 <div
-                  className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-all ${localSettings?.email_notifications ? "right-1" : "left-1"}`}
+                  className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-all ${localSettings.email_notifications ? "right-1" : "left-1"}`}
                 />
               </button>
             </div>
@@ -168,10 +168,10 @@ export default function NotificationSettingsPage() {
                       : null,
                   )
                 }
-                className={`w-14 h-7 rounded-full transition-colors relative shrink-0 ${localSettings?.push_notifications ? "bg-brand-blue" : "bg-gray-200"}`}
+                className={`w-14 h-7 rounded-full transition-colors relative shrink-0 ${localSettings.push_notifications ? "bg-brand-blue" : "bg-gray-200"}`}
               >
                 <div
-                  className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-all ${localSettings?.push_notifications ? "right-1" : "left-1"}`}
+                  className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-all ${localSettings.push_notifications ? "right-1" : "left-1"}`}
                 />
               </button>
             </div>
@@ -191,7 +191,7 @@ export default function NotificationSettingsPage() {
               </label>
               <input
                 type="email"
-                value={localSettings?.admin_email || ""}
+                value={localSettings.admin_email || ""}
                 onChange={(e) =>
                   setLocalSettings((s) =>
                     s ? { ...s, admin_email: e.target.value } : null,

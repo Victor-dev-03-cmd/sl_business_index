@@ -123,7 +123,7 @@ export default function AppearanceSettingsPage() {
                 )
               }
               className={`relative p-6 bg-white border rounded-xl text-left transition-all hover:shadow-md ${
-                localSettings?.primary_font === font.value
+                localSettings.primary_font === font.value
                   ? "border-brand-blue ring-1 ring-brand-blue shadow-sm"
                   : "border-gray-200 hover:border-gray-300"
               }`}
@@ -132,7 +132,7 @@ export default function AppearanceSettingsPage() {
                 <span className="text-sm font-bold text-gray-900">
                   {font.name}
                 </span>
-                {localSettings?.primary_font === font.value && (
+                {localSettings.primary_font === font.value && (
                   <div className="h-5 w-5 bg-brand-blue rounded-full flex items-center justify-center">
                     <Check size={12} className="text-white" />
                   </div>
@@ -170,7 +170,7 @@ export default function AppearanceSettingsPage() {
                 </p>
               </div>
               <span className="text-brand-blue font-bold text-sm bg-brand-blue/10 px-3 py-1 rounded-full self-start sm:self-auto">
-                {localSettings?.button_border_radius ?? 6}px
+                {localSettings.button_border_radius || 6}px
               </span>
             </div>
 
@@ -179,7 +179,7 @@ export default function AppearanceSettingsPage() {
                 type="range"
                 min="0"
                 max="30"
-                value={localSettings?.button_border_radius ?? 6}
+                value={localSettings.button_border_radius || 6}
                 onChange={(e) =>
                   setLocalSettings((s) =>
                     s
@@ -192,7 +192,7 @@ export default function AppearanceSettingsPage() {
               <div className="shrink-0 flex justify-center sm:w-32">
                 <button
                   style={{
-                    borderRadius: `${localSettings?.button_border_radius ?? 6}px`,
+                    borderRadius: `${localSettings.button_border_radius || 6}px`,
                   }}
                   className="px-6 py-2 bg-brand-dark text-white text-sm font-bold transition-all hover:bg-brand-blue pointer-events-none"
                 >

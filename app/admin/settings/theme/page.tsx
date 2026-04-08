@@ -145,13 +145,13 @@ export default function ThemeSettingsPage() {
               <label className="text-sm font-bold text-gray-700 flex justify-between">
                 Primary Dark Color
                 <span className="text-[10px] text-gray-400 font-mono uppercase tracking-widest">
-                  {localSettings?.theme_dark_color}
+                  {localSettings.theme_dark_color}
                 </span>
               </label>
               <div className="flex items-center gap-4">
                 <input
                   type="color"
-                  value={localSettings?.theme_dark_color || "#053765"}
+                  value={localSettings.theme_dark_color || "#053765"}
                   onChange={(e) =>
                     setLocalSettings((s) =>
                       s ? { ...s, theme_dark_color: e.target.value } : null,
@@ -161,7 +161,7 @@ export default function ThemeSettingsPage() {
                 />
                 <input
                   type="text"
-                  value={localSettings?.theme_dark_color || ""}
+                  value={localSettings.theme_dark_color || ""}
                   onChange={(e) =>
                     setLocalSettings((s) =>
                       s ? { ...s, theme_dark_color: e.target.value } : null,
@@ -176,13 +176,13 @@ export default function ThemeSettingsPage() {
               <label className="text-sm font-bold text-gray-700 flex justify-between">
                 Brand Blue Color
                 <span className="text-[10px] text-gray-400 font-mono uppercase tracking-widest">
-                  {localSettings?.theme_blue_color}
+                  {localSettings.theme_blue_color}
                 </span>
               </label>
               <div className="flex items-center gap-4">
                 <input
                   type="color"
-                  value={localSettings?.theme_blue_color || "#2a7db4"}
+                  value={localSettings.theme_blue_color || "#2a7db4"}
                   onChange={(e) =>
                     setLocalSettings((s) =>
                       s ? { ...s, theme_blue_color: e.target.value } : null,
@@ -192,7 +192,7 @@ export default function ThemeSettingsPage() {
                 />
                 <input
                   type="text"
-                  value={localSettings?.theme_blue_color || ""}
+                  value={localSettings.theme_blue_color || ""}
                   onChange={(e) =>
                     setLocalSettings((s) =>
                       s ? { ...s, theme_blue_color: e.target.value } : null,
@@ -207,13 +207,13 @@ export default function ThemeSettingsPage() {
               <label className="text-sm font-bold text-gray-700 flex justify-between">
                 Main Text Color
                 <span className="text-[10px] text-gray-400 font-mono uppercase tracking-widest">
-                  {localSettings?.theme_text_color}
+                  {localSettings.theme_text_color}
                 </span>
               </label>
               <div className="flex items-center gap-4">
                 <input
                   type="color"
-                  value={localSettings?.theme_text_color || "#124272"}
+                  value={localSettings.theme_text_color || "#124272"}
                   onChange={(e) =>
                     setLocalSettings((s) =>
                       s ? { ...s, theme_text_color: e.target.value } : null,
@@ -223,7 +223,7 @@ export default function ThemeSettingsPage() {
                 />
                 <input
                   type="text"
-                  value={localSettings?.theme_text_color || ""}
+                  value={localSettings.theme_text_color || ""}
                   onChange={(e) =>
                     setLocalSettings((s) =>
                       s ? { ...s, theme_text_color: e.target.value } : null,
@@ -246,13 +246,13 @@ export default function ThemeSettingsPage() {
               <label className="text-sm font-bold text-gray-700 flex justify-between">
                 Primary Gold Color
                 <span className="text-[10px] text-gray-400 font-mono uppercase tracking-widest">
-                  {localSettings?.theme_gold_color}
+                  {localSettings.theme_gold_color}
                 </span>
               </label>
               <div className="flex items-center gap-4">
                 <input
                   type="color"
-                  value={localSettings?.theme_gold_color || "#b4863b"}
+                  value={localSettings.theme_gold_color || "#b4863b"}
                   onChange={(e) =>
                     setLocalSettings((s) =>
                       s ? { ...s, theme_gold_color: e.target.value } : null,
@@ -262,7 +262,7 @@ export default function ThemeSettingsPage() {
                 />
                 <input
                   type="text"
-                  value={localSettings?.theme_gold_color || ""}
+                  value={localSettings.theme_gold_color || ""}
                   onChange={(e) =>
                     setLocalSettings((s) =>
                       s ? { ...s, theme_gold_color: e.target.value } : null,
@@ -277,13 +277,13 @@ export default function ThemeSettingsPage() {
               <label className="text-sm font-bold text-gray-700 flex justify-between">
                 Gold Light Color
                 <span className="text-[10px] text-gray-400 font-mono uppercase tracking-widest">
-                  {localSettings?.theme_gold_light_color}
+                  {localSettings.theme_gold_light_color}
                 </span>
               </label>
               <div className="flex items-center gap-4">
                 <input
                   type="color"
-                  value={localSettings?.theme_gold_light_color || "#c09a54"}
+                  value={localSettings.theme_gold_light_color || "#c09a54"}
                   onChange={(e) =>
                     setLocalSettings((s) =>
                       s
@@ -295,7 +295,7 @@ export default function ThemeSettingsPage() {
                 />
                 <input
                   type="text"
-                  value={localSettings?.theme_gold_light_color || ""}
+                  value={localSettings.theme_gold_light_color || ""}
                   onChange={(e) =>
                     setLocalSettings((s) =>
                       s
@@ -312,13 +312,13 @@ export default function ThemeSettingsPage() {
               <label className="text-sm font-bold text-gray-700 flex justify-between">
                 Sand Color (Accents)
                 <span className="text-[10px] text-gray-400 font-mono uppercase tracking-widest">
-                  {localSettings?.theme_sand_color}
+                  {localSettings.theme_sand_color}
                 </span>
               </label>
               <div className="flex items-center gap-4">
                 <input
                   type="color"
-                  value={localSettings?.theme_sand_color || "#dfb85d"}
+                  value={localSettings.theme_sand_color || "#dfb85d"}
                   onChange={(e) =>
                     setLocalSettings((s) =>
                       s ? { ...s, theme_sand_color: e.target.value } : null,
@@ -328,7 +328,7 @@ export default function ThemeSettingsPage() {
                 />
                 <input
                   type="text"
-                  value={localSettings?.theme_sand_color || ""}
+                  value={localSettings.theme_sand_color || ""}
                   onChange={(e) =>
                     setLocalSettings((s) =>
                       s ? { ...s, theme_sand_color: e.target.value } : null,
@@ -349,19 +349,19 @@ export default function ThemeSettingsPage() {
         </h2>
         <div className="bg-white p-12 rounded-xl border border-gray-300 shadow-inner flex flex-wrap items-center justify-center gap-8">
           <button
-            style={{ backgroundColor: localSettings?.theme_dark_color }}
+            style={{ backgroundColor: localSettings.theme_dark_color }}
             className="px-8 py-3 text-white text-sm font-bold rounded-lg transition-all shadow-lg hover:brightness-110"
           >
             Primary Action
           </button>
           <button
-            style={{ backgroundColor: localSettings?.theme_blue_color }}
+            style={{ backgroundColor: localSettings.theme_blue_color }}
             className="px-8 py-3 text-white text-sm font-bold rounded-lg transition-all shadow-lg hover:brightness-110"
           >
             Blue Variant
           </button>
           <button
-            style={{ backgroundColor: localSettings?.theme_gold_color }}
+            style={{ backgroundColor: localSettings.theme_gold_color }}
             className="px-8 py-3 text-white text-sm font-bold rounded-lg transition-all shadow-lg hover:brightness-110"
           >
             Accent Gold
@@ -369,10 +369,10 @@ export default function ThemeSettingsPage() {
           <div className="flex items-center gap-3">
             <Palette
               size={24}
-              style={{ color: localSettings?.theme_blue_color }}
+              style={{ color: localSettings.theme_blue_color }}
             />
             <span
-              style={{ color: localSettings?.theme_text_color }}
+              style={{ color: localSettings.theme_text_color }}
               className="font-bold text-lg"
             >
               Sample Branding Text

@@ -571,7 +571,7 @@ function CampaignCard({ campaign }: { campaign: Campaign }) {
       <div className="flex justify-between items-start mb-3">
         <div className="space-y-0.5">
           <h4 className="text-[11px] font-black text-slate-800 uppercase truncate max-w-[140px]">
-            {campaign.businesses?.name}
+            {campaign.businesses.name}
           </h4>
           <p className="text-[10px] text-slate-500 font-medium">
             {new Date(campaign.created_at).toLocaleDateString()}
@@ -617,7 +617,7 @@ function CampaignCard({ campaign }: { campaign: Campaign }) {
 
       <div className="flex items-center justify-between pt-3 border-t border-slate-200">
         <div className="flex gap-2">
-          {(campaign.platforms || campaign.social_platforms)?.map((p: string) => (
+          {(campaign.platforms || campaign.social_platforms).map((p: string) => (
             <div key={p} className="text-slate-400 group-hover:text-brand-blue transition-colors">
               {p === 'facebook' && <Facebook size={12} />}
               {p === 'instagram' && <Instagram size={12} />}

@@ -160,10 +160,10 @@ export default function WebBlockerSettingsPage() {
                       : null,
                   )
                 }
-                className={`w-14 h-7 rounded-full transition-colors relative shrink-0 ${localSettings?.spam_protection_enabled ? "bg-red-600" : "bg-gray-200"}`}
+                className={`w-14 h-7 rounded-full transition-colors relative shrink-0 ${localSettings.spam_protection_enabled ? "bg-red-600" : "bg-gray-200"}`}
               >
                 <div
-                  className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-all ${localSettings?.spam_protection_enabled ? "right-1" : "left-1"}`}
+                  className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-all ${localSettings.spam_protection_enabled ? "right-1" : "left-1"}`}
                 />
               </button>
             </div>
@@ -191,10 +191,10 @@ export default function WebBlockerSettingsPage() {
                       : null,
                   )
                 }
-                className={`w-14 h-7 rounded-full transition-colors relative shrink-0 ${localSettings?.ip_blocking_enabled ? "bg-gray-900" : "bg-gray-200"}`}
+                className={`w-14 h-7 rounded-full transition-colors relative shrink-0 ${localSettings.ip_blocking_enabled ? "bg-gray-900" : "bg-gray-200"}`}
               >
                 <div
-                  className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-all ${localSettings?.ip_blocking_enabled ? "right-1" : "left-1"}`}
+                  className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-all ${localSettings.ip_blocking_enabled ? "right-1" : "left-1"}`}
                 />
               </button>
             </div>
@@ -202,7 +202,7 @@ export default function WebBlockerSettingsPage() {
         </section>
 
         {/* IP Blocklist */}
-        {localSettings?.ip_blocking_enabled && (
+        {localSettings.ip_blocking_enabled && (
           <section className="space-y-6 animate-in slide-in-from-top-2">
             <h2 className="text-sm font-bold text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
               <Lock size={14} /> Blacklisted IP Addresses

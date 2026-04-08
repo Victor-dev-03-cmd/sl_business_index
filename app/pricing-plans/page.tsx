@@ -68,7 +68,7 @@ export default function PricingPlansPage() {
 
     // Add boolean features from definitions
     featureDefinitions.forEach(def => {
-      if (tier[def.id] === true || tier.functional_features?.[def.id] === true) {
+      if (tier[def.id] === true || tier.functional_features.[def.id] === true) {
         if (!list.includes(def.label)) {
           list.push(def.label);
         }

@@ -56,12 +56,12 @@ export default function AdminAnalyticsPage() {
       ]);
 
       const totalRevenue =
-        revenueRes.data?.reduce((acc, curr) => acc + (curr.amount || 0), 0) ||
+        revenueRes.data.reduce((acc, curr) => acc + (curr.amount || 0), 0) ||
         0;
 
       // Process district data
       const districtCounts: Record<string, number> = {};
-      logsRes.data?.forEach((log) => {
+      logsRes.data.forEach((log) => {
         if (log.city) {
           districtCounts[log.city] = (districtCounts[log.city] || 0) + 1;
         }
@@ -89,7 +89,7 @@ export default function AdminAnalyticsPage() {
         districtData,
         growthData,
         totalViews:
-          logsRes.data?.filter((l) => l.event_type === "view").length || 0,
+          logsRes.data.filter((l) => l.event_type === "view").length || 0,
       };
     },
     staleTime: 5 * 60 * 1000,
@@ -98,7 +98,7 @@ export default function AdminAnalyticsPage() {
   const statCards = [
     {
       name: "Total Users",
-      value: stats?.totalUsers ?? 0,
+      value: stats.totalUsers || 0,
       change: "+12%",
       trending: "up",
       icon: Users,
@@ -106,7 +106,7 @@ export default function AdminAnalyticsPage() {
     },
     {
       name: "Active Businesses",
-      value: stats?.totalBusinesses ?? 0,
+      value: stats.totalBusinesses || 0,
       change: "+5%",
       trending: "up",
       icon: Building2,
@@ -114,7 +114,7 @@ export default function AdminAnalyticsPage() {
     },
     {
       name: "Pending Requests",
-      value: stats?.pendingRequests ?? 0,
+      value: stats.pendingRequests || 0,
       change: "+3",
       trending: "up",
       icon: TrendingUp,
@@ -122,7 +122,7 @@ export default function AdminAnalyticsPage() {
     },
     {
       name: "Total Revenue",
-      value: `LKR ${stats?.totalRevenue?.toLocaleString() || 0}`,
+      value: `LKR ${stats.totalRevenue.toLocaleString() || 0}`,
       change: "+18%",
       trending: "up",
       icon: DollarSign,
@@ -230,7 +230,7 @@ export default function AdminAnalyticsPage() {
                 Active Users
               </p>
               <span className="text-3xl font-medium text-brand-dark">
-                {stats?.totalUsers || 0}
+                {stats.totalUsers || 0}
               </span>
             </div>
             <div className="space-y-2">

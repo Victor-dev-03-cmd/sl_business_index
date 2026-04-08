@@ -49,7 +49,7 @@ export default function EditBusinessForm({ business }: { business: Business }) {
   }, []);
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const file = e.target.files.[0];
     if (file) {
       setLogo(file);
       const reader = new FileReader();
@@ -59,7 +59,7 @@ export default function EditBusinessForm({ business }: { business: Business }) {
   };
 
   const handleHoverImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const file = e.target.files.[0];
     if (file) {
       setHoverImage(file);
       const reader = new FileReader();
@@ -111,10 +111,10 @@ export default function EditBusinessForm({ business }: { business: Business }) {
           website_url: websiteUrl,
           working_hours: workingHours,
           owner_name: ownerName,
-          address: location?.address,
+          address: location.address,
           detailed_address: detailedAddress,
-          latitude: location?.lat,
-          longitude: location?.lng,
+          latitude: location.lat,
+          longitude: location.lng,
           location: location ? `POINT(${location.lng} ${location.lat})` : business.location,
           logo_url: logoUrl,
           image_url: hoverImageUrl,
@@ -234,9 +234,9 @@ export default function EditBusinessForm({ business }: { business: Business }) {
           <div className="md:col-span-2">
             <AddressAutocomplete 
               onLocationSelectAction={handleLocationSelect} 
-              initialAddress={location?.address} 
-              initialLat={location?.lat}
-              initialLng={location?.lng}
+              initialAddress={location.address} 
+              initialLat={location.lat}
+              initialLng={location.lng}
               detailedAddress={detailedAddress}
               onDetailedAddressChange={setDetailedAddress}
             />

@@ -139,7 +139,7 @@ export default function AdminUsersPage() {
     // This is a local toggle in the current UI, but we could also make it a mutation
     // For now keeping it consistent with the previous local update but using queryClient to update cache
     queryClient.setQueryData(["admin-profiles"], (old: Profile[] | undefined) =>
-      old?.map((p) => (p.id === userId ? { ...p, status: newStatus } : p)),
+      old.map((p) => (p.id === userId ? { ...p, status: newStatus } : p)),
     );
   };
 
@@ -147,9 +147,9 @@ export default function AdminUsersPage() {
   const filteredProfiles = useMemo(() => {
     return profiles.filter((p) => {
       const matchesSearch =
-        p.full_name?.toLowerCase().includes(search.toLowerCase()) ||
-        p.username?.toLowerCase().includes(search.toLowerCase()) ||
-        p.email?.toLowerCase().includes(search.toLowerCase());
+        p.full_name.toLowerCase().includes(search.toLowerCase()) ||
+        p.username.toLowerCase().includes(search.toLowerCase()) ||
+        p.email.toLowerCase().includes(search.toLowerCase());
 
       const matchesRole = roleFilter === "all" || p.role === roleFilter;
       const matchesStatus = statusFilter === "all" || p.status === statusFilter;
@@ -166,7 +166,7 @@ export default function AdminUsersPage() {
   );
 
   const getRoleBadge = (role: string) => {
-    switch (role?.toLowerCase()) {
+    switch (role.toLowerCase()) {
       case "admin":
       case "ceo":
         return (
@@ -463,7 +463,7 @@ export default function AdminUsersPage() {
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-4">
                             <div className="h-10 w-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center border border-gray-200 text-gray-500 font-medium text-sm">
-                              {profile.full_name?.charAt(0) || "U"}
+                              {profile.full_name.charAt(0) || "U"}
                             </div>
                             <div className="min-w-0">
                               <p className="text-brand-blue truncate">

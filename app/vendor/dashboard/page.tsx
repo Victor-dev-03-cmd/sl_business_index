@@ -71,7 +71,7 @@ export default function VendorDashboard() {
         .eq('status', 'active')
         .maybeSingle();
 
-      const planName = subscription?.plan_name || 'Basic';
+      const planName = subscription.plan_name || 'Basic';
       
       const { data: planDetails } = await supabase
         .from('subscription_plans')
@@ -207,7 +207,7 @@ export default function VendorDashboard() {
                 <div className="p-2.5 bg-blue-50 rounded-xl text-blue-600 border border-blue-100/50">
                   <Eye size={20} strokeWidth={1.5} />
                 </div>
-                {planLimits?.advanced_analytics ? (
+                {planLimits.advanced_analytics ? (
                   <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full flex items-center gap-1 border border-green-100/50">
                     <TrendingUp size={12} /> +12%
                   </span>
@@ -226,7 +226,7 @@ export default function VendorDashboard() {
                 <div className="p-2.5 bg-emerald-50 rounded-xl text-emerald-600 border border-emerald-100/50">
                   <Phone size={20} strokeWidth={1.5} />
                 </div>
-                {planLimits?.advanced_analytics ? (
+                {planLimits.advanced_analytics ? (
                   <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full flex items-center gap-1 border border-green-100/50">
                     <TrendingUp size={12} /> +5%
                   </span>
@@ -258,7 +258,7 @@ export default function VendorDashboard() {
                 <div className="p-2.5 bg-purple-50 rounded-xl text-purple-600 border border-purple-100/50">
                   <MessageSquare size={20} strokeWidth={1.5} />
                 </div>
-                {planLimits?.advanced_analytics ? (
+                {planLimits.advanced_analytics ? (
                   <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full flex items-center gap-1 border border-green-100/50">
                     <TrendingUp size={12} /> +2
                   </span>

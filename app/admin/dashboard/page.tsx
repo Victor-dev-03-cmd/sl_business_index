@@ -58,7 +58,7 @@ export default function AdminDashboard() {
       .eq("id", user.id)
       .single();
 
-    const role = profile?.role?.toLowerCase();
+    const role = profile.role.toLowerCase();
     if (role !== "admin" && role !== "ceo") {
       router.push("/");
     }
@@ -189,9 +189,9 @@ export default function AdminDashboard() {
           .select("*", { count: "exact", head: true })
           .eq("status", "pending");
 
-        const total = bizData?.length || 0;
+        const total = bizData.length || 0;
         const pendingCount =
-          bizData?.filter((b) => b.status === "pending").length || 0;
+          bizData.filter((b) => b.status === "pending").length || 0;
         return {
           pending: pendingCount,
           total,
@@ -213,7 +213,7 @@ export default function AdminDashboard() {
     return businesses.filter(
       (b) =>
         b.name.toLowerCase().includes(search.toLowerCase()) ||
-        (b.owner_name?.toLowerCase() || "").includes(search.toLowerCase()),
+        (b.owner_name.toLowerCase() || "").includes(search.toLowerCase()),
     );
   }, [businesses, search]);
 

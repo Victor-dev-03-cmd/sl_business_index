@@ -5,7 +5,7 @@ export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
   // if "next" is in param, use it as the redirect URL
-  const next = searchParams.get('next') ?? '/'
+  const next = searchParams.get('next') || '/'
 
   if (code) {
     const supabase = await createClient()
@@ -27,8 +27,8 @@ export async function GET(request: Request) {
         .single()
       
       if (!existingProfile) {
-        const full_name = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'
-        const username = user.user_metadata?.user_name || user.email?.split('@')[0] || 'user'
+        const full_name = user.user_metadata.full_name || user.email.split('@')[0] || 'User'
+        const username = user.user_metadata.user_name || user.email.split('@')[0] || 'user'
         
         await supabase
           .from('profiles')

@@ -37,20 +37,20 @@ export default function Sidebar() {
 
   const toggleVisibility = (obj: fabric.FabricObject) => {
     obj.set('visible', !obj.visible);
-    canvas?.renderAll();
+    canvas.renderAll();
     updateLayers();
   };
 
   const toggleLock = (obj: fabric.FabricObject) => {
     obj.set('selectable', !obj.selectable);
     obj.set('evented', !obj.evented);
-    canvas?.renderAll();
+    canvas.renderAll();
     updateLayers();
   };
 
   const selectLayer = (obj: fabric.FabricObject) => {
-    canvas?.setActiveObject(obj);
-    canvas?.renderAll();
+    canvas.setActiveObject(obj);
+    canvas.renderAll();
     setActiveObject(obj);
   };
 
@@ -184,17 +184,17 @@ function UploadsPanel() {
   const { canvas, saveHistory } = useEditorStore();
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const file = e.target.files.[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = async (f) => {
-      const data = f.target?.result as string;
+      const data = f.target.result as string;
       const img = await fabric.FabricImage.fromURL(data);
       img.scaleToWidth(400);
-      canvas?.add(img);
-      canvas?.centerObject(img);
-      canvas?.setActiveObject(img);
+      canvas.add(img);
+      canvas.centerObject(img);
+      canvas.setActiveObject(img);
       saveHistory();
     };
     reader.readAsDataURL(file);
@@ -252,9 +252,9 @@ function AIMagicPanel() {
       
       const img = await fabric.FabricImage.fromURL(imageUrl);
       img.scaleToWidth(500);
-      canvas?.add(img);
-      canvas?.centerObject(img);
-      canvas?.setActiveObject(img);
+      canvas.add(img);
+      canvas.centerObject(img);
+      canvas.setActiveObject(img);
       saveHistory();
       setLoading(false);
       setPrompt('');
@@ -340,9 +340,9 @@ function ElementsPanel() {
         { x: 42, y: 182 }, { x: 64, y: 114 }, { x: 4, y: 70 }, { x: 79, y: 70 },
       ], { fill: '#f59e0b', left: 100, top: 100 });
     }
-    canvas?.add(obj);
-    canvas?.centerObject(obj);
-    canvas?.setActiveObject(obj);
+    canvas.add(obj);
+    canvas.centerObject(obj);
+    canvas.setActiveObject(obj);
     saveHistory();
   };
 

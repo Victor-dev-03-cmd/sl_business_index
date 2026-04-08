@@ -148,7 +148,7 @@ export default function AdminBillingPage() {
         .select("value")
         .eq("key", "advanced_feature_definitions")
         .single();
-      if (error || !data?.value) return DEFAULT_FEATURES;
+      if (error || !data.value) return DEFAULT_FEATURES;
       return data.value as { id: string; label: string }[];
     },
   });
@@ -191,7 +191,7 @@ export default function AdminBillingPage() {
       // Keep legacy advanced_feature_access sync'd for backend logic
       const dataToSave = {
         ...formData,
-        advanced_feature_access: formData.functional_features?.advanced_feature_access || false,
+        advanced_feature_access: formData.functional_features.advanced_feature_access || false,
       };
 
       if (selectedPlan) {
@@ -221,7 +221,7 @@ export default function AdminBillingPage() {
       } = await supabase.auth.getUser();
       const { error } = await supabase.from("announcements").insert({
         ...formData,
-        created_by: user?.id,
+        created_by: user.id,
         starts_at: new Date().toISOString(),
       });
       if (error) throw error;
@@ -369,10 +369,10 @@ export default function AdminBillingPage() {
                         >
                           <td className="px-8 py-5">
                             <p className="text-sm font-medium text-gray-900">
-                              {sub.profiles?.full_name}
+                              {sub.profiles.full_name}
                             </p>
                             <p className="text-[11px] text-gray-400">
-                              {sub.profiles?.email}
+                              {sub.profiles.email}
                             </p>
                           </td>
                           <td className="px-8 py-5">
@@ -414,7 +414,7 @@ export default function AdminBillingPage() {
                           #{inv.id.slice(0, 8)}
                         </p>
                         <p className="text-xs font-medium text-gray-900">
-                          {inv.subscriptions?.profiles?.full_name}
+                          {inv.subscriptions.profiles.full_name}
                         </p>
                       </div>
                       <div className="text-right">
@@ -506,7 +506,7 @@ export default function AdminBillingPage() {
                       </div>
 
                       <div className="space-y-3 mb-10">
-                        {plan.features?.map((f: string, idx: number) => (
+                        {plan.features.map((f: string, idx: number) => (
                           <div
                             key={idx}
                             className="flex items-start gap-2 text-sm text-gray-600"
@@ -519,7 +519,7 @@ export default function AdminBillingPage() {
                           </div>
                         ))}
                         {featureDefinitions.map((f: any) => 
-                          plan.functional_features?.[f.id] && (
+                          plan.functional_features.[f.id] && (
                             <div
                               key={f.id}
                               className="flex items-start gap-2 text-sm text-brand-blue font-bold"
@@ -672,11 +672,11 @@ export default function AdminBillingPage() {
               <div className="space-y-4">
                 <InfoRow
                   label="Customer"
-                  value={selectedInvoice.subscriptions?.profiles?.full_name}
+                  value={selectedInvoice.subscriptions.profiles.full_name}
                 />
                 <InfoRow
                   label="Email"
-                  value={selectedInvoice.subscriptions?.profiles?.email}
+                  value={selectedInvoice.subscriptions.profiles.email}
                 />
                 <InfoRow
                   label="Date"

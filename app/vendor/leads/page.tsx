@@ -87,9 +87,9 @@ export default function LeadsPage() {
   // Filter Logic
   const filteredLeads = leads.filter(lead => {
     const matchesStatus = filterStatus === 'all' || lead.status === filterStatus;
-    const matchesSearch = (lead.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          lead.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          lead.phone?.includes(searchQuery)) ?? false;
+    const matchesSearch = (lead.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          lead.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          lead.phone.includes(searchQuery)) || false;
     return matchesStatus && matchesSearch;
   });
 
@@ -208,7 +208,7 @@ export default function LeadsPage() {
               <div 
                 key={lead.id}
                 onClick={() => setSelectedLead(lead)}
-                className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors border-l-4 ${selectedLead?.id === lead.id ? 'bg-blue-50/30 border-blue-500' : 'border-transparent'}`}
+                className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors border-l-4 ${selectedLead.id === lead.id ? 'bg-blue-50/30 border-blue-500' : 'border-transparent'}`}
               >
                 <div className="flex justify-between items-start mb-1">
                   <h3 className=" text-brand-blue">{lead.name}</h3>
@@ -264,7 +264,7 @@ export default function LeadsPage() {
                 <Mail size={20} className="mb-1" />
                 <span className="text-xs font-medium">Email</span>
               </a>
-              <a href={`https://wa.me/${selectedLead.phone?.replace(/\D/g,'')}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-green-50 text-green-600 rounded hover:bg-green-100 transition-colors">
+              <a href={`https://wa.me/${selectedLead.phone.replace(/\D/g,'')}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 bg-green-50 text-green-600 rounded hover:bg-green-100 transition-colors">
                 <MessageCircle size={20} className="mb-1" />
                 <span className="text-xs font-medium">WhatsApp</span>
               </a>

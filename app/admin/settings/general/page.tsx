@@ -80,7 +80,7 @@ export default function GeneralSettingsPage() {
   });
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const file = e.target.files.[0];
     if (!file) return;
 
     try {
@@ -186,7 +186,7 @@ export default function GeneralSettingsPage() {
               </label>
               <input
                 type="text"
-                value={localSettings?.site_name || ""}
+                value={localSettings.site_name || ""}
                 onChange={(e) =>
                   setLocalSettings((s) =>
                     s ? { ...s, site_name: e.target.value } : null,
@@ -202,7 +202,7 @@ export default function GeneralSettingsPage() {
               </label>
               <textarea
                 rows={4}
-                value={localSettings?.site_description || ""}
+                value={localSettings.site_description || ""}
                 onChange={(e) =>
                   setLocalSettings((s) =>
                     s ? { ...s, site_description: e.target.value } : null,
@@ -220,13 +220,13 @@ export default function GeneralSettingsPage() {
             </h3>
             <div className="space-y-1.5">
               <p className="text-[#1a0dab] text-xl font-normal hover:underline cursor-pointer truncate">
-                {localSettings?.site_name || "Site Name"}
+                {localSettings.site_name || "Site Name"}
               </p>
               <p className="text-[#006621] text-sm truncate">
                 https://slbusinessindex.com
               </p>
               <p className="text-[#545454] text-sm line-clamp-2 leading-snug">
-                {localSettings?.site_description ||
+                {localSettings.site_description ||
                   "Add a site description to see how it appears in search results."}
               </p>
             </div>
@@ -247,7 +247,7 @@ export default function GeneralSettingsPage() {
             </p>
             <input
               type="text"
-              value={localSettings?.logo_text || ""}
+              value={localSettings.logo_text || ""}
               onChange={(e) =>
                 setLocalSettings((s) =>
                   s ? { ...s, logo_text: e.target.value } : null,
@@ -264,7 +264,7 @@ export default function GeneralSettingsPage() {
             <div className="flex flex-col xl:flex-row items-start gap-8 xl:gap-12">
               <div className="relative group shrink-0 w-full xl:w-auto">
                 <div className="h-40 md:h-48 w-full xl:w-80 rounded-2xl bg-gray-50 border-2 border-dashed border-gray-200 flex items-center justify-center overflow-hidden transition-all group-hover:border-brand-blue shadow-inner group-hover:bg-white">
-                  {localSettings?.logo_url ? (
+                  {localSettings.logo_url ? (
                     <img
                       src={localSettings.logo_url}
                       alt="Logo Preview"
@@ -307,14 +307,14 @@ export default function GeneralSettingsPage() {
                         Width Control
                       </span>
                       <span className="text-brand-blue bg-brand-blue/5 px-2 py-0.5 rounded">
-                        {localSettings?.logo_width || 150}px
+                        {localSettings.logo_width || 150}px
                       </span>
                     </div>
                     <input
                       type="range"
                       min="50"
                       max="400"
-                      value={localSettings?.logo_width || 150}
+                      value={localSettings.logo_width || 150}
                       onChange={(e) =>
                         setLocalSettings((s) =>
                           s
@@ -335,14 +335,14 @@ export default function GeneralSettingsPage() {
                         Height Control
                       </span>
                       <span className="text-brand-blue bg-brand-blue/5 px-2 py-0.5 rounded">
-                        {localSettings?.logo_height || 50}px
+                        {localSettings.logo_height || 50}px
                       </span>
                     </div>
                     <input
                       type="range"
                       min="20"
                       max="150"
-                      value={localSettings?.logo_height || 50}
+                      value={localSettings.logo_height || 50}
                       onChange={(e) =>
                         setLocalSettings((s) =>
                           s
@@ -381,9 +381,9 @@ export default function GeneralSettingsPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 md:p-6 bg-gray-50 rounded-xl border border-gray-200 transition-all hover:bg-white hover:shadow-md group">
             <div className="flex items-center gap-4">
               <div
-                className={`p-3 md:p-4 rounded-xl transition-all shadow-sm shrink-0 ${localSettings?.maintenance_mode ? "bg-amber-500 text-white shadow-amber-200" : "bg-emerald-500 text-white shadow-emerald-200"}`}
+                className={`p-3 md:p-4 rounded-xl transition-all shadow-sm shrink-0 ${localSettings.maintenance_mode ? "bg-amber-500 text-white shadow-amber-200" : "bg-emerald-500 text-white shadow-emerald-200"}`}
               >
-                {localSettings?.maintenance_mode ? (
+                {localSettings.maintenance_mode ? (
                   <AlertCircle size={22} />
                 ) : (
                   <Globe size={22} />
@@ -404,15 +404,15 @@ export default function GeneralSettingsPage() {
                   s ? { ...s, maintenance_mode: !s.maintenance_mode } : null,
                 )
               }
-              className={`w-16 h-8 rounded-full transition-all relative shadow-inner shrink-0 ${localSettings?.maintenance_mode ? "bg-brand-blue" : "bg-gray-300"}`}
+              className={`w-16 h-8 rounded-full transition-all relative shadow-inner shrink-0 ${localSettings.maintenance_mode ? "bg-brand-blue" : "bg-gray-300"}`}
             >
               <div
-                className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all shadow-md ${localSettings?.maintenance_mode ? "right-1" : "left-1"}`}
+                className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all shadow-md ${localSettings.maintenance_mode ? "right-1" : "left-1"}`}
               />
             </button>
           </div>
 
-          {localSettings?.maintenance_mode && (
+          {localSettings.maintenance_mode && (
             <div className="space-y-3 animate-in slide-in-from-top-4 duration-300">
               <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
                 <AlertCircle size={14} className="text-amber-500" /> Maintenance
@@ -420,7 +420,7 @@ export default function GeneralSettingsPage() {
               </label>
               <textarea
                 rows={4}
-                value={localSettings?.maintenance_message || ""}
+                value={localSettings.maintenance_message || ""}
                 onChange={(e) =>
                   setLocalSettings((s) =>
                     s ? { ...s, maintenance_message: e.target.value } : null,

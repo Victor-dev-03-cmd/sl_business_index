@@ -708,7 +708,7 @@ function SplitScreenResultsContent() {
                         <p className="text-[11px] text-gray-500 truncate mt-0.5">
                           {biz.category}
                           {biz.address && (
-                            <> · {biz.address.split(",").pop()?.trim()}</>
+                            <> · {biz.address.split(",").pop().trim()}</>
                           )}
                         </p>
                       </div>
@@ -1054,7 +1054,7 @@ function SplitScreenResultsContent() {
                               <p className="text-[11px] text-gray-400 truncate mt-0.5">
                                 {biz.category}
                                 {(biz.detailed_address || biz.address) && (
-                                  <> · { (biz.detailed_address || biz.address).split(",").pop()?.trim() }</>
+                                  <> · { (biz.detailed_address || biz.address).split(",").pop().trim() }</>
                                 )}
                               </p>
                             </div>
@@ -1313,7 +1313,7 @@ function SplitScreenResultsContent() {
                   }}
                   className={cn(
                     "p-4 bg-white border border-gray-300 rounded-[6px] cursor-pointer hover:border-brand-dark transition-all flex gap-4",
-                    selectedBusiness?.id === b.id && "border-brand-dark",
+                    selectedBusiness.id === b.id && "border-brand-dark",
                   )}
                 >
                   <div className="w-16 h-16 rounded-md bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-200">

@@ -86,11 +86,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     redirect(`/business/${business.slug}`);
   }
 
-  const city = business.address ? business.address.split(',').pop()?.trim() : 'Sri Lanka';
+  const city = business.address ? business.address.split(',').pop().trim() : 'Sri Lanka';
 
   return {
     title: business.name,
-    description: `Contact ${business.name} in ${city}. ${business.description?.substring(0, 150)}...`,
+    description: `Contact ${business.name} in ${city}. ${business.description.substring(0, 150)}...`,
     openGraph: {
       title: `${business.name} | ${business.category}`,
       description: business.description,
@@ -122,7 +122,7 @@ export default async function BusinessDetailPage({ params }: Props) {
     address: {
       '@type': 'PostalAddress',
       streetAddress: business.address || '',
-      addressLocality: business.address ? business.address.split(',').pop()?.trim() : 'Sri Lanka',
+      addressLocality: business.address ? business.address.split(',').pop().trim() : 'Sri Lanka',
       addressCountry: 'LK',
     },
     geo: {
@@ -130,10 +130,10 @@ export default async function BusinessDetailPage({ params }: Props) {
       latitude: business.latitude,
       longitude: business.longitude,
     },
-    aggregateRating: (business.reviews_count ?? 0) > 0 ? {
+    aggregateRating: (business.reviews_count || 0) > 0 ? {
       '@type': 'AggregateRating',
-      ratingValue: business.rating ?? 0,
-      reviewCount: business.reviews_count ?? 0,
+      ratingValue: business.rating || 0,
+      reviewCount: business.reviews_count || 0,
     } : undefined,
     category: business.category,
     priceRange: '$$',

@@ -80,7 +80,7 @@ export default function RegisterBusinessPage() {
   });
 
   const { data: existingBusiness, isLoading: businessLoading } = useQuery({
-    queryKey: ['existing-business', user?.id],
+    queryKey: ['existing-business', user.id],
     queryFn: async () => {
       if (!user) return null;
       const { data } = await supabase
@@ -103,7 +103,7 @@ export default function RegisterBusinessPage() {
   }, []);
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const file = e.target.files.[0];
     if (file) {
       setLogo(file);
       // Revoke the old URL to prevent memory leaks
@@ -113,7 +113,7 @@ export default function RegisterBusinessPage() {
   };
 
   const handleHoverImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const file = e.target.files.[0];
     if (file) {
       setHoverImage(file);
       // Revoke the old URL to prevent memory leaks
@@ -203,7 +203,7 @@ export default function RegisterBusinessPage() {
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      console.log('User check:', user?.id);
+      console.log('User check:', user.id);
       if (!user) throw new Error('You must be logged in to register a business.');
 
       let logoUrl = null;
@@ -550,9 +550,9 @@ export default function RegisterBusinessPage() {
                     onLocationSelectAction={handleLocationSelect} 
                     detailedAddress={detailedAddress}
                     onDetailedAddressChange={setDetailedAddress}
-                    initialAddress={location?.address}
-                    initialLat={location?.lat}
-                    initialLng={location?.lng}
+                    initialAddress={location.address}
+                    initialLat={location.lat}
+                    initialLng={location.lng}
                   />
                 </div>
               </div>

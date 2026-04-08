@@ -18,9 +18,9 @@ export default function MyBusinessesPage() {
   };
 
   const { data: businesses, isLoading: businessesLoading, error: businessesError } = useQuery({
-    queryKey: ['my-businesses', user?.id],
+    queryKey: ['my-businesses', user.id],
     queryFn: async () => {
-      if (!user?.id) return [];
+      if (!user.id) return [];
       const { data, error } = await supabase
         .from('businesses')
         .select('*')
@@ -29,13 +29,13 @@ export default function MyBusinessesPage() {
       if (error) throw error;
       return data as Business[];
     },
-    enabled: !!user?.id,
+    enabled: !!user.id,
   });
 
   const { data: subscription } = useQuery({
-    queryKey: ['my-subscription', user?.id],
+    queryKey: ['my-subscription', user.id],
     queryFn: async () => {
-      if (!user?.id) return null;
+      if (!user.id) return null;
       const { data } = await supabase
         .from('subscriptions')
         .select('plan_name')
@@ -44,10 +44,10 @@ export default function MyBusinessesPage() {
         .maybeSingle();
       return data;
     },
-    enabled: !!user?.id,
+    enabled: !!user.id,
   });
 
-  const planName = subscription?.plan_name || 'Basic';
+  const planName = subscription.plan_name || 'Basic';
 
   const { data: planDetails } = useQuery({
     queryKey: ['plan-details', planName],
@@ -62,8 +62,8 @@ export default function MyBusinessesPage() {
     enabled: !!planName,
   });
 
-  const maxListings = planDetails?.max_listings || 1;
-  const currentCount = businesses?.length || 0;
+  const maxListings = planDetails.max_listings || 1;
+  const currentCount = businesses.length || 0;
   const isLimitReached = currentCount >= maxListings;
 
   if (userLoading || (user && businessesLoading)) {
@@ -129,7 +129,7 @@ export default function MyBusinessesPage() {
       ) : (
         <div className="bg-white rounded border border-gray-300 shadow-sm overflow-hidden">
           <div className="divide-y divide-gray-100">
-            {businesses?.map((business: Business) => (
+            {businesses.map((business: Business) => (
               <div 
                 key={business.id} 
                 onClick={(e) => handleEditClick(e, business.id)}
