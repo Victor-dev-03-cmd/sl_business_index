@@ -49,7 +49,7 @@ export default function HeroSearch({
   const [categorySuggestions, setCategorySuggestions] = useState<any[]>([]);
   const [geoData, setGeoData] = useState<any[]>([]);
   
-  const searchBarRef = useRef<HTMLDivElement>(null);
+  const searchBarRef = useRef<HTMLFormElement>(null);
 
   // Debounce search query
   useEffect(() => {
