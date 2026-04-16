@@ -289,21 +289,21 @@ export default function BusinessRequestsPage() {
   const filteredRequests = requests.filter(
     (r) =>
       r.name.toLowerCase().includes(search.toLowerCase()) ||
-      (r.owner_name.toLowerCase() || "").includes(search.toLowerCase()) ||
-      (r.registration_number.toLowerCase() || "").includes(
+      (r.owner_name?.toLowerCase() || "").includes(search.toLowerCase()) ||
+      (r.registration_number?.toLowerCase() || "").includes(
         search.toLowerCase(),
       ),
   );
 
   const filteredVerifications = verifications.filter(
     (v) =>
-      v.businesses.name.toLowerCase().includes(search.toLowerCase()) ||
-      v.businesses.owner_name.toLowerCase().includes(search.toLowerCase()),
+      v.businesses?.name.toLowerCase().includes(search.toLowerCase()) ||
+      v.businesses?.owner_name.toLowerCase().includes(search.toLowerCase()),
   );
 
   const filteredPromotions = promotions.filter(
     (p) =>
-      p.businesses.name.toLowerCase().includes(search.toLowerCase()) ||
+      p.businesses?.name.toLowerCase().includes(search.toLowerCase()) ||
       (p.caption || "").toLowerCase().includes(search.toLowerCase()),
   );
 

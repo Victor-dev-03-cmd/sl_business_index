@@ -42,7 +42,7 @@ export default function LinkQRPage() {
       const qrData = data as unknown as QRInventory;
       setQrInfo({
         status: qrData.status,
-        business_name: qrData.businesses.name
+        business_name: qrData.businesses?.name
       });
     } else {
       setQrInfo(null);

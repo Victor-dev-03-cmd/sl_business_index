@@ -243,10 +243,13 @@ export default function AdminCategoriesPage() {
       });
 
       data.forEach((cat) => {
+        const current = categoryMap[cat.id];
         if (cat.parent_id && categoryMap[cat.parent_id]) {
-          categoryMap[cat.parent_id].subcategories.push(categoryMap[cat.id]);
+          const parent = categoryMap[cat.parent_id];
+          if (!parent.subcategories) parent.subcategories = [];
+          parent.subcategories.push(current);
         } else {
-          rootCategories.push(categoryMap[cat.id]);
+          rootCategories.push(current);
         }
       });
 
@@ -524,9 +527,9 @@ export default function AdminCategoriesPage() {
       return cats.reduce((acc: Category[], cat) => {
         const matches =
           cat.name.toLowerCase().includes(search.toLowerCase()) ||
-          cat.keywords.some((k) =>
+          (cat.keywords?.some((k) =>
             k.toLowerCase().includes(search.toLowerCase()),
-          );
+          ) ?? false);
         const subMatches = cat.subcategories ? filter(cat.subcategories) : [];
 
         if (matches || subMatches.length > 0) {
@@ -731,7 +734,7 @@ export default function AdminCategoriesPage() {
                   {category.name}
                 </p>
                 <div className="flex flex-wrap gap-1 mt-1">
-                  {category.keywords.slice(0, 2).map((kw) => (
+                  {category.keywords?.slice(0, 2).map((kw) => (
                     <span
                       key={kw}
                       className="text-[8px] md:text-[9px] px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded-md font-medium uppercase tracking-wider"
@@ -761,7 +764,7 @@ export default function AdminCategoriesPage() {
                     : "bg-gray-50 text-gray-400 border-gray-200"
                 }`}
               >
-                {category.subcategories.length || 0} Sub-items
+                {category.subcategories?.length || 0} Sub-items
               </span>
             </div>
           </td>
@@ -830,7 +833,7 @@ export default function AdminCategoriesPage() {
           </td>
         </tr>
         {isExpanded &&
-          category.subcategories.map((sub) => (
+          category.subcategories?.map((sub) => (
             <CategoryRow
               key={sub.id}
               category={sub}
@@ -898,7 +901,7 @@ export default function AdminCategoriesPage() {
               </p>
               <div className="flex flex-wrap gap-1 mt-0.5">
                 <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tight">
-                  {category.subcategories.length || 0} Sub-items
+                  {category.subcategories?.length || 0} Sub-items
                 </span>
               </div>
             </div>
@@ -938,7 +941,7 @@ export default function AdminCategoriesPage() {
         </div>
         
         {isExpanded &&
-          category.subcategories.map((sub) => (
+          category.subcategories?.map((sub) => (
             <MobileCategoryItem key={sub.id} category={sub} depth={depth + 1} />
           ))}
       </div>

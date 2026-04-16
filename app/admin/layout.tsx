@@ -237,21 +237,23 @@ export default function AdminLayout({
 
           {/* Drawer Bottom – user info */}
           <div className="p-4 border-t border-gray-100 shrink-0">
-            <div className="flex items-center gap-3 px-2 py-2">
-              <div className="h-8 w-8 rounded-full bg-brand-dark/10 flex items-center justify-center shrink-0">
-                <span className="text-xs font-bold text-brand-dark">
-                  {user.email.charAt(0).toUpperCase() || "A"}
-                </span>
+            {user && (
+              <div className="flex items-center gap-3 px-2 py-2">
+                <div className="h-8 w-8 rounded-full bg-brand-dark/10 flex items-center justify-center shrink-0">
+                  <span className="text-xs font-bold text-brand-dark">
+                    {user.email?.charAt(0).toUpperCase() || "A"}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-gray-900 truncate">
+                    {user.email || "Admin"}
+                  </p>
+                  <span className="inline-block text-[10px] font-bold tracking-widest uppercase text-brand-dark bg-brand-dark/10 px-2 py-0.5 rounded-full mt-0.5">
+                    Admin
+                  </span>
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-gray-900 truncate">
-                  {user.email || "Admin"}
-                </p>
-                <span className="inline-block text-[10px] font-bold tracking-widest uppercase text-brand-dark bg-brand-dark/10 px-2 py-0.5 rounded-full mt-0.5">
-                  Admin
-                </span>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

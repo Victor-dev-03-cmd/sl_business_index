@@ -117,9 +117,9 @@ export default function AdminFeaturedPage() {
     onSuccess: () => {
       toast.success("Featured status updated successfully");
     },
-    onError: (err: Error, variables, context) => {
+    onError: (err: Error, _variables, context) => {
       // Rollback on error
-      if (context.previousBusinesses) {
+      if (context?.previousBusinesses) {
         queryClient.setQueryData(["admin-approved-businesses"], context.previousBusinesses);
       }
       toast.error(`Error updating status: ${err.message}`);
