@@ -323,7 +323,7 @@ export default function BillingPage() {
                     </li>
                   ))}
                   {featureDefinitions.map((f) => {
-                    const isEnabled = plan.functional_features.[f.id] || (plan as any)[f.id];
+                    const isEnabled = plan.functional_features[f.id] || (plan as any)[f.id];
                     if (!isEnabled) return null;
                     return (
                       <li key={f.id} className="flex items-start gap-2 text-sm text-brand-blue font-bold">

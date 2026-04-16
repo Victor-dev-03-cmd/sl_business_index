@@ -97,7 +97,7 @@ function OTPConfirmPage() {
         </form>
 
         <div className="text-sm text-center text-gray-600">
-          Didn't receive the code?{' '}
+          Didn't receive the code?
           <button className="font-medium text-primary hover:underline">
             Resend
           </button>

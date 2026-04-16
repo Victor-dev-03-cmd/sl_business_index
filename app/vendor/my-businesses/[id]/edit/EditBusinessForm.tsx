@@ -49,7 +49,7 @@ export default function EditBusinessForm({ business }: { business: Business }) {
   }, []);
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files.[0];
+    const file = e.target.files[0];
     if (file) {
       setLogo(file);
       const reader = new FileReader();
@@ -59,7 +59,7 @@ export default function EditBusinessForm({ business }: { business: Business }) {
   };
 
   const handleHoverImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files.[0];
+    const file = e.target.files[0];
     if (file) {
       setHoverImage(file);
       const reader = new FileReader();

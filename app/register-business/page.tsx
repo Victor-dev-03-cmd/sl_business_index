@@ -103,7 +103,7 @@ export default function RegisterBusinessPage() {
   }, []);
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files.[0];
+    const file = e.target.files[0];
     if (file) {
       setLogo(file);
       // Revoke the old URL to prevent memory leaks
@@ -113,7 +113,7 @@ export default function RegisterBusinessPage() {
   };
 
   const handleHoverImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files.[0];
+    const file = e.target.files[0];
     if (file) {
       setHoverImage(file);
       // Revoke the old URL to prevent memory leaks

@@ -33,7 +33,7 @@ export default function PromotionUploadForm({ businesses, onSuccess }: Promotion
   const [uploading, setUploading] = useState(false);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files.[0];
+    const file = e.target.files[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
         toast.error('Image size must be less than 5MB');

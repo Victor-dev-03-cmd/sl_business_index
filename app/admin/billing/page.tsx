@@ -519,7 +519,7 @@ export default function AdminBillingPage() {
                           </div>
                         ))}
                         {featureDefinitions.map((f: any) => 
-                          plan.functional_features.[f.id] && (
+                          plan.functional_features[f.id] && (
                             <div
                               key={f.id}
                               className="flex items-start gap-2 text-sm text-brand-blue font-bold"

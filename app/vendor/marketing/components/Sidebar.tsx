@@ -184,7 +184,7 @@ function UploadsPanel() {
   const { canvas, saveHistory } = useEditorStore();
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files.[0];
+    const file = e.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();

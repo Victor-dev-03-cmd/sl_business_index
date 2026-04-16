@@ -281,7 +281,7 @@ export default function AdminCategoriesPage() {
   const [isUploading, setIsUploading] = useState(false);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const file = e.target.files?[0];
     if (!file) return;
 
     setIsUploading(true);
@@ -356,7 +356,7 @@ export default function AdminCategoriesPage() {
           .order("sort_order", { ascending: false })
           .limit(1);
 
-        const nextSort = (maxSort?.[0]?.sort_order || 0) + 1;
+        const nextSort = (maxSort?[0]?.sort_order || 0) + 1;
 
         const { error } = await supabase
           .from("categories")

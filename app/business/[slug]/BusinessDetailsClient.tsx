@@ -582,7 +582,7 @@ export default function BusinessDetailsClient({ business }: Props) {
               </h3>
               <div className="flex items-center gap-3 relative z-10">
                 <div className="h-11 w-11 rounded-full bg-white/10 flex items-center justify-center font-bold text-brand-sand shrink-0">
-                  {business.owner_name.[0] || "O"}
+                  {business.owner_name[0] || "O"}
                 </div>
                 <div>
                   <p className="text-white font-medium text-sm">
