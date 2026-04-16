@@ -281,7 +281,7 @@ export default function AdminCategoriesPage() {
   const [isUploading, setIsUploading] = useState(false);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?[0];
+    const file = e.target.files?.[0];
     if (!file) return;
 
     setIsUploading(true);
