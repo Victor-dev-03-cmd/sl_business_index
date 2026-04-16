@@ -71,7 +71,7 @@ export default function NotificationSettingsPage() {
     saveMutation.mutate(localSettings);
   };
 
-  if (loading)
+  if (loading || !localSettings)
     return (
       <div className="space-y-8">
         <Skeleton className="h-8 w-48" />
