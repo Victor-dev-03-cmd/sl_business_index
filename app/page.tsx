@@ -229,32 +229,16 @@ export default function HomePage() {
   return (
     <div className="min-h-[100dvh] bg-white font-normal">
       {/* --- HERO SECTION --- */}
-      <section className="relative h-[78dvh] flex items-center justify-center z-20">
-        {/* Hero Background Image with Blur */}
-        <div className="absolute inset-0 z-0 w-full h-full overflow-hidden">
-          <Image
-            src="/hero.jpg"
-            alt="Hero Background"
-            fill
-            priority
-            className="object-cover blur-[8px] scale-105"
-          />
-          {/* Overlay to ensure text readability */}
-          <div className="absolute inset-0 bg-white/20" />
-        </div>
-
+      <section className="relative h-[78dvh] flex items-center justify-center z-20 bg-brand-dark">
         <div className="relative z-10 max-w-5xl px-6 py-12 text-center mx-4">
-          {/* Soft Glow Effect behind text */}
-          <div className="absolute inset-0 -z-10 bg-white/60 blur-[60px] rounded-full scale-90" />
-          
-          <span className="inline-block px-4 py-1.5 mb-6 text-[11px] md:text-[13px] tracking-[0.15em] uppercase text-brand-blue border border-gray-300 rounded bg-white/80">
+          <span className="inline-block px-4 py-1.5 mb-6 text-[11px] md:text-[13px] tracking-[0.15em] uppercase text-brand-sand border border-gray-300/20 rounded bg-white/5">
             Sri Lanka Business Index
           </span>
-          <h1 className="text-3xl md:text-7xl text-gray-900 mb-6 leading-tight tracking-tight">
+          <h1 className="text-3xl md:text-7xl text-white mb-6 leading-tight tracking-tight">
             The Ultimate Directory for <br />
-            <span className="text-brand-blue text-4xl md:text-7xl">Businesses in Sri Lanka (SLBI)</span>
+            <span className="text-white text-4xl md:text-7xl">Businesses in Sri Lanka (SLBI)</span>
           </h1>
-          <p className="text-gray-600 text-base md:text-lg mb-10 max-w-xl mx-auto leading-relaxed">
+          <p className="text-brand-sand text-base md:text-lg mb-10 max-w-xl mx-auto leading-relaxed">
             Explore verified local businesses, clinics, and luxury villas across Sri Lanka. Discover premium services and authentic island experiences through our directory.
           </p>
 

@@ -41,7 +41,7 @@ export default function HeroSearch({
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   useEffect(() => {
-    onFocusChange.(isSearchFocused);
+    onFocusChange?.(isSearchFocused);
   }, [isSearchFocused, onFocusChange]);
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [businessSuggestions, setBusinessSuggestions] = useState<any[]>([]);

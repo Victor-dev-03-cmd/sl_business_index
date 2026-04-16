@@ -125,6 +125,17 @@ interface Category {
   subcategories?: Category[];
 }
 
+const MAIN_CATEGORY_GROUPS = [
+  "Manpower Services",
+  "Care & Lifestyle",
+  "Professional & Finance",
+  "Construction & Industrial",
+  "Technical & Electronics",
+  "Events Food & Leisure",
+  "Travel & Transport",
+  "Retail & Others",
+];
+
 const IconPicker = ({
   value,
   onChange,
@@ -203,48 +214,6 @@ export default function AdminCategoriesPage() {
   >({});
   const [filterLevel, setFilterLevel] = useState<"all" | "root" | "sub">("all");
 
-  // Form states
-  const [formData, setFormData] = useState({
-    name: "",
-    icon: "",
-    image_url: "",
-    keywords: [] as string[],
-    parent_id: null as string | null,
-    keywordInput: "",
-  });
-
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files.[0];
-    if (!file) return;
-
-    setIsUploading(true);
-    try {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
-      const filePath = `category-icons/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("category-images")
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data } = supabase.storage
-        .from("category-images")
-        .getPublicUrl(filePath);
-
-      setFormData((prev) => ({ ...prev, image_url: data.publicUrl }));
-      toast.success("Image uploaded successfully");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to upload image");
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
   const {
     data: categories = [],
     isLoading: loading,
@@ -285,6 +254,78 @@ export default function AdminCategoriesPage() {
     },
   });
 
+  // Form states
+  const [formData, setFormData] = useState({
+    name: "",
+    icon: "",
+    image_url: "",
+    keywords: [] as string[],
+    parent_id: null as string | null,
+    keywordInput: "",
+  });
+
+  const [quickAddData, setQuickAddData] = useState({
+    name: "",
+    parent_id: "",
+    icon: "Tags",
+  });
+
+  // Filter to find the 8 main parent categories for the quick add dropdown
+  const mainParentCategories = useMemo(() => {
+    return categories.filter(cat => 
+      !cat.parent_id && MAIN_CATEGORY_GROUPS.includes(cat.name)
+    );
+  }, [categories]);
+
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+      const filePath = `category-icons/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("category-images")
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from("category-images")
+        .getPublicUrl(filePath);
+
+      setFormData((prev) => ({ ...prev, image_url: data.publicUrl }));
+      toast.success("Image uploaded successfully");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to upload image");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleQuickAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quickAddData.name || !quickAddData.parent_id) {
+      toast.error("Please provide both name and parent category");
+      return;
+    }
+
+    mutation.mutate({
+      name: quickAddData.name,
+      parent_id: quickAddData.parent_id,
+      icon: quickAddData.icon,
+      keywords: [],
+    });
+
+    setQuickAddData({ name: "", parent_id: quickAddData.parent_id, icon: "Tags" });
+  };
+
   // Flattened categories for parent selection (excluding self and children if editing)
   const flatCategories = useMemo(() => {
     const list: { id: string; name: string }[] = [];
@@ -315,7 +356,7 @@ export default function AdminCategoriesPage() {
           .order("sort_order", { ascending: false })
           .limit(1);
 
-        const nextSort = (maxSort.[0].sort_order || 0) + 1;
+        const nextSort = (maxSort?.[0]?.sort_order || 0) + 1;
 
         const { error } = await supabase
           .from("categories")
@@ -725,7 +766,7 @@ export default function AdminCategoriesPage() {
             </div>
           </td>
           <td className="px-8 py-6">
-            <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="flex items-center gap-1.5">
               <button
                 disabled={index === 0}
                 onClick={() => moveOrder("up")}
@@ -745,7 +786,7 @@ export default function AdminCategoriesPage() {
             </div>
           </td>
           <td className="px-8 py-6 text-right">
-            <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="flex items-center justify-end gap-2">
               <button
                 onClick={() => handleAddSubcategory(category)}
                 className="px-3 py-1.5 bg-brand-blue/5 hover:bg-brand-blue/10 border border-brand-blue/10 rounded-[4px] transition-all text-xs font-semibold text-brand-blue flex items-center gap-1.5"
@@ -760,7 +801,7 @@ export default function AdminCategoriesPage() {
                 <Edit size={16} />
               </button>
               <DropdownMenu>
-                <DropdownMenuTrigger className="p-2 hover:bg-white border border-transparent hover:border-gray-200 rounded-[8px] transition-all outline-none group-hover:shadow-sm">
+                <DropdownMenuTrigger className="p-2 hover:bg-white border border-transparent hover:border-gray-200 rounded-[8px] transition-all outline-none hover:shadow-sm">
                   <MoreVertical size={16} className="text-gray-400" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
@@ -920,6 +961,76 @@ export default function AdminCategoriesPage() {
               </span>
             </p>
           </div>
+        </div>
+
+        {/* Quick Add Subcategory Form */}
+        <div className="bg-white p-6 rounded-[6px] shadow-sm border border-gray-100 mb-8 md:mb-12">
+          <h2 className="text-sm font-bold text-gray-900 uppercase tracking-widest mb-4 flex items-center gap-2">
+            <Plus className="text-brand-blue" size={16} strokeWidth={3} />
+            Quick Add Subcategory
+          </h2>
+          <form onSubmit={handleQuickAdd} className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Parent Group</label>
+              <div className="relative group">
+                <select
+                  value={quickAddData.parent_id}
+                  onChange={(e) => setQuickAddData(prev => ({ ...prev, parent_id: e.target.value }))}
+                  className="w-full bg-gray-50 border border-gray-300 rounded-[6px] px-3 py-2.5 text-xs md:text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-brand-blue/10 focus:border-brand-blue appearance-none cursor-pointer hover:border-gray-300 transition-all shadow-sm"
+                  required
+                >
+                  <option value="">Select Parent...</option>
+                  {mainParentCategories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Subcategory Name</label>
+              <input
+                type="text"
+                value={quickAddData.name}
+                onChange={(e) => setQuickAddData(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="e.g., AC Technician"
+                className="w-full px-3 py-2.5 bg-gray-50 border border-gray-300 rounded-[6px] text-xs md:text-sm focus:outline-none focus:ring-1 focus:ring-brand-blue/10 focus:border-brand-blue focus:bg-white transition-all shadow-sm"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Select Icon</label>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button type="button" className="w-full flex items-center justify-between px-3 py-2.5 bg-gray-50 border border-gray-300 rounded-[6px] text-xs md:text-sm text-gray-600 hover:bg-white transition-all shadow-sm">
+                    <div className="flex items-center gap-2">
+                      <IconComponent name={quickAddData.icon} size={16} />
+                      <span>{quickAddData.icon}</span>
+                    </div>
+                    <ChevronDown size={14} />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="p-0 w-72 bg-white border-gray-200 shadow-2xl rounded-xl">
+                  <div className="p-2 max-h-[300px] overflow-auto">
+                    <IconPicker 
+                      value={quickAddData.icon} 
+                      onChange={(icon) => setQuickAddData(prev => ({ ...prev, icon }))} 
+                    />
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            <button
+              type="submit"
+              disabled={mutation.isPending}
+              className="bg-brand-blue text-white px-6 py-2.5 rounded-[6px] text-xs md:text-sm font-bold hover:bg-brand-blue/90 transition-all shadow-lg shadow-brand-blue/10 hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 whitespace-nowrap h-[42px]"
+            >
+              {mutation.isPending ? "Adding..." : "Add Category"}
+            </button>
+          </form>
         </div>
 
         {/* Professional Action Bar */}
