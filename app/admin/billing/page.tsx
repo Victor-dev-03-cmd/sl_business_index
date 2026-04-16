@@ -219,6 +219,9 @@ export default function AdminBillingPage() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
+
+      if (!user) throw new Error("Not authenticated");
+
       const { error } = await supabase.from("announcements").insert({
         ...formData,
         created_by: user.id,
@@ -369,10 +372,10 @@ export default function AdminBillingPage() {
                         >
                           <td className="px-8 py-5">
                             <p className="text-sm font-medium text-gray-900">
-                              {sub.profiles.full_name}
+                              {sub.profiles?.full_name}
                             </p>
                             <p className="text-[11px] text-gray-400">
-                              {sub.profiles.email}
+                              {sub.profiles?.email}
                             </p>
                           </td>
                           <td className="px-8 py-5">
@@ -387,7 +390,7 @@ export default function AdminBillingPage() {
                             </span>
                           </td>
                           <td className="px-8 py-5 text-right font-bold text-sm text-gray-900">
-                            LKR {sub.price.toLocaleString()}
+                            LKR {sub.price?.toLocaleString() || "0"}
                           </td>
                         </tr>
                       ))}
@@ -414,12 +417,12 @@ export default function AdminBillingPage() {
                           #{inv.id.slice(0, 8)}
                         </p>
                         <p className="text-xs font-medium text-gray-900">
-                          {inv.subscriptions.profiles.full_name}
+                          {inv.subscriptions?.profiles?.full_name}
                         </p>
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-bold text-gray-900">
-                          LKR {inv.amount.toLocaleString()}
+                          LKR {inv.amount?.toLocaleString() || "0"}
                         </p>
                         <button
                           onClick={() => setSelectedInvoice(inv)}
@@ -496,12 +499,12 @@ export default function AdminBillingPage() {
                       <div className="mb-8">
                         <div className="flex items-baseline gap-1">
                           <span className="text-3xl font-bold text-gray-900">
-                            LKR {plan.price_monthly.toLocaleString()}
+                            LKR {plan.price_monthly?.toLocaleString() || "0"}
                           </span>
                           <span className="text-sm text-gray-400">/ month</span>
                         </div>
                         <p className="text-xs text-brand-blue font-bold mt-1">
-                          LKR {plan.price_yearly.toLocaleString()} billed yearly
+                          LKR {plan.price_yearly?.toLocaleString() || "0"} billed yearly
                         </p>
                       </div>
 
@@ -672,11 +675,11 @@ export default function AdminBillingPage() {
               <div className="space-y-4">
                 <InfoRow
                   label="Customer"
-                  value={selectedInvoice.subscriptions.profiles.full_name}
+                  value={selectedInvoice.subscriptions?.profiles?.full_name}
                 />
                 <InfoRow
                   label="Email"
-                  value={selectedInvoice.subscriptions.profiles.email}
+                  value={selectedInvoice.subscriptions?.profiles?.email}
                 />
                 <InfoRow
                   label="Date"
@@ -690,7 +693,7 @@ export default function AdminBillingPage() {
                 <div className="pt-4 border-t border-gray-100 flex justify-between text-lg">
                   <span className="font-normal">Total Amount</span>
                   <span className="font-bold text-gray-900">
-                    LKR {selectedInvoice.amount.toLocaleString()}
+                    LKR {selectedInvoice.amount?.toLocaleString() || "0"}
                   </span>
                 </div>
               </div>
