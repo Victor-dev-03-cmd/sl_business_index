@@ -266,7 +266,7 @@ app.post('/analytics/log', async (c) => {
     .insert({
       business_id,
       event_type,
-      user_id: user.id || null,
+      user_id: user?.id || null,
       city,
       metadata: metadata || {}
     })
@@ -335,7 +335,7 @@ app.post('/social/publish', async (c) => {
   const { data: profile } = await supabase
     .from('profiles')
     .select('role')
-    .eq('id', user.id)
+    .eq('id', user?.id)
     .single()
 
   if (!profile || !['admin', 'ceo'].includes(profile.role)) {
@@ -478,8 +478,8 @@ app.post('/contact/send', async (c) => {
       .eq('id', 1)
       .single()
 
-    const adminEmail = settings.admin_email || 'admin@slbusinessindex.com'
-    const emailEnabled = settings.email_notifications || true
+    const adminEmail = settings?.admin_email || 'admin@slbusinessindex.com'
+    const emailEnabled = settings?.email_notifications ?? true
 
     // 3. Send Email (via Resend fetch)
     const RESEND_API_KEY = process.env.RESEND_API_KEY

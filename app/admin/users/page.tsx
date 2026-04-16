@@ -149,7 +149,7 @@ export default function AdminUsersPage() {
       const matchesSearch =
         p.full_name.toLowerCase().includes(search.toLowerCase()) ||
         p.username.toLowerCase().includes(search.toLowerCase()) ||
-        p.email.toLowerCase().includes(search.toLowerCase());
+        (p.email ? p.email.toLowerCase().includes(search.toLowerCase()) : false);
 
       const matchesRole = roleFilter === "all" || p.role === roleFilter;
       const matchesStatus = statusFilter === "all" || p.status === statusFilter;
