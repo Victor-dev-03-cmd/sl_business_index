@@ -356,7 +356,7 @@ export default function AdminCategoriesPage() {
           .order("sort_order", { ascending: false })
           .limit(1);
 
-        const nextSort = (maxSort?[0]?.sort_order || 0) + 1;
+        const nextSort = (maxSort?.[0]?.sort_order || 0) + 1;
 
         const { error } = await supabase
           .from("categories")
