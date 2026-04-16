@@ -165,7 +165,7 @@ export default function TestimonialsManagement() {
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (!file) return;
 
     // Validate file size (e.g., 5MB)
