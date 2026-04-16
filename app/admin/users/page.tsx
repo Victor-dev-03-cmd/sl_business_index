@@ -139,7 +139,7 @@ export default function AdminUsersPage() {
     // This is a local toggle in the current UI, but we could also make it a mutation
     // For now keeping it consistent with the previous local update but using queryClient to update cache
     queryClient.setQueryData(["admin-profiles"], (old: Profile[] | undefined) =>
-      old.map((p) => (p.id === userId ? { ...p, status: newStatus } : p)),
+      old ? old.map((p) => (p.id === userId ? { ...p, status: newStatus } : p)) : [],
     );
   };
 
