@@ -27,8 +27,9 @@ export async function GET(request: Request) {
         .single()
       
       if (!existingProfile) {
-        const full_name = user.user_metadata.full_name || user.email.split('@')[0] || 'User'
-        const username = user.user_metadata.user_name || user.email.split('@')[0] || 'user'
+        const emailPrefix = user.email?.split('@')[0]
+        const full_name = user.user_metadata.full_name || emailPrefix || 'User'
+        const username = user.user_metadata.user_name || emailPrefix || 'user'
         
         await supabase
           .from('profiles')

@@ -99,16 +99,19 @@ export default function BusinessDetailsClient({ business }: Props) {
       await logEvent(
         business.id,
         "view",
-        business.address.split(",").pop().trim(),
+        business.address?.split(",").pop()?.trim() || "Unknown",
       );
 
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      await supabase.from("business_views").insert({
-        business_id: business.id,
-        user_id: user.id,
-      });
+      
+      if (user) {
+        await supabase.from("business_views").insert({
+          business_id: business.id,
+          user_id: user.id,
+        });
+      }
 
       // Increment view count in businesses table
       await supabase.rpc("increment_business_views", {
@@ -166,7 +169,7 @@ export default function BusinessDetailsClient({ business }: Props) {
         .from("reviews")
         .insert({
           business_id: business.id,
-          user_id: user.id || null,
+          user_id: user?.id || null,
           user_name: reviewForm.user_name,
           rating: reviewForm.rating,
           comment: reviewForm.comment,
@@ -230,7 +233,7 @@ export default function BusinessDetailsClient({ business }: Props) {
       await logEvent(
         business.id,
         "lead_form_submit",
-        business.address.split(",").pop().trim(),
+        business.address?.split(",").pop()?.trim() || "Unknown",
       );
 
       setEnquiryForm({ name: "", email: "", phone: "", message: "" });
@@ -327,7 +330,7 @@ export default function BusinessDetailsClient({ business }: Props) {
                   logEvent(
                     business.id,
                     "call_click",
-                    business.address.split(",").pop().trim(),
+                    business.address?.split(",").pop()?.trim() || "Unknown",
                   )
                 }
                 className="flex items-center gap-2 px-8 py-3 bg-white text-brand-dark rounded hover:bg-brand-sand transition-all shadow-xl"
@@ -400,7 +403,7 @@ export default function BusinessDetailsClient({ business }: Props) {
                       logEvent(
                         business.id,
                         "call_click",
-                        business.address.split(",").pop().trim(),
+                        business.address?.split(",").pop()?.trim() || "Unknown",
                       )
                     }
                     className="flex items-center gap-2 p-3 bg-brand-dark text-white rounded text-sm font-semibold justify-center"
@@ -582,7 +585,7 @@ export default function BusinessDetailsClient({ business }: Props) {
               </h3>
               <div className="flex items-center gap-3 relative z-10">
                 <div className="h-11 w-11 rounded-full bg-white/10 flex items-center justify-center font-bold text-brand-sand shrink-0">
-                  {business.owner_name[0] || "O"}
+                  {business.owner_name ? business.owner_name[0] : "O"}
                 </div>
                 <div>
                   <p className="text-white font-medium text-sm">
@@ -620,7 +623,7 @@ export default function BusinessDetailsClient({ business }: Props) {
                   logEvent(
                     business.id,
                     "location_click",
-                    business.address.split(",").pop().trim(),
+                    business.address?.split(",").pop()?.trim() || "Unknown",
                   )
                 }
               >
@@ -818,7 +821,7 @@ export default function BusinessDetailsClient({ business }: Props) {
             logEvent(
               business.id,
               "call_click",
-              business.address.split(",").pop().trim(),
+              business.address?.split(",").pop()?.trim() || "Unknown",
             )
           }
           className="flex-1 flex items-center justify-center gap-2 h-11 bg-brand-dark text-white rounded font-semibold text-sm"
