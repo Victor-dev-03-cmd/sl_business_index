@@ -375,7 +375,7 @@ export default function HeroSearch({
                         </span>
                         {biz.address && (
                           <span className="text-[10px] text-gray-400 truncate">
-                            · {biz.address.split(",").pop().trim()}
+                            · {biz.address.split(",").pop()?.trim()}
                           </span>
                         )}
                       </div>
