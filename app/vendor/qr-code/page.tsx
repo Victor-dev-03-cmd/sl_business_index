@@ -349,7 +349,7 @@ export default function VendorQRCodePage() {
                       <div className="w-16 h-16 bg-brand-dark rounded-2xl flex items-center justify-center mb-4 shadow-lg">
                         <QrCode className="w-8 h-8 text-white" />
                       </div>
-                      <h3 className="text-xl font-bold text-gray-900 line-clamp-1 px-4">{selectedBusiness.name}</h3>
+                      <h3 className="text-xl font-bold text-gray-900 line-clamp-1 px-4">{selectedBusiness?.name}</h3>
                       <p className="text-xs text-gray-500 uppercase tracking-widest mt-1">Official Directory Listing</p>
                     </div>
 
