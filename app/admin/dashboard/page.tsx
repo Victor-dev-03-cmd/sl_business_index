@@ -58,7 +58,7 @@ export default function AdminDashboard() {
       .eq("id", user.id)
       .single();
 
-    if (!profile) {
+    if (!profile || !profile.role) {
       router.push("/");
       return;
     }

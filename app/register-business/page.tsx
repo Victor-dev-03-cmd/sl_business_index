@@ -80,7 +80,7 @@ export default function RegisterBusinessPage() {
   });
 
   const { data: existingBusiness, isLoading: businessLoading } = useQuery({
-    queryKey: ['existing-business', user.id],
+    queryKey: ['existing-business', user?.id],
     queryFn: async () => {
       if (!user) return null;
       const { data } = await supabase
@@ -203,7 +203,7 @@ export default function RegisterBusinessPage() {
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      console.log('User check:', user.id);
+      console.log('User check:', user?.id);
       if (!user) throw new Error('You must be logged in to register a business.');
 
       let logoUrl = null;
@@ -250,11 +250,11 @@ export default function RegisterBusinessPage() {
           is_registered: registrationType === 'registered',
           registration_number: registrationType === 'registered' ? brNumber : nicNumber,
           owner_id: user.id,
-          location: `POINT(${location.lng} ${location.lat})`,
-          address: location.address,
+          location: `POINT(${location?.lng} ${location?.lat})`,
+          address: location?.address,
           detailed_address: detailedAddress,
-          latitude: location.lat,
-          longitude: location.lng,
+          latitude: location?.lat,
+          longitude: location?.lng,
           status: 'pending'
         },
       ]);
@@ -550,9 +550,9 @@ export default function RegisterBusinessPage() {
                     onLocationSelectAction={handleLocationSelect} 
                     detailedAddress={detailedAddress}
                     onDetailedAddressChange={setDetailedAddress}
-                    initialAddress={location.address}
-                    initialLat={location.lat}
-                    initialLng={location.lng}
+                    initialAddress={location?.address}
+                    initialLat={location?.lat}
+                    initialLng={location?.lng}
                   />
                 </div>
               </div>

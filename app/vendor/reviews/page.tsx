@@ -71,8 +71,8 @@ export default function ReviewsPage() {
   // Filter Logic
   const filteredReviews = reviews.filter(review => {
     const matchesRating = filterRating === 'all' || review.rating === filterRating;
-    const matchesSearch = review.comment.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          review.user_name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = (review.comment?.toLowerCase() || '').includes(searchQuery.toLowerCase()) || 
+                          (review.user_name?.toLowerCase() || '').includes(searchQuery.toLowerCase());
     return matchesRating && matchesSearch;
   });
 
@@ -217,11 +217,11 @@ export default function ReviewsPage() {
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
                             <div className="h-9 w-9 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center text-blue-600 font-bold text-xs">
-                              {review.user_name.charAt(0)}
+                              {review.user_name?.charAt(0) || 'U'}
                             </div>
                             <div>
-                              <p className="font-medium text-brand-blue text-sm">{review.user_name}</p>
-                              <p className="font-medium text-[10px] text-gray-500">{formatDate(review.created_at)} • {review.businesses.name}</p>
+                              <p className="font-medium text-brand-blue text-sm">{review.user_name || 'Anonymous'}</p>
+                              <p className="font-medium text-[10px] text-gray-500">{formatDate(review.created_at)} • {review.businesses?.name || 'Unknown Business'}</p>
                             </div>
                           </div>
                         </td>
