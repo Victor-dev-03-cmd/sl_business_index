@@ -37,20 +37,22 @@ export default function Sidebar() {
 
   const toggleVisibility = (obj: fabric.FabricObject) => {
     obj.set('visible', !obj.visible);
-    canvas?.renderAll();
+    if (canvas) canvas.renderAll();
     updateLayers();
   };
 
   const toggleLock = (obj: fabric.FabricObject) => {
     obj.set('selectable', !obj.selectable);
     obj.set('evented', !obj.evented);
-    canvas?.renderAll();
+    if (canvas) canvas.renderAll();
     updateLayers();
   };
 
   const selectLayer = (obj: fabric.FabricObject) => {
-    canvas?.setActiveObject(obj);
-    canvas?.renderAll();
+    if (canvas) {
+      canvas.setActiveObject(obj);
+      canvas.renderAll();
+    }
     setActiveObject(obj);
   };
 

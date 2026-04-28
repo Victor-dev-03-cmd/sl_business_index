@@ -215,7 +215,7 @@ export default function VendorQRCodePage() {
   const businessUrl = typeof window !== 'undefined' 
     ? assignedQR 
       ? `${window.location.origin}/q/${assignedQR.serial_id}`
-      : `${window.location.origin}/business/${selectedBusiness.slug || selectedBusiness.id}`
+      : `${window.location.origin}/business/${selectedBusiness?.slug || selectedBusiness?.id || ''}`
     : '';
 
   return (
@@ -273,7 +273,7 @@ export default function VendorQRCodePage() {
                   key={biz.id}
                   onClick={() => setSelectedBusiness(biz)}
                   className={`w-full p-4 flex items-center gap-4 transition-all text-left hover:bg-gray-50 ${
-                    selectedBusiness.id === biz.id ? 'bg-blue-50/50 ring-1 ring-inset ring-brand-blue/20' : ''
+                    selectedBusiness?.id === biz.id ? 'bg-blue-50/50 ring-1 ring-inset ring-brand-blue/20' : ''
                   }`}
                 >
                   <div className="w-12 h-12 rounded-lg bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-200">
@@ -286,12 +286,12 @@ export default function VendorQRCodePage() {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-bold truncate ${selectedBusiness.id === biz.id ? 'text-brand-blue' : 'text-gray-900'}`}>
+                    <p className={`text-sm font-bold truncate ${selectedBusiness?.id === biz.id ? 'text-brand-blue' : 'text-gray-900'}`}>
                       {biz.name}
                     </p>
                     <p className="text-xs text-gray-500 truncate">{biz.category}</p>
                   </div>
-                  {selectedBusiness.id === biz.id && (
+                  {selectedBusiness?.id === biz.id && (
                     <CheckCircle2 size={18} className="text-brand-blue" />
                   )}
                 </button>

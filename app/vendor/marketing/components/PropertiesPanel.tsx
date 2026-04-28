@@ -74,7 +74,7 @@ export default function PropertiesPanel() {
     // eslint-disable-next-line react-hooks/immutability
     activeObject.set(key as any, value);
     activeObject.setCoords();
-    canvas?.renderAll();
+    if (canvas) canvas.renderAll();
     saveHistory();
     setLocalProps(prev => ({ ...prev, [key]: value }));
   };

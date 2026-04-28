@@ -617,7 +617,7 @@ function CampaignCard({ campaign }: { campaign: Campaign }) {
 
       <div className="flex items-center justify-between pt-3 border-t border-slate-200">
         <div className="flex gap-2">
-          {(campaign.platforms || campaign.social_platforms).map((p: string) => (
+          {(campaign.platforms || campaign.social_platforms || []).map((p: string) => (
             <div key={p} className="text-slate-400 group-hover:text-brand-blue transition-colors">
               {p === 'facebook' && <Facebook size={12} />}
               {p === 'instagram' && <Instagram size={12} />}
