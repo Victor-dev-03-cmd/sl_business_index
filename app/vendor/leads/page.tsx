@@ -208,7 +208,7 @@ export default function LeadsPage() {
               <div 
                 key={lead.id}
                 onClick={() => setSelectedLead(lead)}
-                className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors border-l-4 ${selectedLead.id === lead.id ? 'bg-blue-50/30 border-blue-500' : 'border-transparent'}`}
+                className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors border-l-4 ${selectedLead?.id === lead.id ? 'bg-blue-50/30 border-blue-500' : 'border-transparent'}`}
               >
                 <div className="flex justify-between items-start mb-1">
                   <h3 className=" text-brand-blue">{lead.name}</h3>
@@ -321,7 +321,7 @@ export default function LeadsPage() {
                 />
                 <button 
                   onClick={addNote}
-                  className="p-2 bg-brand-blue text-white rounded hover:bg-blue-600q transition-colors"
+                  className="p-2 bg-brand-blue text-white rounded hover:bg-blue-600 transition-colors"
                 >
                   <Plus size={18} />
                 </button>
