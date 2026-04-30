@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useSession } from "./SessionContext";
 import CategoriesMenu from "./CategoriesMenu";
+import CategorySubNavbar from "./CategorySubNavbar";
 import AuthButton from "./AuthButton";
 import LogoLink from "./LogoLink";
 import NotificationBell from "./NotificationBell";
@@ -55,6 +56,42 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [categOpen, setCategOpen] = useState(false);
   const [isLegacy, setIsLegacy] = useState(false);
+  const [subNavbarOpen, setSubNavbarOpen] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [scrolled, setScrolled] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const handleMouseEnter = (group: string) => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setActiveCategory(group);
+    setSubNavbarOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    timeoutRef.current = setTimeout(() => {
+      setSubNavbarOpen(false);
+      setActiveCategory(null);
+    }, 300);
+  };
+
+  const MAIN_CATEGORY_GROUPS = [
+    "Manpower Services",
+    "Care & Lifestyle",
+    "Professional & Finance",
+    "Construction & Industrial",
+    "Technical & Electronics",
+    "Events, Food & Leisure",
+    "Travel & Transport",
+    "Retail & Others",
+  ];
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -80,7 +117,10 @@ export default function Navbar() {
           .from("categories")
           .select("*")
           .order("name", { ascending: true });
-        if (!error) setCategories(data || []);
+        if (!error) {
+          setCategories(data || []);
+          console.log("Fetched categories:", data?.length);
+        }
       } catch (err) {
         console.error("Error fetching categories in Navbar:", err);
       }
@@ -160,7 +200,16 @@ export default function Navbar() {
       {/* ════════════════════════════════════
           HEADER
       ════════════════════════════════════ */}
-      <header className="sticky top-0 z-50 bg-white shadow-md border-b border-transparent transition-colors">
+      <div 
+        className="sticky top-0 z-50 w-full"
+        onMouseLeave={handleMouseLeave}
+      >
+        <header 
+          className="relative z-50 bg-white shadow-md border-b border-transparent transition-colors"
+          onMouseEnter={() => {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+          }}
+        >
         <div className="container mx-auto flex items-center justify-between h-20 px-4">
           {/* Logo */}
           <div className="flex-shrink-0">
@@ -171,34 +220,25 @@ export default function Navbar() {
           <nav className="hidden md:flex flex-grow justify-center items-center space-x-8">
             <Link
               href="/"
-              className="text-gray-600 hover:text-[#2a7db4] transition-colors"
+              className="text-gray-600 hover:text-brand-dark transition-colors font-medium"
             >
               Home
             </Link>
-            {showRegister && (
-              <Link
-                href="/register-business"
-                className="text-gray-600 hover:text-[#2a7db4] transition-colors"
-                >
-                Register Business
-              </Link>
-            )}
-            <CategoriesMenu initialCategories={categories} />
             <Link
               href="/about"
-              className="text-gray-600 hover:text-[#2a7db4] transition-colors"
+              className="text-gray-600 hover:text-brand-dark transition-colors font-medium"
             >
               About
             </Link>
             <Link
               href="/faq"
-              className="text-gray-600 hover:text-[#2a7db4] transition-colors"
+              className="text-gray-600 hover:text-brand-dark transition-colors font-medium"
             >
               FAQ
             </Link>
             <Link
               href="/contact"
-              className="text-gray-600 hover:text-[#2a7db4] transition-colors"
+              className="text-gray-600 hover:text-brand-dark transition-colors font-medium"
             >
               Contact
             </Link>
@@ -244,6 +284,47 @@ export default function Navbar() {
           </div>
         </div>
       </header>
+
+      {/* Secondary Category Bar */}
+      <div className={cn(
+        "hidden md:block border-b border-gray-200 transition-colors duration-300",
+        scrolled ? "bg-white shadow-sm" : "bg-brand-blue/5"
+      )}>
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-center space-x-1 py-1">
+            {MAIN_CATEGORY_GROUPS.map((group) => (
+              <button
+                key={group}
+                onClick={() => {
+                  if (activeCategory === group && subNavbarOpen) {
+                    setSubNavbarOpen(false);
+                  } else {
+                    setActiveCategory(group);
+                    setSubNavbarOpen(true);
+                  }
+                }}
+                className={cn(
+                  "px-4 py-2 text-[10px] font-bold uppercase tracking-widest transition-all rounded-md",
+                  activeCategory === group && subNavbarOpen
+                    ? "text-brand-dark bg-white shadow-sm"
+                    : "text-gray-500 hover:text-brand-dark hover:bg-white/50"
+                )}
+              >
+                {group}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <CategorySubNavbar
+        isOpen={subNavbarOpen}
+        activeCategory={activeCategory}
+        categories={categories as any}
+        onClose={() => setSubNavbarOpen(false)}
+        topOffset={scrolled ? 120 : 121}
+      />
+    </div>
 
       {/* ════════════════════════════════════
           MOBILE SLIDE PANEL
