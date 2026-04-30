@@ -205,7 +205,7 @@ export default function Navbar() {
         onMouseLeave={handleMouseLeave}
       >
         <header 
-          className="relative z-50 bg-white shadow-md border-b border-transparent transition-colors"
+          className="relative z-50 bg-white border-b border-transparent transition-colors"
           onMouseEnter={() => {
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
           }}
@@ -307,7 +307,7 @@ export default function Navbar() {
                   "px-4 py-2 text-[10px] font-bold uppercase tracking-widest transition-all rounded-md",
                   activeCategory === group && subNavbarOpen
                     ? "text-brand-dark bg-white shadow-sm"
-                    : "text-gray-500 hover:text-brand-dark hover:bg-white/50"
+                    : "text-gray-600 hover:text-brand-dark hover:bg-white/50"
                 )}
               >
                 {group}

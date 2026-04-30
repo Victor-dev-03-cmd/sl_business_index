@@ -258,11 +258,11 @@ export default function HomePage() {
           <span className="inline-block px-4 py-1.5 mb-6 text-[11px] md:text-[13px] tracking-[0.15em] uppercase text-brand-sand border border-gray-300/20 rounded bg-white/5">
             Sri Lanka Business Index
           </span>
-          <h1 className="text-3xl md:text-7xl text-white mb-6 leading-tight tracking-tight">
+          <h1 className="text-3xl md:text-6xl text-white mb-6 leading-tight tracking-tight">
             The Ultimate Directory for <br />
-            <span className="text-white text-4xl md:text-7xl">Businesses in Sri Lanka (SLBI)</span>
+            <span className="text-white text-4xl md:text-6xl">Businesses in Sri Lanka (SLBI)</span>
           </h1>
-          <p className="text-brand-sand text-base md:text-lg mb-10 max-w-xl mx-auto leading-relaxed">
+          <p className="text-brand-sand text-base md:text-[16px] mb-10 max-w-xl mx-auto leading-relaxed">
             Explore verified local businesses, clinics, and luxury villas across Sri Lanka. Discover premium services and authentic island experiences through our directory.
           </p>
 
