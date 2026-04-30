@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { Mic, MicOff, Loader2 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -91,50 +90,18 @@ export default function VoiceSearch({ onResult, className }: VoiceSearchProps) {
         )}
         title={isListening ? "Stop listening" : "Search by voice"}
       >
-        <AnimatePresence mode="wait">
-          {isListening ? (
-            <motion.div
-              key="listening"
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              className="relative"
-            >
-              <Mic size={20} strokeWidth={2} />
-              <motion.span
-                animate={{
-                  scale: [1, 1.5, 1],
-                  opacity: [0.5, 0, 0.5],
-                }}
-                transition={{
-                  duration: 1.5,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-                className="absolute inset-0 rounded-full bg-red-400 -z-10"
-              />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="mic"
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-            >
-              <Mic size={20} strokeWidth={1.5} />
-            </motion.div>
+        <div className="relative">
+          <Mic size={20} strokeWidth={isListening ? 2 : 1.5} />
+          {isListening && (
+            <span className="absolute inset-0 rounded-full bg-red-400/30 animate-ping -z-10" />
           )}
-        </AnimatePresence>
+        </div>
       </button>
 
       {isListening && (
-        <motion.span
-          initial={{ opacity: 0, x: 5 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="absolute right-full mr-2 text-[10px] font-medium text-red-500 uppercase tracking-widest whitespace-nowrap"
-        >
+        <span className="absolute right-full mr-2 text-[10px] font-medium text-red-500 uppercase tracking-widest whitespace-nowrap">
           Listening...
-        </motion.span>
+        </span>
       )}
     </div>
   );

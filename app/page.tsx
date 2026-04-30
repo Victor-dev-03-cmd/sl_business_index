@@ -65,6 +65,8 @@ export default function HomePage() {
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
   const [showAllCategories, setShowAllCategories] = useState(false);
+  const [activePageIndex, setActivePageIndex] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
   const { data: categories = EMPTY_ARRAY, isLoading: categoriesLoading } = useQuery({
     queryKey: ["categories-home"],
@@ -98,7 +100,7 @@ export default function HomePage() {
         `,
         )
         .order("order_index", { ascending: true })
-        .limit(10);
+        .limit(18);
 
       if (error) {
         console.error("Featured listings fetch error:", error);
@@ -143,8 +145,20 @@ export default function HomePage() {
         scrollContainerRef.current;
       setCanScrollLeft(scrollLeft > 0);
       setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 5);
+
+      // Update pagination dots
+      const pages = Math.ceil(scrollWidth / clientWidth);
+      setTotalPages(pages > 1 ? pages : 1);
+      const active = Math.round(scrollLeft / clientWidth);
+      setActivePageIndex(active);
     }
   };
+
+  useEffect(() => {
+    if (!categoriesLoading) {
+      setTimeout(checkScroll, 100);
+    }
+  }, [categoriesLoading]);
 
   useEffect(() => {
     checkScroll();
@@ -224,6 +238,16 @@ export default function HomePage() {
     }
     params.set("q", categoryName);
     router.push(`/nearby?${params.toString()}`);
+  };
+
+  const scrollToPage = (index: number) => {
+    if (scrollContainerRef.current) {
+      const { clientWidth } = scrollContainerRef.current;
+      scrollContainerRef.current.scrollTo({
+        left: index * clientWidth,
+        behavior: "smooth",
+      });
+    }
   };
 
   return (
@@ -362,9 +386,28 @@ export default function HomePage() {
                   );
                 })}
         </div>
+
+        {/* --- PAGINATION DOTS --- */}
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center gap-2.5 mt-4">
+            {[...Array(totalPages)].map((_, i) => (
+              <button
+                key={i}
+                onClick={() => scrollToPage(i)}
+                className={cn(
+                  "w-2 h-2 rounded-full transition-all duration-300",
+                  activePageIndex === i 
+                    ? "bg-brand-blue w-6" 
+                    : "bg-gray-300 hover:bg-gray-400"
+                )}
+                aria-label={`Go to page ${i + 1}`}
+              />
+            ))}
+          </div>
+        )}
       </section>
 
-      {/* --- LISTINGS (4-Column Modern Grid) --- */}
+      {/* --- LISTINGS (6-Column Modern Grid) --- */}
       <section className="py-24 bg-[#f5f5f5] border-t border-gray-300">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-14 gap-4">
@@ -389,9 +432,9 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {featuredLoading ? (
-              [...Array(10)].map((_, i) => (
+              [...Array(18)].map((_, i) => (
                 <div
                   key={i}
                   className="bg-white rounded-[6px] overflow-hidden border border-gray-300 shadow-sm flex flex-col h-full"

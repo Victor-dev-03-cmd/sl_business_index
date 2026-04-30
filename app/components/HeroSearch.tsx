@@ -1,13 +1,11 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
 import { Search, MapPin, ChevronRight, Building2, Star, Tags } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import { cn, expandSearchQuery } from "@/lib/utils";
 import { supabase } from "@/lib/supabaseClient";
-import Fuse from "fuse.js";
 import VoiceSearch from "./VoiceSearch";
 import { SL_TOWNS, Town } from "@/lib/towns";
 
@@ -43,11 +41,9 @@ export default function HeroSearch({
   useEffect(() => {
     onFocusChange?.(isSearchFocused);
   }, [isSearchFocused, onFocusChange]);
-  const [suggestions, setSuggestions] = useState<any[]>([]);
   const [businessSuggestions, setBusinessSuggestions] = useState<any[]>([]);
   const [fuzzyBusinessSuggestions, setFuzzyBusinessSuggestions] = useState<any[]>([]);
   const [categorySuggestions, setCategorySuggestions] = useState<any[]>([]);
-  const [geoData, setGeoData] = useState<any[]>([]);
   
   const searchBarRef = useRef<HTMLFormElement>(null);
 
@@ -58,45 +54,6 @@ export default function HeroSearch({
     }, 300);
     return () => clearTimeout(timer);
   }, [searchQuery]);
-
-  // Load GeoJSON data once
-  useEffect(() => {
-    fetch("/srilanka.geojson")
-      .then((res) => res.json())
-      .then((data) => {
-        // Optimization: Simplify GeoJSON features for Fuse
-        const simplified = (data.features || []).map((f: any) => ({
-          id: f.id,
-          properties: {
-            name: f.properties.name,
-            category: f.properties.category,
-            location: f.properties.location,
-            city: f.properties.city,
-            address: f.properties.address,
-          },
-          geometry: {
-            coordinates: f.geometry.coordinates,
-          }
-        }));
-        setGeoData(simplified);
-      })
-      .catch((err) => console.error("Error loading GeoJSON:", err));
-  }, []);
-
-  const fuse = useMemo(
-    () =>
-      new Fuse(geoData, {
-        keys: [
-          "properties.name",
-          "properties.category",
-          "properties.location",
-          "properties.address",
-        ],
-        threshold: 0.3,
-        distance: 100,
-      }),
-    [geoData]
-  );
 
   // Search logic
   useEffect(() => {
@@ -115,9 +72,6 @@ export default function HeroSearch({
     }
 
     if (debouncedSearchQuery.trim().length > 0) {
-      const geoResults = fuse.search(debouncedSearchQuery).slice(0, 4);
-      setSuggestions(geoResults.map((r) => r.item));
-
       const fetchSuggestions = async () => {
         try {
           const { data, error } = await supabase.rpc("get_global_search_suggestions", {
@@ -135,11 +89,10 @@ export default function HeroSearch({
       };
       fetchSuggestions();
     } else {
-      setSuggestions([]);
       setBusinessSuggestions(featuredBusinesses.slice(0, 4));
       setFuzzyBusinessSuggestions([]);
     }
-  }, [debouncedSearchQuery, searchQuery, fuse, featuredBusinesses, categories]);
+  }, [debouncedSearchQuery, searchQuery, featuredBusinesses, categories]);
 
   const handleSearch = (query?: string) => {
     const finalQuery = query || searchQuery;
@@ -228,14 +181,6 @@ export default function HeroSearch({
     router.push(`/nearby?${searchParams.toString()}`);
   };
 
-  const handleSelectPlace = (feature: any) => {
-    const { name } = feature.properties;
-    const [lng, lat] = feature.geometry.coordinates;
-    setSearchQuery(name);
-    setSuggestions([]);
-    router.push(`/nearby?q=${encodeURIComponent(name)}&lat=${lat}&lng=${lng}&radius=5000`);
-  };
-
   const handleCategoryClick = (categoryName: string) => {
     const params = new URLSearchParams();
     if (userCoords) {
@@ -268,9 +213,9 @@ export default function HeroSearch({
       <form 
         onSubmit={handleSubmit}
         ref={searchBarRef} 
-        className="bg-white rounded-[6px] shadow-lg border border-gray-300"
+        className="bg-white rounded-[6px] shadow-lg border border-gray-300 overflow-hidden"
       >
-        <div className="flex items-center px-4 py-3.5 md:px-5 md:py-4 bg-white rounded-[6px] gap-2 md:gap-3 min-h-[44px]">
+        <div className="flex items-center px-4 py-2 md:px-5 md:py-2.5 bg-white rounded-[6px] gap-2 md:gap-3 min-h-[40px]">
           <Search className="text-gray-400 shrink-0" size={20} strokeWidth={1.5} />
           <input
             type="text"
@@ -301,8 +246,7 @@ export default function HeroSearch({
 
       {/* Suggestions panel */}
       {isSearchFocused &&
-        (suggestions.length > 0 ||
-          businessSuggestions.length > 0 ||
+        (businessSuggestions.length > 0 ||
           fuzzyBusinessSuggestions.length > 0 ||
           categorySuggestions.length > 0) && (
           <div
@@ -391,31 +335,6 @@ export default function HeroSearch({
                       )}
                       <ChevronRight size={14} className="text-gray-300" />
                     </div>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Locations */}
-            {suggestions.length > 0 && (
-              <div className={cn((fuzzyBusinessSuggestions.length > 0 || businessSuggestions.length > 0) && "border-t border-gray-100")}>
-                <div className="px-4 pt-3 pb-2">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Locations</span>
-                </div>
-                {suggestions.map((feature, idx) => (
-                  <button
-                    key={feature.id || idx}
-                    onMouseDown={() => handleSelectPlace(feature)}
-                    className="w-full px-4 py-3 hover:bg-gray-50 active:bg-gray-100 flex items-center gap-3 transition-colors border-b border-gray-50 last:border-0"
-                  >
-                    <div className="w-9 h-9 rounded-full bg-brand-dark/8 flex items-center justify-center shrink-0">
-                      <MapPin size={15} className="text-brand-dark" />
-                    </div>
-                    <div className="flex-1 min-w-0 text-left">
-                      <p className="text-sm font-medium text-gray-800 truncate">{feature.properties.name}</p>
-                      <p className="text-[10px] text-gray-400 mt-0.5">{feature.properties.location || feature.properties.city || "Sri Lanka"}</p>
-                    </div>
-                    <ChevronRight size={14} className="text-gray-300 shrink-0" />
                   </button>
                 ))}
               </div>
