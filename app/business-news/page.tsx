@@ -530,7 +530,7 @@ export default function BusinessNewsPage() {
                       <div className="flex items-center gap-6">
                         <button
                           onClick={() => setSharingPostId(sharingPostId === post.id ? null : post.id)}
-                          className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 hover:text-brand-blue transition-colors relative"
+                          className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-brand-blue hover:text-brand-blue transition-colors relative"
                         >
                           <Share2 size={14} /> Share
                           <AnimatePresence>
@@ -560,7 +560,7 @@ export default function BusinessNewsPage() {
                         </button>
                         <a
                           href={`tel:${post.contact_phone}`}
-                          className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 hover:text-brand-gold transition-colors"
+                          className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-green-600 hover:text-brand-gold transition-colors"
                         >
                           <Phone size={14} /> Call
                         </a>
