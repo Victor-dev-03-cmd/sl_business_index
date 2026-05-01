@@ -7,6 +7,7 @@ import * as LucideIcons from "lucide-react";
 import { cn, expandSearchQuery } from "@/lib/utils";
 import { supabase } from "@/lib/supabaseClient";
 import VoiceSearch from "./VoiceSearch";
+import VerifiedBadge from "./VerifiedBadge";
 import { SL_TOWNS, Town } from "@/lib/towns";
 
 const sriLankanDistricts = [
