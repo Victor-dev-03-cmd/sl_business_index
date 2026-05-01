@@ -224,7 +224,7 @@ export default function AdminBillingPage() {
 
       const { error } = await supabase.from("announcements").insert({
         ...formData,
-        created_by: user.id,
+        created_by: user?.id,
         starts_at: new Date().toISOString(),
       });
       if (error) throw error;

@@ -62,7 +62,7 @@ export default function VendorQRCodePage() {
       const { data, error } = await supabase
         .from('businesses')
         .select('*')
-        .eq('owner_id', user.id)
+        .eq('owner_id', user?.id)
         .order('name', { ascending: true });
 
       if (error) throw error;
@@ -88,7 +88,7 @@ export default function VendorQRCodePage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ business_id: selectedBusiness.id }),
+        body: JSON.stringify({ business_id: selectedBusiness?.id }),
       });
 
       const data = await response.json();
@@ -140,9 +140,9 @@ export default function VendorQRCodePage() {
       ctx.fillStyle = '#053765';
       ctx.font = 'bold 32px sans-serif';
       ctx.textAlign = 'center';
-      const displayName = selectedBusiness.name.length > 25 
-        ? selectedBusiness.name.substring(0, 22) + '...' 
-        : selectedBusiness.name;
+      const displayName = (selectedBusiness?.name || '').length > 25 
+        ? selectedBusiness?.name.substring(0, 22) + '...' 
+        : selectedBusiness?.name;
       ctx.fillText(displayName, finalCanvas.width / 2, finalCanvas.height - 70);
       
       // Add Platform Name
@@ -157,7 +157,7 @@ export default function VendorQRCodePage() {
 
       const url = finalCanvas.toDataURL('image/png');
       const link = document.createElement('a');
-      link.download = `QR-${selectedBusiness.name.replace(/[^a-z0-9]/gi, '-')}.png`;
+      link.download = `QR-${(selectedBusiness?.name || 'Business').replace(/[^a-z0-9]/gi, '-')}.png`;
       link.href = url;
       link.click();
       

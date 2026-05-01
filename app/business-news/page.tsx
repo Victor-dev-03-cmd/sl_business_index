@@ -31,6 +31,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
+import VerifiedBadge from "@/app/components/VerifiedBadge";
 
 interface NewsPost {
   id: string;
@@ -106,6 +107,7 @@ export default function BusinessNewsPage() {
 
   // Sharing state
   const [sharingPostId, setSharingPostId] = useState<string | null>(null);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   const fetchPosts = useCallback(async () => {
     try {
@@ -251,7 +253,7 @@ export default function BusinessNewsPage() {
       let currentProgress = 0;
       for (const file of selectedImages) {
         const fileExt = file.name.split('.').pop();
-        const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const fileName = `${user?.id}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
         const filePath = `posts/${fileName}`;
 
         const { error: uploadError, data } = await supabase.storage
@@ -275,7 +277,7 @@ export default function BusinessNewsPage() {
         .insert([
           {
             business_id: selectedBusinessId,
-            owner_id: user.id,
+            owner_id: user?.id,
             title,
             content,
             contact_phone: contactPhone,
@@ -356,8 +358,37 @@ export default function BusinessNewsPage() {
         </div>
       </div>
 
-      <div className="max-w-[1600px] mx-auto px-4 md:px-8 mt-8">
-        <div className="grid grid-cols-12 gap-8">
+      <div className="max-w-[1600px] mx-auto px-4 md:px-8 mt-4 lg:mt-8">
+        {/* Mobile Category Scroll */}
+        <div className="lg:hidden mb-6 -mx-4 px-4 overflow-x-auto no-scrollbar flex items-center gap-2 pb-2">
+          <button
+            onClick={() => setFilterCategory("all")}
+            className={cn(
+              "whitespace-nowrap px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all shrink-0",
+              filterCategory === "all" 
+                ? "bg-brand-blue text-white border-brand-blue shadow-lg shadow-brand-blue/20" 
+                : "bg-white text-gray-400 border-gray-100"
+            )}
+          >
+            All News
+          </button>
+          {MAIN_CATEGORY_GROUPS.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setFilterCategory(cat)}
+              className={cn(
+                "whitespace-nowrap px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all shrink-0",
+                filterCategory === cat 
+                  ? "bg-brand-blue text-white border-brand-blue shadow-lg shadow-brand-blue/20" 
+                  : "bg-white text-gray-400 border-gray-100"
+              )}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
           {/* LEFT SIDEBAR: Categories (Cols 1-2) */}
           <aside className="hidden lg:block lg:col-span-2 space-y-6 sticky top-24 self-start">
@@ -415,6 +446,12 @@ export default function BusinessNewsPage() {
                 <p className="text-xs text-gray-500 mt-1 uppercase tracking-widest font-bold">Latest Industry Updates</p>
               </div>
               <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowMobileFilters(true)}
+                  className="lg:hidden flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-gray-200 bg-white text-gray-500 hover:border-brand-blue hover:text-brand-blue transition-all"
+                >
+                  <Filter size={12} /> Filters
+                </button>
                 <button
                   onClick={() => setFilterType("hiring")}
                   className={cn(
@@ -485,7 +522,7 @@ export default function BusinessNewsPage() {
                       <div className="flex items-center gap-5">
                         <div className="w-16 h-16 rounded bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden shadow-inner shrink-0 group-hover:border-brand-gold/50 transition-colors">
                           {post.businesses?.logo_url ? (
-                            <img src={post.businesses.logo_url} alt={post.businesses.name} className="w-full h-full object-cover" />
+                            <img src={post.businesses?.logo_url} alt={post.businesses?.name} className="w-full h-full object-cover" />
                           ) : (
                             <Building2 size={28} className="text-gray-300" />
                           )}
@@ -507,7 +544,7 @@ export default function BusinessNewsPage() {
                           <h3 className="text-lg text-gray-900 flex items-center gap-2 leading-none tracking-tight">
                             {post.businesses?.name}
                             {post.businesses?.is_verified && (
-                              <ShieldCheck size={18} className="text-blue-500 fill-blue-50" />
+                              <VerifiedBadge size={14} />
                             )}
                           </h3>
                         </div>
@@ -650,7 +687,10 @@ export default function BusinessNewsPage() {
                        <div className="w-8 h-8 rounded-lg bg-blue-50 overflow-hidden border border-blue-100 shrink-0">
                          {post.businesses?.logo_url ? <img src={post.businesses.logo_url} className="w-full h-full object-cover" /> : <Building2 size={14} className="m-auto text-blue-300" />}
                        </div>
-                       <span className="text-[10px] font-black text-blue-500 uppercase tracking-tight">{post.businesses?.name}</span>
+                       <span className="text-[10px] font-black text-blue-500 uppercase tracking-tight flex items-center gap-1">
+                         {post.businesses?.name}
+                         {post.businesses?.is_verified && <VerifiedBadge size={10} />}
+                       </span>
                     </div>
                     <h4 className="text-xs font-bold text-gray-900 group-hover:text-brand-blue transition-colors line-clamp-2 leading-snug">{post.title}</h4>
                   </Link>
@@ -664,10 +704,91 @@ export default function BusinessNewsPage() {
         </div>
       </div>
 
+      {/* Mobile Filter Drawer */}
+      <AnimatePresence>
+        {showMobileFilters && (
+          <div className="fixed inset-0 z-[110] flex items-end lg:hidden">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-brand-dark/40 backdrop-blur-sm"
+              onClick={() => setShowMobileFilters(false)}
+            />
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="relative w-full bg-white rounded-t-[32px] shadow-2xl overflow-hidden p-6 pb-12 flex flex-col"
+            >
+              <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-8" />
+              <div className="flex items-center justify-between mb-8">
+                <h3 className="text-xl font-bold text-gray-900">Filters</h3>
+                <button 
+                  onClick={() => setShowMobileFilters(false)}
+                  className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 text-gray-400"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="space-y-8 overflow-y-auto max-h-[60vh] px-2">
+                <div className="space-y-4">
+                  <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Categories</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => { setFilterCategory("all"); setShowMobileFilters(false); }}
+                      className={cn(
+                        "text-left px-4 py-3 rounded-xl text-xs font-bold border transition-all",
+                        filterCategory === "all" ? "bg-brand-blue/10 border-brand-blue text-brand-blue" : "bg-gray-50 border-transparent text-gray-500"
+                      )}
+                    >
+                      All News
+                    </button>
+                    {MAIN_CATEGORY_GROUPS.map((cat) => (
+                      <button
+                        key={cat}
+                        onClick={() => { setFilterCategory(cat); setShowMobileFilters(false); }}
+                        className={cn(
+                          "text-left px-4 py-3 rounded-xl text-xs font-bold border transition-all",
+                          filterCategory === cat ? "bg-brand-blue/10 border-brand-blue text-brand-blue" : "bg-gray-50 border-transparent text-gray-500"
+                        )}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Location</h4>
+                  <select
+                    value={filterDistrict}
+                    onChange={(e) => { setFilterDistrict(e.target.value); setShowMobileFilters(false); }}
+                    className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-brand-gold outline-none appearance-none"
+                  >
+                    <option value="all">All Districts</option>
+                    {SRI_LANKAN_DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowMobileFilters(false)}
+                className="w-full mt-8 py-4 bg-brand-dark text-white rounded-2xl font-black text-[12px] tracking-widest shadow-xl shadow-brand-dark/20"
+              >
+                Show Results
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* --- POST NEWS MODAL --- */}
       <AnimatePresence>
         {showPostModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6">
+          <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-6">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -677,12 +798,13 @@ export default function BusinessNewsPage() {
             />
             
             <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              initial={{ opacity: 0, scale: 0.9, y: 100 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-2xl bg-white rounded-[32px] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+              exit={{ opacity: 0, scale: 0.9, y: 100 }}
+              className="relative w-full max-w-2xl bg-white rounded-t-[32px] md:rounded-[32px] shadow-2xl overflow-hidden max-h-[92vh] md:max-h-[90vh] flex flex-col"
             >
-              <div className="p-8 pb-0 flex items-center justify-between shrink-0">
+              <div className="md:hidden w-12 h-1.5 bg-gray-200 rounded-full mx-auto mt-4 shrink-0" />
+              <div className="p-6 md:p-8 pb-0 flex items-center justify-between shrink-0">
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900">New Business Update</h2>
                   <p className="text-sm text-gray-400 mt-1">Broadcast to all users and vendors</p>
@@ -696,7 +818,7 @@ export default function BusinessNewsPage() {
                 </button>
               </div>
 
-              <div className="p-8 overflow-y-auto custom-scrollbar flex-1">
+              <div className="p-6 md:p-8 overflow-y-auto custom-scrollbar flex-1">
                 {userBusinesses.length > 0 ? (
                   <form onSubmit={handlePostSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
