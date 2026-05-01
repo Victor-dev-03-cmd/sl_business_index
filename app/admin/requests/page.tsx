@@ -168,10 +168,11 @@ export default function BusinessRequestsPage() {
       if (businessError) throw businessError;
 
       if (status === "approved" && owner_id) {
-        await supabase
+        const { error: profileError } = await supabase
           .from("profiles")
           .update({ role: "vendor" })
           .eq("id", owner_id);
+        if (profileError) console.error("Error updating profile role:", profileError);
       }
     },
     onSuccess: (_, variables) => {
@@ -281,13 +282,15 @@ export default function BusinessRequestsPage() {
       if (status === "approved") {
         const ownerIds = requests
           .filter((r) => selectedIds.includes(r.id) && r.owner_id)
-          .map((r) => r.owner_id);
+          .map((r) => r.owner_id)
+          .filter(Boolean);
 
         if (ownerIds.length > 0) {
-          await supabase
+          const { error: bulkProfileError } = await supabase
             .from("profiles")
             .update({ role: "vendor" })
             .in("id", ownerIds);
+          if (bulkProfileError) console.error("Error in bulk profile update:", bulkProfileError);
         }
       }
       setSelectedIds([]);

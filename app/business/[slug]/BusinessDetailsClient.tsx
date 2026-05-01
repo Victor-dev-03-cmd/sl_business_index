@@ -23,11 +23,14 @@ import {
   Languages,
   Coffee,
   Navigation,
+  Flag,
+  AlertTriangle
 } from "lucide-react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import { supabase } from "@/lib/supabaseClient";
 import VerifiedBadge from "@/app/components/VerifiedBadge";
+import ReportModal from "@/app/components/ReportModal";
 import { logEvent } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -69,6 +72,7 @@ export default function BusinessDetailsClient({ business }: Props) {
   });
   const [submittingReview, setSubmittingReview] = useState(false);
   const [submittingEnquiry, setSubmittingEnquiry] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
 
   useEffect(() => {
     fetchReviews();
@@ -97,9 +101,9 @@ export default function BusinessDetailsClient({ business }: Props) {
     try {
       // New Analytics logging
       await logEvent(
-        business.id,
+        business?.id,
         "view",
-        business.address?.split(",").pop()?.trim() || "Unknown",
+        business?.address?.split(",").pop()?.trim() || "Unknown",
       );
 
       const {
@@ -108,14 +112,14 @@ export default function BusinessDetailsClient({ business }: Props) {
       
       if (user) {
         await supabase.from("business_views").insert({
-          business_id: business.id,
-          user_id: user.id,
+          business_id: business?.id,
+          user_id: user?.id,
         });
       }
 
       // Increment view count in businesses table
       await supabase.rpc("increment_business_views", {
-        business_id: business.id,
+        business_id: business?.id,
       });
     } catch (error) {
       console.error("Error recording view:", error);
@@ -168,11 +172,11 @@ export default function BusinessDetailsClient({ business }: Props) {
       const { data, error } = await supabase
         .from("reviews")
         .insert({
-          business_id: business.id,
+          business_id: business?.id,
           user_id: user?.id || null,
-          user_name: reviewForm.user_name,
-          rating: reviewForm.rating,
-          comment: reviewForm.comment,
+          user_name: reviewForm?.user_name,
+          rating: reviewForm?.rating,
+          comment: reviewForm?.comment,
           sentiment: sentiment,
           is_approved: is_approved,
         })
@@ -203,11 +207,11 @@ export default function BusinessDetailsClient({ business }: Props) {
     try {
       // 1. Save lead to Supabase for tracking
       const { error } = await supabase.from("leads").insert({
-        business_id: business.id,
-        name: enquiryForm.name,
-        email: enquiryForm.email,
-        phone: enquiryForm.phone,
-        message: enquiryForm.message,
+        business_id: business?.id,
+        name: enquiryForm?.name,
+        email: enquiryForm?.email,
+        phone: enquiryForm?.phone,
+        message: enquiryForm?.message,
         source: "Business Detail Page",
       });
 
@@ -321,6 +325,13 @@ export default function BusinessDetailsClient({ business }: Props) {
 
             {/* Desktop-only hero actions */}
             <div className="hidden md:flex gap-3 shrink-0">
+              <button 
+                onClick={() => setShowReportModal(true)}
+                className="p-3 bg-red-500/10 backdrop-blur-md border border-red-500/20 rounded text-red-500 hover:bg-red-500/20 transition-all flex items-center gap-2"
+                title="Report this business"
+              >
+                <Flag size={20} />
+              </button>
               <button className="p-3 bg-white/10 backdrop-blur-md border border-white/20 rounded text-white hover:bg-white/20 transition-all">
                 <Share2 size={20} />
               </button>
@@ -850,6 +861,14 @@ export default function BusinessDetailsClient({ business }: Props) {
           <Share2 size={17} />
         </button>
       </div>
+
+      <ReportModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        targetId={business.id}
+        targetType="business"
+        targetName={business.name}
+      />
     </div>
   );
 }

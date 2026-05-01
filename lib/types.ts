@@ -17,7 +17,7 @@ export interface Business {
   location?: string; // PostGIS point string
   distanceText?: string;
   durationText?: string;
-  status?: 'pending' | 'approved' | 'rejected';
+  status?: 'pending' | 'approved' | 'rejected' | 'suspended';
   created_at?: string;
   owner_name?: string;
   owner_id?: string;

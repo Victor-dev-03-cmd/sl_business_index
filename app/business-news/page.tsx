@@ -24,7 +24,9 @@ import {
   Image as ImageIcon,
   Trash2,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  AlertTriangle,
+  Flag
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -32,6 +34,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import VerifiedBadge from "@/app/components/VerifiedBadge";
+import ReportModal from "@/app/components/ReportModal";
 
 interface NewsPost {
   id: string;
@@ -49,6 +52,7 @@ interface NewsPost {
     name: string;
     logo_url: string;
     is_verified: boolean;
+    status: string;
   } | null;
 }
 
@@ -109,6 +113,9 @@ export default function BusinessNewsPage() {
   const [sharingPostId, setSharingPostId] = useState<string | null>(null);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
+  // Moderation state
+  const [reportingTarget, setReportingTarget] = useState<{ id: string, name: string } | null>(null);
+
   const fetchPosts = useCallback(async () => {
     try {
       setLoading(true);
@@ -116,12 +123,14 @@ export default function BusinessNewsPage() {
         .from("business_news")
         .select(`
           *,
-          businesses (
+          businesses!inner (
             name,
             logo_url,
-            is_verified
+            is_verified,
+            status
           )
         `)
+        .eq("businesses.status", "approved")
         .order("created_at", { ascending: false });
 
       if (filterCategory !== "all") query = query.eq("category", filterCategory);
@@ -601,6 +610,12 @@ export default function BusinessNewsPage() {
                         >
                           <Phone size={14} /> Call
                         </a>
+                        <button
+                          onClick={() => setReportingTarget({ id: post.id, name: post.title })}
+                          className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-red-400 hover:text-red-600 transition-colors"
+                        >
+                          <Flag size={14} /> Report
+                        </button>
                       </div>
                       <a
                         href={`https://wa.me/${post.contact_phone.replace(/[^\d]/g, '')}`}
@@ -1007,6 +1022,14 @@ export default function BusinessNewsPage() {
           </div>
         )}
       </AnimatePresence>
+
+      <ReportModal
+        isOpen={!!reportingTarget}
+        onClose={() => setReportingTarget(null)}
+        targetId={reportingTarget?.id || ""}
+        targetType="news"
+        targetName={reportingTarget?.name}
+      />
     </div>
   );
 }
