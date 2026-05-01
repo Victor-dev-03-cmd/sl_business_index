@@ -220,7 +220,7 @@ export default function AdminBillingPage() {
         data: { user },
       } = await supabase.auth.getUser();
 
-      if (!user) throw new Error("Not authenticated");
+      if (!user?.id) throw new Error("Not authenticated");
 
       const { error } = await supabase.from("announcements").insert({
         ...formData,

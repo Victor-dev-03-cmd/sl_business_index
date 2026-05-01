@@ -52,10 +52,10 @@ export default function BusinessCard({ business }: BusinessCardProps) {
 
       <div className="p-5 flex-1 flex flex-col relative z-20">
         <div className="flex justify-between items-start mb-2">
-          <h3 className="text-lg font-semibold text-gray-900 group-hover:text-brand-blue transition-colors line-clamp-1 leading-tight">
+          <h3 className="text-lg font-semibold text-gray-900 group-hover:text-brand-blue transition-colors line-clamp-1 leading-tight flex items-center gap-1.5">
             {business.name}
+            {business.is_verified && <VerifiedBadge size={14} />}
           </h3>
-          {business.can_show_badge && <VerifiedBadge size={16} />}
         </div>
         
         <div className="flex items-center gap-1.5 mb-3">

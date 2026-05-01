@@ -312,7 +312,10 @@ export default function HeroSearch({
                       )}
                     </div>
                     <div className="flex-1 min-w-0 text-left">
-                      <p className="text-sm font-semibold text-gray-800 truncate leading-tight">{biz.name}</p>
+                      <p className="text-sm font-semibold text-gray-800 truncate leading-tight flex items-center gap-1.5">
+                        {biz.name}
+                        {biz.is_verified && <VerifiedBadge size={10} />}
+                      </p>
                       <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                         <span className="text-[10px] font-medium text-brand-blue bg-blue-50 px-2 py-0.5 rounded-full shrink-0">
                           {biz.category}

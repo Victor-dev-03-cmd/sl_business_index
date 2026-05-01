@@ -331,197 +331,226 @@ export default function BusinessNewsPage() {
     setSharingPostId(null);
   };
 
+  const recentPosts = posts.slice(0, 5);
+  const verifiedPartnerPosts = posts.filter(p => p.businesses?.is_verified).slice(0, 3);
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
-      <div className="bg-brand-dark py-16 px-6 text-center relative overflow-hidden">
+      <div className="bg-brand-dark py-12 px-6 text-center relative overflow-hidden">
         <div className="absolute inset-0 opacity-10 pointer-events-none">
           <Megaphone className="w-96 h-96 -rotate-12 absolute -left-20 -top-20 text-white" />
           <Building2 className="w-96 h-96 rotate-12 absolute -right-20 -bottom-20 text-white" />
         </div>
         <div className="relative z-10 max-w-4xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 backdrop-blur-md text-brand-sand text-[11px] font-bold uppercase tracking-[0.2em] rounded-full mb-6 border border-white/20">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 backdrop-blur-md text-brand-sand text-[11px] font-bold uppercase tracking-[0.2em] rounded-full mb-4 border border-white/20">
             <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
             SL-Business News
           </div>
-          <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 tracking-tight">
+          <h1 className="text-3xl md:text-5xl font-bold text-white mb-4 tracking-tight">
             The Industry <span className="text-brand-gold">Pulse</span>
           </h1>
-          <p className="text-gray-300 text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
+          <p className="text-gray-300 text-sm md:text-base max-w-2xl mx-auto leading-relaxed">
             Instant updates, urgent requirements, and verified opportunities from across Sri Lanka's business landscape.
           </p>
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-6 -mt-10 relative z-30">
-        {/* Advanced Filters Bar */}
-        <div className="bg-white/80 backdrop-blur-xl p-4 rounded-2xl shadow-xl border border-white/40 mb-8 flex flex-col md:flex-row gap-4 items-center">
-          <div className="flex-1 w-full grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="relative">
-              <Tag size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <select
-                value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-gold outline-none transition-all text-sm font-medium appearance-none cursor-pointer"
-              >
-                <option value="all">All Categories</option>
-                {MAIN_CATEGORY_GROUPS.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            <div className="relative">
-              <MapPin size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <select
-                value={filterDistrict}
-                onChange={(e) => setFilterDistrict(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-gold outline-none transition-all text-sm font-medium appearance-none cursor-pointer"
-              >
-                <option value="all">All Districts</option>
-                {SRI_LANKAN_DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}
-              </select>
-            </div>
-            <div className="relative">
-              <Briefcase size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-gold outline-none transition-all text-sm font-medium appearance-none cursor-pointer"
-              >
-                <option value="all">All Types</option>
-                <option value="hiring">Hiring / Required</option>
-                <option value="looking">Looking for Work</option>
-              </select>
-            </div>
-          </div>
+      <div className="max-w-[1600px] mx-auto px-4 md:px-8 mt-8">
+        <div className="grid grid-cols-12 gap-8">
           
-          <button 
-            onClick={() => { setFilterCategory("all"); setFilterDistrict("all"); setFilterType("all"); }}
-            className="px-4 py-2.5 text-xs font-bold text-gray-400 hover:text-brand-gold uppercase tracking-widest transition-colors"
-          >
-            Reset
-          </button>
-        </div>
+          {/* LEFT SIDEBAR: Categories (Cols 1-2) */}
+          <aside className="hidden lg:block lg:col-span-2 space-y-6 sticky top-24 self-start">
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+              <div className="p-4 border-b border-gray-100 bg-gray-50/50">
+                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Categories</h3>
+              </div>
+              <div className="p-2 space-y-1">
+                <button
+                  onClick={() => setFilterCategory("all")}
+                  className={cn(
+                    "w-full text-left px-4 py-2 rounded-xl text-xs font-bold transition-all",
+                    filterCategory === "all" ? "bg-brand-blue/10 text-brand-blue" : "text-gray-500 hover:bg-gray-50"
+                  )}
+                >
+                  All News
+                </button>
+                {MAIN_CATEGORY_GROUPS.map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setFilterCategory(cat)}
+                    className={cn(
+                      "w-full text-left px-4 py-2 rounded-xl text-xs font-bold transition-all",
+                      filterCategory === cat ? "bg-brand-blue/10 text-brand-blue" : "text-gray-500 hover:bg-gray-50"
+                    )}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Feed */}
-          <div className="lg:col-span-2 space-y-6">
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+              <div className="p-4 border-b border-gray-100 bg-gray-50/50">
+                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Location</h3>
+              </div>
+              <div className="p-4">
+                <select
+                  value={filterDistrict}
+                  onChange={(e) => setFilterDistrict(e.target.value)}
+                  className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-brand-gold outline-none appearance-none cursor-pointer"
+                >
+                  <option value="all">All Districts</option>
+                  {SRI_LANKAN_DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+            </div>
+          </aside>
+
+          {/* CENTER: Main Feed (Cols 3-9) */}
+          <main className="col-span-12 lg:col-span-7 space-y-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Today's News</h2>
+                <p className="text-xs text-gray-500 mt-1 uppercase tracking-widest font-bold">Latest Industry Updates</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setFilterType("hiring")}
+                  className={cn(
+                    "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all",
+                    filterType === 'hiring' ? "bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/20" : "bg-white text-gray-400 border-gray-200 hover:border-blue-600 hover:text-blue-600"
+                  )}
+                >
+                  Hiring
+                </button>
+                <button
+                  onClick={() => setFilterType("looking")}
+                  className={cn(
+                    "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all",
+                    filterType === 'looking' ? "bg-emerald-600 text-white border-emerald-600 shadow-lg shadow-emerald-600/20" : "bg-white text-gray-400 border-gray-200 hover:border-emerald-600 hover:text-emerald-600"
+                  )}
+                >
+                  Looking
+                </button>
+                {filterType !== 'all' && (
+                   <button onClick={() => setFilterType("all")} className="text-[10px] font-bold text-gray-400 hover:text-red-500 underline underline-offset-4 ml-2">Clear</button>
+                )}
+              </div>
+            </div>
+
             {loading ? (
               [...Array(3)].map((_, i) => (
-                <div key={i} className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm animate-pulse">
-                  <div className="flex gap-4 mb-4">
-                    <div className="w-12 h-12 bg-gray-100 rounded-xl" />
-                    <div className="flex-1 space-y-2 py-1">
-                      <div className="h-3 bg-gray-100 rounded w-1/4" />
+                <div key={i} className="bg-white rounded-[12px] p-8 border border-gray-200 shadow-sm animate-pulse">
+                  <div className="flex gap-6 mb-6">
+                    <div className="w-16 h-16 bg-gray-100 rounded-2xl" />
+                    <div className="flex-1 space-y-3 py-1">
+                      <div className="h-4 bg-gray-100 rounded w-1/4" />
                       <div className="h-2 bg-gray-100 rounded w-1/3" />
                     </div>
                   </div>
-                  <div className="space-y-3">
-                    <div className="h-4 bg-gray-100 rounded w-3/4" />
-                    <div className="h-2 bg-gray-100 rounded w-full" />
+                  <div className="space-y-4">
+                    <div className="h-6 bg-gray-100 rounded w-3/4" />
+                    <div className="h-24 bg-gray-100 rounded-3xl w-full" />
                   </div>
                 </div>
               ))
             ) : posts.length > 0 ? (
               posts.map((post) => (
-                <div key={post.id} id={`post-${post.id}`} className="group bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-xl hover:border-brand-gold/30 transition-all duration-500 overflow-hidden flex flex-col">
-                  {/* Optional Image Carousel */}
+                <div key={post.id} id={`post-${post.id}`} className="group bg-white/80 backdrop-blur-xl rounded-[12px] border border-gray-200 shadow-sm hover:shadow-2xl hover:border-brand-gold/30 transition-all duration-700 overflow-hidden flex flex-col">
                   {post.images && post.images.length > 0 && (
-                    <div className="relative aspect-video w-full overflow-hidden bg-gray-100 group/img">
+                    <div className="relative aspect-[21/9] w-full overflow-hidden bg-gray-100">
                       <Image 
                         src={post.images[0]} 
                         alt={post.title} 
                         fill 
-                        className="object-cover transition-transform duration-700 group-hover:scale-105" 
+                        className="object-cover transition-transform duration-1000 group-hover:scale-105" 
                       />
-                      {post.images.length > 1 && (
-                        <div className="absolute bottom-3 right-3 px-2 py-1 bg-black/50 backdrop-blur-md rounded-lg text-[10px] text-white font-bold">
-                          +{post.images.length - 1} more
-                        </div>
-                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                      <div className="absolute bottom-6 left-8 right-8 flex items-end justify-between">
+                         <span className="px-4 py-1.5 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-[10px] text-white font-bold uppercase tracking-[0.2em]">
+                           {post.category}
+                         </span>
+                         {post.images.length > 1 && (
+                          <div className="px-3 py-1 bg-black/50 backdrop-blur-md rounded-lg text-[10px] text-white font-bold border border-white/10">
+                            +{post.images.length - 1} Photos
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
 
-                  <div className="p-6">
-                    {/* Card Header */}
-                    <div className="flex items-start justify-between mb-5">
-                      <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden shadow-inner shrink-0">
+                  <div className="p-8">
+                    <div className="flex items-start justify-between mb-8">
+                      <div className="flex items-center gap-5">
+                        <div className="w-16 h-16 rounded bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden shadow-inner shrink-0 group-hover:border-brand-gold/50 transition-colors">
                           {post.businesses?.logo_url ? (
                             <img src={post.businesses.logo_url} alt={post.businesses.name} className="w-full h-full object-cover" />
                           ) : (
-                            <Building2 size={24} className="text-gray-300" />
+                            <Building2 size={28} className="text-gray-300" />
                           )}
                         </div>
                         <div>
-                          <div className="flex items-center gap-2 mb-1">
+                          <div className="flex items-center gap-2 mb-1.5">
                             <span className={cn(
-                              "text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border",
+                              "text-[10px] font-black uppercase tracking-[0.1em] px-2.5 py-1 rounded-lg border",
                               post.post_type === 'hiring' 
-                                ? "bg-blue-50 text-blue-600 border-blue-100" 
+                                ? "bg-blue-50 text-blue-500 border-blue-100" 
                                 : "bg-emerald-50 text-emerald-600 border-emerald-100"
                             )}>
-                              {post.post_type === 'hiring' ? 'Hiring' : 'Looking'}
+                              {post.post_type === 'hiring' ? 'Requirement' : 'Opportunity'}
                             </span>
-                            <span className="text-[10px] text-gray-400 flex items-center gap-1 font-medium">
-                              <MapPin size={10} /> {post.district}
+                            <span className="text-[10px] text-gray-500 flex items-center gap-1 font-bold uppercase tracking-wider">
+                              <MapPin size={10} className="text-brand-gold" /> {post.district}
                             </span>
                           </div>
-                          <h3 className="text-base font-bold text-gray-900 flex items-center gap-1.5 leading-none">
+                          <h3 className="text-lg text-gray-900 flex items-center gap-2 leading-none tracking-tight">
                             {post.businesses?.name}
                             {post.businesses?.is_verified && (
-                              <ShieldCheck size={16} className="text-brand-gold" />
+                              <ShieldCheck size={18} className="text-blue-500 fill-blue-50" />
                             )}
                           </h3>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-tighter">
+                        <p className="text-[10px] font-black text-gray-500 tracking-widest">
                           {formatTime(post.created_at)}
                         </p>
                       </div>
                     </div>
 
-                    {/* Content */}
-                    <div className="mb-6">
-                      <h2 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-brand-gold transition-colors">{post.title}</h2>
-                      <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap line-clamp-6">
+                    <div className="mb-8">
+                      <h2 className="text-2xl text-brand-blue mb-4 group-hover:text-brand-blue transition-colors leading-tight tracking-tight">{post.title}</h2>
+                      <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap line-clamp-4">
                         {post.content}
                       </p>
                     </div>
 
-                    {/* Footer / Actions */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-5 border-t border-gray-50 gap-4">
-                      <div className="flex items-center gap-4 text-xs font-bold text-gray-400 uppercase tracking-widest">
-                        <span className="flex items-center gap-1.5">
-                          <Tag size={12} /> {post.category}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-8 border-t border-gray-50 gap-6">
+                      <div className="flex items-center gap-6">
                         <button
                           onClick={() => setSharingPostId(sharingPostId === post.id ? null : post.id)}
-                          className="w-10 h-10 flex items-center justify-center bg-white hover:bg-gray-50 text-gray-400 hover:text-brand-gold rounded-xl transition-all border border-gray-200 relative"
-                          title="Share"
+                          className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 hover:text-brand-blue transition-colors relative"
                         >
-                          <Share2 size={18} />
-                          {/* Share Popover */}
+                          <Share2 size={14} /> Share
                           <AnimatePresence>
                             {sharingPostId === post.id && (
                               <motion.div
-                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                animate={{ opacity: 1, y: 0, scale: 1 }}
-                                exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                className="absolute bottom-full right-0 mb-3 p-2 bg-white rounded-2xl shadow-2xl border border-gray-100 flex gap-2 z-50 min-w-max"
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: 10 }}
+                                className="absolute bottom-full left-0 mb-4 p-2 bg-white rounded-2xl shadow-2xl border border-gray-100 flex gap-2 z-50 min-w-max"
+                                onClick={(e) => e.stopPropagation()}
                               >
                                 <button
-                                  onClick={(e) => { e.stopPropagation(); shareOnWhatsApp(post); }}
+                                  onClick={() => shareOnWhatsApp(post)}
                                   className="w-10 h-10 flex items-center justify-center bg-emerald-50 text-[#25D366] rounded-xl hover:bg-emerald-100 transition-colors"
-                                  title="Share to WhatsApp"
                                 >
                                   <MessageSquare size={18} />
                                 </button>
                                 <button
-                                  onClick={(e) => { e.stopPropagation(); shareOnFacebook(post); }}
+                                  onClick={() => shareOnFacebook(post)}
                                   className="w-10 h-10 flex items-center justify-center bg-blue-50 text-[#1877F2] rounded-xl hover:bg-blue-100 transition-colors"
-                                  title="Share to Facebook"
                                 >
                                   <Facebook size={18} />
                                 </button>
@@ -531,43 +560,43 @@ export default function BusinessNewsPage() {
                         </button>
                         <a
                           href={`tel:${post.contact_phone}`}
-                          className="w-10 h-10 flex items-center justify-center bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-xl transition-all border border-gray-200"
-                          title="Call Now"
+                          className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 hover:text-brand-gold transition-colors"
                         >
-                          <Phone size={18} />
-                        </a>
-                        <a
-                          href={`https://wa.me/${post.contact_phone.replace(/[^\d]/g, '')}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="h-10 px-5 flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-emerald-500/20"
-                        >
-                          <MessageSquare size={18} /> WhatsApp
+                          <Phone size={14} /> Call
                         </a>
                       </div>
+                      <a
+                        href={`https://wa.me/${post.contact_phone.replace(/[^\d]/g, '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="h-12 px-8 flex items-center justify-center gap-3 bg-brand-dark hover:bg-brand-blue text-white rounded-2xl text-[12px] tracking-[0.2em] transition-all shadow-xl shadow-brand-dark/10"
+                      >
+                        <MessageSquare size={18} /> WhatsApp Contact
+                      </a>
                     </div>
                   </div>
                 </div>
               ))
             ) : (
-              <div className="text-center py-32 bg-white rounded-3xl border border-dashed border-gray-300">
-                <Megaphone className="mx-auto w-16 h-16 text-gray-200 mb-6" />
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">No Updates Found</h3>
-                <p className="text-gray-500 max-w-xs mx-auto">Try adjusting your filters or be the first to post a new business update!</p>
+              <div className="text-center py-32 bg-white rounded-[40px] border border-dashed border-gray-200">
+                <Megaphone className="mx-auto w-20 h-20 text-gray-100 mb-8" />
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">No News Found</h3>
+                <p className="text-gray-500 max-w-xs mx-auto text-sm">Try adjusting your filters or be the first to broadcast a new industry update!</p>
               </div>
             )}
-          </div>
+          </main>
 
-          {/* Sidebar Area / Sticky Post CTA */}
-          <div className="space-y-6">
-            <div className="bg-brand-dark rounded-3xl p-8 shadow-2xl relative overflow-hidden sticky top-28">
-              <div className="absolute inset-0 opacity-10">
+          {/* RIGHT SIDEBAR: Recent & Verified (Cols 10-12) */}
+          <aside className="hidden lg:block lg:col-span-3 space-y-8 sticky top-24 self-start">
+            {/* Post CTA */}
+            <div className="bg-brand-dark rounded-[12px] p-8 shadow-2xl relative overflow-hidden group">
+              <div className="absolute inset-0 opacity-10 transition-transform duration-700 group-hover:scale-110">
                 <Megaphone className="w-48 h-48 -rotate-12 absolute -right-10 -bottom-10 text-white" />
               </div>
-              <div className="relative z-10">
-                <h2 className="text-2xl font-bold text-white mb-3">Broadcast Your Business</h2>
-                <p className="text-gray-400 text-sm leading-relaxed mb-8">
-                  Verified vendors can post requirements, updates, or offers directly to the SL-Business community.
+              <div className="relative z-10 text-center">
+                <h2 className="text-xl font-bold text-white mb-3">Broadcast Now</h2>
+                <p className="text-gray-400 text-[11px] font-bold uppercase tracking-widest mb-8 leading-relaxed">
+                  Verified vendors can post requirements directly.
                 </p>
                 <button
                   onClick={() => {
@@ -578,33 +607,60 @@ export default function BusinessNewsPage() {
                     }
                     setShowPostForm(true);
                   }}
-                  className="w-full py-4 bg-brand-gold hover:bg-brand-gold-light text-brand-dark rounded-2xl font-bold flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+                  className="w-full py-4 bg-brand-gold hover:bg-brand-gold-light text-white rounded font-black text-[11px] tracking-[0.2em] flex items-center justify-center gap-2 transition-all"
                 >
-                  <Plus size={20} /> Add News Update
+                  <Plus size={18} /> Add News Update
                 </button>
               </div>
             </div>
-            
-            <div className="p-6 bg-white rounded-3xl border border-gray-200 shadow-sm">
-               <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                 <ShieldCheck size={14} className="text-brand-gold" /> Posting Rules
-               </h4>
-               <ul className="space-y-3">
-                 <li className="text-[12px] text-gray-500 flex gap-3">
-                   <div className="w-1.5 h-1.5 rounded-full bg-brand-gold mt-1.5 shrink-0" />
-                   Only verified business profiles can post.
-                 </li>
-                 <li className="text-[12px] text-gray-500 flex gap-3">
-                   <div className="w-1.5 h-1.5 rounded-full bg-brand-gold mt-1.5 shrink-0" />
-                   Posts must be business-related (hiring, deals, etc).
-                 </li>
-                 <li className="text-[12px] text-gray-500 flex gap-3">
-                   <div className="w-1.5 h-1.5 rounded-full bg-brand-gold mt-1.5 shrink-0" />
-                   Maximum of 5 photos per post.
-                 </li>
-               </ul>
+
+            {/* Recently Added */}
+            <div className="bg-white rounded-[12px] border border-gray-200 shadow-sm overflow-hidden">
+              <div className="p-6 border-b border-gray-100 bg-gray-50/50">
+                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Recently Added</h3>
+              </div>
+              <div className="divide-y divide-gray-50">
+                {recentPosts.length > 0 ? recentPosts.map(post => (
+                   <Link key={post.id} href={`/business-news?post_id=${post.id}`} className="block p-5 hover:bg-gray-50 transition-colors group">
+                      <div className="flex items-center gap-3 mb-2">
+                         <div className="w-8 h-8 rounded-lg bg-gray-100 overflow-hidden border border-gray-200 shrink-0">
+                           {post.businesses?.logo_url ? <img src={post.businesses.logo_url} className="w-full h-full object-cover" /> : <Building2 size={14} className="m-auto text-gray-300" />}
+                         </div>
+                         <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{formatTime(post.created_at)}</span>
+                      </div>
+                      <h4 className="text-xs font-bold text-gray-900 group-hover:text-brand-blue transition-colors line-clamp-2 leading-snug">{post.title}</h4>
+                   </Link>
+                )) : (
+                  <p className="p-6 text-xs text-gray-400 text-center font-bold italic">No recent updates</p>
+                )}
+              </div>
             </div>
-          </div>
+
+            {/* Verified Partners */}
+            <div className="bg-white rounded-[12px] border border-gray-200 shadow-sm overflow-hidden">
+              <div className="p-6 border-b border-gray-100 bg-blue-50/30">
+                <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] flex items-center gap-2">
+                  <ShieldCheck size={14} /> Verified Partners
+                </h3>
+              </div>
+              <div className="divide-y divide-gray-50">
+                {verifiedPartnerPosts.length > 0 ? verifiedPartnerPosts.map(post => (
+                  <Link key={post.id} href={`/business-news?post_id=${post.id}`} className="block p-5 hover:bg-gray-50 transition-colors group">
+                    <div className="flex items-center gap-3 mb-2">
+                       <div className="w-8 h-8 rounded-lg bg-blue-50 overflow-hidden border border-blue-100 shrink-0">
+                         {post.businesses?.logo_url ? <img src={post.businesses.logo_url} className="w-full h-full object-cover" /> : <Building2 size={14} className="m-auto text-blue-300" />}
+                       </div>
+                       <span className="text-[10px] font-black text-blue-500 uppercase tracking-tight">{post.businesses?.name}</span>
+                    </div>
+                    <h4 className="text-xs font-bold text-gray-900 group-hover:text-brand-blue transition-colors line-clamp-2 leading-snug">{post.title}</h4>
+                  </Link>
+                )) : (
+                  <p className="p-6 text-xs text-gray-400 text-center font-bold italic">No verified updates</p>
+                )}
+              </div>
+            </div>
+
+          </aside>
         </div>
       </div>
 

@@ -33,10 +33,10 @@ export default function VendorQRCodePage() {
   }, []);
 
   useEffect(() => {
-    if (selectedBusiness) {
+    if (selectedBusiness?.id) {
       checkAssignedQR(selectedBusiness.id);
     }
-  }, [selectedBusiness]);
+  }, [selectedBusiness?.id]);
 
   const checkAssignedQR = async (businessId: string | number) => {
     try {
