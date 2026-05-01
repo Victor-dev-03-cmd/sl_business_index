@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useSession } from "./SessionContext";
 import CategoriesMenu from "./CategoriesMenu";
@@ -26,6 +27,8 @@ import {
   MapPin,
   Moon,
   HelpCircle as HelpIcon,
+  Megaphone,
+  Plus,
 } from "lucide-react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import Image from "next/image";
@@ -49,6 +52,7 @@ interface Category {
 
 export default function Navbar() {
   const { user, loading: sessionLoading } = useSession();
+  const pathname = usePathname();
   const [fullUserData, setFullUserData] = useState<
     UserProfile | null | undefined
   >(undefined);
@@ -59,6 +63,7 @@ export default function Navbar() {
   const [subNavbarOpen, setSubNavbarOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
+  const [hasNewNews, setHasNewNews] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -109,6 +114,73 @@ export default function Navbar() {
       document.body.style.overflow = "";
     };
   }, [mobileMenuOpen]);
+
+  useEffect(() => {
+    const checkNewNews = async () => {
+      if (!user?.id) return;
+      
+      try {
+        // 1. Get user's last check time
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("last_news_check")
+          .eq("id", user.id)
+          .single();
+          
+        const lastCheck = profile?.last_news_check || new Date(0).toISOString();
+        
+        // 2. Check for news after that time
+        const { count, error } = await supabase
+          .from("business_news")
+          .select("id", { count: 'exact', head: true })
+          .gt("created_at", lastCheck);
+          
+        if (!error && count && count > 0) {
+          setHasNewNews(true);
+        }
+      } catch (err) {
+        console.error("Error checking for new news:", err);
+      }
+    };
+    
+    checkNewNews();
+    
+    // Set up realtime subscription for new news
+    const channel = supabase
+      .channel("new_business_news")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "business_news",
+        },
+        () => {
+          setHasNewNews(true);
+        }
+      )
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (pathname === "/business-news") {
+      setHasNewNews(false);
+      
+      const updateCheck = async () => {
+        if (user?.id) {
+          await supabase
+            .from("profiles")
+            .update({ last_news_check: new Date().toISOString() })
+            .eq("id", user.id);
+        }
+      };
+      updateCheck();
+    }
+  }, [pathname, user?.id]);
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -231,6 +303,18 @@ export default function Navbar() {
               About
             </Link>
             <Link
+              href="/business-news"
+              className="text-gray-600 hover:text-brand-dark transition-colors font-medium relative flex items-center gap-1.5"
+            >
+              SL-News
+              {hasNewNews && (
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                </span>
+              )}
+            </Link>
+            <Link
               href="/faq"
               className="text-gray-600 hover:text-brand-dark transition-colors font-medium"
             >
@@ -246,6 +330,14 @@ export default function Navbar() {
 
           {/* Right: icons + toggle */}
           <div className="flex items-center space-x-2 sm:space-x-3">
+            {profileData?.role?.toLowerCase() === "vendor" && (
+              <Link
+                href="/business-news?post=true"
+                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-brand-dark text-white text-[11px] font-bold uppercase tracking-wider rounded-md hover:bg-brand-blue transition-all"
+              >
+                <Plus size={14} /> Add News
+              </Link>
+            )}
             <div className="hidden sm:block">
               <LiveCounter />
             </div>
@@ -491,6 +583,15 @@ export default function Navbar() {
                   href="/about"
                   icon={Info}
                   label="About"
+                  onClick={close}
+                  variants={itemVariants}
+                />
+
+                {/* SL-News */}
+                <MobileNavLink
+                  href="/business-news"
+                  icon={Megaphone}
+                  label="SL-News"
                   onClick={close}
                   variants={itemVariants}
                 />

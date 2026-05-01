@@ -263,7 +263,7 @@ export default function HomePage() {
             <span className="text-white text-4xl md:text-6xl">Businesses in Sri Lanka (SLBI)</span>
           </h1>
           <p className="text-brand-sand text-base md:text-[16px] mb-10 max-w-xl mx-auto leading-relaxed">
-            Explore verified local businesses, clinics, and luxury villas across Sri Lanka. Discover premium services and authentic island experiences through our directory.
+            Explore verified local businesses and luxury villas across Sri Lanka. Discover premium services and authentic island experiences through our directory.
           </p>
 
           <HeroSearch
