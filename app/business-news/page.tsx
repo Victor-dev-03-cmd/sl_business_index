@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useSession } from "@/app/components/SessionContext";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { 
   Megaphone, 
   MessageSquare, 
@@ -19,12 +19,18 @@ import {
   MapPin,
   Tag,
   Briefcase,
-  Search
+  Share2,
+  Facebook,
+  Image as ImageIcon,
+  Trash2,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import Image from "next/image";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface NewsPost {
   id: string;
@@ -37,6 +43,7 @@ interface NewsPost {
   category: string;
   district: string;
   post_type: 'hiring' | 'looking';
+  images: string[];
   businesses: {
     name: string;
     logo_url: string;
@@ -71,11 +78,12 @@ const SRI_LANKAN_DISTRICTS = [
 export default function BusinessNewsPage() {
   const { user } = useSession();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [posts, setPosts] = useState<NewsPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [isPosting, setIsPosting] = useState(false);
   const [userBusinesses, setUserBusinesses] = useState<UserBusiness[]>([]);
-  const [showPostForm, setShowPostForm] = useState(searchParams.get("post") === "true");
+  const [showPostModal, setShowPostForm] = useState(searchParams.get("post") === "true");
   
   // Filters State
   const [filterCategory, setFilterCategory] = useState("all");
@@ -90,6 +98,14 @@ export default function BusinessNewsPage() {
   const [formCategory, setFormCategory] = useState(MAIN_CATEGORY_GROUPS[0]);
   const [formDistrict, setFormDistrict] = useState("Colombo");
   const [formType, setFormType] = useState<'hiring' | 'looking'>('hiring');
+  
+  // Multi-image upload state
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [imagePreviews, setSelectedImagePreviews] = useState<string[]>([]);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
+  // Sharing state
+  const [sharingPostId, setSharingPostId] = useState<string | null>(null);
 
   const fetchPosts = useCallback(async () => {
     try {
@@ -158,6 +174,22 @@ export default function BusinessNewsPage() {
     updateLastCheck();
   }, [user?.id, fetchPosts]);
 
+  // Scroll to specific post if post_id is present and posts are loaded
+  useEffect(() => {
+    const postId = searchParams.get("post_id");
+    if (postId && posts.length > 0) {
+      const element = document.getElementById(`post-${postId}`);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+        element.classList.add("ring-2", "ring-brand-gold", "ring-offset-4");
+        // Remove highlight after a few seconds
+        setTimeout(() => {
+          element.classList.remove("ring-2", "ring-brand-gold", "ring-offset-4");
+        }, 5000);
+      }
+    }
+  }, [posts, searchParams]);
+
   // Realtime Subscription
   useEffect(() => {
     const channel = supabase
@@ -176,10 +208,34 @@ export default function BusinessNewsPage() {
     };
   }, [fetchPosts]);
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const validFiles = files.filter(file => file.type.startsWith('image/'));
+    
+    if (validFiles.length !== files.length) {
+      toast.error("Only image files are allowed");
+    }
+
+    if (selectedImages.length + validFiles.length > 5) {
+      toast.error("Maximum 5 images allowed");
+      return;
+    }
+
+    setSelectedImages(prev => [...prev, ...validFiles]);
+    const newPreviews = validFiles.map(file => URL.createObjectURL(file));
+    setSelectedImagePreviews(prev => [...prev, ...newPreviews]);
+  };
+
+  const removeImage = (index: number) => {
+    setSelectedImages(prev => prev.filter((_, i) => i !== index));
+    setSelectedImagePreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handlePostSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user?.id) {
-      toast.error("You must be logged in to post");
+      toast.error("Redirecting to login...");
+      router.push("/login?redirect=/business-news");
       return;
     }
     if (!selectedBusinessId) {
@@ -189,6 +245,31 @@ export default function BusinessNewsPage() {
 
     try {
       setIsPosting(true);
+      
+      // 1. Upload Images
+      const uploadedUrls: string[] = [];
+      let currentProgress = 0;
+      for (const file of selectedImages) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const filePath = `posts/${fileName}`;
+
+        const { error: uploadError, data } = await supabase.storage
+          .from("news-images")
+          .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from("news-images")
+          .getPublicUrl(filePath);
+          
+        uploadedUrls.push(publicUrl);
+        currentProgress += (100 / selectedImages.length);
+        setUploadProgress(Math.min(currentProgress, 100));
+      }
+
+      // 2. Insert Post
       const { error } = await supabase
         .from("business_news")
         .insert([
@@ -200,7 +281,8 @@ export default function BusinessNewsPage() {
             contact_phone: contactPhone,
             category: formCategory,
             district: formDistrict,
-            post_type: formType
+            post_type: formType,
+            images: uploadedUrls
           }
         ]);
 
@@ -210,6 +292,9 @@ export default function BusinessNewsPage() {
       setTitle("");
       setContent("");
       setContactPhone("");
+      setSelectedImages([]);
+      setSelectedImagePreviews([]);
+      setUploadProgress(0);
       setShowPostForm(false);
       // fetchPosts will be triggered by realtime
     } catch (err: any) {
@@ -231,6 +316,19 @@ export default function BusinessNewsPage() {
       month: "short",
       day: "numeric",
     });
+  };
+
+  const shareOnWhatsApp = (post: NewsPost) => {
+    const url = `${window.location.origin}/business-news?post_id=${post.id}`;
+    const text = `Check out this update from ${post.businesses?.name}: ${post.title}\n\nRead more: ${url}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    setSharingPostId(null);
+  };
+
+  const shareOnFacebook = (post: NewsPost) => {
+    const url = `${window.location.origin}/business-news?post_id=${post.id}`;
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+    setSharingPostId(null);
   };
 
   return (
@@ -259,39 +357,34 @@ export default function BusinessNewsPage() {
         {/* Advanced Filters Bar */}
         <div className="bg-white/80 backdrop-blur-xl p-4 rounded-2xl shadow-xl border border-white/40 mb-8 flex flex-col md:flex-row gap-4 items-center">
           <div className="flex-1 w-full grid grid-cols-1 md:grid-cols-3 gap-3">
-            {/* Category Filter */}
             <div className="relative">
               <Tag size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <select
                 value={filterCategory}
                 onChange={(e) => setFilterCategory(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-gold outline-none transition-all text-sm font-medium appearance-none"
+                className="w-full pl-9 pr-4 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-gold outline-none transition-all text-sm font-medium appearance-none cursor-pointer"
               >
                 <option value="all">All Categories</option>
                 {MAIN_CATEGORY_GROUPS.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
-
-            {/* Location Filter */}
             <div className="relative">
               <MapPin size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <select
                 value={filterDistrict}
                 onChange={(e) => setFilterDistrict(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-gold outline-none transition-all text-sm font-medium appearance-none"
+                className="w-full pl-9 pr-4 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-gold outline-none transition-all text-sm font-medium appearance-none cursor-pointer"
               >
                 <option value="all">All Districts</option>
                 {SRI_LANKAN_DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}
               </select>
             </div>
-
-            {/* Post Type Filter */}
             <div className="relative">
               <Briefcase size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <select
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-gold outline-none transition-all text-sm font-medium appearance-none"
+                className="w-full pl-9 pr-4 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-gold outline-none transition-all text-sm font-medium appearance-none cursor-pointer"
               >
                 <option value="all">All Types</option>
                 <option value="hiring">Hiring / Required</option>
@@ -324,18 +417,34 @@ export default function BusinessNewsPage() {
                   <div className="space-y-3">
                     <div className="h-4 bg-gray-100 rounded w-3/4" />
                     <div className="h-2 bg-gray-100 rounded w-full" />
-                    <div className="h-2 bg-gray-100 rounded w-5/6" />
                   </div>
                 </div>
               ))
             ) : posts.length > 0 ? (
               posts.map((post) => (
-                <div key={post.id} className="group bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-xl hover:border-brand-gold/30 transition-all duration-300 overflow-hidden">
+                <div key={post.id} id={`post-${post.id}`} className="group bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-xl hover:border-brand-gold/30 transition-all duration-500 overflow-hidden flex flex-col">
+                  {/* Optional Image Carousel */}
+                  {post.images && post.images.length > 0 && (
+                    <div className="relative aspect-video w-full overflow-hidden bg-gray-100 group/img">
+                      <Image 
+                        src={post.images[0]} 
+                        alt={post.title} 
+                        fill 
+                        className="object-cover transition-transform duration-700 group-hover:scale-105" 
+                      />
+                      {post.images.length > 1 && (
+                        <div className="absolute bottom-3 right-3 px-2 py-1 bg-black/50 backdrop-blur-md rounded-lg text-[10px] text-white font-bold">
+                          +{post.images.length - 1} more
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div className="p-6">
                     {/* Card Header */}
                     <div className="flex items-start justify-between mb-5">
                       <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden shadow-inner group-hover:scale-105 transition-transform">
+                        <div className="w-14 h-14 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden shadow-inner shrink-0">
                           {post.businesses?.logo_url ? (
                             <img src={post.businesses.logo_url} alt={post.businesses.name} className="w-full h-full object-cover" />
                           ) : (
@@ -374,19 +483,52 @@ export default function BusinessNewsPage() {
                     {/* Content */}
                     <div className="mb-6">
                       <h2 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-brand-gold transition-colors">{post.title}</h2>
-                      <p className="text-gray-600 text-sm leading-relaxed line-clamp-4 whitespace-pre-wrap">
+                      <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap line-clamp-6">
                         {post.content}
                       </p>
                     </div>
 
                     {/* Footer / Actions */}
-                    <div className="flex items-center justify-between pt-5 border-t border-gray-50">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-5 border-t border-gray-50 gap-4">
                       <div className="flex items-center gap-4 text-xs font-bold text-gray-400 uppercase tracking-widest">
                         <span className="flex items-center gap-1.5">
                           <Tag size={12} /> {post.category}
                         </span>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setSharingPostId(sharingPostId === post.id ? null : post.id)}
+                          className="w-10 h-10 flex items-center justify-center bg-white hover:bg-gray-50 text-gray-400 hover:text-brand-gold rounded-xl transition-all border border-gray-200 relative"
+                          title="Share"
+                        >
+                          <Share2 size={18} />
+                          {/* Share Popover */}
+                          <AnimatePresence>
+                            {sharingPostId === post.id && (
+                              <motion.div
+                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                className="absolute bottom-full right-0 mb-3 p-2 bg-white rounded-2xl shadow-2xl border border-gray-100 flex gap-2 z-50 min-w-max"
+                              >
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); shareOnWhatsApp(post); }}
+                                  className="w-10 h-10 flex items-center justify-center bg-emerald-50 text-[#25D366] rounded-xl hover:bg-emerald-100 transition-colors"
+                                  title="Share to WhatsApp"
+                                >
+                                  <MessageSquare size={18} />
+                                </button>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); shareOnFacebook(post); }}
+                                  className="w-10 h-10 flex items-center justify-center bg-blue-50 text-[#1877F2] rounded-xl hover:bg-blue-100 transition-colors"
+                                  title="Share to Facebook"
+                                >
+                                  <Facebook size={18} />
+                                </button>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </button>
                         <a
                           href={`tel:${post.contact_phone}`}
                           className="w-10 h-10 flex items-center justify-center bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-xl transition-all border border-gray-200"
@@ -400,7 +542,7 @@ export default function BusinessNewsPage() {
                           rel="noopener noreferrer"
                           className="h-10 px-5 flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-emerald-500/20"
                         >
-                          <MessageSquare size={18} /> Contact
+                          <MessageSquare size={18} /> WhatsApp
                         </a>
                       </div>
                     </div>
@@ -416,41 +558,98 @@ export default function BusinessNewsPage() {
             )}
           </div>
 
-          {/* Sidebar Area / Post Form */}
+          {/* Sidebar Area / Sticky Post CTA */}
           <div className="space-y-6">
-            {/* Post Card / Prompt */}
-            <div className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100 sticky top-28">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-12 h-12 rounded-2xl bg-brand-gold/10 flex items-center justify-center text-brand-gold">
-                  <Megaphone size={24} />
-                </div>
+            <div className="bg-brand-dark rounded-3xl p-8 shadow-2xl relative overflow-hidden sticky top-28">
+              <div className="absolute inset-0 opacity-10">
+                <Megaphone className="w-48 h-48 -rotate-12 absolute -right-10 -bottom-10 text-white" />
+              </div>
+              <div className="relative z-10">
+                <h2 className="text-2xl font-bold text-white mb-3">Broadcast Your Business</h2>
+                <p className="text-gray-400 text-sm leading-relaxed mb-8">
+                  Verified vendors can post requirements, updates, or offers directly to the SL-Business community.
+                </p>
+                <button
+                  onClick={() => {
+                    if (!user) {
+                      toast.info("Please login to post news");
+                      router.push("/login?redirect=/business-news");
+                      return;
+                    }
+                    setShowPostForm(true);
+                  }}
+                  className="w-full py-4 bg-brand-gold hover:bg-brand-gold-light text-brand-dark rounded-2xl font-bold flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  <Plus size={20} /> Add News Update
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6 bg-white rounded-3xl border border-gray-200 shadow-sm">
+               <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                 <ShieldCheck size={14} className="text-brand-gold" /> Posting Rules
+               </h4>
+               <ul className="space-y-3">
+                 <li className="text-[12px] text-gray-500 flex gap-3">
+                   <div className="w-1.5 h-1.5 rounded-full bg-brand-gold mt-1.5 shrink-0" />
+                   Only verified business profiles can post.
+                 </li>
+                 <li className="text-[12px] text-gray-500 flex gap-3">
+                   <div className="w-1.5 h-1.5 rounded-full bg-brand-gold mt-1.5 shrink-0" />
+                   Posts must be business-related (hiring, deals, etc).
+                 </li>
+                 <li className="text-[12px] text-gray-500 flex gap-3">
+                   <div className="w-1.5 h-1.5 rounded-full bg-brand-gold mt-1.5 shrink-0" />
+                   Maximum of 5 photos per post.
+                 </li>
+               </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* --- POST NEWS MODAL --- */}
+      <AnimatePresence>
+        {showPostModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-brand-dark/80 backdrop-blur-sm"
+              onClick={() => !isPosting && setShowPostForm(false)}
+            />
+            
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-2xl bg-white rounded-[32px] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+            >
+              <div className="p-8 pb-0 flex items-center justify-between shrink-0">
                 <div>
-                  <h2 className="text-lg font-bold text-gray-900">Reach the Island</h2>
-                  <p className="text-xs text-gray-400 font-medium">Broadcast to all businesses</p>
+                  <h2 className="text-2xl font-bold text-gray-900">New Business Update</h2>
+                  <p className="text-sm text-gray-400 mt-1">Broadcast to all users and vendors</p>
                 </div>
+                <button 
+                  onClick={() => setShowPostForm(false)}
+                  disabled={isPosting}
+                  className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 hover:bg-gray-100 text-gray-400 hover:text-gray-900 transition-colors"
+                >
+                  <X size={20} />
+                </button>
               </div>
 
-              {userBusinesses.length > 0 ? (
-                <div className="space-y-4">
-                  <p className="text-sm text-gray-600 leading-relaxed mb-6">
-                    Verified vendors can post requirements, updates, or offers directly to the SL-Business community.
-                  </p>
-                  
-                  {!showPostForm ? (
-                    <button
-                      onClick={() => setShowPostForm(true)}
-                      className="w-full py-4 bg-brand-dark hover:bg-brand-blue text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-brand-dark/10 transition-all"
-                    >
-                      <Plus size={20} /> Create Update
-                    </button>
-                  ) : (
-                    <form onSubmit={handlePostSubmit} className="space-y-4 animate-in fade-in zoom-in-95 duration-300">
-                      <div>
-                        <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Select Business</label>
+              <div className="p-8 overflow-y-auto custom-scrollbar flex-1">
+                {userBusinesses.length > 0 ? (
+                  <form onSubmit={handlePostSubmit} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div className="space-y-2">
+                        <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1">Select Business</label>
                         <select
                           value={selectedBusinessId}
                           onChange={(e) => setSelectedBusinessId(e.target.value)}
-                          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-gold outline-none transition-all text-sm font-bold"
+                          className="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-brand-gold outline-none transition-all text-sm font-bold appearance-none cursor-pointer"
                           required
                         >
                           {userBusinesses.map((biz) => (
@@ -458,146 +657,178 @@ export default function BusinessNewsPage() {
                           ))}
                         </select>
                       </div>
-
-                      <div className="grid grid-cols-2 gap-3">
-                         <div>
-                          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Type</label>
-                          <select
-                            value={formType}
-                            onChange={(e) => setFormType(e.target.value as any)}
-                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-gold outline-none transition-all text-xs font-bold"
-                            required
+                      <div className="space-y-2">
+                        <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1">Type</label>
+                        <div className="grid grid-cols-2 gap-2 bg-gray-50 p-1 rounded-2xl border border-gray-200">
+                          <button
+                            type="button"
+                            onClick={() => setFormType('hiring')}
+                            className={cn(
+                              "py-2.5 rounded-xl text-xs font-bold transition-all",
+                              formType === 'hiring' ? "bg-white text-brand-dark shadow-sm" : "text-gray-400 hover:text-gray-600"
+                            )}
                           >
-                            <option value="hiring">Hiring</option>
-                            <option value="looking">Looking</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">District</label>
-                          <select
-                            value={formDistrict}
-                            onChange={(e) => setFormDistrict(e.target.value)}
-                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-gold outline-none transition-all text-xs font-bold"
-                            required
+                            Hiring
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setFormType('looking')}
+                            className={cn(
+                              "py-2.5 rounded-xl text-xs font-bold transition-all",
+                              formType === 'looking' ? "bg-white text-brand-dark shadow-sm" : "text-gray-400 hover:text-gray-600"
+                            )}
                           >
-                            {SRI_LANKAN_DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}
-                          </select>
+                            Looking
+                          </button>
                         </div>
                       </div>
-                      
-                      <div>
-                        <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Category</label>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div className="space-y-2">
+                        <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1">District</label>
+                        <select
+                          value={formDistrict}
+                          onChange={(e) => setFormDistrict(e.target.value)}
+                          className="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-brand-gold outline-none transition-all text-sm font-bold appearance-none cursor-pointer"
+                          required
+                        >
+                          {SRI_LANKAN_DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1">Category</label>
                         <select
                           value={formCategory}
                           onChange={(e) => setFormCategory(e.target.value)}
-                          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-gold outline-none transition-all text-xs font-bold"
+                          className="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-brand-gold outline-none transition-all text-sm font-bold appearance-none cursor-pointer"
                           required
                         >
                           {MAIN_CATEGORY_GROUPS.map(c => <option key={c} value={c}>{c}</option>)}
                         </select>
                       </div>
-                      
-                      <div>
-                        <input
-                          type="text"
-                          placeholder="Headline (e.g. Urgent Requirement)"
-                          value={title}
-                          onChange={(e) => setTitle(e.target.value)}
-                          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-gold outline-none transition-all text-sm font-medium"
-                          required
-                        />
-                      </div>
+                    </div>
 
-                      <div>
-                        <textarea
-                          rows={4}
-                          placeholder="What's the update?"
-                          value={content}
-                          onChange={(e) => setContent(e.target.value)}
-                          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-gold outline-none transition-all text-sm resize-none"
-                          required
-                        />
-                      </div>
+                    <div className="space-y-2">
+                      <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1">Headline</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Urgent Requirement: 2 Plumbers in Colombo"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-brand-gold outline-none transition-all text-sm font-medium"
+                        required
+                      />
+                    </div>
 
-                      <div>
+                    <div className="space-y-2">
+                      <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1">Description</label>
+                      <textarea
+                        rows={4}
+                        placeholder="What's the update? Be specific about the work, location and requirements..."
+                        value={content}
+                        onChange={(e) => setContent(e.target.value)}
+                        className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-brand-gold outline-none transition-all text-sm resize-none"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-4">
+                      <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1">Photos (Up to 5)</label>
+                      <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+                        {imagePreviews.map((preview, idx) => (
+                          <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 group/img">
+                            <Image src={preview} alt="preview" fill className="object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => removeImage(idx)}
+                              className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center text-white"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        ))}
+                        {imagePreviews.length < 5 && (
+                          <label className="aspect-square rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-1 cursor-pointer hover:bg-gray-50 hover:border-brand-gold transition-all text-gray-400 hover:text-brand-gold">
+                            <Plus size={20} />
+                            <span className="text-[10px] font-bold uppercase">Add</span>
+                            <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageChange} />
+                          </label>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1">Contact Phone</label>
+                      <div className="relative">
+                        <Phone size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
                           type="tel"
-                          placeholder="Phone / WhatsApp"
+                          placeholder="e.g. +94 77 123 4567"
                           value={contactPhone}
                           onChange={(e) => setContactPhone(e.target.value)}
-                          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-gold outline-none transition-all text-sm font-medium"
+                          className="w-full pl-10 pr-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-brand-gold outline-none transition-all text-sm font-medium"
                           required
                         />
                       </div>
+                    </div>
 
-                      <div className="flex gap-2 pt-2">
-                         <button
-                          type="button"
-                          onClick={() => setShowPostForm(false)}
-                          className="flex-1 py-3 bg-gray-100 text-gray-500 rounded-xl font-bold text-sm hover:bg-gray-200 transition-all"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          type="submit"
-                          disabled={isPosting}
-                          className="flex-[2] py-3 bg-brand-dark text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-brand-blue transition-all disabled:opacity-50"
-                        >
-                          {isPosting ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
-                          Post Now
-                        </button>
-                      </div>
-                    </form>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="p-4 bg-brand-sand/10 border border-brand-sand/20 rounded-2xl text-center">
-                    <p className="text-sm text-brand-gold font-bold mb-2">Vendors Only</p>
-                    <p className="text-[11px] text-gray-500 leading-relaxed">
-                      Only verified business owners can post updates. If you have a business, ensure it's verified first.
-                    </p>
+                    <div className="flex gap-4 pt-4">
+                      <button
+                        type="button"
+                        onClick={() => setShowPostForm(false)}
+                        disabled={isPosting}
+                        className="flex-1 py-4 bg-gray-100 text-gray-500 rounded-2xl font-bold text-sm hover:bg-gray-200 transition-all disabled:opacity-50"
+                      >
+                        Discard
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isPosting}
+                        className="flex-[2] py-4 bg-brand-dark text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-brand-blue transition-all disabled:opacity-50 shadow-xl shadow-brand-dark/10"
+                      >
+                        {isPosting ? (
+                          <div className="flex flex-col items-center gap-2">
+                            <div className="w-full bg-white/20 h-1 rounded-full overflow-hidden">
+                              <div 
+                                className="bg-brand-gold h-full transition-all duration-300" 
+                                style={{ width: `${uploadProgress}%` }}
+                              />
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Loader2 className="animate-spin" size={20} />
+                              <span>{uploadProgress < 100 ? `Uploading Photos (${Math.round(uploadProgress)}%)...` : 'Broadcasting...'}</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <Send size={20} />
+                            <span>Post Update</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="py-10 text-center">
+                    <div className="w-16 h-16 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <ShieldCheck size={32} />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900">Verification Required</h3>
+                    <p className="text-gray-500 mt-2 max-w-sm mx-auto">Only verified business owners can broadcast news. Please ensure your business is approved and verified first.</p>
+                    <Link 
+                      href="/register-business" 
+                      className="inline-block mt-6 px-8 py-3 bg-brand-dark text-white rounded-xl font-bold hover:bg-brand-blue transition-all"
+                    >
+                      Verify Business
+                    </Link>
                   </div>
-                  {!user ? (
-                    <Link
-                      href="/login"
-                      className="w-full py-4 bg-brand-dark text-white rounded-2xl font-bold flex items-center justify-center transition-all"
-                    >
-                      Login to Post
-                    </Link>
-                  ) : (
-                    <Link
-                      href="/register-business"
-                      className="w-full py-4 border border-brand-dark text-brand-dark rounded-2xl font-bold flex items-center justify-center transition-all"
-                    >
-                      Register Business
-                    </Link>
-                  )}
-                </div>
-              )}
-            </div>
-            
-            {/* Quick Tips */}
-            <div className="p-6 bg-blue-50/50 rounded-3xl border border-blue-100">
-               <h4 className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-3">Posting Tips</h4>
-               <ul className="space-y-2">
-                 <li className="text-[11px] text-gray-500 flex gap-2">
-                   <div className="w-1 h-1 rounded-full bg-blue-400 mt-1.5 shrink-0" />
-                   Be specific about location and count.
-                 </li>
-                 <li className="text-[11px] text-gray-500 flex gap-2">
-                   <div className="w-1 h-1 rounded-full bg-blue-400 mt-1.5 shrink-0" />
-                   Mention if it's an urgent requirement.
-                 </li>
-                 <li className="text-[11px] text-gray-500 flex gap-2">
-                   <div className="w-1 h-1 rounded-full bg-blue-400 mt-1.5 shrink-0" />
-                   Add your WhatsApp number for faster response.
-                 </li>
-               </ul>
-            </div>
+                )}
+              </div>
+            </motion.div>
           </div>
-        </div>
-      </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

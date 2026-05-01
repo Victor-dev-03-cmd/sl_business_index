@@ -206,7 +206,20 @@ export default function BusinessRequestsPage() {
       if (status === "approved" && business_id) {
         const { error: businessError } = await supabase
           .from("businesses")
-          .update({ is_verified: true })
+          .update({ 
+            is_verified: true,
+            verification_status: "approved"
+          })
+          .eq("id", business_id);
+
+        if (businessError) throw businessError;
+      } else if (status === "rejected" && business_id) {
+        const { error: businessError } = await supabase
+          .from("businesses")
+          .update({ 
+            is_verified: false,
+            verification_status: "rejected"
+          })
           .eq("id", business_id);
 
         if (businessError) throw businessError;

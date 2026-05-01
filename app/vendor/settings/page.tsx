@@ -32,6 +32,8 @@ interface Business {
   name: string;
   service_radius: number;
   seo_keywords: string[];
+  is_verified: boolean;
+  verification_status: string;
 }
 
 interface Verification {
@@ -96,7 +98,7 @@ export default function SettingsPage() {
         });
       }
 
-      // Fetch Businesses for Optimization
+      // Fetch Businesses for Optimization & Verification
       const { data: businessData } = await supabase
         .from('businesses')
         .select('*')
@@ -110,11 +112,14 @@ export default function SettingsPage() {
           setRadius([first.service_radius || 5]);
           setKeywords(first.seo_keywords || []);
 
-          // Fetch Verification for the first business
+          // Use the verification_status from the business record
+          // but also check for detailed verification record
           const { data: verData } = await supabase
             .from('verifications')
             .select('*')
             .eq('business_id', first.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
             .maybeSingle();
           setVerification(verData);
         }
@@ -252,13 +257,13 @@ export default function SettingsPage() {
     setKeywords(keywords.filter(k => k !== keyword));
   };
 
-  // Determine display status
-  const displayStatus = verification?.status === 'approved' ? 'verified' : 
-                        verification?.status === 'pending' ? 'pending' : 
-                        profile.verification_status;
+  // Determine display status for the selected business
+  const selectedBusiness = businesses.find(b => b.id === selectedBusinessId);
+  const displayStatus = selectedBusiness?.verification_status || 'none';
 
-  const isVerified = displayStatus === 'verified';
+  const isVerified = displayStatus === 'approved';
   const isPending = displayStatus === 'pending';
+  const isRejected = displayStatus === 'rejected';
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
@@ -378,6 +383,34 @@ export default function SettingsPage() {
           {/* Verification Center */}
           {activeTab === 'verification' && (
             <div className="bg-white rounded border border-gray-300 shadow-sm p-6 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              
+              <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Verifying Business:</label>
+                <select
+                  value={selectedBusinessId}
+                  onChange={(e) => {
+                    const b = businesses.find(bus => bus.id === e.target.value);
+                    if (b) {
+                      setSelectedBusinessId(b.id);
+                      // Also fetch specific verification for this business
+                      supabase
+                        .from('verifications')
+                        .select('*')
+                        .eq('business_id', b.id)
+                        .order('created_at', { ascending: false })
+                        .limit(1)
+                        .maybeSingle()
+                        .then(({ data }) => setVerification(data));
+                    }
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm bg-white font-medium"
+                >
+                  {businesses.map(b => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
+                </select>
+              </div>
+
               <div className="flex items-start justify-between mb-6">
                 <div>
                   <h2 className="text-lg text-brand-dark flex items-center gap-2">
@@ -385,9 +418,10 @@ export default function SettingsPage() {
                     <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${
                       isVerified ? 'bg-green-50 text-green-700 border-green-100' :
                       isPending ? 'bg-amber-50 text-amber-700 border-amber-100' :
+                      isRejected ? 'bg-red-50 text-red-700 border-red-100' :
                       'bg-gray-50 text-gray-700 border-gray-100'
                     }`}>
-                      {displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1)}
+                      {displayStatus === 'none' ? 'Not Verified' : displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1)}
                     </span>
                   </h2>
                   <p className="text-sm text-gray-500 mt-1">Get the blue tick to build trust with customers.</p>
