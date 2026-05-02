@@ -41,6 +41,10 @@ interface Verification {
   status: string;
   br_document_url?: string;
   nic_passport_url?: string;
+  business_type?: string;
+  br_number?: string;
+  tin_number?: string;
+  svat_number?: string;
 }
 
 export default function SettingsPage() {
@@ -59,6 +63,10 @@ export default function SettingsPage() {
   });
 
   const [verificationFile, setVerificationFile] = useState<File | null>(null);
+  const [businessType, setBusinessType] = useState<'pvt_ltd' | 'local_business'>('pvt_ltd');
+  const [brNumber, setBrNumber] = useState('');
+  const [tinNumber, setTinNumber] = useState('');
+  const [svatNumber, setSvatNumber] = useState('');
 
   // Optimization State
   const [businesses, setBusinesses] = useState<Business[]>([]);
@@ -122,6 +130,12 @@ export default function SettingsPage() {
             .limit(1)
             .maybeSingle();
           setVerification(verData);
+          if (verData) {
+            setBusinessType(verData.business_type || 'pvt_ltd');
+            setBrNumber(verData.br_number || '');
+            setTinNumber(verData.tin_number || '');
+            setSvatNumber(verData.svat_number || '');
+          }
         }
       }
     } catch (error) {
@@ -189,6 +203,25 @@ export default function SettingsPage() {
       return;
     }
 
+    if (!brNumber) {
+      toast.warning('Please enter your BR Number.');
+      return;
+    }
+
+    // BR Number Regex Validation
+    const pvtRegex = /^PV\d{8}$/;
+    const localRegex = /^\d+\/\d{4}\/\w+$/;
+
+    if (businessType === 'pvt_ltd' && !pvtRegex.test(brNumber)) {
+      toast.error('Invalid Private Limited BR Number. Format: PV00212345');
+      return;
+    }
+
+    if (businessType === 'local_business' && !localRegex.test(brNumber)) {
+      toast.error('Invalid Local Business BR Number. Format: [Number]/[Year]/[Code]');
+      return;
+    }
+
     setSubmitting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -213,6 +246,10 @@ export default function SettingsPage() {
           business_id: selectedBusinessId,
           status: 'pending',
           br_document_url: publicUrl,
+          business_type: businessType,
+          br_number: brNumber,
+          tin_number: tinNumber,
+          svat_number: svatNumber
         });
 
       if (verificationError) {
@@ -400,7 +437,19 @@ export default function SettingsPage() {
                         .order('created_at', { ascending: false })
                         .limit(1)
                         .maybeSingle()
-                        .then(({ data }) => setVerification(data));
+                        .then(({ data }) => {
+                          setVerification(data);
+                          if (data) {
+                            setBusinessType(data.business_type || 'pvt_ltd');
+                            setBrNumber(data.br_number || '');
+                            setTinNumber(data.tin_number || '');
+                            setSvatNumber(data.svat_number || '');
+                          } else {
+                            setBrNumber('');
+                            setTinNumber('');
+                            setSvatNumber('');
+                          }
+                        });
                     }
                   }}
                   className="w-full px-3 py-2 border border-gray-300 rounded text-sm bg-white font-medium"
@@ -443,6 +492,57 @@ export default function SettingsPage() {
                   <li>&quot;Verified&quot; badge on your profile</li>
                   <li>Access to premium analytics</li>
                 </ul>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Business Type</label>
+                  <select
+                    value={businessType}
+                    onChange={(e) => setBusinessType(e.target.value as 'pvt_ltd' | 'local_business')}
+                    disabled={isPending || isVerified}
+                    className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm bg-white"
+                  >
+                    <option value="pvt_ltd">Private Limited (PVT)</option>
+                    <option value="local_business">Local Business / Sole Proprietorship</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">BR Number</label>
+                  <input
+                    type="text"
+                    placeholder={businessType === 'pvt_ltd' ? "PV00212345" : "123/2024/ABC"}
+                    value={brNumber}
+                    onChange={(e) => setBrNumber(e.target.value)}
+                    disabled={isPending || isVerified}
+                    className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm"
+                  />
+                  <p className="text-[10px] text-gray-400 mt-1">
+                    {businessType === 'pvt_ltd' ? "Format: PV + 8 digits" : "Format: [Number]/[Year]/[Code]"}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">TIN Number (Optional)</label>
+                  <input
+                    type="text"
+                    placeholder="Taxpayer Identification Number"
+                    value={tinNumber}
+                    onChange={(e) => setTinNumber(e.target.value)}
+                    disabled={isPending || isVerified}
+                    className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">SVAT Number (Optional)</label>
+                  <input
+                    type="text"
+                    placeholder="Simplified VAT Number"
+                    value={svatNumber}
+                    onChange={(e) => setSvatNumber(e.target.value)}
+                    disabled={isPending || isVerified}
+                    className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm"
+                  />
+                </div>
               </div>
 
               <div className="space-y-6">

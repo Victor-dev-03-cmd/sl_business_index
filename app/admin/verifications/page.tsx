@@ -14,6 +14,14 @@ import {
   Building2,
   History,
   Clock,
+  ExternalLink,
+  Fingerprint,
+  FileText,
+  Maximize2,
+  X,
+  Copy,
+  AlertCircle,
+  CheckCircle2,
 } from "lucide-react";
 import { VerificationWithBusiness } from "@/lib/admin-types";
 import { toast } from "sonner";
@@ -39,6 +47,13 @@ export default function VerificationsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [submitting, setSubmitting] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [moderationStatuses, setModerationStatuses] = useState<Record<string, string>>({});
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success("BR Number copied to clipboard!");
+  };
 
   useEffect(() => {
     fetchVerifications();
@@ -76,7 +91,8 @@ export default function VerificationsPage() {
     business_id: string,
     owner_id: string,
     status: "approved" | "rejected",
-    businessName: string
+    businessName: string,
+    moderationStatus: string = "active"
   ) => {
     setSubmitting(id);
     try {
@@ -85,7 +101,8 @@ export default function VerificationsPage() {
           id,
           business_id,
           owner_id,
-          businessName
+          businessName,
+          moderationStatus
         );
         if (!result.success) throw new Error(result.error);
       } else {
@@ -194,6 +211,9 @@ export default function VerificationsPage() {
                       Business Info
                     </th>
                     <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      Verification Details
+                    </th>
+                    <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">
                       Document
                     </th>
                     <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">
@@ -241,18 +261,104 @@ export default function VerificationsPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
+                        <div className="space-y-3">
+                          {/* BR Number & Lookup */}
+                          <div>
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tight w-12">BR No:</span>
+                              <span className="text-sm font-mono font-bold text-brand-blue bg-blue-50 px-2 py-0.5 rounded border border-blue-100 truncate max-w-[140px]">
+                                {v?.br_number || "N/A"}
+                              </span>
+                              {v?.br_number && (
+                                <button
+                                  onClick={() => copyToClipboard(v.br_number!)}
+                                  className="p-1 text-gray-400 hover:text-brand-blue transition-colors rounded hover:bg-gray-100"
+                                  title="Copy BR Number"
+                                >
+                                  <Copy size={12} />
+                                </button>
+                              )}
+                            </div>
+                            
+                            {v?.br_number && (
+                              <div className="flex gap-1.5 ml-14">
+                                {v.br_number.startsWith('PV') && (
+                                  <button
+                                    onClick={() => window.open(`https://eroc.drc.gov.lk/search/company?registration_no=${v.br_number}`, "_blank")}
+                                    className="flex items-center gap-1 px-2 py-1 bg-white border border-gray-200 rounded text-[10px] font-bold text-gray-600 hover:border-brand-blue hover:text-brand-blue transition-all shadow-sm"
+                                  >
+                                    <Search size={10} />
+                                    Search eROC
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => window.open(`https://www.ird.gov.lk/en/eServices/sitepages/Taxpayer%20Registration%20Search.aspx?menuid=1801`, "_blank")}
+                                  className="flex items-center gap-1 px-2 py-1 bg-white border border-gray-200 rounded text-[10px] font-bold text-gray-600 hover:border-brand-blue hover:text-brand-blue transition-all shadow-sm"
+                                >
+                                  <Fingerprint size={10} />
+                                  Check IRD
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Business Type */}
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tight w-12">Type:</span>
+                            <span className="text-xs font-medium text-gray-600">
+                              {v.business_type === 'pvt_ltd' ? 'Private Limited' : 'Local Business'}
+                            </span>
+                          </div>
+
+                          {/* Moderation Status Dropdown (only for pending) */}
+                          {activeTab === 'pending' && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tight w-12">Status:</span>
+                              <select
+                                value={moderationStatuses[v.id] || "active"}
+                                onChange={(e) => setModerationStatuses({ ...moderationStatuses, [v.id]: e.target.value })}
+                                className="text-[10px] font-bold px-2 py-1 border border-gray-200 rounded bg-gray-50 text-gray-700 outline-none focus:ring-1 focus:ring-brand-blue/20"
+                              >
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                                <option value="under_investigation">Under Investigation</option>
+                              </select>
+                            </div>
+                          )}
+
+                          {/* TIN / SVAT */}
+                          {(v.tin_number || v.svat_number) && (
+                            <div className="flex flex-col gap-1 mt-2 pt-2 border-t border-gray-100">
+                              {v.tin_number && (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tight w-12">TIN:</span>
+                                  <span className="text-xs font-medium text-gray-700">{v.tin_number}</span>
+                                </div>
+                              )}
+                              {v.svat_number && (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tight w-12">SVAT:</span>
+                                  <span className="text-xs font-medium text-gray-700">{v.svat_number}</span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
                         {v.br_document_url ? (
-                          <div className="relative group h-16 w-24 rounded-lg overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center">
+                          <div className="relative group h-16 w-24 rounded-lg overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center shadow-sm">
                             <img
                               src={v.br_document_url}
                               alt="Verification Document"
                               className="h-full w-full object-cover group-hover:scale-110 transition-transform cursor-pointer"
-                              onClick={() =>
-                                window.open(v.br_document_url, "_blank")
-                              }
+                              onClick={() => setSelectedImage(v.br_document_url || null)}
                             />
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity pointer-events-none">
-                              <Eye className="text-white" size={16} />
+                              <Maximize2 className="text-white" size={16} />
+                            </div>
+                            <div className="absolute bottom-1 right-1 bg-white/90 p-1 rounded shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                              <FileText size={10} className="text-brand-blue" />
                             </div>
                           </div>
                         ) : (
@@ -291,7 +397,8 @@ export default function VerificationsPage() {
                                   v.business_id,
                                   v.businesses.owner_id,
                                   "approved",
-                                  v.businesses.name
+                                  v.businesses.name,
+                                  moderationStatuses[v.id] || "active"
                                 )
                               }
                               disabled={submitting === v.id}
@@ -327,6 +434,54 @@ export default function VerificationsPage() {
           </>
         )}
       </div>
+
+      {/* Proof Viewer Modal */}
+      {selectedImage && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setSelectedImage(null)}
+        >
+          <div 
+            className="relative max-w-5xl w-full bg-white rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="absolute top-4 right-4 z-10">
+              <button 
+                onClick={() => setSelectedImage(null)}
+                className="p-2 bg-black/20 hover:bg-black/40 text-white rounded-full transition-colors backdrop-blur-md"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-2 bg-gray-50 border-b border-gray-100 flex items-center gap-2">
+              <div className="p-2 bg-blue-50 text-brand-blue rounded-lg">
+                <ShieldCheck size={18} />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-gray-900 leading-none">Document Proof Viewer</h3>
+                <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-wider font-bold">Verification Evidence</p>
+              </div>
+            </div>
+            <div className="aspect-[16/10] relative bg-gray-900 flex items-center justify-center">
+              <img 
+                src={selectedImage} 
+                alt="BR Document Full View" 
+                className="max-w-full max-h-full object-contain"
+              />
+            </div>
+            <div className="p-4 bg-white flex justify-between items-center">
+              <p className="text-xs text-gray-400 italic">Click outside or press (X) to close</p>
+              <button 
+                onClick={() => window.open(selectedImage, '_blank')}
+                className="flex items-center gap-2 px-4 py-2 bg-brand-blue text-white rounded-lg text-xs font-bold hover:bg-brand-dark transition-colors"
+              >
+                <ExternalLink size={14} />
+                Open Original
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -865,7 +865,7 @@ export default function BusinessDetailsClient({ business }: Props) {
       <ReportModal
         isOpen={showReportModal}
         onClose={() => setShowReportModal(false)}
-        targetId={business.id}
+        targetId={business.id.toString()}
         targetType="business"
         targetName={business.name}
       />

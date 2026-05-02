@@ -7,7 +7,8 @@ export async function approveVerificationAction(
   verificationId: string,
   businessId: string,
   ownerId: string,
-  businessName: string
+  businessName: string,
+  moderationStatus: string = 'active'
 ) {
   const supabase = await createClient();
 
@@ -34,15 +35,23 @@ export async function approveVerificationAction(
     // 2. Update Verification Status
     const { error: verificationError } = await supabase
       .from('verifications')
-      .update({ status: 'approved' })
+      .update({ 
+        status: 'approved',
+        moderation_status: moderationStatus 
+      })
       .eq('id', verificationId);
 
     if (verificationError) throw verificationError;
 
-    // 3. Update Business Verified Status
+    // 3. Update Business Verified Status and Audit Trail
     const { error: businessError } = await supabase
       .from('businesses')
-      .update({ is_verified: true })
+      .update({ 
+        is_verified: true,
+        status: moderationStatus === 'active' ? 'approved' : moderationStatus,
+        verified_by: user.id,
+        verified_at: new Date().toISOString()
+      })
       .eq('id', businessId);
 
     if (businessError) throw businessError;
@@ -57,7 +66,17 @@ export async function approveVerificationAction(
       console.error('Error updating profile status:', profileError);
     }
 
-    // 5. Trigger Facebook Marketing
+    // 5. Global Notification if approved and active
+    if (moderationStatus === 'active') {
+      const today = new Date().toISOString().split('T')[0];
+      await supabase.from('notifications').insert({
+        title: 'New Verified Partner! 🏆',
+        message: `${businessName} is now a Verified Partner! [${today}]`,
+        type: 'global_announcement'
+      });
+    }
+
+    // 6. Trigger Facebook Marketing
     const profileLink = `https://slbusinessindex.com/business/${businessId}`;
     const fbResult = await postToFacebook({
       name: businessName,

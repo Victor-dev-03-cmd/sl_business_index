@@ -6,6 +6,11 @@ export interface Verification {
     br_document_url?: string;
     nic_passport_url?: string;
     status: 'pending' | 'approved' | 'rejected';
+    business_type?: string;
+    br_number?: string;
+    tin_number?: string;
+    svat_number?: string;
+    moderation_status?: string;
     created_at: string;
 }
 
