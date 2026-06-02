@@ -306,10 +306,13 @@ export default function BusinessDetailsClient({ business }: Props) {
                 <div className="flex items-center gap-1.5">
                   <MapPin size={14} className="text-brand-gold shrink-0" />
                   <span className="text-xs md:text-base line-clamp-1">
-                    {business.detailed_address || business.address}
+                    {business.detailed_address|| business.address}
                   </span>
                 </div>
                 {business.rating && (
+
+
+                  
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-1 bg-amber-500 px-2 py-0.5 rounded text-white font-bold text-xs md:text-sm">
                       <Star size={12} className="fill-white" />

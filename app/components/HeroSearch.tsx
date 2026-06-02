@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Search, MapPin, ChevronRight, Building2, Star, Tags } from "lucide-react";
 import * as LucideIcons from "lucide-react";
@@ -36,64 +36,68 @@ export default function HeroSearch({
 }: HeroSearchProps) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  // Single list drives the suggestions panel – no duplicate state
+  const [bizSuggestions, setBizSuggestions] = useState<any[]>([]);
+  const [categorySuggestions, setCategorySuggestions] = useState<any[]>([]);
+  const [isFetchingSuggestions, setIsFetchingSuggestions] = useState(false);
+
+  const searchBarRef = useRef<HTMLFormElement>(null);
+  // Track the latest fetch so stale responses from previous queries are ignored
+  const latestFetchId = useRef(0);
 
   useEffect(() => {
     onFocusChange?.(isSearchFocused);
   }, [isSearchFocused, onFocusChange]);
-  const [businessSuggestions, setBusinessSuggestions] = useState<any[]>([]);
-  const [fuzzyBusinessSuggestions, setFuzzyBusinessSuggestions] = useState<any[]>([]);
-  const [categorySuggestions, setCategorySuggestions] = useState<any[]>([]);
-  
-  const searchBarRef = useRef<HTMLFormElement>(null);
 
-  // Debounce search query
+  // Category filter — fast, client-side, no debounce needed
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-
-  // Search logic
-  useEffect(() => {
-    if (searchQuery.trim().length > 0) {
-      const query = searchQuery.toLowerCase();
-      const filteredCats = categories
-        .filter(
-          (cat: any) =>
-            cat.name.toLowerCase().includes(query) ||
-            cat.keywords.some((kw: string) => kw.toLowerCase().includes(query))
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) { setCategorySuggestions([]); return; }
+    setCategorySuggestions(
+      categories
+        .filter((cat: any) =>
+          cat.name.toLowerCase().includes(q) ||
+          cat.keywords.some((kw: string) => kw.toLowerCase().includes(q))
         )
-        .slice(0, 5);
-      setCategorySuggestions(filteredCats);
-    } else {
-      setCategorySuggestions([]);
+        .slice(0, 5)
+    );
+  }, [searchQuery, categories]);
+
+  // Business suggestions — debounced RPC, cancels stale responses
+  useEffect(() => {
+    const q = searchQuery.trim();
+
+    if (!q) {
+      setBizSuggestions(featuredBusinesses.slice(0, 4));
+      setIsFetchingSuggestions(false);
+      return;
     }
 
-    if (debouncedSearchQuery.trim().length > 0) {
-      const fetchSuggestions = async () => {
-        try {
-          const { data, error } = await supabase.rpc("get_global_search_suggestions", {
-            search_query: debouncedSearchQuery,
-            suggestion_limit: 5,
-          });
-          if (error) throw error;
-          if (data) {
-            setFuzzyBusinessSuggestions(data);
-            setBusinessSuggestions(data);
-          }
-        } catch (err) {
-          console.error("Error fetching suggestions:", err);
-        }
-      };
-      fetchSuggestions();
-    } else {
-      setBusinessSuggestions(featuredBusinesses.slice(0, 4));
-      setFuzzyBusinessSuggestions([]);
-    }
-  }, [debouncedSearchQuery, searchQuery, featuredBusinesses, categories]);
+    // Show previous results while waiting; signal loading
+    setIsFetchingSuggestions(true);
+
+    const fetchId = ++latestFetchId.current;
+    const timer = setTimeout(async () => {
+      try {
+        const { data, error } = await supabase.rpc("get_global_search_suggestions", {
+          search_query: q,
+          suggestion_limit: 5,
+        });
+        // Discard if a newer fetch already started
+        if (fetchId !== latestFetchId.current) return;
+        if (error) throw error;
+        setBizSuggestions(data ?? []);
+      } catch (err) {
+        if (fetchId !== latestFetchId.current) return;
+        console.error("Error fetching suggestions:", err);
+      } finally {
+        if (fetchId === latestFetchId.current) setIsFetchingSuggestions(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, featuredBusinesses]);
 
   const handleSearch = (query?: string) => {
     const finalQuery = query || searchQuery;
@@ -246,120 +250,121 @@ export default function HeroSearch({
       </form>
 
       {/* Suggestions panel */}
-      {isSearchFocused &&
-        (businessSuggestions.length > 0 ||
-          fuzzyBusinessSuggestions.length > 0 ||
-          categorySuggestions.length > 0) && (
-          <div
-            className="absolute top-full left-0 right-0 mt-1 bg-white rounded-[6px] shadow-2xl border border-gray-300 overflow-hidden text-left"
-            style={{
-              zIndex: 9999,
-              maxHeight: "65dvh",
-              overflowY: "auto",
-            }}
-          >
-            {/* Categories */}
-            {categorySuggestions.length > 0 && (
-              <div className="border-b border-gray-100 last:border-0">
-                <div className="px-4 pt-3 pb-2">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Categories</span>
-                </div>
-                {categorySuggestions.map((cat) => (
-                  <button
-                    key={cat.id}
-                    onMouseDown={() => handleCategoryClick(cat.name)}
-                    className="w-full px-4 py-3 hover:bg-gray-50 active:bg-gray-100 flex items-center gap-3 transition-colors border-b border-gray-50 last:border-0"
-                  >
-                    <div className="w-9 h-9 rounded-xl bg-brand-gold/10 flex items-center justify-center shrink-0 border border-brand-gold/20">
-                      {cat.image_url ? (
-                        <img src={cat.image_url} alt={cat.name} className="w-5 h-5 object-contain" />
-                      ) : (
-                        <IconComponent name={cat.icon} className="w-5 h-5 text-brand-gold" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0 text-left">
-                      <p className="text-sm font-medium text-gray-800 truncate">{cat.name}</p>
-                      {cat.keywords && cat.keywords.length > 0 && (
-                        <p className="text-[10px] text-gray-400 mt-0.5 truncate">{cat.keywords.join(", ")}</p>
-                      )}
-                    </div>
-                    <ChevronRight size={14} className="text-gray-300 shrink-0" />
-                  </button>
-                ))}
-              </div>
-            )}
+      {isSearchFocused && (bizSuggestions.length > 0 || categorySuggestions.length > 0 || isFetchingSuggestions) && (
+        <div
+          className="absolute top-full left-0 right-0 mt-1 bg-white rounded-md shadow-2xl border border-gray-300 overflow-hidden text-left"
+          style={{ zIndex: 9999, maxHeight: "65dvh", overflowY: "auto" }}
 
-            {/* Businesses */}
-            {(fuzzyBusinessSuggestions.length > 0 || businessSuggestions.length > 0) && (
-              <div>
-                <div className="flex items-center justify-between px-4 pt-3 pb-2">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">
-                    {searchQuery.trim() ? "Best Matches" : "Recommended for You"}
-                  </span>
-                </div>
-                {(fuzzyBusinessSuggestions.length > 0 ? fuzzyBusinessSuggestions : businessSuggestions).map((biz) => (
-                  <button
-                    key={biz.id}
-                    onMouseDown={() => router.push(`/business/${biz.slug || biz.id}`)}
-                    className="w-full px-4 py-3 hover:bg-gray-50 active:bg-gray-100 flex items-center gap-3 transition-colors border-b border-gray-50 last:border-0"
-                  >
-                    <div className="w-11 h-11 rounded-xl bg-gray-100 shrink-0 overflow-hidden border border-gray-200">
-                      {biz.logo_url || biz.image_url ? (
-                        <img src={biz.logo_url || biz.image_url} alt={biz.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-300">
-                          <Building2 size={18} />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0 text-left">
-                      <p className="text-sm font-semibold text-gray-800 truncate leading-tight flex items-center gap-1.5">
-                        {biz.name}
-                        {biz.is_verified && <VerifiedBadge size={10} />}
-                      </p>
-                      <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                        <span className="text-[10px] font-medium text-brand-blue bg-blue-50 px-2 py-0.5 rounded-full shrink-0">
-                          {biz.category}
-                        </span>
-                        {biz.address && (
-                          <span className="text-[10px] text-gray-400 truncate">
-                            · {biz.address.split(",").pop()?.trim()}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="shrink-0 flex items-center gap-2">
-                      {biz.rating ? (
-                        <div className="flex items-center gap-0.5">
-                          <Star size={11} className="text-amber-400 fill-amber-400" />
-                          <span className="text-xs font-semibold text-gray-600">{biz.rating}</span>
-                        </div>
-                      ) : (
-                        <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">New</span>
-                      )}
-                      <ChevronRight size={14} className="text-gray-300" />
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
+        >
+          {/* Subtle loading bar at top */}
+          {isFetchingSuggestions && (
+            <div className="h-0.5 w-full bg-gray-100 overflow-hidden">
+              <div className="h-full bg-brand-blue animate-pulse w-1/2 rounded-full" />
+            </div>
+          )}
 
-            {/* Footer */}
-            {searchQuery.trim() && (
-              <div className="border-t border-gray-100 px-4 py-3 bg-gray-50/50">
+          {/* Categories */}
+          {categorySuggestions.length > 0 && (
+            <div className="border-b border-gray-100">
+              <div className="px-4 pt-3 pb-2">
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Categories</span>
+              </div>
+              {categorySuggestions.map((cat) => (
                 <button
-                  onMouseDown={() => handleSearch()}
-                  className="w-full flex items-center gap-2 text-sm font-medium text-brand-dark hover:text-brand-blue transition-colors group"
+                  key={cat.id}
+                  onMouseDown={() => handleCategoryClick(cat.name)}
+                  className="w-full px-4 py-3 hover:bg-gray-50 active:bg-gray-100 flex items-center gap-3 transition-colors border-b border-gray-50 last:border-0"
                 >
-                  <Search size={14} className="shrink-0 text-gray-400 group-hover:text-brand-blue transition-colors" />
-                  Search all results for&nbsp;
-                  <span className="font-semibold truncate max-w-[180px]">&ldquo;{searchQuery}&rdquo;</span>
-                  <ChevronRight size={14} className="ml-auto text-gray-300 shrink-0" />
+                  <div className="w-9 h-9 rounded-xl bg-brand-gold/10 flex items-center justify-center shrink-0 border border-brand-gold/20">
+                    {cat.image_url ? (
+                      <img src={cat.image_url} alt={cat.name} className="w-5 h-5 object-contain" />
+                    ) : (
+                      <IconComponent name={cat.icon} className="w-5 h-5 text-brand-gold" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="text-sm font-medium text-gray-800 truncate">{cat.name}</p>
+                    {cat.keywords?.length > 0 && (
+                      <p className="text-[10px] text-gray-400 mt-0.5 truncate">{cat.keywords.join(", ")}</p>
+                    )}
+                  </div>
+                  <ChevronRight size={14} className="text-gray-300 shrink-0" />
                 </button>
+              ))}
+            </div>
+          )}
+
+          {/* Businesses */}
+          {bizSuggestions.length > 0 && (
+            <div>
+              <div className="px-4 pt-3 pb-2">
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">
+                  {searchQuery.trim() ? "Best Matches" : "Recommended for You"}
+                </span>
               </div>
-            )}
-          </div>
-        )}
+              {bizSuggestions.map((biz) => (
+                <button
+                  key={biz.id}
+                  onMouseDown={() => router.push(`/business/${biz.slug || biz.id}`)}
+                  className="w-full px-4 py-3 hover:bg-gray-50 active:bg-gray-100 flex items-center gap-3 transition-colors border-b border-gray-50 last:border-0"
+                >
+                  <div className="w-11 h-11 rounded-xl bg-gray-100 shrink-0 overflow-hidden border border-gray-200">
+                    {biz.logo_url || biz.image_url ? (
+                      <img src={biz.logo_url || biz.image_url} alt={biz.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-300">
+                        <Building2 size={18} />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="text-sm font-semibold text-gray-800 truncate leading-tight flex items-center gap-1.5">
+                      {biz.name}
+                      {biz.is_verified && <VerifiedBadge size={10} />}
+                    </p>
+                    <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                      <span className="text-[10px] font-medium text-brand-blue bg-blue-50 px-2 py-0.5 rounded-full shrink-0">
+                        {biz.category}
+                      </span>
+                      {biz.address && (
+                        <span className="text-[10px] text-gray-400 truncate">
+                          · {biz.address.split(",").pop()?.trim()}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="shrink-0 flex items-center gap-2">
+                    {biz.rating ? (
+                      <div className="flex items-center gap-0.5">
+                        <Star size={11} className="text-amber-400 fill-amber-400" />
+                        <span className="text-xs font-semibold text-gray-600">{biz.rating}</span>
+                      </div>
+                    ) : (
+                      <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">New</span>
+                    )}
+                    <ChevronRight size={14} className="text-gray-300" />
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Footer */}
+          {searchQuery.trim() && (
+            <div className="border-t border-gray-100 px-4 py-3 bg-gray-50/50">
+              <button
+                onMouseDown={() => handleSearch()}
+                className="w-full flex items-center gap-2 text-sm font-medium text-brand-dark hover:text-brand-blue transition-colors group"
+              >
+                <Search size={14} className="shrink-0 text-gray-400 group-hover:text-brand-blue transition-colors" />
+                Search all results for&nbsp;
+                <span className="font-semibold truncate max-w-45">&ldquo;{searchQuery}&rdquo;</span>
+                <ChevronRight size={14} className="ml-auto text-gray-300 shrink-0" />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Action Buttons */}
       <div className="flex flex-row items-center justify-center gap-2 px-1 mt-4">

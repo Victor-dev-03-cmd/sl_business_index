@@ -198,35 +198,41 @@ export default function HomePage() {
   };
 
   const handleUseCurrentLocation = (autoSearch: boolean = false) => {
-    if (navigator.geolocation) {
-      setIsFetchingLocation(true);
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          const coords = { lat: latitude, lng: longitude };
-          setUserCoords(coords);
-          setIsFetchingLocation(false);
+    if (!navigator.geolocation) return;
 
-          if (autoSearch) {
-            const params = new URLSearchParams({
-              lat: coords.lat.toString(),
-              lng: coords.lng.toString(),
-              radius: "5000",
-            });
-            router.push(`/nearby?${params.toString()}`);
-          }
-        },
-        (err) => {
-          console.error("Error getting location: ", err.message);
-          setIsFetchingLocation(false);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0,
-        },
-      );
-    }
+    setIsFetchingLocation(true);
+
+    // Hard cap: never show spinner longer than 6 s
+    const timeoutId = setTimeout(() => setIsFetchingLocation(false), 6000);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        clearTimeout(timeoutId);
+        const { latitude, longitude } = position.coords;
+        const coords = { lat: latitude, lng: longitude };
+        setUserCoords(coords);
+        setIsFetchingLocation(false);
+
+        if (autoSearch) {
+          const params = new URLSearchParams({
+            lat: coords.lat.toString(),
+            lng: coords.lng.toString(),
+            radius: "5000",
+          });
+          router.push(`/nearby?${params.toString()}`);
+        }
+      },
+      (err) => {
+        clearTimeout(timeoutId);
+        console.error("Error getting location: ", err.message);
+        setIsFetchingLocation(false);
+      },
+      {
+        enableHighAccuracy: false, // faster, good enough for search
+        timeout: 5000,
+        maximumAge: 60000, // reuse a cached fix up to 1 min old
+      },
+    );
   };
 
   const handleCategoryClick = (categoryName: string) => {
