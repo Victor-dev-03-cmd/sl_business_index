@@ -3,11 +3,26 @@
 import { useState, useEffect } from 'react';
 import Script from 'next/script';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
-import MarketingDesignEditor from './components/MarketingDesignEditor';
 import PromotionUploadForm from './components/PromotionUploadForm';
+
+const MarketingDesignEditor = dynamic(
+  () => import('./components/MarketingDesignEditor'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="text-center space-y-3">
+          <div className="w-10 h-10 border-2 border-brand-blue/30 border-t-brand-blue rounded-full animate-spin mx-auto" />
+          <p className="text-sm text-slate-500 font-medium">Loading Design Editor...</p>
+        </div>
+      </div>
+    ),
+  }
+)
 import { 
   Megaphone,
   Calendar, 
