@@ -7,6 +7,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Chrome, ArrowLeft, Check, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Turnstile } from '@marsidev/react-turnstile';
 
 export default function SignUp() {
   const [username, setUsername] = useState('');
@@ -15,6 +16,7 @@ export default function SignUp() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const router = useRouter();
 
   const handleContextMenu = (e: React.MouseEvent) => {
@@ -25,6 +27,12 @@ export default function SignUp() {
     e.preventDefault();
     setError(null);
     setLoading(true);
+
+    if (!turnstileToken) {
+      setError('Please complete the security check.');
+      setLoading(false);
+      return;
+    }
 
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -206,6 +214,14 @@ export default function SignUp() {
                     {error}
                   </div>
               )}
+
+              <Turnstile
+                siteKey={process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY!}
+                onSuccess={(token) => setTurnstileToken(token)}
+                onError={() => setTurnstileToken(null)}
+                onExpire={() => setTurnstileToken(null)}
+                options={{ theme: 'light', size: 'flexible' }}
+              />
 
               <button
                   type="submit"
