@@ -73,7 +73,7 @@ export default function HomePageClient() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("categories")
-        .select("*")
+        .select('id, name, icon, image_url, parent_id')
         .is("parent_id", null)
         .order("name", { ascending: true });
       if (error) throw error;
