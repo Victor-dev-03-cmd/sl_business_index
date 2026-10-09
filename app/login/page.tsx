@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Chrome, ArrowLeft, Check, Eye, EyeOff } from 'lucide-react';
+import { Chrome, ArrowLeft, Check, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Turnstile } from '@marsidev/react-turnstile';
 
@@ -19,6 +19,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get('next') || '/';
+  const isPasswordReset = searchParams.get('reset') === 'success';
   
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -75,6 +76,19 @@ function LoginForm() {
             />
           </Link>
         </div>
+
+        {isPasswordReset && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-start gap-3 bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-[6px] mb-6 text-sm"
+          >
+            <CheckCircle2 size={16} className="text-emerald-600 shrink-0 mt-0.5" />
+            <span>
+              <span className="font-semibold">Password updated.</span> Sign in with your new credentials below.
+            </span>
+          </motion.div>
+        )}
 
         <div className="mb-10 text-center lg:text-left">
           <h2 className="text-2xl font-normal text-gray-900 mb-2 tracking-tight">Welcome Back</h2>

@@ -6,20 +6,28 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowLeft, Mail, CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Turnstile } from '@marsidev/react-turnstile';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const handleResetRequest = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!turnstileToken) {
+      setError('Please complete the security check.');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'https://slbusinessindex.com/update-password',
+      redirectTo: `${window.location.origin}/auth/callback?next=/update-password`,
     });
 
     setLoading(false);
@@ -34,22 +42,13 @@ export default function ForgotPassword() {
     <div className="flex min-h-[100dvh] bg-white">
       {/* Left Side: Branding Panel */}
       <div className="hidden lg:flex lg:w-1/2 bg-brand-dark relative overflow-hidden items-center justify-center p-12">
-        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-brand-gold/10 rounded-full blur-[120px] -mr-64 -mt-64"></div>
-        
+        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-brand-gold/10 rounded-full blur-[120px] -mr-64 -mt-64" />
+
         <div className="relative z-10 max-w-md w-full text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <div className="mb-10 flex justify-center">
-              <Image
-                src="/logo.png"
-                alt="Logo"
-                width={180}
-                height={50}
-                className="brightness-0 invert"
-              />
+              <Image src="/logo.png" alt="Logo" width={180} height={50} className="brightness-0 invert" />
             </div>
             <h1 className="text-4xl font-normal text-white mb-6">Security & Recovery.</h1>
             <p className="text-brand-sand/80 text-sm leading-relaxed">
@@ -70,16 +69,18 @@ export default function ForgotPassword() {
           </div>
 
           <div className="mb-10">
-            <Link href="/login" className="inline-flex items-center text-gray-400 hover:text-brand-dark text-xs uppercase tracking-widest transition-colors mb-8">
+            <Link
+              href="/login"
+              className="inline-flex items-center text-gray-400 hover:text-brand-dark text-xs uppercase tracking-widest transition-colors mb-8"
+            >
               <ArrowLeft size={14} className="mr-2" /> Back to Login
             </Link>
-            
             <h2 className="text-2xl font-normal text-gray-900 mb-2">Password Recovery</h2>
             <p className="text-gray-400 text-sm">Enter your email address to receive a reset link.</p>
           </div>
 
           {success ? (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               className="bg-emerald-50 border border-emerald-100 p-8 rounded-[6px] text-center"
@@ -91,9 +92,10 @@ export default function ForgotPassword() {
               </div>
               <h3 className="text-emerald-900 font-bold mb-2">Check your Email</h3>
               <p className="text-emerald-700 text-sm mb-6">
-                We&apos;ve sent a password reset link to <span className="font-bold">{email}</span>.
+                We&apos;ve sent a password reset link to{' '}
+                <span className="font-bold">{email}</span>. Check your inbox (and spam folder).
               </p>
-              <Link 
+              <Link
                 href="/login"
                 className="block w-full py-3 bg-emerald-600 text-white rounded-[6px] text-sm font-bold hover:bg-emerald-700 transition-colors"
               >
@@ -103,7 +105,9 @@ export default function ForgotPassword() {
           ) : (
             <form onSubmit={handleResetRequest} className="space-y-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-normal text-gray-400 uppercase tracking-[0.2em] block ml-1">Email Address</label>
+                <label className="text-[10px] font-normal text-gray-400 uppercase tracking-[0.2em] block ml-1">
+                  Email Address
+                </label>
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <input
@@ -122,6 +126,14 @@ export default function ForgotPassword() {
                   {error}
                 </div>
               )}
+
+              <Turnstile
+                siteKey={process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY!}
+                onSuccess={(token) => setTurnstileToken(token)}
+                onError={() => setTurnstileToken(null)}
+                onExpire={() => setTurnstileToken(null)}
+                options={{ theme: 'light', size: 'flexible' }}
+              />
 
               <button
                 type="submit"
