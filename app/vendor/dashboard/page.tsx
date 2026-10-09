@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import VendorAnalytics from './VendorAnalytics';
+import PushNotificationToggle from '@/components/PushNotificationToggle';
 
 interface Business {
   id: string;
@@ -164,12 +165,15 @@ export default function VendorDashboard() {
           <h1 className="text-xl md:text-2xl text-gray-900 font-bold tracking-tight">Dashboard Overview</h1>
           <p className="text-sm text-gray-500 mt-1">Welcome back! Here&apos;s what&apos;s happening with your businesses today.</p>
         </div>
-        <Link 
-          href="/vendor/marketing" 
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-dark text-white rounded-[6px] text-sm transition-all hover:bg-brand-dark/90 shadow-sm font-bold"
-        >
-          <Plus size={18} /> Create Promotion
-        </Link>
+        <div className="flex items-center gap-2">
+          <PushNotificationToggle />
+          <Link
+            href="/vendor/marketing"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-dark text-white rounded-[6px] text-sm transition-all hover:bg-brand-dark/90 shadow-sm font-bold"
+          >
+            <Plus size={18} /> Create Promotion
+          </Link>
+        </div>
       </div>
 
       {/* Tabs */}
