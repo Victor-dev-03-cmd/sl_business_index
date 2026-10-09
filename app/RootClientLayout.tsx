@@ -27,6 +27,14 @@ export default function RootClientLayout({
     setMounted(true);
   }, []);
 
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker
+        .register('/sw.js', { scope: '/' })
+        .catch((err) => console.error('SW registration failed:', err))
+    }
+  }, []);
+
   return (
     <>
       <noscript>
