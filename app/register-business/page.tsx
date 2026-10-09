@@ -12,6 +12,7 @@ const AddressAutocomplete = dynamic(() => import('@/components/AddressAutocomple
 const CategorySelector = dynamic(() => import('@/components/CategorySelector'), { ssr: false });
 
 import { CheckCircle2, Clock, Home, ArrowRight, ShieldCheck, Camera, Upload, Globe, Timer, Building2 } from 'lucide-react';
+import { Turnstile } from '@marsidev/react-turnstile';
 import Image from 'next/image';
 
 export default function RegisterBusinessPage() {
@@ -54,6 +55,7 @@ export default function RegisterBusinessPage() {
   const [isUnauthenticated, setIsUnauthenticated] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   // Sri Lankan NIC Validation
   const validateNIC = (nic: string): boolean => {
@@ -124,18 +126,8 @@ export default function RegisterBusinessPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('handleSubmit called');
     setLoading(true);
     setError(null);
-
-    console.log('Form data:', {
-      businessName,
-      category,
-      location,
-      registrationType,
-      brNumber,
-      nicNumber
-    });
 
     if (!businessName.trim()) {
       setError('Business Name is required.');
@@ -199,6 +191,12 @@ export default function RegisterBusinessPage() {
         setLoading(false);
         return;
       }
+    }
+
+    if (!turnstileToken) {
+      setError('Please complete the security check before submitting.');
+      setLoading(false);
+      return;
     }
 
     try {
@@ -603,6 +601,16 @@ export default function RegisterBusinessPage() {
                   <span className="text-red-600 text-sm font-normal">⚠️ {error}</span>
                 </div>
             )}
+
+            <div className="mt-4">
+              <Turnstile
+                siteKey={process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY!}
+                onSuccess={(token) => setTurnstileToken(token)}
+                onError={() => setTurnstileToken(null)}
+                onExpire={() => setTurnstileToken(null)}
+                options={{ theme: 'light', size: 'flexible' }}
+              />
+            </div>
 
             <div className="pt-10 flex flex-col md:flex-row gap-4 items-center justify-between">
               <p className="text-xs text-gray-400 max-w-sm font-normal">By submitting, you agree to our terms of service and business directory guidelines.</p>
