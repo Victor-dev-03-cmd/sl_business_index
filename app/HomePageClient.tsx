@@ -470,6 +470,7 @@ export default function HomePageClient() {
                         src={business.image_url}
                         alt={business.name}
                         fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 16.7vw"
                         className="object-cover transition-transform duration-700 group-hover:scale-110"
                       />
                     ) : (

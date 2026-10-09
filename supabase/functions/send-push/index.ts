@@ -12,6 +12,11 @@ webpush.setVapidDetails(
 )
 
 Deno.serve(async (req: Request) => {
+  const authHeader = req.headers.get('Authorization')
+  if (authHeader !== `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`) {
+    return new Response('Forbidden', { status: 403 })
+  }
+
   if (req.method !== 'POST') {
     return new Response('Method not allowed', { status: 405 })
   }
@@ -59,6 +64,7 @@ Deno.serve(async (req: Request) => {
     await supabase
       .from('push_subscriptions')
       .delete()
+      .eq('user_id', userId)
       .eq('endpoint', sub.endpoint)
   }
 

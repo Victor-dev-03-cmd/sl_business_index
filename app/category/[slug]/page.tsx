@@ -30,7 +30,6 @@ async function getCategoryData(slug: string) {
   const { data: categories } = await supabase
     .from('categories')
     .select('id, name, icon, image_url, parent_id')
-    .is('parent_id', null)
 
   const category = (categories || []).find((c) => slugify(c.name) === slug)
 
