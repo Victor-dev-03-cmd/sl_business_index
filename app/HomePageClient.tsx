@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { supabase } from "@/lib/supabaseClient";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -67,6 +67,13 @@ export default function HomePageClient() {
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [activePageIndex, setActivePageIndex] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+
+  // Parallax — hero background drifts at 30% of scroll speed
+  const heroRef = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
+  const glowY = useTransform(scrollYProgress, [0, 1], ["0%", "40%"]);
+  const glowOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
+  const contentY = useTransform(scrollYProgress, [0, 1], ["0%", "12%"]);
 
   const { data: categories = EMPTY_ARRAY, isLoading: categoriesLoading } = useQuery({
     queryKey: ["categories-home"],
@@ -259,27 +266,89 @@ export default function HomePageClient() {
   return (
     <div className="min-h-[100dvh] bg-white font-normal">
       {/* --- HERO SECTION --- */}
-      <section className="relative h-[78dvh] flex items-center justify-center z-20 bg-brand-dark">
-        <div className="relative z-10 max-w-5xl px-6 py-12 text-center mx-4">
-          <span className="inline-block px-4 py-1.5 mb-6 text-[11px] md:text-[13px] tracking-[0.15em] uppercase text-brand-sand border border-gray-300/20 rounded bg-white/5">
-            Sri Lanka Business Index
-          </span>
-          <h1 className="text-3xl md:text-6xl text-white mb-6 leading-tight tracking-tight">
-            The Ultimate Directory for <br />
-            <span className="text-white text-4xl md:text-6xl">Businesses in Sri Lanka (SLBI)</span>
-          </h1>
-          <p className="text-brand-sand text-base md:text-[16px] mb-10 max-w-xl mx-auto leading-relaxed">
-            Explore verified local businesses and luxury villas across Sri Lanka. Discover premium services and authentic island experiences through our directory.
-          </p>
+      <section
+        ref={heroRef}
+        className="relative h-[78dvh] flex items-center justify-center overflow-hidden bg-brand-dark"
+        style={{ zIndex: 20 }}
+      >
+        {/* Parallax ambient glow layer */}
+        <motion.div
+          className="absolute inset-0 pointer-events-none"
+          style={{ y: glowY, opacity: glowOpacity }}
+        >
+          <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] rounded-full bg-brand-blue/25 blur-[140px]" />
+          <div className="absolute top-1/3 right-1/5 w-[380px] h-[380px] rounded-full bg-brand-gold/15 blur-[110px]" />
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[200px] rounded-full bg-brand-blue/10 blur-[80px]" />
+        </motion.div>
 
-          <HeroSearch
-            categories={categories}
-            featuredBusinesses={featuredBusinesses}
-            userCoords={userCoords}
-            isFetchingLocation={isFetchingLocation}
-            handleUseCurrentLocation={handleUseCurrentLocation}
-            onFocusChange={setIsSearchFocused}
-          />
+        {/* Subtle dot-grid overlay */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)",
+            backgroundSize: "36px 36px",
+          }}
+        />
+
+        {/* Bottom edge highlight */}
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent pointer-events-none" />
+
+        {/* Content with mild parallax */}
+        <motion.div
+          style={{ y: contentY }}
+          className="relative z-10 max-w-5xl px-6 py-12 text-center mx-4 w-full"
+        >
+          {/* Badge */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, delay: 0.05, ease: "easeOut" }}
+            className="inline-flex items-center gap-2 px-4 py-1.5 mb-7 text-[11px] md:text-[12px] tracking-[0.18em] uppercase text-brand-sand/75 border border-white/10 rounded-full bg-white/5 backdrop-blur-sm"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-brand-gold animate-pulse shrink-0" />
+            Sri Lanka Business Index
+          </motion.div>
+
+          {/* Headline */}
+          <motion.h1
+            initial={{ opacity: 0, y: 22 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.65, delay: 0.15, ease: "easeOut" }}
+            className="text-3xl md:text-[58px] text-white mb-5 leading-[1.15] tracking-tight"
+          >
+            The Ultimate Directory for
+            <br />
+            <span className="bg-gradient-to-r from-white via-brand-sand/90 to-brand-gold bg-clip-text text-transparent">
+              Businesses in Sri Lanka
+            </span>
+          </motion.h1>
+
+          {/* Subheading */}
+          <motion.p
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.25, ease: "easeOut" }}
+            className="text-brand-sand/60 text-sm md:text-[15px] mb-10 max-w-lg mx-auto leading-relaxed"
+          >
+            Explore verified local businesses and luxury villas across Sri Lanka. Discover premium services and authentic island experiences.
+          </motion.p>
+
+          {/* Search */}
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.35, ease: "easeOut" }}
+          >
+            <HeroSearch
+              categories={categories}
+              featuredBusinesses={featuredBusinesses}
+              userCoords={userCoords}
+              isFetchingLocation={isFetchingLocation}
+              handleUseCurrentLocation={handleUseCurrentLocation}
+              onFocusChange={setIsSearchFocused}
+            />
+          </motion.div>
 
           {/* Overlay to close category dropdown */}
           {isCategoryOpen && (
@@ -288,7 +357,7 @@ export default function HomePageClient() {
               onClick={() => setIsCategoryOpen(false)}
             />
           )}
-        </div>
+        </motion.div>
       </section>
 
       {/* --- CATEGORIES (Slider) --- */}
