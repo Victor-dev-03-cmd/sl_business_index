@@ -86,6 +86,23 @@ app.get('/test-fetch', async (c) => {
   }
 })
 
+app.get('/categories', async (c) => {
+  const { data, error } = await supabaseAdmin
+    .from('categories')
+    .select('id, name, icon, image_url, parent_id')
+    .is('parent_id', null)
+    .order('name', { ascending: true })
+
+  if (error) return c.json({ error: error.message }, 500)
+
+  return new Response(JSON.stringify(data), {
+    headers: {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400',
+    },
+  })
+})
+
 // Existing API routes
 app.get('/geocode', async (c) => {
   const q = c.req.query('q')
