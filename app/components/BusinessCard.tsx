@@ -19,12 +19,13 @@ export default function BusinessCard({ business }: BusinessCardProps) {
       
       <div className="aspect-[4/3] bg-gray-50 relative overflow-hidden">
         {business.image_url ? (
-          <Image 
-            src={business.image_url} 
-            alt={business.name} 
-            fill 
+          <Image
+            src={business.image_url}
+            alt={business.name}
+            fill
             unoptimized={business.image_url.includes('supabase.co')}
-            className="object-cover transition-transform duration-700 " 
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            className="object-cover transition-transform duration-700 "
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-200">
