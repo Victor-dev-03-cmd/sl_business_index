@@ -1,11 +1,7 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-/**
- * Next.js 16 Proxy / Middleware
- * Handles Supabase session refresh and role-based protection
- */
-export default async function proxy(request: NextRequest) {
+export default async function middleware(request: NextRequest) {
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -47,13 +43,11 @@ export default async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  // Protected routes check (Admin/Vendor)
   if (pathname.startsWith('/admin') || pathname.startsWith('/vendor')) {
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser()
-      
+
       if (authError) {
-        // Break infinite loops if refresh token is missing or invalid
         if (authError.message.includes('Refresh Token Not Found') || authError.status === 400) {
           const redirectResponse = NextResponse.redirect(new URL('/login', request.url))
           request.cookies.getAll().forEach(cookie => {

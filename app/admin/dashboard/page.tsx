@@ -112,12 +112,6 @@ export default function AdminDashboard() {
       businessId: string | number;
       isFeatured: boolean;
     }) => {
-      console.log(
-        "Toggling featured for:",
-        businessId,
-        "Current status:",
-        isFeatured,
-      );
       if (isFeatured) {
         // Remove from featured
         const { error } = await supabase
@@ -140,7 +134,6 @@ export default function AdminDashboard() {
       }
     },
     onSuccess: () => {
-      console.log("Toggle success, invalidating queries...");
       queryClient.invalidateQueries({ queryKey: ["admin-featured-ids"] });
       queryClient.invalidateQueries({ queryKey: ["featured-businesses-home"] });
       toast.success("Featured status updated successfully!");

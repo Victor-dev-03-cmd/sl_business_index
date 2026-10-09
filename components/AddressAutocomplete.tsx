@@ -241,8 +241,8 @@ export default function AddressAutocomplete({
                       const results = await getGeocode({ location: markerPosition });
                       const components = results[0].address_components;
                       const parts = components
-                        .filter(c => c.types.includes('route') || c.types.includes('sublocality') || c.types.includes('neighborhood'))
-                        .map(c => c.long_name);
+                        .filter((c: { types: string[]; long_name: string }) => c.types.includes('route') || c.types.includes('sublocality') || c.types.includes('neighborhood'))
+                        .map((c: { types: string[]; long_name: string }) => c.long_name);
                       
                       if (parts.length > 0) {
                         onDetailedAddressChange(parts.join(', '));

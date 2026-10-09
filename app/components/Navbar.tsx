@@ -191,7 +191,6 @@ export default function Navbar() {
           .order("name", { ascending: true });
         if (!error) {
           setCategories(data || []);
-          console.log("Fetched categories:", data?.length);
         }
       } catch (err) {
         console.error("Error fetching categories in Navbar:", err);
