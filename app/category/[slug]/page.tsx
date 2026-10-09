@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import CategoryContent from './CategoryContent';
 
+export const revalidate = 600
+
 type Props = {
   params: Promise<{
     slug: string;

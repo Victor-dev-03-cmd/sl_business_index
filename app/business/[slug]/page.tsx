@@ -4,6 +4,8 @@ import { Business } from '@/lib/types';
 import BusinessDetailsClient from './BusinessDetailsClient';
 import { Metadata } from 'next';
 
+export const revalidate = 600
+
 type Props = {
   params: Promise<{
     slug: string;
