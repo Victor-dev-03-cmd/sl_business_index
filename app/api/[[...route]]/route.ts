@@ -647,6 +647,43 @@ app.post('/qr/request', async (c) => {
   }
 })
 
+// Push Notification — Subscribe
+app.post('/push/subscribe', async (c) => {
+  const user = c.get('user')
+  if (!user) return c.json({ error: 'Unauthorized' }, 401)
+
+  const { endpoint, p256dh, auth } = await c.req.json()
+  if (!endpoint || !p256dh || !auth) {
+    return c.json({ error: 'Missing subscription fields' }, 400)
+  }
+
+  const { error } = await supabaseAdmin
+    .from('push_subscriptions')
+    .upsert(
+      { user_id: user.id, endpoint, p256dh, auth },
+      { onConflict: 'user_id,endpoint' }
+    )
+
+  if (error) return c.json({ error: error.message }, 500)
+  return c.json({ success: true })
+})
+
+// Push Notification — Unsubscribe
+app.delete('/push/unsubscribe', async (c) => {
+  const user = c.get('user')
+  if (!user) return c.json({ error: 'Unauthorized' }, 401)
+
+  const { endpoint } = await c.req.json()
+
+  await supabaseAdmin
+    .from('push_subscriptions')
+    .delete()
+    .eq('user_id', user.id)
+    .eq('endpoint', endpoint)
+
+  return c.json({ success: true })
+})
+
 export const GET = handle(app)
 export const POST = handle(app)
 export const PUT = handle(app)
