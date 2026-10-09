@@ -25,39 +25,40 @@ const slugify = (name: string) => {
 };
 
 async function getCategoryData(slug: string) {
-  const supabase = await createClient();
-  
-  // Fetch all categories to find the match by slug
+  const supabase = await createClient()
+
   const { data: categories } = await supabase
     .from('categories')
-    .select('*');
+    .select('id, name, icon, image_url, parent_id')
+    .is('parent_id', null)
 
-  const category = (categories || []).find(c => slugify(c.name) === slug);
-  
+  const category = (categories || []).find((c) => slugify(c.name) === slug)
+
   if (!category) {
-    // Check if it's a category from businesses table that doesn't exist in categories table
+    // Fall back: check if slug matches a raw business category string
     const { data: businesses } = await supabase
       .from('businesses')
       .select('category')
-      .eq('status', 'approved');
-    
-    const uniqueCats = Array.from(new Set((businesses || []).map(b => b.category).filter(Boolean)));
-    const dynamicCat = uniqueCats.find(c => slugify(c as string) === slug);
-    
-    if (!dynamicCat) return null;
-    return { name: dynamicCat, id: null };
+      .eq('status', 'approved')
+
+    const uniqueCats = Array.from(
+      new Set((businesses || []).map((b) => b.category).filter(Boolean))
+    )
+    const dynamicCat = uniqueCats.find((c) => slugify(c as string) === slug)
+    if (!dynamicCat) return null
+    return { name: dynamicCat, id: null }
   }
-  
-  return category;
+
+  return category
 }
 
 async function getAllCategories() {
-  const supabase = await createClient();
+  const supabase = await createClient()
   const { data } = await supabase
     .from('categories')
-    .select('*')
-    .order('name', { ascending: true });
-  return data || [];
+    .select('id, name, icon, image_url, parent_id')
+    .order('name', { ascending: true })
+  return data || []
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

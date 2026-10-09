@@ -73,7 +73,10 @@ export default function CategoryContent({ category, allCategories }: CategoryCon
     queryFn: async () => {
       let query = supabase
         .from('businesses')
-        .select('*', { count: 'exact' })
+        .select(
+          'id, slug, name, category, address, city, latitude, longitude, image_url, logo_url, rating, is_verified, status, can_show_badge, phone',
+          { count: 'exact' }
+        )
         .eq('category', category.name)
         .eq('status', 'approved');
 
