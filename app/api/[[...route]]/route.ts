@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { verifyTurnstileToken } from '@/lib/turnstile'
 import { handle } from 'hono/vercel'
 import { getCookie, setCookie, deleteCookie } from 'hono/cookie'
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
@@ -14,8 +15,6 @@ type Variables = {
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-
-console.log('API Init - Supabase URL:', supabaseUrl ? `${supabaseUrl.slice(0, 10)}...` : 'MISSING')
 
 // Global client for administrative tasks (bypasses RLS)
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey || supabaseAnonKey, {
@@ -448,7 +447,15 @@ app.post('/social/publish', async (c) => {
 // Contact Form Submission Endpoint
 app.post('/contact/send', async (c) => {
   try {
-    const { name, email, subject, department, message, location } = await c.req.json()
+    const body = await c.req.json()
+    const { turnstileToken, ...rest } = body
+
+    const isHuman = await verifyTurnstileToken(turnstileToken)
+    if (!isHuman) {
+      return c.json({ error: 'Security check failed. Please try again.' }, 403)
+    }
+
+    const { name, email, subject, department, message, location } = rest
 
     if (!name || !email || !message) {
       return c.json({ error: 'Name, email, and message are required' }, 400)

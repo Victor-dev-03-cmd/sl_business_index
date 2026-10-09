@@ -25,6 +25,7 @@ import {
   Navigation
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
+import { Turnstile } from '@marsidev/react-turnstile';
 
 const publicServices = [
   {
@@ -164,6 +165,7 @@ export default function ContactPage() {
   };
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -173,7 +175,7 @@ export default function ContactPage() {
       const response = await fetch("/api/contact/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ department, ...formData }),
+        body: JSON.stringify({ department, ...formData, turnstileToken }),
       });
 
       if (!response.ok) {
@@ -409,7 +411,15 @@ export default function ContactPage() {
                   ></textarea>
                 </div>
 
-                <button 
+                <Turnstile
+                  siteKey={process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY!}
+                  onSuccess={(token) => setTurnstileToken(token)}
+                  onError={() => setTurnstileToken(null)}
+                  onExpire={() => setTurnstileToken(null)}
+                  options={{ theme: 'light', size: 'flexible' }}
+                />
+
+                <button
                   type="submit"
                   disabled={isSubmitting}
                   className="w-full py-4 bg-brand-dark text-white rounded-[6px] shadow-lg shadow-emerald-900/10 transition-all font-normal flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed"
