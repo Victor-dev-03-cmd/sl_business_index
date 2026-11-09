@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Mic, MicOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,9 @@ export default function VoiceSearch({ onResult, className }: VoiceSearchProps) {
   const [isListening, setIsListening] = useState(false);
   const [recognition, setRecognition] = useState<any>(null);
   const [isSupported, setIsSupported] = useState(true);
+  // Keep the callback current without recreating SpeechRecognition per keystroke.
+  const onResultRef = useRef(onResult);
+  useEffect(() => { onResultRef.current = onResult; }, [onResult]);
 
   useEffect(() => {
     const SpeechRecognition =
@@ -51,12 +54,19 @@ export default function VoiceSearch({ onResult, className }: VoiceSearchProps) {
     recog.onresult = (event: any) => {
       const transcript = event.results[0][0].transcript;
       if (transcript) {
-        onResult(transcript);
+        onResultRef.current(transcript);
       }
     };
 
     setRecognition(recog);
-  }, [onResult]);
+    return () => {
+      recog.onstart = null;
+      recog.onend = null;
+      recog.onerror = null;
+      recog.onresult = null;
+      try { recog.abort(); } catch { /* already stopped */ }
+    };
+  }, []);
 
   const toggleListening = useCallback(() => {
     if (!recognition) return;
