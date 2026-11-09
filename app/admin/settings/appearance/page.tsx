@@ -5,21 +5,12 @@ import { supabase } from "@/lib/supabaseClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Palette, Save, Type, MousePointer2, Check } from "lucide-react";
+import { Palette, Save, Type, MousePointer2 } from "lucide-react";
 
 interface SiteSettings {
   id: number;
-  primary_font: string;
   button_border_radius: number;
 }
-
-const FONTS = [
-  { name: "Outfit", value: "Outfit" },
-  { name: "Inter", value: "Inter" },
-  { name: "Poppins", value: "Poppins" },
-  { name: "Roboto", value: "Roboto" },
-  { name: "Montserrat", value: "Montserrat" },
-];
 
 export default function AppearanceSettingsPage() {
   const queryClient = useQueryClient();
@@ -30,7 +21,7 @@ export default function AppearanceSettingsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("site_settings")
-        .select("id, primary_font, button_border_radius")
+        .select("id, button_border_radius")
         .eq("id", 1)
         .single();
 
@@ -50,7 +41,7 @@ export default function AppearanceSettingsPage() {
     mutationFn: async (newSettings: SiteSettings) => {
       const { error } = await supabase
         .from("site_settings")
-        .update(newSettings)
+        .update({ button_border_radius: newSettings.button_border_radius })
         .eq("id", 1);
 
       if (error) throw error;
@@ -108,47 +99,15 @@ export default function AppearanceSettingsPage() {
         </button>
       </div>
 
-      {/* Typography Selection */}
-      <section className="space-y-6">
+      {/* Read-only typography identity — site-wide font is managed by the design system. */}
+      <section className="space-y-4">
         <h2 className="text-sm font-bold text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
-          <Type size={14} /> Global Typography
+          <Type size={14} /> Brand Typography
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 bg-gray-50/30 p-4 md:p-6 rounded-xl border border-gray-100">
-          {FONTS.map((font) => (
-            <button
-              key={font.value}
-              onClick={() =>
-                setLocalSettings((s) =>
-                  s ? { ...s, primary_font: font.value } : null,
-                )
-              }
-              className={`relative p-6 bg-white border rounded-xl text-left transition-all hover:shadow-md ${
-                localSettings.primary_font === font.value
-                  ? "border-brand-blue ring-1 ring-brand-blue shadow-sm"
-                  : "border-gray-200 hover:border-gray-300"
-              }`}
-            >
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-bold text-gray-900">
-                  {font.name}
-                </span>
-                {localSettings.primary_font === font.value && (
-                  <div className="h-5 w-5 bg-brand-blue rounded-full flex items-center justify-center">
-                    <Check size={12} className="text-white" />
-                  </div>
-                )}
-              </div>
-              <p
-                className="text-2xl text-gray-400 truncate"
-                style={{ fontFamily: font.value }}
-              >
-                The quick brown fox
-              </p>
-              <p className="text-[10px] text-gray-400 mt-2 font-bold uppercase tracking-widest">
-                Preview
-              </p>
-            </button>
-          ))}
+        <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-2">
+          <p className="text-sm font-bold text-gray-900">Inter — SL Business Index</p>
+          <p className="text-2xl font-medium tracking-tight text-gray-900">Discover businesses with confidence.</p>
+          <p className="text-sm text-gray-500">Inter is used throughout the public website, Admin Panel and Vendor Portal. Tamil and Sinhala use dedicated readable fallback fonts. Typography is centrally controlled for consistent branding.</p>
         </div>
       </section>
 
