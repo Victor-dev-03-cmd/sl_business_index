@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { Suspense, useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useSession } from "@/app/components/SessionContext";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -80,7 +80,7 @@ const SRI_LANKAN_DISTRICTS = [
   "Polonnaruwa", "Puttalam", "Ratnapura", "Trincomalee", "Vavuniya",
 ];
 
-export default function BusinessNewsPage() {
+function BusinessNewsContent() {
   const { user } = useSession();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -1031,5 +1031,22 @@ export default function BusinessNewsPage() {
         targetName={reportingTarget?.name}
       />
     </div>
+  );
+}
+
+
+/** Route-local Suspense boundary for Next.js 16 useSearchParams CSR bailout. */
+export default function BusinessNewsPage() {
+  return (
+    <Suspense fallback={
+      <div role="status" className="flex min-h-[60vh] items-center justify-center bg-[#F6F3ED] px-6">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-[#D7E9DC] border-t-[#2F765C]" />
+          <p className="text-sm font-medium text-[#315B47]">Loading business news…</p>
+        </div>
+      </div>
+    }>
+      <BusinessNewsContent />
+    </Suspense>
   );
 }
