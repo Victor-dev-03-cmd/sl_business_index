@@ -232,8 +232,8 @@ export default function QRGeneratorPage() {
                   >
                     {/* Top Branding - Clean & Minimal */}
                     <div className="w-full pt-16 pb-8 flex flex-col items-center gap-4">
-                      <div className="w-20 h-20 bg-brand-dark rounded-[24px] flex items-center justify-center shadow-xl shadow-brand-dark/10">
-                        <img src="/logo.png" alt="Logo" className="h-12 w-12 object-contain brightness-0 invert" />
+                      <div className="w-20 h-20 bg-[#F6F3ED] rounded-[24px] flex items-center justify-center shadow-xl shadow-brand-dark/10">
+                        <img src="/slbi-mark.svg" alt="SL Business Index mark" className="h-12 w-12 object-contain" />
                       </div>
                       <div className="text-center">
                         <h2 className="text-2xl font-black text-brand-dark tracking-[0.1em] uppercase">Sri Lanka</h2>
@@ -262,7 +262,7 @@ export default function QRGeneratorPage() {
                             size={320}
                             level="H"
                             imageSettings={{
-                              src: "/logo.png",
+                              src: "/slbi-mark.svg",
                               x: undefined,
                               y: undefined,
                               height: 64,
