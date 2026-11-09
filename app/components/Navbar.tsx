@@ -29,6 +29,8 @@ import {
   HelpCircle as HelpIcon,
   Megaphone,
   Plus,
+  Search,
+  ArrowUpRight,
 } from "lucide-react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import Image from "next/image";
@@ -276,83 +278,64 @@ export default function Navbar() {
         onMouseLeave={handleMouseLeave}
       >
         <header 
-          className="relative z-50 bg-white border-b border-transparent transition-colors"
+          className={cn("relative z-50 border-b bg-white/95 backdrop-blur-xl transition-all duration-300", scrolled ? "border-slate-200 shadow-[0_8px_30px_rgba(15,23,42,0.07)]" : "border-slate-100")}
           onMouseEnter={() => {
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
           }}
         >
-        <div className="container mx-auto flex items-center justify-between h-20 px-4">
+        <div className="mx-auto flex h-[76px] max-w-[1440px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           {/* Logo */}
           <div className="flex-shrink-0">
             <LogoLink />
           </div>
 
-          {/* Desktop nav */}
-          <nav className="hidden md:flex flex-grow justify-center items-center space-x-8">
-            <Link
-              href="/"
-              className="text-gray-600 hover:text-brand-dark transition-colors font-medium"
-            >
-              Home
-            </Link>
-            <Link
-              href="/about"
-              className="text-gray-600 hover:text-brand-dark transition-colors font-medium"
-            >
-              About
-            </Link>
-            <Link
-              href="/business-news"
-              className="text-gray-600 hover:text-brand-dark transition-colors font-medium relative flex items-center gap-1.5"
-            >
-              SL-News
-              {hasNewNews && (
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                </span>
-              )}
-            </Link>
-            <Link
-              href="/faq"
-              className="text-gray-600 hover:text-brand-dark transition-colors font-medium"
-            >
-              FAQ
-            </Link>
-            <Link
-              href="/contact"
-              className="text-gray-600 hover:text-brand-dark transition-colors font-medium"
-            >
-              Contact
-            </Link>
-          </nav>
+          {/* Premium desktop navigation */}
+           <nav aria-label="Main navigation" className="hidden lg:flex min-w-0 flex-1 items-center justify-center gap-0.5">
+             {[
+               { href: "/", label: "Explore" },
+               { href: "/category", label: "Categories" },
+               { href: "/nearby", label: "Nearby" },
+               { href: "/business-news", label: "Business News" },
+               { href: "/about", label: "About" },
+             ].map(item => {
+               const active = pathname === item.href || (item.href === "/category" && pathname.startsWith("/category/"));
+               return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={cn("inline-flex h-10 items-center gap-1.5 whitespace-nowrap rounded-xl px-3 text-[13px] font-semibold tracking-tight transition-colors focus-visible:ring-2 focus-visible:ring-blue-500", active ? "bg-slate-100 text-[#102B4E]" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950")}>{item.label}{item.href === "/business-news" && hasNewNews && <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />}</Link>;
+             })}
+             <div className="group relative">
+               <button type="button" aria-label="Resources menu" className="flex h-10 items-center gap-1 rounded-xl px-3 text-[13px] font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-950">Resources <ChevronDown size={14} /></button>
+               <div className="invisible pointer-events-none absolute left-0 top-full z-[80] w-48 translate-y-2 rounded-2xl border border-slate-200 bg-white p-2 opacity-0 shadow-xl transition-all duration-200 group-hover:visible group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:pointer-events-auto group-focus-within:translate-y-0 group-focus-within:opacity-100">
+                 <Link href="/faq" className="block rounded-lg px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50">Help & FAQ</Link>
+                 <Link href="/contact" className="block rounded-lg px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50">Contact Us</Link>
+               </div>
+             </div>
+           </nav>
 
-          {/* Right: icons + toggle */}
-          <div className="flex items-center space-x-2 sm:space-x-3">
+           {/* Right: icons + toggle */}
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             {profileData?.role?.toLowerCase() === "vendor" && (
               <Link
                 href="/business-news?post=true"
-                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-brand-dark text-white text-[11px] font-bold uppercase tracking-wider rounded-md hover:bg-brand-blue transition-all"
+                className="hidden 2xl:flex h-10 items-center gap-1.5 rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50"
               >
                 <Plus size={14} /> Add News
               </Link>
             )}
-            <div className="hidden sm:block">
-              <LiveCounter />
-            </div>
+            <div className="hidden 2xl:block"><LiveCounter /></div>
+             <Link href="/search" aria-label="Search businesses" className="hidden lg:flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-950"><Search size={19} /></Link>
             {fullUserData && <NotificationBell />}
             
-            <AuthButton user={fullUserData} />
+            <div className="hidden sm:block"><AuthButton user={fullUserData} /></div>
+             {showRegister && <Link href="/register-business" className="hidden xl:inline-flex h-10 items-center gap-1.5 whitespace-nowrap rounded-xl bg-[#102B4E] px-4 text-xs font-semibold text-white shadow-md transition-all hover:bg-[#1E4A75] hover:shadow-lg">List Your Business <ArrowUpRight size={15} /></Link>}
 
             {/* ── Modern two-line toggle ── */}
             <button
               onClick={() => setMobileMenuOpen((v) => !v)}
               aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
               className={cn(
-                "md:hidden relative w-11 h-11 flex flex-col items-center justify-center gap-[5.5px] rounded-[8px] border transition-all duration-300 active:scale-95 z-[110]",
+                "lg:hidden relative w-11 h-11 flex flex-col items-center justify-center gap-[5.5px] rounded-[8px] border transition-all duration-300 active:scale-95 z-[110]",
                 mobileMenuOpen 
-                  ? "bg-brand-dark border-brand-dark shadow-inner" 
-                  : "bg-white border-gray-200 shadow-sm hover:border-brand-dark"
+                  ? "bg-[#102B4E] border-[#102B4E] shadow-inner" 
+                  : "bg-white border-slate-200 shadow-sm hover:border-slate-400"
               )}
             >
               <span
@@ -376,44 +359,24 @@ export default function Navbar() {
         </div>
       </header>
 
-      {/* Secondary Category Bar */}
-      <div className={cn(
-        "hidden md:block border-b border-gray-200 transition-colors duration-300",
-        scrolled ? "bg-white shadow-sm" : "bg-brand-blue/5"
-      )}>
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-center space-x-1 py-1">
-            {MAIN_CATEGORY_GROUPS.map((group) => (
-              <button
-                key={group}
-                onClick={() => {
-                  if (activeCategory === group && subNavbarOpen) {
-                    setSubNavbarOpen(false);
-                  } else {
-                    setActiveCategory(group);
-                    setSubNavbarOpen(true);
-                  }
-                }}
-                className={cn(
-                  "px-4 py-2 text-[10px] font-bold uppercase tracking-widest transition-all rounded-md",
-                  activeCategory === group && subNavbarOpen
-                    ? "text-brand-dark bg-white shadow-sm"
-                    : "text-gray-600 hover:text-brand-dark hover:bg-white/50"
-                )}
-              >
-                {group}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+      {/* Industry navigation ribbon */}
+       <div className="hidden lg:block border-b border-slate-200/80 bg-[#F8FAFC]">
+         <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8">
+           <div aria-label="Browse industries" className="flex h-11 items-center gap-1 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+             <span className="mr-3 shrink-0 border-r border-slate-200 pr-4 text-[10px] font-bold uppercase tracking-[0.13em] text-slate-400">Industries</span>
+             {MAIN_CATEGORY_GROUPS.map(group => (
+               <button key={group} type="button" aria-expanded={activeCategory === group && subNavbarOpen} onClick={() => { if (activeCategory === group && subNavbarOpen) setSubNavbarOpen(false); else { setActiveCategory(group); setSubNavbarOpen(true); } }} className={cn("shrink-0 rounded-lg px-3 py-2 text-[11px] font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-blue-500", activeCategory === group && subNavbarOpen ? "bg-white text-[#102B4E] shadow-sm ring-1 ring-slate-200" : "text-slate-500 hover:bg-white hover:text-slate-900")}>{group}</button>
+             ))}
+           </div>
+         </div>
+       </div>
 
-      <CategorySubNavbar
+       <CategorySubNavbar
         isOpen={subNavbarOpen}
         activeCategory={activeCategory}
         categories={categories as any}
         onClose={() => setSubNavbarOpen(false)}
-        topOffset={scrolled ? 120 : 121}
+        topOffset={120}
       />
     </div>
 
@@ -460,7 +423,7 @@ export default function Navbar() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.25 }}
-              className="fixed inset-0 z-[99] bg-black/40"
+              className="fixed inset-0 z-[99] bg-slate-950/50 backdrop-blur-[3px]"
               onClick={close}
             />
 
@@ -471,13 +434,13 @@ export default function Navbar() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", stiffness: 320, damping: 32 }}
-              className="fixed top-0 right-0 z-[100] h-full w-full max-w-[320px] bg-white shadow-2xl flex flex-col"
+              className="fixed top-0 right-0 z-[100] h-full w-full max-w-[360px] bg-white shadow-[0_25px_80px_rgba(15,23,42,0.24)] flex flex-col"
             >
               {/* ── Panel header ── */}
               <div className="flex items-center justify-between h-16 px-5 border-b border-gray-100 shrink-0">
                 <LogoLink />
                 <div className="flex items-center gap-2">
-                  {/* Close button removed - using main toggle button on top */}
+                  <button type="button" onClick={close} aria-label="Close menu" className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50"><X size={19} /></button>
                 </div>
               </div>
 
@@ -554,7 +517,7 @@ export default function Navbar() {
 
               {/* ── Nav links (scrollable) ── */}
               <motion.nav
-                className="flex-1 overflow-y-auto px-4 py-3 space-y-0.5"
+                className="flex-1 overflow-y-auto px-5 py-5 space-y-1"
                 variants={listVariants}
                 initial="closed"
                 animate="open"
