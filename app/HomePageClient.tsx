@@ -318,13 +318,23 @@ export default function HomePageClient() {
               Your connection to opportunities across Sri Lanka starts here.
             </motion.p>
 
+            {/* Unified search experience: one surface, clear primary and secondary actions. */}
             <motion.div
               initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.28 }}
-              className="relative z-40 mt-6 w-full max-w-[670px]"
+              className="relative z-40 mt-6 w-full max-w-[680px]"
             >
-              <div className="rounded-2xl border border-white/15 bg-white/[0.07] p-2 shadow-[0_26px_65px_rgba(0,0,0,0.24)] backdrop-blur-lg sm:p-2.5 [&_form]:!rounded-xl [&_form>div]:!rounded-xl">
+              <div className="rounded-[22px] border border-white/[0.18] bg-white/[0.075] p-2.5 shadow-[0_22px_70px_rgba(0,0,0,0.23)] backdrop-blur-xl sm:p-3">
+                <div className="mb-2 flex items-center justify-between gap-3 px-2 sm:mb-3">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.17em] text-[#BEDBF2]">
+                    What are you looking for?
+                  </span>
+                  <span className="hidden items-center gap-1.5 text-[11px] font-medium text-[#8FAFCB] sm:inline-flex">
+                    <span className="h-1.5 w-1.5 rounded-full bg-sky-300" />
+                    Search across Sri Lanka
+                  </span>
+                </div>
                 <HeroSearch
                   categories={categories}
                   featuredBusinesses={featuredBusinesses}
@@ -333,31 +343,31 @@ export default function HomePageClient() {
                   handleUseCurrentLocation={handleUseCurrentLocation}
                   onFocusChange={setIsSearchFocused}
                 />
+                <div className="mt-2.5 flex flex-wrap items-center gap-2 border-t border-white/10 px-0.5 pt-2.5 sm:mt-3 sm:gap-3 sm:pt-3">
+                  <button
+                    type="button"
+                    onClick={() => handleUseCurrentLocation(true)}
+                    disabled={isFetchingLocation}
+                    className="group inline-flex min-h-10 items-center justify-center gap-2 rounded-[11px] border border-[#8FC9F2]/25 bg-[#D8EDFC]/[0.10] px-3.5 text-[12px] font-semibold text-[#E8F5FF] transition-all duration-200 hover:border-[#8FC9F2]/50 hover:bg-[#D8EDFC]/[0.18] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 disabled:cursor-wait disabled:opacity-60 sm:px-4 sm:text-[13px]"
+                  >
+                    <Navigation size={15} className="text-[#99D5FF] transition-transform group-hover:-translate-y-0.5" />
+                    {isFetchingLocation ? "Finding location…" : "Explore near me"}
+                  </button>
+                  <Link
+                    href="/category"
+                    className="group inline-flex min-h-10 items-center justify-center gap-2 rounded-[11px] border border-white/[0.12] bg-white/[0.035] px-3.5 text-[12px] font-semibold text-[#D7E9F8] transition-all duration-200 hover:border-white/30 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 sm:px-4 sm:text-[13px]"
+                  >
+                    <Tags size={15} className="text-[#A7CDEC]" />
+                    Browse categories
+                    <ChevronRight size={15} className="text-[#A7CDEC] transition-transform group-hover:translate-x-0.5" />
+                  </Link>
+                </div>
               </div>
               <p className="mt-3 pl-1 text-[12px] text-[#92ADC7] sm:text-[13px]">
                 Try “Restaurants in Colombo” or “Electrician in Jaffna”
               </p>
             </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.38 }}
-              className="relative z-10 mt-5 flex flex-wrap items-center gap-3"
-            >
-              <button
-                type="button"
-                onClick={() => handleUseCurrentLocation(true)}
-                disabled={isFetchingLocation}
-                className="inline-flex min-h-12 items-center gap-2.5 rounded-xl bg-[#EAF5FF] px-5 text-[13px] font-bold text-[#0E3152] shadow-lg shadow-black/10 transition-all hover:-translate-y-0.5 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 disabled:cursor-wait disabled:opacity-60"
-              >
-                <Navigation size={17} />
-                {isFetchingLocation ? "Finding location…" : "Explore near me"}
-              </button>
-              <Link href="/category" className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-white/20 px-5 text-[13px] font-semibold text-[#D8EAFA] transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300">
-                Browse categories <ChevronRight size={16} />
-              </Link>
-            </motion.div>
             <p className="mt-5 text-[12px] font-medium tracking-wide text-[#81A5C4]">
               Built for discovery. Designed for connection.
             </p>
