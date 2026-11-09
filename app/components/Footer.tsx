@@ -1,217 +1,197 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { 
-  Facebook, 
-  Instagram, 
-  Mail, 
-  Github, 
-  Heart, 
-  Map, 
-  Search, 
-  Sliders, 
-  PlusCircle, 
-  RefreshCw, 
-  CreditCard, 
-  ArrowUp,
-  MessageCircle,
-  Database,
-  Zap,
-  Wind,
-  Layers,
-  HelpCircle,
-  BookOpen
-} from 'lucide-react';
-import LogoLink from './LogoLink';
-import { useSession } from './SessionContext';
-import { supabase } from '@/lib/supabaseClient';
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { ArrowRight, ArrowUp, ArrowUpRight, Compass, Heart, Mail, MapPin } from "lucide-react";
+import LogoLink from "./LogoLink";
+import { useSession } from "./SessionContext";
+import { supabase } from "@/lib/supabaseClient";
 
-const Footer = () => {
+const discoverLinks = [
+  { label: "Explore categories", href: "/category" },
+  { label: "Find businesses nearby", href: "/nearby" },
+  { label: "Search the directory", href: "/search" },
+  { label: "Business news", href: "/business-news" },
+];
+
+const companyLinks = [
+  { label: "About us", href: "/about" },
+  { label: "Help & FAQ", href: "/faq" },
+  { label: "Contact us", href: "/contact" },
+  { label: "Privacy policy", href: "/privacy-policy" },
+  { label: "Terms of service", href: "/terms-of-service" },
+];
+
+const areas = [
+  { name: "Colombo", href: "/nearby?district=Colombo" },
+  { name: "Jaffna", href: "/nearby?district=Jaffna" },
+  { name: "Kandy", href: "/nearby?district=Kandy" },
+  { name: "Vavuniya", href: "/nearby?district=Vavuniya" },
+  { name: "Kanagarayankulam", href: "/nearby?q=Kanagarayankulam" },
+];
+
+export default function Footer() {
   const { user } = useSession();
   const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchUserRole = async () => {
-      if (user) {
+    let active = true;
+    if (!user) {
+      setUserRole(null);
+      return;
+    }
+
+    const fetchRole = async () => {
+      try {
         const { data, error } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
           .single();
-        if (!error && data) {
-          setUserRole(data.role);
-        }
-      } else {
-        setUserRole(null);
+        if (error) throw error;
+        if (active) setUserRole(data?.role ?? null);
+      } catch (error) {
+        if (active) console.error("Error fetching footer role:", error);
       }
     };
-    fetchUserRole();
-  }, [user]);
+    void fetchRole();
+    return () => { active = false; };
+  }, [user?.id]);
 
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  const pricingHref = userRole === "vendor" ? "/vendor/billing" : "/pricing-plans";
 
-  const pricingHref = userRole === 'vendor' ? '/vendor/billing' : '/pricing-plans';
+  const footerLinkClass =
+    "group inline-flex w-fit items-center gap-1.5 text-[13px] leading-6 text-[#A5BBCD] transition-colors duration-150 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400";
 
   return (
-    <footer className="bg-gray-950 text-gray-300 pt-16 pb-8 border-t border-brand-dark/30">
-      <div className="max-w-7xl mx-auto px-6">
-        {/* Main Footer Grid: 4 Columns */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-16">
-          {/* Column 1: Brand & Socials */}
-          <div className="space-y-6">
-            <div className="-ml-2">
-              <LogoLink className="brightness-0 invert" />
+    <footer aria-label="SL Business Index footer" className="relative isolate overflow-hidden border-t border-[#2B4961] bg-[#091F33] text-[#DBE9F4]">
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-80 bg-gradient-to-b from-[#123A5B]/30 to-transparent" />
+
+      <div className="relative mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12">
+        {/* Editorial introduction and functional CTA. */}
+        <div className="flex flex-col justify-between gap-6 border-b border-white/15 py-12 sm:py-14 lg:flex-row lg:items-center">
+          <div className="max-w-[720px]">
+            <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-[#89BFDF]">
+              Discover · Connect · Grow
+            </p>
+            <h2 className="text-balance text-[clamp(1.9rem,3vw,3.4rem)] font-semibold leading-[1.15] tracking-[-0.055em] text-white">
+              Your next connection starts here.
+            </h2>
+          </div>
+          <Link
+            href="/register-business"
+            className="group inline-flex h-12 w-fit shrink-0 items-center gap-2 rounded-xl bg-white px-5 text-[13px] font-bold text-[#113958] transition-colors hover:bg-[#EAF5FD] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
+          >
+            List your business
+            <ArrowUpRight size={17} className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+          </Link>
+        </div>
+
+        {/* Brand and primary navigation. Original logo is shown without color filters. */}
+        <div className="grid gap-10 py-14 sm:grid-cols-2 sm:gap-x-10 lg:grid-cols-[1.65fr_1fr_1fr_1fr] lg:gap-x-9 lg:py-16">
+          <div className="max-w-[340px]">
+            <div className="inline-flex min-h-[76px] items-center rounded-[18px] border border-white/10 bg-white px-4 py-2">
+              <LogoLink />
             </div>
-            <div className="space-y-4">
-              <h4 className="text-gray-200 text-sm font-semibold uppercase tracking-wider">About SLBI</h4>
-              <p className="text-sm leading-relaxed text-gray-400">
-                SLBI (SL Business Index) is the heart of <strong>Sri Lankan Commerce</strong>. We provide a comprehensive directory of <strong>verified businesses in Sri Lanka</strong>, helping you find the right <strong>SL business</strong> for your needs.
-              </p>
-            </div>
-            <div className="flex gap-4">
-              <a href="#" className="p-2 rounded-lg bg-gray-900 hover:bg-brand-dark/30 hover:text-brand-blue transition-all border border-gray-800">
-                <Facebook size={18} />
-              </a>
-              <a href="#" className="p-2 rounded-lg bg-gray-900 hover:bg-brand-dark/30 hover:text-brand-blue transition-all border border-gray-800">
-                <Instagram size={18} />
-              </a>
-              <a href="#" className="p-2 rounded-lg bg-gray-900 hover:bg-brand-dark/30 hover:text-brand-blue transition-all border border-gray-800">
-                <MessageCircle size={18} />
-              </a>
-            </div>
+            <p className="mt-6 max-w-[320px] text-[14px] leading-[1.85] text-[#A5BBCD]">
+              A home for Sri Lankan business discovery. Find local services,
+              explore businesses and connect with opportunities across the island.
+            </p>
+            <Link href="/contact" className="mt-6 inline-flex items-center gap-2 text-[13px] font-semibold text-[#B6DFF8] transition-colors hover:text-white">
+              <Mail size={17} /> Get in touch <ArrowUpRight size={15} />
+            </Link>
           </div>
 
-          {/* Column 2: User Links */}
-          <div className="md:pt-4">
-            <h4 className="text-gray-200 mb-6 text-lg">User Links</h4>
-            <ul className="space-y-4 text-sm">
-              <li>
-                <Link href="/nearby" className="flex items-center gap-3 hover:text-brand-blue transition-colors group">
-                  <Map size={16} className="text-brand-blue transition-transform" />
-                  Find Nearby
-                </Link>
-              </li>
-              <li>
-                <Link href="/search" className="flex items-center gap-3 hover:text-brand-blue transition-colors group">
-                  <Search size={16} className="text-brand-blue transition-transform" />
-                  Search Map
-                </Link>
-              </li>
-              <li>
-                <Link href="/nearby" className="flex items-center gap-3 hover:text-brand-blue transition-colors group">
-                  <Sliders size={16} className="text-brand-blue transition-transform" />
-                  Advanced Filters
-                </Link>
-              </li>
-              <li>
-                <Link href="/how-to-list" className="flex items-center gap-3 hover:text-brand-blue transition-colors group">
-                  <BookOpen size={16} className="text-brand-blue transition-transform" />
-                  How to List
-                </Link>
-              </li>
-              <li>
-                <Link href="/faq" className="flex items-center gap-3 hover:text-brand-blue transition-colors group">
-                  <HelpCircle size={16} className="text-brand-blue transition-transform" />
-                  Help & FAQ
-                </Link>
-              </li>
+          <nav aria-label="Discover links">
+            <h3 className="mb-5 text-[12px] font-bold uppercase tracking-[0.13em] text-white">Discover</h3>
+            <ul className="space-y-3.5">
+              {discoverLinks.map(link => (
+                <li key={link.href}>
+                  <Link className={footerLinkClass} href={link.href}>
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
-          </div>
+          </nav>
 
-          {/* Column 3: Business Owners */}
-          <div className="md:pt-4">
-            <h4 className="text-gray-200 mb-6 text-lg">Business Owners</h4>
-            <ul className="space-y-4 text-sm">
-              <li>
-                <Link href="/register-business" className="flex items-center gap-3 hover:text-brand-blue transition-colors group">
-                  <PlusCircle size={16} className="text-brand-blue transition-transform" />
-                  Register Your Business
-                </Link>
-              </li>
-              <li>
-                <Link href="/register-business" className="flex items-center gap-3 hover:text-brand-blue transition-colors group">
-                  <RefreshCw size={16} className="text-brand-blue transition-transform" />
-                  Update Listing
-                </Link>
-              </li>
-              <li>
-                <Link href={pricingHref} className="flex items-center gap-3 hover:text-brand-blue transition-colors group">
-                  <CreditCard size={16} className="text-brand-blue transition-transform" />
-                  Pricing & Plans
-                </Link>
-              </li>
+          <nav aria-label="Business owner links">
+            <h3 className="mb-5 text-[12px] font-bold uppercase tracking-[0.13em] text-white">For business owners</h3>
+            <ul className="space-y-3.5">
+              <li><Link className={footerLinkClass} href="/register-business">List your business</Link></li>
+              <li><Link className={footerLinkClass} href="/how-to-list">How to list</Link></li>
+              <li><Link className={footerLinkClass} href={pricingHref}>Pricing &amp; plans</Link></li>
             </ul>
-          </div>
+          </nav>
 
-          {/* Column 4: Contact & Legal */}
-          <div className="md:pt-4">
-            <h4 className="text-gray-200 mb-6 text-lg">Contact & Legal</h4>
-            <ul className="space-y-4 text-sm">
-              <li>
-                <a href="mailto:developerconsole03@gmail.com" className="flex items-center gap-3 hover:text-brand-blue transition-colors group">
-                  <Mail size={16} className="text-brand-blue transition-transform" />
-                  slbusinessindex@gmail.com
-                </a>
-              </li>
-              <li>
-                <Link href="/privacy-policy" className="hover:text-brand-blue transition-colors">Privacy Policy</Link>
-              </li>
-              <li>
-                <Link href="/terms-of-service" className="hover:text-brand-blue transition-colors">Terms of Service</Link>
-              </li>
-              <li>
-                <div className="flex items-center gap-2 mt-4 text-xs text-gray-500 bg-gray-900/50 w-fit px-3 py-1.5 rounded-full border border-gray-800">
-                  <span>English</span> | <span>தமிழ்</span> | <span>සිංහල</span>
-                </div>
-              </li>
+          <nav aria-label="Company and legal links">
+            <h3 className="mb-5 text-[12px] font-bold uppercase tracking-[0.13em] text-white">Company</h3>
+            <ul className="space-y-3.5">
+              {companyLinks.map(link => (
+                <li key={link.href}>
+                  <Link className={footerLinkClass} href={link.href}>
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
+          </nav>
+        </div>
+
+        {/* Search-friendly location links, no invented businesses or location counts. */}
+        <div className="border-y border-white/15 py-7 sm:py-8">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex shrink-0 items-center gap-2.5">
+              <MapPin size={17} className="text-[#8CC8ED]" />
+              <h3 className="text-[13px] font-semibold text-white">Explore popular areas</h3>
+            </div>
+            <nav aria-label="Browse businesses by area" className="flex flex-wrap gap-2">
+              {areas.map(area => (
+                <Link
+                  key={area.name}
+                  href={area.href}
+                  className="inline-flex min-h-9 items-center rounded-full border border-white/15 bg-white/[0.045] px-3.5 text-[12px] font-medium text-[#B9CDDC] transition-colors hover:border-[#659DC5]/60 hover:bg-white/[0.10] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+                >
+                  {area.name}
+                </Link>
+              ))}
+            </nav>
           </div>
         </div>
 
-        {/* SEO Section: Popular Areas */}
-        <div className="border-t border-gray-900 pt-10 pb-10">
-          <h4 className="text-xs text-gray-500 uppercase tracking-widest mb-6">Popular Areas</h4>
-          <div className="flex flex-wrap gap-x-8 gap-y-3">
-            <Link href="/nearby?district=Jaffna" className="text-sm text-gray-400 hover:text-brand-blue transition-colors underline decoration-brand-dark underline-offset-4">Businesses in Jaffna City</Link>
-            <Link href="/nearby?district=Vavuniya" className="text-sm text-gray-400 hover:text-brand-blue transition-colors underline decoration-brand-dark underline-offset-4">Businesses in Vavuniya Town</Link>
-            <Link href="/nearby?q=Kanagarayankulam" className="text-sm text-gray-400 hover:text-brand-blue transition-colors underline decoration-brand-dark underline-offset-4">Businesses in Kanagarayankulam</Link>
-            <Link href="/nearby?district=Colombo" className="text-sm text-gray-400 hover:text-brand-blue transition-colors underline decoration-brand-dark underline-offset-4">Businesses in Colombo</Link>
-            <Link href="/nearby?district=Kandy" className="text-sm text-gray-400 hover:text-brand-blue transition-colors underline decoration-brand-dark underline-offset-4">Businesses in Kandy</Link>
+        {/* Original credits remain acknowledged; no dead # social links. */}
+        <div className="flex flex-col gap-5 py-7 text-[12px] text-[#83A0B5] md:flex-row md:items-center md:justify-between md:gap-7">
+          <p>
+            © {new Date().getFullYear()} SL Business Index. Built for Sri Lankan businesses.
+          </p>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            <a
+              href="https://arud-portfolio.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+            >
+              Design: Arud Graphics
+            </a>
+            <a
+              href="https://laxsan-dev.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+            >
+              <Heart size={12} className="text-[#A8D5F2]" /> Developed by Laxsan Dev
+            </a>
           </div>
-        </div>
-
-        {/* Bottom Bar: Copyright & Developer Signature */}
-        <div className="border-t border-gray-900 pt-8 flex flex-col md:grid md:grid-cols-3 items-center gap-6">
-          <div className="text-[10px] md:text-xs text-gray-400 text-center md:text-left order-2 md:order-1">
-            Graphic design by <a href="https://arud-portfolio.vercel.app/" target="_blank" rel="noopener noreferrer" className="text-brand-blue transition-all underline decoration-gray-800 underline-offset-4">Arud Graphics</a>
-          </div>
-
-          <div className="text-[10px] md:text-xs text-gray-500 text-center order-1 md:order-2">
-            © 2026 SL Business Index | <span className="text-gray-400">The Heart of Sri Lankan Commerce</span>
-          </div>
-
-          <div className="flex flex-col items-center md:items-end gap-3 order-3">
-            <div className="flex items-center gap-1.5 text-[10px] md:text-xs text-gray-400">
-              Built with <Heart size={12} className="text-red-500 fill-red-500" /> in Sri Lanka by 
-              <a href="https://laxsan-dev.vercel.app/" target="_blank" rel="noopener noreferrer" className="text-brand-blue hover:underline cursor-pointer"> Laxsan Dev</a>
-            </div>
-            <div className="flex items-center gap-4 text-gray-600">
-              <div title="Next.js" className="hover:text-white transition-colors"><Zap size={14} /></div>
-              <div title="Tailwind CSS" className="hover:text-emerald-400 transition-colors"><Wind size={14} /></div>
-              <div title="Supabase" className="hover:text-emerald-600 transition-colors"><Database size={14} /></div>
-              <div title="Mapbox" className="hover:text-blue-400 transition-colors"><Layers size={14} /></div>
-              <a href="https://laxsan-dev.vercel.app/" target="_blank" rel="noopener noreferrer" title="GitHub" className="hover:text-white transition-colors ml-2">
-                <Github size={14} />
-              </a>
-            </div>
-          </div>
+          <button
+            type="button"
+            aria-label="Back to top"
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white/[0.06] text-[#CDE7F8] transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+          >
+            <ArrowUp size={17} />
+          </button>
         </div>
       </div>
     </footer>
   );
-};
-
-export default Footer;
+}
