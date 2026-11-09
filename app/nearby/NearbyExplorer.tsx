@@ -8,7 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft, ArrowRight, ArrowUpRight, Building2, ChevronDown,
   Compass, LocateFixed, Map as MapIcon, MapPin, Navigation, Search,
-  SlidersHorizontal, Star, X, List, RotateCcw, ShieldCheck, Sparkles, Check
+  SlidersHorizontal, Star, X, List, RotateCcw, ShieldCheck, Sparkles, Check, Layers3, PanelLeftClose, PanelLeftOpen, Camera, Globe2, BadgeCheck, Route
 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/lib/supabaseClient";
@@ -68,6 +68,15 @@ const DISTRICTS: Record<string, { lat: number; lng: number }> = {
   Trincomalee: { lat: 8.5874, lng: 81.2152 },
   Vavuniya: { lat: 8.7514, lng: 80.4971 },
 };
+
+const DISCOVERY_AREAS = [
+  { name: "Colombo", detail: "Western coast" },
+  { name: "Kandy", detail: "Central region" },
+  { name: "Jaffna", detail: "Northern peninsula" },
+  { name: "Galle", detail: "Southern coast" },
+  { name: "Gampaha", detail: "Western region" },
+  { name: "Trincomalee", detail: "Eastern coast" },
+] as const;
 
 const TOWN_INDEX = SL_TOWNS.map((town) => ({
   town,
@@ -148,6 +157,14 @@ export default function NearbyExplorer() {
   const [selectedBusiness, setSelectedBusiness] = useState<NearbyBusiness | null>(null);
   const [sortBy, setSortBy] = useState<SortMode>("nearest");
   const [resultLimit, setResultLimit] = useState(30);
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
+  const [withPhotosOnly, setWithPhotosOnly] = useState(false);
+  const [draftVerifiedOnly, setDraftVerifiedOnly] = useState(false);
+  const [draftWithPhotosOnly, setDraftWithPhotosOnly] = useState(false);
+  const [mapExpanded, setMapExpanded] = useState(false);
+  const [mapAppearance, setMapAppearance] = useState<"original" | "soft">("original");
+  const [mapAppearanceOpen, setMapAppearanceOpen] = useState(false);
+  const mapAppearanceRef = useRef<HTMLDivElement>(null);
 
   const headerRef = useRef<HTMLElement>(null);
   const skipMapMove = useRef(false);
@@ -198,7 +215,10 @@ export default function NearbyExplorer() {
   });
 
   const visibleBusinesses = useMemo(() => {
-    const sorted = [...businesses];
+    const sorted = businesses.filter(item =>
+      (!verifiedOnly || (item.is_verified === true && item.can_show_badge === true)) &&
+      (!withPhotosOnly || Boolean(item.image_url || item.logo_url))
+    );
     if (sortBy === "top-rated") {
       sorted.sort((a, b) => (Number(b.rating) || 0) - (Number(a.rating) || 0));
     } else if (sortBy === "alphabetical") {
@@ -210,9 +230,9 @@ export default function NearbyExplorer() {
       );
     }
     return sorted;
-  }, [businesses, sortBy]);
+  }, [businesses, sortBy, verifiedOnly, withPhotosOnly]);
 
-  useEffect(() => { setResultLimit(30); }, [location.lat, location.lng, appliedQuery, category, radius, sortBy]);
+  useEffect(() => { setResultLimit(30); }, [location.lat, location.lng, appliedQuery, category, radius, sortBy, verifiedOnly, withPhotosOnly]);
 
   const mapFeatures = useMemo(() => visibleBusinesses
     .filter((business) => validCoords(Number(business.latitude), Number(business.longitude)))
@@ -325,6 +345,8 @@ export default function NearbyExplorer() {
   const openFilters = () => {
     setRadiusDraft(radius);
     setDraftCategory(category);
+    setDraftVerifiedOnly(verifiedOnly);
+    setDraftWithPhotosOnly(withPhotosOnly);
     setAreaOpen(false);
     setSearchFocused(false);
     setFiltersOpen(true);
@@ -355,6 +377,22 @@ export default function NearbyExplorer() {
     if (mapMoveTimer.current) window.clearTimeout(mapMoveTimer.current);
   }, []);
 
+  useEffect(() => {
+    if (!mapAppearanceOpen) return;
+    const outside = (event: PointerEvent) => {
+      if (!mapAppearanceRef.current?.contains(event.target as Node)) setMapAppearanceOpen(false);
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMapAppearanceOpen(false);
+    };
+    document.addEventListener("pointerdown", outside);
+    document.addEventListener("keydown", escape);
+    return () => {
+      document.removeEventListener("pointerdown", outside);
+      document.removeEventListener("keydown", escape);
+    };
+  }, [mapAppearanceOpen]);
+
   const moveMapTo = (lat: number, lng: number, zoom: number) => {
     skipMapMove.current = true;
     if (mapMoveTimer.current) window.clearTimeout(mapMoveTimer.current);
@@ -370,6 +408,8 @@ export default function NearbyExplorer() {
     category?: string | null;
     radius?: number;
     zoom?: number;
+    verifiedOnly?: boolean;
+    withPhotosOnly?: boolean;
   }) => {
     const nextLocation = options?.location || location;
     const nextQuery = options?.query !== undefined ? options.query.trim() : appliedQuery;
@@ -383,6 +423,14 @@ export default function NearbyExplorer() {
     setRadius(nextRadius);
     setRadiusDraft(nextRadius);
     setDraftCategory(nextCategory);
+    if (options && "verifiedOnly" in options) {
+      setVerifiedOnly(Boolean(options.verifiedOnly));
+      setDraftVerifiedOnly(Boolean(options.verifiedOnly));
+    }
+    if (options && "withPhotosOnly" in options) {
+      setWithPhotosOnly(Boolean(options.withPhotosOnly));
+      setDraftWithPhotosOnly(Boolean(options.withPhotosOnly));
+    }
     setSelectedBusiness(null);
     setLocationNotice("");
     moveMapTo(nextLocation.lat, nextLocation.lng, options?.zoom || 12);
@@ -476,7 +524,7 @@ export default function NearbyExplorer() {
   const QUICK_CATEGORIES = ["Food & Dining", "Health & Medical", "Shopping & Retail", "Travel & Tourism", "Professional Services"];
   const quickCategories = categories.filter((item: any) => QUICK_CATEGORIES.includes(String(item.name))).sort((a: any, b: any) => QUICK_CATEGORIES.indexOf(a.name) - QUICK_CATEGORIES.indexOf(b.name));
   const categoryCount = category ? 1 : 0;
-  const activeFiltersCount = categoryCount + (radius !== 10000 ? 1 : 0);
+  const activeFiltersCount = categoryCount + (radius !== 10000 ? 1 : 0) + (verifiedOnly ? 1 : 0) + (withPhotosOnly ? 1 : 0);
 
   return (
     <div className="flex h-[100dvh] min-h-[500px] w-full flex-col overflow-hidden bg-[#F6F9FC] font-sans text-[#123653]">
@@ -731,6 +779,18 @@ export default function NearbyExplorer() {
                         ))}
                       </div>
 
+                      <div className="mt-7 space-y-3 border-t border-[#EEF2F5] pt-6">
+                        <h3 className="text-[13px] font-semibold text-[#1C4565]">More ways to discover</h3>
+                        <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-[#E1E9EF] bg-[#F9FAF8] px-3.5 py-3">
+                          <span className="flex items-center gap-2 text-[12px] font-medium text-[#395B5B]"><BadgeCheck size={16} className="text-[#367D73]"/> Verified listings only</span>
+                          <input type="checkbox" checked={draftVerifiedOnly} onChange={event => setDraftVerifiedOnly(event.target.checked)} className="h-4 w-4 accent-[#21766C]" />
+                        </label>
+                        <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-[#E1E9EF] bg-[#F9FAF8] px-3.5 py-3">
+                          <span className="flex items-center gap-2 text-[12px] font-medium text-[#395B5B]"><Camera size={16} className="text-[#367D73]"/> Listings with photos</span>
+                          <input type="checkbox" checked={draftWithPhotosOnly} onChange={event => setDraftWithPhotosOnly(event.target.checked)} className="h-4 w-4 accent-[#21766C]" />
+                        </label>
+                      </div>
+
                       <div className="mt-7 border-t border-[#EEF2F5] pt-6">
                         <h3 className="mb-4 text-[13px] font-semibold text-[#1C4565]">Business category</h3>
                         <div className="flex max-h-[230px] flex-wrap gap-2 overflow-y-auto pr-1">
@@ -755,11 +815,11 @@ export default function NearbyExplorer() {
                       </div>
                     </div>
                     <div className="flex gap-3 border-t border-[#EEF2F5] bg-white px-5 py-4 pb-[max(16px,env(safe-area-inset-bottom))]">
-                      <button type="button" onClick={() => { setDraftCategory(null); setRadiusDraft(10000); }}
+                      <button type="button" onClick={() => { setDraftCategory(null); setRadiusDraft(10000); setDraftVerifiedOnly(false); setDraftWithPhotosOnly(false); }}
                         className="inline-flex h-11 items-center gap-2 rounded-xl border border-[#DDE7EF] px-4 text-[12px] font-semibold text-[#597B92] hover:bg-[#F5F9FC]">
                         <RotateCcw size={15} /> Reset
                       </button>
-                      <button type="button" onClick={() => applySearch({ category: draftCategory, radius: radiusDraft })}
+                      <button type="button" onClick={() => applySearch({ category: draftCategory, radius: radiusDraft, verifiedOnly: draftVerifiedOnly, withPhotosOnly: draftWithPhotosOnly })}
                         className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-[#123D63] px-4 text-[12px] font-semibold text-white hover:bg-[#1B5C8D]">
                         Apply filters <ArrowRight size={16} />
                       </button>
@@ -777,9 +837,9 @@ export default function NearbyExplorer() {
           </span>
           <button
             type="button"
-            onClick={() => applySearch({ category: null, query: "" })}
-            aria-pressed={!category && !appliedQuery}
-            className={"inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-[11px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 " + (!category && !appliedQuery ? "border-[#14466D] bg-[#103A60] text-white" : "border-[#DEEBF3] bg-[#F7FAFD] text-[#557B95] hover:border-[#B5D2E4] hover:bg-[#EDF6FC]")}
+            onClick={() => applySearch({ category: null, query: "", verifiedOnly: false, withPhotosOnly: false })}
+            aria-pressed={!category && !appliedQuery && !verifiedOnly && !withPhotosOnly}
+            className={"inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-[11px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 " + (!category && !appliedQuery && !verifiedOnly && !withPhotosOnly ? "border-[#14466D] bg-[#103A60] text-white" : "border-[#DEEBF3] bg-[#F7FAFD] text-[#557B95] hover:border-[#B5D2E4] hover:bg-[#EDF6FC]")}
           >
             <Compass size={13} /> All businesses
           </button>
