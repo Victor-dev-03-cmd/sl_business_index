@@ -16,6 +16,7 @@ import {
   Navigation,
   Search,
   MapPin,
+  ChevronRight,
 } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -265,97 +266,125 @@ export default function HomePageClient() {
 
   return (
     <div className="min-h-[100dvh] bg-white font-normal">
-      {/* --- HERO SECTION --- */}
+      {/* --- PREMIUM HERO: brand-led, search-first, generous editorial typography --- */}
       <section
         ref={heroRef}
-        className="relative h-[78dvh] flex items-center justify-center overflow-hidden bg-brand-dark"
-        style={{ zIndex: 20 }}
+        aria-labelledby="homepage-hero-title"
+        className="relative isolate flex min-h-[690px] flex-col justify-center bg-[#071C32] text-white sm:min-h-[750px] lg:min-h-[790px]"
       >
-        {/* Parallax ambient glow layer */}
-        <motion.div
-          className="absolute inset-0 pointer-events-none"
-          style={{ y: glowY, opacity: glowOpacity }}
-        >
-          <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] rounded-full bg-brand-blue/25 blur-[140px]" />
-          <div className="absolute top-1/3 right-1/5 w-[380px] h-[380px] rounded-full bg-brand-gold/15 blur-[110px]" />
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[200px] rounded-full bg-brand-blue/10 blur-[80px]" />
-        </motion.div>
+        {/* Contain ambient effects without clipping the search suggestions. */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+          <motion.div
+            style={{ y: glowY, opacity: glowOpacity }}
+            className="absolute inset-0"
+          >
+            <div className="absolute -left-36 top-4 h-[500px] w-[500px] rounded-full bg-[#18538A]/30 blur-[125px] lg:h-[760px] lg:w-[760px]" />
+            <div className="absolute -right-44 top-0 h-[540px] w-[540px] rounded-full bg-[#2377C3]/20 blur-[145px] lg:h-[840px] lg:w-[840px]" />
+            <div className="absolute bottom-[-260px] left-1/2 h-[450px] w-[80%] -translate-x-1/2 rounded-full bg-[#1B5B98]/25 blur-[120px]" />
+          </motion.div>
+          <div className="absolute inset-0 opacity-[0.18]" style={{ backgroundImage: "radial-gradient(rgba(175,215,255,0.2) 0.75px, transparent 0.75px)", backgroundSize: "30px 30px", maskImage: "linear-gradient(to bottom, black, transparent 85%)" }} />
+          <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[#79B5E7]/40 to-transparent" />
+        </div>
 
-        {/* Subtle dot-grid overlay */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)",
-            backgroundSize: "36px 36px",
-          }}
-        />
-
-        {/* Bottom edge highlight */}
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent pointer-events-none" />
-
-        {/* Content with mild parallax */}
         <motion.div
           style={{ y: contentY }}
-          className="relative z-10 max-w-5xl px-6 py-12 text-center mx-4 w-full"
+          className="relative z-10 mx-auto flex w-full max-w-[1160px] flex-col items-center px-5 pb-24 pt-20 text-center sm:px-8 sm:pb-28 sm:pt-24 lg:px-10"
         >
-          {/* Badge */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, delay: 0.05, ease: "easeOut" }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 mb-7 text-[11px] md:text-[12px] tracking-[0.18em] uppercase text-brand-sand/75 border border-white/10 rounded-full bg-white/5 backdrop-blur-sm"
+            transition={{ duration: 0.55, ease: "easeOut" }}
+            className="mb-7 inline-flex max-w-full items-center gap-2.5 rounded-full border border-white/15 bg-white/[0.055] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#C8E4FB] backdrop-blur-sm sm:mb-9 sm:text-[11px]"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-brand-gold animate-pulse shrink-0" />
-            Sri Lanka Business Index
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#7DD3FC] shadow-[0_0_12px_rgba(125,211,252,0.7)]" />
+            A smarter way to discover Sri Lanka
           </motion.div>
 
-          {/* Headline */}
           <motion.h1
-            initial={{ opacity: 0, y: 22 }}
+            id="homepage-hero-title"
+            initial={{ opacity: 0, y: 23 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.65, delay: 0.15, ease: "easeOut" }}
-            className="text-3xl md:text-[58px] text-white mb-5 leading-[1.15] tracking-tight"
+            transition={{ duration: 0.72, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+            className="max-w-[1090px] text-balance text-[clamp(3rem,8.1vw,7.75rem)] font-semibold leading-[1.055] tracking-[-0.065em] text-white"
           >
-            The Ultimate Directory for
+            Discover better.
             <br />
-            <span className="bg-gradient-to-r from-white via-brand-sand/90 to-brand-gold bg-clip-text text-transparent">
-              Businesses in Sri Lanka
+            <span className="bg-gradient-to-r from-[#F2F8FF] via-[#B7DBFA] to-[#69B9F7] bg-clip-text text-transparent">
+              Grow together.
             </span>
           </motion.h1>
 
-          {/* Subheading */}
           <motion.p
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.25, ease: "easeOut" }}
-            className="text-brand-sand/60 text-sm md:text-[15px] mb-10 max-w-lg mx-auto leading-relaxed"
+            transition={{ duration: 0.65, delay: 0.18, ease: "easeOut" }}
+            className="mx-auto mt-6 max-w-[650px] text-pretty text-base font-normal leading-[1.75] text-[#B2C6DC] sm:mt-8 sm:text-lg lg:text-[19px]"
           >
-            Explore verified local businesses and luxury villas across Sri Lanka. Discover premium services and authentic island experiences.
+            Find businesses, services, and local expertise across Sri Lanka.
+            One destination to discover what matters — and help your business get found.
           </motion.p>
 
-          {/* Search */}
+          {/* Existing live Supabase suggestions, voice search and location-aware search remain intact. */}
           <motion.div
-            initial={{ opacity: 0, y: 14 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.35, ease: "easeOut" }}
+            transition={{ duration: 0.7, delay: 0.26, ease: [0.22, 1, 0.36, 1] }}
+            className="relative z-30 mt-9 w-full max-w-[780px] sm:mt-11"
           >
-            <HeroSearch
-              categories={categories}
-              featuredBusinesses={featuredBusinesses}
-              userCoords={userCoords}
-              isFetchingLocation={isFetchingLocation}
-              handleUseCurrentLocation={handleUseCurrentLocation}
-              onFocusChange={setIsSearchFocused}
-            />
+            <div className="rounded-2xl border border-white/15 bg-white/[0.06] p-2 shadow-[0_25px_70px_rgba(0,0,0,0.2)] backdrop-blur-lg sm:p-2.5 [&_form]:!rounded-xl [&_form>div]:!rounded-xl">
+              <HeroSearch
+                categories={categories}
+                featuredBusinesses={featuredBusinesses}
+                userCoords={userCoords}
+                isFetchingLocation={isFetchingLocation}
+                handleUseCurrentLocation={handleUseCurrentLocation}
+                onFocusChange={setIsSearchFocused}
+              />
+            </div>
+            <p className="mt-3 text-center text-[12px] text-[#8FAFCB] sm:text-[13px]">
+              Try “Restaurants in Colombo” or “Electrician in Jaffna”
+            </p>
           </motion.div>
 
-          {/* Overlay to close category dropdown */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.36 }}
+            className="relative z-10 mt-8 flex w-full flex-wrap items-center justify-center gap-x-3 gap-y-3 sm:mt-9"
+          >
+            <button
+              type="button"
+              onClick={() => handleUseCurrentLocation(true)}
+              disabled={isFetchingLocation}
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/20 bg-white/[0.09] px-5 text-[13px] font-semibold text-white transition-colors hover:border-white/40 hover:bg-white/[0.15] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 disabled:cursor-wait disabled:opacity-60"
+            >
+              <Navigation size={16} />
+              {isFetchingLocation ? "Finding your location…" : "Explore near me"}
+            </button>
+            <Link
+              href="/category"
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl px-5 text-[13px] font-semibold text-[#C5E4FC] transition-colors hover:bg-white/[0.08] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
+            >
+              Browse categories <ChevronRight size={17} />
+            </Link>
+            <Link
+              href="/register-business"
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl px-5 text-[13px] font-semibold text-[#C5E4FC] transition-colors hover:bg-white/[0.08] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
+            >
+              List your business <ChevronRight size={17} />
+            </Link>
+          </motion.div>
+
+          <div className="mt-16 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 border-t border-white/10 pt-6 text-[11px] font-medium uppercase tracking-[0.14em] text-[#80A4C4] sm:mt-20 sm:gap-x-10">
+            <span>Discover locally</span>
+            <span aria-hidden="true" className="h-1 w-1 rounded-full bg-[#4D7293]" />
+            <span>Connect confidently</span>
+            <span aria-hidden="true" className="h-1 w-1 rounded-full bg-[#4D7293]" />
+            <span>Grow nationwide</span>
+          </div>
+
           {isCategoryOpen && (
-            <div
-              className="fixed inset-0 z-40 bg-transparent"
-              onClick={() => setIsCategoryOpen(false)}
-            />
+            <div className="fixed inset-0 z-20 bg-transparent" onClick={() => setIsCategoryOpen(false)} />
           )}
         </motion.div>
       </section>
