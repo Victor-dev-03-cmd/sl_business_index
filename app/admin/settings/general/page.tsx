@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import BrandLogo from "@/app/components/BrandLogo";
 import { supabase } from "@/lib/supabaseClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -105,7 +106,7 @@ export default function GeneralSettingsPage() {
       } = supabase.storage.from("business-logos").getPublicUrl(filePath);
 
       // Add a timestamp to bypass browser cache
-      const uniqueUrl = `${publicUrl}?t=${Date.now()}`;
+      const uniqueUrl = `${publicUrl}?t=${Date.now()}&slbi-brand-v2=1`;
 
       setLocalSettings((s) => (s ? { ...s, logo_url: uniqueUrl } : null));
 
@@ -259,15 +260,19 @@ export default function GeneralSettingsPage() {
 
           <div className="space-y-6">
             <label className="text-sm font-bold text-gray-700">
-              Logo Configuration
+              Website Logo — Current Preview
             </label>
+            <p className="max-w-2xl text-xs leading-6 text-[#647A6A]">
+              The updated forest-green and champagne SL Business Index logo is now the default across the website.
+              Uploading a new logo here activates your custom image site-wide. Earlier blue logos are not reused.
+            </p>
             <div className="flex flex-col xl:flex-row items-start gap-8 xl:gap-12">
               <div className="relative group shrink-0 w-full xl:w-auto">
                 <div className="h-40 md:h-48 w-full xl:w-80 rounded-2xl bg-gray-50 border-2 border-dashed border-gray-200 flex items-center justify-center overflow-hidden transition-all group-hover:border-brand-blue shadow-inner group-hover:bg-white">
-                  {localSettings.logo_url ? (
+                  {localSettings.logo_url?.includes("slbi-brand-v2=1") ? (
                     <img
                       src={localSettings.logo_url}
-                      alt="Logo Preview"
+                      alt="Current custom brand logo preview"
                       style={{
                         width: `${localSettings.logo_width}px`,
                         height: `${localSettings.logo_height}px`,
@@ -275,12 +280,7 @@ export default function GeneralSettingsPage() {
                       className="object-contain drop-shadow-sm"
                     />
                   ) : (
-                    <div className="flex flex-col items-center justify-center text-gray-300">
-                      <ImageIcon size={48} strokeWidth={1} />
-                      <span className="text-[10px] mt-3 font-bold uppercase tracking-[0.2em]">
-                        Upload Brand Logo
-                      </span>
-                    </div>
+                    <BrandLogo />
                   )}
                   {isUploading && (
                     <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center">
