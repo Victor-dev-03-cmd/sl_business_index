@@ -6,7 +6,7 @@ import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
-  ArrowLeft, ArrowRight, ArrowUpRight, Building2, Check, ChevronDown,
+  ArrowLeft, ArrowRight, ArrowUpRight, Building2, ChevronDown,
   Compass, LocateFixed, Map as MapIcon, MapPin, Navigation, Search,
   SlidersHorizontal, Star, X, List, RotateCcw, ShieldCheck, Sparkles
 } from "lucide-react";
@@ -15,7 +15,6 @@ import { supabase } from "@/lib/supabaseClient";
 import { SL_TOWNS, type Town } from "@/lib/towns";
 import type { Business } from "@/lib/types";
 import VerifiedBadge from "@/app/components/VerifiedBadge";
-import LogoLink from "@/app/components/LogoLink";
 
 const LeafletMap = dynamic(() => import("@/components/LeafletMap"), {
   ssr: false,
@@ -28,6 +27,8 @@ const LeafletMap = dynamic(() => import("@/components/LeafletMap"), {
 });
 
 type NearbyBusiness = Business & { distance_meters?: number };
+const EMPTY_CATEGORIES: any[] = [];
+const EMPTY_BUSINESSES: NearbyBusiness[] = [];
 type LocationChoice = {
   lat: number;
   lng: number;
@@ -148,7 +149,7 @@ export default function NearbyExplorer() {
   const skipMapMove = useRef(false);
   const mapMoveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const { data: categories = [] } = useQuery({
+  const { data: categories = EMPTY_CATEGORIES } = useQuery({
     queryKey: ["categories-nearby"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -163,7 +164,7 @@ export default function NearbyExplorer() {
   });
 
   const {
-    data: businesses = [],
+    data: businesses = EMPTY_BUSINESSES,
     isLoading: loadingBusinesses,
     isFetching,
     error,
