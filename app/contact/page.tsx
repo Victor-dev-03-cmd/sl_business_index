@@ -210,7 +210,7 @@ export default function ContactPage() {
     "name": "SL Business Index",
     "alternateName": "SLBI",
     "url": "https://slbusinessindex.com",
-    "logo": "https://slbusinessindex.com/logo.png",
+    "logo": "https://slbusinessindex.com/slbi-logo.svg",
     "description": "Verified public service and emergency contacts for Sri Lanka including CEB, NWSDB, and Health services.",
     "contactPoint": publicServices.flatMap(cat => cat.services).map(s => ({
       "@type": "ContactPoint",
