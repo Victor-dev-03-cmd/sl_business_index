@@ -218,14 +218,14 @@ export default function HeroSearch({
     (bizSuggestions.length > 0 || categorySuggestions.length > 0 || isFetchingSuggestions);
 
   return (
-    <div className="relative max-w-2xl mx-auto">
+    <div className="relative mx-auto w-full">
       {/* Main Search Input */}
       <form
         onSubmit={handleSubmit}
         ref={searchBarRef}
-        className="bg-white rounded-[8px] shadow-xl shadow-black/10 border border-white/60 overflow-visible"
+        className="relative rounded-[16px] border border-white/80 bg-white shadow-[0_10px_35px_rgba(3,19,36,0.12)] transition-shadow duration-200 focus-within:shadow-[0_12px_38px_rgba(15,75,135,0.21)]"
       >
-        <div className="flex items-center px-4 py-2 md:px-5 md:py-2.5 bg-white rounded-[8px] gap-2 md:gap-3 min-h-[48px]">
+        <div className="flex min-h-[58px] items-center gap-2 rounded-[16px] bg-white px-3 py-1.5 sm:min-h-[64px] sm:gap-3 sm:px-4">
           <Search className="text-gray-400 shrink-0" size={20} strokeWidth={1.5} />
           <input
             type="text"
@@ -234,7 +234,7 @@ export default function HeroSearch({
             onFocus={() => setIsSearchFocused(true)}
             onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
             placeholder="Service or Business… (e.g. Hospital in Colombo)"
-            className="flex-1 min-w-0 bg-transparent outline-none text-gray-700 text-sm md:text-base placeholder:text-gray-400 font-normal"
+            className="min-w-0 flex-1 bg-transparent text-[13px] font-medium text-slate-800 outline-none placeholder:font-normal placeholder:text-slate-400 sm:text-[15px]"
           />
           {searchQuery && (
             <button
@@ -243,12 +243,12 @@ export default function HeroSearch({
                 e.preventDefault();
                 setSearchQuery("");
               }}
-              className="shrink-0 text-gray-400 hover:text-gray-600 transition-colors text-base leading-none"
+              aria-label="Clear search" className="shrink-0 rounded-full px-1 text-base leading-none text-slate-400 transition-colors hover:text-slate-700"
             >
               ✕
             </button>
           )}
-          <div className="w-[1px] h-6 bg-gray-200 mx-1 shrink-0" />
+          <div aria-hidden="true" className="h-6 w-px shrink-0 bg-slate-200" />
           <VoiceSearch
             onResult={(text) => {
               setSearchQuery(text);
@@ -256,7 +256,7 @@ export default function HeroSearch({
             }}
             className="shrink-0"
           />
-          <button type="submit" className="hidden">Search</button>
+          <button type="submit" aria-label="Search businesses" className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-[11px] bg-[#113C65] px-3 text-[13px] font-semibold text-white shadow-[0_4px_12px_rgba(17,60,101,0.17)] transition-all duration-200 hover:bg-[#19598D] hover:shadow-[0_6px_16px_rgba(17,60,101,0.24)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 sm:h-11 sm:px-5"><Search size={16} strokeWidth={2} /><span className="hidden sm:inline">Search</span></button>
         </div>
       </form>
 
