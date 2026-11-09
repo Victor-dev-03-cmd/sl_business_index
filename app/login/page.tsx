@@ -4,7 +4,7 @@ import { useState, Suspense } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
+import BrandLogo from '@/app/components/BrandLogo';
 import { Chrome, ArrowLeft, Check, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Turnstile } from '@marsidev/react-turnstile';
@@ -66,14 +66,7 @@ function LoginForm() {
         {/* Mobile Logo */}
         <div className="lg:hidden flex justify-center mb-8">
           <Link href="/" onContextMenu={handleContextMenu}>
-            <Image 
-              src="/logo.png" 
-              alt="Logo" 
-              width={140} 
-              height={45} 
-              draggable={false}
-              onContextMenu={handleContextMenu}
-            />
+            <BrandLogo tone="light" />
           </Link>
         </div>
 
@@ -210,15 +203,7 @@ export default function LogIn() {
               </Link>
 
               <div className="mb-10">
-                <Image
-                    src="/logo.png"
-                    alt="Logo"
-                    width={180}
-                    height={50}
-                    className="brightness-0 invert opacity-100"
-                    draggable={false}
-                    onContextMenu={(e) => e.preventDefault()}
-                />
+                <BrandLogo tone="dark" />
               </div>
 
               <h1 className="text-4xl font-normal text-white mb-6 leading-tight tracking-tight">
