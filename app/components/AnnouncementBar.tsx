@@ -1,84 +1,71 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Megaphone, ChevronRight, X } from 'lucide-react';
-import Link from 'next/link';
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { ArrowUpRight, Megaphone, X } from "lucide-react";
 
-const announcements = [
-  {
-    text: "List your business today and get verified island-wide.",
-    link: "/register-business",
-    cta: "Register Now"
-  },
-  {
-    text: "Need emergency help? Access our verified public service directory.",
-    link: "/contact",
-    cta: "View Directory"
-  },
-  {
-    text: "Join 1,200+ businesses growing with SL Business Index.",
-    link: "/about",
-    cta: "Learn More"
-  }
-];
+const DISMISS_KEY = "slbusinessindex-announcement-dismissed";
 
 export default function AnnouncementBar() {
-  const [index, setIndex] = useState(0);
-  const [isVisible, setIsVisible] = useState(true);
+  const [visible, setVisible] = useState(true);
 
+  // Respect a dismissal for the current browser session only.
   useEffect(() => {
-    const timer = setInterval(() => {
-      setIndex((prev) => (prev + 1) % announcements.length);
-    }, 5000);
-    return () => clearInterval(timer);
+    try {
+      if (sessionStorage.getItem(DISMISS_KEY) === "yes") setVisible(false);
+    } catch {
+      // Private browsing / storage disabled: the banner remains dismissible.
+    }
   }, []);
 
-  if (!isVisible) return null;
+  const dismiss = () => {
+    setVisible(false);
+    try {
+      sessionStorage.setItem(DISMISS_KEY, "yes");
+    } catch {
+      // Storage is optional; hiding the banner still works.
+    }
+  };
+
+  if (!visible) return null;
 
   return (
-    <div className="bg-brand-dark text-white overflow-hidden relative border-b border-brand-dark/50">
-      <div className="container mx-auto px-4 h-10 flex items-center justify-between">
-        <div className="flex items-center gap-3 overflow-hidden">
-          <div className="bg-brand-gold/20 p-1 rounded-full text-brand-sand flex-shrink-0 animate-pulse">
-            <Megaphone size={12} strokeWidth={2.5} />
-          </div>
-          
-          <div className="relative h-5 overflow-hidden flex-grow min-w-0">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={index}
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: -20, opacity: 0 }}
-                transition={{ duration: 0.5, ease: "easeInOut" }}
-                className="flex items-center gap-4 whitespace-nowrap"
-              >
-                <p className="text-[11px] font-normal text-brand-sand/90 truncate">
-                  {announcements[index].text}
-                </p>
-                <Link 
-                  href={announcements[index].link}
-                  className="hidden sm:flex items-center gap-1 text-[10px] font-normal text-brand-sand hover:text-white transition-colors uppercase tracking-widest group"
-                >
-                  {announcements[index].cta}
-                  <ChevronRight size={10} className="group-hover:translate-x-0.5 transition-transform" />
-                </Link>
-              </motion.div>
-            </AnimatePresence>
-          </div>
+    <aside
+      aria-label="SL Business Index announcement"
+      className="relative isolate overflow-hidden border-b border-white/10 bg-[#0C3154] text-white"
+    >
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#082946] via-[#0C365C] to-[#103E63]" />
+      <div className="relative mx-auto flex min-h-10 w-full max-w-[1440px] items-center justify-between gap-3 px-4 py-1.5 sm:px-6 lg:px-8">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-sky-300/20 bg-sky-200/10 text-[#A9D9FF]">
+            <Megaphone size={13} strokeWidth={1.9} />
+          </span>
+          <span className="hidden shrink-0 text-[10px] font-bold uppercase tracking-[0.15em] text-[#9CCCEB] lg:inline">
+            SL Business Index
+          </span>
+          <span aria-hidden="true" className="hidden h-3.5 w-px bg-white/20 lg:inline" />
+          <p className="min-w-0 truncate text-[11px] font-medium tracking-[-0.005em] text-[#E5F1FB] sm:text-xs">
+            Discover Sri Lanka's businesses. Connect with local opportunities.
+          </p>
         </div>
-
-        <button 
-          onClick={() => setIsVisible(false)}
-          className="p-1 hover:bg-white/5 rounded-full text-brand-sand/30 hover:text-white transition-colors ml-4"
-        >
-          <X size={12} />
-        </button>
+        <div className="flex shrink-0 items-center gap-3 sm:gap-5">
+          <Link
+            href="/register-business"
+            className="group inline-flex items-center gap-1 text-[10px] font-bold tracking-[0.02em] text-[#B9E5FF] transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 sm:text-[11px]"
+          >
+            List your business
+            <ArrowUpRight size={13} className="transition-transform duration-150 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+          </Link>
+          <button
+            type="button"
+            aria-label="Dismiss announcement"
+            onClick={dismiss}
+            className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-[#A8C5DB] transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
+          >
+            <X size={15} />
+          </button>
+        </div>
       </div>
-
-      {/* Subtle Bottom Glow Line */}
-      <div className="absolute bottom-0 left-0 h-[1px] bg-gradient-to-r from-transparent via-brand-gold/30 to-transparent w-full"></div>
-    </div>
+    </aside>
   );
 }
