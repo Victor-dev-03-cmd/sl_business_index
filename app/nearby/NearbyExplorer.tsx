@@ -861,6 +861,17 @@ export default function NearbyExplorer() {
               </button>
             );
           })}
+          <span aria-hidden="true" className="mx-1 h-5 w-px shrink-0 bg-[#DCD3C6]"/>
+          <button type="button" aria-pressed={verifiedOnly}
+            onClick={() => applySearch({ verifiedOnly: !verifiedOnly })}
+            className={"inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-[11px] font-semibold transition-colors " + (verifiedOnly ? "border-[#2E7568] bg-[#276F62] text-white" : "border-[#DDD8CD] bg-[#FCFAF6] text-[#536F63] hover:bg-[#F1F8F1]")}>
+            <BadgeCheck size={14}/> Verified
+          </button>
+          <button type="button" aria-pressed={withPhotosOnly}
+            onClick={() => applySearch({ withPhotosOnly: !withPhotosOnly })}
+            className={"inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-[11px] font-semibold transition-colors " + (withPhotosOnly ? "border-[#2E7568] bg-[#276F62] text-white" : "border-[#DDD8CD] bg-[#FCFAF6] text-[#536F63] hover:bg-[#F1F8F1]")}>
+            <Camera size={14}/> Photos
+          </button>
           <Link href="/category" className="ml-auto inline-flex min-h-9 shrink-0 items-center gap-1.5 px-2 text-[11px] font-semibold text-[#307A68] transition-colors hover:text-[#184B3F]">
             More categories <ArrowUpRight size={13}/>
           </Link>
@@ -906,6 +917,8 @@ export default function NearbyExplorer() {
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-[#E1DACA] bg-white/85 px-3 py-1.5 text-[11px] font-medium text-[#5D766B]">{formatDistance(radius)} radius</span>
                 {category && <button type="button" onClick={() => applySearch({ category: null })} aria-label="Clear category filter" className="inline-flex items-center gap-1.5 rounded-full bg-[#DDEFFB] px-3 py-1.5 text-[11px] font-semibold text-[#215B80] hover:bg-[#CBE4F5]">{category} <X size={12}/></button>}
                 {appliedQuery && <button type="button" onClick={() => applySearch({ query: "" })} aria-label="Clear search query" className="inline-flex items-center gap-1.5 rounded-full bg-[#DDEFFB] px-3 py-1.5 text-[11px] font-semibold text-[#215B80] hover:bg-[#CBE4F5]">{appliedQuery} <X size={12}/></button>}
+                {verifiedOnly && <button type="button" onClick={() => applySearch({ verifiedOnly: false })} className="inline-flex items-center gap-1.5 rounded-full border border-[#C6DACB] bg-[#E6F2E9] px-3 py-1.5 text-[11px] font-semibold text-[#39705C] hover:bg-[#D7EBDF]"><BadgeCheck size={12}/> Verified <X size={12}/></button>}
+                {withPhotosOnly && <button type="button" onClick={() => applySearch({ withPhotosOnly: false })} className="inline-flex items-center gap-1.5 rounded-full border border-[#C6DACB] bg-[#E6F2E9] px-3 py-1.5 text-[11px] font-semibold text-[#39705C] hover:bg-[#D7EBDF]"><Camera size={12}/> Photos <X size={12}/></button>}
               </div>
             </div>
             <div className="mt-4 flex items-center justify-between gap-2">
