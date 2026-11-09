@@ -6,7 +6,7 @@ import { Search, ChevronRight, Building2, Star, Tags, MapPin, ChevronDown, Check
 import * as LucideIcons from "lucide-react";
 import { cn, expandSearchQuery } from "@/lib/utils";
 import { supabase } from "@/lib/supabaseClient";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import Fuse from "fuse.js";
 import VoiceSearch from "./VoiceSearch";
 import VerifiedBadge from "./VerifiedBadge";
@@ -78,6 +78,7 @@ export default function HeroSearch({
   const [areaQuery, setAreaQuery] = useState("");
   const [selectedArea, setSelectedArea] = useState<{ label: string; district?: string; town?: Town } | null>(null);
   const areaRef = useRef<HTMLDivElement>(null);
+  const searchRootRef = useRef<HTMLDivElement>(null);
 
   const searchBarRef = useRef<HTMLFormElement>(null);
   const suggestionCache = useRef<Map<string, any[]>>(new Map());
@@ -106,6 +107,18 @@ export default function HeroSearch({
     document.addEventListener("mousedown", onOutsideClick);
     return () => document.removeEventListener("mousedown", onOutsideClick);
   }, [areaOpen]);
+
+  // Close search suggestions on outside pointer interaction (without locking page scroll).
+  useEffect(() => {
+    if (!isSearchFocused) return;
+    const closeOutside = (event: PointerEvent) => {
+      if (searchRootRef.current && !searchRootRef.current.contains(event.target as Node)) {
+        setIsSearchFocused(false);
+      }
+    };
+    document.addEventListener("pointerdown", closeOutside);
+    return () => document.removeEventListener("pointerdown", closeOutside);
+  }, [isSearchFocused]);
 
   // Fuse.js instance — rebuilt only when categories list changes
   const fuse = useMemo(
@@ -255,13 +268,15 @@ export default function HeroSearch({
     return Icon ? <Icon className={className} /> : <Tags className={className} />;
   };
 
-  const displayedBusinesses = searchQuery.trim() ? bizSuggestions : featuredBusinesses.slice(0, 4);
+  // An empty focused input must not open a large scrollable panel.
+  // Suggestions appear only after meaningful input, avoiding unnecessary layout/compositing work.
+  const displayedBusinesses = searchQuery.trim().length >= 2 ? bizSuggestions : [];
   const showDropdown =
-    !areaOpen && isSearchFocused &&
+    !areaOpen && isSearchFocused && searchQuery.trim().length >= 2 &&
     (displayedBusinesses.length > 0 || categorySuggestions.length > 0 || isFetchingSuggestions);
 
   return (
-    <div className="relative mx-auto w-full">
+    <div ref={searchRootRef} className="relative mx-auto w-full">
       {/* Three-part destination search: keyword, location, one primary action. */}
       <form
         onSubmit={handleSubmit}
@@ -282,7 +297,15 @@ export default function HeroSearch({
                 maxLength={160}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => { setIsSearchFocused(true); setAreaOpen(false); }}
-                onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+                onBlur={() => setTimeout(() => setIsSearchFocused(false), 120)}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") {
+                    setIsSearchFocused(false);
+                    event.currentTarget.blur();
+                  }
+                }}
+                aria-expanded={showDropdown}
+                aria-controls="hero-search-suggestions"
                 placeholder="What are you looking for?"
                 className="mt-0.5 w-full min-w-0 bg-transparent text-[13px] font-medium text-slate-900 outline-none placeholder:font-normal placeholder:text-slate-400 sm:text-[14px]"
               />
@@ -357,18 +380,14 @@ export default function HeroSearch({
         </div>
       </form>
 
-      {/* Suggestions dropdown */}
-      <AnimatePresence>
-        {showDropdown && (
-          <motion.div
-            key="suggestions"
-            initial={{ opacity: 0, y: -8, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -4, scale: 0.98 }}
-            transition={{ duration: 0.15, ease: [0.2, 0, 0, 1] }}
-            className="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl rounded-xl shadow-2xl shadow-black/15 border border-gray-200/80 overflow-hidden text-left"
-            style={{ zIndex: 9999, maxHeight: "65dvh", overflowY: "auto" }}
-          >
+      {/* Lightweight autocomplete. No full-page overlay or scroll lock. */}
+      {showDropdown && (
+        <div
+          id="hero-search-suggestions"
+          role="region"
+          aria-label="Business search suggestions"
+          className="absolute left-0 right-0 top-full z-50 mt-2 max-h-[288px] overflow-y-auto overscroll-auto rounded-xl border border-slate-200 bg-white text-left shadow-[0_14px_42px_rgba(15,23,42,0.14)]"
+        >
             {/* Loading indicator */}
             {isFetchingSuggestions && (
               <div className="h-[2px] w-full bg-gray-100 overflow-hidden">
@@ -492,9 +511,8 @@ export default function HeroSearch({
                 </button>
               </div>
             )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+        </div>
+      )}
 
 
     </div>
