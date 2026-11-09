@@ -8,7 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft, ArrowRight, ArrowUpRight, Building2, ChevronDown,
   Compass, LocateFixed, Map as MapIcon, MapPin, Navigation, Search,
-  SlidersHorizontal, Star, X, List, RotateCcw, ShieldCheck, Sparkles
+  SlidersHorizontal, Star, X, List, RotateCcw, ShieldCheck, Sparkles, Check
 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/lib/supabaseClient";
@@ -35,7 +35,7 @@ type LocationChoice = {
   label: string;
   kind: "default" | "district" | "town" | "gps" | "coordinates";
 };
-type SortMode = "nearest" | "top-rated";
+type SortMode = "nearest" | "top-rated" | "alphabetical";
 type AreaOption = { label: string; description: string; lat: number; lng: number; kind: "district" | "town" };
 
 const DEFAULT_LOCATION: LocationChoice = {
@@ -201,6 +201,8 @@ export default function NearbyExplorer() {
     const sorted = [...businesses];
     if (sortBy === "top-rated") {
       sorted.sort((a, b) => (Number(b.rating) || 0) - (Number(a.rating) || 0));
+    } else if (sortBy === "alphabetical") {
+      sorted.sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
     } else {
       sorted.sort((a, b) =>
         (typeof a.distance_meters === "number" ? a.distance_meters : Number.MAX_SAFE_INTEGER) -
@@ -471,11 +473,13 @@ export default function NearbyExplorer() {
   }, []);
 
   const searchDropdownOpen = searchFocused && searchText.trim().length >= 2;
+  const QUICK_CATEGORIES = ["Food & Dining", "Health & Medical", "Shopping & Retail", "Travel & Tourism", "Professional Services"];
+  const quickCategories = categories.filter((item: any) => QUICK_CATEGORIES.includes(String(item.name))).sort((a: any, b: any) => QUICK_CATEGORIES.indexOf(a.name) - QUICK_CATEGORIES.indexOf(b.name));
   const categoryCount = category ? 1 : 0;
   const activeFiltersCount = categoryCount + (radius !== 10000 ? 1 : 0);
 
   return (
-    <div className="flex h-[100dvh] min-h-[500px] w-full flex-col overflow-hidden bg-[#F7FAFD] font-sans text-[#123653]">
+    <div className="flex h-[100dvh] min-h-[500px] w-full flex-col overflow-hidden bg-[#F6F9FC] font-sans text-[#123653]">
       <header ref={headerRef} className="relative z-[1200] shrink-0 border-b border-[#DDE8F1] bg-white shadow-[0_5px_22px_rgba(15,47,74,0.045)]">
         {/* App title and trusted navigation */}
         <div className="mx-auto flex min-h-[66px] max-w-[1800px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
@@ -494,7 +498,7 @@ export default function NearbyExplorer() {
               <h1 className="truncate text-[17px] font-semibold tracking-[-0.04em] text-[#102F4D] sm:text-[20px]">
                 Nearby Explorer<span className="text-[#4B9AC7]">.</span>
               </h1>
-              <p className="hidden text-[11px] font-medium text-[#829BAD] sm:block">Discover businesses across Sri Lanka</p>
+              <p className="hidden text-[11px] font-medium text-[#829BAD] sm:block">Your Sri Lanka. Your next discovery.</p>
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -718,6 +722,14 @@ export default function NearbyExplorer() {
                       </div>
                       <Slider min={1000} max={50000} step={1000} value={[radiusDraft]} onValueChange={value => setRadiusDraft(value[0])} className="mt-5 py-2" />
                       <div className="mt-2 flex justify-between text-[11px] text-[#90A3B1]"><span>1 km</span><span>50 km</span></div>
+                      <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Quick radius selection">
+                        {[2000, 5000, 10000, 25000, 50000].map(distance => (
+                          <button key={distance} type="button" onClick={() => setRadiusDraft(distance)} aria-pressed={radiusDraft === distance}
+                            className={"min-h-9 rounded-full border px-3 text-[11px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 " + (radiusDraft === distance ? "border-[#123D63] bg-[#123D63] text-white" : "border-[#DDE7EF] text-[#54768F] hover:bg-[#F0F7FB]")}>
+                            {formatDistance(distance)}
+                          </button>
+                        ))}
+                      </div>
 
                       <div className="mt-7 border-t border-[#EEF2F5] pt-6">
                         <h3 className="mb-4 text-[13px] font-semibold text-[#1C4565]">Business category</h3>
@@ -758,6 +770,39 @@ export default function NearbyExplorer() {
             </div>
           </div>
         </div>
+        {/* Discovery shortcuts: only categories present in the database. */}
+        <nav aria-label="Quick discovery categories" className="mx-auto flex max-w-[1800px] items-center gap-2 overflow-x-auto border-t border-[#F0F4F7] px-4 py-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:px-6 lg:px-8">
+          <span className="mr-1 hidden shrink-0 items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.11em] text-[#7B9AAF] sm:inline-flex">
+            <Sparkles size={14} className="text-[#3B8EBB]"/> Explore
+          </span>
+          <button
+            type="button"
+            onClick={() => applySearch({ category: null, query: "" })}
+            aria-pressed={!category && !appliedQuery}
+            className={"inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-[11px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 " + (!category && !appliedQuery ? "border-[#14466D] bg-[#103A60] text-white" : "border-[#DEEBF3] bg-[#F7FAFD] text-[#557B95] hover:border-[#B5D2E4] hover:bg-[#EDF6FC]")}
+          >
+            <Compass size={13} /> All businesses
+          </button>
+          {quickCategories.map((item: any) => {
+            const selected = category === item.name;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                aria-pressed={selected}
+                onClick={() => applySearch({ category: selected ? null : item.name, query: "" })}
+                className={"inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-[11px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 " + (selected ? "border-[#14466D] bg-[#103A60] text-white" : "border-[#DEEBF3] bg-[#F7FAFD] text-[#557B95] hover:border-[#B5D2E4] hover:bg-[#EDF6FC]")}
+              >
+                {selected && <Check size={12}/>}
+                {item.name}
+              </button>
+            );
+          })}
+          <Link href="/category" className="ml-auto inline-flex min-h-9 shrink-0 items-center gap-1.5 px-2 text-[11px] font-semibold text-[#2B6991] transition-colors hover:text-[#103A60]">
+            More categories <ArrowUpRight size={13}/>
+          </Link>
+        </nav>
+
         {locationNotice && (
           <div role="status" className="mx-auto flex max-w-[1800px] items-center justify-between gap-3 border-t border-[#E4EDF4] px-4 py-2 text-[12px] text-[#9A5824] sm:px-6 lg:px-8">
             <span>{locationNotice}</span>
@@ -790,7 +835,7 @@ export default function NearbyExplorer() {
               </div>
             </div>
             <div className="mt-4 flex items-center justify-between gap-2">
-              <p className="text-[11px] text-[#8DA3B3]">{sortBy === "nearest" ? "Closest first" : "Highest rated first"}</p>
+              <p className="text-[11px] text-[#8DA3B3]">{sortBy === "nearest" ? "Closest first" : sortBy === "top-rated" ? "Highest rated first" : "A to Z"}</p>
               <label className="flex items-center gap-2 text-[11px] font-semibold text-[#557B95]">
                 Sort by
                 <select
@@ -800,6 +845,7 @@ export default function NearbyExplorer() {
                 >
                   <option value="nearest">Nearest</option>
                   <option value="top-rated">Top rated</option>
+                  <option value="alphabetical">Name (A–Z)</option>
                 </select>
               </label>
             </div>
