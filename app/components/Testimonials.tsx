@@ -62,30 +62,30 @@ export default function Testimonials() {
       <div className="mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12">
         <div className="mb-10 flex flex-col justify-between gap-7 md:mb-12 lg:flex-row lg:items-end">
           <div className="max-w-[780px]">
-            <p className="mb-5 inline-flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.17em] text-[#34688C]">
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-[10px] border border-[#D8E5EF] bg-[#F4F8FC] text-[#245A80]">
+            <p className="mb-5 inline-flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.17em] text-[#2B6552]">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-[10px] border border-[#E0EADB] bg-[#F8F7F2] text-[#2B6552]">
                 <Quote size={17} strokeWidth={1.8} />
               </span>
               Community voices
             </p>
-            <h2 id="community-stories-title" className="text-balance text-[clamp(2.7rem,5vw,5.1rem)] font-semibold leading-[1.08] tracking-[-0.065em] text-[#102B4E]">
-              Stories that connect<span className="text-[#4085B6]">.</span>
+            <h2 id="community-stories-title" className="text-balance text-[clamp(2.7rem,5vw,5.1rem)] font-semibold leading-[1.08] tracking-[-0.065em] text-[#1B3430]">
+              Stories that connect<span className="text-[#4A8C70]">.</span>
             </h2>
-            <p className="mt-5 max-w-[610px] text-[15px] leading-[1.8] text-slate-500 sm:text-[17px]">
+            <p className="mt-5 max-w-[610px] text-[15px] leading-[1.8] text-stone-500 sm:text-[17px]">
               Hear from the people and businesses who are part of our growing local community.
             </p>
           </div>
-          <p className="text-[12px] font-medium text-[#7792A5]">Real experiences, shared by the community.</p>
+          <p className="text-[12px] font-medium text-[#75AB8D]">Real experiences, shared by the community.</p>
         </div>
 
         {loading ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3" aria-label="Loading community stories">
             {[0, 1, 2].map(index => (
-              <div key={index} className="min-h-[280px] animate-pulse rounded-[24px] border border-[#E4EBF2] bg-[#F5F8FB] p-7">
-                <div className="h-8 w-8 rounded-xl bg-[#DFE8F0]" />
-                <div className="mt-10 h-4 w-full rounded-md bg-[#DFE8F0]" />
-                <div className="mt-3 h-4 w-4/5 rounded-md bg-[#DFE8F0]" />
-                <div className="mt-12 h-9 w-2/5 rounded-md bg-[#DFE8F0]" />
+              <div key={index} className="min-h-[280px] animate-pulse rounded-[24px] border border-[#F0F2E9] bg-[#F8F7F2] p-7">
+                <div className="h-8 w-8 rounded-xl bg-[#E0EADB]" />
+                <div className="mt-10 h-4 w-full rounded-md bg-[#E0EADB]" />
+                <div className="mt-3 h-4 w-4/5 rounded-md bg-[#E0EADB]" />
+                <div className="mt-12 h-9 w-2/5 rounded-md bg-[#E0EADB]" />
               </div>
             ))}
           </div>
@@ -99,7 +99,7 @@ export default function Testimonials() {
               return item.type === "image" ? (
                 <div
                   key={item.id}
-                  className="group relative min-h-[320px] overflow-hidden rounded-[24px] border border-[#E1EAF1] bg-[#153A59] sm:min-h-[360px]"
+                  className="group relative min-h-[320px] overflow-hidden rounded-[24px] border border-[#F0F2E9] bg-[#1B3430] sm:min-h-[360px]"
                 >
                   {item.image_url ? (
                     <Image
@@ -110,12 +110,12 @@ export default function Testimonials() {
                       className="object-cover transition-transform duration-500 motion-safe:group-hover:scale-[1.035]"
                     />
                   ) : (
-                    <div className="absolute inset-0 bg-gradient-to-br from-[#215778] to-[#0F2D4D]" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#26483B] to-[#1B3430]" />
                   )}
                   {item.name && (
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#071C30]/90 to-transparent px-6 pb-6 pt-16">
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#152C25]/90 to-transparent px-6 pb-6 pt-16">
                       <p className="text-[17px] font-semibold text-white">{item.name}</p>
-                      {item.role && <p className="mt-1 text-[12px] text-[#D4E9F7]">{item.role}</p>}
+                      {item.role && <p className="mt-1 text-[12px] text-[#E0EADB]">{item.role}</p>}
                     </div>
                   )}
                 </div>
@@ -125,17 +125,17 @@ export default function Testimonials() {
                   className={
                     "flex min-h-[300px] flex-col justify-between rounded-[24px] border p-6 sm:p-8 " +
                     (prominent
-                      ? "border-[#153E62] bg-[#0E3152] text-white md:col-span-2 lg:col-span-2"
-                      : "border-[#E0E9F1] bg-[#F8FBFD] text-[#133754]")
+                      ? "border-[#1B3430] bg-[#1B3430] text-white md:col-span-2 lg:col-span-2"
+                      : "border-[#F0F2E9] bg-[#F8F7F2] text-[#1B3430]")
                   }
                 >
                   <div>
                     <div className="flex items-center justify-between gap-3">
-                      <Quote size={26} strokeWidth={1.6} className={prominent ? "text-[#A7D6F4]" : "text-[#367DA9]"} />
+                      <Quote size={26} strokeWidth={1.6} className={prominent ? "text-[#F0D9AC]" : "text-[#36785E]"} />
                       {rating > 0 && (
                         <div aria-label={rating + " out of 5 stars"} className="flex gap-0.5">
                           {Array.from({ length: rating }, (_, i) => (
-                            <Star key={i} size={14} className={prominent ? "fill-[#A9DCF7] text-[#A9DCF7]" : "fill-[#3686B8] text-[#3686B8]"} />
+                            <Star key={i} size={14} className={prominent ? "fill-[#F0D9AC] text-[#F0D9AC]" : "fill-[#36785E] text-[#36785E]"} />
                           ))}
                         </div>
                       )}
@@ -145,9 +145,9 @@ export default function Testimonials() {
                     </blockquote>
                   </div>
 
-                  <figcaption className={"mt-10 flex items-center gap-3 border-t pt-5 " + (prominent ? "border-white/20" : "border-[#E3EAF0]")}>
+                  <figcaption className={"mt-10 flex items-center gap-3 border-t pt-5 " + (prominent ? "border-white/20" : "border-[#F0F2E9]")}>
                     {item.image_url ? (
-                      <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full border border-white/25 bg-[#DDECF6]">
+                      <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full border border-white/25 bg-[#F0F2E9]">
                         <Image
                           src={item.image_url}
                           alt=""
@@ -158,16 +158,16 @@ export default function Testimonials() {
                         />
                       </div>
                     ) : (
-                      <div className={"flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[16px] font-semibold " + (prominent ? "bg-white/15 text-white" : "bg-[#DCEAF4] text-[#275F83]")}>
+                      <div className={"flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[16px] font-semibold " + (prominent ? "bg-white/15 text-white" : "bg-[#E0EADB] text-[#2B6552]")}>
                         {(item.name || "C").slice(0, 1).toUpperCase()}
                       </div>
                     )}
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5">
                         <span className="truncate text-[13px] font-semibold">{item.name || "Community member"}</span>
-                        {item.is_verified && <CheckCircle2 size={14} aria-label="Verified" className={prominent ? "text-[#A9DCF7]" : "text-[#2D83B8]"} />}
+                        {item.is_verified && <CheckCircle2 size={14} aria-label="Verified" className={prominent ? "text-[#F0D9AC]" : "text-[#36785E]"} />}
                       </div>
-                      {item.role && <p className={"mt-1 truncate text-[12px] " + (prominent ? "text-[#A8C7DD]" : "text-slate-500")}>{item.role}</p>}
+                      {item.role && <p className={"mt-1 truncate text-[12px] " + (prominent ? "text-[#B0CFB5]" : "text-stone-500")}>{item.role}</p>}
                     </div>
                   </figcaption>
                 </figure>
