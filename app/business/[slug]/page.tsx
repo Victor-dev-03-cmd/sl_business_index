@@ -71,6 +71,9 @@ function mapBusinessData(data: any): Business {
     logo_url: data.logo_url,
     registration_number: data.registration_number,
     is_registered: data.is_registered,
+    is_verified: data.is_verified,
+    verification_status: data.verification_status,
+    can_show_badge: data.can_show_badge,
     working_hours: data.working_hours,
     facilities: data.facilities,
     detailed_address: data.detailed_address,
@@ -138,13 +141,7 @@ export default async function BusinessDetailPage({ params }: Props) {
       reviewCount: business.reviews_count || 0,
     } : undefined,
     category: business.category,
-    priceRange: '$$',
-    openingHoursSpecification: business.working_hours ? Object.entries(business.working_hours).map(([day, hours]: [string, any]) => ({
-      '@type': 'OpeningHoursSpecification',
-      dayOfWeek: day,
-      opens: hours.open || '09:00',
-      closes: hours.close || '17:00',
-    })) : undefined,
+    // Working hours come from business-provided text. Do not invent hours from defaults.
   };
 
   return (
