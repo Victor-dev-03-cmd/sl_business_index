@@ -360,7 +360,7 @@ export default function VendorQRCodePage() {
                         level="H"
                         includeMargin={false}
                         imageSettings={{
-                          src: "/logo.png",
+                          src: "/slbi-mark.svg",
                           x: undefined,
                           y: undefined,
                           height: 40,
