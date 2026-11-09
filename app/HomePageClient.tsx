@@ -791,321 +791,231 @@ export default function HomePageClient() {
         </div>
       </section>
 
-      {/* --- HOW IT WORKS (Live Discovery) --- */}
-      <section className="py-24 bg-white overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-20"
-          >
-            <span className="text-brand-blue text-[10px] uppercase tracking-[0.2em] mb-4 block">
-              Process
-            </span>
-            <h2 className="text-3xl text-gray-900 tracking-tight font-normal">
-              How Live Discovery Works
-            </h2>
-            <div className="w-12 h-1 bg-brand-dark mx-auto mt-6 rounded-full"></div>
-          </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-16 relative font-normal">
-            {/* Animated Connecting Arrows (Desktop Only) */}
-            <div className="hidden md:block absolute top-12 left-[33%] -translate-x-1/2 w-24">
-              <div className="h-[2px] w-full bg-gray-100 relative overflow-hidden">
-                <motion.div
-                  animate={{
-                    x: ["-100%", "100%"],
-                    opacity: [0, 1, 0],
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: "linear",
-                  }}
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-brand-gold-light to-transparent"
-                />
-              </div>
-              <motion.div
-                animate={{ opacity: [0.3, 1, 0.3] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2"
-              >
-                <ChevronRight
-                  size={16}
-                  strokeWidth={1.5}
-                  className="text-brand-gold"
-                />
-              </motion.div>
+      {/* --- HOW DISCOVERY WORKS --- */}
+      <section aria-labelledby="discovery-process-heading" className="relative bg-[#F8FAFC] py-20 sm:py-24 lg:py-28">
+        <div className="mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12">
+          <div className="flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
+            <div className="max-w-[790px]">
+              <p className="mb-5 flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.17em] text-[#34688C]">
+                <span className="h-px w-9 bg-[#5B8FAE]" />
+                A simpler way to discover
+              </p>
+              <h2 id="discovery-process-heading" className="text-balance text-[clamp(2.65rem,5vw,5.1rem)] font-semibold leading-[1.08] tracking-[-0.065em] text-[#102B4E]">
+                Find more. <span className="text-[#4085B6]">Go further.</span>
+              </h2>
+              <p className="mt-5 max-w-[610px] text-[15px] leading-[1.8] text-slate-500 sm:text-[17px]">
+                A thoughtful way to connect with the businesses, services and local expertise you need — wherever you are in Sri Lanka.
+              </p>
             </div>
-
-            <div className="hidden md:block absolute top-12 left-[66%] -translate-x-1/2 w-24">
-              <div className="h-[2px] w-full bg-gray-100 relative overflow-hidden">
-                <motion.div
-                  animate={{
-                    x: ["-100%", "100%"],
-                    opacity: [0, 1, 0],
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: "linear",
-                    delay: 1,
-                  }}
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-brand-gold-light to-transparent"
-                />
-              </div>
-              <motion.div
-                animate={{ opacity: [0.3, 1, 0.3] }}
-                transition={{ duration: 2, repeat: Infinity, delay: 1 }}
-                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2"
-              >
-                <ChevronRight
-                  size={16}
-                  strokeWidth={1.5}
-                  className="text-brand-gold"
-                />
-              </motion.div>
-            </div>
-
-            {/* Step 1 */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2 }}
-              className="flex flex-col items-center text-center group relative"
-            >
-              <div className="relative">
-                <motion.div
-                  animate={{ scale: [1, 1.15, 1], opacity: [0.1, 0.3, 0.1] }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
-                  className="absolute -inset-4 bg-brand-gold-light rounded-full blur-xl"
-                />
-                <div className="w-24 h-24 rounded-[50%] bg-gray-50 border border-gray-100 text-brand-blue flex items-center justify-center mb-8 group-hover:border-brand-sand transition-colors relative z-10 overflow-hidden">
-                  <Navigation size={32} strokeWidth={1.5} />
-                  <motion.div
-                    animate={{ x: ["-100%", "200%"] }}
-                    transition={{
-                      duration: 1.5,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                    }}
-                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-12"
-                  />
-                </div>
-              </div>
-              <h3 className="text-lg font-normal text-gray-900 mb-4">
-                1. Automatic Detection
-              </h3>
-              <p className="text-sm text-gray-500 leading-relaxed max-w-[280px] font-normal">
-                We pinpoint your exact spot—whether you&apos;re in the heart of
-                Jaffna or a village in Vavuniya—to give you relevant results.
-              </p>
-            </motion.div>
-
-            {/* Step 2 */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.4 }}
-              className="flex flex-col items-center text-center group relative"
-            >
-              <div className="relative">
-                <motion.div
-                  animate={{ scale: [1, 1.15, 1], opacity: [0.1, 0.3, 0.1] }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                    delay: 1,
-                  }}
-                  className="absolute -inset-4 bg-brand-gold-light rounded-full blur-xl"
-                />
-                <div className="w-24 h-24 rounded-[50%] bg-gray-50 border border-gray-100 text-brand-blue flex items-center justify-center mb-8 group-hover:border-brand-sand transition-colors relative z-10 overflow-hidden">
-                  <Search size={32} strokeWidth={1.5} />
-                  <motion.div
-                    animate={{ x: ["-100%", "200%"] }}
-                    transition={{
-                      duration: 1.5,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                      delay: 0.5,
-                    }}
-                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-12"
-                  />
-                </div>
-              </div>
-              <h3 className="text-lg font-normal text-gray-900 mb-4">
-                2. Intelligent Filtering
-              </h3>
-              <p className="text-sm text-gray-500 leading-relaxed max-w-[280px] font-normal">
-                Our system scans the local database for businesses within your
-                chosen radius.
-              </p>
-            </motion.div>
-
-            {/* Step 3 */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.6 }}
-              className="flex flex-col items-center text-center group relative"
-            >
-              <div className="relative">
-                <motion.div
-                  animate={{ scale: [1, 1.15, 1], opacity: [0.1, 0.3, 0.1] }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                    delay: 2,
-                  }}
-                  className="absolute -inset-4 bg-brand-gold-light rounded-full blur-xl"
-                />
-                <div className="w-24 h-24 rounded-[50%] bg-gray-50 border border-gray-100 text-brand-blue flex items-center justify-center mb-8 group-hover:border-brand-sand transition-colors relative z-10 overflow-hidden">
-                  <MapPin size={32} strokeWidth={1.5} />
-                  <motion.div
-                    animate={{ x: ["-100%", "200%"] }}
-                    transition={{
-                      duration: 1.5,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                      delay: 1,
-                    }}
-                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-12"
-                  />
-                </div>
-              </div>
-              <h3 className="text-lg font-normal text-gray-900 mb-4">
-                3. Instant Connection
-              </h3>
-              <p className="text-sm text-gray-500 leading-relaxed max-w-[280px] font-normal">
-                See the shops on the live map. Check if they are &apos;Open
-                Now,&apos; view their ratings, and get one-tap directions.
-              </p>
-            </motion.div>
+            <Link href="/nearby" className="group inline-flex h-12 w-fit shrink-0 items-center gap-2.5 rounded-xl bg-[#10395D] px-5 text-[13px] font-semibold text-white transition-colors hover:bg-[#1B5682] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2">
+              Start exploring <ArrowUpRight size={17} className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+            </Link>
           </div>
 
-
-
-          {/* Final Conversion CTA */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            className="mt-24 p-12 bg-brand-dark rounded-[6px] relative overflow-hidden text-center shadow-2xl"
-          >
-            <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
-            <motion.div
-              animate={{
-                opacity: [0.05, 0.15, 0.05],
-                scale: [1, 1.05, 1],
-              }}
-              transition={{ duration: 8, repeat: Infinity }}
-              className="absolute inset-0 bg-gradient-to-br from-brand-gold/20 to-transparent"
-            />
-            <div className="relative z-10 font-normal">
-              <h3 className="text-3xl text-white mb-6 font-normal">
-                Ready to find something nearby?
-              </h3>
-              <p className="text-brand-sand text-base mb-10 max-w-xl mx-auto leading-relaxed">
-                Start your discovery journey now and support verified local
-                businesses in your community across Sri Lanka.
-              </p>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => handleUseCurrentLocation(true)}
-                className="bg-white text-black px-10 py-4 rounded-[6px] transition-all shadow-2xl shadow-brand-dark/40 border font-normal"
-              >
-                Start Discovery Now
-              </motion.button>
-            </div>
-          </motion.div>
-        </div>
-
-        {/* --- CONTEXTUAL SNIPPETS (AI Overview Optimization) --- */}
-        <section className="py-24 bg-gray-50/50 border-t border-gray-200">
-          <div className="max-w-4xl mx-auto px-6 text-center">
-            <h2 className="text-3xl text-gray-900 mb-12 tracking-tight">
-              Common Questions about Businesses in Sri Lanka
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
-              <div className="space-y-4">
-                <h3 className="text-lg text-brand-dark">What is the SL Business Index (SLBI)?</h3>
-                <p className="text-sm text-gray-600 leading-relaxed">
-                  SLBI is a comprehensive digital directory designed to connect consumers with verified businesses across Sri Lanka. From luxury villas in Galle to specialized clinics in Colombo, we provide a centralized platform for reliable local discovery.
-                </p>
-              </div>
-              <div className="space-y-4">
-                <h3 className="text-lg text-brand-dark">How do I find verified businesses in Sri Lanka?</h3>
-                <p className="text-sm text-gray-600 leading-relaxed">
-                  You can use our real-time search and map features to find businesses nearby. Look for the "Verified" badge on listings, which indicates that the business has been manually reviewed and authenticated by our team.
-                </p>
-              </div>
-              <div className="space-y-4">
-                <h3 className="text-lg text-brand-dark">Where are the best service providers located?</h3>
-                <p className="text-sm text-gray-600 leading-relaxed">
-                  Top-rated service providers are spread across major hubs like Colombo, Kandy, and Jaffna. SLBI allows you to filter by district and town to find the highest-rated businesses in your specific area.
-                </p>
-              </div>
-              <div className="space-y-4">
-                <h3 className="text-lg text-brand-dark">How can I register my Sri Lankan business on SLBI?</h3>
-                <p className="text-sm text-gray-600 leading-relaxed">
-                  Business owners can register by clicking the Register Business button in the menu. After providing your details and verification documents (like BR), your business will be indexed and made discoverable to thousands of monthly users.
-                </p>
-              </div>
-            </div>
+          <div className="mt-12 grid gap-4 md:grid-cols-3 lg:mt-14 lg:gap-5">
+            {[
+              {
+                index: "01",
+                title: "Choose what matters",
+                description: "Search for a service, business, or category — from everyday essentials to specialist support.",
+                icon: Search,
+              },
+              {
+                index: "02",
+                title: "Explore your area",
+                description: "Select a town or use your location to discover relevant listings on the map.",
+                icon: MapPin,
+              },
+              {
+                index: "03",
+                title: "Make a connection",
+                description: "Open a business profile, review its available details and reach out with confidence.",
+                icon: Navigation,
+              },
+            ].map((step) => {
+              const Icon = step.icon;
+              return (
+                <div key={step.index} className="group relative flex min-h-[300px] flex-col overflow-hidden rounded-[26px] border border-[#DFE9F0] bg-white p-7 shadow-[0_8px_24px_rgba(13,45,75,0.025)] transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-1 hover:border-[#B7D2E5] hover:shadow-[0_16px_36px_rgba(13,45,75,0.08)] sm:p-8">
+                  <div aria-hidden="true" className="pointer-events-none absolute -right-14 -top-16 h-44 w-44 rounded-full bg-[#E9F5FD] opacity-60" />
+                  <div className="relative flex items-start justify-between">
+                    <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-[#D9E8F2] bg-[#F0F7FC] text-[#27678F]">
+                      <Icon size={25} strokeWidth={1.65} />
+                    </span>
+                    <span className="text-[12px] font-semibold tracking-[0.12em] text-[#9AB2C4]">{step.index}</span>
+                  </div>
+                  <div className="relative mt-auto pt-12">
+                    <h3 className="text-[22px] font-semibold leading-[1.25] tracking-[-0.04em] text-[#123452]">{step.title}</h3>
+                    <p className="mt-3 max-w-[340px] text-[14px] leading-[1.75] text-slate-500">{step.description}</p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        </section>
-
-        <Testimonials />
-
-        {/* --- MOBILE BANNER --- */}
-        <div
-          className="md:hidden px-4 pt-12 pb-4 select-none"
-          onContextMenu={(e) => e.preventDefault()}
-          onDragStart={(e) => e.preventDefault()}
-        >
-          <div className="w-full relative">
-            <Image
-              src="/mobile.jpeg"
-              alt="SLBI Mobile Banner"
-              width={1080}
-              height={1920}
-              className="w-full h-auto pointer-events-none select-none rounded-[6px]"
-              priority
-              draggable={false}
-            />
-          </div>
-        </div>
-
-        {/* --- DESKTOP BANNER --- */}
-        <div
-          className="hidden md:block max-w-7xl mx-auto px-4 pt-12 pb-4 select-none"
-          onContextMenu={(e) => e.preventDefault()}
-          onDragStart={(e) => e.preventDefault()}
-        >
-          <div className="w-full relative">
-            <Image
-              src="/banner.jpeg"
-              alt="SLBI Banner"
-              width={1920}
-              height={700}
-              className="w-full h-auto pointer-events-none select-none"
-              priority
-              draggable={false}
-            />
+          <div className="mt-8 flex flex-wrap items-center gap-x-7 gap-y-3 text-[12px] font-medium text-[#6B879C]">
+            <span className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[#66ADD8]" /> Explore categories</span>
+            <span className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[#66ADD8]" /> Discover nearby</span>
+            <span className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[#66ADD8]" /> Connect directly</span>
           </div>
         </div>
       </section>
+
+      {/* --- DISCOVERY CTA: static, lightweight and functional --- */}
+      <section aria-labelledby="discover-nearby-title" className="border-y border-[#E7EDF2] bg-white py-18 sm:py-20">
+        <div className="mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12">
+          <div className="relative isolate grid items-center gap-9 overflow-hidden rounded-[30px] bg-[#0C2C4B] px-6 py-12 sm:px-10 sm:py-14 lg:grid-cols-[1fr_0.72fr] lg:gap-16 lg:px-14 lg:py-16">
+            <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+              <div className="absolute -left-28 -top-32 h-80 w-80 rounded-full bg-[#3E88BE]/15 blur-[85px]" />
+              <div className="absolute -right-32 bottom-0 h-80 w-80 rounded-full bg-[#46B2F4]/10 blur-[95px]" />
+            </div>
+            <div className="relative z-10">
+              <p className="text-[11px] font-bold uppercase tracking-[0.19em] text-[#A0D5F5]">Explore around you</p>
+              <h2 id="discover-nearby-title" className="mt-5 max-w-[650px] text-balance text-[clamp(2.4rem,4vw,4.4rem)] font-semibold leading-[1.09] tracking-[-0.06em] text-white">
+                Discover more, right where you are.
+              </h2>
+              <p className="mt-5 max-w-[530px] text-[15px] leading-[1.8] text-[#BCD1E2]">
+                Search businesses, choose an area and explore local services in a few simple steps.
+              </p>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => handleUseCurrentLocation(true)}
+                  disabled={isFetchingLocation}
+                  className="inline-flex min-h-12 items-center justify-center gap-2.5 rounded-xl bg-white px-5 text-[13px] font-bold text-[#103858] transition-colors hover:bg-[#E8F5FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 disabled:cursor-wait disabled:opacity-60"
+                >
+                  <Navigation size={17} />
+                  {isFetchingLocation ? "Finding your location…" : "Explore near me"}
+                </button>
+                <Link href="/category" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/25 px-5 text-[13px] font-semibold text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300">
+                  Browse categories <ArrowUpRight size={16} />
+                </Link>
+              </div>
+            </div>
+            <div className="relative z-10 flex min-h-[220px] items-center justify-center overflow-hidden rounded-[24px] border border-white/15 bg-white/[0.06] p-6 sm:min-h-[270px]">
+              <div aria-hidden="true" className="absolute -left-20 -top-20 h-56 w-56 rounded-full border border-[#78BCE9]/20" />
+              <div aria-hidden="true" className="absolute -right-14 -bottom-28 h-72 w-72 rounded-full border border-[#78BCE9]/20" />
+              <div className="relative w-full max-w-[350px] rounded-[22px] border border-[#83BCE5]/20 bg-[#163F60] p-5 shadow-[0_24px_55px_rgba(0,0,0,0.2)]">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#8ED3FE]/15 text-[#B5E0FE]"><MapPin size={21} /></span>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-[#8FBFDF]">Local discovery</p>
+                    <p className="mt-1 text-[15px] font-semibold text-white">Made for Sri Lanka</p>
+                  </div>
+                </div>
+                <div className="mt-6 space-y-3">
+                  <div className="h-2.5 w-[85%] rounded-full bg-white/15" />
+                  <div className="h-2.5 w-[63%] rounded-full bg-white/10" />
+                  <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/15 pt-4">
+                    <span className="text-xs font-medium text-[#C3E0F4]">Search · Explore · Connect</span>
+                    <ArrowUpRight size={17} className="text-[#A4D9FA]" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* --- COMMON QUESTIONS: compact, semantic accordions --- */}
+      <section aria-labelledby="homepage-faq-title" className="bg-[#F8FAFC] py-20 sm:py-24 lg:py-28">
+        <div className="mx-auto grid max-w-[1440px] gap-10 px-5 sm:px-8 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20 lg:px-12">
+          <div>
+            <p className="mb-5 flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.17em] text-[#34688C]">
+              <span className="h-px w-9 bg-[#5B8FAE]" /> Good to know
+            </p>
+            <h2 id="homepage-faq-title" className="text-balance text-[clamp(2.5rem,4.4vw,4.5rem)] font-semibold leading-[1.1] tracking-[-0.065em] text-[#102B4E]">
+              Questions, answered<span className="text-[#4085B6]">.</span>
+            </h2>
+            <p className="mt-5 max-w-[425px] text-[15px] leading-[1.8] text-slate-500">
+              Everything you need to start exploring — or put your own business on the map.
+            </p>
+            <Link href="/faq" className="group mt-7 inline-flex items-center gap-2 text-[13px] font-semibold text-[#1B587F] transition-colors hover:text-[#0C2C4B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400">
+              Visit the Help Center <ArrowUpRight size={16} className="transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          </div>
+          <div className="space-y-3">
+            {[
+              {
+                question: "What is SL Business Index?",
+                answer: "SL Business Index is a directory for discovering Sri Lankan businesses and services. Browse categories, search by name or service, and explore listings by location.",
+              },
+              {
+                question: "How can I find a business near me?",
+                answer: "Use the Nearby feature and allow location access, or choose a town or district in search. You can then browse matching listings and view their details.",
+              },
+              {
+                question: "What does a Verified badge mean?",
+                answer: "A Verified badge identifies a listing that has met the platform's verification requirements. Always review business details and make your own checks before a transaction.",
+              },
+              {
+                question: "How do I add my business?",
+                answer: "Select List Your Business to start registering. Complete your business profile and any requested verification steps to submit the listing for review.",
+              },
+            ].map((item, i) => (
+              <details key={item.question} className="group rounded-[18px] border border-[#DEE8F0] bg-white px-5 py-1 transition-colors open:border-[#BAD5E8] sm:px-6">
+                <summary className="flex min-h-[70px] cursor-pointer list-none items-center justify-between gap-4 py-3 text-left text-[15px] font-semibold text-[#163854] marker:hidden [&::-webkit-details-marker]:hidden sm:text-[16px]">
+                  <span className="flex items-center gap-4">
+                    <span className="text-[11px] font-semibold text-[#8BACBF]">{String(i + 1).padStart(2, "0")}</span>
+                    {item.question}
+                  </span>
+                  <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#E0E9F0] bg-[#F8FBFD] text-[#446E8C] transition-transform duration-200 group-open:rotate-45">
+                    <span className="text-lg font-normal leading-none">+</span>
+                  </span>
+                </summary>
+                <p className="border-t border-[#EEF2F6] pb-6 pt-4 pl-0 text-[14px] leading-[1.8] text-slate-500 sm:pl-8">
+                  {item.answer}
+                </p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <Testimonials />
+
+      {/* --- GROW WITH SLBI: preserve supplied desktop/mobile campaign artwork --- */}
+      <section aria-labelledby="grow-with-slbi-title" className="border-t border-[#E4EDF3] bg-white py-20 sm:py-24 lg:py-28">
+        <div className="mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12">
+          <div className="grid items-center gap-10 overflow-hidden rounded-[30px] bg-[#0E2E4C] px-6 py-10 sm:px-10 sm:py-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-10 lg:px-12 lg:py-12">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#A3D5F5]">For local businesses</p>
+              <h2 id="grow-with-slbi-title" className="mt-5 max-w-[580px] text-balance text-[clamp(2.5rem,4vw,4.6rem)] font-semibold leading-[1.07] tracking-[-0.065em] text-white">
+                Get discovered. Grow your reach.
+              </h2>
+              <p className="mt-5 max-w-[450px] text-[14px] leading-[1.85] text-[#C1D4E3] sm:text-[15px]">
+                Give people a better way to find your business. Create your listing and share what makes you different.
+              </p>
+              <div className="mt-8 flex flex-wrap items-center gap-3">
+                <Link href="/register-business" className="group inline-flex min-h-12 items-center gap-2 rounded-xl bg-white px-5 text-[13px] font-bold text-[#0C3154] transition-colors hover:bg-[#EAF6FE] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300">
+                  List your business <ArrowUpRight size={16} className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                </Link>
+                <Link href="/how-to-list" className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-white/20 px-5 text-[13px] font-semibold text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300">
+                  How it works <ChevronRight size={16} />
+                </Link>
+              </div>
+            </div>
+            <div className="flex min-w-0 items-center justify-center overflow-hidden rounded-[22px] border border-white/15 bg-white/[0.07] p-3 sm:p-4">
+              <Image
+                src="/banner.jpeg"
+                alt="SL Business Index promotional banner"
+                width={1920}
+                height={700}
+                loading="lazy"
+                className="hidden h-auto w-full rounded-[14px] object-contain md:block"
+              />
+              <Image
+                src="/mobile.jpeg"
+                alt="SL Business Index promotional artwork for mobile"
+                width={1080}
+                height={1920}
+                loading="lazy"
+                className="mx-auto block max-h-[440px] w-auto max-w-full rounded-[14px] object-contain md:hidden"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
     </div>
   );
 }
