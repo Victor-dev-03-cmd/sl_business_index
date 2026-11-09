@@ -25,12 +25,12 @@ interface SiteSettings {
 }
 
 const DEFAULT_COLORS = {
-  theme_dark_color: "#053765",
-  theme_blue_color: "#2a7db4",
-  theme_gold_color: "#b4863b",
-  theme_gold_light_color: "#c09a54",
-  theme_sand_color: "#dfb85d",
-  theme_text_color: "#124272",
+  theme_dark_color: "#1B3430",
+  theme_blue_color: "#2F765C",
+  theme_gold_color: "#C59A5E",
+  theme_gold_light_color: "#E1B579",
+  theme_sand_color: "#E8C58C",
+  theme_text_color: "#24483D",
 };
 
 export default function ThemeSettingsPage() {
@@ -56,7 +56,12 @@ export default function ThemeSettingsPage() {
 
   useEffect(() => {
     if (settings) {
-      setLocalSettings(settings);
+      setLocalSettings({
+        ...settings,
+        theme_dark_color: settings.theme_dark_color?.toLowerCase() === "#053765" ? DEFAULT_COLORS.theme_dark_color : settings.theme_dark_color,
+        theme_blue_color: settings.theme_blue_color?.toLowerCase() === "#2a7db4" ? DEFAULT_COLORS.theme_blue_color : settings.theme_blue_color,
+        theme_text_color: settings.theme_text_color?.toLowerCase() === "#124272" ? DEFAULT_COLORS.theme_text_color : settings.theme_text_color,
+      });
     }
   }, [settings]);
 
@@ -151,7 +156,7 @@ export default function ThemeSettingsPage() {
               <div className="flex items-center gap-4">
                 <input
                   type="color"
-                  value={localSettings.theme_dark_color || "#053765"}
+                  value={localSettings.theme_dark_color || "#1B3430"}
                   onChange={(e) =>
                     setLocalSettings((s) =>
                       s ? { ...s, theme_dark_color: e.target.value } : null,
@@ -174,7 +179,7 @@ export default function ThemeSettingsPage() {
 
             <div className="space-y-4">
               <label className="text-sm font-bold text-gray-700 flex justify-between">
-                Brand Blue Color
+                Emerald Accent Color
                 <span className="text-[10px] text-gray-400 font-mono uppercase tracking-widest">
                   {localSettings.theme_blue_color}
                 </span>
@@ -182,7 +187,7 @@ export default function ThemeSettingsPage() {
               <div className="flex items-center gap-4">
                 <input
                   type="color"
-                  value={localSettings.theme_blue_color || "#2a7db4"}
+                  value={localSettings.theme_blue_color || "#2F765C"}
                   onChange={(e) =>
                     setLocalSettings((s) =>
                       s ? { ...s, theme_blue_color: e.target.value } : null,
@@ -213,7 +218,7 @@ export default function ThemeSettingsPage() {
               <div className="flex items-center gap-4">
                 <input
                   type="color"
-                  value={localSettings.theme_text_color || "#124272"}
+                  value={localSettings.theme_text_color || "#24483D"}
                   onChange={(e) =>
                     setLocalSettings((s) =>
                       s ? { ...s, theme_text_color: e.target.value } : null,
@@ -252,7 +257,7 @@ export default function ThemeSettingsPage() {
               <div className="flex items-center gap-4">
                 <input
                   type="color"
-                  value={localSettings.theme_gold_color || "#b4863b"}
+                  value={localSettings.theme_gold_color || "#C59A5E"}
                   onChange={(e) =>
                     setLocalSettings((s) =>
                       s ? { ...s, theme_gold_color: e.target.value } : null,
@@ -283,7 +288,7 @@ export default function ThemeSettingsPage() {
               <div className="flex items-center gap-4">
                 <input
                   type="color"
-                  value={localSettings.theme_gold_light_color || "#c09a54"}
+                  value={localSettings.theme_gold_light_color || "#E1B579"}
                   onChange={(e) =>
                     setLocalSettings((s) =>
                       s
@@ -318,7 +323,7 @@ export default function ThemeSettingsPage() {
               <div className="flex items-center gap-4">
                 <input
                   type="color"
-                  value={localSettings.theme_sand_color || "#dfb85d"}
+                  value={localSettings.theme_sand_color || "#E8C58C"}
                   onChange={(e) =>
                     setLocalSettings((s) =>
                       s ? { ...s, theme_sand_color: e.target.value } : null,
@@ -358,7 +363,7 @@ export default function ThemeSettingsPage() {
             style={{ backgroundColor: localSettings.theme_blue_color }}
             className="px-8 py-3 text-white text-sm font-bold rounded-lg transition-all shadow-lg hover:brightness-110"
           >
-            Blue Variant
+            Emerald Variant
           </button>
           <button
             style={{ backgroundColor: localSettings.theme_gold_color }}
