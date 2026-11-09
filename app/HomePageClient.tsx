@@ -59,6 +59,9 @@ export default function HomePageClient() {
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [showAllCategories, setShowAllCategories] = useState(false);
+  const featuredScrollRef = useRef<HTMLDivElement>(null);
+  const [canFeaturedScrollLeft, setCanFeaturedScrollLeft] = useState(false);
+  const [canFeaturedScrollRight, setCanFeaturedScrollRight] = useState(false);
 
   // Parallax — hero background drifts at 30% of scroll speed
   const heroRef = useRef<HTMLElement>(null);
@@ -140,6 +143,41 @@ export default function HomePageClient() {
     const container = scrollContainerRef.current;
     if (!container) return;
     const distance = Math.max(230, Math.round(container.clientWidth * 0.75));
+    container.scrollBy({
+      left: direction === "left" ? -distance : distance,
+      behavior: "smooth",
+    });
+  };
+
+  // Native snap scrolling; no autoplay, interval or animation loop.
+  const updateFeaturedScrollControls = useCallback(() => {
+    const container = featuredScrollRef.current;
+    if (!container) return;
+    setCanFeaturedScrollLeft(container.scrollLeft > 8);
+    setCanFeaturedScrollRight(
+      container.scrollLeft + container.clientWidth < container.scrollWidth - 8,
+    );
+  }, []);
+
+  useEffect(() => {
+    const container = featuredScrollRef.current;
+    if (!container) return;
+    updateFeaturedScrollControls();
+    const observer = typeof ResizeObserver !== "undefined"
+      ? new ResizeObserver(updateFeaturedScrollControls)
+      : null;
+    observer?.observe(container);
+    window.addEventListener("resize", updateFeaturedScrollControls);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", updateFeaturedScrollControls);
+    };
+  }, [featuredLoading, featuredBusinesses.length, updateFeaturedScrollControls]);
+
+  const scrollFeatured = (direction: "left" | "right") => {
+    const container = featuredScrollRef.current;
+    if (!container) return;
+    const distance = Math.max(194, Math.round(container.clientWidth * 0.75));
     container.scrollBy({
       left: direction === "left" ? -distance : distance,
       behavior: "smooth",
@@ -564,118 +602,191 @@ export default function HomePageClient() {
         </div>
       </section>
 
-      {/* --- LISTINGS (6-Column Modern Grid) --- */}
-      <section className="py-24 bg-[#f5f5f5] border-t border-gray-300">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-14 gap-4">
-            <div>
-              <h2 className="text-2xl text-gray-900 tracking-tight font-normal">
-                Featured Listings
+      {/* --- FEATURED LISTINGS: premium portrait business showcase --- */}
+      <section
+        aria-labelledby="featured-listings-title"
+        className="relative isolate overflow-hidden border-b border-[#E7EDF2] bg-white py-20 sm:py-24 lg:py-28"
+      >
+        <div className="pointer-events-none absolute -left-48 top-0 h-[500px] w-[500px] rounded-full bg-[#D8ECFB]/20 blur-[120px]" aria-hidden="true" />
+        <div className="relative mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12">
+          <div className="mb-9 flex flex-col justify-between gap-7 sm:mb-11 lg:flex-row lg:items-end">
+            <div className="max-w-[780px]">
+              <p className="mb-5 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#34668D]">
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-[10px] border border-[#D8E5EF] bg-[#F3F8FC] text-[#245A80]">
+                  <Star size={16} strokeWidth={1.8} />
+                </span>
+                The spotlight
+              </p>
+              <h2
+                id="featured-listings-title"
+                className="text-balance text-[clamp(2.7rem,5vw,5.2rem)] font-semibold leading-[1.08] tracking-[-0.065em] text-[#102B4E]"
+              >
+                Featured listings<span className="text-[#3C82B4]">.</span>
               </h2>
-              <p className="text-sm text-gray-500 mt-2 font-normal">
-                Discover handpicked and verified establishments across Sri Lanka
+              <p className="mt-5 max-w-[620px] text-pretty text-[15px] leading-[1.8] text-slate-500 sm:text-[17px]">
+                Discover businesses and services across Sri Lanka,
+                presented in a fresh perspective.
               </p>
             </div>
             <Link
               href="/nearby"
-              className="text-sm font-normal text-brand-gold hover:text-brand-gold-light transition-colors flex items-center gap-1 group"
+              className="group inline-flex h-12 w-fit shrink-0 items-center gap-3 rounded-xl border border-[#D7E1EB] bg-[#F8FBFD] px-5 text-[13px] font-semibold text-[#123B60] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#AFC8DA] hover:bg-white hover:shadow-[0_8px_22px_rgba(15,47,74,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
             >
-              Explore All{" "}
-              <ChevronRight
-                size={16}
-                strokeWidth={1.5}
-                className="group-hover:translate-x-0.5 transition-transform"
-              />
+              Explore businesses
+              <ArrowUpRight size={17} className="transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+              Discover a business worth knowing
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => scrollFeatured("left")}
+                disabled={!canFeaturedScrollLeft}
+                aria-label="Scroll featured listings left"
+                aria-controls="featured-listings-carousel"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#DEE7EE] bg-white text-[#214965] transition-colors hover:border-[#B0C8DA] hover:bg-[#F0F7FC] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:cursor-not-allowed disabled:opacity-35 sm:h-11 sm:w-11"
+              >
+                <ChevronLeft size={19} strokeWidth={1.8} />
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollFeatured("right")}
+                disabled={!canFeaturedScrollRight}
+                aria-label="Scroll featured listings right"
+                aria-controls="featured-listings-carousel"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#DEE7EE] bg-white text-[#214965] transition-colors hover:border-[#B0C8DA] hover:bg-[#F0F7FC] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:cursor-not-allowed disabled:opacity-35 sm:h-11 sm:w-11"
+              >
+                <ChevronRight size={19} strokeWidth={1.8} />
+              </button>
+            </div>
+          </div>
+
+          <div
+            id="featured-listings-carousel"
+            ref={featuredScrollRef}
+            onScroll={updateFeaturedScrollControls}
+            aria-label="Featured Sri Lankan business listings"
+            className="flex gap-3 overflow-x-auto overscroll-x-contain pb-6 pr-2 snap-x snap-mandatory scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4 lg:gap-5"
+          >
             {featuredLoading ? (
-              [...Array(18)].map((_, i) => (
+              Array.from({ length: 6 }, (_, i) => (
                 <div
                   key={i}
-                  className="bg-white rounded-[6px] overflow-hidden border border-gray-300 shadow-sm flex flex-col h-full"
+                  aria-hidden="true"
+                  className="relative aspect-[9/16] w-[178px] shrink-0 snap-start overflow-hidden rounded-[22px] bg-slate-100 sm:w-[207px] lg:w-[229px]"
                 >
-                  <Skeleton className="aspect-square w-full" />
-                  <div className="p-4 flex flex-col flex-1 space-y-3">
-                    <Skeleton className="h-3 w-1/2" />
-                    <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="absolute inset-0 h-full w-full rounded-none" />
+                  <div className="absolute bottom-0 left-0 right-0 space-y-3 p-5">
+                    <Skeleton className="h-4 w-4/5 bg-slate-200" />
+                    <Skeleton className="h-3 w-1/2 bg-slate-200" />
                   </div>
                 </div>
               ))
             ) : featuredError ? (
-              <div className="col-span-full text-center py-12 text-red-400">
-                <p>Failed to load featured listings. Please refresh.</p>
+              <div className="flex min-h-[250px] w-full flex-col items-center justify-center rounded-[22px] border border-rose-100 bg-rose-50/40 px-6 text-center">
+                <p className="text-sm font-semibold text-slate-800">Featured listings are unavailable right now.</p>
+                <p className="mt-2 text-xs text-slate-500">Please refresh the page or try again shortly.</p>
               </div>
             ) : featuredBusinesses.length > 0 ? (
               featuredBusinesses.map((business) => (
                 <Link
                   key={business.id}
                   href={`/business/${business.slug || business.id}`}
-                  className="group bg-white rounded-[6px] overflow-hidden border border-gray-300 hover:border-brand-gold/40 shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col h-full relative"
+                  aria-label={`View ${business.name} business profile`}
+                  className="group relative isolate block aspect-[9/16] w-[178px] shrink-0 snap-start overflow-hidden rounded-[22px] border border-[#DFE7EF] bg-[#132F49] shadow-[0_6px_23px_rgba(15,40,67,0.07)] transition-[border-color,transform,box-shadow] duration-200 hover:-translate-y-1 hover:border-[#A9CBDE] hover:shadow-[0_16px_36px_rgba(15,40,67,0.19)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 sm:w-[207px] lg:w-[229px] xl:w-[237px]"
                 >
-                  {/* Image Section */}
-                  <div className="relative aspect-square w-full overflow-hidden bg-gray-100">
+                  {/* 9:16 visual works with landscape photos as well as portrait images. */}
+                  <div className="absolute inset-0 overflow-hidden">
                     {business.image_url ? (
                       <Image
                         src={business.image_url}
                         alt={business.name}
                         fill
-                        sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 16.7vw"
-                        className="object-cover transition-transform duration-700 group-hover:scale-110"
+                        sizes="(max-width: 640px) 178px, (max-width: 1024px) 207px, 237px"
+                        className="object-cover transition-transform duration-500 motion-safe:group-hover:scale-[1.045]"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300">
-                        <Building2 size={48} strokeWidth={1} />
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#1C4C75] via-[#153958] to-[#0B2238]">
+                        {business.logo_url ? (
+                          <div className="relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-[24px] border border-white/15 bg-white/95 p-4 shadow-xl">
+                            <Image src={business.logo_url} alt={business.name} fill sizes="112px" className="object-contain p-4" />
+                          </div>
+                        ) : (
+                          <Building2 size={60} strokeWidth={1.1} className="text-[#A7D5F2]/75" />
+                        )}
                       </div>
                     )}
-
-                    {/*Overlay on Hover */}
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-500 p-4 text-center z-20">
-                      <p className="text-white font-bold text-sm mb-1">{business.name}</p>
-                      <p className="text-gray-300 text-[10px] font-medium uppercase tracking-wider">{business.category}</p>
-                    </div>
-
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60 group-hover:opacity-0 transition-opacity" />
-
-                    {business.is_verified && business.can_show_badge && (
-                      <div className="absolute top-3 left-3 z-10">
-                        <span className="bg-brand-gold text-white text-[9px] font-bold uppercase tracking-[0.2em] px-2.5 py-1.5 rounded-[4px] shadow-lg flex items-center gap-1.5">
-                          <VerifiedBadge size={10} /> Verified
-                        </span>
-                      </div>
-                    )}
-
-                    {business.status === "pending" && (
-                      <div className="absolute top-3 right-3 z-10">
-                        <span className="bg-amber-500 text-white text-[9px] font-bold uppercase tracking-[0.2em] px-2.5 py-1.5 rounded-[4px] shadow-lg">
-                          Pending
-                        </span>
-                      </div>
-                    )}
-
-                    <div className="absolute bottom-3 right-3 z-10">
-                      <div className="flex items-center gap-1.5 bg-white/90 px-2.5 py-1 rounded-[4px] shadow-lg text-gray-900 border border-white/50">
-                        <Star
-                          size={12}
-                          strokeWidth={2}
-                          className="text-brand-gold fill-brand-gold"
-                        />
-                        <span className="text-[11px] font-bold">
-                          {business.rating || "New"}
-                        </span>
-                      </div>
-                    </div>
                   </div>
 
+                  {/* Contrast stays legible without requiring hover or animation. */}
+                  <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#051523] via-[#051523]/65 via-[39%] to-transparent" />
+                  <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/45 to-transparent" />
 
+                  <div className="absolute inset-x-0 top-0 z-10 flex flex-wrap items-start justify-between gap-1.5 p-3 sm:p-4">
+                    {business.is_verified && business.can_show_badge ? (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-white/20 bg-[#EAF6FF]/95 px-2.5 py-1 text-[10px] font-bold text-[#15557D] shadow-sm">
+                        <VerifiedBadge size={12} /> Verified
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center rounded-full border border-white/30 bg-black/25 px-2.5 py-1 text-[10px] font-semibold text-white">
+                        Featured
+                      </span>
+                    )}
+                    {typeof business.rating === "number" && business.rating > 0 && (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-white/25 bg-black/35 px-2.5 py-1 text-[10px] font-semibold text-white">
+                        <Star size={11} className="fill-amber-300 text-amber-300" />
+                        {business.rating.toFixed(1)}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="absolute inset-x-0 bottom-0 z-10 p-3.5 text-white sm:p-5">
+                    <span className="mb-2 inline-block max-w-full truncate rounded-full border border-white/20 bg-white/15 px-2.5 py-1 text-[10px] font-semibold text-[#E4F3FF]">
+                      {business.category || "Local business"}
+                    </span>
+                    <h3 className="line-clamp-2 text-[17px] font-semibold leading-[1.25] tracking-[-0.035em] drop-shadow-sm sm:text-[20px]">
+                      {business.name}
+                    </h3>
+                    {business.address && (
+                      <p className="mt-2 flex min-w-0 items-center gap-1.5 text-[11px] font-medium text-[#CDDCE9]">
+                        <MapPin size={12} className="shrink-0" />
+                        <span className="truncate">{business.address}</span>
+                      </p>
+                    )}
+                    <div className="mt-4 flex items-center justify-between border-t border-white/20 pt-3 text-[11px] font-semibold text-white/90">
+                      <span>View business</span>
+                      <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/25 bg-white/15 transition-colors group-hover:bg-white group-hover:text-[#0C3154]">
+                        <ArrowUpRight size={15} />
+                      </span>
+                    </div>
+                  </div>
                 </Link>
               ))
             ) : (
-              <div className="col-span-full text-center py-12 text-gray-400">
-                <p>No featured businesses yet.</p>
+              <div className="flex min-h-[270px] w-full flex-col items-center justify-center rounded-[22px] border border-dashed border-[#CFDCE7] bg-[#F8FBFD] px-6 text-center">
+                <Building2 size={30} className="text-[#7DA5C5]" />
+                <h3 className="mt-4 text-base font-semibold text-[#123A5B]">No featured businesses yet</h3>
+                <p className="mt-2 max-w-sm text-sm text-slate-500">
+                  Browse businesses across Sri Lanka while new listings are being added.
+                </p>
+                <Link href="/nearby" className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[#195780] hover:underline">
+                  Explore businesses <ArrowRight size={16} />
+                </Link>
               </div>
             )}
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-[#EDF1F5] pt-6">
+            <p className="text-[12px] text-slate-500">
+              Swipe or use the arrows to explore featured businesses.
+            </p>
+            <Link href="/nearby" className="inline-flex items-center gap-2 text-[12px] font-semibold text-[#195780] hover:text-[#0A304F]">
+              Explore nearby listings <ArrowRight size={15} />
+            </Link>
           </div>
         </div>
       </section>
