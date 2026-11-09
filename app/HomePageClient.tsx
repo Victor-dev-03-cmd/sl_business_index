@@ -16,7 +16,6 @@ import {
   Navigation,
   Search,
   MapPin,
-  ChevronRight,
 } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -266,127 +265,201 @@ export default function HomePageClient() {
 
   return (
     <div className="min-h-[100dvh] bg-white font-normal">
-      {/* --- PREMIUM HERO: brand-led, search-first, generous editorial typography --- */}
+
+      {/* --- PHASE 3: Split editorial hero with accessible SVG product motion --- */}
       <section
         ref={heroRef}
         aria-labelledby="homepage-hero-title"
-        className="relative isolate flex min-h-[690px] flex-col justify-center bg-[#071C32] text-white sm:min-h-[750px] lg:min-h-[790px]"
+        className="relative isolate bg-[#071B30] text-white"
       >
-        {/* Contain ambient effects without clipping the search suggestions. */}
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-          <motion.div
-            style={{ y: glowY, opacity: glowOpacity }}
-            className="absolute inset-0"
-          >
-            <div className="absolute -left-36 top-4 h-[500px] w-[500px] rounded-full bg-[#18538A]/30 blur-[125px] lg:h-[760px] lg:w-[760px]" />
-            <div className="absolute -right-44 top-0 h-[540px] w-[540px] rounded-full bg-[#2377C3]/20 blur-[145px] lg:h-[840px] lg:w-[840px]" />
-            <div className="absolute bottom-[-260px] left-1/2 h-[450px] w-[80%] -translate-x-1/2 rounded-full bg-[#1B5B98]/25 blur-[120px]" />
+          <motion.div className="absolute inset-0" style={{ y: glowY, opacity: glowOpacity }}>
+            <div className="absolute -left-56 top-0 h-[750px] w-[750px] rounded-full bg-[#174675]/25 blur-[135px]" />
+            <div className="absolute -right-28 top-12 h-[740px] w-[740px] rounded-full bg-[#236FAD]/20 blur-[145px]" />
           </motion.div>
-          <div className="absolute inset-0 opacity-[0.18]" style={{ backgroundImage: "radial-gradient(rgba(175,215,255,0.2) 0.75px, transparent 0.75px)", backgroundSize: "30px 30px", maskImage: "linear-gradient(to bottom, black, transparent 85%)" }} />
-          <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[#79B5E7]/40 to-transparent" />
+          <div className="absolute inset-0 opacity-[0.16]" style={{ backgroundImage: "radial-gradient(rgba(185,222,255,0.26) 0.8px,transparent 0.8px)", backgroundSize: "32px 32px" }} />
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#82BDEB]/40 to-transparent" />
         </div>
 
-        <motion.div
-          style={{ y: contentY }}
-          className="relative z-10 mx-auto flex w-full max-w-[1160px] flex-col items-center px-5 pb-24 pt-20 text-center sm:px-8 sm:pb-28 sm:pt-24 lg:px-10"
-        >
+        <div className="relative mx-auto grid min-h-[740px] max-w-[1500px] items-center gap-12 px-5 pb-20 pt-24 sm:px-8 lg:min-h-[780px] lg:grid-cols-[minmax(0,1.04fr)_minmax(0,0.96fr)] lg:gap-8 lg:px-12 lg:pb-24 lg:pt-24 xl:gap-16 xl:px-16">
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, ease: "easeOut" }}
-            className="mb-7 inline-flex max-w-full items-center gap-2.5 rounded-full border border-white/15 bg-white/[0.055] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#C8E4FB] backdrop-blur-sm sm:mb-9 sm:text-[11px]"
+            style={{ y: contentY }}
+            className="relative z-30 min-w-0 max-w-[790px] text-left"
           >
-            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#7DD3FC] shadow-[0_0_12px_rgba(125,211,252,0.7)]" />
-            A smarter way to discover Sri Lanka
-          </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="mb-8 inline-flex max-w-full items-center gap-2.5 rounded-full border border-white/15 bg-white/[0.05] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#C2DEF7] sm:text-[11px]"
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-sky-300 shadow-[0_0_14px_rgba(125,211,252,0.8)]" />
+              Discover Sri Lanka, differently
+            </motion.div>
 
-          <motion.h1
-            id="homepage-hero-title"
-            initial={{ opacity: 0, y: 23 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.72, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
-            className="max-w-[1090px] text-balance text-[clamp(3rem,8.1vw,7.75rem)] font-semibold leading-[1.055] tracking-[-0.065em] text-white"
-          >
-            Discover better.
-            <br />
-            <span className="bg-gradient-to-r from-[#F2F8FF] via-[#B7DBFA] to-[#69B9F7] bg-clip-text text-transparent">
+            <motion.h1
+              id="homepage-hero-title"
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+              className="text-balance text-[clamp(3.75rem,7vw,8rem)] font-semibold leading-[0.99] tracking-[-0.073em] text-white"
+            >
+              Discover
+              <br />
+              <span className="bg-gradient-to-r from-[#F7FBFF] via-[#B8DDFD] to-[#67B7F6] bg-clip-text text-transparent">
+                better.
+              </span>
+              <br />
               Grow together.
-            </span>
-          </motion.h1>
+            </motion.h1>
 
-          <motion.p
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.65, delay: 0.18, ease: "easeOut" }}
-            className="mx-auto mt-6 max-w-[650px] text-pretty text-base font-normal leading-[1.75] text-[#B2C6DC] sm:mt-8 sm:text-lg lg:text-[19px]"
-          >
-            Find businesses, services, and local expertise across Sri Lanka.
-            One destination to discover what matters — and help your business get found.
-          </motion.p>
+            <motion.p
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.18 }}
+              className="mt-8 max-w-[610px] text-pretty text-[16px] leading-[1.8] text-[#B4C7DB] sm:text-[19px]"
+            >
+              Discover businesses, services and people worth knowing.
+              Your connection to opportunities across Sri Lanka starts here.
+            </motion.p>
 
-          {/* Existing live Supabase suggestions, voice search and location-aware search remain intact. */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.26, ease: [0.22, 1, 0.36, 1] }}
-            className="relative z-30 mt-9 w-full max-w-[780px] sm:mt-11"
-          >
-            <div className="rounded-2xl border border-white/15 bg-white/[0.06] p-2 shadow-[0_25px_70px_rgba(0,0,0,0.2)] backdrop-blur-lg sm:p-2.5 [&_form]:!rounded-xl [&_form>div]:!rounded-xl">
-              <HeroSearch
-                categories={categories}
-                featuredBusinesses={featuredBusinesses}
-                userCoords={userCoords}
-                isFetchingLocation={isFetchingLocation}
-                handleUseCurrentLocation={handleUseCurrentLocation}
-                onFocusChange={setIsSearchFocused}
-              />
-            </div>
-            <p className="mt-3 text-center text-[12px] text-[#8FAFCB] sm:text-[13px]">
-              Try “Restaurants in Colombo” or “Electrician in Jaffna”
+            <motion.div
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.28 }}
+              className="relative z-40 mt-9 w-full max-w-[670px]"
+            >
+              <div className="rounded-2xl border border-white/15 bg-white/[0.07] p-2 shadow-[0_26px_65px_rgba(0,0,0,0.24)] backdrop-blur-lg sm:p-2.5 [&_form]:!rounded-xl [&_form>div]:!rounded-xl">
+                <HeroSearch
+                  categories={categories}
+                  featuredBusinesses={featuredBusinesses}
+                  userCoords={userCoords}
+                  isFetchingLocation={isFetchingLocation}
+                  handleUseCurrentLocation={handleUseCurrentLocation}
+                  onFocusChange={setIsSearchFocused}
+                />
+              </div>
+              <p className="mt-3 pl-1 text-[12px] text-[#92ADC7] sm:text-[13px]">
+                Try “Restaurants in Colombo” or “Electrician in Jaffna”
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.38 }}
+              className="relative z-10 mt-7 flex flex-wrap items-center gap-3"
+            >
+              <button
+                type="button"
+                onClick={() => handleUseCurrentLocation(true)}
+                disabled={isFetchingLocation}
+                className="inline-flex min-h-12 items-center gap-2.5 rounded-xl bg-[#EAF5FF] px-5 text-[13px] font-bold text-[#0E3152] shadow-lg shadow-black/10 transition-all hover:-translate-y-0.5 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 disabled:cursor-wait disabled:opacity-60"
+              >
+                <Navigation size={17} />
+                {isFetchingLocation ? "Finding location…" : "Explore near me"}
+              </button>
+              <Link href="/category" className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-white/20 px-5 text-[13px] font-semibold text-[#D8EAFA] transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300">
+                Browse categories <ChevronRight size={16} />
+              </Link>
+            </motion.div>
+            <p className="mt-8 text-[12px] font-medium tracking-wide text-[#81A5C4]">
+              Built for discovery. Designed for connection.
             </p>
           </motion.div>
 
+          {/* Fully code-based vector scene: no stock imagery, GIF downloads or external animation service. */}
           <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.36 }}
-            className="relative z-10 mt-8 flex w-full flex-wrap items-center justify-center gap-x-3 gap-y-3 sm:mt-9"
+            initial={{ opacity: 0, x: 36, scale: 0.97 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            transition={{ duration: 0.95, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            className="relative z-10 mx-auto flex w-full max-w-[640px] items-center justify-center lg:max-w-none"
+            aria-label="Illustration of business discovery across Sri Lanka"
+            role="img"
           >
-            <button
-              type="button"
-              onClick={() => handleUseCurrentLocation(true)}
-              disabled={isFetchingLocation}
-              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/20 bg-white/[0.09] px-5 text-[13px] font-semibold text-white transition-colors hover:border-white/40 hover:bg-white/[0.15] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 disabled:cursor-wait disabled:opacity-60"
-            >
-              <Navigation size={16} />
-              {isFetchingLocation ? "Finding your location…" : "Explore near me"}
-            </button>
-            <Link
-              href="/category"
-              className="inline-flex min-h-11 items-center gap-2 rounded-xl px-5 text-[13px] font-semibold text-[#C5E4FC] transition-colors hover:bg-white/[0.08] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
-            >
-              Browse categories <ChevronRight size={17} />
-            </Link>
-            <Link
-              href="/register-business"
-              className="inline-flex min-h-11 items-center gap-2 rounded-xl px-5 text-[13px] font-semibold text-[#C5E4FC] transition-colors hover:bg-white/[0.08] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
-            >
-              List your business <ChevronRight size={17} />
-            </Link>
+            <div className="relative aspect-[1.03/1] w-full max-w-[620px]">
+              <div className="absolute inset-[7%] rounded-full border border-[#7CB8E5]/10 bg-[radial-gradient(circle,rgba(34,104,160,0.20)_0%,rgba(11,41,73,0.04)_67%,transparent_74%)]" />
+              <motion.div
+                aria-hidden="true"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 90, repeat: Infinity, ease: "linear" }}
+                className="absolute inset-[7%] rounded-full border border-dashed border-[#83C4F3]/20"
+              />
+              <motion.div
+                aria-hidden="true"
+                animate={{ rotate: -360 }}
+                transition={{ duration: 115, repeat: Infinity, ease: "linear" }}
+                className="absolute inset-[17%] rounded-full border border-[#6FAEE0]/20"
+              />
+              <svg viewBox="0 0 600 600" fill="none" aria-hidden="true" className="absolute inset-0 h-full w-full">
+                <defs>
+                  <linearGradient id="hero-map-stroke" x1="140" y1="110" x2="460" y2="520" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="#93D9FF" stopOpacity="0.95" />
+                    <stop offset="1" stopColor="#267CC1" stopOpacity="0.55" />
+                  </linearGradient>
+                  <linearGradient id="hero-map-fill" x1="280" y1="125" x2="365" y2="510" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="#173F69" stopOpacity="0.94" />
+                    <stop offset="1" stopColor="#0E2E4D" stopOpacity="0.8" />
+                  </linearGradient>
+                </defs>
+                <circle cx="300" cy="300" r="224" stroke="#8ACBF7" strokeOpacity=".14" />
+                <circle cx="300" cy="300" r="170" stroke="#8ACBF7" strokeOpacity=".13" strokeDasharray="4 12" />
+                <path d="M299 90C275 119 278 148 264 172C249 198 244 227 261 253C272 269 252 287 259 307C266 331 285 347 290 366C296 394 305 419 322 442C337 463 346 493 366 505C383 509 396 491 390 472C384 452 372 434 375 412C379 391 370 369 358 350C345 329 343 307 354 286C364 266 356 245 343 229C327 210 325 185 322 163C320 134 313 106 299 90Z" fill="url(#hero-map-fill)" stroke="url(#hero-map-stroke)" strokeWidth="2.5" strokeLinejoin="round" />
+                <path d="M278 200L308 277L294 364L357 437M308 277L343 329M294 364L324 404" stroke="#67B8F1" strokeOpacity=".38" strokeWidth="1.5" strokeDasharray="5 8" />
+                <circle cx="278" cy="200" r="5" fill="#A2E4FF" />
+                <circle cx="308" cy="277" r="5" fill="#A2E4FF" />
+                <circle cx="294" cy="364" r="5" fill="#A2E4FF" />
+                <circle cx="357" cy="437" r="5" fill="#A2E4FF" />
+                <motion.circle cx="308" cy="277" r="19" stroke="#9ADDFF" strokeWidth="2" animate={{ r: [10, 25, 10], opacity: [0.7, 0, 0.7] }} transition={{ duration: 3.2, repeat: Infinity, ease: "easeOut" }} />
+                <motion.circle cx="294" cy="364" r="19" stroke="#9ADDFF" strokeWidth="2" animate={{ r: [10, 23, 10], opacity: [0.6, 0, 0.6] }} transition={{ duration: 3.8, repeat: Infinity, delay: 0.5, ease: "easeOut" }} />
+              </svg>
+
+              <motion.div
+                animate={{ y: [0, -12, 0] }}
+                transition={{ duration: 6.5, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute left-[1%] top-[24%] w-[45%] max-w-[225px] rounded-2xl border border-white/15 bg-[#102E4C]/90 p-4 shadow-[0_25px_55px_rgba(0,0,0,0.25)] backdrop-blur-xl sm:p-5"
+              >
+                <div className="mb-3 flex items-center gap-2">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-400/15 text-sky-200"><Building2 size={18} /></span>
+                  <div className="min-w-0">
+                    <p className="text-[10px] uppercase tracking-[0.12em] text-sky-300">Find what matters</p>
+                    <p className="text-sm font-semibold text-white">Local businesses</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="h-2 w-[82%] rounded-full bg-white/20" />
+                  <div className="h-2 w-[60%] rounded-full bg-white/10" />
+                </div>
+              </motion.div>
+
+              <motion.div
+                animate={{ y: [0, 10, 0] }}
+                transition={{ duration: 7.1, repeat: Infinity, delay: 0.5, ease: "easeInOut" }}
+                className="absolute right-[0%] top-[53%] w-[46%] max-w-[236px] rounded-2xl border border-white/15 bg-[#102E4C]/95 p-4 shadow-[0_25px_60px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:p-5"
+              >
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#6CC5FF]/15 text-sky-200"><MapPin size={19} /></span>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.12em] text-sky-300">Explore nearby</p>
+                    <p className="text-sm font-semibold text-white">Sri Lanka</p>
+                  </div>
+                </div>
+                <div className="mt-4 flex items-center gap-2 text-[11px] text-[#B4D4EB]">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                  Discover local opportunities
+                </div>
+              </motion.div>
+
+              <motion.div
+                animate={{ y: [0, -7, 0] }}
+                transition={{ duration: 5.4, repeat: Infinity, delay: 0.8, ease: "easeInOut" }}
+                className="absolute bottom-[8%] left-[19%] inline-flex items-center gap-2 rounded-full border border-[#7AC9FE]/20 bg-[#0A2845]/90 px-4 py-3 text-xs font-semibold text-[#C8E9FF] shadow-xl backdrop-blur-lg"
+              >
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#75C8FF]/15"><Search size={14} /></span>
+                Discover. Connect. Grow.
+              </motion.div>
+            </div>
           </motion.div>
-
-          <div className="mt-16 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 border-t border-white/10 pt-6 text-[11px] font-medium uppercase tracking-[0.14em] text-[#80A4C4] sm:mt-20 sm:gap-x-10">
-            <span>Discover locally</span>
-            <span aria-hidden="true" className="h-1 w-1 rounded-full bg-[#4D7293]" />
-            <span>Connect confidently</span>
-            <span aria-hidden="true" className="h-1 w-1 rounded-full bg-[#4D7293]" />
-            <span>Grow nationwide</span>
-          </div>
-
-          {isCategoryOpen && (
-            <div className="fixed inset-0 z-20 bg-transparent" onClick={() => setIsCategoryOpen(false)} />
-          )}
-        </motion.div>
+        </div>
       </section>
 
       {/* --- CATEGORIES (Slider) --- */}
