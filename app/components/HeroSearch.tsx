@@ -275,6 +275,21 @@ export default function HeroSearch({
     !areaOpen && isSearchFocused && searchQuery.trim().length >= 2 &&
     (displayedBusinesses.length > 0 || categorySuggestions.length > 0 || isFetchingSuggestions);
 
+  // Never trap page scrolling in the autocomplete panel. Dismiss it on
+  // wheel/touch scroll gestures; keep default scrolling fully enabled.
+  useEffect(() => {
+    if (!showDropdown) return;
+    const dismiss = () => setIsSearchFocused(false);
+    window.addEventListener("wheel", dismiss, { capture: true, passive: true });
+    window.addEventListener("touchmove", dismiss, { capture: true, passive: true });
+    window.addEventListener("scroll", dismiss, { passive: true });
+    return () => {
+      window.removeEventListener("wheel", dismiss, true);
+      window.removeEventListener("touchmove", dismiss, true);
+      window.removeEventListener("scroll", dismiss);
+    };
+  }, [showDropdown]);
+
   return (
     <div ref={searchRootRef} className="relative mx-auto w-full">
       {/* Three-part destination search: keyword, location, one primary action. */}
