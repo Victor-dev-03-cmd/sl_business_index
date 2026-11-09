@@ -6,47 +6,44 @@ html {
 
 :root {
   --font-sans: var(--font-inter), var(--font-tamil), var(--font-sinhala), ui-sans-serif, system-ui;
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
+  --background: 42 30% 97%;
+  --foreground: 154 34% 15%;
   --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
+  --card-foreground: 154 34% 15%;
   --popover: 0 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
-  --primary: 221.2 83.2% 53.3%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 210 40% 96.1%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 222.2 47.4% 11.2%;
+  --popover-foreground: 154 34% 15%;
+  --primary: 153 45% 29%;
+  --primary-foreground: 42 30% 98%;
+  --secondary: 48 25% 94%;
+  --secondary-foreground: 155 34% 19%;
+  --muted: 50 18% 94%;
+  --muted-foreground: 148 12% 42%;
+  --accent: 143 23% 91%;
+  --accent-foreground: 156 39% 23%;
   --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 221.2 83.2% 53.3%;
+  --destructive-foreground: 42 30% 98%;
+  --border: 55 15% 86%;
+  --input: 55 15% 86%;
+  --ring: 150 34% 46%;
   --radius: 0.5rem;
 
   /* Live Theme Variables */
-  --brand-dark: #053765;
-  --brand-blue: #2a7db4;
-  --brand-gold: #b4863b;
-  --brand-gold-light: #c09a54;
-  --brand-sand: #dfb85d;
-  --brand-text: #124272;
-  --btn-radius: 6px;
+  --brand-dark: #1B3430;
+  --brand-blue: #2F765C; /* historical name retained for legacy class compatibility */
+  --brand-gold: #C59A5E;
+  --brand-gold-light: #E1B579;
+  --brand-sand: #E8C58C;
+  --brand-text: #24483D;
+  --btn-radius: 12px;
 }
 
-/* Global Component Overrides */
-button:not(.avatar), 
-input,
-textarea,
-select,
-.rounded-md, 
-.rounded-lg, 
-.rounded-xl, 
-.rounded-2xl {
-  border-radius: var(--btn-radius) !important;
+/* Respect each component's own radius utility. The previous !important
+   override flattened all premium cards, dialogs and buttons to 6px. */
+button:not([class*="rounded-"]),
+input:not([class*="rounded-"]),
+textarea:not([class*="rounded-"]),
+select:not([class*="rounded-"]) {
+  border-radius: var(--btn-radius);
 }
 
 /* Profiles/Avatars must stay circular */
