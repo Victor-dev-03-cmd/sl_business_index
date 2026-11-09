@@ -246,10 +246,9 @@ function SplitScreenResultsContent() {
     null,
   );
   const [suggestions, setSuggestions] = useState<any[]>([]);
-  const [categorySuggestions, setCategorySuggestions] = useState<any[]>([]);
 
   // Fetch categories for search suggestions
-  const { data: categories = [] } = useQuery({
+  const { data: categories = EMPTY_ARRAY } = useQuery({
     queryKey: ["categories-nearby"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -346,7 +345,7 @@ function SplitScreenResultsContent() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
-    }, 300);
+    }, 450);
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
@@ -360,18 +359,15 @@ function SplitScreenResultsContent() {
     [categories],
   );
 
-  // Update category suggestions
-  useEffect(() => {
-    if (searchQuery.trim().length > 0) {
-      const results = categoryFuse
-        .search(searchQuery)
-        .slice(0, 5)
-        .map((r) => r.item);
-      setCategorySuggestions(results);
-    } else {
-      setCategorySuggestions([]);
-    }
-  }, [searchQuery, categoryFuse]);
+  // Derived suggestions avoid a setState/useEffect feedback loop while data loads.
+  const categorySuggestions = useMemo(() => {
+    if (!isSearchFocused || searchQuery.trim().length < 2) return EMPTY_ARRAY;
+    return categoryFuse.search(searchQuery).slice(0, 5).map((r) => r.item);
+  }, [searchQuery, categoryFuse, isSearchFocused]);
+
+  // Do not refetch the entire nearby map for single-character input.
+  const effectiveSearchQuery =
+    debouncedSearchQuery.trim().length === 1 ? "" : debouncedSearchQuery;
 
   // React Query fetch
   const {
@@ -385,20 +381,20 @@ function SplitScreenResultsContent() {
       currentLat,
       currentLng,
       radius,
-      debouncedSearchQuery,
+      effectiveSearchQuery,
       selectedCategory,
     ],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const lat = currentLat ? parseFloat(currentLat) : 7.8731;
       const lng = currentLng ? parseFloat(currentLng) : 80.7718;
 
       const { data, error } = await supabase.rpc("get_nearby_businesses", {
         user_lat: lat,
         user_lng: lng,
-        search_query: debouncedSearchQuery || "",
+        search_query: effectiveSearchQuery || "",
         dist_limit: radius,
         category_filter: selectedCategory || "",
-      });
+      }).abortSignal(signal);
 
       if (error) throw error;
       return data.map((b: any) => ({
@@ -416,33 +412,52 @@ function SplitScreenResultsContent() {
     staleTime: 60 * 1000,
   });
 
-  // Global Suggestions Fetch (Debounced)
+  // Only fetch autocomplete while the input is focused, with cancellation
+  // and a small in-memory cache to avoid duplicate Supabase calls.
+  const suggestionCache = useRef<Map<string, any[]>>(new Map());
   useEffect(() => {
-    if (debouncedSearchQuery.trim().length > 0) {
-      const fetchGlobalSuggestions = async () => {
-        try {
-          const { data, error } = await supabase.rpc(
-            "get_global_search_suggestions",
-            {
-              search_query: debouncedSearchQuery,
-              suggestion_limit: 5,
-            },
-          );
-          if (error) throw error;
-          if (data) {
-            setSuggestions(data);
-          }
-        } catch (err) {
-          console.error("Error fetching global suggestions:", err);
-        }
-      };
-      fetchGlobalSuggestions();
-    } else if (isSearchFocused) {
-      // Auto-show nearby businesses when focused but empty
-      setSuggestions(businessesData.slice(0, 5));
-    } else {
+    const query = debouncedSearchQuery.trim();
+    if (!isSearchFocused) {
       setSuggestions(EMPTY_ARRAY);
+      return;
     }
+    if (query.length < 2) {
+      setSuggestions(query ? EMPTY_ARRAY : businessesData.slice(0, 5));
+      return;
+    }
+
+    const key = query.toLowerCase();
+    const cached = suggestionCache.current.get(key);
+    if (cached) {
+      setSuggestions(cached);
+      return;
+    }
+
+    let active = true;
+    const controller = new AbortController();
+    const fetchGlobalSuggestions = async () => {
+      try {
+        const { data, error } = await supabase.rpc(
+          "get_global_search_suggestions",
+          { search_query: query, suggestion_limit: 5 },
+        ).abortSignal(controller.signal);
+        if (!active || controller.signal.aborted) return;
+        if (error) throw error;
+        const matches = data ?? EMPTY_ARRAY;
+        if (suggestionCache.current.size > 60) suggestionCache.current.clear();
+        suggestionCache.current.set(key, matches);
+        setSuggestions(matches);
+      } catch (error) {
+        if (active && !controller.signal.aborted) {
+          console.error("Error fetching global suggestions:", error);
+        }
+      }
+    };
+    void fetchGlobalSuggestions();
+    return () => {
+      active = false;
+      controller.abort();
+    };
   }, [debouncedSearchQuery, businessesData, isSearchFocused]);
 
   // 3. UI Helpers
