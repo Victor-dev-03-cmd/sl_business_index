@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import Link from 'next/link';
-import Image from 'next/image';
+import BrandLogo from '@/app/components/BrandLogo';
 import { ArrowLeft, Mail, CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Turnstile } from '@marsidev/react-turnstile';
@@ -48,7 +48,7 @@ export default function ForgotPassword() {
         <div className="relative z-10 max-w-md w-full text-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <div className="mb-10 flex justify-center">
-              <Image src="/logo.png" alt="Logo" width={180} height={50} className="brightness-0 invert" />
+              <BrandLogo tone="dark" />
             </div>
             <h1 className="text-4xl font-normal text-white mb-6">Security & Recovery.</h1>
             <p className="text-brand-sand/80 text-sm leading-relaxed">
@@ -64,7 +64,7 @@ export default function ForgotPassword() {
           {/* Mobile Logo */}
           <div className="lg:hidden flex justify-center mb-8">
             <Link href="/">
-              <Image src="/logo.png" alt="Logo" width={140} height={45} />
+              <BrandLogo tone="light" />
             </Link>
           </div>
 
