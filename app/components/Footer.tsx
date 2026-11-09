@@ -87,11 +87,11 @@ export default function Footer() {
           </Link>
         </div>
 
-        {/* Brand and primary navigation. Original logo is shown without color filters. */}
+        {/* Unified evergreen wordmark for the nearly black footer. */}
         <div className="grid gap-10 py-14 sm:grid-cols-2 sm:gap-x-10 lg:grid-cols-[1.65fr_1fr_1fr_1fr] lg:gap-x-9 lg:py-16">
           <div className="max-w-[340px]">
-            <div className="inline-flex min-h-[76px] items-center rounded-[18px] border border-white/10 bg-white px-4 py-2">
-              <LogoLink />
+            <div className="inline-flex min-h-[76px] items-center">
+              <LogoLink tone="dark" />
             </div>
             <p className="mt-6 max-w-[320px] text-[14px] leading-[1.85] text-[#B0CFB5]">
               A home for Sri Lankan business discovery. Find local services,
