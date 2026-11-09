@@ -61,17 +61,17 @@ export default function Footer() {
   const pricingHref = userRole === "vendor" ? "/vendor/billing" : "/pricing-plans";
 
   const footerLinkClass =
-    "group inline-flex w-fit items-center gap-1.5 text-[13px] leading-6 text-[#A5BBCD] transition-colors duration-150 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400";
+    "group inline-flex w-fit items-center gap-1.5 text-[13px] leading-6 text-[#B0CFB5] transition-colors duration-150 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400";
 
   return (
-    <footer aria-label="SL Business Index footer" className="relative isolate overflow-hidden border-t border-[#2B4961] bg-[#091F33] text-[#DBE9F4]">
-      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-80 bg-gradient-to-b from-[#123A5B]/30 to-transparent" />
+    <footer aria-label="SL Business Index footer" className="relative isolate overflow-hidden border-t border-[#2E4035] bg-[#090B0A] text-[#E0EADB]">
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-80 bg-gradient-to-b from-[#203A2E]/35 to-transparent" />
 
       <div className="relative mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12">
         {/* Editorial introduction and functional CTA. */}
         <div className="flex flex-col justify-between gap-6 border-b border-white/15 py-12 sm:py-14 lg:flex-row lg:items-center">
           <div className="max-w-[720px]">
-            <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-[#89BFDF]">
+            <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-[#94BAA0]">
               Discover · Connect · Grow
             </p>
             <h2 className="text-balance text-[clamp(1.9rem,3vw,3.4rem)] font-semibold leading-[1.15] tracking-[-0.055em] text-white">
@@ -80,7 +80,7 @@ export default function Footer() {
           </div>
           <Link
             href="/register-business"
-            className="group inline-flex h-12 w-fit shrink-0 items-center gap-2 rounded-xl bg-white px-5 text-[13px] font-bold text-[#113958] transition-colors hover:bg-[#EAF5FD] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
+            className="group inline-flex h-12 w-fit shrink-0 items-center gap-2 rounded-xl bg-white px-5 text-[13px] font-bold text-[#1B3430] transition-colors hover:bg-[#F0F2E9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
           >
             List your business
             <ArrowUpRight size={17} className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
@@ -93,11 +93,11 @@ export default function Footer() {
             <div className="inline-flex min-h-[76px] items-center rounded-[18px] border border-white/10 bg-white px-4 py-2">
               <LogoLink />
             </div>
-            <p className="mt-6 max-w-[320px] text-[14px] leading-[1.85] text-[#A5BBCD]">
+            <p className="mt-6 max-w-[320px] text-[14px] leading-[1.85] text-[#B0CFB5]">
               A home for Sri Lankan business discovery. Find local services,
               explore businesses and connect with opportunities across the island.
             </p>
-            <Link href="/contact" className="mt-6 inline-flex items-center gap-2 text-[13px] font-semibold text-[#B6DFF8] transition-colors hover:text-white">
+            <Link href="/contact" className="mt-6 inline-flex items-center gap-2 text-[13px] font-semibold text-[#F0D9AC] transition-colors hover:text-white">
               <Mail size={17} /> Get in touch <ArrowUpRight size={15} />
             </Link>
           </div>
@@ -142,7 +142,7 @@ export default function Footer() {
         <div className="border-y border-white/15 py-7 sm:py-8">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex shrink-0 items-center gap-2.5">
-              <MapPin size={17} className="text-[#8CC8ED]" />
+              <MapPin size={17} className="text-[#E7C58E]" />
               <h3 className="text-[13px] font-semibold text-white">Explore popular areas</h3>
             </div>
             <nav aria-label="Browse businesses by area" className="flex flex-wrap gap-2">
@@ -150,7 +150,7 @@ export default function Footer() {
                 <Link
                   key={area.name}
                   href={area.href}
-                  className="inline-flex min-h-9 items-center rounded-full border border-white/15 bg-white/[0.045] px-3.5 text-[12px] font-medium text-[#B9CDDC] transition-colors hover:border-[#659DC5]/60 hover:bg-white/[0.10] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+                  className="inline-flex min-h-9 items-center rounded-full border border-white/15 bg-white/[0.045] px-3.5 text-[12px] font-medium text-[#CADDCB] transition-colors hover:border-[#75AB8D]/60 hover:bg-white/[0.10] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
                 >
                   {area.name}
                 </Link>
@@ -160,7 +160,7 @@ export default function Footer() {
         </div>
 
         {/* Original credits remain acknowledged; no dead # social links. */}
-        <div className="flex flex-col gap-5 py-7 text-[12px] text-[#83A0B5] md:flex-row md:items-center md:justify-between md:gap-7">
+        <div className="flex flex-col gap-5 py-7 text-[12px] text-[#75AB8D] md:flex-row md:items-center md:justify-between md:gap-7">
           <p>
             © {new Date().getFullYear()} SL Business Index. Built for Sri Lankan businesses.
           </p>
@@ -169,7 +169,7 @@ export default function Footer() {
               href="https://arud-portfolio.vercel.app/"
               target="_blank"
               rel="noopener noreferrer"
-              className="transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+              className="transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
             >
               Design: Arud Graphics
             </a>
@@ -177,16 +177,16 @@ export default function Footer() {
               href="https://laxsan-dev.vercel.app/"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+              className="inline-flex items-center gap-1.5 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
             >
-              <Heart size={12} className="text-[#A8D5F2]" /> Developed by Laxsan Dev
+              <Heart size={12} className="text-[#F0D9AC]" /> Developed by Laxsan Dev
             </a>
           </div>
           <button
             type="button"
             aria-label="Back to top"
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white/[0.06] text-[#CDE7F8] transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white/[0.06] text-[#F0D9AC] transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
           >
             <ArrowUp size={17} />
           </button>
