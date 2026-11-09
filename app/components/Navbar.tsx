@@ -320,7 +320,7 @@ export default function Navbar() {
         }}
       >
         <header 
-          className={cn("relative z-50 border-b bg-white/95 backdrop-blur-xl transition-all duration-300", scrolled ? "border-slate-200 shadow-[0_8px_30px_rgba(15,23,42,0.07)]" : "border-slate-100")}
+          className={cn("relative z-50 border-b bg-[#FCFAF6]/95 backdrop-blur-xl transition-all duration-300", scrolled ? "border-stone-200 shadow-[0_8px_30px_rgba(15,23,42,0.07)]" : "border-stone-100")}
           onMouseEnter={() => {
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
           }}
@@ -341,13 +341,13 @@ export default function Navbar() {
                { href: "/about", label: "About" },
              ].map(item => {
                const active = pathname === item.href || (item.href === "/category" && pathname.startsWith("/category/"));
-               return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={cn("inline-flex h-10 items-center gap-1.5 whitespace-nowrap rounded-xl px-3 text-[13px] font-semibold tracking-tight transition-colors focus-visible:ring-2 focus-visible:ring-blue-500", active ? "bg-slate-100 text-[#102B4E]" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950")}>{item.label}{item.href === "/business-news" && hasNewNews && <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />}</Link>;
+               return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={cn("inline-flex h-10 items-center gap-1.5 whitespace-nowrap rounded-xl px-3 text-[13px] font-semibold tracking-tight transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500", active ? "bg-stone-100 text-[#1B3430]" : "text-stone-600 hover:bg-stone-50 hover:text-stone-950")}>{item.label}{item.href === "/business-news" && hasNewNews && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />}</Link>;
              })}
              <div className="group relative">
-               <button type="button" aria-label="Resources menu" className="flex h-10 items-center gap-1 rounded-xl px-3 text-[13px] font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-950">Resources <ChevronDown size={14} /></button>
-               <div className="invisible pointer-events-none absolute left-0 top-full z-[80] w-48 translate-y-2 rounded-2xl border border-slate-200 bg-white p-2 opacity-0 shadow-xl transition-all duration-200 group-hover:visible group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:pointer-events-auto group-focus-within:translate-y-0 group-focus-within:opacity-100">
-                 <Link href="/faq" className="block rounded-lg px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50">Help & FAQ</Link>
-                 <Link href="/contact" className="block rounded-lg px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50">Contact Us</Link>
+               <button type="button" aria-label="Resources menu" className="flex h-10 items-center gap-1 rounded-xl px-3 text-[13px] font-semibold text-stone-600 hover:bg-stone-50 hover:text-stone-950">Resources <ChevronDown size={14} /></button>
+               <div className="invisible pointer-events-none absolute left-0 top-full z-[80] w-48 translate-y-2 rounded-2xl border border-stone-200 bg-white p-2 opacity-0 shadow-xl transition-all duration-200 group-hover:visible group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:pointer-events-auto group-focus-within:translate-y-0 group-focus-within:opacity-100">
+                 <Link href="/faq" className="block rounded-lg px-3 py-2.5 text-sm text-stone-700 hover:bg-stone-50">Help & FAQ</Link>
+                 <Link href="/contact" className="block rounded-lg px-3 py-2.5 text-sm text-stone-700 hover:bg-stone-50">Contact Us</Link>
                </div>
              </div>
            </nav>
@@ -357,17 +357,17 @@ export default function Navbar() {
             {profileData?.role?.toLowerCase() === "vendor" && (
               <Link
                 href="/business-news?post=true"
-                className="hidden 2xl:flex h-10 items-center gap-1.5 rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                className="hidden 2xl:flex h-10 items-center gap-1.5 rounded-xl border border-stone-200 px-3 text-xs font-semibold text-stone-700 hover:bg-stone-50"
               >
                 <Plus size={14} /> Add News
               </Link>
             )}
             <div className="hidden 2xl:block"><LiveCounter /></div>
-             <Link href="/search" aria-label="Search businesses" className="hidden lg:flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-950"><Search size={19} /></Link>
+             <Link href="/search" aria-label="Search businesses" className="hidden lg:flex h-10 w-10 items-center justify-center rounded-xl text-stone-600 hover:bg-stone-100 hover:text-stone-950"><Search size={19} /></Link>
             {fullUserData && <NotificationBell />}
             
             <div className="hidden sm:block"><AuthButton user={fullUserData} /></div>
-             {showRegister && <Link href="/register-business" className="hidden xl:inline-flex h-10 items-center gap-1.5 whitespace-nowrap rounded-xl bg-[#102B4E] px-4 text-xs font-semibold text-white shadow-md transition-all hover:bg-[#1E4A75] hover:shadow-lg">List Your Business <ArrowUpRight size={15} /></Link>}
+             {showRegister && <Link href="/register-business" className="hidden xl:inline-flex h-10 items-center gap-1.5 whitespace-nowrap rounded-xl bg-[#1B3430] px-4 text-xs font-semibold text-white shadow-md transition-all hover:bg-[#26483B] hover:shadow-lg">List Your Business <ArrowUpRight size={15} /></Link>}
 
             {/* ── Modern two-line toggle ── */}
             <button
@@ -376,8 +376,8 @@ export default function Navbar() {
               className={cn(
                 "lg:hidden relative w-11 h-11 flex flex-col items-center justify-center gap-[5.5px] rounded-[8px] border transition-all duration-300 active:scale-95 z-[110]",
                 mobileMenuOpen 
-                  ? "bg-[#102B4E] border-[#102B4E] shadow-inner" 
-                  : "bg-white border-slate-200 shadow-sm hover:border-slate-400"
+                  ? "bg-[#1B3430] border-[#1B3430] shadow-inner" 
+                  : "bg-white border-stone-200 shadow-sm hover:border-stone-400"
               )}
             >
               <span
@@ -402,10 +402,10 @@ export default function Navbar() {
       </header>
 
       {/* Refined industry ribbon — hover, click and keyboard focus open mega menu. */}
-      <div className="hidden border-b border-slate-200 bg-[#F7FAFD] lg:block">
+      <div className="hidden border-b border-stone-200 bg-[#F2EFE7] lg:block">
         <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8">
           <nav aria-label="Business industries" className="flex h-12 items-center gap-1 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <span className="mr-2 inline-flex shrink-0 items-center gap-2 border-r border-slate-200 pr-4 text-[10px] font-bold uppercase tracking-[0.14em] text-[#587794]">
+            <span className="mr-2 inline-flex shrink-0 items-center gap-2 border-r border-stone-200 pr-4 text-[10px] font-bold uppercase tracking-[0.14em] text-[#36785E]">
               <LayoutGrid size={14} strokeWidth={1.8} /> Industries
             </span>
             {MAIN_CATEGORY_GROUPS.map((group) => {
@@ -424,10 +424,10 @@ export default function Navbar() {
                     else handleMouseEnter(group);
                   }}
                   className={cn(
-                    "group relative inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-3 text-[11px] font-semibold tracking-[-0.005em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
+                    "group relative inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-3 text-[11px] font-semibold tracking-[-0.005em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500",
                     selected
-                      ? "bg-white text-[#0C365B] shadow-sm ring-1 ring-[#D5E3EE]"
-                      : "text-slate-500 hover:bg-white hover:text-[#0C365B]"
+                      ? "bg-white text-[#1B3430] shadow-sm ring-1 ring-[#E0EADB]"
+                      : "text-stone-500 hover:bg-white hover:text-[#1B3430]"
                   )}
                 >
                   {group}
@@ -490,7 +490,7 @@ export default function Navbar() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.25 }}
-              className="fixed inset-0 z-[99] bg-slate-950/50 backdrop-blur-[3px]"
+              className="fixed inset-0 z-[99] bg-stone-950/50 backdrop-blur-[3px]"
               onClick={close}
             />
 
@@ -501,13 +501,13 @@ export default function Navbar() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", stiffness: 320, damping: 32 }}
-              className="fixed top-0 right-0 z-[100] h-full w-full max-w-[360px] bg-white shadow-[0_25px_80px_rgba(15,23,42,0.24)] flex flex-col"
+              className="fixed top-0 right-0 z-[100] h-full w-full max-w-[360px] bg-[#FCFAF6] shadow-[0_25px_80px_rgba(15,23,42,0.24)] flex flex-col"
             >
               {/* ── Panel header ── */}
               <div className="flex items-center justify-between h-16 px-5 border-b border-gray-100 shrink-0">
                 <LogoLink />
                 <div className="flex items-center gap-2">
-                  <button type="button" onClick={close} aria-label="Close menu" className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50"><X size={19} /></button>
+                  <button type="button" onClick={close} aria-label="Close menu" className="flex h-10 w-10 items-center justify-center rounded-xl border border-stone-200 text-stone-700 hover:bg-stone-50"><X size={19} /></button>
                 </div>
               </div>
 
@@ -661,7 +661,7 @@ export default function Navbar() {
                     onClick={() => setCategOpen((v) => !v)}
                     className="w-full flex items-center gap-3 px-3 py-3.5 rounded-xl text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors"
                   >
-                    <span className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-brand-blue shrink-0">
+                    <span className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-brand-blue shrink-0">
                       <LayoutGrid size={16} />
                     </span>
                     <span className="flex-1 text-sm font-medium text-left">
