@@ -147,6 +147,7 @@ export default function NearbyExplorer() {
   const [mobileView, setMobileView] = useState<"map" | "list">("map");
   const [selectedBusiness, setSelectedBusiness] = useState<NearbyBusiness | null>(null);
   const [sortBy, setSortBy] = useState<SortMode>("nearest");
+  const [resultLimit, setResultLimit] = useState(30);
 
   const headerRef = useRef<HTMLElement>(null);
   const skipMapMove = useRef(false);
@@ -208,6 +209,8 @@ export default function NearbyExplorer() {
     }
     return sorted;
   }, [businesses, sortBy]);
+
+  useEffect(() => { setResultLimit(30); }, [location.lat, location.lng, appliedQuery, category, radius, sortBy]);
 
   const mapFeatures = useMemo(() => visibleBusinesses
     .filter((business) => validCoords(Number(business.latitude), Number(business.longitude)))
@@ -835,7 +838,7 @@ export default function NearbyExplorer() {
                 </div>
               </div>
             ) : (
-              visibleBusinesses.map((business) => {
+              visibleBusinesses.slice(0, resultLimit).map((business) => {
                 const active = selectedBusiness?.id === business.id;
                 const rating = Number(business.rating);
                 return (
@@ -880,6 +883,17 @@ export default function NearbyExplorer() {
                   </article>
                 );
               })
+            )}
+            {!loadingBusinesses && !error && visibleBusinesses.length > resultLimit && (
+              <button
+                type="button"
+                onClick={() => setResultLimit(limit => limit + 30)}
+                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-[16px] border border-[#DCE7EF] bg-white px-5 text-[12px] font-semibold text-[#20597F] transition-colors hover:bg-[#EDF6FB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+              >
+                Show more results
+                <span className="text-[#91A8B7]">({visibleBusinesses.length - resultLimit} remaining)</span>
+                <ChevronDown size={16}/>
+              </button>
             )}
           </div>
         </aside>
