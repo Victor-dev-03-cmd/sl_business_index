@@ -95,6 +95,9 @@ function initialChoice(params: ReturnType<typeof useSearchParams>): LocationChoi
     const lat = Number(latString);
     const lng = Number(lngString);
     if (validCoords(lat, lng)) {
+      const districtQuery = params.get("district");
+      const districtName = districtQuery && Object.keys(DISTRICTS).find(name => name.toLowerCase() === districtQuery.toLowerCase());
+      if (districtName) return { lat, lng, label: districtName + " District", kind: "district" };
       return { lat, lng, label: "Selected map area", kind: "coordinates" };
     }
   }
