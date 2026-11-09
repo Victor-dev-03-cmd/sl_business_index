@@ -40,7 +40,7 @@ BEGIN
       OR COALESCE(NEW.is_verified,false)
       OR COALESCE(NEW.is_featured,false)
       OR COALESCE(NEW.can_show_badge,false)
-      OR NEW.verification_status NOT IN ('pending','unverified') THEN
+      OR NEW.verification_status NOT IN ('none','pending','unverified') THEN
       RAISE EXCEPTION 'Approval and badges require administrator review'
         USING ERRCODE='42501';
     END IF;
@@ -50,7 +50,11 @@ BEGIN
       OR NEW.is_verified IS DISTINCT FROM OLD.is_verified
       OR NEW.is_featured IS DISTINCT FROM OLD.is_featured
       OR NEW.can_show_badge IS DISTINCT FROM OLD.can_show_badge
-      OR NEW.verification_status IS DISTINCT FROM OLD.verification_status THEN
+      OR (
+        NEW.verification_status IS DISTINCT FROM OLD.verification_status
+        AND NOT (NEW.verification_status='pending'
+          AND COALESCE(OLD.verification_status,'none') IN ('none','rejected'))
+      ) THEN
       RAISE EXCEPTION 'Only administrators can change business approval and verification'
         USING ERRCODE='42501';
     END IF;
