@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Search, ChevronRight, Building2, Star, Tags } from "lucide-react";
+import { Search, ChevronRight, Building2, Star, Tags, MapPin, ChevronDown, Check, X } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import { cn, expandSearchQuery } from "@/lib/utils";
 import { supabase } from "@/lib/supabaseClient";
@@ -42,9 +42,31 @@ export default function HeroSearch({
   const [bizSuggestions, setBizSuggestions] = useState<any[]>([]);
   const [categorySuggestions, setCategorySuggestions] = useState<any[]>([]);
   const [isFetchingSuggestions, setIsFetchingSuggestions] = useState(false);
+  const [areaOpen, setAreaOpen] = useState(false);
+  const [areaQuery, setAreaQuery] = useState("");
+  const [selectedArea, setSelectedArea] = useState<{ label: string; district?: string; town?: Town } | null>(null);
+  const areaRef = useRef<HTMLDivElement>(null);
 
   const searchBarRef = useRef<HTMLFormElement>(null);
   const latestFetchId = useRef(0);
+
+  // The location selector uses existing Sri Lankan town coordinates; no invented postal codes.
+  const areaOptions = useMemo(() => {
+    const query = areaQuery.trim().toLowerCase();
+    if (!query) return sriLankanDistricts.slice(0, 8).map(district => ({ label: district, district }));
+    const matchingDistricts = sriLankanDistricts.filter(d => d.toLowerCase().includes(query)).slice(0, 5).map(district => ({ label: district, district }));
+    const matchingTowns = SL_TOWNS.filter(t => t.name.toLowerCase().includes(query) || t.district.toLowerCase().includes(query)).slice(0, 12).map(town => ({ label: `${town.name}, ${town.district}`, town }));
+    return [...matchingDistricts, ...matchingTowns];
+  }, [areaQuery]);
+
+  useEffect(() => {
+    if (!areaOpen) return;
+    const onOutsideClick = (event: MouseEvent) => {
+      if (areaRef.current && !areaRef.current.contains(event.target as Node)) setAreaOpen(false);
+    };
+    document.addEventListener("mousedown", onOutsideClick);
+    return () => document.removeEventListener("mousedown", onOutsideClick);
+  }, [areaOpen]);
 
   // Fuse.js instance — rebuilt only when categories list changes
   const fuse = useMemo(
@@ -115,7 +137,17 @@ export default function HeroSearch({
     let finalDistrict = "";
     let finalSearchMode: "location" | "nearby" | null = null;
 
-    for (const town of SL_TOWNS) {
+    // Explicit area selection takes precedence over location inference and cached GPS.
+    if (selectedArea?.town) {
+      finalLat = selectedArea.town.lat.toString();
+      finalLng = selectedArea.town.lon.toString();
+      finalSearchMode = "nearby";
+    } else if (selectedArea?.district) {
+      finalDistrict = selectedArea.district;
+      finalSearchMode = "location";
+    }
+
+    if (!selectedArea) for (const town of SL_TOWNS) {
       const townName = town.name.toLowerCase();
       const patterns = [` in ${townName}`, ` at ${townName}`, ` near ${townName}`, `${townName} `, ` ${townName}`];
       if (lowerQuery === townName) {
@@ -141,7 +173,7 @@ export default function HeroSearch({
       finalSearchMode = "nearby";
     }
 
-    if (!finalLat) {
+    if (!selectedArea && !finalLat) {
       for (const district of sriLankanDistricts) {
         const dLower = district.toLowerCase();
         const patterns = [` in ${dLower}`, ` at ${dLower}`, ` near ${dLower}`, `${dLower} `, ` ${dLower}`];
@@ -174,7 +206,7 @@ export default function HeroSearch({
     }
 
     const searchParams = new URLSearchParams();
-    searchParams.set("q", expandSearchQuery(lowerQuery || searchQuery));
+    searchParams.set("q", expandSearchQuery(selectedArea ? finalQuery.trim() : (lowerQuery || searchQuery)));
 
     if (finalLat && finalLng) {
       searchParams.set("lat", finalLat);
@@ -214,49 +246,102 @@ export default function HeroSearch({
   };
 
   const showDropdown =
-    isSearchFocused &&
+    !areaOpen && isSearchFocused &&
     (bizSuggestions.length > 0 || categorySuggestions.length > 0 || isFetchingSuggestions);
 
   return (
     <div className="relative mx-auto w-full">
-      {/* Main Search Input */}
+      {/* Three-part destination search: keyword, location, one primary action. */}
       <form
         onSubmit={handleSubmit}
         ref={searchBarRef}
-        className="relative rounded-[16px] border border-white/80 bg-white shadow-[0_10px_35px_rgba(3,19,36,0.12)] transition-shadow duration-200 focus-within:shadow-[0_12px_38px_rgba(15,75,135,0.21)]"
+        role="search"
+        className="rounded-[17px] border border-slate-200 bg-white p-1.5 shadow-[0_12px_36px_rgba(2,22,44,0.16)] focus-within:ring-2 focus-within:ring-sky-200 sm:p-2"
       >
-        <div className="flex min-h-[58px] items-center gap-2 rounded-[16px] bg-white px-3 py-1.5 sm:min-h-[64px] sm:gap-3 sm:px-4">
-          <Search className="text-gray-400 shrink-0" size={20} strokeWidth={1.5} />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onFocus={() => setIsSearchFocused(true)}
-            onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-            placeholder="Service or Business… (e.g. Hospital in Colombo)"
-            className="min-w-0 flex-1 bg-transparent text-[13px] font-medium text-slate-800 outline-none placeholder:font-normal placeholder:text-slate-400 sm:text-[15px]"
-          />
-          {searchQuery && (
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-stretch sm:gap-0">
+          <div className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl px-3 py-2 sm:py-1">
+            <Search size={20} strokeWidth={1.8} className="shrink-0 text-slate-400" />
+            <div className="min-w-0 flex-1">
+              <label htmlFor="hero-business-query" className="block text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">Business or service</label>
+              <input
+                id="hero-business-query"
+                type="search"
+                autoComplete="off"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => { setIsSearchFocused(true); setAreaOpen(false); }}
+                onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+                placeholder="What are you looking for?"
+                className="mt-0.5 w-full min-w-0 bg-transparent text-[13px] font-medium text-slate-900 outline-none placeholder:font-normal placeholder:text-slate-400 sm:text-[14px]"
+              />
+            </div>
+            <VoiceSearch
+              onResult={(text) => { setSearchQuery(text); handleSearch(text); }}
+              className="shrink-0"
+            />
+          </div>
+
+          <div className="mx-2 h-px bg-slate-200 sm:mx-0 sm:my-1 sm:h-auto sm:w-px" />
+
+          <div ref={areaRef} className="relative min-w-0 sm:w-[37%]">
             <button
               type="button"
-              onMouseDown={(e) => {
-                e.preventDefault();
-                setSearchQuery("");
-              }}
-              aria-label="Clear search" className="shrink-0 rounded-full px-1 text-base leading-none text-slate-400 transition-colors hover:text-slate-700"
+              aria-label="Choose district or town"
+              aria-expanded={areaOpen}
+              onClick={() => { setAreaOpen(v => !v); setIsSearchFocused(false); setAreaQuery(""); }}
+              className="flex min-h-[54px] w-full items-center gap-2 rounded-xl px-3 text-left transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 sm:min-h-[56px]"
             >
-              ✕
+              <MapPin size={19} strokeWidth={1.8} className="shrink-0 text-slate-400" />
+              <span className="min-w-0 flex-1">
+                <span className="block text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">Area / town</span>
+                <span className="mt-0.5 block truncate text-[13px] font-semibold text-slate-800">{selectedArea?.label || "All Sri Lanka"}</span>
+              </span>
+              <ChevronDown size={15} className={cn("shrink-0 text-slate-400 transition-transform", areaOpen && "rotate-180")} />
             </button>
-          )}
-          <div aria-hidden="true" className="h-6 w-px shrink-0 bg-slate-200" />
-          <VoiceSearch
-            onResult={(text) => {
-              setSearchQuery(text);
-              handleSearch(text);
-            }}
-            className="shrink-0"
-          />
-          <button type="submit" aria-label="Search businesses" className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-[11px] bg-[#113C65] px-3 text-[13px] font-semibold text-white shadow-[0_4px_12px_rgba(17,60,101,0.17)] transition-all duration-200 hover:bg-[#19598D] hover:shadow-[0_6px_16px_rgba(17,60,101,0.24)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 sm:h-11 sm:px-5"><Search size={16} strokeWidth={2} /><span className="hidden sm:inline">Search</span></button>
+            {areaOpen && (
+              <div className="absolute left-0 right-0 top-full z-[100] mt-2 min-w-[250px] overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 text-left shadow-[0_20px_55px_rgba(2,22,44,0.22)] sm:right-auto sm:w-[330px]">
+                <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3">
+                  <Search size={16} className="shrink-0 text-slate-400" />
+                  <input
+                    type="search"
+                    autoFocus
+                    value={areaQuery}
+                    onChange={e => setAreaQuery(e.target.value)}
+                    placeholder="Search district or town..."
+                    aria-label="Search Sri Lankan districts and towns"
+                    className="h-11 min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
+                  />
+                  {selectedArea && <button type="button" onClick={() => { setSelectedArea(null); setAreaOpen(false); }} aria-label="Clear selected area" className="text-slate-400 hover:text-slate-700"><X size={16}/></button>}
+                </div>
+                <div className="max-h-[238px] overflow-y-auto py-1">
+                  <button type="button" onClick={() => { setSelectedArea(null); setAreaOpen(false); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-sky-50">
+                    <MapPin size={16} className="text-slate-400" /> All Sri Lanka {!selectedArea && <Check size={15} className="ml-auto text-sky-700"/>}
+                  </button>
+                  {areaOptions.map(option => (
+                    <button
+                      type="button"
+                      key={option.town ? `town-${option.town.name}-${option.town.district}-${option.town.lat}` : `district-${option.district}`}
+                      onClick={() => { setSelectedArea(option); setAreaOpen(false); }}
+                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm text-slate-700 transition-colors hover:bg-sky-50"
+                    >
+                      <MapPin size={15} className="shrink-0 text-sky-600" />
+                      <span className="min-w-0 flex-1 truncate">{option.label}</span>
+                      <span className="shrink-0 text-[10px] text-slate-400">{option.town ? "Town" : "District"}</span>
+                      {selectedArea?.label === option.label && <Check size={15} className="text-sky-700"/>}
+                    </button>
+                  ))}
+                  {areaOptions.length === 0 && <p className="px-3 py-4 text-sm text-slate-500">No matching area found.</p>}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <button
+            type="submit"
+            className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-[12px] bg-[#123E65] px-5 text-[13px] font-semibold text-white shadow-[0_5px_16px_rgba(18,62,101,0.2)] transition-colors hover:bg-[#1B5888] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 sm:min-h-[56px]"
+          >
+            <Search size={18} strokeWidth={2} /> Search
+          </button>
         </div>
       </form>
 
@@ -399,29 +484,7 @@ export default function HeroSearch({
         )}
       </AnimatePresence>
 
-      {/* Action Buttons */}
-      <div className="flex flex-row items-center justify-center gap-2 px-1 mt-4">
-        <button
-          onClick={() => handleUseCurrentLocation(true)}
-          disabled={isFetchingLocation}
-          className="flex items-center justify-center gap-2 flex-1 md:flex-none md:w-auto px-4 md:px-6 py-3 text-gray-700 bg-gray-50 hover:bg-brand-blue hover:text-white border border-brand-blue font-normal transition-all disabled:opacity-50 text-sm md:text-base rounded-[6px]"
-        >
-          <LucideIcons.Navigation
-            size={16}
-            strokeWidth={1.5}
-            className={cn("text-brand-blue", isFetchingLocation && "animate-pulse")}
-          />
-          <span className="whitespace-nowrap">
-            {isFetchingLocation ? "Locating..." : "Near me"}
-          </span>
-        </button>
-        <button
-          onClick={() => handleSearch()}
-          className="flex-1 md:flex-none md:w-auto bg-brand-blue hover:bg-brand-blue/90 text-white text-sm md:text-base font-normal px-6 md:px-12 py-3 shadow-lg shadow-brand-blue/20 transition-all rounded-[6px]"
-        >
-          Search
-        </button>
-      </div>
+
     </div>
   );
 }
