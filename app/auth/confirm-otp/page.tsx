@@ -1,10 +1,11 @@
 'use client';
 
+import BrandLogo from '@/app/components/BrandLogo';
+
 import { useEffect, useState, Suspense } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import { KeyRound } from 'lucide-react';
 
 function OTPConfirmPage() {
@@ -54,7 +55,7 @@ function OTPConfirmPage() {
         {/* Logo Integration */}
         <div className="flex justify-center mb-4">
           <Link href="/">
-            <Image src="/logo.png" alt="Logo" width={140} height={45} />
+            <BrandLogo tone="light" />
           </Link>
         </div>
 
