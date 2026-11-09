@@ -415,8 +415,16 @@ export default function BusinessDetailsClient({ business }: Props) {
           </div>
           <div className="relative order-1 h-[300px] min-w-0 overflow-hidden bg-[#294941] sm:h-[380px] lg:order-2 lg:h-auto">
             {business.image_url ? (
-              <Image src={business.image_url} alt={"Photo of " + business.name} fill priority
-                sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" />
+              <>
+                {/* A soft, blurred fill keeps the hero cinematic without cropping the main photo. */}
+                <Image src={business.image_url} alt="" aria-hidden="true" fill
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  className="scale-110 object-cover opacity-35 blur-[24px]" />
+                <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-r from-[#1B3430]/35 via-transparent to-[#1B3430]/10" />
+                <Image src={business.image_url} alt={"Full photo of " + business.name} fill priority
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  className="relative z-[1] object-contain object-center p-2 sm:p-3 lg:p-4" />
+              </>
             ) : (
               <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#386354] via-[#23473E] to-[#162E2A]">
                 <div aria-hidden="true" className="absolute -left-20 -top-20 h-80 w-80 rounded-full border-[45px] border-[#E7C18B]/[0.08]" />
@@ -428,7 +436,7 @@ export default function BusinessDetailsClient({ business }: Props) {
               </div>
             )}
             <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#102B25]/35 via-transparent to-transparent"/>
-            <div className="absolute bottom-4 left-4 flex items-center gap-2 rounded-full border border-white/25 bg-[#183A31]/80 px-3.5 py-2 text-[11px] font-semibold text-white backdrop-blur-sm sm:bottom-6 sm:left-6">
+            <div className="absolute bottom-4 left-4 z-[2] flex items-center gap-2 rounded-full border border-white/25 bg-[#183A31]/80 px-3.5 py-2 text-[11px] font-semibold text-white backdrop-blur-sm sm:bottom-6 sm:left-6">
               {business.image_url ? <Camera size={15}/> : <Building2 size={15}/>}
               {business.image_url ? "Business photo" : "Business profile"}
             </div>
