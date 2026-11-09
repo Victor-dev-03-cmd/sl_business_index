@@ -196,6 +196,32 @@ const userIcon = L.divIcon({
   iconAnchor: [12, 12],
 });
 
+// Keep Leaflet aligned with responsive Map/List panels, especially on mobile.
+function ResponsiveMapSize() {
+  const map = useMap();
+  useEffect(() => {
+    const element = map.getContainer();
+    const refresh = () => {
+      if (element.getBoundingClientRect().width > 0) {
+        map.invalidateSize({ animate: false, pan: false });
+      }
+    };
+    const observer = typeof ResizeObserver !== "undefined"
+      ? new ResizeObserver(refresh)
+      : null;
+    observer?.observe(element);
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      observer?.disconnect();
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [map]);
+  return null;
+}
+
 function MapUpdater({
   lat,
   lng,
@@ -313,6 +339,7 @@ function MapContent({
       />
 
       <ZoomControl position="bottomright" />
+      <ResponsiveMapSize />
       <MapUpdater lat={centerLat} lng={centerLng} zoom={zoom} />
       <MapEvents onMapClick={onMapClick} onMapMove={onMapMove} map={map} />
 
