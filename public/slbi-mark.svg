@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none" role="img" aria-label="SL Business Index brand mark">
+  <defs>
+    <linearGradient id="forest" x1="8" y1="5" x2="57" y2="60" gradientUnits="userSpaceOnUse"><stop stop-color="#315D4C"/><stop offset="1" stop-color="#132D27"/></linearGradient>
+    <linearGradient id="champagne" x1="38" y1="14" x2="55" y2="49" gradientUnits="userSpaceOnUse"><stop stop-color="#F1D5A5"/><stop offset="1" stop-color="#C59656"/></linearGradient>
+  </defs>
+  <rect x="1" y="1" width="62" height="62" rx="18" fill="url(#forest)"/>
+  <rect x="1.6" y="1.6" width="60.8" height="60.8" rx="17.4" stroke="#E4C28C" stroke-opacity=".42" stroke-width="1.2"/>
+  <path d="M33 21.5C29.2 18.2 25.6 17.8 22 19.2C18.9 20.5 17.2 23 17.2 25.7C17.2 29.4 21.2 30.7 25.6 31.7C30.2 32.8 33.2 34.1 33.2 38C33.2 42.5 29.2 45.6 24.2 45.6C20.5 45.6 17.4 44 14.6 41.2" stroke="#FFF9EE" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M41.5 19V44.5H52" stroke="url(#champagne)" stroke-width="5.1" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="47.7" cy="15.4" r="2.3" fill="#F1D5A5"/>
+</svg>
