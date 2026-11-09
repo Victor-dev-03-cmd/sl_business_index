@@ -80,8 +80,8 @@ export default function VendorLayout({ children }: { children: React.ReactNode }
         } fixed inset-y-0 left-0 z-50 bg-white border-r border-gray-300 transition-all duration-300 ease-in-out hidden md:flex flex-col`}
       >
         <div className="flex items-center h-20 px-6 border-b border-gray-300">
-          <div className="h-10 w-10 bg-brand-dark rounded-xl flex items-center justify-center mr-3 shrink-0 shadow-lg shadow-brand-dark/20">
-            <Briefcase className="h-6 w-6 text-white" strokeWidth={2} />
+          <div className="mr-3 h-10 w-10 shrink-0">
+            <img src="/slbi-mark.svg" alt="SL Business Index" className="h-10 w-10 object-contain" />
           </div>
           {sidebarOpen && (
             <div className="flex flex-col">
@@ -149,8 +149,8 @@ export default function VendorLayout({ children }: { children: React.ReactNode }
         >
           {/* Drawer Header */}
           <div className="flex items-center h-16 px-4 border-b border-gray-200 shrink-0">
-            <div className="h-9 w-9 bg-brand-dark rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-brand-dark/20">
-              <Briefcase className="h-5 w-5 text-white" strokeWidth={2} />
+            <div className="h-9 w-9 shrink-0">
+              <img src="/slbi-mark.svg" alt="SL Business Index" className="h-9 w-9 object-contain" />
             </div>
             <div className="flex flex-col ml-3 flex-1 min-w-0">
               <span className="font-bold text-gray-900 text-sm tracking-tight uppercase">SL Business</span>
