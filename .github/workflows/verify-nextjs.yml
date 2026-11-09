@@ -2,7 +2,7 @@ name: Verify Next.js Build
 
 on:
   push:
-    branches: [main, feature/vendor-premium-dashboard-v2]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
