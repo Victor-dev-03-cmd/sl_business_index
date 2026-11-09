@@ -66,7 +66,8 @@ export default function Navbar() {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const [hasNewNews, setHasNewNews] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const headerRootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -76,6 +77,12 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const closeMegaMenu = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setSubNavbarOpen(false);
+    setActiveCategory(null);
+  };
+
   const handleMouseEnter = (group: string) => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     setActiveCategory(group);
@@ -83,11 +90,42 @@ export default function Navbar() {
   };
 
   const handleMouseLeave = () => {
-    timeoutRef.current = setTimeout(() => {
-      setSubNavbarOpen(false);
-      setActiveCategory(null);
-    }, 300);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(closeMegaMenu, 180);
   };
+
+  // Outside interactions, Escape and route changes close the menu without
+  // installing an overlay or preventing the page from scrolling.
+  useEffect(() => {
+    if (!subNavbarOpen) return;
+    const onOutside = (event: PointerEvent) => {
+      if (!headerRootRef.current?.contains(event.target as Node)) {
+        setSubNavbarOpen(false);
+        setActiveCategory(null);
+      }
+    };
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setSubNavbarOpen(false);
+        setActiveCategory(null);
+      }
+    };
+    document.addEventListener("pointerdown", onOutside);
+    document.addEventListener("keydown", onEscape);
+    return () => {
+      document.removeEventListener("pointerdown", onOutside);
+      document.removeEventListener("keydown", onEscape);
+    };
+  }, [subNavbarOpen]);
+
+  useEffect(() => {
+    setSubNavbarOpen(false);
+    setActiveCategory(null);
+  }, [pathname]);
+
+  useEffect(() => () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+  }, []);
 
   const MAIN_CATEGORY_GROUPS = [
     "Manpower Services",
@@ -273,9 +311,13 @@ export default function Navbar() {
       {/* ════════════════════════════════════
           HEADER
       ════════════════════════════════════ */}
-      <div 
+      <div
+        ref={headerRootRef}
         className="sticky top-0 z-50 w-full"
         onMouseLeave={handleMouseLeave}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") closeMegaMenu();
+        }}
       >
         <header 
           className={cn("relative z-50 border-b bg-white/95 backdrop-blur-xl transition-all duration-300", scrolled ? "border-slate-200 shadow-[0_8px_30px_rgba(15,23,42,0.07)]" : "border-slate-100")}
@@ -359,24 +401,49 @@ export default function Navbar() {
         </div>
       </header>
 
-      {/* Industry navigation ribbon */}
-       <div className="hidden lg:block border-b border-slate-200/80 bg-[#F8FAFC]">
-         <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8">
-           <div aria-label="Browse industries" className="flex h-11 items-center gap-1 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-             <span className="mr-3 shrink-0 border-r border-slate-200 pr-4 text-[10px] font-bold uppercase tracking-[0.13em] text-slate-400">Industries</span>
-             {MAIN_CATEGORY_GROUPS.map(group => (
-               <button key={group} type="button" aria-expanded={activeCategory === group && subNavbarOpen} onClick={() => { if (activeCategory === group && subNavbarOpen) setSubNavbarOpen(false); else { setActiveCategory(group); setSubNavbarOpen(true); } }} className={cn("shrink-0 rounded-lg px-3 py-2 text-[11px] font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-blue-500", activeCategory === group && subNavbarOpen ? "bg-white text-[#102B4E] shadow-sm ring-1 ring-slate-200" : "text-slate-500 hover:bg-white hover:text-slate-900")}>{group}</button>
-             ))}
-           </div>
-         </div>
-       </div>
+      {/* Refined industry ribbon — hover, click and keyboard focus open mega menu. */}
+      <div className="hidden border-b border-slate-200 bg-[#F7FAFD] lg:block">
+        <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8">
+          <nav aria-label="Business industries" className="flex h-12 items-center gap-1 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <span className="mr-2 inline-flex shrink-0 items-center gap-2 border-r border-slate-200 pr-4 text-[10px] font-bold uppercase tracking-[0.14em] text-[#587794]">
+              <LayoutGrid size={14} strokeWidth={1.8} /> Industries
+            </span>
+            {MAIN_CATEGORY_GROUPS.map((group) => {
+              const selected = activeCategory === group && subNavbarOpen;
+              return (
+                <button
+                  key={group}
+                  type="button"
+                  aria-controls="industry-mega-menu"
+                  aria-expanded={selected}
+                  aria-haspopup="true"
+                  onMouseEnter={() => handleMouseEnter(group)}
+                  onFocus={() => handleMouseEnter(group)}
+                  onClick={() => {
+                    if (selected) closeMegaMenu();
+                    else handleMouseEnter(group);
+                  }}
+                  className={cn(
+                    "group relative inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-3 text-[11px] font-semibold tracking-[-0.005em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
+                    selected
+                      ? "bg-white text-[#0C365B] shadow-sm ring-1 ring-[#D5E3EE]"
+                      : "text-slate-500 hover:bg-white hover:text-[#0C365B]"
+                  )}
+                >
+                  {group}
+                  <ChevronDown size={12} strokeWidth={2} className={cn("shrink-0 transition-transform duration-150", selected && "rotate-180")} />
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+      </div>
 
-       <CategorySubNavbar
+      <CategorySubNavbar
         isOpen={subNavbarOpen}
         activeCategory={activeCategory}
         categories={categories as any}
-        onClose={() => setSubNavbarOpen(false)}
-        topOffset={120}
+        onClose={closeMegaMenu}
       />
     </div>
 
