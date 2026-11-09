@@ -147,7 +147,7 @@ export default function NearbyExplorer() {
 
   const headerRef = useRef<HTMLElement>(null);
   const skipMapMove = useRef(false);
-  const mapMoveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mapMoveTimer = useRef<number | null>(null);
 
   const { data: categories = EMPTY_CATEGORIES } = useQuery({
     queryKey: ["categories-nearby"],
