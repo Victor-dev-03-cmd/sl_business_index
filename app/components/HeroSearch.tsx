@@ -51,7 +51,7 @@ export default function HeroSearch({
   const latestFetchId = useRef(0);
 
   // The location selector uses existing Sri Lankan town coordinates; no invented postal codes.
-  const areaOptions = useMemo(() => {
+  const areaOptions = useMemo<Array<{ label: string; district?: string; town?: Town }>>(() => {
     const query = areaQuery.trim().toLowerCase();
     if (!query) return sriLankanDistricts.slice(0, 8).map(district => ({ label: district, district }));
     const matchingDistricts = sriLankanDistricts.filter(d => d.toLowerCase().includes(query)).slice(0, 5).map(district => ({ label: district, district }));
