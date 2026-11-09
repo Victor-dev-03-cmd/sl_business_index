@@ -1,5 +1,5 @@
 // public/sw.js
-const CACHE_NAME = 'slbi-shell-v1'
+const CACHE_NAME = 'slbi-shell-evergreen-v2'
 const OFFLINE_URL = '/'
 
 self.addEventListener('install', (event) => {
