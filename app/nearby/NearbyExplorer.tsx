@@ -1127,6 +1127,48 @@ export default function NearbyExplorer() {
               wrapperClassName="h-full w-full overflow-hidden z-0"
             />
           </div>
+          {/* Map appearance / viewport controls; no extra database requests. */}
+          <div className="absolute right-4 top-4 z-[890] flex items-start gap-2 md:right-5">
+            <div ref={mapAppearanceRef} className="relative">
+              <button
+                type="button"
+                aria-expanded={mapAppearanceOpen}
+                aria-controls="nearby-map-appearance"
+                aria-label="Choose map appearance"
+                onClick={() => setMapAppearanceOpen(value => !value)}
+                className="inline-flex h-11 items-center gap-2 rounded-[13px] border border-[#D9E3DB] bg-white px-3 text-[12px] font-semibold text-[#2D574A] shadow-[0_8px_26px_rgba(22,47,42,0.14)] transition-colors hover:bg-[#F5FAF5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8DC4A6]"
+              >
+                <Layers3 size={18}/>
+                <span className="hidden sm:inline">Map style</span>
+                <ChevronDown size={14} className="hidden text-[#7A9D88] sm:inline"/>
+              </button>
+              {mapAppearanceOpen && (
+                <div id="nearby-map-appearance" role="group" aria-label="Map appearance" className="absolute right-0 top-full mt-2 w-52 rounded-[16px] border border-[#DCE5DC] bg-white p-2 shadow-[0_16px_45px_rgba(22,47,42,0.2)]">
+                  {([
+                    { id: "original" as const, label: "Original", hint: "Full-color streets" },
+                    { id: "soft" as const, label: "Soft", hint: "Calmer, muted map" },
+                  ]).map(option => (
+                    <button key={option.id} type="button" aria-pressed={mapAppearance === option.id}
+                      onClick={() => { setMapAppearance(option.id); setMapAppearanceOpen(false); }}
+                      className="flex w-full items-center justify-between gap-2 rounded-[11px] px-3 py-2.5 text-left transition-colors hover:bg-[#F1F7EF]">
+                      <span>
+                        <span className="block text-[12px] font-semibold text-[#2D5146]">{option.label}</span>
+                        <span className="block text-[10px] text-[#91A399]">{option.hint}</span>
+                      </span>
+                      {mapAppearance === option.id && <Check size={16} className="text-[#2D8A70]"/>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <button type="button" aria-pressed={mapExpanded} onClick={() => setMapExpanded(value => !value)}
+              aria-label={mapExpanded ? "Show business results panel" : "Expand map to full width"}
+              className="hidden h-11 items-center gap-2 rounded-[13px] border border-[#D9E3DB] bg-white px-3 text-[12px] font-semibold text-[#2D574A] shadow-[0_8px_26px_rgba(22,47,42,0.14)] transition-colors hover:bg-[#F5FAF5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8DC4A6] md:inline-flex">
+              {mapExpanded ? <PanelLeftOpen size={18}/> : <PanelLeftClose size={18}/>}
+              <span className="hidden xl:inline">{mapExpanded ? "Show results" : "Full map"}</span>
+            </button>
+          </div>
+
           {pendingArea && (
             <div className="absolute left-1/2 top-5 z-[900] -translate-x-1/2">
               <button
@@ -1227,6 +1269,12 @@ export default function NearbyExplorer() {
           {activeFiltersCount > 0 && <span className="absolute right-[calc(50%-21px)] top-2 h-2 w-2 rounded-full bg-[#3E94C4]"/>}
         </button>
       </nav>
+      <style jsx global>{`
+        .nearby-map-soft .leaflet-tile-pane {
+          filter: saturate(0.58) contrast(0.94) brightness(1.075);
+        }
+        .nearby-map-soft .leaflet-container { background: #f1f2ec; }
+      `}</style>
     </div>
   );
 }
