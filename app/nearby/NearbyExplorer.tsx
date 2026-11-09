@@ -458,8 +458,10 @@ export default function NearbyExplorer() {
     }
   }, []);
 
-  const onMarkerClicked = useCallback((business: NearbyBusiness) => {
-    setSelectedBusiness(business);
+  const onMarkerClicked = useCallback((feature: any) => {
+    // LeafletMap sends GeoJSON features; always extract the actual business.
+    const business = feature?.properties || feature;
+    if (business?.id) setSelectedBusiness(business as NearbyBusiness);
   }, []);
 
   const searchDropdownOpen = searchFocused && searchText.trim().length >= 2;
