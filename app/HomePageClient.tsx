@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -16,9 +16,11 @@ import {
   Navigation,
   Search,
   MapPin,
+  LayoutGrid,
+  ArrowUpRight,
+  ArrowRight,
 } from "lucide-react";
 import * as LucideIcons from "lucide-react";
-import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import dynamic from "next/dynamic";
 import VerifiedBadge from "./components/VerifiedBadge";
@@ -31,42 +33,32 @@ const HeroSearch = dynamic(() => import("./components/HeroSearch"), {
 
 const EMPTY_ARRAY: any[] = [];
 
+const IconComponent = ({
+  name,
+  className,
+}: {
+  name: string | null;
+  className?: string;
+}) => {
+  if (!name) return <Tags className={className} />;
+  const Icon = (LucideIcons as any)[name];
+  return Icon ? (
+    <Icon className={className} />
+  ) : (
+    <Tags className={className} />
+  );
+};
+
+
 export default function HomePageClient() {
   const router = useRouter();
 
-  const IconComponent = ({
-    name,
-    className,
-  }: {
-    name: string | null;
-    className?: string;
-  }) => {
-    if (!name) return <Tags className={className} />;
-    const Icon = (LucideIcons as any)[name];
-    return Icon ? (
-      <Icon className={className} />
-    ) : (
-      <Tags className={className} />
-    );
-  };
-
-  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
-  const [userCoords, setUserCoords] = useState<{
-    lat: number;
-    lng: number;
-  } | null>(null);
+  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [isFetchingLocation, setIsFetchingLocation] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
-  const [isPaused, setIsPaused] = useState(false);
-  const [sliderActive, setSliderActive] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
+  const [canScrollRight, setCanScrollRight] = useState(false);
   const [showAllCategories, setShowAllCategories] = useState(false);
-  const [activePageIndex, setActivePageIndex] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
 
   // Parallax — hero background drifts at 30% of scroll speed
   const heroRef = useRef<HTMLElement>(null);
@@ -121,120 +113,37 @@ export default function HomePageClient() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Only animate the category slider while visible; respect battery saving
-  // and users who prefer reduced motion. No offscreen animation loop.
-  useEffect(() => {
-    const slider = scrollContainerRef.current;
-    if (!slider) return;
-    const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
-    let inView = false;
-    const sync = () => setSliderActive(
-      inView &&
-      document.visibilityState === "visible" &&
-      !motionPreference.matches &&
-      slider.scrollWidth > slider.clientWidth + 5,
-    );
-    const observer = typeof IntersectionObserver !== "undefined"
-      ? new IntersectionObserver(([entry]) => {
-          inView = entry.isIntersecting;
-          sync();
-        }, { rootMargin: "100px 0px", threshold: 0 })
-      : null;
-    if (observer) observer.observe(slider);
-    else { inView = true; sync(); }
-    document.addEventListener("visibilitychange", sync);
-    window.addEventListener("resize", sync);
-    if (motionPreference.addEventListener) motionPreference.addEventListener("change", sync);
-    else motionPreference.addListener(sync);
-    return () => {
-      observer?.disconnect();
-      document.removeEventListener("visibilitychange", sync);
-      window.removeEventListener("resize", sync);
-      if (motionPreference.removeEventListener) motionPreference.removeEventListener("change", sync);
-      else motionPreference.removeListener(sync);
-    };
-  }, [categoriesLoading]);
-
-  useEffect(() => {
-    if (!sliderActive || isPaused || isDragging) return;
-    const slider = scrollContainerRef.current;
-    if (!slider) return;
-    let frame = 0;
-    let previousFrame = 0;
-    // Cap DOM scroll writes around 30 fps rather than every browser frame.
-    const autoScroll = (timestamp: number) => {
-      if (timestamp - previousFrame >= 32) {
-        previousFrame = timestamp;
-        if (slider.scrollWidth > slider.clientWidth + 5) {
-          if (slider.scrollLeft >= slider.scrollWidth - slider.clientWidth - 5) {
-            slider.scrollLeft = 0;
-          } else {
-            slider.scrollLeft += 0.6;
-          }
-        }
-      }
-      frame = requestAnimationFrame(autoScroll);
-    };
-    frame = requestAnimationFrame(autoScroll);
-    return () => cancelAnimationFrame(frame);
-  }, [sliderActive, isPaused, isDragging]);
-
-  const checkScroll = () => {
-    if (scrollContainerRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } =
-        scrollContainerRef.current;
-      setCanScrollLeft(scrollLeft > 0);
-      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 5);
-
-      // Update pagination dots
-      const pages = Math.ceil(scrollWidth / clientWidth);
-      setTotalPages(pages > 1 ? pages : 1);
-      const active = Math.round(scrollLeft / clientWidth);
-      setActivePageIndex(active);
-    }
-  };
-
-  useEffect(() => {
-    if (!categoriesLoading) {
-      setTimeout(checkScroll, 100);
-    }
-  }, [categoriesLoading]);
-
-  useEffect(() => {
-    checkScroll();
-    window.addEventListener("resize", checkScroll);
-    return () => window.removeEventListener("resize", checkScroll);
+  // Browse Categories uses manual navigation only: no perpetual animation loop.
+  const updateScrollControls = useCallback(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    setCanScrollLeft(container.scrollLeft > 8);
+    setCanScrollRight(container.scrollLeft + container.clientWidth < container.scrollWidth - 8);
   }, []);
 
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    updateScrollControls();
+    const observer = typeof ResizeObserver !== "undefined"
+      ? new ResizeObserver(updateScrollControls)
+      : null;
+    observer?.observe(container);
+    window.addEventListener("resize", updateScrollControls);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", updateScrollControls);
+    };
+  }, [categoriesLoading, categories.length, updateScrollControls]);
+
   const scroll = (direction: "left" | "right") => {
-    if (scrollContainerRef.current) {
-      const scrollAmount = 600;
-      scrollContainerRef.current.scrollBy({
-        left: direction === "left" ? -scrollAmount : scrollAmount,
-        behavior: "smooth",
-      });
-    }
-  };
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (!scrollContainerRef.current) return;
-    setIsDragging(true);
-    setStartX(e.pageX - scrollContainerRef.current.offsetLeft);
-    setScrollLeft(scrollContainerRef.current.scrollLeft);
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || !scrollContainerRef.current) return;
-    e.preventDefault();
-    const x = e.pageX - scrollContainerRef.current.offsetLeft;
-    const walk = (x - startX) * 2;
-    scrollContainerRef.current.scrollLeft = scrollLeft - walk;
-    checkScroll();
-  };
-
-  const handleMouseUpOrLeave = () => {
-    setIsDragging(false);
-    setIsPaused(false);
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    const distance = Math.max(230, Math.round(container.clientWidth * 0.75));
+    container.scrollBy({
+      left: direction === "left" ? -distance : distance,
+      behavior: "smooth",
+    });
   };
 
   const handleUseCurrentLocation = (autoSearch: boolean = false) => {
@@ -286,15 +195,8 @@ export default function HomePageClient() {
     router.push(`/nearby?${params.toString()}`);
   };
 
-  const scrollToPage = (index: number) => {
-    if (scrollContainerRef.current) {
-      const { clientWidth } = scrollContainerRef.current;
-      scrollContainerRef.current.scrollTo({
-        left: index * clientWidth,
-        behavior: "smooth",
-      });
-    }
-  };
+  // Keep the homepage light; full category catalog lives at /category.
+  const featuredCategories = categories.slice(0, 24);
 
   return (
     <div className="min-h-[100dvh] bg-white font-normal">
@@ -500,126 +402,166 @@ export default function HomePageClient() {
         </div>
       </section>
 
-      {/* --- CATEGORIES (Slider) --- */}
-      <section className="py-24 px-6 max-w-7xl mx-auto overflow-hidden">
-        <div className="flex justify-between items-center mb-10 px-2">
-          <h2 className="text-2xl text-gray-800 tracking-tight font-normal">
-            Browse Categories
-          </h2>
-          <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center gap-2 mr-2">
-              <button
-                onClick={() => scroll("left")}
-                disabled={!canScrollLeft}
-                className="p-2 border border-gray-200 rounded-full hover:bg-brand-blue hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all text-gray-600"
+      {/* --- BROWSE CATEGORIES: editorial, accessible, and lightweight --- */}
+      <section
+        aria-labelledby="browse-categories-heading"
+        className="relative isolate border-b border-[#E6EBF1] bg-[#F8FAFC] py-20 sm:py-24 lg:py-28"
+      >
+        <div className="pointer-events-none absolute right-0 top-0 h-72 w-72 rounded-full bg-[#C9E2F7]/25 blur-[100px]" aria-hidden="true" />
+        <div className="relative mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12">
+          <div className="mb-10 flex flex-col justify-between gap-8 md:mb-12 lg:flex-row lg:items-end">
+            <div className="max-w-[820px]">
+              <p className="mb-5 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#34668D]">
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-[10px] border border-[#D8E5EF] bg-white text-[#245A80]">
+                  <LayoutGrid size={16} strokeWidth={1.8} />
+                </span>
+                Explore Sri Lanka
+              </p>
+              <h2
+                id="browse-categories-heading"
+                className="text-balance text-[clamp(2.75rem,5vw,5.3rem)] font-semibold leading-[1.08] tracking-[-0.065em] text-[#102B4E]"
               >
-                <ChevronLeft size={20} strokeWidth={2} />
-              </button>
-              <button
-                onClick={() => scroll("right")}
-                disabled={!canScrollRight}
-                className="p-2 border border-gray-200 rounded-full hover:bg-brand-blue hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all text-gray-600"
-              >
-                <ChevronRight size={20} strokeWidth={2} />
-              </button>
+                Browse categories<span className="text-[#3C82B4]">.</span>
+              </h2>
+              <p className="mt-5 max-w-[620px] text-pretty text-[15px] leading-[1.8] text-slate-500 sm:text-[17px]">
+                From everyday essentials to specialized expertise. Explore local
+                businesses and services across Sri Lanka, all in one place.
+              </p>
             </div>
             <Link
               href="/category"
-              className="hidden md:flex text-sm text-brand-gold items-center hover:underline font-normal"
+              className="group inline-flex h-12 w-fit shrink-0 items-center gap-3 rounded-xl border border-[#D7E1EB] bg-white px-5 text-[13px] font-semibold text-[#123B60] shadow-[0_5px_20px_rgba(15,47,74,0.04)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#AFC8DA] hover:shadow-[0_8px_24px_rgba(15,47,74,0.1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
             >
-              View All
+              Explore all categories
+              <ArrowUpRight size={17} className="transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
             </Link>
-            {!showAllCategories && (
-              <button
-                onClick={() => setShowAllCategories(true)}
-                className="md:hidden text-sm text-brand-gold flex items-center hover:underline font-normal"
-              >
-                View All
-              </button>
-            )}
           </div>
-        </div>
 
-        <div
-          ref={scrollContainerRef}
-          onScroll={checkScroll}
-          onMouseEnter={() => setIsPaused(true)}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUpOrLeave}
-          onMouseLeave={handleMouseUpOrLeave}
-          className={cn(
-            "grid grid-cols-4 gap-2 md:grid md:grid-cols-none md:grid-rows-2 md:grid-flow-col md:auto-cols-max md:gap-x-6 md:gap-y-6 px-2 md:overflow-x-auto md:min-h-[450px] no-scrollbar pb-8 select-none",
-            isDragging && "cursor-grabbing",
-          )}
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-        >
-          {categoriesLoading
-            ? [...Array(16)].map((_, i) => (
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+              Discover by industry
+            </p>
+            <div className="hidden items-center gap-2 md:flex">
+              <button
+                type="button"
+                aria-label="Scroll categories left"
+                onClick={() => scroll("left")}
+                disabled={!canScrollLeft}
+                className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[#DDE5EC] bg-white text-[#214965] transition-all duration-150 hover:border-[#B0C8DA] hover:bg-[#ECF5FB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:cursor-not-allowed disabled:opacity-35"
+              >
+                <ChevronLeft size={19} strokeWidth={1.8} />
+              </button>
+              <button
+                type="button"
+                aria-label="Scroll categories right"
+                onClick={() => scroll("right")}
+                disabled={!canScrollRight}
+                className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[#DDE5EC] bg-white text-[#214965] transition-all duration-150 hover:border-[#B0C8DA] hover:bg-[#ECF5FB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:cursor-not-allowed disabled:opacity-35"
+              >
+                <ChevronRight size={19} strokeWidth={1.8} />
+              </button>
+            </div>
+          </div>
+
+          <div
+            ref={scrollContainerRef}
+            onScroll={updateScrollControls}
+            aria-label="Browse business categories"
+            className="grid grid-cols-2 gap-3 sm:gap-4 md:flex md:snap-x md:snap-mandatory md:gap-4 md:overflow-x-auto md:overscroll-x-contain md:pb-6 md:scroll-smooth md:[scrollbar-width:none] md:[&::-webkit-scrollbar]:hidden"
+          >
+            {categoriesLoading ? (
+              Array.from({ length: 8 }, (_, i) => (
                 <div
                   key={i}
-                  className="flex flex-col items-center justify-center p-3 md:p-8 bg-white border border-gray-200 rounded-[8px] md:rounded-[12px] md:min-w-[200px] md:h-full"
+                  aria-hidden="true"
+                  className="flex min-h-[182px] flex-col justify-between rounded-[22px] border border-[#E2E9F0] bg-white p-5 md:h-[228px] md:w-[232px] md:shrink-0"
                 >
-                  <Skeleton className="w-10 h-10 md:w-20 md:h-20 rounded-full mb-2 md:mb-4" />
-                  <Skeleton className="h-2 w-3/4" />
+                  <Skeleton className="h-16 w-16 rounded-2xl" />
+                  <div className="space-y-3">
+                    <Skeleton className="h-4 w-3/4 rounded-md" />
+                    <Skeleton className="h-3 w-1/2 rounded-md" />
+                  </div>
                 </div>
               ))
-            : categories
-                .slice(0, showAllCategories ? categories.length : 1000) // Fallback for desktop
-                .map((cat, idx) => {
-                  // On mobile, if not showAllCategories, only show first 16 (4 rows of 4)
-                  if (!showAllCategories && typeof window !== 'undefined' && window.innerWidth < 768 && idx >= 16) {
-                    return null;
+            ) : featuredCategories.length > 0 ? (
+              featuredCategories.map((cat, idx) => (
+                <button
+                  key={cat.id ?? idx}
+                  type="button"
+                  onClick={() => handleCategoryClick(cat.name)}
+                  aria-label={"Browse " + cat.name}
+                  className={
+                    "group relative min-h-[182px] w-full flex-col justify-between overflow-hidden rounded-[22px] border border-[#E0E7EF] bg-white p-4 text-left shadow-[0_3px_16px_rgba(15,40,67,0.025)] transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-1 hover:border-[#BCD5E8] hover:shadow-[0_12px_30px_rgba(15,40,67,0.09)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 sm:p-5 md:h-[228px] md:w-[232px] md:shrink-0 md:snap-start " +
+                    (!showAllCategories && idx >= 8 ? "hidden md:flex" : "flex")
                   }
-                  return (
-                    <div
-                      key={cat.id || idx}
-                      onClick={() => handleCategoryClick(cat.name)}
-                      className="group cursor-pointer flex flex-col items-center justify-center p-3 md:p-8 bg-white border border-gray-300 rounded md:rounded-[12px] md:min-w-[200px] md:h-full hover:border-brand-gold hover:shadow-xl hover:-translate-y-1 transition-all duration-300 select-none"
-                      onContextMenu={(e) => e.preventDefault()}
-                    >
-                      <div className="relative w-10 h-10 md:w-20 md:h-20 mb-2 md:mb-4 transition-transform group-hover:scale-110 pointer-events-none flex items-center justify-center">
-                        {cat.image_url ? (
-                          <Image
-                            src={encodeURI(cat.image_url)}
-                            alt={cat.name}
-                            fill
-                            className="object-contain"
-                            draggable={false}
-                            unoptimized={cat.image_url.includes('supabase.co')}
-                          />
-                        ) : (
-                          <div className="text-brand-gold scale-[1] md:scale-[2]">
-                            <IconComponent name={cat.icon} />
-                          </div>
-                        )}
-                      </div>
-                      <span className="text-gray-700 text-[10px] md:text-[12px] font-medium text-center group-hover:text-brand-gold transition-colors leading-tight line-clamp-2">
-                        {cat.name}
-                      </span>
+                >
+                  <div aria-hidden="true" className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-[#EAF4FC] opacity-70 transition-transform duration-300 group-hover:scale-110" />
+                  <div className="relative flex w-full items-start justify-between gap-3">
+                    <div className="relative flex h-[58px] w-[58px] shrink-0 items-center justify-center overflow-hidden rounded-[17px] border border-[#E8EFF5] bg-[#F4F8FC] text-[#24638D] sm:h-[66px] sm:w-[66px]">
+                      {cat.image_url ? (
+                        <Image
+                          src={encodeURI(cat.image_url)}
+                          alt=""
+                          fill
+                          sizes="66px"
+                          className="object-contain p-3"
+                          draggable={false}
+                          unoptimized={cat.image_url.includes("supabase.co")}
+                        />
+                      ) : (
+                        <IconComponent name={cat.icon} className="h-7 w-7" />
+                      )}
                     </div>
-                  );
-                })}
-        </div>
-
-        {/* --- PAGINATION DOTS --- */}
-        {totalPages > 1 && (
-          <div className="flex justify-center items-center gap-2.5 mt-4">
-            {[...Array(totalPages)].map((_, i) => (
-              <button
-                key={i}
-                onClick={() => scrollToPage(i)}
-                className={cn(
-                  "w-2 h-2 rounded-full transition-all duration-300",
-                  activePageIndex === i
-                    ? "bg-brand-blue w-6"
-                    : "bg-gray-300 hover:bg-gray-400"
-                )}
-                aria-label={`Go to page ${i + 1}`}
-              />
-            ))}
+                    <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#E4EBF1] bg-white text-[#7B97AB] transition-colors duration-200 group-hover:border-[#C4DAEB] group-hover:bg-[#E9F5FD] group-hover:text-[#164B72]">
+                      <ArrowUpRight size={16} strokeWidth={1.7} />
+                    </span>
+                  </div>
+                  <div className="relative mt-6 w-full">
+                    <span className="mb-2 block text-[10px] font-semibold tracking-[0.1em] text-[#83A1B7]">
+                      {String(idx + 1).padStart(2, "0")}
+                    </span>
+                    <h3 className="line-clamp-2 text-[14px] font-semibold leading-[1.4] tracking-[-0.025em] text-[#183851] transition-colors group-hover:text-[#155D92] sm:text-[17px]">
+                      {cat.name}
+                    </h3>
+                  </div>
+                </button>
+              ))
+            ) : (
+              <div className="col-span-2 flex w-full flex-col items-center justify-center rounded-2xl border border-dashed border-[#CFDCE7] bg-white px-6 py-14 text-center text-slate-500">
+                <LayoutGrid size={26} className="mb-3 text-[#7DA5C5]" />
+                <p className="text-sm font-semibold">No categories available right now.</p>
+                <Link href="/nearby" className="mt-3 text-xs font-semibold text-[#1B628E] hover:underline">
+                  Explore businesses instead
+                </Link>
+              </div>
+            )}
           </div>
-        )}
+
+          {!categoriesLoading && featuredCategories.length > 8 && (
+            <button
+              type="button"
+              onClick={() => setShowAllCategories(value => !value)}
+              className="mx-auto mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#D7E3EC] bg-white px-5 text-[13px] font-semibold text-[#174B72] transition-colors hover:bg-[#EDF5FA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 md:hidden"
+            >
+              {showAllCategories ? "Show fewer categories" : "Show more categories"}
+              <ChevronRight size={16} className={showAllCategories ? "-rotate-90" : "rotate-90"} />
+            </button>
+          )}
+
+          <div className="mt-9 flex flex-col justify-between gap-4 border-t border-[#E1E8EE] pt-6 sm:flex-row sm:items-center">
+            <p className="flex items-center gap-2 text-[13px] text-slate-500">
+              <MapPin size={16} className="shrink-0 text-[#5687AC]" />
+              Discover businesses wherever you are in Sri Lanka.
+            </p>
+            <Link
+              href="/nearby"
+              className="group inline-flex w-fit items-center gap-2 text-[13px] font-semibold text-[#1A557E] transition-colors hover:text-[#0B304F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+            >
+              Find businesses near you
+              <ArrowRight size={16} className="transition-transform duration-150 group-hover:translate-x-1" />
+            </Link>
+          </div>
+        </div>
       </section>
 
       {/* --- LISTINGS (6-Column Modern Grid) --- */}
