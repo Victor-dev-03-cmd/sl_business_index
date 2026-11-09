@@ -527,7 +527,7 @@ export default function NearbyExplorer() {
   const activeFiltersCount = categoryCount + (radius !== 10000 ? 1 : 0) + (verifiedOnly ? 1 : 0) + (withPhotosOnly ? 1 : 0);
 
   return (
-    <div className="flex h-[100dvh] min-h-[500px] w-full flex-col overflow-hidden bg-[#F6F9FC] font-sans text-[#123653]">
+    <div className="flex h-[100dvh] min-h-[500px] w-full flex-col overflow-hidden bg-[#F5F2EB] font-sans text-[#243D38]">
       <header ref={headerRef} className="relative z-[1200] shrink-0 border-b border-[#E5DED2] bg-[#F5F1EB] shadow-[0_6px_25px_rgba(26,49,45,0.09)]">
         {/* Dark editorial navigation gives the map explorer a clear visual hierarchy. */}
         <div className="bg-[#1B3230]">
@@ -887,12 +887,12 @@ export default function NearbyExplorer() {
 
       {/* Desktop split view. Mobile switches between map and results without blocking scrolling. */}
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        <aside id="nearby-results" className={(mobileView === "list" ? "flex" : "hidden") + " w-full min-h-0 flex-col border-r border-[#E0EAF1] bg-[#F7FAFC] md:flex md:w-[420px] md:shrink-0 xl:w-[490px]"} aria-label="Nearby business results">
-          <div className="shrink-0 border-b border-[#E3EBF1] bg-white px-4 pb-4 pt-5 sm:px-6">
+        <aside id="nearby-results" className={(mobileView === "list" ? "flex" : "hidden") + (mapExpanded ? " md:hidden" : " md:flex") + " w-full min-h-0 flex-col border-r border-[#E2DCD1] bg-[#F6F3EE] md:w-[420px] md:shrink-0 xl:w-[490px]"} aria-label="Nearby business results">
+          <div className="shrink-0 border-b border-[#E4DDD2] bg-gradient-to-br from-[#EBE7DC] via-[#F4EFE5] to-[#FAF7F0] px-4 pb-4 pt-5 sm:px-6">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#6489A4]">Explore listings</p>
-                <h2 aria-live="polite" className="mt-1.5 text-[24px] font-semibold tracking-[-0.055em] text-[#123B5A]">
+                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#A27C52]">Your discovery feed</p>
+                <h2 aria-live="polite" className="mt-1.5 text-[24px] font-semibold tracking-[-0.055em] text-[#213C36]">
                   {loadingBusinesses ? "Finding businesses…" : resultsMessage(visibleBusinesses.length)}
                 </h2>
               </div>
@@ -900,22 +900,22 @@ export default function NearbyExplorer() {
             </div>
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
               <div className="flex min-w-0 flex-wrap gap-1.5">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F0F6FA] px-3 py-1.5 text-[11px] font-medium text-[#4E7895]">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-[#E1DACA] bg-white/85 px-3 py-1.5 text-[11px] font-medium text-[#5D766B]">
                   <MapPin size={12} /> {location.label}
                 </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F0F6FA] px-3 py-1.5 text-[11px] font-medium text-[#4E7895]">{formatDistance(radius)} radius</span>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-[#E1DACA] bg-white/85 px-3 py-1.5 text-[11px] font-medium text-[#5D766B]">{formatDistance(radius)} radius</span>
                 {category && <button type="button" onClick={() => applySearch({ category: null })} aria-label="Clear category filter" className="inline-flex items-center gap-1.5 rounded-full bg-[#DDEFFB] px-3 py-1.5 text-[11px] font-semibold text-[#215B80] hover:bg-[#CBE4F5]">{category} <X size={12}/></button>}
                 {appliedQuery && <button type="button" onClick={() => applySearch({ query: "" })} aria-label="Clear search query" className="inline-flex items-center gap-1.5 rounded-full bg-[#DDEFFB] px-3 py-1.5 text-[11px] font-semibold text-[#215B80] hover:bg-[#CBE4F5]">{appliedQuery} <X size={12}/></button>}
               </div>
             </div>
             <div className="mt-4 flex items-center justify-between gap-2">
-              <p className="text-[11px] text-[#8DA3B3]">{sortBy === "nearest" ? "Closest first" : sortBy === "top-rated" ? "Highest rated first" : "A to Z"}</p>
-              <label className="flex items-center gap-2 text-[11px] font-semibold text-[#557B95]">
+              <p className="text-[11px] text-[#8A897C]">{sortBy === "nearest" ? "Closest first" : sortBy === "top-rated" ? "Highest rated first" : "A to Z"}</p>
+              <label className="flex items-center gap-2 text-[11px] font-semibold text-[#62786C]">
                 Sort by
                 <select
                   value={sortBy}
                   onChange={event => setSortBy(event.target.value as SortMode)}
-                  className="rounded-lg border border-[#DDE8F0] bg-white px-2.5 py-2 text-[12px] text-[#234F70] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+                  className="rounded-lg border border-[#DFD8CB] bg-white px-2.5 py-2 text-[12px] text-[#315D4B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
                 >
                   <option value="nearest">Nearest</option>
                   <option value="top-rated">Top rated</option>
@@ -1110,8 +1110,8 @@ export default function NearbyExplorer() {
           </div>
         </aside>
 
-        <main className={(mobileView === "map" ? "flex" : "hidden") + " relative min-h-0 min-w-0 flex-1 flex-col bg-[#E5EFF6] md:flex"} aria-label="Interactive business map">
-          <div className="absolute inset-0">
+        <main className={(mobileView === "map" ? "flex" : "hidden") + " relative min-h-0 min-w-0 flex-1 flex-col bg-[#E8ECE4] md:flex"} aria-label="Interactive business map">
+          <div className={"absolute inset-0 " + (mapAppearance === "soft" ? "nearby-map-soft" : "")}>
             <LeafletMap
               centerLat={mapCenter.lat}
               centerLng={mapCenter.lng}
