@@ -50,7 +50,6 @@ export default function HomePageClient() {
     );
   };
 
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [userCoords, setUserCoords] = useState<{
     lat: number;
@@ -61,6 +60,7 @@ export default function HomePageClient() {
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
+  const [sliderActive, setSliderActive] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
@@ -121,30 +121,63 @@ export default function HomePageClient() {
     staleTime: 5 * 60 * 1000,
   });
 
+  // Only animate the category slider while visible; respect battery saving
+  // and users who prefer reduced motion. No offscreen animation loop.
   useEffect(() => {
-    let animationId: number;
-    const scrollStep = 0.3;
+    const slider = scrollContainerRef.current;
+    if (!slider) return;
+    const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let inView = false;
+    const sync = () => setSliderActive(
+      inView &&
+      document.visibilityState === "visible" &&
+      !motionPreference.matches &&
+      slider.scrollWidth > slider.clientWidth + 5,
+    );
+    const observer = typeof IntersectionObserver !== "undefined"
+      ? new IntersectionObserver(([entry]) => {
+          inView = entry.isIntersecting;
+          sync();
+        }, { rootMargin: "100px 0px", threshold: 0 })
+      : null;
+    if (observer) observer.observe(slider);
+    else { inView = true; sync(); }
+    document.addEventListener("visibilitychange", sync);
+    window.addEventListener("resize", sync);
+    if (motionPreference.addEventListener) motionPreference.addEventListener("change", sync);
+    else motionPreference.addListener(sync);
+    return () => {
+      observer?.disconnect();
+      document.removeEventListener("visibilitychange", sync);
+      window.removeEventListener("resize", sync);
+      if (motionPreference.removeEventListener) motionPreference.removeEventListener("change", sync);
+      else motionPreference.removeListener(sync);
+    };
+  }, [categoriesLoading]);
 
-    const autoScroll = () => {
-      if (scrollContainerRef.current && !isPaused && !isDragging) {
-        const {
-          scrollLeft: sLeft,
-          scrollWidth,
-          clientWidth,
-        } = scrollContainerRef.current;
-
-        if (sLeft >= scrollWidth - clientWidth - 5) {
-          scrollContainerRef.current.scrollLeft = 0;
-        } else {
-          scrollContainerRef.current.scrollLeft += scrollStep;
+  useEffect(() => {
+    if (!sliderActive || isPaused || isDragging) return;
+    const slider = scrollContainerRef.current;
+    if (!slider) return;
+    let frame = 0;
+    let previousFrame = 0;
+    // Cap DOM scroll writes around 30 fps rather than every browser frame.
+    const autoScroll = (timestamp: number) => {
+      if (timestamp - previousFrame >= 32) {
+        previousFrame = timestamp;
+        if (slider.scrollWidth > slider.clientWidth + 5) {
+          if (slider.scrollLeft >= slider.scrollWidth - slider.clientWidth - 5) {
+            slider.scrollLeft = 0;
+          } else {
+            slider.scrollLeft += 0.6;
+          }
         }
       }
-      animationId = requestAnimationFrame(autoScroll);
+      frame = requestAnimationFrame(autoScroll);
     };
-
-    animationId = requestAnimationFrame(autoScroll);
-    return () => cancelAnimationFrame(animationId);
-  }, [isPaused, isDragging]);
+    frame = requestAnimationFrame(autoScroll);
+    return () => cancelAnimationFrame(frame);
+  }, [sliderActive, isPaused, isDragging]);
 
   const checkScroll = () => {
     if (scrollContainerRef.current) {
@@ -341,7 +374,6 @@ export default function HomePageClient() {
                   userCoords={userCoords}
                   isFetchingLocation={isFetchingLocation}
                   handleUseCurrentLocation={handleUseCurrentLocation}
-                  onFocusChange={setIsSearchFocused}
                 />
                 <div className="mt-2.5 flex flex-wrap items-center gap-2 border-t border-white/10 px-0.5 pt-2.5 sm:mt-3 sm:gap-3 sm:pt-3">
                   <button
