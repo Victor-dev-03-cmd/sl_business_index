@@ -1008,7 +1008,21 @@ export default function NearbyExplorer() {
                     <X size={16}/>
                   </button>
                 </div>
-                <div className="mt-4 flex items-center gap-2">
+                <div className="mt-4 flex items-center gap-3 rounded-[16px] bg-[#F3F8FC] p-2.5">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#DFEBF4] text-[#5A91B4]">
+                    {selectedBusiness.logo_url || selectedBusiness.image_url ? (
+                      <img src={selectedBusiness.logo_url || selectedBusiness.image_url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+                    ) : <Building2 size={23} strokeWidth={1.5} />}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[12px] font-semibold text-[#244E69]">{selectedBusiness.city || selectedBusiness.address || "Sri Lanka"}</p>
+                    <div className="mt-1 flex items-center gap-2 text-[11px] text-[#6489A3]">
+                      {typeof selectedBusiness.distance_meters === "number" && <span>{formatDistance(selectedBusiness.distance_meters)} away</span>}
+                      {Number(selectedBusiness.rating) > 0 && <span className="inline-flex items-center gap-1"><Star size={12} className="fill-amber-400 text-amber-400"/>{Number(selectedBusiness.rating).toFixed(1)}</span>}
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center gap-2">
                   <Link href={"/business/" + (selectedBusiness.slug || selectedBusiness.id)} className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-[#123E65] px-4 text-[12px] font-semibold text-white hover:bg-[#205E8B]">
                     View profile <ArrowUpRight size={14}/>
                   </Link>
