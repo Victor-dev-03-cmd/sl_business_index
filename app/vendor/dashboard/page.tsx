@@ -300,6 +300,7 @@ export default function VendorDashboard() {
                 {planLimits?.advanced_analytics ? (
                   <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full flex items-center gap-1 border border-green-100/50">
                     <TrendingUp size={12} /> Advanced
+                  </span>
                 ) : (
                   <Link href="/vendor/billing" className="text-[10px] font-bold text-brand-gold bg-brand-gold/10 px-2 py-1 rounded flex items-center gap-1 border border-brand-gold/20">
                     <Lock size={10} /> Upgrade
