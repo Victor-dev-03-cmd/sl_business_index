@@ -146,7 +146,7 @@ export default function AuthButton({ user }: { user?: AuthUser | null }) {
   return (
     <Link
       href="/login"
-      className="inline-flex h-11 min-w-[104px] items-center justify-center gap-2 rounded-xl border border-[#315E4B] bg-[#1B3430] px-5 text-[13px] font-bold text-[#FFF9EF] shadow-[0_5px_16px_rgba(27,52,48,0.14)] transition-[background-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:bg-[#2F765C] hover:shadow-[0_8px_22px_rgba(27,52,48,0.20)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D1B078] focus-visible:ring-offset-2"
+      className="inline-flex h-11 min-w-[104px] items-center justify-center gap-2 rounded-xl border border-[#2C745A] bg-[#2F765C] px-5 text-[13px] font-bold text-[#FFF9EF] shadow-[0_5px_16px_rgba(28,88,64,0.17)] transition-[background-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-[#CAA36F] hover:bg-[#205640] hover:shadow-[0_8px_22px_rgba(28,88,64,0.24)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D1B078] focus-visible:ring-offset-2"
     >
       Sign In
     </Link>
