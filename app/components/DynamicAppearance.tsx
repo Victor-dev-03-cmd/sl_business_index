@@ -33,26 +33,8 @@ export default function DynamicAppearance() {
 
     const root = document.documentElement;
     
-    // Apply font family
-    if (settings.primary_font) {
-      if (settings.primary_font === 'Outfit') {
-        root.style.setProperty('--font-sans', 'var(--font-outfit), ui-sans-serif, system-ui');
-      } else {
-        root.style.setProperty('--font-sans', `'${settings.primary_font}', sans-serif`);
-        
-        // Inject Google Font if not already present (skip for local BrandFont and Outfit which is preloaded)
-        if (settings.primary_font !== 'BrandFont') {
-          const fontId = `google-font-${settings.primary_font.replace(/\s+/g, '-').toLowerCase()}`;
-          if (!document.getElementById(fontId)) {
-            const link = document.createElement('link');
-            link.id = fontId;
-            link.rel = 'stylesheet';
-            link.href = `https://fonts.googleapis.com/css2?family=${settings.primary_font.replace(/\s/g, '+')}:wght@300;400;500;600;700&display=swap`;
-            document.head.appendChild(link);
-          }
-        }
-      }
-    }
+    // Typography is defined once in the root layout using Inter + Unicode fallbacks.
+    // Do not override it from legacy primary_font values saved in site_settings.
 
     // Apply button border radius via CSS variable
     if (settings.button_border_radius !== undefined) {
