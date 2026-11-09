@@ -10,6 +10,7 @@ import {
   MessageSquare, 
   Users, 
   CreditCard, 
+  Sparkles,
   Settings,
   Search,
   PanelLeftClose,
@@ -30,6 +31,7 @@ import { useUser } from '@/lib/hooks/useUser';
 const vendorMenuItems = [
   { name: 'Home', href: '/', icon: Home },
   { name: 'Dashboard', href: '/vendor/dashboard', icon: LayoutDashboard },
+  { name: 'Growth OS', href: '/vendor/growth', icon: Sparkles },
   { name: 'My Businesses', href: '/vendor/my-businesses', icon: Store },
   { name: 'QR Code', href: '/vendor/qr-code', icon: QrCode },
   { name: 'Marketing', href: '/vendor/marketing', icon: Megaphone },

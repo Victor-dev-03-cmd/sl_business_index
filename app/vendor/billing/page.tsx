@@ -51,7 +51,6 @@ export default function BillingPage() {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [businessCount, setBusinessCount] = useState(0);
-  const [submitting, setSubmitting] = useState(false);
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [featureDefinitions, setFeatureDefinitions] = useState<{ id: string; label: string }[]>([]);
 
@@ -121,43 +120,17 @@ export default function BillingPage() {
     }
   };
 
-  const handleUpgrade = async (plan: SubscriptionPlan) => {
-    const price = billingCycle === 'monthly' ? plan.price_monthly : plan.price_yearly;
-    setSubmitting(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: newSub, error: subError } = await supabase
-        .from('subscriptions')
-        .insert({
-          user_id: user.id,
-          plan_name: plan.name,
-          price: price,
-          billing_cycle: billingCycle,
-          status: 'active',
-          renews_at: new Date(Date.now() + (billingCycle === 'monthly' ? 30 : 365) * 24 * 60 * 60 * 1000).toISOString()
-        })
-        .select()
-        .single();
-
-      if (subError) throw subError;
-
-      await supabase.from('invoices').insert({
-        id: `INV-${Date.now()}`,
-        subscription_id: newSub.id,
-        amount: price,
-        status: 'paid'
-      });
-
-      toast.success(`Successfully upgraded to ${plan.name} plan!`);
-      fetchBillingData();
-    } catch (error) {
-      console.error('Error upgrading:', error);
-      toast.error('Failed to upgrade plan');
-    } finally {
-      setSubmitting(false);
+  // Never activate a paid plan or fabricate a paid invoice from the browser.
+  // Payment gateway + verified webhook integration is a separate release.
+  const handleUpgrade = (plan: SubscriptionPlan) => {
+    if (plan.price_monthly === 0 && plan.price_yearly === 0) {
+      toast.info('Your free plan is managed automatically.');
+      return;
     }
+    const subject = encodeURIComponent('SL Business Index plan upgrade request: ' + plan.name);
+    const body = encodeURIComponent('Hello, I would like to upgrade to the ' + plan.name + ' plan (' + billingCycle + '). Please send the verified payment instructions.');
+    toast.info('Paid upgrades require confirmed payment. Opening an email to our billing team.');
+    window.location.href = 'mailto:slbusinessindex@gmail.com?subject=' + subject + '&body=' + body;
   };
 
   const currentPlan = subscription?.plan_name || 'Free';
@@ -229,26 +202,18 @@ export default function BillingPage() {
           )}
         </div>
 
-        {/* Payment Method */}
-        <div className="bg-white rounded border border-gray-300 p-6 shadow-sm flex flex-col justify-between">
+        {/* Transparent billing state — no fictitious saved payment methods. */}
+        <div className="flex flex-col justify-between rounded-2xl border border-[#DFE7DD] bg-white p-6 shadow-sm">
           <div>
-            <h3 className="text-gray-900 mb-4 flex items-center gap-2">
-              <CreditCard size={18} className="text-gray-500" /> Payment Method
+            <h3 className="mb-4 flex items-center gap-2 font-semibold text-[#1B3430]">
+              <CreditCard size={18} className="text-[#2F765C]" /> Payment & verification
             </h3>
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded border border-gray-300">
-              <div className="w-10 h-6 bg-brand-dark rounded flex items-center justify-center text-[10px] font-bold text-gray-100">VISA</div>
-              <div>
-                <p className="text-sm font-medium text-gray-900">•••• 4242</p>
-                <p className="text-xs text-gray-500">Expires 12/29</p>
-              </div>
-            </div>
+            <p className="text-sm leading-6 text-[#657968]">Secure online payments are not connected yet. We will never mark a plan as paid until payment is independently verified.</p>
           </div>
-          <button 
-            onClick={() => toast.info('Secure payment portal integration is in progress. Please contact billing@slbusiness.com to update your details.')}
-            className="w-full py-2 mt-4 text-sm  text-gray-100 hover:text-gray-200 border border-gray-300 rounded bg-brand-dark transition-colors"
-          >
-            Update Payment Method
-          </button>
+          <a href="mailto:slbusinessindex@gmail.com?subject=Billing%20enquiry"
+            className="mt-5 inline-flex justify-center rounded-xl bg-[#1B3430] px-4 py-3 text-sm font-semibold text-white hover:bg-[#2F765C]">
+            Contact billing support
+          </a>
         </div>
       </div>
 
@@ -269,7 +234,7 @@ export default function BillingPage() {
               onClick={() => setBillingCycle('yearly')}
               className={`px-4 py-1.5 rounded text-sm transition-all ${billingCycle === 'yearly' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
             >
-              Yearly <span className="text-[10px] text-blue-500 font-bold ml-1">-20%</span>
+              Yearly
             </button>
           </div>
         </div>
@@ -341,9 +306,9 @@ export default function BillingPage() {
                       ? 'bg-gray-200 text-gray-400 cursor-default' 
                       : 'bg-brand-dark text-white hover:bg-black'
                   }`}
-                  disabled={plan.name === currentPlan || submitting}
+                  disabled={plan.name === currentPlan}
                 >
-                  {submitting ? <Loader2 className="animate-spin mx-auto" size={18} /> : (plan.name === currentPlan ? 'Current Plan' : 'Upgrade')}
+                  {plan.name === currentPlan ? 'Current Plan' : 'Request Upgrade'}
                 </button>
               </div>
             );
@@ -394,7 +359,7 @@ export default function BillingPage() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <button 
-                        onClick={() => toast.info(`Downloading PDF for invoice ${invoice.id}...`)}
+                        onClick={() => toast.info('Invoice PDF export is not available yet.')}
                         className="text-gray-400 hover:text-gray-600 transition-colors"
                       >
                         <Download size={16} />
