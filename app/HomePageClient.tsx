@@ -243,15 +243,15 @@ export default function HomePageClient() {
       <section
         ref={heroRef}
         aria-labelledby="homepage-hero-title"
-        className="relative isolate bg-[#071B30] text-white"
+        className="relative isolate bg-[#1B3430] text-white"
       >
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
           <motion.div className="absolute inset-0" style={{ y: glowY, opacity: glowOpacity }}>
-            <div className="absolute -left-56 top-0 h-[750px] w-[750px] rounded-full bg-[#174675]/25 blur-[135px]" />
-            <div className="absolute -right-28 top-12 h-[740px] w-[740px] rounded-full bg-[#236FAD]/20 blur-[145px]" />
+            <div className="absolute -left-56 top-0 h-[750px] w-[750px] rounded-full bg-[#26483B]/25 blur-[135px]" />
+            <div className="absolute -right-28 top-12 h-[740px] w-[740px] rounded-full bg-[#36785E]/20 blur-[145px]" />
           </motion.div>
-          <div className="absolute inset-0 opacity-[0.16]" style={{ backgroundImage: "radial-gradient(rgba(185,222,255,0.26) 0.8px,transparent 0.8px)", backgroundSize: "32px 32px" }} />
-          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#82BDEB]/40 to-transparent" />
+          <div className="absolute inset-0 opacity-[0.16]" style={{ backgroundImage: "radial-gradient(rgba(234,194,133,0.22) 0.8px,transparent 0.8px)", backgroundSize: "32px 32px" }} />
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#E7C58E]/40 to-transparent" />
         </div>
 
         <div className="relative mx-auto grid min-h-[540px] max-w-[1500px] items-center gap-7 px-5 pb-12 pt-14 sm:px-8 sm:pb-14 sm:pt-16 lg:min-h-[620px] lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-6 lg:px-12 lg:pb-14 lg:pt-14 xl:gap-10 xl:px-16">
@@ -263,9 +263,9 @@ export default function HomePageClient() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="mb-5 inline-flex max-w-full items-center gap-2.5 rounded-full border border-white/15 bg-white/[0.05] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#C2DEF7] sm:text-[11px]"
+              className="mb-5 inline-flex max-w-full items-center gap-2.5 rounded-full border border-white/15 bg-white/[0.05] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#F0D9AC] sm:text-[11px]"
             >
-              <span className="h-1.5 w-1.5 rounded-full bg-sky-300 shadow-[0_0_14px_rgba(125,211,252,0.8)]" />
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_14px_rgba(231,197,142,0.65)]" />
               Discover Sri Lanka, differently
             </motion.div>
 
@@ -276,7 +276,7 @@ export default function HomePageClient() {
               transition={{ duration: 0.8, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
               className="text-balance text-[clamp(3.3rem,5.4vw,6.35rem)] font-medium leading-[1.055] tracking-[-0.065em] text-white"
             >
-              Discover <span className="bg-gradient-to-r from-[#F7FBFF] via-[#B8DDFD] to-[#67B7F6] bg-clip-text text-transparent">better.</span>
+              Discover <span className="bg-gradient-to-r from-[#F8F7F2] via-[#F0D9AC] to-[#E7C58E] bg-clip-text text-transparent">better.</span>
               <br />
               Grow together.
             </motion.h1>
@@ -285,7 +285,7 @@ export default function HomePageClient() {
               initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.18 }}
-              className="mt-5 max-w-[600px] text-pretty text-[15px] leading-[1.65] text-[#B4C7DB] sm:text-[17px]"
+              className="mt-5 max-w-[600px] text-pretty text-[15px] leading-[1.65] text-[#CADDCB] sm:text-[17px]"
             >
               Discover businesses, services and people worth knowing.
               Your connection to opportunities across Sri Lanka starts here.
@@ -300,11 +300,11 @@ export default function HomePageClient() {
             >
               <div className="rounded-[22px] border border-white/[0.18] bg-white/[0.075] p-2.5 shadow-[0_22px_70px_rgba(0,0,0,0.23)] backdrop-blur-xl sm:p-3">
                 <div className="mb-2 flex items-center justify-between gap-3 px-2 sm:mb-3">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.17em] text-[#BEDBF2]">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.17em] text-[#CADDCB]">
                     What are you looking for?
                   </span>
-                  <span className="hidden items-center gap-1.5 text-[11px] font-medium text-[#8FAFCB] sm:inline-flex">
-                    <span className="h-1.5 w-1.5 rounded-full bg-sky-300" />
+                  <span className="hidden items-center gap-1.5 text-[11px] font-medium text-[#94BAA0] sm:inline-flex">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
                     Search across Sri Lanka
                   </span>
                 </div>
@@ -320,27 +320,27 @@ export default function HomePageClient() {
                     type="button"
                     onClick={() => handleUseCurrentLocation(true)}
                     disabled={isFetchingLocation}
-                    className="group inline-flex min-h-10 items-center justify-center gap-2 rounded-[11px] border border-[#8FC9F2]/25 bg-[#D8EDFC]/[0.10] px-3.5 text-[12px] font-semibold text-[#E8F5FF] transition-all duration-200 hover:border-[#8FC9F2]/50 hover:bg-[#D8EDFC]/[0.18] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 disabled:cursor-wait disabled:opacity-60 sm:px-4 sm:text-[13px]"
+                    className="group inline-flex min-h-10 items-center justify-center gap-2 rounded-[11px] border border-[#E7C58E]/25 bg-[#F0F2E9]/[0.10] px-3.5 text-[12px] font-semibold text-[#F0F2E9] transition-all duration-200 hover:border-[#E7C58E]/50 hover:bg-[#F0F2E9]/[0.18] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 disabled:cursor-wait disabled:opacity-60 sm:px-4 sm:text-[13px]"
                   >
-                    <Navigation size={15} className="text-[#99D5FF] transition-transform group-hover:-translate-y-0.5" />
+                    <Navigation size={15} className="text-[#F0D9AC] transition-transform group-hover:-translate-y-0.5" />
                     {isFetchingLocation ? "Finding location…" : "Explore near me"}
                   </button>
                   <Link
                     href="/category"
-                    className="group inline-flex min-h-10 items-center justify-center gap-2 rounded-[11px] border border-white/[0.12] bg-white/[0.035] px-3.5 text-[12px] font-semibold text-[#D7E9F8] transition-all duration-200 hover:border-white/30 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 sm:px-4 sm:text-[13px]"
+                    className="group inline-flex min-h-10 items-center justify-center gap-2 rounded-[11px] border border-white/[0.12] bg-white/[0.035] px-3.5 text-[12px] font-semibold text-[#E0EADB] transition-all duration-200 hover:border-white/30 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 sm:px-4 sm:text-[13px]"
                   >
-                    <Tags size={15} className="text-[#A7CDEC]" />
+                    <Tags size={15} className="text-[#CADDCB]" />
                     Browse categories
-                    <ChevronRight size={15} className="text-[#A7CDEC] transition-transform group-hover:translate-x-0.5" />
+                    <ChevronRight size={15} className="text-[#CADDCB] transition-transform group-hover:translate-x-0.5" />
                   </Link>
                 </div>
               </div>
-              <p className="mt-3 pl-1 text-[12px] text-[#92ADC7] sm:text-[13px]">
+              <p className="mt-3 pl-1 text-[12px] text-[#94BAA0] sm:text-[13px]">
                 Try “Restaurants in Colombo” or “Electrician in Jaffna”
               </p>
             </motion.div>
 
-            <p className="mt-5 text-[12px] font-medium tracking-wide text-[#81A5C4]">
+            <p className="mt-5 text-[12px] font-medium tracking-wide text-[#75AB8D]">
               Built for discovery. Designed for connection.
             </p>
           </motion.div>
@@ -355,51 +355,51 @@ export default function HomePageClient() {
             role="img"
           >
             <div className="relative aspect-[1.03/1] w-full max-w-[550px]">
-              <div className="absolute inset-[7%] rounded-full border border-[#7CB8E5]/10 bg-[radial-gradient(circle,rgba(34,104,160,0.20)_0%,rgba(11,41,73,0.04)_67%,transparent_74%)]" />
+              <div className="absolute inset-[7%] rounded-full border border-[#94BAA0]/10 bg-[radial-gradient(circle,rgba(52,112,83,0.20)_0%,rgba(17,45,33,0.05)_67%,transparent_74%)]" />
               <motion.div
                 aria-hidden="true"
                 animate={{ rotate: 360 }}
                 transition={{ duration: 90, repeat: Infinity, ease: "linear" }}
-                className="absolute inset-[7%] rounded-full border border-dashed border-[#83C4F3]/20"
+                className="absolute inset-[7%] rounded-full border border-dashed border-[#E7C58E]/20"
               />
               <motion.div
                 aria-hidden="true"
                 animate={{ rotate: -360 }}
                 transition={{ duration: 115, repeat: Infinity, ease: "linear" }}
-                className="absolute inset-[17%] rounded-full border border-[#6FAEE0]/20"
+                className="absolute inset-[17%] rounded-full border border-[#94BAA0]/20"
               />
               <svg viewBox="0 0 600 600" fill="none" aria-hidden="true" className="absolute inset-0 h-full w-full">
                 <defs>
                   <linearGradient id="hero-map-stroke" x1="140" y1="110" x2="460" y2="520" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#93D9FF" stopOpacity="0.95" />
-                    <stop offset="1" stopColor="#267CC1" stopOpacity="0.55" />
+                    <stop stopColor="#F0D9AC" stopOpacity="0.95" />
+                    <stop offset="1" stopColor="#36785E" stopOpacity="0.55" />
                   </linearGradient>
                   <linearGradient id="hero-map-fill" x1="280" y1="125" x2="365" y2="510" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#173F69" stopOpacity="0.94" />
-                    <stop offset="1" stopColor="#0E2E4D" stopOpacity="0.8" />
+                    <stop stopColor="#26483B" stopOpacity="0.94" />
+                    <stop offset="1" stopColor="#1B3430" stopOpacity="0.8" />
                   </linearGradient>
                 </defs>
-                <circle cx="300" cy="300" r="224" stroke="#8ACBF7" strokeOpacity=".14" />
-                <circle cx="300" cy="300" r="170" stroke="#8ACBF7" strokeOpacity=".13" strokeDasharray="4 12" />
+                <circle cx="300" cy="300" r="224" stroke="#E7C58E" strokeOpacity=".14" />
+                <circle cx="300" cy="300" r="170" stroke="#E7C58E" strokeOpacity=".13" strokeDasharray="4 12" />
                 <path d="M299 90C275 119 278 148 264 172C249 198 244 227 261 253C272 269 252 287 259 307C266 331 285 347 290 366C296 394 305 419 322 442C337 463 346 493 366 505C383 509 396 491 390 472C384 452 372 434 375 412C379 391 370 369 358 350C345 329 343 307 354 286C364 266 356 245 343 229C327 210 325 185 322 163C320 134 313 106 299 90Z" fill="url(#hero-map-fill)" stroke="url(#hero-map-stroke)" strokeWidth="2.5" strokeLinejoin="round" />
-                <path d="M278 200L308 277L294 364L357 437M308 277L343 329M294 364L324 404" stroke="#67B8F1" strokeOpacity=".38" strokeWidth="1.5" strokeDasharray="5 8" />
-                <circle cx="278" cy="200" r="5" fill="#A2E4FF" />
-                <circle cx="308" cy="277" r="5" fill="#A2E4FF" />
-                <circle cx="294" cy="364" r="5" fill="#A2E4FF" />
-                <circle cx="357" cy="437" r="5" fill="#A2E4FF" />
-                <motion.circle cx="308" cy="277" r="19" stroke="#9ADDFF" strokeWidth="2" animate={{ r: [10, 25, 10], opacity: [0.7, 0, 0.7] }} transition={{ duration: 3.2, repeat: Infinity, ease: "easeOut" }} />
-                <motion.circle cx="294" cy="364" r="19" stroke="#9ADDFF" strokeWidth="2" animate={{ r: [10, 23, 10], opacity: [0.6, 0, 0.6] }} transition={{ duration: 3.8, repeat: Infinity, delay: 0.5, ease: "easeOut" }} />
+                <path d="M278 200L308 277L294 364L357 437M308 277L343 329M294 364L324 404" stroke="#DCB179" strokeOpacity=".38" strokeWidth="1.5" strokeDasharray="5 8" />
+                <circle cx="278" cy="200" r="5" fill="#F0D9AC" />
+                <circle cx="308" cy="277" r="5" fill="#F0D9AC" />
+                <circle cx="294" cy="364" r="5" fill="#F0D9AC" />
+                <circle cx="357" cy="437" r="5" fill="#F0D9AC" />
+                <motion.circle cx="308" cy="277" r="19" stroke="#F0D9AC" strokeWidth="2" animate={{ r: [10, 25, 10], opacity: [0.7, 0, 0.7] }} transition={{ duration: 3.2, repeat: Infinity, ease: "easeOut" }} />
+                <motion.circle cx="294" cy="364" r="19" stroke="#F0D9AC" strokeWidth="2" animate={{ r: [10, 23, 10], opacity: [0.6, 0, 0.6] }} transition={{ duration: 3.8, repeat: Infinity, delay: 0.5, ease: "easeOut" }} />
               </svg>
 
               <motion.div
                 animate={{ y: [0, -12, 0] }}
                 transition={{ duration: 6.5, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute left-[1%] top-[24%] w-[45%] max-w-[225px] rounded-2xl border border-white/15 bg-[#102E4C]/90 p-4 shadow-[0_25px_55px_rgba(0,0,0,0.25)] backdrop-blur-xl sm:p-5"
+                className="absolute left-[1%] top-[24%] w-[45%] max-w-[225px] rounded-2xl border border-white/15 bg-[#1B3430]/90 p-4 shadow-[0_25px_55px_rgba(0,0,0,0.25)] backdrop-blur-xl sm:p-5"
               >
                 <div className="mb-3 flex items-center gap-2">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-400/15 text-sky-200"><Building2 size={18} /></span>
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-400/15 text-emerald-200"><Building2 size={18} /></span>
                   <div className="min-w-0">
-                    <p className="text-[10px] uppercase tracking-[0.12em] text-sky-300">Find what matters</p>
+                    <p className="text-[10px] uppercase tracking-[0.12em] text-emerald-300">Find what matters</p>
                     <p className="text-sm font-semibold text-white">Local businesses</p>
                   </div>
                 </div>
@@ -412,16 +412,16 @@ export default function HomePageClient() {
               <motion.div
                 animate={{ y: [0, 10, 0] }}
                 transition={{ duration: 7.1, repeat: Infinity, delay: 0.5, ease: "easeInOut" }}
-                className="absolute right-[0%] top-[53%] w-[46%] max-w-[236px] rounded-2xl border border-white/15 bg-[#102E4C]/95 p-4 shadow-[0_25px_60px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:p-5"
+                className="absolute right-[0%] top-[53%] w-[46%] max-w-[236px] rounded-2xl border border-white/15 bg-[#1B3430]/95 p-4 shadow-[0_25px_60px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:p-5"
               >
                 <div className="flex items-center gap-2.5">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#6CC5FF]/15 text-sky-200"><MapPin size={19} /></span>
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#E7C58E]/15 text-emerald-200"><MapPin size={19} /></span>
                   <div>
-                    <p className="text-[10px] uppercase tracking-[0.12em] text-sky-300">Explore nearby</p>
+                    <p className="text-[10px] uppercase tracking-[0.12em] text-emerald-300">Explore nearby</p>
                     <p className="text-sm font-semibold text-white">Sri Lanka</p>
                   </div>
                 </div>
-                <div className="mt-4 flex items-center gap-2 text-[11px] text-[#B4D4EB]">
+                <div className="mt-4 flex items-center gap-2 text-[11px] text-[#CADDCB]">
                   <span className="h-2 w-2 rounded-full bg-emerald-400" />
                   Discover local opportunities
                 </div>
@@ -430,9 +430,9 @@ export default function HomePageClient() {
               <motion.div
                 animate={{ y: [0, -7, 0] }}
                 transition={{ duration: 5.4, repeat: Infinity, delay: 0.8, ease: "easeInOut" }}
-                className="absolute bottom-[8%] left-[19%] inline-flex items-center gap-2 rounded-full border border-[#7AC9FE]/20 bg-[#0A2845]/90 px-4 py-3 text-xs font-semibold text-[#C8E9FF] shadow-xl backdrop-blur-lg"
+                className="absolute bottom-[8%] left-[19%] inline-flex items-center gap-2 rounded-full border border-[#E7C58E]/20 bg-[#152C25]/90 px-4 py-3 text-xs font-semibold text-[#E0EADB] shadow-xl backdrop-blur-lg"
               >
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#75C8FF]/15"><Search size={14} /></span>
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#E7C58E]/15"><Search size={14} /></span>
                 Discover. Connect. Grow.
               </motion.div>
             </div>
@@ -443,32 +443,32 @@ export default function HomePageClient() {
       {/* --- BROWSE CATEGORIES: editorial, accessible, and lightweight --- */}
       <section
         aria-labelledby="browse-categories-heading"
-        className="relative isolate border-b border-[#E6EBF1] bg-[#F8FAFC] py-20 sm:py-24 lg:py-28"
+        className="relative isolate border-b border-[#F0F2E9] bg-[#F8F7F2] py-20 sm:py-24 lg:py-28"
       >
-        <div className="pointer-events-none absolute right-0 top-0 h-72 w-72 rounded-full bg-[#C9E2F7]/25 blur-[100px]" aria-hidden="true" />
+        <div className="pointer-events-none absolute right-0 top-0 h-72 w-72 rounded-full bg-[#F0D9AC]/25 blur-[100px]" aria-hidden="true" />
         <div className="relative mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12">
           <div className="mb-10 flex flex-col justify-between gap-8 md:mb-12 lg:flex-row lg:items-end">
             <div className="max-w-[820px]">
-              <p className="mb-5 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#34668D]">
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-[10px] border border-[#D8E5EF] bg-white text-[#245A80]">
+              <p className="mb-5 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#2B6552]">
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-[10px] border border-[#E0EADB] bg-white text-[#2B6552]">
                   <LayoutGrid size={16} strokeWidth={1.8} />
                 </span>
                 Explore Sri Lanka
               </p>
               <h2
                 id="browse-categories-heading"
-                className="text-balance text-[clamp(2.75rem,5vw,5.3rem)] font-semibold leading-[1.08] tracking-[-0.065em] text-[#102B4E]"
+                className="text-balance text-[clamp(2.75rem,5vw,5.3rem)] font-semibold leading-[1.08] tracking-[-0.065em] text-[#1B3430]"
               >
-                Browse categories<span className="text-[#3C82B4]">.</span>
+                Browse categories<span className="text-[#4A8C70]">.</span>
               </h2>
-              <p className="mt-5 max-w-[620px] text-pretty text-[15px] leading-[1.8] text-slate-500 sm:text-[17px]">
+              <p className="mt-5 max-w-[620px] text-pretty text-[15px] leading-[1.8] text-stone-500 sm:text-[17px]">
                 From everyday essentials to specialized expertise. Explore local
                 businesses and services across Sri Lanka, all in one place.
               </p>
             </div>
             <Link
               href="/category"
-              className="group inline-flex h-12 w-fit shrink-0 items-center gap-3 rounded-xl border border-[#D7E1EB] bg-white px-5 text-[13px] font-semibold text-[#123B60] shadow-[0_5px_20px_rgba(15,47,74,0.04)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#AFC8DA] hover:shadow-[0_8px_24px_rgba(15,47,74,0.1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+              className="group inline-flex h-12 w-fit shrink-0 items-center gap-3 rounded-xl border border-[#E0EADB] bg-white px-5 text-[13px] font-semibold text-[#1B3430] shadow-[0_5px_20px_rgba(15,47,74,0.04)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#B0CFB5] hover:shadow-[0_8px_24px_rgba(15,47,74,0.1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
             >
               Explore all categories
               <ArrowUpRight size={17} className="transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
@@ -476,7 +476,7 @@ export default function HomePageClient() {
           </div>
 
           <div className="mb-5 flex items-center justify-between gap-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-stone-400">
               Discover by industry
             </p>
             <div className="hidden items-center gap-2 md:flex">
@@ -485,7 +485,7 @@ export default function HomePageClient() {
                 aria-label="Scroll categories left"
                 onClick={() => scroll("left")}
                 disabled={!canScrollLeft}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[#DDE5EC] bg-white text-[#214965] transition-all duration-150 hover:border-[#B0C8DA] hover:bg-[#ECF5FB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:cursor-not-allowed disabled:opacity-35"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[#E0EADB] bg-white text-[#26483B] transition-all duration-150 hover:border-[#B0CFB5] hover:bg-[#F0F2E9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 disabled:cursor-not-allowed disabled:opacity-35"
               >
                 <ChevronLeft size={19} strokeWidth={1.8} />
               </button>
@@ -494,7 +494,7 @@ export default function HomePageClient() {
                 aria-label="Scroll categories right"
                 onClick={() => scroll("right")}
                 disabled={!canScrollRight}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[#DDE5EC] bg-white text-[#214965] transition-all duration-150 hover:border-[#B0C8DA] hover:bg-[#ECF5FB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:cursor-not-allowed disabled:opacity-35"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[#E0EADB] bg-white text-[#26483B] transition-all duration-150 hover:border-[#B0CFB5] hover:bg-[#F0F2E9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 disabled:cursor-not-allowed disabled:opacity-35"
               >
                 <ChevronRight size={19} strokeWidth={1.8} />
               </button>
@@ -512,7 +512,7 @@ export default function HomePageClient() {
                 <div
                   key={i}
                   aria-hidden="true"
-                  className="flex min-h-[182px] flex-col justify-between rounded-[22px] border border-[#E2E9F0] bg-white p-5 md:h-[228px] md:w-[232px] md:shrink-0"
+                  className="flex min-h-[182px] flex-col justify-between rounded-[22px] border border-[#F0F2E9] bg-white p-5 md:h-[228px] md:w-[232px] md:shrink-0"
                 >
                   <Skeleton className="h-16 w-16 rounded-2xl" />
                   <div className="space-y-3">
@@ -529,13 +529,13 @@ export default function HomePageClient() {
                   onClick={() => handleCategoryClick(cat.name)}
                   aria-label={"Browse " + cat.name}
                   className={
-                    "group relative min-h-[182px] w-full flex-col justify-between overflow-hidden rounded-[22px] border border-[#E0E7EF] bg-white p-4 text-left shadow-[0_3px_16px_rgba(15,40,67,0.025)] transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-1 hover:border-[#BCD5E8] hover:shadow-[0_12px_30px_rgba(15,40,67,0.09)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 sm:p-5 md:h-[228px] md:w-[232px] md:shrink-0 md:snap-start " +
+                    "group relative min-h-[182px] w-full flex-col justify-between overflow-hidden rounded-[22px] border border-[#E0EADB] bg-white p-4 text-left shadow-[0_3px_16px_rgba(15,40,67,0.025)] transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-1 hover:border-[#CADDCB] hover:shadow-[0_12px_30px_rgba(15,40,67,0.09)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 sm:p-5 md:h-[228px] md:w-[232px] md:shrink-0 md:snap-start " +
                     (!showAllCategories && idx >= 8 ? "hidden md:flex" : "flex")
                   }
                 >
-                  <div aria-hidden="true" className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-[#EAF4FC] opacity-70 transition-transform duration-300 group-hover:scale-110" />
+                  <div aria-hidden="true" className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-[#F0F2E9] opacity-70 transition-transform duration-300 group-hover:scale-110" />
                   <div className="relative flex w-full items-start justify-between gap-3">
-                    <div className="relative flex h-[58px] w-[58px] shrink-0 items-center justify-center overflow-hidden rounded-[17px] border border-[#E8EFF5] bg-[#F4F8FC] text-[#24638D] sm:h-[66px] sm:w-[66px]">
+                    <div className="relative flex h-[58px] w-[58px] shrink-0 items-center justify-center overflow-hidden rounded-[17px] border border-[#F0F2E9] bg-[#F8F7F2] text-[#2B6552] sm:h-[66px] sm:w-[66px]">
                       {cat.image_url ? (
                         <Image
                           src={encodeURI(cat.image_url)}
@@ -550,25 +550,25 @@ export default function HomePageClient() {
                         <IconComponent name={cat.icon} className="h-7 w-7" />
                       )}
                     </div>
-                    <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#E4EBF1] bg-white text-[#7B97AB] transition-colors duration-200 group-hover:border-[#C4DAEB] group-hover:bg-[#E9F5FD] group-hover:text-[#164B72]">
+                    <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#F0F2E9] bg-white text-[#75AB8D] transition-colors duration-200 group-hover:border-[#CADDCB] group-hover:bg-[#F0F2E9] group-hover:text-[#26483B]">
                       <ArrowUpRight size={16} strokeWidth={1.7} />
                     </span>
                   </div>
                   <div className="relative mt-6 w-full">
-                    <span className="mb-2 block text-[10px] font-semibold tracking-[0.1em] text-[#83A1B7]">
+                    <span className="mb-2 block text-[10px] font-semibold tracking-[0.1em] text-[#75AB8D]">
                       {String(idx + 1).padStart(2, "0")}
                     </span>
-                    <h3 className="line-clamp-2 text-[14px] font-semibold leading-[1.4] tracking-[-0.025em] text-[#183851] transition-colors group-hover:text-[#155D92] sm:text-[17px]">
+                    <h3 className="line-clamp-2 text-[14px] font-semibold leading-[1.4] tracking-[-0.025em] text-[#1B3430] transition-colors group-hover:text-[#2B6552] sm:text-[17px]">
                       {cat.name}
                     </h3>
                   </div>
                 </button>
               ))
             ) : (
-              <div className="col-span-2 flex w-full flex-col items-center justify-center rounded-2xl border border-dashed border-[#CFDCE7] bg-white px-6 py-14 text-center text-slate-500">
-                <LayoutGrid size={26} className="mb-3 text-[#7DA5C5]" />
+              <div className="col-span-2 flex w-full flex-col items-center justify-center rounded-2xl border border-dashed border-[#E0EADB] bg-white px-6 py-14 text-center text-stone-500">
+                <LayoutGrid size={26} className="mb-3 text-[#75AB8D]" />
                 <p className="text-sm font-semibold">No categories available right now.</p>
-                <Link href="/nearby" className="mt-3 text-xs font-semibold text-[#1B628E] hover:underline">
+                <Link href="/nearby" className="mt-3 text-xs font-semibold text-[#2B6552] hover:underline">
                   Explore businesses instead
                 </Link>
               </div>
@@ -579,21 +579,21 @@ export default function HomePageClient() {
             <button
               type="button"
               onClick={() => setShowAllCategories(value => !value)}
-              className="mx-auto mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#D7E3EC] bg-white px-5 text-[13px] font-semibold text-[#174B72] transition-colors hover:bg-[#EDF5FA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 md:hidden"
+              className="mx-auto mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#E0EADB] bg-white px-5 text-[13px] font-semibold text-[#26483B] transition-colors hover:bg-[#F0F2E9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 md:hidden"
             >
               {showAllCategories ? "Show fewer categories" : "Show more categories"}
               <ChevronRight size={16} className={showAllCategories ? "-rotate-90" : "rotate-90"} />
             </button>
           )}
 
-          <div className="mt-9 flex flex-col justify-between gap-4 border-t border-[#E1E8EE] pt-6 sm:flex-row sm:items-center">
-            <p className="flex items-center gap-2 text-[13px] text-slate-500">
-              <MapPin size={16} className="shrink-0 text-[#5687AC]" />
+          <div className="mt-9 flex flex-col justify-between gap-4 border-t border-[#E0EADB] pt-6 sm:flex-row sm:items-center">
+            <p className="flex items-center gap-2 text-[13px] text-stone-500">
+              <MapPin size={16} className="shrink-0 text-[#4A8C70]" />
               Discover businesses wherever you are in Sri Lanka.
             </p>
             <Link
               href="/nearby"
-              className="group inline-flex w-fit items-center gap-2 text-[13px] font-semibold text-[#1A557E] transition-colors hover:text-[#0B304F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+              className="group inline-flex w-fit items-center gap-2 text-[13px] font-semibold text-[#26483B] transition-colors hover:text-[#1B3430] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
             >
               Find businesses near you
               <ArrowRight size={16} className="transition-transform duration-150 group-hover:translate-x-1" />
@@ -605,32 +605,32 @@ export default function HomePageClient() {
       {/* --- FEATURED LISTINGS: premium portrait business showcase --- */}
       <section
         aria-labelledby="featured-listings-title"
-        className="relative isolate overflow-hidden border-b border-[#E7EDF2] bg-white py-20 sm:py-24 lg:py-28"
+        className="relative isolate overflow-hidden border-b border-[#F0F2E9] bg-white py-20 sm:py-24 lg:py-28"
       >
-        <div className="pointer-events-none absolute -left-48 top-0 h-[500px] w-[500px] rounded-full bg-[#D8ECFB]/20 blur-[120px]" aria-hidden="true" />
+        <div className="pointer-events-none absolute -left-48 top-0 h-[500px] w-[500px] rounded-full bg-[#F0F2E9]/20 blur-[120px]" aria-hidden="true" />
         <div className="relative mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12">
           <div className="mb-9 flex flex-col justify-between gap-7 sm:mb-11 lg:flex-row lg:items-end">
             <div className="max-w-[780px]">
-              <p className="mb-5 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#34668D]">
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-[10px] border border-[#D8E5EF] bg-[#F3F8FC] text-[#245A80]">
+              <p className="mb-5 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#2B6552]">
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-[10px] border border-[#E0EADB] bg-[#F8F7F2] text-[#2B6552]">
                   <Star size={16} strokeWidth={1.8} />
                 </span>
                 The spotlight
               </p>
               <h2
                 id="featured-listings-title"
-                className="text-balance text-[clamp(2.7rem,5vw,5.2rem)] font-semibold leading-[1.08] tracking-[-0.065em] text-[#102B4E]"
+                className="text-balance text-[clamp(2.7rem,5vw,5.2rem)] font-semibold leading-[1.08] tracking-[-0.065em] text-[#1B3430]"
               >
-                Featured listings<span className="text-[#3C82B4]">.</span>
+                Featured listings<span className="text-[#4A8C70]">.</span>
               </h2>
-              <p className="mt-5 max-w-[620px] text-pretty text-[15px] leading-[1.8] text-slate-500 sm:text-[17px]">
+              <p className="mt-5 max-w-[620px] text-pretty text-[15px] leading-[1.8] text-stone-500 sm:text-[17px]">
                 Discover businesses and services across Sri Lanka,
                 presented in a fresh perspective.
               </p>
             </div>
             <Link
               href="/nearby"
-              className="group inline-flex h-12 w-fit shrink-0 items-center gap-3 rounded-xl border border-[#D7E1EB] bg-[#F8FBFD] px-5 text-[13px] font-semibold text-[#123B60] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#AFC8DA] hover:bg-white hover:shadow-[0_8px_22px_rgba(15,47,74,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+              className="group inline-flex h-12 w-fit shrink-0 items-center gap-3 rounded-xl border border-[#E0EADB] bg-[#F8F7F2] px-5 text-[13px] font-semibold text-[#1B3430] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#B0CFB5] hover:bg-white hover:shadow-[0_8px_22px_rgba(15,47,74,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
             >
               Explore businesses
               <ArrowUpRight size={17} className="transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
@@ -638,7 +638,7 @@ export default function HomePageClient() {
           </div>
 
           <div className="mb-5 flex items-center justify-between gap-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-stone-400">
               Discover a business worth knowing
             </p>
             <div className="flex items-center gap-2">
@@ -648,7 +648,7 @@ export default function HomePageClient() {
                 disabled={!canFeaturedScrollLeft}
                 aria-label="Scroll featured listings left"
                 aria-controls="featured-listings-carousel"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#DEE7EE] bg-white text-[#214965] transition-colors hover:border-[#B0C8DA] hover:bg-[#F0F7FC] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:cursor-not-allowed disabled:opacity-35 sm:h-11 sm:w-11"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#E0EADB] bg-white text-[#26483B] transition-colors hover:border-[#B0CFB5] hover:bg-[#F8F7F2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 disabled:cursor-not-allowed disabled:opacity-35 sm:h-11 sm:w-11"
               >
                 <ChevronLeft size={19} strokeWidth={1.8} />
               </button>
@@ -658,7 +658,7 @@ export default function HomePageClient() {
                 disabled={!canFeaturedScrollRight}
                 aria-label="Scroll featured listings right"
                 aria-controls="featured-listings-carousel"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#DEE7EE] bg-white text-[#214965] transition-colors hover:border-[#B0C8DA] hover:bg-[#F0F7FC] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:cursor-not-allowed disabled:opacity-35 sm:h-11 sm:w-11"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#E0EADB] bg-white text-[#26483B] transition-colors hover:border-[#B0CFB5] hover:bg-[#F8F7F2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 disabled:cursor-not-allowed disabled:opacity-35 sm:h-11 sm:w-11"
               >
                 <ChevronRight size={19} strokeWidth={1.8} />
               </button>
@@ -677,19 +677,19 @@ export default function HomePageClient() {
                 <div
                   key={i}
                   aria-hidden="true"
-                  className="relative aspect-[9/16] w-[178px] shrink-0 snap-start overflow-hidden rounded-[22px] bg-slate-100 sm:w-[207px] lg:w-[229px]"
+                  className="relative aspect-[9/16] w-[178px] shrink-0 snap-start overflow-hidden rounded-[22px] bg-stone-100 sm:w-[207px] lg:w-[229px]"
                 >
                   <Skeleton className="absolute inset-0 h-full w-full rounded-none" />
                   <div className="absolute bottom-0 left-0 right-0 space-y-3 p-5">
-                    <Skeleton className="h-4 w-4/5 bg-slate-200" />
-                    <Skeleton className="h-3 w-1/2 bg-slate-200" />
+                    <Skeleton className="h-4 w-4/5 bg-stone-200" />
+                    <Skeleton className="h-3 w-1/2 bg-stone-200" />
                   </div>
                 </div>
               ))
             ) : featuredError ? (
               <div className="flex min-h-[250px] w-full flex-col items-center justify-center rounded-[22px] border border-rose-100 bg-rose-50/40 px-6 text-center">
-                <p className="text-sm font-semibold text-slate-800">Featured listings are unavailable right now.</p>
-                <p className="mt-2 text-xs text-slate-500">Please refresh the page or try again shortly.</p>
+                <p className="text-sm font-semibold text-stone-800">Featured listings are unavailable right now.</p>
+                <p className="mt-2 text-xs text-stone-500">Please refresh the page or try again shortly.</p>
               </div>
             ) : featuredBusinesses.length > 0 ? (
               featuredBusinesses.map((business) => (
@@ -697,7 +697,7 @@ export default function HomePageClient() {
                   key={business.id}
                   href={`/business/${business.slug || business.id}`}
                   aria-label={`View ${business.name} business profile`}
-                  className="group relative isolate block aspect-[9/16] w-[178px] shrink-0 snap-start overflow-hidden rounded-[22px] border border-[#DFE7EF] bg-[#132F49] shadow-[0_6px_23px_rgba(15,40,67,0.07)] transition-[border-color,transform,box-shadow] duration-200 hover:-translate-y-1 hover:border-[#A9CBDE] hover:shadow-[0_16px_36px_rgba(15,40,67,0.19)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 sm:w-[207px] lg:w-[229px] xl:w-[237px]"
+                  className="group relative isolate block aspect-[9/16] w-[178px] shrink-0 snap-start overflow-hidden rounded-[22px] border border-[#E0EADB] bg-[#1B3430] shadow-[0_6px_23px_rgba(15,40,67,0.07)] transition-[border-color,transform,box-shadow] duration-200 hover:-translate-y-1 hover:border-[#B0CFB5] hover:shadow-[0_16px_36px_rgba(15,40,67,0.19)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 sm:w-[207px] lg:w-[229px] xl:w-[237px]"
                 >
                   {/* 9:16 visual works with landscape photos as well as portrait images. */}
                   <div className="absolute inset-0 overflow-hidden">
@@ -710,25 +710,25 @@ export default function HomePageClient() {
                         className="object-cover transition-transform duration-500 motion-safe:group-hover:scale-[1.045]"
                       />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#1C4C75] via-[#153958] to-[#0B2238]">
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#26483B] via-[#1B3430] to-[#152C25]">
                         {business.logo_url ? (
                           <div className="relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-[24px] border border-white/15 bg-white/95 p-4 shadow-xl">
                             <Image src={business.logo_url} alt={business.name} fill sizes="112px" className="object-contain p-4" />
                           </div>
                         ) : (
-                          <Building2 size={60} strokeWidth={1.1} className="text-[#A7D5F2]/75" />
+                          <Building2 size={60} strokeWidth={1.1} className="text-[#F0D9AC]/75" />
                         )}
                       </div>
                     )}
                   </div>
 
                   {/* Contrast stays legible without requiring hover or animation. */}
-                  <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#051523] via-[#051523]/65 via-[39%] to-transparent" />
+                  <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0D211B] via-[#0D211B]/65 via-[39%] to-transparent" />
                   <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/45 to-transparent" />
 
                   <div className="absolute inset-x-0 top-0 z-10 flex flex-wrap items-start justify-between gap-1.5 p-3 sm:p-4">
                     {business.is_verified && business.can_show_badge ? (
-                      <span className="inline-flex items-center gap-1 rounded-full border border-white/20 bg-[#EAF6FF]/95 px-2.5 py-1 text-[10px] font-bold text-[#15557D] shadow-sm">
+                      <span className="inline-flex items-center gap-1 rounded-full border border-white/20 bg-[#F0F2E9]/95 px-2.5 py-1 text-[10px] font-bold text-[#26483B] shadow-sm">
                         <VerifiedBadge size={12} /> Verified
                       </span>
                     ) : (
@@ -745,21 +745,21 @@ export default function HomePageClient() {
                   </div>
 
                   <div className="absolute inset-x-0 bottom-0 z-10 p-3.5 text-white sm:p-5">
-                    <span className="mb-2 inline-block max-w-full truncate rounded-full border border-white/20 bg-white/15 px-2.5 py-1 text-[10px] font-semibold text-[#E4F3FF]">
+                    <span className="mb-2 inline-block max-w-full truncate rounded-full border border-white/20 bg-white/15 px-2.5 py-1 text-[10px] font-semibold text-[#F0F2E9]">
                       {business.category || "Local business"}
                     </span>
                     <h3 className="line-clamp-2 text-[17px] font-semibold leading-[1.25] tracking-[-0.035em] drop-shadow-sm sm:text-[20px]">
                       {business.name}
                     </h3>
                     {business.address && (
-                      <p className="mt-2 flex min-w-0 items-center gap-1.5 text-[11px] font-medium text-[#CDDCE9]">
+                      <p className="mt-2 flex min-w-0 items-center gap-1.5 text-[11px] font-medium text-[#E0EADB]">
                         <MapPin size={12} className="shrink-0" />
                         <span className="truncate">{business.address}</span>
                       </p>
                     )}
                     <div className="mt-4 flex items-center justify-between border-t border-white/20 pt-3 text-[11px] font-semibold text-white/90">
                       <span>View business</span>
-                      <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/25 bg-white/15 transition-colors group-hover:bg-white group-hover:text-[#0C3154]">
+                      <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/25 bg-white/15 transition-colors group-hover:bg-white group-hover:text-[#1B3430]">
                         <ArrowUpRight size={15} />
                       </span>
                     </div>
@@ -767,24 +767,24 @@ export default function HomePageClient() {
                 </Link>
               ))
             ) : (
-              <div className="flex min-h-[270px] w-full flex-col items-center justify-center rounded-[22px] border border-dashed border-[#CFDCE7] bg-[#F8FBFD] px-6 text-center">
-                <Building2 size={30} className="text-[#7DA5C5]" />
-                <h3 className="mt-4 text-base font-semibold text-[#123A5B]">No featured businesses yet</h3>
-                <p className="mt-2 max-w-sm text-sm text-slate-500">
+              <div className="flex min-h-[270px] w-full flex-col items-center justify-center rounded-[22px] border border-dashed border-[#E0EADB] bg-[#F8F7F2] px-6 text-center">
+                <Building2 size={30} className="text-[#75AB8D]" />
+                <h3 className="mt-4 text-base font-semibold text-[#1B3430]">No featured businesses yet</h3>
+                <p className="mt-2 max-w-sm text-sm text-stone-500">
                   Browse businesses across Sri Lanka while new listings are being added.
                 </p>
-                <Link href="/nearby" className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[#195780] hover:underline">
+                <Link href="/nearby" className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[#26483B] hover:underline">
                   Explore businesses <ArrowRight size={16} />
                 </Link>
               </div>
             )}
           </div>
 
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-[#EDF1F5] pt-6">
-            <p className="text-[12px] text-slate-500">
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-[#F0F2E9] pt-6">
+            <p className="text-[12px] text-stone-500">
               Swipe or use the arrows to explore featured businesses.
             </p>
-            <Link href="/nearby" className="inline-flex items-center gap-2 text-[12px] font-semibold text-[#195780] hover:text-[#0A304F]">
+            <Link href="/nearby" className="inline-flex items-center gap-2 text-[12px] font-semibold text-[#26483B] hover:text-[#1B3430]">
               Explore nearby listings <ArrowRight size={15} />
             </Link>
           </div>
@@ -793,22 +793,22 @@ export default function HomePageClient() {
 
 
       {/* --- HOW DISCOVERY WORKS --- */}
-      <section aria-labelledby="discovery-process-heading" className="relative bg-[#F8FAFC] py-20 sm:py-24 lg:py-28">
+      <section aria-labelledby="discovery-process-heading" className="relative bg-[#F8F7F2] py-20 sm:py-24 lg:py-28">
         <div className="mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12">
           <div className="flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
             <div className="max-w-[790px]">
-              <p className="mb-5 flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.17em] text-[#34688C]">
-                <span className="h-px w-9 bg-[#5B8FAE]" />
+              <p className="mb-5 flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.17em] text-[#2B6552]">
+                <span className="h-px w-9 bg-[#4A8C70]" />
                 A simpler way to discover
               </p>
-              <h2 id="discovery-process-heading" className="text-balance text-[clamp(2.65rem,5vw,5.1rem)] font-semibold leading-[1.08] tracking-[-0.065em] text-[#102B4E]">
-                Find more. <span className="text-[#4085B6]">Go further.</span>
+              <h2 id="discovery-process-heading" className="text-balance text-[clamp(2.65rem,5vw,5.1rem)] font-semibold leading-[1.08] tracking-[-0.065em] text-[#1B3430]">
+                Find more. <span className="text-[#4A8C70]">Go further.</span>
               </h2>
-              <p className="mt-5 max-w-[610px] text-[15px] leading-[1.8] text-slate-500 sm:text-[17px]">
+              <p className="mt-5 max-w-[610px] text-[15px] leading-[1.8] text-stone-500 sm:text-[17px]">
                 A thoughtful way to connect with the businesses, services and local expertise you need — wherever you are in Sri Lanka.
               </p>
             </div>
-            <Link href="/nearby" className="group inline-flex h-12 w-fit shrink-0 items-center gap-2.5 rounded-xl bg-[#10395D] px-5 text-[13px] font-semibold text-white transition-colors hover:bg-[#1B5682] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2">
+            <Link href="/nearby" className="group inline-flex h-12 w-fit shrink-0 items-center gap-2.5 rounded-xl bg-[#1B3430] px-5 text-[13px] font-semibold text-white transition-colors hover:bg-[#26483B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2">
               Start exploring <ArrowUpRight size={17} className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
             </Link>
           </div>
@@ -836,44 +836,44 @@ export default function HomePageClient() {
             ].map((step) => {
               const Icon = step.icon;
               return (
-                <div key={step.index} className="group relative flex min-h-[300px] flex-col overflow-hidden rounded-[26px] border border-[#DFE9F0] bg-white p-7 shadow-[0_8px_24px_rgba(13,45,75,0.025)] transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-1 hover:border-[#B7D2E5] hover:shadow-[0_16px_36px_rgba(13,45,75,0.08)] sm:p-8">
-                  <div aria-hidden="true" className="pointer-events-none absolute -right-14 -top-16 h-44 w-44 rounded-full bg-[#E9F5FD] opacity-60" />
+                <div key={step.index} className="group relative flex min-h-[300px] flex-col overflow-hidden rounded-[26px] border border-[#E0EADB] bg-white p-7 shadow-[0_8px_24px_rgba(13,45,75,0.025)] transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-1 hover:border-[#CADDCB] hover:shadow-[0_16px_36px_rgba(13,45,75,0.08)] sm:p-8">
+                  <div aria-hidden="true" className="pointer-events-none absolute -right-14 -top-16 h-44 w-44 rounded-full bg-[#F0F2E9] opacity-60" />
                   <div className="relative flex items-start justify-between">
-                    <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-[#D9E8F2] bg-[#F0F7FC] text-[#27678F]">
+                    <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-[#E0EADB] bg-[#F8F7F2] text-[#2B6552]">
                       <Icon size={25} strokeWidth={1.65} />
                     </span>
-                    <span className="text-[12px] font-semibold tracking-[0.12em] text-[#9AB2C4]">{step.index}</span>
+                    <span className="text-[12px] font-semibold tracking-[0.12em] text-[#94BAA0]">{step.index}</span>
                   </div>
                   <div className="relative mt-auto pt-12">
-                    <h3 className="text-[22px] font-semibold leading-[1.25] tracking-[-0.04em] text-[#123452]">{step.title}</h3>
-                    <p className="mt-3 max-w-[340px] text-[14px] leading-[1.75] text-slate-500">{step.description}</p>
+                    <h3 className="text-[22px] font-semibold leading-[1.25] tracking-[-0.04em] text-[#1B3430]">{step.title}</h3>
+                    <p className="mt-3 max-w-[340px] text-[14px] leading-[1.75] text-stone-500">{step.description}</p>
                   </div>
                 </div>
               );
             })}
           </div>
-          <div className="mt-8 flex flex-wrap items-center gap-x-7 gap-y-3 text-[12px] font-medium text-[#6B879C]">
-            <span className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[#66ADD8]" /> Explore categories</span>
-            <span className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[#66ADD8]" /> Discover nearby</span>
-            <span className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[#66ADD8]" /> Connect directly</span>
+          <div className="mt-8 flex flex-wrap items-center gap-x-7 gap-y-3 text-[12px] font-medium text-[#4A8C70]">
+            <span className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[#75AB8D]" /> Explore categories</span>
+            <span className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[#75AB8D]" /> Discover nearby</span>
+            <span className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[#75AB8D]" /> Connect directly</span>
           </div>
         </div>
       </section>
 
       {/* --- DISCOVERY CTA: static, lightweight and functional --- */}
-      <section aria-labelledby="discover-nearby-title" className="border-y border-[#E7EDF2] bg-white py-18 sm:py-20">
+      <section aria-labelledby="discover-nearby-title" className="border-y border-[#F0F2E9] bg-white py-18 sm:py-20">
         <div className="mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12">
-          <div className="relative isolate grid items-center gap-9 overflow-hidden rounded-[30px] bg-[#0C2C4B] px-6 py-12 sm:px-10 sm:py-14 lg:grid-cols-[1fr_0.72fr] lg:gap-16 lg:px-14 lg:py-16">
+          <div className="relative isolate grid items-center gap-9 overflow-hidden rounded-[30px] bg-[#1B3430] px-6 py-12 sm:px-10 sm:py-14 lg:grid-cols-[1fr_0.72fr] lg:gap-16 lg:px-14 lg:py-16">
             <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-              <div className="absolute -left-28 -top-32 h-80 w-80 rounded-full bg-[#3E88BE]/15 blur-[85px]" />
-              <div className="absolute -right-32 bottom-0 h-80 w-80 rounded-full bg-[#46B2F4]/10 blur-[95px]" />
+              <div className="absolute -left-28 -top-32 h-80 w-80 rounded-full bg-[#4A8C70]/15 blur-[85px]" />
+              <div className="absolute -right-32 bottom-0 h-80 w-80 rounded-full bg-[#DCB179]/10 blur-[95px]" />
             </div>
             <div className="relative z-10">
-              <p className="text-[11px] font-bold uppercase tracking-[0.19em] text-[#A0D5F5]">Explore around you</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.19em] text-[#F0D9AC]">Explore around you</p>
               <h2 id="discover-nearby-title" className="mt-5 max-w-[650px] text-balance text-[clamp(2.4rem,4vw,4.4rem)] font-semibold leading-[1.09] tracking-[-0.06em] text-white">
                 Discover more, right where you are.
               </h2>
-              <p className="mt-5 max-w-[530px] text-[15px] leading-[1.8] text-[#BCD1E2]">
+              <p className="mt-5 max-w-[530px] text-[15px] leading-[1.8] text-[#CADDCB]">
                 Search businesses, choose an area and explore local services in a few simple steps.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
@@ -881,24 +881,24 @@ export default function HomePageClient() {
                   type="button"
                   onClick={() => handleUseCurrentLocation(true)}
                   disabled={isFetchingLocation}
-                  className="inline-flex min-h-12 items-center justify-center gap-2.5 rounded-xl bg-white px-5 text-[13px] font-bold text-[#103858] transition-colors hover:bg-[#E8F5FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 disabled:cursor-wait disabled:opacity-60"
+                  className="inline-flex min-h-12 items-center justify-center gap-2.5 rounded-xl bg-white px-5 text-[13px] font-bold text-[#1B3430] transition-colors hover:bg-[#F0F2E9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 disabled:cursor-wait disabled:opacity-60"
                 >
                   <Navigation size={17} />
                   {isFetchingLocation ? "Finding your location…" : "Explore near me"}
                 </button>
-                <Link href="/category" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/25 px-5 text-[13px] font-semibold text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300">
+                <Link href="/category" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/25 px-5 text-[13px] font-semibold text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">
                   Browse categories <ArrowUpRight size={16} />
                 </Link>
               </div>
             </div>
             <div className="relative z-10 flex min-h-[220px] items-center justify-center overflow-hidden rounded-[24px] border border-white/15 bg-white/[0.06] p-6 sm:min-h-[270px]">
-              <div aria-hidden="true" className="absolute -left-20 -top-20 h-56 w-56 rounded-full border border-[#78BCE9]/20" />
-              <div aria-hidden="true" className="absolute -right-14 -bottom-28 h-72 w-72 rounded-full border border-[#78BCE9]/20" />
-              <div className="relative w-full max-w-[350px] rounded-[22px] border border-[#83BCE5]/20 bg-[#163F60] p-5 shadow-[0_24px_55px_rgba(0,0,0,0.2)]">
+              <div aria-hidden="true" className="absolute -left-20 -top-20 h-56 w-56 rounded-full border border-[#E7C58E]/20" />
+              <div aria-hidden="true" className="absolute -right-14 -bottom-28 h-72 w-72 rounded-full border border-[#E7C58E]/20" />
+              <div className="relative w-full max-w-[350px] rounded-[22px] border border-[#94BAA0]/20 bg-[#1B3430] p-5 shadow-[0_24px_55px_rgba(0,0,0,0.2)]">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#8ED3FE]/15 text-[#B5E0FE]"><MapPin size={21} /></span>
+                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#F0D9AC]/15 text-[#F0D9AC]"><MapPin size={21} /></span>
                   <div className="min-w-0">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-[#8FBFDF]">Local discovery</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-[#B0CFB5]">Local discovery</p>
                     <p className="mt-1 text-[15px] font-semibold text-white">Made for Sri Lanka</p>
                   </div>
                 </div>
@@ -906,8 +906,8 @@ export default function HomePageClient() {
                   <div className="h-2.5 w-[85%] rounded-full bg-white/15" />
                   <div className="h-2.5 w-[63%] rounded-full bg-white/10" />
                   <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/15 pt-4">
-                    <span className="text-xs font-medium text-[#C3E0F4]">Search · Explore · Connect</span>
-                    <ArrowUpRight size={17} className="text-[#A4D9FA]" />
+                    <span className="text-xs font-medium text-[#F0D9AC]">Search · Explore · Connect</span>
+                    <ArrowUpRight size={17} className="text-[#F0D9AC]" />
                   </div>
                 </div>
               </div>
@@ -917,19 +917,19 @@ export default function HomePageClient() {
       </section>
 
       {/* --- COMMON QUESTIONS: compact, semantic accordions --- */}
-      <section aria-labelledby="homepage-faq-title" className="bg-[#F8FAFC] py-20 sm:py-24 lg:py-28">
+      <section aria-labelledby="homepage-faq-title" className="bg-[#F8F7F2] py-20 sm:py-24 lg:py-28">
         <div className="mx-auto grid max-w-[1440px] gap-10 px-5 sm:px-8 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20 lg:px-12">
           <div>
-            <p className="mb-5 flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.17em] text-[#34688C]">
-              <span className="h-px w-9 bg-[#5B8FAE]" /> Good to know
+            <p className="mb-5 flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.17em] text-[#2B6552]">
+              <span className="h-px w-9 bg-[#4A8C70]" /> Good to know
             </p>
-            <h2 id="homepage-faq-title" className="text-balance text-[clamp(2.5rem,4.4vw,4.5rem)] font-semibold leading-[1.1] tracking-[-0.065em] text-[#102B4E]">
-              Questions, answered<span className="text-[#4085B6]">.</span>
+            <h2 id="homepage-faq-title" className="text-balance text-[clamp(2.5rem,4.4vw,4.5rem)] font-semibold leading-[1.1] tracking-[-0.065em] text-[#1B3430]">
+              Questions, answered<span className="text-[#4A8C70]">.</span>
             </h2>
-            <p className="mt-5 max-w-[425px] text-[15px] leading-[1.8] text-slate-500">
+            <p className="mt-5 max-w-[425px] text-[15px] leading-[1.8] text-stone-500">
               Everything you need to start exploring — or put your own business on the map.
             </p>
-            <Link href="/faq" className="group mt-7 inline-flex items-center gap-2 text-[13px] font-semibold text-[#1B587F] transition-colors hover:text-[#0C2C4B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400">
+            <Link href="/faq" className="group mt-7 inline-flex items-center gap-2 text-[13px] font-semibold text-[#26483B] transition-colors hover:text-[#1B3430] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400">
               Visit the Help Center <ArrowUpRight size={16} className="transition-transform group-hover:translate-x-0.5" />
             </Link>
           </div>
@@ -952,17 +952,17 @@ export default function HomePageClient() {
                 answer: "Select List Your Business to start registering. Complete your business profile and any requested verification steps to submit the listing for review.",
               },
             ].map((item, i) => (
-              <details key={item.question} className="group rounded-[18px] border border-[#DEE8F0] bg-white px-5 py-1 transition-colors open:border-[#BAD5E8] sm:px-6">
-                <summary className="flex min-h-[70px] cursor-pointer list-none items-center justify-between gap-4 py-3 text-left text-[15px] font-semibold text-[#163854] marker:hidden [&::-webkit-details-marker]:hidden sm:text-[16px]">
+              <details key={item.question} className="group rounded-[18px] border border-[#E0EADB] bg-white px-5 py-1 transition-colors open:border-[#CADDCB] sm:px-6">
+                <summary className="flex min-h-[70px] cursor-pointer list-none items-center justify-between gap-4 py-3 text-left text-[15px] font-semibold text-[#1B3430] marker:hidden [&::-webkit-details-marker]:hidden sm:text-[16px]">
                   <span className="flex items-center gap-4">
-                    <span className="text-[11px] font-semibold text-[#8BACBF]">{String(i + 1).padStart(2, "0")}</span>
+                    <span className="text-[11px] font-semibold text-[#94BAA0]">{String(i + 1).padStart(2, "0")}</span>
                     {item.question}
                   </span>
-                  <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#E0E9F0] bg-[#F8FBFD] text-[#446E8C] transition-transform duration-200 group-open:rotate-45">
+                  <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#E0EADB] bg-[#F8F7F2] text-[#36785E] transition-transform duration-200 group-open:rotate-45">
                     <span className="text-lg font-normal leading-none">+</span>
                   </span>
                 </summary>
-                <p className="border-t border-[#EEF2F6] pb-6 pt-4 pl-0 text-[14px] leading-[1.8] text-slate-500 sm:pl-8">
+                <p className="border-t border-[#F0F2E9] pb-6 pt-4 pl-0 text-[14px] leading-[1.8] text-stone-500 sm:pl-8">
                   {item.answer}
                 </p>
               </details>
@@ -974,22 +974,22 @@ export default function HomePageClient() {
       <Testimonials />
 
       {/* --- GROW WITH SLBI: preserve supplied desktop/mobile campaign artwork --- */}
-      <section aria-labelledby="grow-with-slbi-title" className="border-t border-[#E4EDF3] bg-white py-20 sm:py-24 lg:py-28">
+      <section aria-labelledby="grow-with-slbi-title" className="border-t border-[#F0F2E9] bg-white py-20 sm:py-24 lg:py-28">
         <div className="mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12">
-          <div className="grid items-center gap-10 overflow-hidden rounded-[30px] bg-[#0E2E4C] px-6 py-10 sm:px-10 sm:py-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-10 lg:px-12 lg:py-12">
+          <div className="grid items-center gap-10 overflow-hidden rounded-[30px] bg-[#1B3430] px-6 py-10 sm:px-10 sm:py-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-10 lg:px-12 lg:py-12">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#A3D5F5]">For local businesses</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#F0D9AC]">For local businesses</p>
               <h2 id="grow-with-slbi-title" className="mt-5 max-w-[580px] text-balance text-[clamp(2.5rem,4vw,4.6rem)] font-semibold leading-[1.07] tracking-[-0.065em] text-white">
                 Get discovered. Grow your reach.
               </h2>
-              <p className="mt-5 max-w-[450px] text-[14px] leading-[1.85] text-[#C1D4E3] sm:text-[15px]">
+              <p className="mt-5 max-w-[450px] text-[14px] leading-[1.85] text-[#CADDCB] sm:text-[15px]">
                 Give people a better way to find your business. Create your listing and share what makes you different.
               </p>
               <div className="mt-8 flex flex-wrap items-center gap-3">
-                <Link href="/register-business" className="group inline-flex min-h-12 items-center gap-2 rounded-xl bg-white px-5 text-[13px] font-bold text-[#0C3154] transition-colors hover:bg-[#EAF6FE] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300">
+                <Link href="/register-business" className="group inline-flex min-h-12 items-center gap-2 rounded-xl bg-white px-5 text-[13px] font-bold text-[#1B3430] transition-colors hover:bg-[#F0F2E9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">
                   List your business <ArrowUpRight size={16} className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
                 </Link>
-                <Link href="/how-to-list" className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-white/20 px-5 text-[13px] font-semibold text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300">
+                <Link href="/how-to-list" className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-white/20 px-5 text-[13px] font-semibold text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">
                   How it works <ChevronRight size={16} />
                 </Link>
               </div>
