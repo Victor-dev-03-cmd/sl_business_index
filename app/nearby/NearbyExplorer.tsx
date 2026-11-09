@@ -528,39 +528,40 @@ export default function NearbyExplorer() {
 
   return (
     <div className="flex h-[100dvh] min-h-[500px] w-full flex-col overflow-hidden bg-[#F6F9FC] font-sans text-[#123653]">
-      <header ref={headerRef} className="relative z-[1200] shrink-0 border-b border-[#DDE8F1] bg-white shadow-[0_5px_22px_rgba(15,47,74,0.045)]">
-        {/* App title and trusted navigation */}
-        <div className="mx-auto flex min-h-[66px] max-w-[1800px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+      <header ref={headerRef} className="relative z-[1200] shrink-0 border-b border-[#E5DED2] bg-[#F5F1EB] shadow-[0_6px_25px_rgba(26,49,45,0.09)]">
+        {/* Dark editorial navigation gives the map explorer a clear visual hierarchy. */}
+        <div className="bg-[#1B3230]">
+        <div className="mx-auto flex min-h-[74px] max-w-[1800px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-3">
             <Link
               href="/"
               aria-label="Back to SL Business Index homepage"
-              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#DFE9F1] text-[#315D7A] transition-colors hover:bg-[#F0F7FC] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white/[0.05] text-[#E2EEE8] transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
             >
               <ArrowLeft size={19} />
             </Link>
-            <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[13px] bg-[#0D3458] text-[#B1DFFF]">
+            <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[13px] border border-[#D2AA72]/35 bg-[#E5B77C]/15 text-[#F3D4A4]">
               <Compass size={21} strokeWidth={1.7} />
             </div>
             <div className="min-w-0">
-              <h1 className="truncate text-[17px] font-semibold tracking-[-0.04em] text-[#102F4D] sm:text-[20px]">
-                Nearby Explorer<span className="text-[#4B9AC7]">.</span>
+              <h1 className="truncate text-[17px] font-semibold tracking-[-0.04em] text-white sm:text-[20px]">
+                Nearby Explorer<span className="text-[#E7BC81]">.</span>
               </h1>
-              <p className="hidden text-[11px] font-medium text-[#829BAD] sm:block">Your Sri Lanka. Your next discovery.</p>
+              <p className="hidden text-[11px] font-medium text-[#AFC7BD] sm:block">Your Sri Lanka. Your next discovery.</p>
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <Link href="/category" className="hidden rounded-xl px-4 py-2.5 text-[12px] font-semibold text-[#476B85] transition-colors hover:bg-[#F0F7FC] md:inline-flex">
+            <Link href="/category" className="hidden rounded-xl px-4 py-2.5 text-[12px] font-semibold text-[#BFD2CA] transition-colors hover:bg-white/10 hover:text-white md:inline-flex">
               Categories
             </Link>
-            <Link href="/" className="hidden rounded-xl px-4 py-2.5 text-[12px] font-semibold text-[#476B85] transition-colors hover:bg-[#F0F7FC] lg:inline-flex">
+            <Link href="/" className="hidden rounded-xl px-4 py-2.5 text-[12px] font-semibold text-[#BFD2CA] transition-colors hover:bg-white/10 hover:text-white lg:inline-flex">
               Home
             </Link>
             <button
               type="button"
               disabled={locationLoading}
               onClick={locateMe}
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#0F3A60] px-3.5 text-[12px] font-semibold text-white transition-colors hover:bg-[#205C89] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:cursor-wait disabled:opacity-60 sm:px-4"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#E8BB7B] px-3.5 text-[12px] font-semibold text-[#203936] transition-colors hover:bg-[#F4CE9A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:cursor-wait disabled:opacity-60 sm:px-4"
             >
               <LocateFixed size={17} className={locationLoading ? "animate-pulse" : ""} />
               <span className="hidden sm:inline">{locationLoading ? "Locating…" : "Use my location"}</span>
@@ -568,10 +569,12 @@ export default function NearbyExplorer() {
           </div>
         </div>
 
+        </div>
+
         {/* Consistent search, town selector and filters for every screen */}
-        <div className="mx-auto flex max-w-[1800px] flex-col gap-2.5 px-4 pb-3.5 sm:px-6 md:flex-row md:items-stretch md:gap-3 lg:px-8">
+        <div className="mx-auto flex max-w-[1800px] flex-col gap-2.5 px-4 pb-4 pt-3.5 sm:px-6 md:flex-row md:items-stretch md:gap-3 lg:px-8">
           <div className="relative min-w-0 flex-1">
-            <form onSubmit={submitSearch} role="search" className="flex h-[51px] items-center gap-2 rounded-[14px] border border-[#DDE8F0] bg-[#F8FBFD] p-1.5 pl-3.5 focus-within:border-[#8BBBD9] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#CDE9FA]/70">
+            <form onSubmit={submitSearch} role="search" className="flex h-[51px] items-center gap-2 rounded-[14px] border border-[#E3DCD0] bg-white p-1.5 pl-3.5 shadow-[0_3px_12px_rgba(30,58,53,0.04)] focus-within:border-[#8EBAAB] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#D7E9DC]/80">
               <Search size={18} className="shrink-0 text-[#7C9AAF]" />
               <input
                 type="search"
@@ -604,7 +607,7 @@ export default function NearbyExplorer() {
               )}
               <button
                 type="submit"
-                className="inline-flex h-[39px] shrink-0 items-center justify-center gap-1.5 rounded-[10px] bg-[#123E65] px-3.5 text-[12px] font-semibold text-white transition-colors hover:bg-[#1A5A89] sm:px-5"
+                className="inline-flex h-[39px] shrink-0 items-center justify-center gap-1.5 rounded-[10px] bg-[#256C60] px-3.5 text-[12px] font-semibold text-white transition-colors hover:bg-[#174F47] sm:px-5"
               >
                 <Search size={15} />
                 <span className="hidden sm:inline">Search</span>
@@ -683,7 +686,7 @@ export default function NearbyExplorer() {
                 aria-controls="nearby-area-picker"
                 aria-expanded={areaOpen}
                 onClick={() => { setAreaOpen(value => !value); setAreaText(""); setSearchFocused(false); setFiltersOpen(false); }}
-                className="flex h-[51px] w-full min-w-0 items-center gap-2.5 rounded-[14px] border border-[#DDE8F0] bg-white px-3.5 text-left transition-colors hover:border-[#A8C9DF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+                className="flex h-[51px] w-full min-w-0 items-center gap-2.5 rounded-[14px] border border-[#E3DCD0] bg-white px-3.5 text-left shadow-[0_3px_12px_rgba(30,58,53,0.04)] transition-colors hover:border-[#B4CABB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
               >
                 <MapPin size={18} className="shrink-0 text-[#4285B1]" />
                 <span className="min-w-0 flex-1">
@@ -737,7 +740,7 @@ export default function NearbyExplorer() {
                 aria-expanded={filtersOpen}
                 aria-controls="nearby-filter-panel"
                 onClick={openFilters}
-                className="relative inline-flex h-[51px] items-center gap-2 rounded-[14px] border border-[#DDE8F0] bg-white px-3.5 text-[12px] font-semibold text-[#234D6C] transition-colors hover:border-[#A8C9DF] hover:bg-[#F8FBFD] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 sm:px-4"
+                className="relative inline-flex h-[51px] items-center gap-2 rounded-[14px] border border-[#E3DCD0] bg-white px-3.5 text-[12px] font-semibold text-[#385B52] shadow-[0_3px_12px_rgba(30,58,53,0.04)] transition-colors hover:border-[#B4CABB] hover:bg-[#FAFCF8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 sm:px-4"
               >
                 <SlidersHorizontal size={18} className="text-[#5686A9]" />
                 Filters
@@ -831,15 +834,15 @@ export default function NearbyExplorer() {
           </div>
         </div>
         {/* Discovery shortcuts: only categories present in the database. */}
-        <nav aria-label="Quick discovery categories" className="mx-auto flex max-w-[1800px] items-center gap-2 overflow-x-auto border-t border-[#F0F4F7] px-4 py-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:px-6 lg:px-8">
-          <span className="mr-1 hidden shrink-0 items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.11em] text-[#7B9AAF] sm:inline-flex">
-            <Sparkles size={14} className="text-[#3B8EBB]"/> Explore
+        <nav aria-label="Quick discovery categories" className="mx-auto flex max-w-[1800px] items-center gap-2 overflow-x-auto border-t border-[#E8E0D5] bg-[#EEE9E1] px-4 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:px-6 lg:px-8">
+          <span className="mr-1 hidden shrink-0 items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.11em] text-[#796F5F] sm:inline-flex">
+            <Sparkles size={14} className="text-[#3F897A]"/> Explore
           </span>
           <button
             type="button"
             onClick={() => applySearch({ category: null, query: "", verifiedOnly: false, withPhotosOnly: false })}
             aria-pressed={!category && !appliedQuery && !verifiedOnly && !withPhotosOnly}
-            className={"inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-[11px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 " + (!category && !appliedQuery && !verifiedOnly && !withPhotosOnly ? "border-[#14466D] bg-[#103A60] text-white" : "border-[#DEEBF3] bg-[#F7FAFD] text-[#557B95] hover:border-[#B5D2E4] hover:bg-[#EDF6FC]")}
+            className={"inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-[11px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 " + (!category && !appliedQuery && !verifiedOnly && !withPhotosOnly ? "border-[#2E7568] bg-[#276F62] text-white" : "border-[#DDD8CD] bg-[#FCFAF6] text-[#536F63] hover:border-[#AFCBB5] hover:bg-[#F1F8F1]")}
           >
             <Compass size={13} /> All businesses
           </button>
@@ -858,7 +861,7 @@ export default function NearbyExplorer() {
               </button>
             );
           })}
-          <Link href="/category" className="ml-auto inline-flex min-h-9 shrink-0 items-center gap-1.5 px-2 text-[11px] font-semibold text-[#2B6991] transition-colors hover:text-[#103A60]">
+          <Link href="/category" className="ml-auto inline-flex min-h-9 shrink-0 items-center gap-1.5 px-2 text-[11px] font-semibold text-[#307A68] transition-colors hover:text-[#184B3F]">
             More categories <ArrowUpRight size={13}/>
           </Link>
         </nav>
