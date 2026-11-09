@@ -297,13 +297,13 @@ export default function HeroSearch({
         onSubmit={handleSubmit}
         ref={searchBarRef}
         role="search"
-        className="rounded-[17px] border border-slate-200 bg-white p-1.5 shadow-[0_12px_36px_rgba(2,22,44,0.16)] focus-within:ring-2 focus-within:ring-sky-200 sm:p-2"
+        className="rounded-[17px] border border-stone-200 bg-white p-1.5 shadow-[0_12px_36px_rgba(2,22,44,0.16)] focus-within:ring-2 focus-within:ring-emerald-200 sm:p-2"
       >
         <div className="flex flex-col gap-1 sm:flex-row sm:items-stretch sm:gap-0">
           <div className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl px-3 py-2 sm:py-1">
-            <Search size={20} strokeWidth={1.8} className="shrink-0 text-slate-400" />
+            <Search size={20} strokeWidth={1.8} className="shrink-0 text-stone-400" />
             <div className="min-w-0 flex-1">
-              <label htmlFor="hero-business-query" className="block text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">Business or service</label>
+              <label htmlFor="hero-business-query" className="block text-[10px] font-bold uppercase tracking-[0.08em] text-stone-500">Business or service</label>
               <input
                 id="hero-business-query"
                 type="search"
@@ -322,7 +322,7 @@ export default function HeroSearch({
                 aria-expanded={showDropdown}
                 aria-controls="hero-search-suggestions"
                 placeholder="What are you looking for?"
-                className="mt-0.5 w-full min-w-0 bg-transparent text-[13px] font-medium text-slate-900 outline-none placeholder:font-normal placeholder:text-slate-400 sm:text-[14px]"
+                className="mt-0.5 w-full min-w-0 bg-transparent text-[13px] font-medium text-stone-900 outline-none placeholder:font-normal placeholder:text-stone-400 sm:text-[14px]"
               />
             </div>
             <VoiceSearch
@@ -331,7 +331,7 @@ export default function HeroSearch({
             />
           </div>
 
-          <div className="mx-2 h-px bg-slate-200 sm:mx-0 sm:my-1 sm:h-auto sm:w-px" />
+          <div className="mx-2 h-px bg-stone-200 sm:mx-0 sm:my-1 sm:h-auto sm:w-px" />
 
           <div ref={areaRef} className="relative min-w-0 sm:w-[37%]">
             <button
@@ -339,19 +339,19 @@ export default function HeroSearch({
               aria-label="Choose district or town"
               aria-expanded={areaOpen}
               onClick={() => { setAreaOpen(v => !v); setIsSearchFocused(false); setAreaQuery(""); }}
-              className="flex min-h-[54px] w-full items-center gap-2 rounded-xl px-3 text-left transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 sm:min-h-[56px]"
+              className="flex min-h-[54px] w-full items-center gap-2 rounded-xl px-3 text-left transition-colors hover:bg-stone-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 sm:min-h-[56px]"
             >
-              <MapPin size={19} strokeWidth={1.8} className="shrink-0 text-slate-400" />
+              <MapPin size={19} strokeWidth={1.8} className="shrink-0 text-stone-400" />
               <span className="min-w-0 flex-1">
-                <span className="block text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">Area / town</span>
-                <span className="mt-0.5 block truncate text-[13px] font-semibold text-slate-800">{selectedArea?.label || "All Sri Lanka"}</span>
+                <span className="block text-[10px] font-bold uppercase tracking-[0.08em] text-stone-500">Area / town</span>
+                <span className="mt-0.5 block truncate text-[13px] font-semibold text-stone-800">{selectedArea?.label || "All Sri Lanka"}</span>
               </span>
-              <ChevronDown size={15} className={cn("shrink-0 text-slate-400 transition-transform", areaOpen && "rotate-180")} />
+              <ChevronDown size={15} className={cn("shrink-0 text-stone-400 transition-transform", areaOpen && "rotate-180")} />
             </button>
             {areaOpen && (
-              <div className="absolute left-0 right-0 top-full z-[100] mt-2 min-w-[250px] overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 text-left shadow-[0_20px_55px_rgba(2,22,44,0.22)] sm:right-auto sm:w-[330px]">
-                <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3">
-                  <Search size={16} className="shrink-0 text-slate-400" />
+              <div className="absolute left-0 right-0 top-full z-[100] mt-2 min-w-[250px] overflow-hidden rounded-2xl border border-stone-200 bg-white p-2 text-left shadow-[0_20px_55px_rgba(2,22,44,0.22)] sm:right-auto sm:w-[330px]">
+                <div className="flex items-center gap-2 rounded-xl border border-stone-200 bg-stone-50 px-3">
+                  <Search size={16} className="shrink-0 text-stone-400" />
                   <input
                     type="search"
                     autoFocus
@@ -359,28 +359,28 @@ export default function HeroSearch({
                     onChange={e => setAreaQuery(e.target.value)}
                     placeholder="Search district or town..."
                     aria-label="Search Sri Lankan districts and towns"
-                    className="h-11 min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
+                    className="h-11 min-w-0 flex-1 bg-transparent text-sm text-stone-900 outline-none placeholder:text-stone-400"
                   />
-                  {selectedArea && <button type="button" onClick={() => { setSelectedArea(null); setAreaOpen(false); }} aria-label="Clear selected area" className="text-slate-400 hover:text-slate-700"><X size={16}/></button>}
+                  {selectedArea && <button type="button" onClick={() => { setSelectedArea(null); setAreaOpen(false); }} aria-label="Clear selected area" className="text-stone-400 hover:text-stone-700"><X size={16}/></button>}
                 </div>
                 <div className="max-h-[238px] overflow-y-auto py-1">
-                  <button type="button" onClick={() => { setSelectedArea(null); setAreaOpen(false); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-sky-50">
-                    <MapPin size={16} className="text-slate-400" /> All Sri Lanka {!selectedArea && <Check size={15} className="ml-auto text-sky-700"/>}
+                  <button type="button" onClick={() => { setSelectedArea(null); setAreaOpen(false); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-stone-700 hover:bg-emerald-50">
+                    <MapPin size={16} className="text-stone-400" /> All Sri Lanka {!selectedArea && <Check size={15} className="ml-auto text-emerald-700"/>}
                   </button>
                   {areaOptions.map(option => (
                     <button
                       type="button"
                       key={option.town ? `town-${option.town.name}-${option.town.district}-${option.town.lat}` : `district-${option.district}`}
                       onClick={() => { setSelectedArea(option); setAreaOpen(false); }}
-                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm text-slate-700 transition-colors hover:bg-sky-50"
+                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm text-stone-700 transition-colors hover:bg-emerald-50"
                     >
-                      <MapPin size={15} className="shrink-0 text-sky-600" />
+                      <MapPin size={15} className="shrink-0 text-emerald-600" />
                       <span className="min-w-0 flex-1 truncate">{option.label}</span>
-                      <span className="shrink-0 text-[10px] text-slate-400">{option.town ? "Town" : "District"}</span>
-                      {selectedArea?.label === option.label && <Check size={15} className="text-sky-700"/>}
+                      <span className="shrink-0 text-[10px] text-stone-400">{option.town ? "Town" : "District"}</span>
+                      {selectedArea?.label === option.label && <Check size={15} className="text-emerald-700"/>}
                     </button>
                   ))}
-                  {areaOptions.length === 0 && <p className="px-3 py-4 text-sm text-slate-500">No matching area found.</p>}
+                  {areaOptions.length === 0 && <p className="px-3 py-4 text-sm text-stone-500">No matching area found.</p>}
                 </div>
               </div>
             )}
@@ -388,7 +388,7 @@ export default function HeroSearch({
 
           <button
             type="submit"
-            className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-[12px] bg-[#123E65] px-5 text-[13px] font-semibold text-white shadow-[0_5px_16px_rgba(18,62,101,0.2)] transition-colors hover:bg-[#1B5888] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 sm:min-h-[56px]"
+            className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-[12px] bg-[#1B3430] px-5 text-[13px] font-semibold text-white shadow-[0_5px_16px_rgba(18,62,101,0.2)] transition-colors hover:bg-[#2B6552] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 sm:min-h-[56px]"
           >
             <Search size={18} strokeWidth={2} /> Search
           </button>
@@ -401,7 +401,7 @@ export default function HeroSearch({
           id="hero-search-suggestions"
           role="region"
           aria-label="Business search suggestions"
-          className="absolute left-0 right-0 top-full z-50 mt-2 max-h-[288px] overflow-y-auto overscroll-auto rounded-xl border border-slate-200 bg-white text-left shadow-[0_14px_42px_rgba(15,23,42,0.14)]"
+          className="absolute left-0 right-0 top-full z-50 mt-2 max-h-[288px] overflow-y-auto overscroll-auto rounded-xl border border-stone-200 bg-white text-left shadow-[0_14px_42px_rgba(15,23,42,0.14)]"
         >
             {/* Loading indicator */}
             {isFetchingSuggestions && (
@@ -479,7 +479,7 @@ export default function HeroSearch({
                         {biz.is_verified && <VerifiedBadge size={10} />}
                       </p>
                       <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                        <span className="text-[10px] font-medium text-brand-blue bg-blue-50 px-1.5 py-0.5 rounded-full shrink-0">
+                        <span className="text-[10px] font-medium text-brand-blue bg-emerald-50 px-1.5 py-0.5 rounded-full shrink-0">
                           {biz.category}
                         </span>
                         {biz.address && (
