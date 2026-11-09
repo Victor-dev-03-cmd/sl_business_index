@@ -943,15 +943,107 @@ export default function NearbyExplorer() {
                   <RotateCcw size={16}/> Try again
                 </button>
               </div>
+
             ) : visibleBusinesses.length === 0 ? (
-              <div className="rounded-[24px] border border-[#E0EAF1] bg-white px-6 py-12 text-center">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#EDF5FB] text-[#548CB2]"><Search size={28}/></div>
-                <h3 className="mt-5 text-[19px] font-semibold text-[#173E5C]">No businesses found in this area.</h3>
-                <p className="mx-auto mt-2 max-w-[290px] text-[13px] leading-6 text-[#8198AA]">Try a wider search radius or remove a filter to see more listings.</p>
-                <div className="mt-6 flex flex-wrap justify-center gap-2">
-                  {radius < 50000 && <button type="button" onClick={() => applySearch({ radius: Math.min(radius + 10000, 50000) })} className="inline-flex h-10 items-center rounded-xl bg-[#123D63] px-4 text-[12px] font-semibold text-white hover:bg-[#1B5E8E]">Expand radius</button>}
-                  {(category || appliedQuery) && <button type="button" onClick={() => applySearch({ category: null, query: "" })} className="inline-flex h-10 items-center rounded-xl border border-[#DDE7EF] px-4 text-[12px] font-semibold text-[#245B80] hover:bg-[#F1F7FB]">Clear filters</button>}
-                  <button type="button" onClick={() => { setAreaOpen(true); setMobileView("map"); }} className="inline-flex h-10 items-center rounded-xl border border-[#DDE7EF] px-4 text-[12px] font-semibold text-[#245B80] hover:bg-[#F1F7FB]">Choose another area</button>
+              <div className="space-y-4 pb-6">
+                <div className="relative overflow-hidden rounded-[24px] bg-[#1D3534] p-5 text-white shadow-[0_15px_36px_rgba(25,52,50,0.14)] sm:p-6">
+                  <div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-28 h-64 w-64 rounded-full border-[35px] border-white/[0.06]" />
+                  <div className="relative inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-[#F3CC93]">
+                    <Compass size={23} strokeWidth={1.65}/>
+                  </div>
+                  <p className="relative mt-6 text-[10px] font-bold uppercase tracking-[0.17em] text-[#EAC48C]">Keep exploring</p>
+                  <h3 className="relative mt-2 text-[23px] font-semibold leading-[1.2] tracking-[-0.045em] text-white">
+                    Your next discovery is out there.
+                  </h3>
+                  <p className="relative mt-3 max-w-[330px] text-[13px] leading-[1.75] text-[#CBDBD6]">
+                    Our directory has no matches for these settings. Broaden your search or try another place.
+                  </p>
+                  <div className="relative mt-6 flex flex-wrap gap-2">
+                    {radius < 50000 && (
+                      <button type="button" onClick={() => applySearch({ radius: Math.min(radius + 15000, 50000) })}
+                        className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-[#E9BB78] px-4 text-[12px] font-bold text-[#17312F] transition-colors hover:bg-[#F2CF9B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
+                        <Route size={15}/> Widen to {formatDistance(Math.min(radius + 15000, 50000))}
+                      </button>
+                    )}
+                    {(category || appliedQuery || verifiedOnly || withPhotosOnly) && (
+                      <button type="button" onClick={() => applySearch({ category: null, query: "", verifiedOnly: false, withPhotosOnly: false })}
+                        className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-white/25 px-4 text-[12px] font-semibold text-white transition-colors hover:bg-white/10">
+                        <RotateCcw size={14}/> Clear filters
+                      </button>
+                    )}
+                    <button type="button" onClick={() => setAreaOpen(true)}
+                      className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-white/25 px-4 text-[12px] font-semibold text-white transition-colors hover:bg-white/10">
+                      <MapPin size={14}/> Choose a town
+                    </button>
+                  </div>
+                </div>
+
+                <div className="rounded-[22px] border border-[#E4DDD2] bg-white p-4 shadow-[0_5px_20px_rgba(28,52,49,0.035)] sm:p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#B18A57]">Explore Sri Lanka</p>
+                      <h3 className="mt-1.5 text-[18px] font-semibold tracking-[-0.035em] text-[#253E3A]">Jump to another area</h3>
+                    </div>
+                    <Globe2 size={20} className="text-[#B79A73]"/>
+                  </div>
+                  <div className="mt-4 grid grid-cols-2 gap-2">
+                    {DISCOVERY_AREAS.map(area => (
+                      <button
+                        type="button"
+                        key={area.name}
+                        onClick={() => applySearch({
+                          location: { ...DISTRICTS[area.name], label: area.name + " District", kind: "district" },
+                          query: "", category: null, verifiedOnly: false, withPhotosOnly: false, zoom: 11,
+                        })}
+                        className="group flex min-h-[70px] items-center gap-2.5 rounded-[13px] border border-[#E8E7E0] bg-[#F8F8F4] px-3 text-left transition-[background,border-color] hover:border-[#AACCC1] hover:bg-[#EDF6F0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#81BDA8]"
+                      >
+                        <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-[#E5EEE8] text-[#427565]"><MapPin size={15}/></span>
+                        <span className="min-w-0">
+                          <span className="block truncate text-[12px] font-semibold text-[#29413B]">{area.name}</span>
+                          <span className="mt-0.5 block truncate text-[10px] text-[#82928B]">{area.detail}</span>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-[22px] border border-[#E4DDD2] bg-white p-4 shadow-[0_5px_20px_rgba(28,52,49,0.035)] sm:p-5">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#A5885F]">Explore by interest</p>
+                      <h3 className="mt-1.5 text-[18px] font-semibold tracking-[-0.035em] text-[#253E3A]">What are you looking for?</h3>
+                    </div>
+                    <SlidersHorizontal size={19} className="text-[#B59A79]"/>
+                  </div>
+                  {categories.length > 0 ? (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {categories.slice(0, 7).map((item: any) => (
+                        <button key={item.id} type="button"
+                          onClick={() => applySearch({ category: item.name, query: "", verifiedOnly: false, withPhotosOnly: false })}
+                          className="min-h-9 rounded-full border border-[#D8E6DE] bg-[#F2F8F4] px-3 text-[11px] font-semibold text-[#356957] transition-colors hover:border-[#9CC6AE] hover:bg-[#E0F0E6]">
+                          {item.name}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-3 text-[12px] leading-6 text-[#81978A]">Browse the full directory to find the right service category.</p>
+                  )}
+                  <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-[#F0EFE9] pt-4">
+                    <Link href="/category" className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#397562] hover:text-[#1D4E40]">
+                      Browse categories <ArrowUpRight size={14}/>
+                    </Link>
+                    <Link href="/search" className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#397562] hover:text-[#1D4E40]">
+                      Search island-wide <ArrowRight size={14}/>
+                    </Link>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 rounded-[17px] border border-[#E4E5D9] bg-[#F4F4EC] px-4 py-4">
+                  <LocateFixed size={20} className="shrink-0 text-[#6A9483]"/>
+                  <p className="min-w-0 flex-1 text-[12px] leading-5 text-[#687E73]">Prefer results around you? Location access is optional.</p>
+                  <button type="button" onClick={locateMe} disabled={locationLoading} className="shrink-0 text-[12px] font-bold text-[#37735E] hover:underline disabled:opacity-50">
+                    Use GPS
+                  </button>
                 </div>
               </div>
             ) : (
