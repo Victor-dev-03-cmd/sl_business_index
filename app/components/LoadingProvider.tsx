@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { Suspense, useEffect, useState, type ReactNode } from "react";
 import Image from "next/image";
 
 /**
@@ -18,7 +18,8 @@ export default function LoadingProvider({ children }: { children: ReactNode }) {
 
   return (
     <>
-      {children}
+      {/* Required for pages that use useSearchParams during static prerender. */}
+      <Suspense fallback={<LoadingScreen />}>{children}</Suspense>
       {showIntro && <LoadingScreen />}
     </>
   );
