@@ -1,10 +1,11 @@
 'use client';
 
+import BrandLogo from '@/app/components/BrandLogo';
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import { ArrowLeft, Lock, CheckCircle2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -93,7 +94,7 @@ export default function UpdatePassword() {
         <div className="relative z-10 max-w-md w-full text-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <div className="mb-10 flex justify-center">
-              <Image src="/logo.png" alt="Logo" width={180} height={50} className="brightness-0 invert" />
+              <BrandLogo tone="dark" />
             </div>
             <h1 className="text-4xl font-normal text-white mb-6">Reset Your Security.</h1>
             <p className="text-brand-sand/80 text-sm leading-relaxed">
@@ -109,7 +110,7 @@ export default function UpdatePassword() {
           {/* Mobile Logo */}
           <div className="lg:hidden flex justify-center mb-8">
             <Link href="/">
-              <Image src="/logo.png" alt="Logo" width={140} height={45} />
+              <BrandLogo tone="light" />
             </Link>
           </div>
 
