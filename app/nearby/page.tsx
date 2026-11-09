@@ -414,7 +414,7 @@ function SplitScreenResultsContent() {
 
   // Only fetch autocomplete while the input is focused, with cancellation
   // and a small in-memory cache to avoid duplicate Supabase calls.
-  const suggestionCache = useRef<Map<string, any[]>>(new Map());
+  const suggestionCache = useRef<globalThis.Map<string, any[]>>(new globalThis.Map<string, any[]>());
   useEffect(() => {
     const query = debouncedSearchQuery.trim();
     if (!isSearchFocused) {
