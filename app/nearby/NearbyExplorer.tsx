@@ -803,6 +803,17 @@ export default function NearbyExplorer() {
           </Link>
         </nav>
 
+        {location.kind === "default" && !locationNotice && (
+          <div role="status" className="mx-auto flex max-w-[1800px] items-center justify-between gap-3 border-t border-[#EBF0F4] bg-[#F2F8FC] px-4 py-2 text-[11px] text-[#4B7694] sm:px-6 lg:px-8">
+            <span className="inline-flex min-w-0 items-center gap-2">
+              <MapPin size={14} className="shrink-0" />
+              Starting in Colombo. Choose a district or town, or use your location for nearby results.
+            </span>
+            <button type="button" onClick={locateMe} disabled={locationLoading} className="inline-flex shrink-0 items-center gap-1.5 font-semibold text-[#195C89] hover:text-[#0C3554] disabled:opacity-60">
+              <LocateFixed size={14}/><span className="hidden sm:inline">Use my location</span>
+            </button>
+          </div>
+        )}
         {locationNotice && (
           <div role="status" className="mx-auto flex max-w-[1800px] items-center justify-between gap-3 border-t border-[#E4EDF4] px-4 py-2 text-[12px] text-[#9A5824] sm:px-6 lg:px-8">
             <span>{locationNotice}</span>
@@ -813,12 +824,12 @@ export default function NearbyExplorer() {
 
       {/* Desktop split view. Mobile switches between map and results without blocking scrolling. */}
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        <aside className={(mobileView === "list" ? "flex" : "hidden") + " w-full min-h-0 flex-col border-r border-[#E0EAF1] bg-[#F8FAFD] md:flex md:w-[410px] md:shrink-0 xl:w-[470px]"} aria-label="Nearby business results">
+        <aside id="nearby-results" className={(mobileView === "list" ? "flex" : "hidden") + " w-full min-h-0 flex-col border-r border-[#E0EAF1] bg-[#F7FAFC] md:flex md:w-[420px] md:shrink-0 xl:w-[490px]"} aria-label="Nearby business results">
           <div className="shrink-0 border-b border-[#E3EBF1] bg-white px-4 pb-4 pt-5 sm:px-6">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#6489A4]">Explore listings</p>
-                <h2 className="mt-1.5 text-[24px] font-semibold tracking-[-0.055em] text-[#123B5A]">
+                <h2 aria-live="polite" className="mt-1.5 text-[24px] font-semibold tracking-[-0.055em] text-[#123B5A]">
                   {loadingBusinesses ? "Finding businesses…" : resultsMessage(visibleBusinesses.length)}
                 </h2>
               </div>
@@ -888,7 +899,7 @@ export default function NearbyExplorer() {
                 const active = selectedBusiness?.id === business.id;
                 const rating = Number(business.rating);
                 return (
-                  <article key={business.id} className={"group rounded-[20px] border bg-white p-3.5 shadow-[0_4px_17px_rgba(15,46,73,0.035)] transition-[border-color,box-shadow] duration-150 hover:border-[#BED7E7] hover:shadow-[0_9px_26px_rgba(15,46,73,0.085)] " + (active ? "border-[#7BB4D9] ring-1 ring-[#D4EAF8]" : "border-[#DFE9F1]")}>
+                  <article key={business.id} className={"group rounded-[23px] border bg-white p-3.5 shadow-[0_6px_22px_rgba(15,46,73,0.035)] transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-[#AFCFE2] hover:shadow-[0_13px_30px_rgba(15,46,73,0.095)] " + (active ? "border-[#7BB4D9] ring-1 ring-[#D4EAF8]" : "border-[#DFE9F1]")}>
                     <button
                       type="button"
                       onClick={() => showBusinessOnMap(business)}
@@ -920,7 +931,7 @@ export default function NearbyExplorer() {
                       </div>
                     </button>
                     <div className="mt-3 flex items-center justify-between gap-2 border-t border-[#EFF3F6] pt-3">
-                      <span className="inline-flex items-center gap-1.5 text-[11px] text-[#8199AA]"><ShieldCheck size={13} /> Explore business details</span>
+                      <span className="inline-flex items-center gap-1.5 text-[11px] text-[#8199AA]"><Compass size={13} /> Business profile</span>
                       <div className="flex items-center gap-3">
                         <button type="button" onClick={() => showBusinessOnMap(business)} className="text-[12px] font-semibold text-[#477FA2] hover:text-[#1B5175]">Show on map</button>
                         <Link href={"/business/" + (business.slug || business.id)} className="inline-flex items-center gap-1 text-[12px] font-bold text-[#164D76] hover:text-[#0B304F]">View profile <ArrowUpRight size={14}/></Link>
@@ -986,7 +997,7 @@ export default function NearbyExplorer() {
           )}
           {selectedBusiness && (
             <div className="absolute bottom-5 left-4 right-4 z-[900] md:bottom-6 md:left-6 md:right-auto md:w-[min(360px,calc(100%-48px))]">
-              <div className="rounded-[20px] border border-[#DCE8F0] bg-white p-4 shadow-[0_18px_50px_rgba(8,40,66,0.22)]">
+              <div className="rounded-[24px] border border-[#DCE8F0] bg-white p-4 shadow-[0_18px_50px_rgba(8,40,66,0.22)]">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#7495AB]">Selected business</p>
