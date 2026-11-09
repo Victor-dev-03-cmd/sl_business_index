@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import NavbarWrapper from "./components/NavbarWrapper";
@@ -13,7 +13,7 @@ import GlobalAnnouncement from "@/components/GlobalAnnouncement";
 import ClarityTracker from "./components/ClarityTracker";
 import DynamicAppearance from "./components/DynamicAppearance";
 import { SessionProvider } from "./components/SessionContext";
-import LoadingProvider, { LoadingScreen } from "./components/LoadingProvider";
+import LoadingProvider from "./components/LoadingProvider";
 import { Toaster } from "sonner";
 
 export default function RootClientLayout({
@@ -21,12 +21,6 @@ export default function RootClientLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   useEffect(() => {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker
@@ -47,10 +41,7 @@ export default function RootClientLayout({
           </div>
         </div>
       </noscript>
-      {!mounted ? (
-        <LoadingScreen />
-      ) : (
-        <LoadingProvider>
+      <LoadingProvider>
           <ClarityTracker />
           <QueryProvider>
             <Toaster richColors closeButton position="bottom-right" />
@@ -72,7 +63,6 @@ export default function RootClientLayout({
             </SessionProvider>
           </QueryProvider>
         </LoadingProvider>
-      )}
     </>
   );
 }
