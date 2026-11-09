@@ -58,7 +58,7 @@ export default async function QRRedirectPage({ params }: Props) {
       <div className="max-w-md w-full bg-white border border-gray-200 rounded-[6px] shadow-xl overflow-hidden text-center">
         <div className="bg-brand-dark py-12 flex flex-col items-center space-y-4">
           <div className="relative w-20 h-20">
-            <img src="/logo.png" alt="Logo" className="object-contain w-full h-full brightness-0 invert" />
+            <img src="/slbi-mark.svg" alt="SL Business Index mark" className="object-contain w-full h-full" />
           </div>
           <h1 className="text-white font-bold text-xl tracking-wider">SL BUSINESS INDEX</h1>
         </div>
