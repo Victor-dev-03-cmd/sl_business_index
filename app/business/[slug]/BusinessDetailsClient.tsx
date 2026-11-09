@@ -80,6 +80,7 @@ export default function BusinessDetailsClient({ business }: Props) {
   });
   const [submittingReview, setSubmittingReview] = useState(false);
   const [submittingEnquiry, setSubmittingEnquiry] = useState(false);
+  const [whatsappReadyUrl, setWhatsappReadyUrl] = useState<string | null>(null);
   const [showReportModal, setShowReportModal] = useState(false);
 
   useEffect(() => {
@@ -211,6 +212,7 @@ export default function BusinessDetailsClient({ business }: Props) {
 
   const handleEnquirySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setWhatsappReadyUrl(null);
     setSubmittingEnquiry(true);
     try {
       // 1. Save lead to Supabase for tracking
@@ -225,7 +227,7 @@ export default function BusinessDetailsClient({ business }: Props) {
 
       if (error) throw error;
 
-      // 2. Construct Free WhatsApp URL and open in new tab
+      // 2. Prepare an explicit WhatsApp link; async popup opening may be blocked.
       if (business.phone) {
         // Format Owner Phone: remove non-digits, replace leading 0 with 94
         const formattedOwnerPhone = business.phone.replace(/\D/g, "");
@@ -238,7 +240,7 @@ export default function BusinessDetailsClient({ business }: Props) {
         const whatsappText = `New Enquiry from SLBI:\n\nName: ${enquiryForm.name}\nPhone: ${enquiryForm.phone}\nMessage: ${enquiryForm.message}`;
         const whatsappUrl = `https://wa.me/${finalOwnerPhone}?text=${encodeURIComponent(whatsappText)}`;
         
-        window.open(whatsappUrl, "_blank");
+        setWhatsappReadyUrl(whatsappUrl);
       }
 
       // Log analytics event
@@ -249,12 +251,11 @@ export default function BusinessDetailsClient({ business }: Props) {
       );
 
       setEnquiryForm({ name: "", email: "", phone: "", message: "" });
-      toast.success(
-        "Message Sent",
-        {
-          description: "Opening WhatsApp to send your enquiry..."
-        }
-      );
+      toast.success("Enquiry submitted", {
+        description: business.phone
+          ? "You can also continue the conversation on WhatsApp below."
+          : "Your enquiry has been saved successfully.",
+      });
     } catch (error) {
       console.error("Error sending enquiry:", error);
       toast.error("Failed to send enquiry.");
@@ -695,7 +696,7 @@ export default function BusinessDetailsClient({ business }: Props) {
                 </div>
               </div>
               <p className="mt-4 text-[12px] leading-6 text-[#85968A]">Share your enquiry with this business. Your message and contact details will be submitted to the directory.</p>
-              <form onSubmit={handleEnquirySubmit} className="mt-6 space-y-3.5">
+              <form onSubmit={handleEnquirySubmit} onChange={() => setWhatsappReadyUrl(null)} className="mt-6 space-y-3.5">
                 <div>
                   <label htmlFor="enquiry-name" className="mb-1.5 block text-[11px] font-semibold text-[#537361]">Your name</label>
                   <input id="enquiry-name" type="text" required maxLength={100} placeholder="Full name"
@@ -721,6 +722,12 @@ export default function BusinessDetailsClient({ business }: Props) {
                   {submittingEnquiry ? <Loader2 size={17} className="animate-spin"/> : <Send size={17}/>} Send enquiry
                 </button>
               </form>
+              {whatsappReadyUrl && (
+                <a href={whatsappReadyUrl} target="_blank" rel="noopener noreferrer"
+                  className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#B9DCC4] bg-[#EFF9F0] px-4 text-[12px] font-bold text-[#286A49] transition-colors hover:bg-[#E0F3E5]">
+                  Continue on WhatsApp <ArrowUpRight size={16}/>
+                </a>
+              )}
               <p className="mt-4 text-center text-[11px] leading-5 text-[#9BA99D]">Please avoid sharing sensitive personal or payment information.</p>
             </section>
 
