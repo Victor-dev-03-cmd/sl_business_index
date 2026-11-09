@@ -281,7 +281,7 @@ export default function HomePageClient() {
           <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#82BDEB]/40 to-transparent" />
         </div>
 
-        <div className="relative mx-auto grid min-h-[740px] max-w-[1500px] items-center gap-12 px-5 pb-20 pt-24 sm:px-8 lg:min-h-[780px] lg:grid-cols-[minmax(0,1.04fr)_minmax(0,0.96fr)] lg:gap-8 lg:px-12 lg:pb-24 lg:pt-24 xl:gap-16 xl:px-16">
+        <div className="relative mx-auto grid min-h-[540px] max-w-[1500px] items-center gap-7 px-5 pb-12 pt-14 sm:px-8 sm:pb-14 sm:pt-16 lg:min-h-[620px] lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-6 lg:px-12 lg:pb-14 lg:pt-14 xl:gap-10 xl:px-16">
           <motion.div
             style={{ y: contentY }}
             className="relative z-30 min-w-0 max-w-[790px] text-left"
@@ -290,7 +290,7 @@ export default function HomePageClient() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="mb-8 inline-flex max-w-full items-center gap-2.5 rounded-full border border-white/15 bg-white/[0.05] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#C2DEF7] sm:text-[11px]"
+              className="mb-5 inline-flex max-w-full items-center gap-2.5 rounded-full border border-white/15 bg-white/[0.05] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#C2DEF7] sm:text-[11px]"
             >
               <span className="h-1.5 w-1.5 rounded-full bg-sky-300 shadow-[0_0_14px_rgba(125,211,252,0.8)]" />
               Discover Sri Lanka, differently
@@ -301,13 +301,9 @@ export default function HomePageClient() {
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
-              className="text-balance text-[clamp(3.75rem,7vw,8rem)] font-semibold leading-[0.99] tracking-[-0.073em] text-white"
+              className="text-balance text-[clamp(3.3rem,5.4vw,6.35rem)] font-medium leading-[1.055] tracking-[-0.065em] text-white"
             >
-              Discover
-              <br />
-              <span className="bg-gradient-to-r from-[#F7FBFF] via-[#B8DDFD] to-[#67B7F6] bg-clip-text text-transparent">
-                better.
-              </span>
+              Discover <span className="bg-gradient-to-r from-[#F7FBFF] via-[#B8DDFD] to-[#67B7F6] bg-clip-text text-transparent">better.</span>
               <br />
               Grow together.
             </motion.h1>
@@ -316,7 +312,7 @@ export default function HomePageClient() {
               initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.18 }}
-              className="mt-8 max-w-[610px] text-pretty text-[16px] leading-[1.8] text-[#B4C7DB] sm:text-[19px]"
+              className="mt-5 max-w-[600px] text-pretty text-[15px] leading-[1.65] text-[#B4C7DB] sm:text-[17px]"
             >
               Discover businesses, services and people worth knowing.
               Your connection to opportunities across Sri Lanka starts here.
@@ -326,7 +322,7 @@ export default function HomePageClient() {
               initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.28 }}
-              className="relative z-40 mt-9 w-full max-w-[670px]"
+              className="relative z-40 mt-6 w-full max-w-[670px]"
             >
               <div className="rounded-2xl border border-white/15 bg-white/[0.07] p-2 shadow-[0_26px_65px_rgba(0,0,0,0.24)] backdrop-blur-lg sm:p-2.5 [&_form]:!rounded-xl [&_form>div]:!rounded-xl">
                 <HeroSearch
@@ -347,7 +343,7 @@ export default function HomePageClient() {
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.38 }}
-              className="relative z-10 mt-7 flex flex-wrap items-center gap-3"
+              className="relative z-10 mt-5 flex flex-wrap items-center gap-3"
             >
               <button
                 type="button"
@@ -362,7 +358,7 @@ export default function HomePageClient() {
                 Browse categories <ChevronRight size={16} />
               </Link>
             </motion.div>
-            <p className="mt-8 text-[12px] font-medium tracking-wide text-[#81A5C4]">
+            <p className="mt-5 text-[12px] font-medium tracking-wide text-[#81A5C4]">
               Built for discovery. Designed for connection.
             </p>
           </motion.div>
@@ -372,11 +368,11 @@ export default function HomePageClient() {
             initial={{ opacity: 0, x: 36, scale: 0.97 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
             transition={{ duration: 0.95, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-            className="relative z-10 mx-auto flex w-full max-w-[640px] items-center justify-center lg:max-w-none"
+            className="relative z-10 mx-auto flex w-full max-w-[380px] items-center justify-center sm:max-w-[460px] lg:max-w-none"
             aria-label="Illustration of business discovery across Sri Lanka"
             role="img"
           >
-            <div className="relative aspect-[1.03/1] w-full max-w-[620px]">
+            <div className="relative aspect-[1.03/1] w-full max-w-[550px]">
               <div className="absolute inset-[7%] rounded-full border border-[#7CB8E5]/10 bg-[radial-gradient(circle,rgba(34,104,160,0.20)_0%,rgba(11,41,73,0.04)_67%,transparent_74%)]" />
               <motion.div
                 aria-hidden="true"
