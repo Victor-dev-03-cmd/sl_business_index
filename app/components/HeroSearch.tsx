@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, { useState, useRef, useEffect, useMemo, useDeferredValue } from "react";
 import { useRouter } from "next/navigation";
 import { Search, ChevronRight, Building2, Star, Tags, MapPin, ChevronDown, Check, X } from "lucide-react";
 import * as LucideIcons from "lucide-react";
@@ -19,13 +19,47 @@ const sriLankanDistricts = [
   "Polonnaruwa", "Puttalam", "Ratnapura", "Trincomalee", "Vavuniya",
 ];
 
+
+type AreaMatch = { town?: Town; district?: string; remainingQuery: string };
+const normalizePlace = (value: string) =>
+  value.toLowerCase().replace(/[.,!?]+/g, " ").trim().replace(/\s+/g, " ");
+
+// Build the lookup once at module load, rather than scanning SL_TOWNS on Search.
+const TOWN_LOOKUP = new Map<string, Town>();
+for (const town of SL_TOWNS) {
+  const name = normalizePlace(town.name);
+  if (!TOWN_LOOKUP.has(name)) TOWN_LOOKUP.set(name, town);
+}
+const DISTRICT_LOOKUP = new Map(sriLankanDistricts.map(name => [normalizePlace(name), name]));
+const TOWN_SEARCH_INDEX = SL_TOWNS.map(town => ({
+  town,
+  text: `${town.name} ${town.district}`.toLowerCase(),
+}));
+
+function findAreaInQuery(input: string): AreaMatch | null {
+  const parts = normalizePlace(input).split(" ").filter(Boolean);
+  if (parts.length === 0) return null;
+  // Longest place names first; bounded by input maxLength and place name length.
+  for (let width = Math.min(5, parts.length); width >= 1; width--) {
+    for (let i = 0; i + width <= parts.length; i++) {
+      const candidate = parts.slice(i, i + width).join(" ");
+      const town = TOWN_LOOKUP.get(candidate);
+      const district = DISTRICT_LOOKUP.get(candidate);
+      if (!town && !district) continue;
+      const before = parts.slice(0, i);
+      if (["in", "at", "near"].includes(before[before.length - 1])) before.pop();
+      return { town, district, remainingQuery: [...before, ...parts.slice(i + width)].join(" ") };
+    }
+  }
+  return null;
+}
+
 interface HeroSearchProps {
   categories: any[];
   featuredBusinesses: any[];
   userCoords: { lat: number; lng: number } | null;
   isFetchingLocation: boolean;
   handleUseCurrentLocation: (autoSearch?: boolean) => void;
-  onFocusChange?: (focused: boolean) => void;
 }
 
 export default function HeroSearch({
@@ -34,13 +68,11 @@ export default function HeroSearch({
   userCoords,
   isFetchingLocation,
   handleUseCurrentLocation,
-  onFocusChange,
 }: HeroSearchProps) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [bizSuggestions, setBizSuggestions] = useState<any[]>([]);
-  const [categorySuggestions, setCategorySuggestions] = useState<any[]>([]);
   const [isFetchingSuggestions, setIsFetchingSuggestions] = useState(false);
   const [areaOpen, setAreaOpen] = useState(false);
   const [areaQuery, setAreaQuery] = useState("");
@@ -48,16 +80,23 @@ export default function HeroSearch({
   const areaRef = useRef<HTMLDivElement>(null);
 
   const searchBarRef = useRef<HTMLFormElement>(null);
-  const latestFetchId = useRef(0);
+  const suggestionCache = useRef<Map<string, any[]>>(new Map());
+  const deferredAreaQuery = useDeferredValue(areaQuery);
 
   // The location selector uses existing Sri Lankan town coordinates; no invented postal codes.
   const areaOptions = useMemo<Array<{ label: string; district?: string; town?: Town }>>(() => {
-    const query = areaQuery.trim().toLowerCase();
+    const query = deferredAreaQuery.trim().toLowerCase();
     if (!query) return sriLankanDistricts.slice(0, 8).map(district => ({ label: district, district }));
     const matchingDistricts = sriLankanDistricts.filter(d => d.toLowerCase().includes(query)).slice(0, 5).map(district => ({ label: district, district }));
-    const matchingTowns = SL_TOWNS.filter(t => t.name.toLowerCase().includes(query) || t.district.toLowerCase().includes(query)).slice(0, 12).map(town => ({ label: `${town.name}, ${town.district}`, town }));
+    const matchingTowns: Array<{ label: string; town: Town }> = [];
+    for (const row of TOWN_SEARCH_INDEX) {
+      if (row.text.includes(query)) {
+        matchingTowns.push({ label: `${row.town.name}, ${row.town.district}`, town: row.town });
+        if (matchingTowns.length === 12) break;
+      }
+    }
     return [...matchingDistricts, ...matchingTowns];
-  }, [areaQuery]);
+  }, [deferredAreaQuery]);
 
   useEffect(() => {
     if (!areaOpen) return;
@@ -80,53 +119,60 @@ export default function HeroSearch({
     [categories]
   );
 
-  useEffect(() => {
-    onFocusChange?.(isSearchFocused);
-  }, [isSearchFocused, onFocusChange]);
+  // Derive category suggestions without scheduling a state update on every keystroke.
+  const categorySuggestions = useMemo(() => {
+    const query = searchQuery.trim();
+    if (!isSearchFocused || areaOpen || query.length < 2) return [];
+    return fuse.search(query, { limit: 5 }).map((result) => result.item);
+  }, [searchQuery, fuse, isSearchFocused, areaOpen]);
 
-  // Category filter — Fuse.js fuzzy match, instant client-side
+  // Autocomplete runs only while actively searching, after two characters.
+  // Cancel stale requests and reuse recent results to reduce database work.
   useEffect(() => {
-    const q = searchQuery.trim();
-    if (!q) {
-      setCategorySuggestions([]);
+    const query = searchQuery.trim();
+    if (!isSearchFocused || areaOpen || query.length < 2) {
+      setBizSuggestions([]);
+      setIsFetchingSuggestions(false);
       return;
     }
-    const results = fuse.search(q, { limit: 5 });
-    setCategorySuggestions(results.map((r) => r.item));
-  }, [searchQuery, fuse]);
-
-  // Business suggestions — debounced RPC at 150 ms, cancels stale responses
-  useEffect(() => {
-    const q = searchQuery.trim();
-
-    if (!q) {
-      setBizSuggestions(featuredBusinesses.slice(0, 4));
+    const key = query.toLowerCase();
+    const cached = suggestionCache.current.get(key);
+    if (cached) {
+      setBizSuggestions(cached);
       setIsFetchingSuggestions(false);
       return;
     }
 
+    let active = true;
+    const controller = new AbortController();
     setIsFetchingSuggestions(true);
-
-    const fetchId = ++latestFetchId.current;
-    const timer = setTimeout(async () => {
+    const timer = window.setTimeout(async () => {
       try {
         const { data, error } = await supabase.rpc("get_global_search_suggestions", {
-          search_query: q,
+          search_query: query,
           suggestion_limit: 5,
-        });
-        if (fetchId !== latestFetchId.current) return;
+        }).abortSignal(controller.signal);
+        if (!active || controller.signal.aborted) return;
         if (error) throw error;
-        setBizSuggestions(data ?? []);
-      } catch (err) {
-        if (fetchId !== latestFetchId.current) return;
-        console.error("Error fetching suggestions:", err);
+        const matches = data ?? [];
+        if (suggestionCache.current.size >= 60) suggestionCache.current.clear();
+        suggestionCache.current.set(key, matches);
+        setBizSuggestions(matches);
+      } catch (error) {
+        if (active && !controller.signal.aborted) {
+          console.error("Error fetching suggestions:", error);
+        }
       } finally {
-        if (fetchId === latestFetchId.current) setIsFetchingSuggestions(false);
+        if (active && !controller.signal.aborted) setIsFetchingSuggestions(false);
       }
-    }, 150);
+    }, 350);
 
-    return () => clearTimeout(timer);
-  }, [searchQuery, featuredBusinesses]);
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [searchQuery, isSearchFocused, areaOpen]);
 
   const handleSearch = (query?: string) => {
     const finalQuery = query || searchQuery;
@@ -137,7 +183,8 @@ export default function HeroSearch({
     let finalDistrict = "";
     let finalSearchMode: "location" | "nearby" | null = null;
 
-    // Explicit area selection takes precedence over location inference and cached GPS.
+    // Explicit selection wins. Otherwise parse short keyword phrases against
+    // an indexed town/district lookup instead of scanning thousands of towns.
     if (selectedArea?.town) {
       finalLat = selectedArea.town.lat.toString();
       finalLng = selectedArea.town.lon.toString();
@@ -145,55 +192,18 @@ export default function HeroSearch({
     } else if (selectedArea?.district) {
       finalDistrict = selectedArea.district;
       finalSearchMode = "location";
-    }
-
-    if (!selectedArea) for (const town of SL_TOWNS) {
-      const townName = town.name.toLowerCase();
-      const patterns = [` in ${townName}`, ` at ${townName}`, ` near ${townName}`, `${townName} `, ` ${townName}`];
-      if (lowerQuery === townName) {
-        extractedTown = town;
-        lowerQuery = "";
-        break;
-      }
-      let found = false;
-      for (const pattern of patterns) {
-        if (lowerQuery.includes(pattern)) {
-          extractedTown = town;
-          lowerQuery = lowerQuery.replace(pattern, " ").trim();
-          found = true;
-          break;
-        }
-      }
-      if (found) break;
-    }
-
-    if (extractedTown) {
-      finalLat = extractedTown.lat.toString();
-      finalLng = extractedTown.lon.toString();
-      finalSearchMode = "nearby";
-    }
-
-    if (!selectedArea && !finalLat) {
-      for (const district of sriLankanDistricts) {
-        const dLower = district.toLowerCase();
-        const patterns = [` in ${dLower}`, ` at ${dLower}`, ` near ${dLower}`, `${dLower} `, ` ${dLower}`];
-        if (lowerQuery === dLower) {
-          finalDistrict = district;
+    } else {
+      const match = findAreaInQuery(finalQuery);
+      if (match) {
+        lowerQuery = match.remainingQuery;
+        if (match.town) {
+          finalLat = match.town.lat.toString();
+          finalLng = match.town.lon.toString();
+          finalSearchMode = "nearby";
+        } else if (match.district) {
+          finalDistrict = match.district;
           finalSearchMode = "location";
-          lowerQuery = "";
-          break;
         }
-        let found = false;
-        for (const pattern of patterns) {
-          if (lowerQuery.includes(pattern)) {
-            finalDistrict = district;
-            finalSearchMode = "location";
-            lowerQuery = lowerQuery.replace(pattern, " ").trim();
-            found = true;
-            break;
-          }
-        }
-        if (found) break;
       }
     }
 
@@ -245,9 +255,10 @@ export default function HeroSearch({
     return Icon ? <Icon className={className} /> : <Tags className={className} />;
   };
 
+  const displayedBusinesses = searchQuery.trim() ? bizSuggestions : featuredBusinesses.slice(0, 4);
   const showDropdown =
     !areaOpen && isSearchFocused &&
-    (bizSuggestions.length > 0 || categorySuggestions.length > 0 || isFetchingSuggestions);
+    (displayedBusinesses.length > 0 || categorySuggestions.length > 0 || isFetchingSuggestions);
 
   return (
     <div className="relative mx-auto w-full">
@@ -268,6 +279,7 @@ export default function HeroSearch({
                 type="search"
                 autoComplete="off"
                 value={searchQuery}
+                maxLength={160}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => { setIsSearchFocused(true); setAreaOpen(false); }}
                 onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
@@ -401,14 +413,14 @@ export default function HeroSearch({
             )}
 
             {/* Businesses */}
-            {bizSuggestions.length > 0 && (
+            {displayedBusinesses.length > 0 && (
               <div>
                 <div className="px-4 pt-3 pb-1.5">
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">
                     {searchQuery.trim() ? "Best Matches" : "Recommended for You"}
                   </span>
                 </div>
-                {bizSuggestions.map((biz) => (
+                {displayedBusinesses.map((biz) => (
                   <button
                     key={biz.id}
                     onMouseDown={() => router.push(`/business/${biz.slug || biz.id}`)}
