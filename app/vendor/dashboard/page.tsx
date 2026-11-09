@@ -5,10 +5,10 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import {
-  Activity, ArrowRight, ArrowUpRight, BarChart3, CheckCircle2, ChevronRight,
-  Clock3, Eye, ExternalLink, LayoutDashboard, Megaphone, MessageCircle,
-  MessageSquare, MousePointerClick, PhoneCall, Plus, RefreshCw, Search,
-  ShieldCheck, Sparkles, Star, Store, TrendingUp, Zap, type LucideIcon
+  Activity, ArrowRight, ArrowUpRight, CheckCircle2, ChevronRight,
+  Eye, ExternalLink, LayoutDashboard, Megaphone, MessageCircle,
+  MessageSquare, PhoneCall, Plus, RefreshCw, Search,
+  ShieldCheck, Sparkles, Star, Store, Zap, type LucideIcon
 } from 'lucide-react';
 import VendorAnalytics from './VendorAnalytics';
 import PushNotificationToggle from '@/components/PushNotificationToggle';
@@ -150,7 +150,7 @@ export default function VendorDashboard() {
         leads: leadCount.count || 0,
       });
       setRecentReviews((recent.data || []).map(r => {
-        const joined = r.businesses;
+        const joined = r.businesses as unknown as { name?: string } | { name?: string }[] | null;
         const businessName = Array.isArray(joined) ? joined[0]?.name : joined?.name;
         return {
           id: r.id,
@@ -352,6 +352,39 @@ export default function VendorDashboard() {
             </div>
           </div>
         </div>
+
+        {tab === 'performance' && (
+          <section className="overflow-hidden rounded-[24px] border border-[#e2eae5] bg-white shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#eef2ee] p-5 sm:p-6">
+              <div>
+                <h3 className="text-lg font-bold text-[#153c2e]">Performance by business</h3>
+                <p className="mt-1 text-xs text-[#8a9b90]">All-time recorded views and call clicks for each of your listings.</p>
+              </div>
+              <Link href="/vendor/my-businesses" className="inline-flex items-center gap-2 text-xs font-bold text-[#2e7555] hover:underline">Manage listings <ArrowUpRight size={14} /></Link>
+            </div>
+            {businesses.length === 0 ? (
+              <p className="p-8 text-center text-sm text-[#87988d]">Register a business to see its performance breakdown.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[520px] text-left">
+                  <thead className="bg-[#f7faf8] text-[10px] uppercase tracking-wider text-[#849b8b]">
+                    <tr><th className="px-6 py-4">Business</th><th className="px-4 py-4">Listing</th><th className="px-4 py-4 text-right">Views</th><th className="px-6 py-4 text-right">Call clicks</th></tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#edf2ee]">
+                    {businesses.map(b => (
+                      <tr key={b.id} className="text-[12px] text-[#31513d] hover:bg-[#f9fbfa]">
+                        <td className="px-6 py-4 font-bold">{b.name}</td>
+                        <td className="px-4 py-4">{b.status === 'approved' ? 'Live' : 'Under review'}</td>
+                        <td className="px-4 py-4 text-right font-semibold">{fmt(Number(b.views || 0))}</td>
+                        <td className="px-6 py-4 text-right font-semibold">{fmt(Number(b.calls || 0))}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+        )}
 
         {/* Actions */}
         <section>
