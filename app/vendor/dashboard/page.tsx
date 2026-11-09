@@ -299,7 +299,7 @@ export default function VendorDashboard() {
                 </div>
                 {planLimits?.advanced_analytics ? (
                   <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full flex items-center gap-1 border border-green-100/50">
-                    <TrendingUp size={12} /Advanced/span>
+                    <TrendingUp size={12} /> Advanced
                 ) : (
                   <Link href="/vendor/billing" className="text-[10px] font-bold text-brand-gold bg-brand-gold/10 px-2 py-1 rounded flex items-center gap-1 border border-brand-gold/20">
                     <Lock size={10} /> Upgrade
@@ -325,7 +325,7 @@ export default function VendorDashboard() {
               </Link>;
             })}
           </div>
-          {/* My Businesses Section */
+          {/* My Businesses Section */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
             {/* Business List */}
             <div className="lg:col-span-2 bg-white rounded-[6px] border border-gray-300 shadow-sm overflow-hidden flex flex-col">
