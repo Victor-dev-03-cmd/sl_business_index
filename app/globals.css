@@ -5,7 +5,7 @@ html {
 }
 
 :root {
-  --font-sans: var(--font-outfit), ui-sans-serif, system-ui;
+  --font-sans: var(--font-inter), var(--font-tamil), var(--font-sinhala), ui-sans-serif, system-ui;
   --background: 0 0% 100%;
   --foreground: 222.2 84% 4.9%;
   --card: 0 0% 100%;
@@ -90,6 +90,8 @@ body {
   background: hsl(var(--background));
   color: hsl(var(--foreground));
   font-family: var(--font-sans);
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
@@ -181,3 +183,10 @@ body {
 }
 
 
+
+/* Keep buttons, form controls and portal content on the brand typeface. */
+button, input, select, textarea, option { font-family: inherit; }
+
+/* Brand typography: consistent English with script-aware fallback. */
+:lang(ta) { font-family: var(--font-tamil), var(--font-inter), sans-serif; }
+:lang(si) { font-family: var(--font-sinhala), var(--font-inter), sans-serif; }
