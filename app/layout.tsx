@@ -1,12 +1,16 @@
-import { Outfit } from "next/font/google";
+import { Inter, Noto_Sans_Tamil, Noto_Sans_Sinhala } from "next/font/google";
 import RootClientLayout from "./RootClientLayout";
 import "./globals.css";
 
-const outfit = Outfit({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-outfit",
-  display: 'swap',
+  variable: "--font-inter",
+  display: "swap",
 });
+
+// Script-specific fallbacks preserve readable Tamil and Sinhala text.
+const tamil = Noto_Sans_Tamil({ subsets: ["tamil"], variable: "--font-tamil", display: "swap" });
+const sinhala = Noto_Sans_Sinhala({ subsets: ["sinhala"], variable: "--font-sinhala", display: "swap" });
 
 export const metadata = {
   title: "SL Business Index - Premium Sri Lankan Directory",
@@ -19,7 +23,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={outfit.variable} suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${tamil.variable} ${sinhala.variable}`} suppressHydrationWarning>
       <body className="antialiased" suppressHydrationWarning>
         <RootClientLayout>
           {children}
