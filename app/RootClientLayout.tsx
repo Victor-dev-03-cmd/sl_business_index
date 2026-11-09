@@ -14,6 +14,7 @@ import ClarityTracker from "./components/ClarityTracker";
 import DynamicAppearance from "./components/DynamicAppearance";
 import { SessionProvider } from "./components/SessionContext";
 import LoadingProvider from "./components/LoadingProvider";
+import IconsaxRegistry from "./components/IconsaxRegistry";
 import { Toaster } from "sonner";
 
 export default function RootClientLayout({
@@ -42,6 +43,7 @@ export default function RootClientLayout({
         </div>
       </noscript>
       <LoadingProvider>
+          <IconsaxRegistry />
           <ClarityTracker />
           <QueryProvider>
             <Toaster richColors closeButton position="bottom-right" />
