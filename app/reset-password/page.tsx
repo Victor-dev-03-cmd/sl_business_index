@@ -1,10 +1,11 @@
 'use client';
 
+import BrandLogo from '@/app/components/BrandLogo';
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Lock, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -67,7 +68,7 @@ export default function ResetPassword() {
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
         <div className="relative z-10 max-w-md w-full text-center">
           <div className="mb-10 flex justify-center">
-            <Image src="/logo.png" alt="Logo" width={180} height={50} className="brightness-0 invert" />
+            <BrandLogo tone="dark" />
           </div>
           <h1 className="text-4xl font-normal text-white mb-6">Create New Password.</h1>
           <p className="text-brand-sand/80 text-sm">Set a strong password to protect your account and business data.</p>
@@ -80,7 +81,7 @@ export default function ResetPassword() {
           {/* Mobile Logo */}
           <div className="lg:hidden flex justify-center mb-8">
             <Link href="/">
-              <Image src="/logo.png" alt="Logo" width={140} height={45} />
+              <BrandLogo tone="light" />
             </Link>
           </div>
 
