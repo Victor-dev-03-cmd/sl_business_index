@@ -1,7 +1,8 @@
 'use client';
 
+import BrandLogo from '@/app/components/BrandLogo';
+
 import Link from 'next/link';
-import Image from 'next/image';
 import { AlertCircle, ArrowLeft } from 'lucide-react';
 
 export default function AuthCodeError() {
@@ -11,7 +12,7 @@ export default function AuthCodeError() {
         {/* Logo Integration */}
         <div className="flex justify-center mb-4">
           <Link href="/">
-            <Image src="/logo.png" alt="Logo" width={140} height={45} />
+            <BrandLogo tone="light" />
           </Link>
         </div>
 
