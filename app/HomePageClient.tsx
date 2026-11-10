@@ -25,6 +25,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import dynamic from "next/dynamic";
 import VerifiedBadge from "./components/VerifiedBadge";
 import Testimonials from "./components/Testimonials";
+import HeroDiscoveryGraphic from "./components/HeroDiscoveryGraphic";
 
 // Server-render the visible search form: client-only 64px placeholder shifted
 // the entire hero after hydration (a major mobile CLS source).
@@ -448,85 +449,8 @@ export default function HomePageClient() {
             </p>
           </div>
 
-          {/* Fully code-based vector scene: no stock imagery, GIF downloads or external animation service. */}
-          <div
-            className="relative z-10 mx-auto flex w-full max-w-[380px] items-center justify-center sm:max-w-[460px] lg:max-w-none"
-            aria-label="Illustration of business discovery across Sri Lanka"
-            role="img"
-          >
-            <div className="relative aspect-[1.03/1] w-full max-w-[550px]">
-              <div className="absolute inset-[7%] rounded-full border border-[#94BAA0]/10 bg-[radial-gradient(circle,rgba(52,112,83,0.20)_0%,rgba(17,45,33,0.05)_67%,transparent_74%)]" />
-              <div
-                aria-hidden="true"
-                className="absolute inset-[7%] rounded-full border border-dashed border-[#E7C58E]/20"
-              />
-              <div
-                aria-hidden="true"
-                className="absolute inset-[17%] rounded-full border border-[#94BAA0]/20"
-              />
-              <svg viewBox="0 0 600 600" fill="none" aria-hidden="true" className="absolute inset-0 h-full w-full">
-                <defs>
-                  <linearGradient id="hero-map-stroke" x1="140" y1="110" x2="460" y2="520" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#F0D9AC" stopOpacity="0.95" />
-                    <stop offset="1" stopColor="#36785E" stopOpacity="0.55" />
-                  </linearGradient>
-                  <linearGradient id="hero-map-fill" x1="280" y1="125" x2="365" y2="510" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#26483B" stopOpacity="0.94" />
-                    <stop offset="1" stopColor="#1B3430" stopOpacity="0.8" />
-                  </linearGradient>
-                </defs>
-                <circle cx="300" cy="300" r="224" stroke="#E7C58E" strokeOpacity=".14" />
-                <circle cx="300" cy="300" r="170" stroke="#E7C58E" strokeOpacity=".13" strokeDasharray="4 12" />
-                <path d="M299 90C275 119 278 148 264 172C249 198 244 227 261 253C272 269 252 287 259 307C266 331 285 347 290 366C296 394 305 419 322 442C337 463 346 493 366 505C383 509 396 491 390 472C384 452 372 434 375 412C379 391 370 369 358 350C345 329 343 307 354 286C364 266 356 245 343 229C327 210 325 185 322 163C320 134 313 106 299 90Z" fill="url(#hero-map-fill)" stroke="url(#hero-map-stroke)" strokeWidth="2.5" strokeLinejoin="round" />
-                <path d="M278 200L308 277L294 364L357 437M308 277L343 329M294 364L324 404" stroke="#DCB179" strokeOpacity=".38" strokeWidth="1.5" strokeDasharray="5 8" />
-                <circle cx="278" cy="200" r="5" fill="#F0D9AC" />
-                <circle cx="308" cy="277" r="5" fill="#F0D9AC" />
-                <circle cx="294" cy="364" r="5" fill="#F0D9AC" />
-                <circle cx="357" cy="437" r="5" fill="#F0D9AC" />
-                <circle cx="308" cy="277" r="19" stroke="#F0D9AC" strokeWidth="2" />
-                <circle cx="294" cy="364" r="19" stroke="#F0D9AC" strokeWidth="2" />
-              </svg>
-
-              <div
-                className="absolute left-[1%] top-[24%] w-[45%] max-w-[225px] rounded-2xl border border-white/15 bg-[#1B3430]/90 p-4 shadow-[0_25px_55px_rgba(0,0,0,0.25)]  sm:p-5"
-              >
-                <div className="mb-3 flex items-center gap-2">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-400/15 text-emerald-200"><Building2 size={18} /></span>
-                  <div className="min-w-0">
-                    <p className="text-[10px] uppercase tracking-[0.12em] text-emerald-300">Find what matters</p>
-                    <p className="text-sm font-semibold text-white">Local businesses</p>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="h-2 w-[82%] rounded-full bg-white/20" />
-                  <div className="h-2 w-[60%] rounded-full bg-white/10" />
-                </div>
-              </div>
-
-              <div
-                className="absolute right-[0%] top-[53%] w-[46%] max-w-[236px] rounded-2xl border border-white/15 bg-[#1B3430]/95 p-4 shadow-[0_25px_60px_rgba(0,0,0,0.28)]  sm:p-5"
-              >
-                <div className="flex items-center gap-2.5">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#E7C58E]/15 text-emerald-200"><MapPin size={19} /></span>
-                  <div>
-                    <p className="text-[10px] uppercase tracking-[0.12em] text-emerald-300">Explore nearby</p>
-                    <p className="text-sm font-semibold text-white">Sri Lanka</p>
-                  </div>
-                </div>
-                <div className="mt-4 flex items-center gap-2 text-[11px] text-[#CADDCB]">
-                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                  Discover local opportunities
-                </div>
-              </div>
-
-              <div
-                className="absolute bottom-[8%] left-[19%] inline-flex items-center gap-2 rounded-full border border-[#E7C58E]/20 bg-[#152C25]/90 px-4 py-3 text-xs font-semibold text-[#E0EADB] shadow-xl "
-              >
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#E7C58E]/15"><Search size={14} /></span>
-                Discover. Connect. Grow.
-              </div>
-            </div>
-          </div>
+          {/* Lightweight cartographic SVG; no heavy looping animations or filters. */}
+          <HeroDiscoveryGraphic />
         </div>
       </section>
 

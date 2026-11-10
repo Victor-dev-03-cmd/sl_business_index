@@ -187,3 +187,17 @@ button, input, select, textarea, option { font-family: inherit; }
 /* Brand typography: consistent English with script-aware fallback. */
 :lang(ta) { font-family: var(--font-tamil), var(--font-inter), sans-serif; }
 :lang(si) { font-family: var(--font-sinhala), var(--font-inter), sans-serif; }
+
+
+/* Homepage hero: one brief pin light-up, no permanent animation/blur layer. */
+@keyframes hero-discovery-ignite {
+  0%, 28% { opacity: 0.22; }
+  42% { opacity: 0.95; }
+  61% { opacity: 0.42; }
+  100% { opacity: 0.95; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .hero-discovery-led {
+    animation: hero-discovery-ignite 1050ms ease-out both;
+  }
+}
