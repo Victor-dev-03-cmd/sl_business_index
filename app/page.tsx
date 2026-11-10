@@ -16,7 +16,6 @@ export default async function HomePage() {
       const { data } = await supabase
         .from('categories')
         .select('id, name, icon, parent_id')
-        .is('parent_id', null)
         .order('name', { ascending: true })
       return data ?? []
     },
