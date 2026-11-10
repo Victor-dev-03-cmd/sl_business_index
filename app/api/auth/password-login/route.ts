@@ -14,8 +14,21 @@ const json = (body: unknown, status = 200) =>
  * Never echo tokens or sign-in secrets in responses or logs.
  */
 export async function POST(request: Request) {
+  // Next.js may normalize Request.url to localhost behind its dev proxy.
+  // The browser's Host header is the correct same-origin authority, including
+  // Vercel custom domains. Reject mismatched hosts and schemes.
   const origin = request.headers.get('origin')
-  if (!origin || origin !== new URL(request.url).origin) {
+  const host = request.headers.get('host') || new URL(request.url).host
+  const protocol = request.headers.get('x-forwarded-proto') ||
+    new URL(request.url).protocol.replace(':', '')
+  let acceptedOrigin = false
+  try {
+    const supplied = new URL(origin || '')
+    acceptedOrigin = supplied.host === host &&
+      supplied.protocol === protocol + ':' &&
+      (protocol === 'https' || process.env.NODE_ENV !== 'production')
+  } catch { /* Missing or invalid Origin: reject. */ }
+  if (!acceptedOrigin) {
     return json({ error: 'Cross-origin sign-in request rejected.' }, 403)
   }
   if (!(request.headers.get('content-type') || '').toLowerCase().includes('application/json')) {
