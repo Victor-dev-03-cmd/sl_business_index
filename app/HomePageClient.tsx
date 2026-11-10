@@ -152,7 +152,6 @@ export default function HomePageClient() {
       const { data, error } = await supabase
         .from("categories")
         .select('id, name, icon, parent_id')
-        .is("parent_id", null)
         .order("name", { ascending: true });
       if (error) throw error;
       return data;
@@ -319,10 +318,18 @@ export default function HomePageClient() {
     router.push(`/nearby?${params.toString()}`);
   };
 
-  // Surface high-demand categories ahead of A–Z on this homepage only.
-  // Preserve full category navigation and the original database ordering.
+  // The database has only 16 parent groups, while important Food & Dining,
+  // Health & Medical and Shopping & Retail entries are children. Include those
+  // explicitly on the homepage without altering the category table or full directory.
   const featuredCategories = React.useMemo(() => {
-    const priorities = [
+    const spotlightNames = [
+      "food & dining",
+      "health & medical",
+      "shopping & retail",
+      "hotels & restaurants",
+      "educational institutes & services",
+    ];
+    const broadPriorities = [
       /\bfood\b/i,
       /\b(health(?:care)?|medical|hospital|clinic|doctor|pharmacy)\b/i,
       /\b(restaurant|dining|cafe|catering)\b/i,
@@ -333,12 +340,16 @@ export default function HomePageClient() {
       /\b(professional|finance|insurance|banking)\b/i,
       /\b(construction|industrial|engineering)\b/i,
     ];
-    const rank = (name: string) => {
-      const match = priorities.findIndex(pattern => pattern.test(name));
-      return match === -1 ? priorities.length : match;
+    const normalizedName = (name: string) => name.trim().toLowerCase();
+    const rank = (category: { name: string }) => {
+      const featuredIndex = spotlightNames.indexOf(normalizedName(category.name));
+      if (featuredIndex >= 0) return featuredIndex;
+      const broadIndex = broadPriorities.findIndex(pattern => pattern.test(category.name));
+      return spotlightNames.length + (broadIndex === -1 ? broadPriorities.length : broadIndex);
     };
     return [...categories]
-      .sort((a, b) => rank(a.name) - rank(b.name) || a.name.localeCompare(b.name))
+      .filter(category => category.parent_id == null || spotlightNames.includes(normalizedName(category.name)))
+      .sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name))
       .slice(0, 24);
   }, [categories]);
 
