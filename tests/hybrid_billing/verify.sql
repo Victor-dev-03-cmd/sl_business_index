@@ -1,13 +1,6 @@
 -- Test only on ephemeral PostgreSQL 17 CI database.
 \set ON_ERROR_STOP on
-CREATE ROLE slbi_billing_app NOLOGIN;
-CREATE ROLE slbi_billing_staff NOLOGIN;
-GRANT USAGE ON SCHEMA billing TO slbi_billing_app,slbi_billing_staff;
-GRANT EXECUTE ON FUNCTION billing.submit_request(uuid,uuid,text,text) TO slbi_billing_app;
-GRANT EXECUTE ON FUNCTION billing.account_snapshot(uuid) TO slbi_billing_app;
-GRANT EXECUTE ON FUNCTION billing.published_plans() TO slbi_billing_app;
-GRANT EXECUTE ON FUNCTION billing.staff_action(uuid,uuid,text,text,text,boolean) TO slbi_billing_staff;
-GRANT EXECUTE ON FUNCTION billing.staff_queue() TO slbi_billing_staff;
+-- Roles and EXECUTE-only grants are applied by migration 002.
 
 -- Production catalogue MUST be empty until final four-plan pricing approved.
 DO $$ BEGIN IF (SELECT count(*) FROM billing.plans) <> 0 THEN
@@ -60,6 +53,20 @@ DO $$ BEGIN
   EXCEPTION WHEN insufficient_privilege THEN NULL;
   END;
 END $$;
+SELECT billing.submit_request(
+ '00000000-0000-4000-8000-000000000003'::uuid,
+ '10000000-0000-4000-8000-000000000002'::uuid,'monthly',
+ 'test-cancel-order-user-B-0001') AS cancel_order \gset
+SELECT billing.cancel_request(
+ '00000000-0000-4000-8000-000000000003'::uuid, :'cancel_order'::uuid);
+SELECT billing.account_snapshot('00000000-0000-4000-8000-000000000003'::uuid)
+ -> 'orders' @> '[{"status":"cancelled"}]'::jsonb AS cancelled_ok \gset
+\if :cancelled_ok
+ \echo 'PASS: vendor may cancel their own pending order'
+\else
+ \echo 'FAIL: cancellation'
+ \quit 1
+\endif
 RESET ROLE;
 
 SET ROLE slbi_billing_staff;
