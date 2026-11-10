@@ -508,7 +508,7 @@ export default function HomePageClient() {
                           unoptimized={cat.image_url.includes("supabase.co")}
                         />
                       ) : (
-                        <CategoryIcon name={cat.icon} className="h-7 w-7" />
+                        <CategoryIcon name={cat.icon} size={28} className="h-7 w-7" />
                       )}
                     </div>
                     <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#F0F2E9] bg-white text-[#75AB8D] transition-colors duration-200 group-hover:border-[#CADDCB] group-hover:bg-[#F0F2E9] group-hover:text-[#26483B]">
