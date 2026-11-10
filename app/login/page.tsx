@@ -9,6 +9,14 @@ import { Chrome, ArrowLeft, Check, Eye, EyeOff, CheckCircle2 } from 'lucide-reac
 import { motion } from 'framer-motion';
 import { Turnstile } from '@marsidev/react-turnstile';
 
+function safeInternalPath(value: string | null): string {
+  if (!value || !value.startsWith('/') || value.startsWith('//') ||
+      value.length > 2048 || /[\\\u0000-\u001f\u007f]/.test(value)) {
+    return '/';
+  }
+  return value;
+}
+
 function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -18,7 +26,7 @@ function LoginForm() {
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get('next') || '/';
+  const next = safeInternalPath(searchParams.get('next') || searchParams.get('redirect'));
   const isPasswordReset = searchParams.get('reset') === 'success';
   
   const handleContextMenu = (e: React.MouseEvent) => {
@@ -51,12 +59,14 @@ function LoginForm() {
   };
 
   const handleSocialLogin = async (provider: 'google' | 'github') => {
-    await supabase.auth.signInWithOAuth({
+    setError(null);
+    const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
         redirectTo: `${location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
       },
     });
+    if (oauthError) setError(oauthError.message);
   };
 
   return (

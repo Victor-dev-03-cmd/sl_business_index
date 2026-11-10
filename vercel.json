@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "git": {
+    "deploymentEnabled": {
+      "security/supabase-auth-protected-routes": false,
+      "feature/hybrid-postgres-billing": false
+    }
+  }
+}

@@ -1,0 +1,38 @@
+name: Verify Independent PostgreSQL Billing
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  hybrid-billing-sql:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: slbi_hybrid_ci
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d slbi_hybrid_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 15
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: slbi_hybrid_ci
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Create independent Billing database
+        run: psql -v ON_ERROR_STOP=1 -f database/postgres/billing/001_initial.sql
+      - name: Provision least-privilege roles and cancellation
+        run: psql -v ON_ERROR_STOP=1 -f database/postgres/billing/002_account_cancellation_and_roles.sql
+      - name: Test permissions and payment integrity
+        run: psql -v ON_ERROR_STOP=1 -f tests/hybrid_billing/verify.sql

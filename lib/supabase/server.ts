@@ -1,40 +1,33 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 
+type CookieToSet = { name: string; value: string; options?: CookieOptions }
+import { cookies } from 'next/headers'
+
+/**
+ * Per-request Supabase server client with shared SSR auth cookies.
+ * Use auth.getUser() or getClaims(), never getSession(), for authorization.
+ */
 export async function createClient() {
-  const cookieStore = await cookies();
+  const cookieStore = await cookies()
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+    || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      auth: {
-        // In Server Components, we should not attempt to persist or auto-refresh 
-        // to avoid infinite loops during server-side rendering if the token is invalid.
-        // The middleware handles session refresh.
-        persistSession: false,
-        autoRefreshToken: false,
-        detectSessionInUrl: false,
+  return createServerClient(supabaseUrl, supabaseKey, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll()
       },
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-        set(name: string, value: string, options: CookieOptions) {
-          try {
-            cookieStore.set({ name, value, ...options });
-          } catch (error) {
-            // The `set` method was called from a Server Component.
-          }
-        },
-        remove(name: string, options: CookieOptions) {
-          try {
-            cookieStore.set({ name, value: '', ...options });
-          } catch (error) {
-            // The `delete` method was called from a Server Component.
-          }
-        },
+      setAll(cookiesToSet: CookieToSet[]) {
+        try {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            cookieStore.set(name, value, options)
+          )
+        } catch {
+          // Server Components cannot write cookies. The Proxy refreshes
+          // credentials on the paths that require authenticated access.
+        }
       },
-    }
-  );
+    },
+  })
 }

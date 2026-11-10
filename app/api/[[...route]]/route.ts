@@ -763,15 +763,38 @@ app.post('/billing/upgrade-request', async (c) => {
     // Do not declare a discount applied; actual payment terms are confirmed by staff.
     const { data: current, error: subError } = await db
       .from('subscriptions')
-      .select('plan_name')
+      .select('plan_name,billing_cycle,renews_at')
       .eq('user_id', authUser.id)
       .eq('status', 'active')
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle()
     if (subError) throw subError
-    if (current?.plan_name === plan.name) {
+    if (current?.plan_name === plan.name && current?.billing_cycle === billingCycle &&
+        (!current.renews_at || new Date(current.renews_at).getTime() > Date.now())) {
       return c.json({ error: 'This plan is already your active subscription.' }, 409)
+    }
+
+    // Billing V2 is opt-in until its reviewed RLS migration is applied and tested
+    // on a staging database. Never fall back to an unverified activation.
+    if (process.env.BILLING_V2_ENABLED === 'true') {
+      const { data: billingRequestId, error: requestError } = await db.rpc(
+        'slbi_submit_billing_request',
+        { p_plan_id: payload.planId, p_cycle: billingCycle }
+      )
+      if (requestError) {
+        if (requestError.message.includes('Too many recent billing requests')) {
+          return c.json({ error: 'Request limit reached. Try again tomorrow.' }, 429)
+        }
+        if (requestError.message.includes('already active')) {
+          return c.json({ error: 'This plan and billing cycle are already active.' }, 409)
+        }
+        throw requestError
+      }
+      return c.json({
+        success: true, requestId: String(billingRequestId),
+        message: 'Request recorded for manual review; no payment was taken or subscription activated.',
+      }, 201)
     }
 
     // Avoid reading the private admin-only contact inbox from a vendor session.
