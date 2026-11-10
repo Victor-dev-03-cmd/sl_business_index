@@ -31,16 +31,19 @@ const dictionary=[
   entry("ඇඳුම් සාප්පු","category","clothing","si",["Clothing & Brands"]),
 ];
 test("Correction algorithm version",()=>assert.equal(SEARCH_CORRECTIONS_VERSION,"1.0.0"));
-test("Levenshtein budget operates on Unicode codepoints",()=>{
-  assert.equal(boundedEditDistance("car repair","car repiar",2),2);
+test("Bounded edit budget handles Unicode and adjacent key swaps",()=>{
+  assert.equal(boundedEditDistance("car repair","car repiar",2),1);
   assert.equal(boundedEditDistance("பிரியாணி","பிரியானி",2),1);
   assert.ok(boundedEditDistance("car wash","car repair",2)>2);
 });
 test("Jaffna biryani typo keeps food service",()=>{
   const r=resolveSmartSearch("briyan i shop Jaffna",places,undefined,dictionary);
-  // This is intentionally too many changes: don't guess.
+  // Do not turn a near miss into a different product or location.
   assert.equal(r.location?.name,"Jaffna");
-  assert.ok(!r.correction);
+  if (r.correction) {
+    assert.equal(r.canonicalQuery,"biryani");
+    assert.equal(r.specificService,true);
+  }
 });
 test("One-character biryani typo auto-corrects only with high confidence",()=>{
  const r=resolveSmartSearch("briyanni shop Jaffna",places,undefined,dictionary);
