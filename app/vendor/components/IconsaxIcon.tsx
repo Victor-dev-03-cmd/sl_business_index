@@ -2,7 +2,7 @@
 
 import { createElement, useEffect, useRef, useState } from 'react';
 import {
-  ArrowDown2, ArrowUp2, Building2, CalendarClock, Phone, ChartNoAxesCombined,
+  ChevronDown, ChevronUp, Building2, CalendarClock, Phone, ChartNoAxesCombined,
   CheckCircle2, ChevronLeft, ChevronRight, CirclePlus, Coins, Download,
   Eye, Zap, Globe, House, Mail, Menu, MessageSquareText, Users, RefreshCw,
   Search, Settings2, ShieldCheck, Store, PanelLeft, Star,
@@ -25,8 +25,8 @@ const fallbacks: Record<string, LucideIcon> = {
   'add-circle': CirclePlus,
   'arrow-right-2': ChevronRight,
   'arrow-left-2': ChevronLeft,
-  'arrow-down-2': ArrowDown2,
-  'arrow-up-2': ArrowUp2,
+  'arrow-down-2': ChevronDown,
+  'arrow-up-2': ChevronUp,
   'shop': Store,
   'people': Users,
   'flash': Zap,
