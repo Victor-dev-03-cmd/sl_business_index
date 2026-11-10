@@ -321,7 +321,7 @@ export default function Navbar() {
         }}
       >
         <header 
-          className={cn("relative z-50 border-b bg-[#FCFAF6]/95 backdrop-blur-xl transition-all duration-300", scrolled ? "border-stone-200 shadow-[0_8px_30px_rgba(15,23,42,0.07)]" : "border-stone-100")}
+          className={cn("relative z-50 border-b bg-[#FCFAF6] transition-[border-color,box-shadow] duration-150", scrolled ? "border-stone-200 shadow-[0_2px_10px_rgba(15,23,42,0.055)]" : "border-stone-100")}
           onMouseEnter={() => {
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
           }}
@@ -478,6 +478,12 @@ export default function Navbar() {
                 <Link href="/" onClick={close} className="flex items-center gap-3 p-3 text-gray-700 hover:bg-gray-50 rounded-lg">
                   <BrandIcon name="home-2" size={20} /> <span className="font-medium">Home</span>
                 </Link>
+                <Link href="/category" onClick={close} className="flex items-center gap-3 p-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                  <BrandIcon name="category-2" size={20} /> <span className="font-medium">Categories</span>
+                </Link>
+                <Link href="/business-news" onClick={close} className="flex items-center gap-3 p-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                  <BrandIcon name="note-2" size={20} /> <span className="font-medium">Business News</span>
+                </Link>
                 <Link href="/nearby" onClick={close} className="flex items-center gap-3 p-3 text-gray-700 hover:bg-gray-50 rounded-lg">
                   <BrandIcon name="location" size={20} /> <span className="font-medium">Nearby</span>
                 </Link>
@@ -489,6 +495,9 @@ export default function Navbar() {
                 </Link>
                 <Link href="/contact" onClick={close} className="flex items-center gap-3 p-3 text-gray-700 hover:bg-gray-50 rounded-lg">
                   <BrandIcon name="call" size={20} /> <span className="font-medium">Contact</span>
+                </Link>
+                <Link href="/register-business" onClick={close} className="flex items-center gap-3 p-3 text-gray-700 hover:bg-gray-50 rounded-lg">
+                  <BrandIcon name="buildings-2" size={20} /> <span className="font-medium">List Your Business</span>
                 </Link>
               </nav>
             </div>
@@ -581,7 +590,7 @@ export default function Navbar() {
                         onClick={close}
                         className="ml-auto shrink-0 p-3 bg-white rounded-lg border border-gray-200 text-brand-dark hover:bg-brand-dark hover:text-white transition-colors flex items-center justify-center min-w-[44px] min-h-[44px]"
                       >
-                        <LayoutDashboard size={20} />
+                        <BrandIcon name="element-3" size={20} />
                       </Link>
                     )}
                     {(profileData && profileData.role === "vendor") && (
@@ -590,7 +599,7 @@ export default function Navbar() {
                         onClick={close}
                         className="ml-auto shrink-0 p-3 bg-white rounded-lg border border-gray-200 text-brand-dark hover:bg-brand-dark hover:text-white transition-colors flex items-center justify-center min-w-[44px] min-h-[44px]"
                       >
-                        <Briefcase size={20} />
+                        <BrandIcon name="briefcase" size={20} />
                       </Link>
                     )}
                   </div>
@@ -718,10 +727,7 @@ export default function Navbar() {
                                     className="object-contain"
                                   />
                                 ) : (
-                                  <LayoutGrid
-                                    size={12}
-                                    className="text-brand-blue"
-                                  />
+                                  <BrandIcon name="category-2" size={14} />
                                 )}
                               </span>
                               <span className="text-[11px] text-gray-700 font-medium truncate leading-tight">
