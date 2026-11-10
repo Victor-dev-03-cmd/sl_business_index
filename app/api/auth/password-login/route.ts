@@ -1,5 +1,7 @@
-import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { NextResponse, type NextRequest } from 'next/server'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
+
+type CookieToSet = { name: string; value: string; options?: CookieOptions }
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -13,7 +15,7 @@ const json = (body: unknown, status = 200) =>
  * cookies through next/headers before this response is sent to the browser.
  * Never echo tokens or sign-in secrets in responses or logs.
  */
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   // Next.js may normalize Request.url to localhost behind its dev proxy.
   // The browser's Host header is the correct same-origin authority, including
   // Vercel custom domains. Reject mismatched hosts and schemes.
@@ -78,20 +80,45 @@ export async function POST(request: Request) {
   }
 
   try {
-    const supabase = await createClient()
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+      || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    if (!url || !key) {
+      return json({ error: 'Authentication service is not configured.' }, 503)
+    }
+
+    // IMPORTANT: Use the SAME response for Supabase's Set-Cookie headers and
+    // the returned JSON body. Mutating next/headers cookies and constructing a
+    // separate response may lose the freshly-issued SSR session in production.
+    const signedInResponse = json({ authenticated: true })
+    const supabase = createServerClient(url, key, {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet: CookieToSet[]) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            signedInResponse.cookies.set(name, value, options)
+          })
+        },
+      },
+    })
+
+    // Supabase Auth itself checks the credentials and issues the session;
+    // there is no reason to call getUser again inside this same request.
+    // The protected Proxy verifies getClaims() on the subsequent navigation.
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error || !data.session || !data.user) {
       return json({ error: 'Invalid email or password.' }, 401)
     }
 
-    // signInWithPassword has already authenticated the credentials against
-    // Supabase Auth and returned the signed-in user + session. Its SSR cookie
-    // adapter writes the session to this Route Handler's response. Calling
-    // getUser() a second time inside the SAME request is redundant and can
-    // falsely fail before the new cookies are available on the next request.
-    // The protected Proxy independently validates getClaims() on navigation.
-    // Never return tokens to the browser in this JSON response.
-    return json({ authenticated: true })
+    // Fail closed rather than announce success with a cookie-less response.
+    // The SSR client may split its session across several cookie chunks.
+    if (signedInResponse.cookies.getAll().length === 0) {
+      console.error('Login session cookie was not written to response')
+      return json({ error: 'Login session could not be established. Please retry.' }, 503)
+    }
+    return signedInResponse
   } catch {
     return json({ error: 'Authentication service temporarily unavailable.' }, 503)
   }
