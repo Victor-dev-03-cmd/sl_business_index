@@ -62,3 +62,69 @@ test("Category names are mapped only to declared known choices when available",(
  const r=resolveSmartSearch("medical",towns,["Health & Medical"]);
  assert.deepEqual(r.categories,["Health & Medical"]);
 });
+
+
+test("Sinhala Jaffna inflection + car mechanic intent yields real Jaffna coordinates",()=>{
+ const parsed=resolveSmartSearch("යාපනයේ කාර් රෙපෙයාර් කරන තැන්",towns,["Repairing & Services","Vehicles & Automative"]);
+ assert.equal(parsed.location?.name,"Jaffna");
+ assert.equal(parsed.location?.lat,9.665093);
+ assert.equal(parsed.canonicalQuery,"car repair");
+ assert.equal(parsed.specificService,true);
+ assert.equal(parsed.intentKey,"repair");
+ assert.ok(parsed.categories.includes("Repairing & Services"));
+ assert.ok(parsed.categories.includes("Vehicles & Automative"));
+});
+test("User supplied mixed-script Tamil/Sinhala spelling still resolves Jaffna car repair",()=>{
+ const parsed=resolveSmartSearch("கார் ரிපෙயரிங் ஜப்னா டவுன்",towns);
+ assert.equal(parsed.location?.name,"Jaffna");
+ assert.equal(parsed.canonicalQuery,"car repair");
+ assert.equal(parsed.specificService,true);
+});
+test("Tamil colloquial car repair in Jaffna recognizes service and town",()=>{
+ for(const input of [
+  "கார் ரிப்பேரிங் யாழ்ப்பாணத்தில்",
+  "கார் ரிப்பேர் ஜப்னா",
+  "கார் பழுதுபார்ப்பு யாழ்ப்பாணம்",
+ ]) {
+   const parsed=resolveSmartSearch(input,towns);
+   assert.equal(parsed.location?.name,"Jaffna",input);
+   assert.equal(parsed.canonicalQuery,"car repair",input);
+   assert.equal(parsed.specificService,true,input);
+ }
+});
+test("Sinhala mechanical synonyms normalize to car repair",()=>{
+ for(const input of ["කාර් අලුත්වැඩියා යාපනයේ","වාහන අලුත්වැඩියා යාපනය","කාර් ගරාජ් ජාෆ්නා"]) {
+   const parsed=resolveSmartSearch(input,towns);
+   assert.equal(parsed.location?.name,"Jaffna",input);
+   assert.equal(parsed.canonicalQuery,"car repair",input);
+ }
+});
+test("Tamil/Sinhala aliases preserve earlier clothing search behavior",()=>{
+ const tamil=resolveSmartSearch("யாழ்ப்பாணத்தில் துணிக்கடை",towns);
+ const sinhala=resolveSmartSearch("යාපනයේ ඇඳුම් සාප්පු",towns);
+ for(const parsed of [tamil,sinhala]) {
+   assert.equal(parsed.location?.name,"Jaffna");
+   assert.equal(parsed.canonicalQuery,"clothing");
+   assert.equal(parsed.specificService,false);
+ }
+});
+test("Canonical town spellings in English continue working unchanged",()=>{
+ for(const query of ["Jaffna car repair","car repair Jaffna town","car repair near Kandy"]) {
+   const parsed=resolveSmartSearch(query,towns);
+   assert.ok(parsed.location,query);
+   assert.equal(parsed.canonicalQuery,"car repair",query);
+ }
+});
+test("Car wash is never independently classified as an exact car-repair claim",()=>{
+ const parsed=resolveSmartSearch("Jaffna car repair",towns);
+ assert.equal(parsed.specificService,true);
+ // Retrieval is responsible for evidence: category-related service only.
+ // A category label alone must not prove that a car wash repairs engines.
+ assert.ok(parsed.categories.includes("Repairing & Services"));
+});
+test("Colombo and Kandy Sinhala/Tamil town aliases also work",()=>{
+ for(const input of ["කොළඹ medical","கொழும்பில் medical","මහනුවර education","கண்டியில் education"]) {
+   const parsed=resolveSmartSearch(input,towns);
+   assert.ok(parsed.location,input);
+ }
+});

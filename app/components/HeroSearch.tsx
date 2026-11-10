@@ -213,6 +213,17 @@ export default function HeroSearch({
     } else if (selectedArea?.district) {
       finalDistrict = selectedArea.district;
       finalSearchMode = "location";
+    } else if (
+      smartIntent.location &&
+      typeof smartIntent.location.lat === "number" &&
+      typeof smartIntent.location.lon === "number"
+    ) {
+      // The shared SmartSearch parser resolves Sinhala/Tamil inflections and
+      // romanized town spellings, not just English "Jaffna".
+      extractedTown = smartIntent.location as Town;
+      finalLat = smartIntent.location.lat.toString();
+      finalLng = smartIntent.location.lon.toString();
+      finalSearchMode = "nearby";
     } else {
       const match = findAreaInQuery(finalQuery);
       if (match) {

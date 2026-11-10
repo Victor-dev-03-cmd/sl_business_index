@@ -71,9 +71,19 @@ const GROUPS: readonly DictionaryGroup[] = [
   },
   {
     key: "repair", name: "Repairing & Services",
-    categories: ["Repairing & Services","Electrical Equipment and Services"],
+    categories: ["Repairing & Services","Vehicles & Automative","Electrical Equipment and Services"],
     general: ["repair","repairs","electrician","electricians","plumber","plumbers","mechanic","mechanics","service center","பழுதுபார்ப்பு","மின்சார வேலை","අලුත්වැඩියා"],
-    specific: ["phone repair","laptop repair","computer repair","ac repair","fridge repair"],
+    specific: [
+      "phone repair","laptop repair","computer repair","ac repair","fridge repair",
+      "car repair","car repairs","car repairing","car mechanic","auto repair",
+      "automotive repair","vehicle repair","mechanic garage","car garage",
+      "කාර් රෙපෙයාර්","කාර් රිපෙයාර්","කාර් රෙපයාර්",
+      "කාර් රෙපෙයාර් කරන තැන්","කාර් අලුත්වැඩියා","වාහන අලුත්වැඩියා",
+      "වාහන ගරාජ්","කාර් ගරාජ්",
+      "கார் ரிப்பேர்","கார் ரிப்பேரிங்","கார் ரிපෙයரிங்",
+      "கார் ரிப்பெரிங்","கார் பழுதுபார்ப்பு","வாகன பழுதுபார்ப்பு",
+      "கார் மெக்கானிக்","கார் கராஜ்",
+    ],
   },
 ] as const;
 
@@ -85,10 +95,47 @@ const SPECIFIC_SYNONYMS: Readonly<Record<string,string>> = {
   "பீட்சா":"pizza", "පීසා":"pizza", "pizzas":"pizza",
   "burgers":"burger", "கொத்து":"kottu", "කොත්තු":"kottu",
   "rice and curry":"rice curry",
+  "car repairs":"car repair", "car repairing":"car repair",
+  "car mechanic":"car repair", "auto repair":"car repair",
+  "automotive repair":"car repair", "vehicle repair":"car repair",
+  "mechanic garage":"car repair", "car garage":"car repair",
+  "කාර් රෙපෙයාර්":"car repair", "කාර් රිපෙයාර්":"car repair",
+  "කාර් රෙපයාර්":"car repair", "කාර් රෙපෙයාර් කරන තැන්":"car repair",
+  "කාර් අලුත්වැඩියා":"car repair", "වාහන අලුත්වැඩියා":"car repair",
+  "වාහන ගරාජ්":"car repair", "කාර් ගරාජ්":"car repair",
+  "கார் ரிப்பேர்":"car repair", "கார் ரிப்பேரிங்":"car repair",
+  "கார் ரிපෙයரிங்":"car repair", "கார் ரிப்பெரிங்":"car repair",
+  "கார் பழுதுபார்ப்பு":"car repair", "வாகன பழுதுபார்ப்பு":"car repair",
+  "கார் மெக்கானிக்":"car repair", "கார் கராஜ்":"car repair",
 };
 
 const GENERIC_WORDS = new Set(["shop","shops","store","stores","business","businesses","service","services","company","companies","place","places","near","nearby","around","in","at","for","me","my","the","best","find","a","an","local"]);
 const PLACE_INDEX = new WeakMap<object, SearchPlace[]>();
+
+// Curated geographic aliases. Inflected Sinhala and Tamil spellings need an
+// explicit place match; a generic transliterator cannot reliably handle them.
+// Canonical coordinates are always read from SL_TOWNS, never invented.
+const PLACE_ALIASES: ReadonlyArray<{ canonical: string; forms: readonly string[] }> = [
+  { canonical: "Jaffna", forms: [
+    "යාපනයේ","යාපනය","යාපනේ","යාපනයට","ජාෆ්නා","ජාෆ්නාවේ",
+    "யாழ்ப்பாணத்தில்","யாழ்ப்பாணத்தில","யாழ்ப்பாணம்","யாழ்ப்பாண",
+    "ஜப்னா டவுன்","ஜப்னாவில்","ஜப்னா","ஜாஃப்னா","ஜாஃப்னாவில்",
+    "jaffna town","jaffna city","jafna","jafnah",
+  ] },
+  { canonical: "Colombo", forms: [
+    "කොළඹ","කොළඹදී","கொழும்பில்","கொழும்பு","colombo city",
+  ] },
+  { canonical: "Kandy", forms: [
+    "මහනුවර","මහනුවරදී","கண்டியில்","கண்டி","kandy city",
+  ] },
+] as const;
+
+const SERVICE_NOISE_WORDS = new Set([
+  "කරන","තැන්","තැන","ආයතන","කඩ","කඩවල්",
+  "கடை","கடைகள்","சென்டர்","நிலையம்","டவுன்","டவுண்",
+  "place","places","center","centre","shop","shops",
+]);
+
 
 const scrub = (s: string) =>
   s.normalize("NFKC").toLocaleLowerCase().replace(/[.,!?;:/\\()[\]{}"'’–—-]+/g, " ").replace(/\s+/g, " ").trim();
@@ -99,6 +146,26 @@ function containsPhrase(haystack: string, phrase: string) {
 
 export function extractSearchPlace(query: string, places: readonly SearchPlace[] = []) {
   const clean = scrub(query);
+  const tokens = clean.split(" ").filter(Boolean);
+
+  // Resolve exact curated aliases before English-only town names.
+  const variants = PLACE_ALIASES.flatMap(group =>
+    group.forms.map(form => ({place: group.canonical, form: scrub(form)})),
+  ).sort((a,b) => b.form.length - a.form.length);
+  for (const alias of variants) {
+    if (!containsPhrase(clean, alias.form)) continue;
+    const town = places.find(place => scrub(place.name) === scrub(alias.place));
+    if (!town) continue;
+    const phrase = alias.form.split(" ");
+    for (let index=0; index<=tokens.length-phrase.length; index++) {
+      if (tokens.slice(index,index+phrase.length).join(" ") !== alias.form) continue;
+      const before = tokens.slice(0,index);
+      if (["in","near","at","around","දී","இல்"].includes(before[before.length-1])) before.pop();
+      const after = tokens.slice(index+phrase.length);
+      return { location:town, remaining:[...before,...after].join(" ").trim() };
+    }
+  }
+
   // Reuse the stable Sri Lankan town index across keystrokes/autocomplete.
   let candidates = PLACE_INDEX.get(places);
   if (!candidates) {
@@ -174,7 +241,9 @@ export function resolveSmartSearch(
       // Canonical English product name bridges Sinhala/Tamil query text to
       // English-listed services without claiming every category match sells it.
       const canonical = SPECIFIC_SYNONYMS[best.phrase] || best.phrase;
-      canonicalQuery = cleaned.replace(best.phrase, canonical).trim() || canonical;
+      const rest = cleaned.replace(best.phrase, " ").split(" ")
+        .filter(word => word && !SERVICE_NOISE_WORDS.has(word)).join(" ").trim();
+      canonicalQuery = rest ? (canonical + " " + rest).trim() : canonical;
     } else {
       canonicalQuery = cleaned;
     }
