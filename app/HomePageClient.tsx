@@ -20,6 +20,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import CategoryIcon from "./components/CategoryIcon";
+import BrandIcon from "./components/BrandIcon";
 import { Skeleton } from "@/components/ui/skeleton";
 import dynamic from "next/dynamic";
 import VerifiedBadge from "./components/VerifiedBadge";
@@ -43,6 +44,7 @@ export default function HomePageClient() {
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [showAllCategories, setShowAllCategories] = useState(false);
   const featuredScrollRef = useRef<HTMLDivElement>(null);
+  const featuredFrameRef = useRef<number | null>(null);
   const [canFeaturedScrollLeft, setCanFeaturedScrollLeft] = useState(false);
   const [canFeaturedScrollRight, setCanFeaturedScrollRight] = useState(false);
 
@@ -125,14 +127,20 @@ export default function HomePageClient() {
     });
   };
 
-  // Native snap scrolling; no autoplay, interval or animation loop.
+  // Scroll and ResizeObserver events can arrive many times in a frame.
+  // Measure horizontal scroll bounds at most once per animation frame and
+  // avoid redundant React state updates while the user scrolls the page.
   const updateFeaturedScrollControls = useCallback(() => {
-    const container = featuredScrollRef.current;
-    if (!container) return;
-    setCanFeaturedScrollLeft(container.scrollLeft > 8);
-    setCanFeaturedScrollRight(
-      container.scrollLeft + container.clientWidth < container.scrollWidth - 8,
-    );
+    if (featuredFrameRef.current !== null) return;
+    featuredFrameRef.current = window.requestAnimationFrame(() => {
+      featuredFrameRef.current = null;
+      const container = featuredScrollRef.current;
+      if (!container) return;
+      const nextLeft = container.scrollLeft > 8;
+      const nextRight = container.scrollLeft + container.clientWidth < container.scrollWidth - 8;
+      setCanFeaturedScrollLeft(previous => previous === nextLeft ? previous : nextLeft);
+      setCanFeaturedScrollRight(previous => previous === nextRight ? previous : nextRight);
+    });
   }, []);
 
   useEffect(() => {
@@ -143,10 +151,14 @@ export default function HomePageClient() {
       ? new ResizeObserver(updateFeaturedScrollControls)
       : null;
     observer?.observe(container);
-    window.addEventListener("resize", updateFeaturedScrollControls);
+    window.addEventListener("resize", updateFeaturedScrollControls, { passive: true });
     return () => {
       observer?.disconnect();
       window.removeEventListener("resize", updateFeaturedScrollControls);
+      if (featuredFrameRef.current !== null) {
+        cancelAnimationFrame(featuredFrameRef.current);
+        featuredFrameRef.current = null;
+      }
     };
   }, [featuredLoading, featuredBusinesses.length, updateFeaturedScrollControls]);
 
@@ -284,14 +296,14 @@ export default function HomePageClient() {
                     disabled={isFetchingLocation}
                     className="group inline-flex min-h-10 items-center justify-center gap-2 rounded-[11px] border border-[#E7C58E]/25 bg-[#F0F2E9]/[0.10] px-3.5 text-[12px] font-semibold text-[#F0F2E9] transition-all duration-200 hover:border-[#E7C58E]/50 hover:bg-[#F0F2E9]/[0.18] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 disabled:cursor-wait disabled:opacity-60 sm:px-4 sm:text-[13px]"
                   >
-                    <Navigation size={15} className="text-[#F0D9AC] transition-transform group-hover:-translate-y-0.5" />
+                    <BrandIcon name="location" size={17} color="#F0D9AC" />
                     {isFetchingLocation ? "Finding location…" : "Explore near me"}
                   </button>
                   <Link
                     href="/category"
                     className="group inline-flex min-h-10 items-center justify-center gap-2 rounded-[11px] border border-white/[0.12] bg-white/[0.035] px-3.5 text-[12px] font-semibold text-[#E0EADB] transition-all duration-200 hover:border-white/30 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 sm:px-4 sm:text-[13px]"
                   >
-                    <Tags size={15} className="text-[#CADDCB]" />
+                    <BrandIcon name="category-2" size={17} color="#CADDCB" />
                     Browse categories
                     <ChevronRight size={15} className="text-[#CADDCB] transition-transform group-hover:translate-x-0.5" />
                   </Link>
@@ -436,7 +448,7 @@ export default function HomePageClient() {
                 disabled={!canScrollLeft}
                 className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[#E0EADB] bg-white text-[#26483B] transition-all duration-150 hover:border-[#B0CFB5] hover:bg-[#F0F2E9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 disabled:cursor-not-allowed disabled:opacity-35"
               >
-                <ChevronLeft size={19} strokeWidth={1.8} />
+                <BrandIcon name="arrow-left-2" size={19} />
               </button>
               <button
                 type="button"
@@ -562,7 +574,7 @@ export default function HomePageClient() {
             <div className="max-w-[780px]">
               <p className="mb-5 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#2B6552]">
                 <span className="inline-flex h-8 w-8 items-center justify-center rounded-[10px] border border-[#E0EADB] bg-[#F8F7F2] text-[#2B6552]">
-                  <Star size={16} strokeWidth={1.8} />
+                  <BrandIcon name="star-1" size={18} variant="bulk" />
                 </span>
                 The spotlight
               </p>
@@ -609,7 +621,7 @@ export default function HomePageClient() {
                 aria-controls="featured-listings-carousel"
                 className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#E0EADB] bg-white text-[#26483B] transition-colors hover:border-[#B0CFB5] hover:bg-[#F8F7F2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 disabled:cursor-not-allowed disabled:opacity-35 sm:h-11 sm:w-11"
               >
-                <ChevronRight size={19} strokeWidth={1.8} />
+                <BrandIcon name="arrow-right-3" size={19} />
               </button>
             </div>
           </div>
@@ -619,7 +631,7 @@ export default function HomePageClient() {
             ref={featuredScrollRef}
             onScroll={updateFeaturedScrollControls}
             aria-label="Featured Sri Lankan business listings"
-            className="flex gap-3 overflow-x-auto overscroll-x-contain pb-6 pr-2 snap-x snap-mandatory scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4 lg:gap-5"
+            className="flex gap-3 overflow-x-auto overscroll-x-contain pb-6 pr-2 snap-x snap-proximity scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4 lg:gap-5"
           >
             {featuredLoading ? (
               Array.from({ length: 6 }, (_, i) => (
@@ -645,8 +657,9 @@ export default function HomePageClient() {
                 <Link
                   key={business.id}
                   href={`/business/${business.slug || business.id}`}
+                  prefetch={false}
                   aria-label={`View ${business.name} business profile`}
-                  className="group relative isolate block [contain:layout_paint] aspect-[9/16] w-[178px shrink-0 snap-start overflow-hidden rounded-[22px] border border-[#E0EADB] bg-[#1B3430] shadow-[0_6px_23px_rgba(15,40,67,0.07)] transition-[border-color,transform,box-shadow] duration-200 hover:-translate-y-1 hover:border-[#B0CFB5] hover:shadow-[0_16px_36px_rgba(15,40,67,0.19)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 sm:w-[207px] lg:w-[229px] xl:w-[237px]"
+                  className="group relative isolate block [contain:layout_paint] [content-visibility:auto] aspect-[9/16] w-[178px] shrink-0 snap-start overflow-hidden rounded-[22px] border border-[#E0EADB] bg-[#1B3430] shadow-[0_3px_12px_rgba(15,40,67,0.07)] transition-colors duration-150 hover:border-[#75AB8D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 sm:w-[207px] lg:w-[229px] xl:w-[237px]"
                 >
                   {/* 9:16 visual works with landscape photos as well as portrait images. */}
                   <div className="absolute inset-0 overflow-hidden">
@@ -656,10 +669,10 @@ export default function HomePageClient() {
                         alt={business.name}
                         fill
                         loading="lazy"
-                        quality={65}
+                        quality={55}
                         decoding="async"
                         sizes="(max-width: 640px) 178px, (max-width: 1024px) 207px, 237px"
-                        className="object-cover transition-transform duration-500 motion-safe:group-hover:scale-[1.045]"
+                        className="object-cover"
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#26483B] via-[#1B3430] to-[#152C25]">
@@ -668,7 +681,7 @@ export default function HomePageClient() {
                             <Image src={business.logo_url} alt={business.name} fill loading="lazy" quality={65} sizes="112px" className="object-contain p-4" />
                           </div>
                         ) : (
-                          <Building2 size={60} strokeWidth={1.1} className="text-[#F0D9AC]/75" />
+                          <BrandIcon name="buildings-2" size={55} color="#F0D9AC" />
                         )}
                       </div>
                     )}
@@ -690,7 +703,7 @@ export default function HomePageClient() {
                     )}
                     {typeof business.rating === "number" && business.rating > 0 && (
                       <span className="inline-flex items-center gap-1 rounded-full border border-white/25 bg-black/35 px-2.5 py-1 text-[10px] font-semibold text-white">
-                        <Star size={11} className="fill-amber-300 text-amber-300" />
+                        <BrandIcon name="star-1" variant="bold" size={12} color="#FCD34D" />
                         {business.rating.toFixed(1)}
                       </span>
                     )}
@@ -705,14 +718,14 @@ export default function HomePageClient() {
                     </h3>
                     {business.address && (
                       <p className="mt-2 flex min-w-0 items-center gap-1.5 text-[11px] font-medium text-[#E0EADB]">
-                        <MapPin size={12} className="shrink-0" />
+                        <BrandIcon name="location" size={13} />
                         <span className="truncate">{business.address}</span>
                       </p>
                     )}
                     <div className="mt-4 flex items-center justify-between border-t border-white/20 pt-3 text-[11px] font-semibold text-white/90">
                       <span>View business</span>
                       <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/25 bg-white/15 transition-colors group-hover:bg-white group-hover:text-[#1B3430]">
-                        <ArrowUpRight size={15} />
+                        <BrandIcon name="arrow-up-right" size={17} />
                       </span>
                     </div>
                   </div>
