@@ -1041,6 +1041,13 @@ export default function NearbyExplorer() {
                     <Search size={12}/> {smartIntent.label}
                   </span>
                 )}
+                {smartIntent.correction && (
+                  <span role="status" title={smartIntent.correction.strategy === "phonetic" ? "Matched a reviewed romanized spelling" : "Matched a reviewed spelling variation"}
+                    className="inline-flex max-w-full items-center gap-1.5 rounded-[7px] border border-[#E7D9B6] bg-[#FFF9EB] px-3 py-1.5 text-[11px] font-medium text-[#76582D]">
+                    <Search size={12}/>
+                    Interpreted as <strong>{smartIntent.correction.interpretedAs}</strong>
+                  </span>
+                )}
                 {category && <button type="button" onClick={() => applySearch({ category: null })} aria-label="Clear category filter" className="inline-flex items-center gap-1.5 rounded-full bg-[#DDEFFB] px-3 py-1.5 text-[11px] font-semibold text-[#215B80] hover:bg-[#CBE4F5]">{category} <X size={12}/></button>}
                 {appliedQuery && <button type="button" onClick={() => applySearch({ query: "" })} aria-label="Clear search query" className="inline-flex items-center gap-1.5 rounded-full bg-[#DDEFFB] px-3 py-1.5 text-[11px] font-semibold text-[#215B80] hover:bg-[#CBE4F5]">{appliedQuery} <X size={12}/></button>}
                 {verifiedOnly && <button type="button" onClick={() => applySearch({ verifiedOnly: false })} className="inline-flex items-center gap-1.5 rounded-full border border-[#C6DACB] bg-[#E6F2E9] px-3 py-1.5 text-[11px] font-semibold text-[#39705C] hover:bg-[#D7EBDF]"><BadgeCheck size={12}/> Verified <X size={12}/></button>}

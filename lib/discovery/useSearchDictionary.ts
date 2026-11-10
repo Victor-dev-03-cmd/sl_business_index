@@ -12,11 +12,11 @@ const EMPTY_SEARCH_DICTIONARY: SearchDictionaryEntry[] = [];
  */
 export function useSearchDictionary(): readonly SearchDictionaryEntry[] {
   const { data } = useQuery<SearchDictionaryEntry[]>({
-    queryKey: ["slbi-search-dictionary", "v1"],
+    queryKey: ["slbi-search-dictionary", "v2"],
     queryFn: async ({ signal }) => {
       const { data, error } = await supabase
         .from("search_dictionary")
-        .select("alias,alias_kind,intent_key,canonical_query,categories,specific_service,town_name")
+        .select("alias,language,alias_kind,intent_key,canonical_query,categories,specific_service,town_name")
         .eq("review_status", "approved")
         .eq("is_active", true)
         .order("alias_normalized", { ascending: true })
