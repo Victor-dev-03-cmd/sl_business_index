@@ -8,7 +8,8 @@ CREATE TABLE billing.plans (
  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
  code text NOT NULL UNIQUE CHECK(code ~ '^[a-z][a-z0-9_-]{1,60}$'),
  name text NOT NULL,
- features jsonb NOT NULL DEFAULT '{}'::jsonb,
+ features jsonb NOT NULL DEFAULT '{}'::jsonb CHECK(jsonb_typeof(features)='object'),
+ monthly_credits integer NOT NULL DEFAULT 0 CHECK(monthly_credits BETWEEN 0 AND 1000000),
  active boolean NOT NULL DEFAULT false
 );
 CREATE TABLE billing.prices (
@@ -123,7 +124,10 @@ CREATE FUNCTION billing.activate_verified(
 ) RETURNS uuid LANGUAGE plpgsql SECURITY INVOKER SET search_path=''
 AS $$
 DECLARE r billing.requests%ROWTYPE; pay billing.payments%ROWTYPE;
+ plan_row billing.plans%ROWTYPE;
  s_id uuid; start_time timestamptz := now(); expires timestamptz;
+ v_credit_period date := date_trunc('month',now() AT TIME ZONE 'UTC')::date;
+ v_feature text;
 BEGIN
  IF p_actor IS NULL OR length(btrim(coalesce(p_note,'')))<12
  THEN RAISE EXCEPTION 'Staff audit evidence required' USING ERRCODE='22023'; END IF;
@@ -137,6 +141,10 @@ BEGIN
  THEN RAISE EXCEPTION 'Payment is not independently verified' USING ERRCODE='22023'; END IF;
  IF r.cycle_snapshot NOT IN ('monthly','yearly')
  THEN RAISE EXCEPTION 'Not a recurring subscription' USING ERRCODE='22023'; END IF;
+ SELECT * INTO plan_row FROM billing.plans WHERE id=r.plan_id AND active=true;
+ IF NOT FOUND THEN RAISE EXCEPTION 'Paid plan is not active' USING ERRCODE='22023'; END IF;
+ IF jsonb_typeof(coalesce(plan_row.features->'enabled','[]'::jsonb)) <> 'array'
+ THEN RAISE EXCEPTION 'Invalid plan feature configuration' USING ERRCODE='22023'; END IF;
  expires := start_time + CASE WHEN r.cycle_snapshot='yearly' THEN interval '1 year'
  ELSE interval '1 month' END;
  UPDATE billing.subscriptions SET state='cancelled' WHERE user_id=r.user_id AND state='active';
@@ -144,6 +152,31 @@ BEGIN
  VALUES(r.user_id,r.id,r.plan_id,'active',start_time,expires) RETURNING id INTO s_id;
  INSERT INTO billing.invoices(request_id,subscription_id,payment_id,amount_minor)
  VALUES(r.id,s_id,pay.id,r.amount_minor);
+ -- Provision entitlements and monthly AI credits inside the SAME transaction
+ -- as verified bank/provider settlement, avoiding split-brain paid features.
+ FOR v_feature IN SELECT jsonb_array_elements_text(coalesce(plan_row.features->'enabled','[]'::jsonb)) LOOP
+  IF v_feature !~ '^[a-z][a-z0-9_.-]{1,127}
+ INSERT INTO billing.events(request_id,actor_id,event_type,detail)
+ VALUES(r.id,p_actor,'activated',jsonb_build_object('payment_id',pay.id,'note',left(p_note,1400)));
+ INSERT INTO billing.outbox(topic,payload,dedupe_key)
+ VALUES('billing.activated',jsonb_build_object('user_id',r.user_id,'subscription_id',s_id),
+ 'activated:'||r.id::text);
+ -- Production cutover still requires provider verification, test accounts,
+ -- legal payment/invoice policy and server-only entitlement enforcement.
+ RETURN s_id;
+END $$;
+REVOKE ALL ON FUNCTION billing.activate_verified(uuid,uuid,uuid,text) FROM PUBLIC;
+COMMIT;
+
+  THEN RAISE EXCEPTION 'Invalid entitlement key' USING ERRCODE='22023'; END IF;
+  INSERT INTO billing.entitlements(user_id,subscription_id,feature_key,valid_until)
+  VALUES(r.user_id,s_id,v_feature,expires);
+ END LOOP;
+ INSERT INTO billing.credit_wallets(user_id,period_start,credit_limit,credits_remaining)
+ VALUES(r.user_id,v_credit_period,plan_row.monthly_credits,plan_row.monthly_credits)
+ ON CONFLICT(user_id,period_start) DO UPDATE SET
+   credit_limit=EXCLUDED.credit_limit,
+   credits_remaining=GREATEST(0,EXCLUDED.credit_limit-billing.credit_wallets.used);
  UPDATE billing.requests SET state='activated',updated_at=now() WHERE id=r.id;
  INSERT INTO billing.events(request_id,actor_id,event_type,detail)
  VALUES(r.id,p_actor,'activated',jsonb_build_object('payment_id',pay.id,'note',left(p_note,1400)));
