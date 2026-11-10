@@ -2,7 +2,7 @@
 
 import { useState, Suspense } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import BrandLogo from '@/app/components/BrandLogo';
 import { Chrome, ArrowLeft, Check, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
@@ -24,7 +24,7 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
-  const router = useRouter();
+  const [challengeVersion, setChallengeVersion] = useState(0);
   const searchParams = useSearchParams();
   const next = safeInternalPath(searchParams.get('next') || searchParams.get('redirect'));
   const isPasswordReset = searchParams.get('reset') === 'success';
@@ -44,17 +44,33 @@ function LoginForm() {
       return;
     }
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      // The protected Next.js Proxy checks server-readable Supabase cookies.
+      // Authenticate through a same-origin Route Handler so the browser receives
+      // Set-Cookie BEFORE making a full document request to a protected page.
+      const response = await fetch('/api/auth/password-login', {
+        method: 'POST',
+        credentials: 'same-origin',
+        cache: 'no-store',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, turnstileToken }),
+      });
+      const result: { error?: string } = await response.json();
+      if (!response.ok) {
+        setError(result.error || 'Sign-in could not be completed. Please try again.');
+        setTurnstileToken(null);
+        setChallengeVersion(v => v + 1);
+        return;
+      }
 
-    setLoading(false);
-    if (error) {
-      setError(error.message);
-    } else {
-      router.push(next);
-      router.refresh();
+      // Full navigation avoids prefetch / client router racing with cookie writes.
+      window.location.assign(next);
+    } catch {
+      setError('Unable to connect to the authentication service. Please try again.');
+      setTurnstileToken(null);
+      setChallengeVersion(v => v + 1);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -146,6 +162,7 @@ function LoginForm() {
           )}
 
           <Turnstile
+            key={challengeVersion}
             siteKey={process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY!}
             onSuccess={(token) => setTurnstileToken(token)}
             onError={() => setTurnstileToken(null)}

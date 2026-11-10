@@ -53,3 +53,29 @@ for endpoint in /api/billing/hybrid /api/admin/billing/hybrid; do
   fi
   echo "PASS $endpoint fails closed while hybrid billing is disabled"
 done
+
+# Reject malformed password login before any Supabase/Turnstile network call.
+login_status=$(curl --max-time 10 -sS -o /dev/null -w '%{http_code}' \
+  -X POST 'http://localhost:3099/api/auth/password-login' \
+  -H 'Origin: http://localhost:3099' \
+  -H 'Content-Type: application/json' \
+  --data '{"email":"test@example.invalid","password":"x"}')
+# A production-mode server must reject an insecure HTTP origin BEFORE validation.
+if [[ "$login_status" != "403" ]]; then
+  echo "FAIL insecure HTTP sign-in should be rejected with 403, got $login_status"
+  exit 1
+fi
+echo "PASS HTTP sign-in rejected in production mode"
+
+# Forwarded HTTPS request with matching Host should reach payload validation.
+secure_status=$(curl --max-time 10 -sS -o /dev/null -w '%{http_code}' \
+  -X POST 'http://localhost:3099/api/auth/password-login' \
+  -H 'Origin: https://localhost:3099' \
+  -H 'X-Forwarded-Proto: https' \
+  -H 'Content-Type: application/json' \
+  --data '{"email":"test@example.invalid","password":"x"}')
+if [[ "$secure_status" != "400" ]]; then
+  echo "FAIL secure-origin malformed request should return 400, got $secure_status"
+  exit 1
+fi
+echo "PASS HTTPS-origin malformed password request returns 400"
