@@ -49,15 +49,23 @@ export function boundedEditDistance(a: string, b: string, maxEdits: number): num
   if (left.length === 0) return right.length;
   if (right.length === 0) return left.length;
   let previous = Array.from({length:right.length + 1},(_,i)=>i);
+  let beforePrevious: number[] = [];
   for (let i=1;i<=left.length;i++) {
     const next = [i];
     let rowMin=i;
     for (let j=1;j<=right.length;j++) {
       const cost=left[i-1]===right[j-1]?0:1;
-      const value=Math.min(previous[j]+1,next[j-1]+1,previous[j-1]+cost);
+      let value=Math.min(previous[j]+1,next[j-1]+1,previous[j-1]+cost);
+      // Adjacent key swaps such as "repiar" -> "repair" are a single
+      // Damerau-OSA edit, while different services remain separated.
+      if (i>1 && j>1 && left[i-1]===right[j-2] &&
+          left[i-2]===right[j-1] && beforePrevious.length) {
+        value=Math.min(value,beforePrevious[j-2]+1);
+      }
       next[j]=value;rowMin=Math.min(rowMin,value);
     }
     if (rowMin>maxEdits) return maxEdits+1;
+    beforePrevious=previous;
     previous=next;
   }
   return previous[right.length];
