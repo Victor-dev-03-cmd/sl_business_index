@@ -332,7 +332,12 @@ export default function VendorBillingPage() {
             <p className="text-[12px] text-slate-500">Review your plan, listing allowance and recorded billing history.</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <button type="button" onClick={() => void load()} disabled={loading} className={actionButton}>
+            {process.env.NEXT_PUBLIC_BILLING_HYBRID_ENABLED === 'true' && (
+              <Link href="/vendor/billing/hybrid" className={actionButton}>
+                <IconsaxIcon name="card" size={15} /> New billing ledger
+              </Link>
+            )}
+            <button type="button" onClick={() => void load() disabled={loading} className={actionButton}>
               <IconsaxIcon name="refresh" size={15} /> Refresh
             </button>
             <a href={'mailto:' + billingEmail + '?subject=SL%20Business%20Index%20Billing%20Support'}
