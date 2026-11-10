@@ -15,6 +15,8 @@ import { supabase } from "@/lib/supabaseClient";
 import { SL_TOWNS, type Town } from "@/lib/towns";
 import type { Business } from "@/lib/types";
 import VerifiedBadge from "@/app/components/VerifiedBadge";
+import { normalizeDiscoveryQuery, sortGeoRank } from "@/lib/discovery/geoRank";
+import { recordNearbySample } from "@/lib/discovery/diagnostics";
 
 const LeafletMap = dynamic(() => import("@/components/LeafletMap"), {
   ssr: false,
@@ -35,7 +37,7 @@ type LocationChoice = {
   label: string;
   kind: "default" | "district" | "town" | "gps" | "coordinates";
 };
-type SortMode = "nearest" | "top-rated" | "alphabetical";
+type SortMode = "best-match" | "nearest" | "top-rated" | "alphabetical";
 type AreaOption = { label: string; description: string; lat: number; lng: number; kind: "district" | "town" };
 
 const DEFAULT_LOCATION: LocationChoice = {
@@ -153,9 +155,17 @@ export default function NearbyExplorer() {
   const [areaOpen, setAreaOpen] = useState(false);
   const [areaText, setAreaText] = useState("");
   const deferredAreaText = useDeferredValue(areaText);
-  const [mobileView, setMobileView] = useState<"map" | "list">("map");
+  const [mobileView, setMobileView] = useState<"map" | "list">("list");
+  const [desktopMapEnabled, setDesktopMapEnabled] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia("(min-width: 768px)");
+    const refresh = () => setDesktopMapEnabled(media.matches);
+    refresh();
+    media.addEventListener("change", refresh);
+    return () => media.removeEventListener("change", refresh);
+  }, []);
   const [selectedBusiness, setSelectedBusiness] = useState<NearbyBusiness | null>(null);
-  const [sortBy, setSortBy] = useState<SortMode>("nearest");
+  const [sortBy, setSortBy] = useState<SortMode>("best-match");
   const [resultLimit, setResultLimit] = useState(30);
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [withPhotosOnly, setWithPhotosOnly] = useState(false);
@@ -176,13 +186,20 @@ export default function NearbyExplorer() {
       const { data, error } = await supabase
         .from("categories")
         .select("id, name, icon, parent_id")
-        .is("parent_id", null)
         .order("name", { ascending: true });
       if (error) throw error;
       return data || [];
     },
     staleTime: 5 * 60 * 1000,
   });
+
+  const selectedCategoryNames = useMemo(() => {
+    if (!category) return [];
+    const parent = categories.find((item: any) => item.name === category);
+    return [category, ...categories
+      .filter((item: any) => parent?.id && item.parent_id === parent.id)
+      .map((item: any) => String(item.name))];
+  }, [categories, category]);
 
   const {
     data: businesses = EMPTY_BUSINESSES,
@@ -191,24 +208,30 @@ export default function NearbyExplorer() {
     error,
     refetch,
   } = useQuery<NearbyBusiness[]>({
-    queryKey: ["nearby-businesses", location.lat, location.lng, radius, appliedQuery, category],
+    queryKey: ["nearby-businesses", location.lat, location.lng, radius, appliedQuery, category, selectedCategoryNames.join("|")],
     queryFn: async ({ signal }) => {
+      const startedAt = performance.now();
       const { data, error: fetchError } = await supabase
         .rpc("get_nearby_businesses", {
           user_lat: location.lat,
           user_lng: location.lng,
-          search_query: appliedQuery,
+          search_query: normalizeDiscoveryQuery(appliedQuery),
           dist_limit: radius,
-          category_filter: category || "",
+          category_filter: selectedCategoryNames.length > 1 ? "" : (category || ""),
         })
         .abortSignal(signal);
+      if (!signal.aborted) recordNearbySample(performance.now() - startedAt, data?.length || 0, Boolean(fetchError));
       if (fetchError) throw fetchError;
-      return (data || []).map((row: any) => ({
-        ...row,
-        distanceText: typeof row.distance_meters === "number"
-          ? formatDistance(row.distance_meters)
-          : undefined,
-      }));
+      return (data || [])
+        .filter((row: any) => !category || selectedCategoryNames.length <= 1 ||
+          selectedCategoryNames.some((name) => name.toLowerCase() === String(row.category || "").toLowerCase()))
+        .map((row: any) => ({
+          ...row,
+          is_verified: row.is_verified === true || row.verification_status === "verified",
+          distanceText: typeof row.distance_meters === "number"
+            ? formatDistance(row.distance_meters)
+            : undefined,
+        }));
     },
     staleTime: 60 * 1000,
     retry: 1,
@@ -219,7 +242,9 @@ export default function NearbyExplorer() {
       (!verifiedOnly || (item.is_verified === true && item.can_show_badge === true)) &&
       (!withPhotosOnly || Boolean(item.image_url || item.logo_url))
     );
-    if (sortBy === "top-rated") {
+    if (sortBy === "best-match") {
+      return sortGeoRank(sorted, appliedQuery, radius);
+    } else if (sortBy === "top-rated") {
       sorted.sort((a, b) => (Number(b.rating) || 0) - (Number(a.rating) || 0));
     } else if (sortBy === "alphabetical") {
       sorted.sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
@@ -230,7 +255,7 @@ export default function NearbyExplorer() {
       );
     }
     return sorted;
-  }, [businesses, sortBy, verifiedOnly, withPhotosOnly]);
+  }, [businesses, sortBy, verifiedOnly, withPhotosOnly, appliedQuery, radius]);
 
   useEffect(() => { setResultLimit(30); }, [location.lat, location.lng, appliedQuery, category, radius, sortBy, verifiedOnly, withPhotosOnly]);
 
@@ -515,10 +540,18 @@ export default function NearbyExplorer() {
   }, []);
 
   const onMarkerClicked = useCallback((feature: any) => {
-    // LeafletMap sends GeoJSON features; always extract the actual business.
     const business = feature?.properties || feature;
-    if (business?.id) setSelectedBusiness(business as NearbyBusiness);
-  }, []);
+    if (!business?.id) return;
+    setSelectedBusiness(business as NearbyBusiness);
+    const index = visibleBusinesses.findIndex((item) => item.id === business.id);
+    if (index >= 0) setResultLimit((previous) => Math.max(previous, Math.ceil((index + 1) / 30) * 30));
+    if (window.matchMedia("(min-width: 768px)").matches) {
+      window.requestAnimationFrame(() => {
+        document.getElementById("nearby-card-" + business.id)
+          ?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      });
+    }
+  }, [visibleBusinesses]);
 
   const searchDropdownOpen = searchFocused && searchText.trim().length >= 2;
   const QUICK_CATEGORIES = ["Food & Dining", "Health & Medical", "Shopping & Retail", "Travel & Tourism", "Professional Services"];
@@ -531,7 +564,7 @@ export default function NearbyExplorer() {
       <header ref={headerRef} className="relative z-[1200] shrink-0 border-b border-[#E5DED2] bg-[#F5F1EB] shadow-[0_6px_25px_rgba(26,49,45,0.09)]">
         {/* Dark editorial navigation gives the map explorer a clear visual hierarchy. */}
         <div className="bg-[#1B3230]">
-        <div className="mx-auto flex min-h-[74px] max-w-[1800px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex min-h-[62px] max-w-[1800px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-3">
             <Link
               href="/"
@@ -572,9 +605,9 @@ export default function NearbyExplorer() {
         </div>
 
         {/* Consistent search, town selector and filters for every screen */}
-        <div className="mx-auto flex max-w-[1800px] flex-col gap-2.5 px-4 pb-4 pt-3.5 sm:px-6 md:flex-row md:items-stretch md:gap-3 lg:px-8">
+        <div className="mx-auto flex max-w-[1800px] flex-col gap-2.5 px-4 pb-2.5 pt-2.5 sm:px-6 md:flex-row md:items-stretch md:gap-3 lg:px-8">
           <div className="relative min-w-0 flex-1">
-            <form onSubmit={submitSearch} role="search" className="flex h-[51px] items-center gap-2 rounded-[14px] border border-[#E3DCD0] bg-white p-1.5 pl-3.5 shadow-[0_3px_12px_rgba(30,58,53,0.04)] focus-within:border-[#8EBAAB] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#D7E9DC]/80">
+            <form onSubmit={submitSearch} role="search" className="flex h-[45px] items-center gap-2 rounded-[14px] border border-[#E3DCD0] bg-white p-1.5 pl-3.5 shadow-[0_3px_12px_rgba(30,58,53,0.04)] focus-within:border-[#8EBAAB] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#D7E9DC]/80">
               <Search size={18} className="shrink-0 text-[#7C9AAF]" />
               <input
                 type="search"
@@ -607,7 +640,7 @@ export default function NearbyExplorer() {
               )}
               <button
                 type="submit"
-                className="inline-flex h-[39px] shrink-0 items-center justify-center gap-1.5 rounded-[10px] bg-[#256C60] px-3.5 text-[12px] font-semibold text-white transition-colors hover:bg-[#174F47] sm:px-5"
+                className="inline-flex h-[35px] shrink-0 items-center justify-center gap-1.5 rounded-[10px] bg-[#256C60] px-3.5 text-[12px] font-semibold text-white transition-colors hover:bg-[#174F47] sm:px-5"
               >
                 <Search size={15} />
                 <span className="hidden sm:inline">Search</span>
@@ -686,7 +719,7 @@ export default function NearbyExplorer() {
                 aria-controls="nearby-area-picker"
                 aria-expanded={areaOpen}
                 onClick={() => { setAreaOpen(value => !value); setAreaText(""); setSearchFocused(false); setFiltersOpen(false); }}
-                className="flex h-[51px] w-full min-w-0 items-center gap-2.5 rounded-[14px] border border-[#E3DCD0] bg-white px-3.5 text-left shadow-[0_3px_12px_rgba(30,58,53,0.04)] transition-colors hover:border-[#B4CABB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+                className="flex h-[45px] w-full min-w-0 items-center gap-2.5 rounded-[14px] border border-[#E3DCD0] bg-white px-3.5 text-left shadow-[0_3px_12px_rgba(30,58,53,0.04)] transition-colors hover:border-[#B4CABB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
               >
                 <MapPin size={18} className="shrink-0 text-[#4285B1]" />
                 <span className="min-w-0 flex-1">
@@ -740,7 +773,7 @@ export default function NearbyExplorer() {
                 aria-expanded={filtersOpen}
                 aria-controls="nearby-filter-panel"
                 onClick={openFilters}
-                className="relative inline-flex h-[51px] items-center gap-2 rounded-[14px] border border-[#E3DCD0] bg-white px-3.5 text-[12px] font-semibold text-[#385B52] shadow-[0_3px_12px_rgba(30,58,53,0.04)] transition-colors hover:border-[#B4CABB] hover:bg-[#FAFCF8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 sm:px-4"
+                className="relative inline-flex h-[45px] items-center gap-2 rounded-[14px] border border-[#E3DCD0] bg-white px-3.5 text-[12px] font-semibold text-[#385B52] shadow-[0_3px_12px_rgba(30,58,53,0.04)] transition-colors hover:border-[#B4CABB] hover:bg-[#FAFCF8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 sm:px-4"
               >
                 <SlidersHorizontal size={18} className="text-[#5686A9]" />
                 Filters
@@ -834,7 +867,7 @@ export default function NearbyExplorer() {
           </div>
         </div>
         {/* Discovery shortcuts: only categories present in the database. */}
-        <nav aria-label="Quick discovery categories" className="mx-auto flex max-w-[1800px] items-center gap-2 overflow-x-auto border-t border-[#E8E0D5] bg-[#EEE9E1] px-4 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:px-6 lg:px-8">
+        <nav aria-label="Quick discovery categories" className="mx-auto flex max-w-[1800px] items-center gap-2 overflow-x-auto border-t border-[#E8E0D5] bg-[#EEE9E1] px-4 py-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:px-6 lg:px-8">
           <span className="mr-1 hidden shrink-0 items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.11em] text-[#796F5F] sm:inline-flex">
             <Sparkles size={14} className="text-[#3F897A]"/> Explore
           </span>
@@ -842,7 +875,7 @@ export default function NearbyExplorer() {
             type="button"
             onClick={() => applySearch({ category: null, query: "", verifiedOnly: false, withPhotosOnly: false })}
             aria-pressed={!category && !appliedQuery && !verifiedOnly && !withPhotosOnly}
-            className={"inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-[11px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 " + (!category && !appliedQuery && !verifiedOnly && !withPhotosOnly ? "border-[#2E7568] bg-[#276F62] text-white" : "border-[#DDD8CD] bg-[#FCFAF6] text-[#536F63] hover:border-[#AFCBB5] hover:bg-[#F1F8F1]")}
+            className={"inline-flex min-h-10 shrink-0 md:min-h-9 items-center gap-1.5 rounded-full border px-3.5 text-[11px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 " + (!category && !appliedQuery && !verifiedOnly && !withPhotosOnly ? "border-[#2E7568] bg-[#276F62] text-white" : "border-[#DDD8CD] bg-[#FCFAF6] text-[#536F63] hover:border-[#AFCBB5] hover:bg-[#F1F8F1]")}
           >
             <Compass size={13} /> All businesses
           </button>
@@ -854,7 +887,7 @@ export default function NearbyExplorer() {
                 type="button"
                 aria-pressed={selected}
                 onClick={() => applySearch({ category: selected ? null : item.name, query: "" })}
-                className={"inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-[11px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 " + (selected ? "border-[#14466D] bg-[#103A60] text-white" : "border-[#DEEBF3] bg-[#F7FAFD] text-[#557B95] hover:border-[#B5D2E4] hover:bg-[#EDF6FC]")}
+                className={"inline-flex min-h-10 shrink-0 md:min-h-9 items-center gap-1.5 rounded-full border px-3.5 text-[11px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 " + (selected ? "border-[#14466D] bg-[#103A60] text-white" : "border-[#DEEBF3] bg-[#F7FAFD] text-[#557B95] hover:border-[#B5D2E4] hover:bg-[#EDF6FC]")}
               >
                 {selected && <Check size={12}/>}
                 {item.name}
@@ -864,15 +897,15 @@ export default function NearbyExplorer() {
           <span aria-hidden="true" className="mx-1 h-5 w-px shrink-0 bg-[#DCD3C6]"/>
           <button type="button" aria-pressed={verifiedOnly}
             onClick={() => applySearch({ verifiedOnly: !verifiedOnly })}
-            className={"inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-[11px] font-semibold transition-colors " + (verifiedOnly ? "border-[#2E7568] bg-[#276F62] text-white" : "border-[#DDD8CD] bg-[#FCFAF6] text-[#536F63] hover:bg-[#F1F8F1]")}>
+            className={"inline-flex min-h-10 shrink-0 md:min-h-9 items-center gap-1.5 rounded-full border px-3.5 text-[11px] font-semibold transition-colors " + (verifiedOnly ? "border-[#2E7568] bg-[#276F62] text-white" : "border-[#DDD8CD] bg-[#FCFAF6] text-[#536F63] hover:bg-[#F1F8F1]")}>
             <BadgeCheck size={14}/> Verified
           </button>
           <button type="button" aria-pressed={withPhotosOnly}
             onClick={() => applySearch({ withPhotosOnly: !withPhotosOnly })}
-            className={"inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-[11px] font-semibold transition-colors " + (withPhotosOnly ? "border-[#2E7568] bg-[#276F62] text-white" : "border-[#DDD8CD] bg-[#FCFAF6] text-[#536F63] hover:bg-[#F1F8F1]")}>
+            className={"inline-flex min-h-10 shrink-0 md:min-h-9 items-center gap-1.5 rounded-full border px-3.5 text-[11px] font-semibold transition-colors " + (withPhotosOnly ? "border-[#2E7568] bg-[#276F62] text-white" : "border-[#DDD8CD] bg-[#FCFAF6] text-[#536F63] hover:bg-[#F1F8F1]")}>
             <Camera size={14}/> Photos
           </button>
-          <Link href="/category" className="ml-auto inline-flex min-h-9 shrink-0 items-center gap-1.5 px-2 text-[11px] font-semibold text-[#307A68] transition-colors hover:text-[#184B3F]">
+          <Link href="/category" className="ml-auto inline-flex min-h-10 shrink-0 md:min-h-9 items-center gap-1.5 px-2 text-[11px] font-semibold text-[#307A68] transition-colors hover:text-[#184B3F]">
             More categories <ArrowUpRight size={13}/>
           </Link>
         </nav>
@@ -898,18 +931,18 @@ export default function NearbyExplorer() {
 
       {/* Desktop split view. Mobile switches between map and results without blocking scrolling. */}
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        <aside id="nearby-results" className={(mobileView === "list" ? "flex" : "hidden") + (mapExpanded ? " md:hidden" : " md:flex") + " w-full min-h-0 flex-col border-r border-[#E2DCD1] bg-[#F6F3EE] md:w-[420px] md:shrink-0 xl:w-[490px]"} aria-label="Nearby business results">
-          <div className="shrink-0 border-b border-[#E4DDD2] bg-gradient-to-br from-[#EBE7DC] via-[#F4EFE5] to-[#FAF7F0] px-4 pb-4 pt-5 sm:px-6">
+        <aside id="nearby-results" className={(mobileView === "list" ? "flex" : "hidden") + (mapExpanded ? " md:hidden" : " md:flex") + " w-full min-h-0 flex-col border-r border-[#E2DCD1] bg-[#F6F3EE] md:w-[60%] md:shrink-0 xl:w-[62%]"} aria-label="Nearby business results">
+          <div className="shrink-0 border-b border-[#E4DDD2] bg-gradient-to-br from-[#EBE7DC] via-[#F4EFE5] to-[#FAF7F0] px-4 pb-3 pt-3 sm:px-5">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#A27C52]">Your discovery feed</p>
-                <h2 aria-live="polite" className="mt-1.5 text-[24px] font-semibold tracking-[-0.055em] text-[#213C36]">
+                <h2 aria-live="polite" className="mt-1 text-[20px] font-semibold tracking-[-0.055em] text-[#213C36]">
                   {loadingBusinesses ? "Finding businesses…" : resultsMessage(visibleBusinesses.length)}
                 </h2>
               </div>
               {isFetching && !loadingBusinesses && <span className="shrink-0 rounded-full bg-[#E9F4FC] px-2.5 py-1 text-[10px] font-semibold text-[#337BA5]">Updating</span>}
             </div>
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="mt-2.5 flex flex-wrap items-center justify-between gap-3">
               <div className="flex min-w-0 flex-wrap gap-1.5">
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-[#E1DACA] bg-white/85 px-3 py-1.5 text-[11px] font-medium text-[#5D766B]">
                   <MapPin size={12} /> {location.label}
@@ -921,8 +954,8 @@ export default function NearbyExplorer() {
                 {withPhotosOnly && <button type="button" onClick={() => applySearch({ withPhotosOnly: false })} className="inline-flex items-center gap-1.5 rounded-full border border-[#C6DACB] bg-[#E6F2E9] px-3 py-1.5 text-[11px] font-semibold text-[#39705C] hover:bg-[#D7EBDF]"><Camera size={12}/> Photos <X size={12}/></button>}
               </div>
             </div>
-            <div className="mt-4 flex items-center justify-between gap-2">
-              <p className="text-[11px] text-[#8A897C]">{sortBy === "nearest" ? "Closest first" : sortBy === "top-rated" ? "Highest rated first" : "A to Z"}</p>
+            <div className="mt-2.5 flex items-center justify-between gap-2">
+              <p className="text-[11px] text-[#8A897C]">{sortBy === "best-match" ? "Best matches for this area" : sortBy === "nearest" ? "Closest first" : sortBy === "top-rated" ? "Highest rated first" : "A to Z"}</p>
               <label className="flex items-center gap-2 text-[11px] font-semibold text-[#62786C]">
                 Sort by
                 <select
@@ -930,7 +963,8 @@ export default function NearbyExplorer() {
                   onChange={event => setSortBy(event.target.value as SortMode)}
                   className="rounded-lg border border-[#DFD8CB] bg-white px-2.5 py-2 text-[12px] text-[#315D4B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
                 >
-                  <option value="nearest">Nearest</option>
+                  <option value="best-match">Best match · GeoRank v1</option>
+                   <option value="nearest">Nearest</option>
                   <option value="top-rated">Top rated</option>
                   <option value="alphabetical">Name (A–Z)</option>
                 </select>
@@ -938,7 +972,7 @@ export default function NearbyExplorer() {
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-3 py-4 sm:px-4">
+          <div className="grid min-h-0 flex-1 content-start grid-cols-1 gap-3 overflow-y-auto overscroll-contain px-3 py-3 sm:px-4 min-[1280px]:grid-cols-2">
             {loadingBusinesses ? (
               Array.from({ length: 5 }, (_, i) => (
                 <div key={i} className="flex gap-4 rounded-[20px] border border-[#E0EAF2] bg-white p-4">
@@ -951,7 +985,7 @@ export default function NearbyExplorer() {
                 </div>
               ))
             ) : error ? (
-              <div className="rounded-[24px] border border-[#E5EDF3] bg-white px-6 py-12 text-center">
+              <div className="rounded-[10px] border border-[#E5EDF3] bg-white px-6 py-12 text-center min-[1280px]:col-span-2">
                 <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F1F7FB] text-[#5789AA]"><RotateCcw size={25}/></div>
                 <h3 className="mt-5 text-[18px] font-semibold text-[#163B58]">We could not load businesses.</h3>
                 <p className="mt-2 text-[13px] leading-6 text-[#8198AA]">Check your connection and try again.</p>
@@ -961,7 +995,7 @@ export default function NearbyExplorer() {
               </div>
 
             ) : visibleBusinesses.length === 0 ? (
-              <div className="space-y-4 pb-6">
+              <div className="space-y-4 pb-6 min-[1280px]:col-span-2">
                 <div className="relative overflow-hidden rounded-[24px] bg-[#1D3534] p-5 text-white shadow-[0_15px_36px_rgba(25,52,50,0.14)] sm:p-6">
                   <div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-28 h-64 w-64 rounded-full border-[35px] border-white/[0.06]" />
                   <div className="relative inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-[#F3CC93]">
@@ -1067,21 +1101,21 @@ export default function NearbyExplorer() {
                 const active = selectedBusiness?.id === business.id;
                 const rating = Number(business.rating);
                 return (
-                  <article key={business.id} className={"group rounded-[23px] border bg-white p-3.5 shadow-[0_6px_22px_rgba(15,46,73,0.035)] transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-[#AFCFE2] hover:shadow-[0_13px_30px_rgba(15,46,73,0.095)] " + (active ? "border-[#7BB4D9] ring-1 ring-[#D4EAF8]" : "border-[#DFE9F1]")}>
+                  <article key={business.id} id={"nearby-card-" + business.id} className={"group rounded-[10px] border bg-white p-3 shadow-[0_2px_12px_rgba(15,46,73,0.03)] transition-[border-color,box-shadow] duration-150 hover:border-[#9DC2B2] hover:shadow-[0_8px_20px_rgba(15,46,73,0.07)] " + (active ? "border-[#4F9E84] ring-1 ring-[#CBE7D8]" : "border-[#DFE9E1]")}>
                     <button
                       type="button"
                       onClick={() => showBusinessOnMap(business)}
                       aria-label={"Show " + business.name + " on the map"}
-                      className="flex w-full items-start gap-3.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+                      className="flex w-full items-start gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
                     >
-                      <div className="flex h-[92px] w-[92px] shrink-0 items-center justify-center overflow-hidden rounded-[15px] bg-gradient-to-br from-[#EAF3FA] to-[#D7E7F2] text-[#7BA8C4] sm:h-[104px] sm:w-[104px]">
+                      <div className="flex h-[78px] w-[78px] shrink-0 items-center justify-center overflow-hidden rounded-[8px] bg-gradient-to-br from-[#EDF4ED] to-[#DCECE2] text-[#60947B] sm:h-[90px] sm:w-[90px]">
                         {business.logo_url || business.image_url ? (
                           <img
                             loading="lazy"
                             decoding="async"
                             src={business.logo_url || business.image_url}
                             alt={business.name}
-                            className="h-full w-full object-cover"
+                            className={business.logo_url ? "h-full w-full object-contain p-2" : "h-full w-full object-cover"}
                           />
                         ) : <Building2 size={34} strokeWidth={1.3}/>}
                       </div>
@@ -1098,10 +1132,16 @@ export default function NearbyExplorer() {
                         </div>
                       </div>
                     </button>
-                    <div className="mt-3 flex items-center justify-between gap-2 border-t border-[#EFF3F6] pt-3">
-                      <span className="inline-flex items-center gap-1.5 text-[11px] text-[#8199AA]"><Compass size={13} /> Business profile</span>
-                      <div className="flex items-center gap-3">
-                        <button type="button" onClick={() => showBusinessOnMap(business)} className="text-[12px] font-semibold text-[#477FA2] hover:text-[#1B5175]">Show on map</button>
+                    <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t border-[#EDF1EA] pt-2.5">
+                      <span className="inline-flex items-center gap-1.5 text-[11px] text-[#718779]"><MapPin size={13} /> Nearby listing</span>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                        <button type="button" onClick={() => showBusinessOnMap(business)} className="text-[12px] font-semibold text-[#387B61] hover:text-[#1B4F3B]">Show on map</button>
+                        {typeof business.latitude === "number" && typeof business.longitude === "number" && (
+                          <a href={"https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(business.latitude + "," + business.longitude)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[12px] font-semibold text-[#387B61] hover:text-[#1B4F3B]">Directions <Navigation size={12}/></a>
+                        )}
+                        {business.phone && String(business.phone).replace(/[^\d+]/g, "") && (
+                          <a href={"tel:" + String(business.phone).replace(/[^\d+]/g, "")} className="text-[12px] font-semibold text-[#387B61] hover:text-[#1B4F3B]">Call</a>
+                        )}
                         <Link href={"/business/" + (business.slug || business.id)} className="inline-flex items-center gap-1 text-[12px] font-bold text-[#164D76] hover:text-[#0B304F]">View profile <ArrowUpRight size={14}/></Link>
                       </div>
                     </div>
@@ -1113,7 +1153,7 @@ export default function NearbyExplorer() {
               <button
                 type="button"
                 onClick={() => setResultLimit(limit => limit + 30)}
-                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-[16px] border border-[#DCE7EF] bg-white px-5 text-[12px] font-semibold text-[#20597F] transition-colors hover:bg-[#EDF6FB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-[8px] border border-[#DCE7EF] bg-white px-5 min-[1280px]:col-span-2 text-[12px] font-semibold text-[#20597F] transition-colors hover:bg-[#EDF6FB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
               >
                 Show more results
                 <span className="text-[#91A8B7]">({visibleBusinesses.length - resultLimit} remaining)</span>
@@ -1125,7 +1165,8 @@ export default function NearbyExplorer() {
 
         <main className={(mobileView === "map" ? "flex" : "hidden") + " relative min-h-0 min-w-0 flex-1 flex-col bg-[#E8ECE4] md:flex"} aria-label="Interactive business map">
           <div className={"absolute inset-0 " + (mapAppearance === "soft" ? "nearby-map-soft" : "")}>
-            <LeafletMap
+            {(desktopMapEnabled || mobileView === "map") ? <LeafletMap
+              tileProvider="osm"
               centerLat={mapCenter.lat}
               centerLng={mapCenter.lng}
               userLat={userPosition?.lat}
@@ -1138,7 +1179,11 @@ export default function NearbyExplorer() {
               onMapMove={onMapMoved}
               onMapClick={onMapClicked}
               wrapperClassName="h-full w-full overflow-hidden z-0"
-            />
+            /> : (
+              <div className="flex h-full items-center justify-center bg-[#E7F0E9] text-[13px] text-[#517C64]">
+                Open Map to explore business locations
+              </div>
+            )}
           </div>
           {/* Map appearance / viewport controls; no extra database requests. */}
           <div className="absolute right-4 top-4 z-[890] flex items-start gap-2 md:right-5">

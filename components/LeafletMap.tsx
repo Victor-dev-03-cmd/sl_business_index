@@ -49,6 +49,7 @@ interface LeafletMapProps {
   onMapClick?: (lat: number, lng: number) => void;
   onMapMove?: (lat: number, lng: number, zoom: number) => void;
   showUserLocation?: boolean;
+  tileProvider?: "google" | "osm";
   wrapperClassName?: string;
 }
 
@@ -299,6 +300,7 @@ function MapContent({
   onMapClick,
   onMapMove,
   showUserLocation = true,
+  tileProvider = "google",
 }: LeafletMapProps) {
   const map = useMap();
 
@@ -326,17 +328,29 @@ function MapContent({
 
   return (
     <>
-      <TileLayer
-        attribution="&copy; Google Maps"
-        url="https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
-        subdomains={["mt0", "mt1", "mt2", "mt3"]}
-        maxZoom={22}
-        tileSize={256}
-        detectRetina={true}
-        keepBuffer={6}
-        updateWhenZooming={false}
-        crossOrigin="anonymous"
-      />
+      {tileProvider === "osm" ? (
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
+          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+          maxZoom={19}
+          tileSize={256}
+          detectRetina={false}
+          keepBuffer={2}
+          updateWhenZooming={false}
+        />
+      ) : (
+        <TileLayer
+          attribution="&copy; Google Maps"
+          url="https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
+          subdomains={["mt0", "mt1", "mt2", "mt3"]}
+          maxZoom={22}
+          tileSize={256}
+          detectRetina={true}
+          keepBuffer={6}
+          updateWhenZooming={false}
+          crossOrigin="anonymous"
+        />
+      )}
 
       <ZoomControl position="bottomright" />
       <ResponsiveMapSize />
