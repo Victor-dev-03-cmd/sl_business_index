@@ -1,4 +1,4 @@
-import { createServerClient } from '@supabase/ssr';
+import { createServerClient, createBrowserClient } from '@supabase/ssr';
 import assert from 'node:assert/strict';
 
 const cookieJar = new Map();
@@ -85,4 +85,32 @@ const legacy = await freshClient().auth.getUser();
 assert.equal(legacy.error,null,'Legacy raw JSON SSR session must remain readable after upgrade');
 assert.equal(legacy.data.user?.id,userId);
 assert.equal(serverVerified,true,'Legacy cookies must still require remote Auth verification');
-console.log('PASS: multi-chunk encoded SSR session and legacy raw SSR session are verified securely');
+// Test the actual app boundary: an official browser client writes cookies,
+// then a new server client must reconstruct and independently verify them.
+cookieJar.clear();
+serverVerified = false;
+const browserClient = createBrowserClient(origin, anonKey, {
+  isSingleton: false,
+  global: { fetch: fakeFetch },
+  cookies: {
+    getAll() { return [...cookieJar].map(([name,value]) => ({name,value})); },
+    setAll(items) {
+      for (const {name,value,options} of items) {
+        if (!value || (options?.maxAge !== undefined && options.maxAge <= 0)) {
+          cookieJar.delete(name);
+        } else cookieJar.set(name,value);
+      }
+    },
+  },
+});
+const browserLogin = await browserClient.auth.signInWithPassword({
+  email: user.email, password: 'synthetic-browser-password',
+});
+assert.equal(browserLogin.error, null);
+const browserCookies = [...cookieJar].filter(([name]) => name.startsWith('sb-test-supabase-auth-token.'));
+assert.ok(browserCookies.length >= 2, 'Browser client should write a chunked session');
+const crossBoundary = await freshClient().auth.getUser();
+assert.equal(crossBoundary.error, null, 'Server must read the browser SSR cookie');
+assert.equal(crossBoundary.data.user?.id, userId);
+assert.equal(serverVerified, true, 'Server must verify token with Auth');
+console.log('PASS: multi-chunk SSR, legacy raw cookie, and browser-to-server Auth verification');
