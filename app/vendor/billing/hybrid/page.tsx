@@ -54,6 +54,18 @@ export default function HybridVendorBilling() {
   useEffect(()=>{void load()},[load])
   const active=useMemo(()=>snapshot.subscriptions.find(s=>s.status==='active'&&new Date(s.ends_at).getTime()>Date.now()),[snapshot])
   const pending=useMemo(()=>snapshot.orders.filter(o=>['submitted','reviewing','awaiting_payment'].includes(o.status)),[snapshot])
+  async function cancelRequest(order:Order){
+    if(submitting) return
+    setSubmitting(order.id)
+    try {
+      const res=await fetch('/api/billing/hybrid',{method:'DELETE',credentials:'same-origin',
+        headers:{'Content-Type':'application/json'},body:JSON.stringify({requestId:order.id})})
+      const data=await res.json()
+      if(!res.ok)throw Error(data.error||'Unable to cancel request')
+      toast.success('Request cancelled');await load()
+    }catch(e){toast.error(e instanceof Error?e.message:'Unable to cancel request')}
+    finally{setSubmitting(null)}
+  }
   async function submit(plan:Plan){
     if(submitting)return
     const price=cycle==='yearly'?plan.yearly_lkr:plan.monthly_lkr
@@ -121,7 +133,8 @@ export default function HybridVendorBilling() {
           <div className="border-b border-[#edf0ed] px-5 py-4"><h2 className="text-sm font-bold">Subscription requests</h2><p className="mt-1 text-[11px] text-slate-500">All payment statuses are independently recorded; submitting is not paying.</p></div>
           {snapshot.orders.length===0?<p className="p-7 text-center text-xs text-slate-500">No billing requests.</p>:
           <div className="overflow-x-auto"><table className="w-full min-w-[650px] text-left text-xs"><thead className="bg-[#fafcfb] text-[10px] uppercase text-slate-500"><tr><th className="p-4">Plan</th><th className="p-4">Cycle</th><th className="p-4">Quoted</th><th className="p-4">Status</th><th className="p-4">Created</th></tr></thead>
-            <tbody className="divide-y divide-[#edf2ee]">{snapshot.orders.map(o=><tr key={o.id}><td className="p-4 font-semibold">{o.plan_name}</td><td className="p-4">{o.cycle}</td><td className="p-4">{money(Number(o.quoted_lkr))}</td><td className="p-4"><span className="rounded-md bg-[#edf4ee] px-2 py-1 text-[10px] font-semibold">{o.status.replaceAll('_',' ')}</span></td><td className="p-4">{date(o.created_at)}</td></tr>)}</tbody></table></div>}
+            <tbody className="divide-y divide-[#edf2ee]">{snapshot.orders.map(o=><tr key={o.id}><td className="p-4 font-semibold">{o.plan_name}</td><td className="p-4">{o.cycle}</td><td className="p-4">{money(Number(o.quoted_lkr))}</td><td className="p-4"><span className="rounded-md bg-[#edf4ee] px-2 py-1 text-[10px] font-semibold">{o.status.replaceAll('_',' ')}</span>
+              {['submitted','reviewing','awaiting_payment'].includes(o.status)&&<button type="button" disabled={!!submitting} onClick={()=>void cancelRequest(o)} className="ml-2 text-[10px] font-semibold text-rose-600 hover:underline disabled:opacity-40">Cancel</button>}</td><td className="p-4">{date(o.created_at)}</td></tr>)}</tbody></table></div>}
         </section>
         <section className={surface+' overflow-hidden'}>
           <div className="border-b border-[#edf0ed] px-5 py-4"><h2 className="text-sm font-bold">Verified payment records</h2><p className="mt-1 text-[11px] text-slate-500">Payment record only. Not a certified tax invoice.</p></div>
