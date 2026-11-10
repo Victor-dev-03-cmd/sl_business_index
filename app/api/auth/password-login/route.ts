@@ -24,9 +24,13 @@ export async function POST(request: Request) {
   let acceptedOrigin = false
   try {
     const supplied = new URL(origin || '')
+    // Local production-build smoke tests run on HTTP loopback. Public
+    // production origins must still use HTTPS.
+    const isLoopback = /^(localhost|127\\.0\\.0\\.1|\\[::1\\])(?::[0-9]+)?$/.test(host)
     acceptedOrigin = supplied.host === host &&
       supplied.protocol === protocol + ':' &&
-      (protocol === 'https' || process.env.NODE_ENV !== 'production')
+      (protocol === 'https' || (protocol === 'http' &&
+        (process.env.NODE_ENV !== 'production' || isLoopback)))
   } catch { /* Missing or invalid Origin: reject. */ }
   if (!acceptedOrigin) {
     return json({ error: 'Cross-origin sign-in request rejected.' }, 403)
