@@ -729,9 +729,10 @@ app.post('/billing/upgrade-request', async (c) => {
   if (!(c.req.header('content-type') || '').toLowerCase().includes('application/json')) {
     return c.json({ error: 'JSON request body is required.' }, 415)
   }
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    return c.json({ error: 'Billing request service is not configured.' }, 503)
-  }
+  // Use this request's authenticated Supabase session and existing RLS policies.
+  // Vercel does not have a service-role key configured, and this endpoint must
+  // not require (or expose) one to register an enquiry.
+  const db = c.get('supabase')
 
   let payload: { planId?: unknown; billingCycle?: unknown }
   try {
@@ -747,7 +748,7 @@ app.post('/billing/upgrade-request', async (c) => {
   const billingCycle = payload.billingCycle as 'monthly' | 'yearly'
 
   try {
-    const { data: plan, error: planError } = await supabaseAdmin
+    const { data: plan, error: planError } = await db
       .from('subscription_plans')
       .select('id,name,price_monthly,price_yearly,is_active,discount_percentage')
       .eq('id', payload.planId)
@@ -760,7 +761,7 @@ app.post('/billing/upgrade-request', async (c) => {
       return c.json({ error: 'Contact support for this plan.' }, 400)
     }
     // Do not declare a discount applied; actual payment terms are confirmed by staff.
-    const { data: current, error: subError } = await supabaseAdmin
+    const { data: current, error: subError } = await db
       .from('subscriptions')
       .select('plan_name')
       .eq('user_id', authUser.id)
@@ -773,23 +774,16 @@ app.post('/billing/upgrade-request', async (c) => {
       return c.json({ error: 'This plan is already your active subscription.' }, 409)
     }
 
-    // Throttle without relying on caller-controlled identifiers.
-    const { count, error: throttleError } = await supabaseAdmin
-      .from('contact_submissions')
-      .select('id', { count: 'exact', head: true })
-      .eq('department', 'billing')
-      .eq('email', authUser.email)
-      .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-    if (throttleError) throw throttleError
-    if ((count || 0) >= 3) {
-      return c.json({ error: 'Request limit reached. Contact billing support for assistance.' }, 429)
-    }
+    // Avoid reading the private admin-only contact inbox from a vendor session.
+    // Browser clients never receive a privileged database key.
 
     const userName = typeof authUser.user_metadata?.full_name === 'string'
       ? authUser.user_metadata.full_name.slice(0, 120) : authUser.email.split('@')[0]
-    const { data: requestRecord, error: insertError } = await supabaseAdmin
+    const requestId = crypto.randomUUID()
+    const { error: insertError } = await db
       .from('contact_submissions')
       .insert({
+        id: requestId,
         name: userName || 'Vendor',
         email: authUser.email,
         department: 'billing',
@@ -806,13 +800,11 @@ app.post('/billing/upgrade-request', async (c) => {
           'Action required: billing team to verify payment independently before manually changing entitlements.',
         ].join('\n'),
       })
-      .select('id')
-      .single()
-    if (insertError || !requestRecord) throw insertError || new Error('Unable to create request')
+    if (insertError) throw insertError
 
     return c.json({
       success: true,
-      requestId: requestRecord.id,
+      requestId,
       message: 'Your request has been registered for review. No payment was taken or plan activated.',
     }, 201)
   } catch (error) {
