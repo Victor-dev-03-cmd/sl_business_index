@@ -394,7 +394,7 @@ export default function HeroSearch({
 
           <button
             type="submit"
-            className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-[8px] bg-[#1B3430]" px-5 text-[13px] font-semibold text-white shadow-[0_5px_16px_rgba(18,62,101,0.2)] transition-colors hover:bg-[#2B6552] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 sm:min-h-[56px]"
+            className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-[8px] bg-[#1B3430] px-5 text-[13px] font-semibold text-white shadow-[0_5px_16px_rgba(18,62,101,0.2)] transition-colors hover:bg-[#2B6552] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 sm:min-h-[56px]"
           >
             <Search size={18} strokeWidth={2} /> Search
           </button>
