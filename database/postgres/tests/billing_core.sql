@@ -1,5 +1,6 @@
 \set ON_ERROR_STOP on
-INSERT INTO billing.plans(code,name,active) VALUES('test_plan','Test Plan',true);
+INSERT INTO billing.plans(code,name,features,monthly_credits,active)
+VALUES('test_plan','Test Plan','{"enabled":["ai_social_draft","seo_basic_audit"]}'::jsonb,500,true);
 INSERT INTO billing.prices(plan_id,cycle,amount_minor,version,active)
  SELECT id,'monthly',250000,1,true FROM billing.plans;
 INSERT INTO billing.requests(user_id,plan_id,price_id,plan_snapshot,cycle_snapshot,amount_minor,idempotency_key,state)
@@ -18,6 +19,8 @@ BEGIN
   'Bank statement independently confirmed in simulated database');
  IF (SELECT count(*) FROM billing.subscriptions WHERE state='active')<>1
  OR (SELECT count(*) FROM billing.invoices)<>1
+ OR (SELECT count(*) FROM billing.entitlements WHERE feature_key IN ('ai_social_draft','seo_basic_audit'))<>2
+ OR (SELECT count(*) FROM billing.credit_wallets WHERE credit_limit=500 AND credits_remaining=500)<>1
  OR (SELECT count(*) FROM billing.events WHERE event_type='activated')<>1
  OR (SELECT count(*) FROM billing.outbox WHERE topic='billing.activated')<>1
  THEN RAISE EXCEPTION 'Atomic settlement failed'; END IF;
