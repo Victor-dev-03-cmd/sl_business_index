@@ -168,7 +168,7 @@ export default function CategoryExplorer({ categories }: { categories: CategoryR
               <label htmlFor="category-search" className="mb-2.5 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#B4CEBF]">
                 Find a category or service
               </label>
-              <div className="flex min-h-14 items-center gap-3 rounded-[16px] border border-white/20 bg-white px-4 shadow-[0_12px_36px_rgba(0,0,0,0.13)] focus-within:ring-2 focus-within:ring-[#A1E3C2]">
+              <div className="flex min-h-14 items-center gap-3 rounded-[10px] border border-white/20 bg-white px-4 shadow-[0_12px_36px_rgba(0,0,0,0.13)] focus-within:ring-2 focus-within:ring-[#A1E3C2]">
                 <Search size={20} className="shrink-0 text-[#4A8C70]" aria-hidden="true" />
                 <input
                   id="category-search"
@@ -197,25 +197,25 @@ export default function CategoryExplorer({ categories }: { categories: CategoryR
           </div>
 
           <div className="hidden lg:block" aria-hidden="true">
-            <div className="relative mx-auto max-w-[490px] rounded-[28px] border border-white/15 bg-white/[0.07] p-5 shadow-[0_26px_90px_rgba(0,0,0,0.13)] xl:p-6">
+            <div className="relative mx-auto max-w-[490px] rounded-[12px] border border-white/15 bg-white/[0.07] p-5 shadow-[0_26px_90px_rgba(0,0,0,0.13)] xl:p-6">
               <div className="flex items-center justify-between border-b border-white/10 pb-4">
                 <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#F0D9AC]">Directory overview</span>
                 <span className="rounded-full border border-[#88CBAA]/30 bg-[#88CBAA]/10 px-3 py-1 text-[10px] font-semibold tracking-wide text-[#BFE8CE]">Sri Lanka</span>
               </div>
               <div className="grid grid-cols-2 gap-3 py-5">
-                <div className="rounded-[18px] border border-white/10 bg-[#26483B] px-5 py-5">
+                <div className="rounded-[10px] border border-white/10 bg-[#26483B] px-5 py-5">
                   <span className="text-[36px] font-semibold leading-none tracking-[-0.065em] text-white">{groups.length}</span>
                   <span className="mt-2 block text-[11px] font-medium text-[#BDD6C5]">Main industries</span>
                 </div>
-                <div className="rounded-[18px] border border-white/10 bg-[#26483B] px-5 py-5">
+                <div className="rounded-[10px] border border-white/10 bg-[#26483B] px-5 py-5">
                   <span className="text-[36px] font-semibold leading-none tracking-[-0.065em] text-white">{categories.length}</span>
                   <span className="mt-2 block text-[11px] font-medium text-[#BDD6C5]">Total categories</span>
                 </div>
               </div>
               <div className="space-y-2.5">
                 {groups.slice(0, 3).map((group, index) => (
-                  <div key={group.root.id} className="flex items-center gap-3 rounded-[15px] border border-white/10 bg-[#18372F] px-3.5 py-3">
-                    <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[12px] border border-[#A0CDB0]/15 bg-[#315A4A] text-[#D4F5D9]">
+                  <div key={group.root.id} className="flex items-center gap-3 rounded-[9px] border border-white/10 bg-[#18372F] px-3.5 py-3">
+                    <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[9px] border border-[#A0CDB0]/15 bg-[#315A4A] text-[#D4F5D9]">
                       <CategoryIcon name={group.root.icon} categoryName={group.root.name} size={25} />
                     </span>
                     <div className="min-w-0 flex-1">
@@ -255,10 +255,10 @@ export default function CategoryExplorer({ categories }: { categories: CategoryR
                   <Link
                     key={item.category.id}
                     href={categoryHref(item.category.name)}
-                    className="group flex min-h-[178px] flex-col justify-between rounded-[21px] border border-[#E0EADB] bg-[#F8F7F2] p-4 transition-[border-color,background-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-[#AECFB7] hover:bg-white hover:shadow-[0_12px_32px_rgba(25,52,40,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#36785E] sm:p-5"
+                    className="group flex min-h-[178px] flex-col justify-between rounded-[12px] border border-[#E0EADB] bg-[#F8F7F2] p-4 transition-[border-color,background-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-[#AECFB7] hover:bg-white hover:shadow-[0_12px_32px_rgba(25,52,40,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#36785E] sm:p-5"
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <span className="inline-flex h-[62px] w-[62px] items-center justify-center rounded-[17px] border border-[#D7E6D7] bg-white text-[#36785E] transition-colors group-hover:bg-[#ECF4ED]">
+                      <span className="inline-flex h-[62px] w-[62px] items-center justify-center rounded-[10px] border border-[#D7E6D7] bg-white text-[#36785E] transition-colors group-hover:bg-[#ECF4ED]">
                         <CategoryIcon name={item.category.icon} categoryName={item.category.name} size={34} />
                       </span>
                       <ArrowUpRight size={17} className="shrink-0 text-[#76A28C] transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true" />
@@ -320,7 +320,7 @@ export default function CategoryExplorer({ categories }: { categories: CategoryR
             </div>
 
             {activeFilter && (
-              <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-[#DCE8DC] bg-[#F1F6EE] px-4 py-3">
+              <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[9px] border border-[#DCE8DC] bg-[#F1F6EE] px-4 py-3">
                 <p className="text-[12px] font-medium text-[#365D4B]">
                   {query ? "Showing matching industries and services" : "Showing your selected industry"}
                 </p>
@@ -345,10 +345,10 @@ export default function CategoryExplorer({ categories }: { categories: CategoryR
                   return (
                     <article
                       key={key}
-                      className="flex h-full min-w-0 flex-col overflow-hidden rounded-[23px] border border-[#E1E8DF] bg-white shadow-[0_3px_18px_rgba(23,54,40,0.025)] transition-[border-color,box-shadow] duration-200 hover:border-[#C7DDCB] hover:shadow-[0_12px_36px_rgba(23,54,40,0.065)]"
+                      className="flex h-full min-w-0 flex-col overflow-hidden rounded-[12px] border border-[#E1E8DF] bg-white shadow-[0_3px_18px_rgba(23,54,40,0.025)] transition-[border-color,box-shadow] duration-200 hover:border-[#C7DDCB] hover:shadow-[0_12px_36px_rgba(23,54,40,0.065)]"
                     >
                       <div className="flex items-start gap-3.5 p-5 sm:p-6">
-                        <span className="inline-flex h-[61px] w-[61px] shrink-0 items-center justify-center rounded-[17px] border border-[#DFE9DC] bg-[#F2F7F1] text-[#36785E]">
+                        <span className="inline-flex h-[61px] w-[61px] shrink-0 items-center justify-center rounded-[10px] border border-[#DFE9DC] bg-[#F2F7F1] text-[#36785E]">
                           <CategoryIcon name={group.root.icon} categoryName={group.root.name} size={35} />
                         </span>
                         <div className="min-w-0 flex-1 pt-1">
@@ -382,7 +382,7 @@ export default function CategoryExplorer({ categories }: { categories: CategoryR
                               <Link
                                 key={child.id}
                                 href={categoryHref(child.name)}
-                                className="group/item flex min-h-11 items-center gap-2.5 rounded-[11px] px-2.5 py-2 text-[#436254] transition-colors hover:bg-[#F2F7F1] hover:text-[#1B3430] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#36785E]"
+                                className="group/item flex min-h-11 items-center gap-2.5 rounded-[8px] px-2.5 py-2 text-[#436254] transition-colors hover:bg-[#F2F7F1] hover:text-[#1B3430] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#36785E]"
                               >
                                 <CornerDownRight size={14} className="shrink-0 text-[#93B6A0]" aria-hidden="true" />
                                 <span className="min-w-0 flex-1 text-[12px] font-medium leading-snug sm:text-[13px]">{child.name}</span>
@@ -391,7 +391,7 @@ export default function CategoryExplorer({ categories }: { categories: CategoryR
                             ))}
                           </div>
                         ) : (
-                          <div className="flex min-h-20 items-center rounded-xl bg-[#F8F9F5] px-4 py-3 text-[12px] leading-relaxed text-stone-500">
+                          <div className="flex min-h-20 items-center rounded-[9px] bg-[#F8F9F5] px-4 py-3 text-[12px] leading-relaxed text-stone-500">
                             Browse businesses and services in this industry.
                           </div>
                         )}
@@ -401,7 +401,7 @@ export default function CategoryExplorer({ categories }: { categories: CategoryR
                             type="button"
                             aria-expanded={Boolean(expandedGroups[key])}
                             onClick={() => setExpandedGroups((previous) => ({ ...previous, [key]: !previous[key] }))}
-                            className="mt-2 flex w-full min-h-10 items-center justify-center gap-2 rounded-[10px] border border-[#DFE9DC] bg-[#F8FAF6] px-3 text-[12px] font-semibold text-[#36785E] transition-colors hover:bg-[#EDF5ED] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#36785E]"
+                            className="mt-2 flex w-full min-h-10 items-center justify-center gap-2 rounded-[8px] border border-[#DFE9DC] bg-[#F8FAF6] px-3 text-[12px] font-semibold text-[#36785E] transition-colors hover:bg-[#EDF5ED] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#36785E]"
                           >
                             <ChevronDown size={15} aria-hidden="true" />
                             Show {remaining} more {remaining === 1 ? "service" : "services"}
@@ -411,7 +411,7 @@ export default function CategoryExplorer({ categories }: { categories: CategoryR
                           <button
                             type="button"
                             onClick={() => setExpandedGroups((previous) => ({ ...previous, [key]: false }))}
-                            className="mt-2 flex w-full min-h-10 items-center justify-center rounded-[10px] text-[12px] font-semibold text-[#36785E] hover:bg-[#F2F7F1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#36785E]"
+                            className="mt-2 flex w-full min-h-10 items-center justify-center rounded-[8px] text-[12px] font-semibold text-[#36785E] hover:bg-[#F2F7F1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#36785E]"
                           >
                             Show fewer services
                           </button>
@@ -428,11 +428,11 @@ export default function CategoryExplorer({ categories }: { categories: CategoryR
                 })}
               </div>
             ) : (
-              <div className="rounded-[24px] border border-dashed border-[#CFDFD2] bg-white px-6 py-20 text-center">
-                <span className="mx-auto inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-[#F2F7F1] text-[#36785E]"><Search size={29} aria-hidden="true" /></span>
+              <div className="rounded-[12px] border border-dashed border-[#CFDFD2] bg-white px-6 py-20 text-center">
+                <span className="mx-auto inline-flex h-16 w-16 items-center justify-center rounded-[10px] bg-[#F2F7F1] text-[#36785E]"><Search size={29} aria-hidden="true" /></span>
                 <h3 className="mt-5 text-[21px] font-semibold tracking-tight text-[#1B3430]">No matching categories</h3>
                 <p className="mx-auto mt-2 max-w-sm text-[14px] leading-relaxed text-stone-500">Try a different keyword or clear your industry filter to explore more services.</p>
-                <button type="button" onClick={clearFilters} className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#1B3430] px-5 text-[13px] font-bold text-white hover:bg-[#2E6A51] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#36785E]">
+                <button type="button" onClick={clearFilters} className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-[9px] bg-[#1B3430] px-5 text-[13px] font-bold text-white hover:bg-[#2E6A51] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#36785E]">
                   Show all categories <ArrowRight size={16} aria-hidden="true" />
                 </button>
               </div>
@@ -447,7 +447,7 @@ export default function CategoryExplorer({ categories }: { categories: CategoryR
               <h2 className="text-[clamp(1.5rem,2.5vw,2.5rem)] font-semibold tracking-[-0.055em] text-[#1B3430]">Make it easier for customers to find you.</h2>
               <p className="mt-2 text-[13px] leading-relaxed text-stone-500">Create a listing and be part of Sri Lanka&apos;s growing business directory.</p>
             </div>
-            <Link href="/register-business" className="inline-flex min-h-12 w-fit shrink-0 items-center gap-2 rounded-[12px] bg-[#1B3430] px-6 text-[13px] font-bold text-white transition-colors hover:bg-[#2F765C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#36785E]">
+            <Link href="/register-business" className="inline-flex min-h-12 w-fit shrink-0 items-center gap-2 rounded-[9px] bg-[#1B3430] px-6 text-[13px] font-bold text-white transition-colors hover:bg-[#2F765C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#36785E]">
               List your business <ArrowUpRight size={17} aria-hidden="true" />
             </Link>
           </div>
