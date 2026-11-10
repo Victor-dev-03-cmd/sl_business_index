@@ -168,7 +168,10 @@ export default function VendorBillingPage() {
     return () => window.removeEventListener('keydown', close);
   }, [requestPlan, requesting]);
 
-  const active = subscriptions.find(s => s.status === 'active') || null;
+  const active = subscriptions.find(s => s.status === 'active' &&
+    (!s.renews_at || new Date(s.renews_at).getTime() > Date.now())) || null;
+  const expiredRecord = !active && subscriptions.some(s => s.status === 'active' &&
+    !!s.renews_at && new Date(s.renews_at).getTime() <= Date.now());
   const activePlan = plans.find(p => p.name === active?.plan_name) || null;
   const maxListings = typeof activePlan?.max_listings === 'number' ? activePlan.max_listings : null;
   const invoiceTotal = invoices.reduce((sum, i) => sum + (Number.isFinite(Number(i.amount)) ? Number(i.amount) : 0), 0);
@@ -187,7 +190,7 @@ export default function VendorBillingPage() {
   const requestedPrice = requestPlan ? Number(cycle === 'yearly' ? requestPlan.price_yearly : requestPlan.price_monthly) : 0;
 
   function openUpgrade(plan: Plan) {
-    if (active?.plan_name === plan.name) return;
+    if (active?.plan_name === plan.name && active.billing_cycle === cycle) return;
     if (Number(plan.price_monthly) <= 0 && Number(plan.price_yearly) <= 0) {
       toast.info('Complimentary plans are managed by the billing team.');
       return;
@@ -329,7 +332,7 @@ export default function VendorBillingPage() {
 
         <section aria-label="Billing account summary" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {[
-            { title: 'Current plan', value: active?.plan_name || 'Not assigned', icon: 'card', tone: '#15956c', hint: active ? 'Recorded active subscription' : 'No active subscription record' },
+            { title: 'Current plan', value: active?.plan_name || (expiredRecord ? 'Renewal overdue' : 'Not assigned'), icon: 'card', tone: '#15956c', hint: active ? 'Recorded active subscription' : 'No active subscription record' },
             { title: 'Business listings', value: loading ? '—' : nfmt(businessCount), icon: 'shop', tone: '#2563eb', hint: maxListings === null ? 'Allowance not available' : nfmt(businessCount) + ' of ' + (maxListings === 9999 ? 'unlimited' : nfmt(maxListings)) + ' listings' },
             { title: 'Enquiries this month', value: loading || monthlyLeads === null ? '—' : nfmt(monthlyLeads), icon: 'people', tone: '#8561c2', hint: 'Actual recorded enquiries (UTC month)' },
             { title: 'Billing records', value: loading ? '—' : nfmt(invoices.length), icon: 'document-download', tone: '#c1903b', hint: 'Latest 100 historical records' },
@@ -350,7 +353,7 @@ export default function VendorBillingPage() {
             <div className="flex items-center justify-between border-b border-[#eef0f2] px-5 py-4">
               <div><h2 className="text-[13px] font-bold text-[#23392f]">Subscription details</h2><p className="mt-1 text-[11px] text-slate-400">Plan and renewal information from your account</p></div>
               <span className={'rounded-md border px-2.5 py-1 text-[10px] font-bold ' + (active ? 'border-[#d5eadc] bg-[#eff8f2] text-[#287b51]' : 'border-[#e9d9c0] bg-[#fff8ee] text-[#aa792c]')}>
-                {loading ? 'Loading' : active ? 'Active record' : 'No active record'}
+                {loading ? 'Loading' : active ? 'Active record' : expiredRecord ? 'Renewal overdue' : 'No active record'}
               </span>
             </div>
             <div className="grid grid-cols-2 gap-x-6 gap-y-5 px-5 py-5 sm:grid-cols-4">
@@ -421,7 +424,7 @@ export default function VendorBillingPage() {
             <div className="grid grid-cols-1 gap-3 p-4 md:grid-cols-2 xl:grid-cols-3">
               {plans.map(plan => {
                 const listPrice = Number(cycle === 'yearly' ? plan.price_yearly : plan.price_monthly);
-                const current = active?.plan_name === plan.name;
+                const current = active?.plan_name === plan.name && active.billing_cycle === cycle;
                 const features = featuresFor(plan, definitions);
                 const isPaid = Number(plan.price_monthly) > 0 || Number(plan.price_yearly) > 0;
                 return (

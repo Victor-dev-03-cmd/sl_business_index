@@ -763,14 +763,14 @@ app.post('/billing/upgrade-request', async (c) => {
     // Do not declare a discount applied; actual payment terms are confirmed by staff.
     const { data: current, error: subError } = await db
       .from('subscriptions')
-      .select('plan_name')
+      .select('plan_name,billing_cycle')
       .eq('user_id', authUser.id)
       .eq('status', 'active')
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle()
     if (subError) throw subError
-    if (current?.plan_name === plan.name) {
+    if (current?.plan_name === plan.name && current.billing_cycle === billingCycle) {
       return c.json({ error: 'This plan is already your active subscription.' }, 409)
     }
 
