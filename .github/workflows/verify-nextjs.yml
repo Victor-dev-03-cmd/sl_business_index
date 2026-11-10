@@ -30,6 +30,8 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
+      - name: Synthetic SSR multi-chunk cookie round-trip
+        run: node tests/auth/ssr-cookie-roundtrip.mjs
       - name: Typecheck
         run: npx tsc --noEmit
       - name: Production build
