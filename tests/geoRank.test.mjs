@@ -1,10 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {GEO_RANK_VERSION,scoreGeoRank,sortGeoRank,normalizeDiscoveryQuery} from "../lib/discovery/geoRank.ts";
-test("versioned score stays bounded",()=>{const s=scoreGeoRank({id:"a",name:"Food & Dining",distance_meters:0},"food");assert.equal(GEO_RANK_VERSION,"1.0.0");assert.ok(s.score>=0&&s.score<=1)});
+test("versioned score stays bounded",()=>{const s=scoreGeoRank({id:"a",name:"Food & Dining",distance_meters:0},"food");assert.equal(GEO_RANK_VERSION,"1.1.0");assert.ok(s.score>=0&&s.score<=1)});
 test("matching results can outrank close unrelated businesses",()=>{const a={id:"a",name:"Hardware Repair",category:"Hardware",distance_meters:450};const b={id:"b",name:"Local Restaurant",category:"Food & Dining",distance_meters:2100};assert.equal(sortGeoRank([a,b],"restaurant",10000)[0].id,"b")});
 test("empty query prioritizes proximity",()=>{const a={id:"far",distance_meters:8000};const b={id:"near",distance_meters:400};assert.equal(sortGeoRank([a,b],"",10000)[0].id,"near")});
 test("missing availability/freshness is not fabricated",()=>{const s=scoreGeoRank({name:"Shop",distance_meters:1000},"shop");assert.equal(s.availability,null);assert.equal(s.freshness,null)});
 test("verified quality requires verified status",()=>{const b={name:"Shop",can_show_badge:true,distance_meters:1000};assert.ok(scoreGeoRank({...b,verification_status:"verified"},"").quality>scoreGeoRank({...b,verification_status:"pending"},"").quality)});
 test("Tamil and Sinhala aliases",()=>{assert.equal(normalizeDiscoveryQuery("உணவகம்"),"food");assert.equal(normalizeDiscoveryQuery("රෝහල"),"medical");assert.equal(normalizeDiscoveryQuery("கடை"),"shopping")});
 test("does not mutate original candidates",()=>{const a=[{id:"2",distance_meters:2000},{id:"1",distance_meters:200}];sortGeoRank(a,"",10000);assert.equal(a[0].id,"2")});
+
+test("confirmed service outranks mere category relation",()=>{const exact={id:"exact",name:"Local Biryani",category:"Food & Dining",distance_meters:2200,match_type:"exact_service"};const related={id:"related",name:"Food Corner",category:"Food & Dining",distance_meters:500,match_type:"category_related"};assert.equal(sortGeoRank([related,exact],"biryani",20000)[0].id,"exact")});

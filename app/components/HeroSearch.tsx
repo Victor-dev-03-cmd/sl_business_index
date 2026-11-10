@@ -11,6 +11,7 @@ import Fuse from "fuse.js";
 import VoiceSearch from "./VoiceSearch";
 import VerifiedBadge from "./VerifiedBadge";
 import { SL_TOWNS, Town } from "@/lib/towns";
+import { resolveSmartSearch } from "@/lib/discovery/smartSearch";
 
 const sriLankanDistricts = [
   "Ampara", "Anuradhapura", "Badulla", "Batticaloa", "Colombo", "Galle", "Gampaha",
@@ -136,7 +137,12 @@ export default function HeroSearch({
   const categorySuggestions = useMemo(() => {
     const query = searchQuery.trim();
     if (!isSearchFocused || areaOpen || query.length < 2) return [];
-    return fuse.search(query, { limit: 5 }).map((result) => result.item);
+    const parsed = resolveSmartSearch(query, SL_TOWNS, categories.map((item) => item.name));
+    const recommended = parsed.categories
+      .map((name) => categories.find((item) => item.name.toLowerCase() === name.toLowerCase()))
+      .filter(Boolean);
+    const fuzzy = fuse.search(parsed.query || query, { limit: 5 }).map((result) => result.item);
+    return [...new Map([...recommended, ...fuzzy].map((item) => [item.id, item])).values()].slice(0, 5);
   }, [searchQuery, fuse, isSearchFocused, areaOpen]);
 
   // Autocomplete runs only while actively searching, after two characters.
@@ -189,7 +195,8 @@ export default function HeroSearch({
 
   const handleSearch = (query?: string) => {
     const finalQuery = query || searchQuery;
-    let lowerQuery = finalQuery.toLowerCase().trim();
+    const smartIntent = resolveSmartSearch(finalQuery, SL_TOWNS);
+    let lowerQuery = smartIntent.canonicalQuery;
     let finalLat = "";
     let finalLng = "";
     let extractedTown: Town | null = null;
@@ -199,6 +206,7 @@ export default function HeroSearch({
     // Explicit selection wins. Otherwise parse short keyword phrases against
     // an indexed town/district lookup instead of scanning thousands of towns.
     if (selectedArea?.town) {
+      extractedTown = selectedArea.town;
       finalLat = selectedArea.town.lat.toString();
       finalLng = selectedArea.town.lon.toString();
       finalSearchMode = "nearby";
@@ -208,8 +216,9 @@ export default function HeroSearch({
     } else {
       const match = findAreaInQuery(finalQuery);
       if (match) {
-        lowerQuery = match.remainingQuery;
+        lowerQuery = smartIntent.canonicalQuery || match.remainingQuery;
         if (match.town) {
+          extractedTown = match.town;
           finalLat = match.town.lat.toString();
           finalLng = match.town.lon.toString();
           finalSearchMode = "nearby";
@@ -229,12 +238,15 @@ export default function HeroSearch({
     }
 
     const searchParams = new URLSearchParams();
-    searchParams.set("q", expandSearchQuery(selectedArea ? finalQuery.trim() : (lowerQuery || searchQuery)));
+    searchParams.set("q", expandSearchQuery(lowerQuery || finalQuery.trim()));
+    if (smartIntent.intentKey) searchParams.set("intent", smartIntent.intentKey);
+    if (smartIntent.specificService) searchParams.set("service", "1");
 
     if (finalLat && finalLng) {
       searchParams.set("lat", finalLat);
       searchParams.set("lng", finalLng);
       searchParams.set("radius", "3000");
+      if (extractedTown) searchParams.set("town", extractedTown.name);
     } else if ((finalSearchMode === "nearby" || (!finalDistrict && userCoords)) && userCoords) {
       searchParams.set("lat", userCoords.lat.toString());
       searchParams.set("lng", userCoords.lng.toString());
@@ -253,7 +265,7 @@ export default function HeroSearch({
       params.set("lng", userCoords.lng.toString());
       params.set("radius", "5000");
     }
-    params.set("q", categoryName);
+    params.set("category", categoryName);
     router.push(`/nearby?${params.toString()}`);
   };
 
@@ -291,10 +303,10 @@ export default function HeroSearch({
         onSubmit={handleSubmit}
         ref={searchBarRef}
         role="search"
-        className="rounded-[17px] border border-stone-200 bg-white p-1.5 shadow-[0_12px_36px_rgba(2,22,44,0.16)] focus-within:ring-2 focus-within:ring-emerald-200 sm:p-2"
+        className="rounded-[11px] border border-stone-200 bg-white p-1.5 shadow-[0_8px_28px_rgba(2,22,44,0.12)] focus-within:ring-2 focus-within:ring-emerald-200 sm:p-2"
       >
         <div className="flex flex-col gap-1 sm:flex-row sm:items-stretch sm:gap-0">
-          <div className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl px-3 py-2 sm:py-1">
+          <div className="flex min-w-0 flex-1 items-center gap-2.5 rounded-[8px] px-3 py-2 sm:py-1">
             <Search size={20} strokeWidth={1.8} className="shrink-0 text-stone-400" />
             <div className="min-w-0 flex-1">
               <label htmlFor="hero-business-query" className="block text-[10px] font-bold uppercase tracking-[0.08em] text-stone-500">Business or service</label>
@@ -316,7 +328,7 @@ export default function HeroSearch({
                 aria-expanded={showDropdown}
                 aria-controls="hero-search-suggestions"
                 placeholder="What are you looking for?"
-                className="mt-0.5 w-full min-w-0 bg-transparent text-[13px] font-medium text-stone-900 outline-none placeholder:font-normal placeholder:text-stone-400 sm:text-[14px]"
+                className="mt-0.5 block h-[29px] w-full min-w-0 appearance-none border-0 bg-transparent px-0 pr-1 text-[15px] font-medium leading-[27px] text-stone-900 outline-none placeholder:font-normal placeholder:text-stone-400"
               />
             </div>
             <VoiceSearch
@@ -327,13 +339,13 @@ export default function HeroSearch({
 
           <div className="mx-2 h-px bg-stone-200 sm:mx-0 sm:my-1 sm:h-auto sm:w-px" />
 
-          <div ref={areaRef} className="relative min-w-0 sm:w-[37%]">
+          <div ref={areaRef} className="relative min-w-0 sm:w-[30%] sm:max-w-[205px] lg:max-w-[230px]">
             <button
               type="button"
               aria-label="Choose district or town"
               aria-expanded={areaOpen}
               onClick={() => { setAreaOpen(v => !v); setIsSearchFocused(false); setAreaQuery(""); }}
-              className="flex min-h-[54px] w-full items-center gap-2 rounded-xl px-3 text-left transition-colors hover:bg-stone-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 sm:min-h-[56px]"
+              className="flex min-h-[54px] w-full items-center gap-2 rounded-[8px] px-3 text-left transition-colors hover:bg-stone-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 sm:min-h-[56px]"
             >
               <MapPin size={19} strokeWidth={1.8} className="shrink-0 text-stone-400" />
               <span className="min-w-0 flex-1">
@@ -382,7 +394,7 @@ export default function HeroSearch({
 
           <button
             type="submit"
-            className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-[12px] bg-[#1B3430] px-5 text-[13px] font-semibold text-white shadow-[0_5px_16px_rgba(18,62,101,0.2)] transition-colors hover:bg-[#2B6552] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 sm:min-h-[56px]"
+            className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-[8px] bg-[#1B3430]" px-5 text-[13px] font-semibold text-white shadow-[0_5px_16px_rgba(18,62,101,0.2)] transition-colors hover:bg-[#2B6552] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 sm:min-h-[56px]"
           >
             <Search size={18} strokeWidth={2} /> Search
           </button>

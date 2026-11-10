@@ -1,5 +1,5 @@
-/** SLBI GeoRank v1.0.0: pure, explainable ranking of approved PostGIS candidates. */
-export const GEO_RANK_VERSION = "1.0.0";
+/** SLBI GeoRank v1.1.0: pure, explainable ranking of approved PostGIS candidates. */
+export const GEO_RANK_VERSION = "1.1.0";
 export type GeoRankBusiness = {
   id?: string | number; name?: string|null; category?: string|null; description?: string|null;
   distance_meters?: number|null; search_rank?: number|null; rating?: number|null;
@@ -7,6 +7,7 @@ export type GeoRankBusiness = {
   website_url?: string|null; is_verified?: boolean|null; can_show_badge?: boolean|null;
   verification_status?: string|null; updated_at?: string|null;
   availability_verified?: boolean|null;
+  match_type?: "nearby"|"exact_service"|"lexical"|"category"|"category_related"|string|null;
 };
 export type GeoRankScores = {
   relevance: number; distance: number; quality: number; freshness: number|null;
@@ -37,7 +38,8 @@ function relevanceScore(item:GeoRankBusiness,query:string):number {
  const matched=terms.filter(term=>name.includes(term)||category.includes(term)||description.includes(term)).length;
  const lexical=terms.length?matched/terms.length:0;
  const fuzzy=clamp(Number(item.search_rank??0)/0.65);
- return clamp(Math.max(
+ const backend = item.match_type === "exact_service" ? 1 : item.match_type === "category" ? 0.86 : item.match_type === "category_related" ? 0.33 : 0;
+ return clamp(Math.max(backend,
  name===query?1:0,name.startsWith(query)?0.93:0,category===query?0.88:0,
  category.startsWith(query)?0.83:0,name.includes(query)?0.79:0,
  category.includes(query)?0.72:0,description.includes(query)?0.50:0,
