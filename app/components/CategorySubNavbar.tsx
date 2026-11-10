@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, Compass, LayoutGrid, X } from "lucide-react";
+import { ArrowRight, ArrowUpRight, X } from "lucide-react";
+import BrandIcon from "./BrandIcon";
 
 interface Category {
   id: string;
@@ -37,6 +38,36 @@ const GROUP_DESCRIPTIONS: Record<string, string> = {
   "Travel & Transport": "Explore transportation, travel and mobility services.",
   "Retail & Others": "Find local shops, products and everyday essentials.",
 };
+
+// One icon system for both the desktop main menu and its industry mega menu.
+// New database categories use a relevant keyword match or their parent industry icon.
+const GROUP_ICON_NAMES: Readonly<Record<string, string>> = {
+  "Manpower Services": "people",
+  "Care & Lifestyle": "heart",
+  "Professional & Finance": "briefcase",
+  "Construction & Industrial": "buildings",
+  "Technical & Electronics": "cpu",
+  "Events, Food & Leisure": "calendar",
+  "Travel & Transport": "airplane",
+  "Retail & Others": "shop",
+};
+
+function serviceIcon(name: string, industry: string): string {
+  const text = name.toLowerCase();
+  if (/health|medical|beauty|wellness|baby|pet|care/.test(text)) return "heart";
+  if (/bank|financ|insuranc/.test(text)) return "briefcase";
+  if (/educat|school|tuition|institute|academy/.test(text)) return "book-1";
+  if (/travel|tourism/.test(text)) return "airplane";
+  if (/transport|vehicle|automotive/.test(text)) return "location";
+  if (/food|restaurant|hotel|dining|retail|shopping|market/.test(text)) return "shop";
+  if (/electr|tech|repair|telecom|communication/.test(text)) return "cpu";
+  if (/construction|hardware|industr|manufactur|equipment|interior|appliance/.test(text)) return "buildings";
+  if (/media|advertis|design/.test(text)) return "monitor";
+  if (/religious|government|legal/.test(text)) return "shield";
+  if (/event|wedding|entertainment|leisure|sports/.test(text)) return "calendar";
+  if (/mason|painter|plumber|carpenter|welder|electrician|cleaner|laborer/.test(text)) return "people";
+  return GROUP_ICON_NAMES[industry] || "category-2";
+}
 
 const slugify = (name: string) =>
   name.toLowerCase().trim()
@@ -78,7 +109,7 @@ export default function CategorySubNavbar({
         <div className="flex min-h-[290px] flex-col justify-between rounded-[18px] bg-[#1B3430] p-7 text-white">
           <div>
             <div className="mb-6 inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/15 bg-white/10">
-              <Compass size={22} className="text-[#F0D9AC]" strokeWidth={1.7} />
+              <BrandIcon name={GROUP_ICON_NAMES[activeCategory] || "category-2"} size={23} color="#F0D9AC" variant="bulk" />
             </div>
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#E7C58E]">Explore an industry</p>
             <h2 className="mt-3 text-[26px] font-semibold leading-[1.18] tracking-[-0.04em]">{activeCategory}</h2>
@@ -99,7 +130,7 @@ export default function CategorySubNavbar({
           <div className="flex items-start justify-between gap-4 border-b border-stone-100 pb-5">
             <div>
               <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[#36785E]">
-                <LayoutGrid size={14} /> Browse services
+                <BrandIcon name="category-2" size={15} /> Browse services
               </p>
               <h3 className="mt-2 text-[21px] font-semibold tracking-[-0.035em] text-[#1B3430]">
                 Find what you need
@@ -123,7 +154,10 @@ export default function CategorySubNavbar({
                 onClick={onClose}
                 className="group flex min-h-12 items-center justify-between gap-3 rounded-xl px-3 py-3 text-[13px] font-medium text-stone-600 transition-colors duration-150 hover:bg-[#F8F7F2] hover:text-[#1B3430] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
               >
-                <span className="min-w-0 leading-snug">{item.name}</span>
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-[#E0EADB] bg-[#F8F7F2] text-[#36785E] transition-colors group-hover:border-[#C5DCCB] group-hover:bg-[#EAF3ED]">
+                  <BrandIcon name={serviceIcon(item.name, activeCategory)} size={18} />
+                </span>
+                <span className="min-w-0 flex-1 leading-snug">{item.name}</span>
                 <ArrowUpRight size={15} className="shrink-0 text-stone-300 transition-colors group-hover:text-[#36785E]" />
               </Link>
             )) : (
