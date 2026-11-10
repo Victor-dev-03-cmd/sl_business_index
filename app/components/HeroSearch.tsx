@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect, useMemo, useDeferredValue } from "react";
 import { useRouter } from "next/navigation";
 import { Search, ChevronRight, Building2, Star, Tags, MapPin, ChevronDown, Check, X } from "lucide-react";
-import * as LucideIcons from "lucide-react";
+import CategoryIcon from "./CategoryIcon";
 import { cn, expandSearchQuery } from "@/lib/utils";
 import { supabase } from "@/lib/supabaseClient";
 import { motion } from "framer-motion";
@@ -262,12 +262,6 @@ export default function HeroSearch({
     handleSearch();
   };
 
-  const IconComponent = ({ name, className }: { name: string | null; className?: string }) => {
-    if (!name) return <Tags className={className} />;
-    const Icon = (LucideIcons as any)[name];
-    return Icon ? <Icon className={className} /> : <Tags className={className} />;
-  };
-
   // An empty focused input must not open a large scrollable panel.
   // Suggestions appear only after meaningful input, avoiding unnecessary layout/compositing work.
   const displayedBusinesses = searchQuery.trim().length >= 2 ? bizSuggestions : [];
@@ -434,7 +428,7 @@ export default function HeroSearch({
                       {cat.image_url ? (
                         <img src={cat.image_url} alt={cat.name} className="w-4 h-4 object-contain" />
                       ) : (
-                        <IconComponent name={cat.icon} className="w-4 h-4 text-brand-gold" />
+                        <CategoryIcon name={cat.icon} className="w-4 h-4 text-brand-gold" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0 text-left">

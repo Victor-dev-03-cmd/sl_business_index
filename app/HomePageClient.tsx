@@ -4,7 +4,6 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { motion, useScroll, useTransform } from "framer-motion";
 import { supabase } from "@/lib/supabaseClient";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -20,35 +19,19 @@ import {
   ArrowUpRight,
   ArrowRight,
 } from "lucide-react";
-import * as LucideIcons from "lucide-react";
+import CategoryIcon from "./components/CategoryIcon";
 import { Skeleton } from "@/components/ui/skeleton";
 import dynamic from "next/dynamic";
 import VerifiedBadge from "./components/VerifiedBadge";
 import Testimonials from "./components/Testimonials";
 
+// Server-render the visible search form: client-only 64px placeholder shifted
+// the entire hero after hydration (a major mobile CLS source).
 const HeroSearch = dynamic(() => import("./components/HeroSearch"), {
-  ssr: false,
-  loading: () => <div className="h-16 w-full max-w-2xl mx-auto bg-white/10 animate-pulse rounded-[6px]" />,
+  loading: () => <div aria-hidden="true" className="min-h-[190px] w-full rounded-[14px] bg-white/10 sm:min-h-[72px]" />,
 });
 
 const EMPTY_ARRAY: any[] = [];
-
-const IconComponent = ({
-  name,
-  className,
-}: {
-  name: string | null;
-  className?: string;
-}) => {
-  if (!name) return <Tags className={className} />;
-  const Icon = (LucideIcons as any)[name];
-  return Icon ? (
-    <Icon className={className} />
-  ) : (
-    <Tags className={className} />
-  );
-};
-
 
 export default function HomePageClient() {
   const router = useRouter();
@@ -62,13 +45,6 @@ export default function HomePageClient() {
   const featuredScrollRef = useRef<HTMLDivElement>(null);
   const [canFeaturedScrollLeft, setCanFeaturedScrollLeft] = useState(false);
   const [canFeaturedScrollRight, setCanFeaturedScrollRight] = useState(false);
-
-  // Parallax — hero background drifts at 30% of scroll speed
-  const heroRef = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
-  const glowY = useTransform(scrollYProgress, [0, 1], ["0%", "40%"]);
-  const glowOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
-  const contentY = useTransform(scrollYProgress, [0, 1], ["0%", "12%"]);
 
   const { data: categories = EMPTY_ARRAY, isLoading: categoriesLoading } = useQuery({
     queryKey: ["categories-home"],
@@ -241,64 +217,50 @@ export default function HomePageClient() {
 
       {/* --- PHASE 3: Split editorial hero with accessible SVG product motion --- */}
       <section
-        ref={heroRef}
         aria-labelledby="homepage-hero-title"
         className="relative isolate bg-[#1B3430] text-white"
       >
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-          <motion.div className="absolute inset-0" style={{ y: glowY, opacity: glowOpacity }}>
-            <div className="absolute -left-56 top-0 h-[750px] w-[750px] rounded-full bg-[#26483B]/25 blur-[135px]" />
-            <div className="absolute -right-28 top-12 h-[740px] w-[740px] rounded-full bg-[#36785E]/20 blur-[145px]" />
-          </motion.div>
+          <div className="absolute inset-0">
+            <div className="absolute -left-56 top-0 h-[750px] w-[750px] rounded-full bg-[radial-gradient(circle,rgba(38,72,59,0.24)_0%,transparent_72%)]" />
+            <div className="absolute -right-28 top-12 h-[740px] w-[740px] rounded-full bg-[radial-gradient(circle,rgba(54,120,94,0.20)_0%,transparent_72%)]" />
+          </div>
           <div className="absolute inset-0 opacity-[0.16]" style={{ backgroundImage: "radial-gradient(rgba(234,194,133,0.22) 0.8px,transparent 0.8px)", backgroundSize: "32px 32px" }} />
           <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#E7C58E]/40 to-transparent" />
         </div>
 
         <div className="relative mx-auto grid min-h-[540px] max-w-[1500px] items-center gap-7 px-5 pb-12 pt-14 sm:px-8 sm:pb-14 sm:pt-16 lg:min-h-[620px] lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-6 lg:px-12 lg:pb-14 lg:pt-14 xl:gap-10 xl:px-16">
-          <motion.div
-            style={{ y: contentY }}
+          <div
             className="relative z-30 min-w-0 max-w-[790px] text-left"
           >
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
+            <div
               className="mb-5 inline-flex max-w-full items-center gap-2.5 rounded-full border border-white/15 bg-white/[0.05] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#F0D9AC] sm:text-[11px]"
             >
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_14px_rgba(231,197,142,0.65)]" />
               Discover Sri Lanka, differently
-            </motion.div>
+            </div>
 
-            <motion.h1
+            <h1
               id="homepage-hero-title"
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
               className="text-balance text-[clamp(3.3rem,5.4vw,6.35rem)] font-medium leading-[1.055] tracking-[-0.065em] text-white"
             >
               Discover <span className="bg-gradient-to-r from-[#F8F7F2] via-[#F0D9AC] to-[#E7C58E] bg-clip-text text-transparent">better.</span>
               <br />
               Grow together.
-            </motion.h1>
+            </h1>
 
-            <motion.p
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.18 }}
+            <p
               className="mt-5 max-w-[600px] text-pretty text-[15px] leading-[1.65] text-[#CADDCB] sm:text-[17px]"
             >
               Discover businesses, services and people worth knowing.
               Your connection to opportunities across Sri Lanka starts here.
-            </motion.p>
+            </p>
 
             {/* Unified search experience: one surface, clear primary and secondary actions. */}
-            <motion.div
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.28 }}
+            <div
               className="relative z-40 mt-6 w-full max-w-[680px]"
             >
-              <div className="rounded-[22px] border border-white/[0.18] bg-white/[0.075] p-2.5 shadow-[0_22px_70px_rgba(0,0,0,0.23)] backdrop-blur-xl sm:p-3">
+              <div className="rounded-[22px] border border-white/[0.18] bg-white/[0.075] p-2.5 shadow-[0_22px_70px_rgba(0,0,0,0.23)]  sm:p-3">
                 <div className="mb-2 flex items-center justify-between gap-3 px-2 sm:mb-3">
                   <span className="text-[10px] font-bold uppercase tracking-[0.17em] text-[#CADDCB]">
                     What are you looking for?
@@ -338,34 +300,27 @@ export default function HomePageClient() {
               <p className="mt-3 pl-1 text-[12px] text-[#94BAA0] sm:text-[13px]">
                 Try “Restaurants in Colombo” or “Electrician in Jaffna”
               </p>
-            </motion.div>
+            </div>
 
             <p className="mt-5 text-[12px] font-medium tracking-wide text-[#75AB8D]">
               Built for discovery. Designed for connection.
             </p>
-          </motion.div>
+          </div>
 
           {/* Fully code-based vector scene: no stock imagery, GIF downloads or external animation service. */}
-          <motion.div
-            initial={{ opacity: 0, x: 36, scale: 0.97 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            transition={{ duration: 0.95, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+          <div
             className="relative z-10 mx-auto flex w-full max-w-[380px] items-center justify-center sm:max-w-[460px] lg:max-w-none"
             aria-label="Illustration of business discovery across Sri Lanka"
             role="img"
           >
             <div className="relative aspect-[1.03/1] w-full max-w-[550px]">
               <div className="absolute inset-[7%] rounded-full border border-[#94BAA0]/10 bg-[radial-gradient(circle,rgba(52,112,83,0.20)_0%,rgba(17,45,33,0.05)_67%,transparent_74%)]" />
-              <motion.div
+              <div
                 aria-hidden="true"
-                animate={{ rotate: 360 }}
-                transition={{ duration: 90, repeat: Infinity, ease: "linear" }}
                 className="absolute inset-[7%] rounded-full border border-dashed border-[#E7C58E]/20"
               />
-              <motion.div
+              <div
                 aria-hidden="true"
-                animate={{ rotate: -360 }}
-                transition={{ duration: 115, repeat: Infinity, ease: "linear" }}
                 className="absolute inset-[17%] rounded-full border border-[#94BAA0]/20"
               />
               <svg viewBox="0 0 600 600" fill="none" aria-hidden="true" className="absolute inset-0 h-full w-full">
@@ -387,14 +342,12 @@ export default function HomePageClient() {
                 <circle cx="308" cy="277" r="5" fill="#F0D9AC" />
                 <circle cx="294" cy="364" r="5" fill="#F0D9AC" />
                 <circle cx="357" cy="437" r="5" fill="#F0D9AC" />
-                <motion.circle cx="308" cy="277" r="19" stroke="#F0D9AC" strokeWidth="2" animate={{ r: [10, 25, 10], opacity: [0.7, 0, 0.7] }} transition={{ duration: 3.2, repeat: Infinity, ease: "easeOut" }} />
-                <motion.circle cx="294" cy="364" r="19" stroke="#F0D9AC" strokeWidth="2" animate={{ r: [10, 23, 10], opacity: [0.6, 0, 0.6] }} transition={{ duration: 3.8, repeat: Infinity, delay: 0.5, ease: "easeOut" }} />
+                <circle cx="308" cy="277" r="19" stroke="#F0D9AC" strokeWidth="2" />
+                <circle cx="294" cy="364" r="19" stroke="#F0D9AC" strokeWidth="2" />
               </svg>
 
-              <motion.div
-                animate={{ y: [0, -12, 0] }}
-                transition={{ duration: 6.5, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute left-[1%] top-[24%] w-[45%] max-w-[225px] rounded-2xl border border-white/15 bg-[#1B3430]/90 p-4 shadow-[0_25px_55px_rgba(0,0,0,0.25)] backdrop-blur-xl sm:p-5"
+              <div
+                className="absolute left-[1%] top-[24%] w-[45%] max-w-[225px] rounded-2xl border border-white/15 bg-[#1B3430]/90 p-4 shadow-[0_25px_55px_rgba(0,0,0,0.25)]  sm:p-5"
               >
                 <div className="mb-3 flex items-center gap-2">
                   <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-400/15 text-emerald-200"><Building2 size={18} /></span>
@@ -407,12 +360,10 @@ export default function HomePageClient() {
                   <div className="h-2 w-[82%] rounded-full bg-white/20" />
                   <div className="h-2 w-[60%] rounded-full bg-white/10" />
                 </div>
-              </motion.div>
+              </div>
 
-              <motion.div
-                animate={{ y: [0, 10, 0] }}
-                transition={{ duration: 7.1, repeat: Infinity, delay: 0.5, ease: "easeInOut" }}
-                className="absolute right-[0%] top-[53%] w-[46%] max-w-[236px] rounded-2xl border border-white/15 bg-[#1B3430]/95 p-4 shadow-[0_25px_60px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:p-5"
+              <div
+                className="absolute right-[0%] top-[53%] w-[46%] max-w-[236px] rounded-2xl border border-white/15 bg-[#1B3430]/95 p-4 shadow-[0_25px_60px_rgba(0,0,0,0.28)]  sm:p-5"
               >
                 <div className="flex items-center gap-2.5">
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#E7C58E]/15 text-emerald-200"><MapPin size={19} /></span>
@@ -425,18 +376,16 @@ export default function HomePageClient() {
                   <span className="h-2 w-2 rounded-full bg-emerald-400" />
                   Discover local opportunities
                 </div>
-              </motion.div>
+              </div>
 
-              <motion.div
-                animate={{ y: [0, -7, 0] }}
-                transition={{ duration: 5.4, repeat: Infinity, delay: 0.8, ease: "easeInOut" }}
-                className="absolute bottom-[8%] left-[19%] inline-flex items-center gap-2 rounded-full border border-[#E7C58E]/20 bg-[#152C25]/90 px-4 py-3 text-xs font-semibold text-[#E0EADB] shadow-xl backdrop-blur-lg"
+              <div
+                className="absolute bottom-[8%] left-[19%] inline-flex items-center gap-2 rounded-full border border-[#E7C58E]/20 bg-[#152C25]/90 px-4 py-3 text-xs font-semibold text-[#E0EADB] shadow-xl "
               >
                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#E7C58E]/15"><Search size={14} /></span>
                 Discover. Connect. Grow.
-              </motion.div>
+              </div>
             </div>
-          </motion.div>
+          </div>
         </div>
       </section>
 
@@ -547,7 +496,7 @@ export default function HomePageClient() {
                           unoptimized={cat.image_url.includes("supabase.co")}
                         />
                       ) : (
-                        <IconComponent name={cat.icon} className="h-7 w-7" />
+                        <CategoryIcon name={cat.icon} className="h-7 w-7" />
                       )}
                     </div>
                     <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#F0F2E9] bg-white text-[#75AB8D] transition-colors duration-200 group-hover:border-[#CADDCB] group-hover:bg-[#F0F2E9] group-hover:text-[#26483B]">
@@ -607,7 +556,7 @@ export default function HomePageClient() {
         aria-labelledby="featured-listings-title"
         className="relative isolate overflow-hidden border-b border-[#F0F2E9] bg-white py-20 sm:py-24 lg:py-28"
       >
-        <div className="pointer-events-none absolute -left-48 top-0 h-[500px] w-[500px] rounded-full bg-[#F0F2E9]/20 blur-[120px]" aria-hidden="true" />
+        <div className="pointer-events-none absolute -left-48 top-0 h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle,rgba(224,234,219,0.32)_0%,transparent_72%)]" aria-hidden="true" />
         <div className="relative mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12">
           <div className="mb-9 flex flex-col justify-between gap-7 sm:mb-11 lg:flex-row lg:items-end">
             <div className="max-w-[780px]">
@@ -697,7 +646,7 @@ export default function HomePageClient() {
                   key={business.id}
                   href={`/business/${business.slug || business.id}`}
                   aria-label={`View ${business.name} business profile`}
-                  className="group relative isolate block aspect-[9/16] w-[178px] shrink-0 snap-start overflow-hidden rounded-[22px] border border-[#E0EADB] bg-[#1B3430] shadow-[0_6px_23px_rgba(15,40,67,0.07)] transition-[border-color,transform,box-shadow] duration-200 hover:-translate-y-1 hover:border-[#B0CFB5] hover:shadow-[0_16px_36px_rgba(15,40,67,0.19)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 sm:w-[207px] lg:w-[229px] xl:w-[237px]"
+                  className="group relative isolate block [contain:layout_paint] aspect-[9/16] w-[178px shrink-0 snap-start overflow-hidden rounded-[22px] border border-[#E0EADB] bg-[#1B3430] shadow-[0_6px_23px_rgba(15,40,67,0.07)] transition-[border-color,transform,box-shadow] duration-200 hover:-translate-y-1 hover:border-[#B0CFB5] hover:shadow-[0_16px_36px_rgba(15,40,67,0.19)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 sm:w-[207px] lg:w-[229px] xl:w-[237px]"
                 >
                   {/* 9:16 visual works with landscape photos as well as portrait images. */}
                   <div className="absolute inset-0 overflow-hidden">
@@ -706,6 +655,9 @@ export default function HomePageClient() {
                         src={business.image_url}
                         alt={business.name}
                         fill
+                        loading="lazy"
+                        quality={65}
+                        decoding="async"
                         sizes="(max-width: 640px) 178px, (max-width: 1024px) 207px, 237px"
                         className="object-cover transition-transform duration-500 motion-safe:group-hover:scale-[1.045]"
                       />
@@ -713,7 +665,7 @@ export default function HomePageClient() {
                       <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#26483B] via-[#1B3430] to-[#152C25]">
                         {business.logo_url ? (
                           <div className="relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-[24px] border border-white/15 bg-white/95 p-4 shadow-xl">
-                            <Image src={business.logo_url} alt={business.name} fill sizes="112px" className="object-contain p-4" />
+                            <Image src={business.logo_url} alt={business.name} fill loading="lazy" quality={65} sizes="112px" className="object-contain p-4" />
                           </div>
                         ) : (
                           <Building2 size={60} strokeWidth={1.1} className="text-[#F0D9AC]/75" />
