@@ -1,106 +1,120 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export default async function middleware(request: NextRequest) {
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
+function isWithin(path: string, prefix: string): boolean {
+  return path === prefix || path.startsWith(prefix + '/')
+}
+
+function privateNoStore(response: NextResponse): NextResponse {
+  response.headers.set('Cache-Control', 'private, no-store')
+  return response
+}
+
+/**
+ * Server-side access gate. These checks protect pages, not data APIs:
+ * all sensitive Supabase queries must still be restricted by RLS.
+ */
+export async function proxy(request: NextRequest) {
+  const path = request.nextUrl.pathname
+  const isAdmin = isWithin(path, '/admin')
+  const isVendor = isWithin(path, '/vendor')
+  const isBusinessRegistration = isWithin(path, '/register-business')
+
+  if (!isAdmin && !isVendor && !isBusinessRegistration) {
+    return NextResponse.next({ request })
+  }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+    || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  // Never allow a protected route through on a missing configuration.
+  if (!supabaseUrl || !supabaseKey) {
+    return new NextResponse('Authentication service unavailable', { status: 503 })
+  }
+
+  let response = privateNoStore(NextResponse.next({ request }))
+  const supabase = createServerClient(supabaseUrl, supabaseKey, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll()
+      },
+      setAll(cookiesToSet, headers) {
+        // Keep the refreshed session consistent for both Server Components and browser.
+        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+        response = privateNoStore(NextResponse.next({ request }))
+        cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options))
+        Object.entries(headers || {}).forEach(([name, value]) => response.headers.set(name, value))
+      },
     },
   })
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  function withSessionCookies(destination: NextResponse): NextResponse {
+    response.cookies.getAll().forEach(cookie => destination.cookies.set(cookie))
+    return privateNoStore(destination)
+  }
 
-  if (!supabaseUrl || !supabaseAnonKey) {
+  function signInRedirect(): NextResponse {
+    const login = new URL('/login', request.url)
+    login.searchParams.set('next', path + request.nextUrl.search)
+    return withSessionCookies(NextResponse.redirect(login))
+  }
+
+  try {
+    // getClaims validates the JWT instead of trusting cookie/session contents.
+    // It also refreshes expired tokens via the SSR cookie adapter when needed.
+    const { data, error } = await supabase.auth.getClaims()
+    const userId = data?.claims?.sub
+    if (error || !userId) return signInRedirect()
+
+    if (isBusinessRegistration) return response
+
+    // Roles are sourced from the database, never user-editable auth metadata.
+    const { data: profile, error: roleError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', userId)
+      .maybeSingle()
+
+    if (roleError) {
+      return withSessionCookies(new NextResponse('Access verification temporarily unavailable', { status: 503 }))
+    }
+
+    const role = String(profile?.role || 'customer').toLowerCase()
+    const staff = role === 'admin' || role === 'ceo'
+
+    if (isAdmin) {
+      return staff
+        ? response
+        : withSessionCookies(NextResponse.redirect(new URL('/', request.url)))
+    }
+
+    if (isVendor && !staff && role !== 'vendor') {
+      const { data: owned, error: ownershipError } = await supabase
+        .from('businesses')
+        .select('id')
+        .eq('owner_id', userId)
+        .limit(1)
+
+      if (ownershipError) {
+        return withSessionCookies(new NextResponse('Access verification temporarily unavailable', { status: 503 }))
+      }
+      if (!owned?.length) {
+        return withSessionCookies(NextResponse.redirect(new URL('/register-business', request.url)))
+      }
+    }
+
     return response
+  } catch (error) {
+    console.error('Protected route verification failed', error)
+    return withSessionCookies(new NextResponse('Access verification temporarily unavailable', { status: 503 }))
   }
-
-  const supabase = createServerClient(
-    supabaseUrl,
-    supabaseAnonKey,
-    {
-      cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value
-        },
-        set(name: string, value: string, options: CookieOptions) {
-          response.cookies.set({
-            name,
-            value,
-            ...options,
-          })
-        },
-        remove(name: string, options: CookieOptions) {
-          response.cookies.set({
-            name,
-            value: '',
-            ...options,
-          })
-        },
-      },
-    }
-  )
-
-  const { pathname } = request.nextUrl
-
-  if (pathname.startsWith('/admin') || pathname.startsWith('/vendor')) {
-    try {
-      const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-      if (authError) {
-        if (authError.message.includes('Refresh Token Not Found') || authError.status === 400) {
-          const redirectResponse = NextResponse.redirect(new URL('/login', request.url))
-          request.cookies.getAll().forEach(cookie => {
-            if (cookie.name.includes('auth-token') || cookie.name.includes('supabase')) {
-              redirectResponse.cookies.set(cookie.name, '', { maxAge: 0 })
-            }
-          })
-          return redirectResponse
-        }
-        throw authError
-      }
-
-      if (!user) {
-        const url = new URL('/login', request.url)
-        url.searchParams.set('next', pathname)
-        return NextResponse.redirect(url)
-      }
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single()
-
-      const role = profile?.role?.toLowerCase()
-
-      if (pathname.startsWith('/admin')) {
-        if (role !== 'admin' && role !== 'ceo') {
-          return NextResponse.redirect(new URL('/', request.url))
-        }
-      }
-
-      if (pathname.startsWith('/vendor')) {
-        const { count } = await supabase
-          .from('businesses')
-          .select('*', { count: 'exact', head: true })
-          .eq('owner_id', user.id)
-
-        const isBusinessOwner = (count || 0) > 0
-        if (role !== 'vendor' && role !== 'admin' && role !== 'ceo' && !isBusinessOwner) {
-          return NextResponse.redirect(new URL('/', request.url))
-        }
-      }
-    } catch (e) {
-      return NextResponse.redirect(new URL('/login', request.url))
-    }
-  }
-
-  return response
 }
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/admin/:path*',
+    '/vendor/:path*',
+    '/register-business/:path*',
   ],
 }
