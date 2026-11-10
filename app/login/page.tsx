@@ -55,12 +55,36 @@ function LoginForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, turnstileToken }),
       });
-      const result: { error?: string } = await response.json();
-      if (!response.ok) {
+      const result: { error?: string; authenticated?: boolean; browserSessionRequired?: boolean } =
+        await response.json();
+      if (!response.ok || result.authenticated !== true) {
         setError(result.error || 'Sign-in could not be completed. Please try again.');
         setTurnstileToken(null);
         setChallengeVersion(v => v + 1);
         return;
+      }
+
+      if (result.browserSessionRequired) {
+        // Some Supabase SSR versions return a valid server-side session without
+        // emitting a new Set-Cookie. Persist it via the shared createBrowserClient
+        // before loading a page protected by server-side getClaims(). Turnstile
+        // and credentials were already checked by our same-origin endpoint.
+        // No session/token is ever echoed from the server into the page.
+        const { data: browserData, error: browserError } =
+          await supabase.auth.signInWithPassword({ email, password });
+        if (browserError || !browserData.session) {
+          setError('Your credentials were accepted, but the browser session could not be saved. Please retry.');
+          setTurnstileToken(null);
+          setChallengeVersion(v => v + 1);
+          return;
+        }
+        const { data: saved, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError || !saved.session?.access_token) {
+          setError('The browser could not confirm its saved login session. Please try again.');
+          setTurnstileToken(null);
+          setChallengeVersion(v => v + 1);
+          return;
+        }
       }
 
       // Full navigation avoids prefetch / client router racing with cookie writes.
