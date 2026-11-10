@@ -17,7 +17,7 @@ for attempt in $(seq 1 35); do
   sleep 1
 done
 
-for path in /admin/billing /vendor/billing /register-business; do
+for path in /admin/billing /vendor/billing /register-business /admin/billing/hybrid /vendor/billing/hybrid; do
   headers=$(curl --max-time 10 -sS -D - -o /dev/null "http://127.0.0.1:3099$path")
   status=$(printf '%s\n' "$headers" | head -n 1 | tr -d '\r')
   case "$status" in
@@ -41,3 +41,15 @@ if [[ "$status" != "401" ]]; then
   exit 1
 fi
 echo "PASS unauthenticated billing API returns 401"
+
+
+# Fail-closed: until both independent DB credentials and the feature flags
+# are explicitly configured, no hybrid billing endpoint may operate.
+for endpoint in /api/billing/hybrid /api/admin/billing/hybrid; do
+  code=$(curl --max-time 10 -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:3099$endpoint")
+  if [[ "$code" != "503" ]]; then
+    echo "FAIL $endpoint: expected disabled service 503, got $code"
+    exit 1
+  fi
+  echo "PASS $endpoint fails closed while hybrid billing is disabled"
+done
