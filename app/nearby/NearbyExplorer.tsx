@@ -15,7 +15,8 @@ import { supabase } from "@/lib/supabaseClient";
 import { SL_TOWNS, type Town } from "@/lib/towns";
 import type { Business } from "@/lib/types";
 import VerifiedBadge from "@/app/components/VerifiedBadge";
-import { normalizeDiscoveryQuery, sortGeoRank } from "@/lib/discovery/geoRank";
+import { sortGeoRank } from "@/lib/discovery/geoRank";
+import { resolveSmartSearch, radiusSteps } from "@/lib/discovery/smartSearch";
 import { recordNearbySample } from "@/lib/discovery/diagnostics";
 
 const LeafletMap = dynamic(() => import("@/components/LeafletMap"), {
@@ -28,7 +29,18 @@ const LeafletMap = dynamic(() => import("@/components/LeafletMap"), {
   ),
 });
 
-type NearbyBusiness = Business & { distance_meters?: number };
+type NearbyBusiness = Business & {
+  distance_meters?: number;
+  match_type?: "nearby" | "exact_service" | "category" | "category_related" | "lexical";
+  lexical_rank?: number;
+  search_rank?: number;
+};
+type NearbySearchResponse = {
+  businesses: NearbyBusiness[];
+  effectiveRadius: number;
+  expanded: boolean;
+  backend: "smartsearch-v1" | "legacy";
+};
 const EMPTY_CATEGORIES: any[] = [];
 const EMPTY_BUSINESSES: NearbyBusiness[] = [];
 type LocationChoice = {
@@ -109,6 +121,8 @@ function initialChoice(params: ReturnType<typeof useSearchParams>): LocationChoi
       const districtQuery = params.get("district");
       const districtName = districtQuery && Object.keys(DISTRICTS).find(name => name.toLowerCase() === districtQuery.toLowerCase());
       if (districtName) return { lat, lng, label: districtName + " District", kind: "district" };
+      const townName = params.get("town");
+      if (townName) return { lat, lng, label: townName + " · Selected town", kind: "town" };
       return { lat, lng, label: "Selected map area", kind: "coordinates" };
     }
   }
@@ -201,41 +215,86 @@ export default function NearbyExplorer() {
       .map((item: any) => String(item.name))];
   }, [categories, category]);
 
+  const smartIntent = useMemo(
+    () => resolveSmartSearch(appliedQuery, SL_TOWNS, categories.map((item: any) => String(item.name))),
+    [appliedQuery, categories],
+  );
+  const suggestedCategories = category ? [] : smartIntent.categories;
+  const normalizedSearch = smartIntent.canonicalQuery;
+
   const {
-    data: businesses = EMPTY_BUSINESSES,
+    data: searchResponse,
     isLoading: loadingBusinesses,
     isFetching,
     error,
     refetch,
-  } = useQuery<NearbyBusiness[]>({
-    queryKey: ["nearby-businesses", location.lat, location.lng, radius, appliedQuery, category, selectedCategoryNames.join("|")],
+  } = useQuery<NearbySearchResponse>({
+    queryKey: [
+      "nearby-smartsearch-v1", location.lat, location.lng, radius,
+      normalizedSearch, category, selectedCategoryNames.join("|"),
+      suggestedCategories.join("|"), smartIntent.specificService,
+    ],
     queryFn: async ({ signal }) => {
       const startedAt = performance.now();
-      const { data, error: fetchError } = await supabase
-        .rpc("get_nearby_businesses", {
-          user_lat: location.lat,
-          user_lng: location.lng,
-          search_query: normalizeDiscoveryQuery(appliedQuery),
-          dist_limit: radius,
-          category_filter: selectedCategoryNames.length > 1 ? "" : (category || ""),
-        })
-        .abortSignal(signal);
-      if (!signal.aborted) recordNearbySample(performance.now() - startedAt, data?.length || 0, Boolean(fetchError));
-      if (fetchError) throw fetchError;
-      return (data || [])
-        .filter((row: any) => !category || selectedCategoryNames.length <= 1 ||
-          selectedCategoryNames.some((name) => name.toLowerCase() === String(row.category || "").toLowerCase()))
-        .map((row: any) => ({
-          ...row,
-          is_verified: row.is_verified === true || row.verification_status === "verified",
-          distanceText: typeof row.distance_meters === "number"
-            ? formatDistance(row.distance_meters)
-            : undefined,
-        }));
+      // With no explicit town/GPS selection, search across Sri Lanka as a
+      // final, clearly disclosed fallback rather than hiding distant matches.
+      const steps = normalizedSearch
+        ? [...radiusSteps(radius), ...(location.kind === "default" ? [500000] : [])]
+        : [radius];
+      let usedRadius = radius;
+      let backend: NearbySearchResponse["backend"] = "smartsearch-v1";
+      let results: NearbyBusiness[] = [];
+      try {
+        for (const targetRadius of steps) {
+          if (signal.aborted) throw new DOMException("Search cancelled", "AbortError");
+          const request = await supabase.rpc("get_nearby_businesses_v2", {
+            user_lat: location.lat,
+            user_lng: location.lng,
+            search_query: normalizedSearch,
+            dist_limit: targetRadius,
+            filter_categories: selectedCategoryNames,
+            related_categories: suggestedCategories,
+            specific_service: smartIntent.specificService,
+          }).abortSignal(signal);
+          let rows = request.data;
+          if (request.error) {
+            // Backward compatibility when a migration is being rolled back.
+            if (request.error.code !== "PGRST202") throw request.error;
+            const fallback = await supabase.rpc("get_nearby_businesses", {
+              user_lat: location.lat,
+              user_lng: location.lng,
+              search_query: normalizedSearch,
+              dist_limit: targetRadius,
+              category_filter: selectedCategoryNames.length === 1 ? selectedCategoryNames[0] : "",
+            }).abortSignal(signal);
+            if (fallback.error) throw fallback.error;
+            backend = "legacy";
+            rows = (fallback.data || []).filter((row: any) =>
+              !selectedCategoryNames.length ||
+              selectedCategoryNames.some((name) => name.toLowerCase() === String(row.category || "").toLowerCase()));
+          }
+          usedRadius = targetRadius;
+          results = (rows || []).map((row: any) => ({
+            ...row,
+            is_verified: row.is_verified === true || row.verification_status === "verified",
+            distanceText: typeof row.distance_meters === "number"
+              ? formatDistance(row.distance_meters) : undefined,
+          })) as NearbyBusiness[];
+          if (results.length > 0 || signal.aborted) break;
+        }
+        if (!signal.aborted) recordNearbySample(performance.now() - startedAt, results.length, false);
+        return { businesses: results, effectiveRadius: usedRadius, expanded: usedRadius > radius, backend };
+      } catch (fetchError) {
+        if (!signal.aborted) recordNearbySample(performance.now() - startedAt, 0, true);
+        throw fetchError;
+      }
     },
     staleTime: 60 * 1000,
     retry: 1,
   });
+
+  const businesses = searchResponse?.businesses ?? EMPTY_BUSINESSES;
+  const effectiveRadius = searchResponse?.effectiveRadius ?? radius;
 
   const visibleBusinesses = useMemo(() => {
     const sorted = businesses.filter(item =>
@@ -243,7 +302,7 @@ export default function NearbyExplorer() {
       (!withPhotosOnly || Boolean(item.image_url || item.logo_url))
     );
     if (sortBy === "best-match") {
-      return sortGeoRank(sorted, appliedQuery, radius);
+      return sortGeoRank(sorted, normalizedSearch, effectiveRadius);
     } else if (sortBy === "top-rated") {
       sorted.sort((a, b) => (Number(b.rating) || 0) - (Number(a.rating) || 0));
     } else if (sortBy === "alphabetical") {
@@ -255,7 +314,7 @@ export default function NearbyExplorer() {
       );
     }
     return sorted;
-  }, [businesses, sortBy, verifiedOnly, withPhotosOnly, appliedQuery, radius]);
+  }, [businesses, sortBy, verifiedOnly, withPhotosOnly, normalizedSearch, effectiveRadius]);
 
   useEffect(() => { setResultLimit(30); }, [location.lat, location.lng, appliedQuery, category, radius, sortBy, verifiedOnly, withPhotosOnly]);
 
@@ -505,6 +564,20 @@ export default function NearbyExplorer() {
   const submitSearch = (event?: React.FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
     const query = searchText.trim();
+    const parsed = resolveSmartSearch(query, SL_TOWNS, categories.map((item: any) => String(item.name)));
+    if (parsed.location?.lat != null && parsed.location.lon != null) {
+      applySearch({
+        query: parsed.canonicalQuery,
+        location: {
+          lat: parsed.location.lat, lng: parsed.location.lon,
+          label: parsed.location.name + (parsed.location.district ? ", " + parsed.location.district : ""),
+          kind: "town",
+        },
+        zoom: 13,
+      });
+      setMobileView("list");
+      return;
+    }
     const exactTown = TOWN_EXACT.get(query.toLowerCase());
     if (exactTown) {
       applySearch({
@@ -514,7 +587,7 @@ export default function NearbyExplorer() {
       });
       return;
     }
-    applySearch({ query });
+    applySearch({ query: parsed.canonicalQuery || query });
     setMobileView("list");
   };
 
@@ -947,7 +1020,17 @@ export default function NearbyExplorer() {
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-[#E1DACA] bg-white/85 px-3 py-1.5 text-[11px] font-medium text-[#5D766B]">
                   <MapPin size={12} /> {location.label}
                 </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-[#E1DACA] bg-white/85 px-3 py-1.5 text-[11px] font-medium text-[#5D766B]">{formatDistance(radius)} radius</span>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-[#E1DACA] bg-white/85 px-3 py-1.5 text-[11px] font-medium text-[#5D766B]">{effectiveRadius > 50000 ? "Sri Lanka-wide" : formatDistance(effectiveRadius) + " radius"}</span>
+                {searchResponse?.expanded && (
+                  <span role="status" className="inline-flex items-center gap-1.5 rounded-[7px] border border-[#B9DAC4] bg-[#E7F5EA] px-3 py-1.5 text-[11px] font-semibold text-[#2D6D4B]">
+                    <Route size={12}/> {effectiveRadius > 50000 ? "Showing island-wide results" : "Search expanded to " + formatDistance(effectiveRadius)}
+                  </span>
+                )}
+                {smartIntent.label && (
+                  <span className="inline-flex items-center gap-1.5 rounded-[7px] border border-[#DCE3D0] bg-white/85 px-3 py-1.5 text-[11px] font-medium text-[#456C55]">
+                    <Search size={12}/> {smartIntent.label}
+                  </span>
+                )}
                 {category && <button type="button" onClick={() => applySearch({ category: null })} aria-label="Clear category filter" className="inline-flex items-center gap-1.5 rounded-full bg-[#DDEFFB] px-3 py-1.5 text-[11px] font-semibold text-[#215B80] hover:bg-[#CBE4F5]">{category} <X size={12}/></button>}
                 {appliedQuery && <button type="button" onClick={() => applySearch({ query: "" })} aria-label="Clear search query" className="inline-flex items-center gap-1.5 rounded-full bg-[#DDEFFB] px-3 py-1.5 text-[11px] font-semibold text-[#215B80] hover:bg-[#CBE4F5]">{appliedQuery} <X size={12}/></button>}
                 {verifiedOnly && <button type="button" onClick={() => applySearch({ verifiedOnly: false })} className="inline-flex items-center gap-1.5 rounded-full border border-[#C6DACB] bg-[#E6F2E9] px-3 py-1.5 text-[11px] font-semibold text-[#39705C] hover:bg-[#D7EBDF]"><BadgeCheck size={12}/> Verified <X size={12}/></button>}
@@ -1128,6 +1211,11 @@ export default function NearbyExplorer() {
                         <p className="mt-2 line-clamp-2 text-[11px] leading-4 text-[#8198A9]">{business.detailed_address || business.address || business.city || "Sri Lanka"}</p>
                         <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] font-semibold">
                           {business.distanceText && <span className="inline-flex items-center gap-1 rounded-full bg-[#EDF5FB] px-2.5 py-1 text-[#326A90]"><MapPin size={11}/>{business.distanceText}</span>}
+                          {business.match_type === "category_related" && (
+                            <span title="This category is related, but the specific item is not verified" className="inline-flex items-center gap-1 rounded-[5px] border border-[#E5D9C7] bg-[#FBF6E8] px-2 py-1 text-[#816A3A]">
+                              Related category · service unconfirmed
+                            </span>
+                          )}
                           {Number.isFinite(rating) && rating > 0 && <span className="inline-flex items-center gap-1 text-[#B37A21]"><Star size={12} className="fill-amber-400 text-amber-400"/>{rating.toFixed(1)}</span>}
                         </div>
                       </div>
@@ -1173,7 +1261,7 @@ export default function NearbyExplorer() {
               userLng={userPosition?.lng}
               businesses={mapFeatures}
               zoom={mapZoom}
-              radius={radius}
+              radius={effectiveRadius > 50000 ? undefined : effectiveRadius}
               height="100%"
               onMarkerClick={onMarkerClicked}
               onMapMove={onMapMoved}

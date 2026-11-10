@@ -33,7 +33,7 @@ jobs:
       - name: Synthetic SSR multi-chunk cookie round-trip
         run: node tests/auth/ssr-cookie-roundtrip.mjs
       - name: Nearby GeoRank unit tests
-        run: node --experimental-strip-types --test tests/geoRank.test.mjs tests/diagnostics.test.mjs
+        run: node --experimental-strip-types --test tests/geoRank.test.mjs tests/diagnostics.test.mjs tests/smartSearch.test.mjs tests/searchEvaluation.test.mjs
       - name: Typecheck
         run: npx tsc --noEmit
       - name: Production build
