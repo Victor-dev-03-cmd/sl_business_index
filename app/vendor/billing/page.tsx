@@ -337,7 +337,7 @@ export default function VendorBillingPage() {
                 <IconsaxIcon name="card" size={15} /> New billing ledger
               </Link>
             )}
-            <button type="button" onClick={() => void load() disabled={loading} className={actionButton}>
+            <button type="button" onClick={() => void load()} disabled={loading} className={actionButton}>
               <IconsaxIcon name="refresh" size={15} /> Refresh
             </button>
             <a href={'mailto:' + billingEmail + '?subject=SL%20Business%20Index%20Billing%20Support'}
