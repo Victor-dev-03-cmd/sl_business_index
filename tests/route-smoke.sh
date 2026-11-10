@@ -56,8 +56,8 @@ done
 
 # Reject malformed password login before any Supabase/Turnstile network call.
 login_status=$(curl --max-time 10 -sS -o /dev/null -w '%{http_code}' \
-  -X POST 'http://127.0.0.1:3099/api/auth/password-login' \
-  -H 'Origin: http://127.0.0.1:3099' \
+  -X POST 'http://localhost:3099/api/auth/password-login' \
+  -H 'Origin: http://localhost:3099' \
   -H 'Content-Type: application/json' \
   --data '{"email":"test@example.invalid","password":"x"}')
 if [[ "$login_status" != "400" ]]; then
