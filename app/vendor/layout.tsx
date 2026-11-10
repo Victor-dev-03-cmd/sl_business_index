@@ -1,332 +1,161 @@
 'use client';
 
-import React, { useState, useEffect, startTransition } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { 
-  LayoutDashboard, 
-  Store, 
-  Megaphone, 
-  MessageSquare, 
-  Users, 
-  CreditCard, 
-  Sparkles,
-  Settings,
-  Search,
-  PanelLeftClose,
-  PanelLeftOpen,
-  Briefcase,
-  HelpCircle,
-  Home,
-  QrCode,
-  Menu,
-  X
-} from 'lucide-react';
 import AuthButton from '@/app/components/AuthButton';
 import NotificationBell from '@/app/components/NotificationBell';
 import VerifiedBadge from '@/app/components/VerifiedBadge';
-import { toast } from 'sonner';
 import { useUser } from '@/lib/hooks/useUser';
+import IconsaxIcon from './components/IconsaxIcon';
 
-const vendorMenuItems = [
-  { name: 'Home', href: '/', icon: Home },
-  { name: 'Dashboard', href: '/vendor/dashboard', icon: LayoutDashboard },
-  { name: 'Growth OS', href: '/vendor/growth', icon: Sparkles },
-  { name: 'My Businesses', href: '/vendor/my-businesses', icon: Store },
-  { name: 'QR Code', href: '/vendor/qr-code', icon: QrCode },
-  { name: 'Marketing', href: '/vendor/marketing', icon: Megaphone },
-  { name: 'Reviews', href: '/vendor/reviews', icon: MessageSquare },
-  { name: 'Leads', href: '/vendor/leads', icon: Users },
-  { name: 'Billing', href: '/vendor/billing', icon: CreditCard },
-  { name: 'Settings', href: '/vendor/settings', icon: Settings },
+const primaryNav = [
+  { name: 'Dashboard', href: '/vendor/dashboard', icon: 'category' },
+  { name: 'Growth OS', href: '/vendor/growth', icon: 'chart' },
+  { name: 'My Businesses', href: '/vendor/my-businesses', icon: 'shop' },
+  { name: 'Leads', href: '/vendor/leads', icon: 'people' },
+  { name: 'Reviews', href: '/vendor/reviews', icon: 'star' },
 ];
-
-const mobileQuickNav = [
-  { name: 'Dashboard', href: '/vendor/dashboard', icon: LayoutDashboard },
-  { name: 'Businesses', href: '/vendor/my-businesses', icon: Store },
-  { name: 'Leads', href: '/vendor/leads', icon: Users },
-  { name: 'Settings', href: '/vendor/settings', icon: Settings },
+const toolsNav = [
+  { name: 'Marketing', href: '/vendor/marketing', icon: 'flash' },
+  { name: 'QR Code', href: '/vendor/qr-code', icon: 'scan-barcode' },
+  { name: 'Billing', href: '/vendor/billing', icon: 'card' },
+  { name: 'Settings', href: '/vendor/settings', icon: 'setting-2' },
+];
+const mobileNav = [
+  { name: 'Dashboard', href: '/vendor/dashboard', icon: 'category' },
+  { name: 'Businesses', href: '/vendor/my-businesses', icon: 'shop' },
+  { name: 'Leads', href: '/vendor/leads', icon: 'people' },
+  { name: 'Settings', href: '/vendor/settings', icon: 'setting-2' },
 ];
 
 export default function VendorLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const { data: user, isLoading } = useUser();
+  const [expanded, setExpanded] = useState(true);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  useEffect(() => { setDrawerOpen(false); }, [pathname]);
 
-  useEffect(() => {
-    startTransition(() => {
-      setMobileDrawerOpen(false);
+  function active(href: string) {
+    return pathname === href || pathname.startsWith(href + '/');
+  }
+
+  function navItems(items: typeof primaryNav, mobile = false) {
+    return items.map(item => {
+      const selected = active(item.href);
+      return (
+        <Link key={item.href} href={item.href} title={item.name} aria-current={selected ? 'page' : undefined}
+          className={'group relative flex items-center gap-3 rounded-lg px-3 py-[10px] transition-colors ' +
+            (selected ? 'bg-[#eaf3ed] font-bold text-[#1b5438]' : 'font-medium text-[#617068] hover:bg-[#f4f7f5] hover:text-[#1c4f39]')}>
+          <IconsaxIcon name={item.icon} size={19} variant={selected ? 'bold' : 'linear'} color={selected ? '#236546' : '#77877d'} />
+          {(expanded || mobile) && <span className="truncate text-[12px]">{item.name}</span>}
+          {selected && <span className="absolute bottom-2 right-0 top-2 w-[3px] rounded-l bg-[#28774e]" />}
+        </Link>
+      );
     });
-  }, [pathname]);
+  }
 
   if (isLoading) {
-    return (
-      <div className="flex h-[100dvh] items-center justify-center bg-white">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-dark border-t-transparent" />
-      </div>
-    );
+    return <div className="flex h-[100dvh] items-center justify-center bg-[#f8faf8]">
+      <div className="h-7 w-7 animate-spin rounded-full border-2 border-[#d9e8de] border-t-[#236448]" />
+    </div>;
   }
 
   return (
-    <div className="flex h-[100dvh] bg-gray-50/50 transition-colors duration-300 overflow-hidden">
-      {/* ── Desktop Sidebar (hidden on mobile, visible md+) ───────────────── */}
-      <aside 
-        className={`${
-          sidebarOpen ? 'w-64' : 'w-20'
-        } fixed inset-y-0 left-0 z-50 bg-white border-r border-gray-300 transition-all duration-300 ease-in-out hidden md:flex flex-col`}
-      >
-        <div className="flex items-center h-20 px-6 border-b border-gray-300">
-          <div className="mr-3 h-10 w-10 shrink-0">
-            <img src="/slbi-mark.svg" alt="SL Business Index" className="h-10 w-10 object-contain" />
-          </div>
-          {sidebarOpen && (
-            <div className="flex flex-col">
-              <span className="font-bold text-gray-900 text-sm tracking-tight uppercase">SL Business</span>
-              <span className="text-[10px] font-bold text-gray-400 tracking-widest uppercase">Vendor Portal</span>
-            </div>
-          )}
+    <div className="flex h-[100dvh] overflow-hidden bg-[#f8f9fb]">
+      {/* Desktop navigation */}
+      <aside className={'fixed inset-y-0 left-0 z-50 hidden flex-col border-r border-[#e4e9e5] bg-white transition-[width] duration-200 md:flex ' + (expanded ? 'w-[238px]' : 'w-[72px]')}>
+        <Link href="/vendor/dashboard" className="flex h-[68px] shrink-0 items-center gap-2.5 border-b border-[#edf0ed] px-4">
+          <img src="/slbi-mark.svg" className="h-9 w-9 shrink-0 object-contain" alt="SLBI" />
+          {expanded && <span className="flex min-w-0 flex-col leading-tight">
+            <span className="truncate text-[12px] font-extrabold tracking-tight text-[#1f4131]">SL BUSINESS INDEX</span>
+            <span className="mt-1 text-[9px] font-bold uppercase tracking-[0.18em] text-[#a0ada3]">Vendor intelligence</span>
+          </span>}
+        </Link>
+        <div className="flex-1 overflow-y-auto px-3 pb-4 pt-4">
+          {expanded && <p className="mb-2 px-3 text-[9px] font-bold uppercase tracking-[0.15em] text-[#9ba9a0]">Workspace</p>}
+          <div className="space-y-0.5">{navItems(primaryNav)}</div>
+          <div className="my-4 border-t border-[#f0f2f0]" />
+          {expanded && <p className="mb-2 px-3 text-[9px] font-bold uppercase tracking-[0.15em] text-[#9ba9a0]">Tools & account</p>}
+          <div className="space-y-0.5">{navItems(toolsNav)}</div>
         </div>
-
-        <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-          {vendorMenuItems.map((item) => {
-            const isActive = pathname === item.href;
-            const Icon = item.icon;
-            
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={`flex items-center px-4 py-3 rounded transition-all duration-200 group relative ${
-                  isActive 
-                    ? 'bg-brand-dark text-white shadow-lg shadow-brand-dark/10'
-                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
-                }`}
-              >
-                <Icon className={`h-[18px] w-[18px] shrink-0 transition-colors ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-brand-dark'}`} strokeWidth={isActive ? 2 : 1.5} />
-                {sidebarOpen && (
-                  <span className={`ml-3 text-[13px] font-bold tracking-tight ${isActive ? 'text-white' : 'text-gray-500 group-hover:text-gray-900'}`}>{item.name}</span>
-                )}
-                {isActive && !sidebarOpen && (
-                  <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-brand-dark rounded-l-full" />
-                )}
-              </Link>
-            );
-          })}
-        </nav>
-
-        <div className="p-4 border-t border-gray-100 space-y-2">
-          {sidebarOpen && (
-            <button 
-              onClick={() => toast.info('Support Center coming soon! Please email support@slbusiness.com')}
-              className="flex items-center w-full px-4 py-3 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-all text-[13px] font-bold"
-            >
-              <HelpCircle className="h-[18px] w-[18px] mr-3" strokeWidth={1.5} />
-              Vendor Support
-            </button>
-          )}
+        <div className="shrink-0 border-t border-[#edf0ed] p-3">
+          <Link href="/" title="Back to homepage" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[12px] font-medium text-[#72837a] transition hover:bg-[#f5f7f5]">
+            <IconsaxIcon name="home" size={18} /> {expanded && <span>Visit website</span>}
+          </Link>
+          {expanded && <div className="mt-2 rounded-lg border border-[#eaf0eb] bg-[#f7faf8] px-3 py-2.5">
+            <p className="truncate text-[11px] font-semibold text-[#2a4a36]">{user?.email || 'Vendor'}</p>
+            <p className="mt-1 text-[10px] text-[#9aa89f]">SLBI Vendor account</p>
+          </div>}
         </div>
       </aside>
 
-      {/* ── Mobile Slide-in Drawer (md:hidden) ───────────────────────────── */}
-      <div className="md:hidden">
-        {/* Backdrop */}
-        {mobileDrawerOpen && (
-          <div
-            className="fixed inset-0 bg-black/40 z-[60]"
-            onClick={() => setMobileDrawerOpen(false)}
-          />
-        )}
-
-        {/* Drawer Panel */}
-        <div
-          className={`fixed top-0 left-0 h-full w-72 bg-white z-[70] shadow-2xl flex flex-col transition-transform duration-300 ${
-            mobileDrawerOpen ? "translate-x-0" : "-translate-x-full"
-          }`}
-        >
-          {/* Drawer Header */}
-          <div className="flex items-center h-16 px-4 border-b border-gray-200 shrink-0">
-            <div className="h-9 w-9 shrink-0">
-              <img src="/slbi-mark.svg" alt="SL Business Index" className="h-9 w-9 object-contain" />
-            </div>
-            <div className="flex flex-col ml-3 flex-1 min-w-0">
-              <span className="font-bold text-gray-900 text-sm tracking-tight uppercase">SL Business</span>
-              <span className="text-[10px] font-bold text-gray-400 tracking-widest uppercase">Vendor Portal</span>
-            </div>
-            <button
-              onClick={() => setMobileDrawerOpen(false)}
-              className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-500 shrink-0 ml-2"
-            >
-              <X className="h-5 w-5" strokeWidth={1.5} />
-            </button>
+      {/* Mobile drawer */}
+      {drawerOpen && <div role="presentation" onClick={() => setDrawerOpen(false)} className="fixed inset-0 z-[60] bg-[#122d22]/45 md:hidden" />}
+      <aside className={'fixed inset-y-0 left-0 z-[70] flex w-[268px] flex-col bg-white shadow-2xl transition-transform duration-200 md:hidden ' + (drawerOpen ? 'translate-x-0' : '-translate-x-full')}>
+        <div className="flex h-16 items-center gap-3 border-b border-[#e9eeea] px-4">
+          <img src="/slbi-mark.svg" className="h-9 w-9" alt="SLBI" />
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-bold text-[#1e4531]">SL Business Index</p>
+            <p className="mt-0.5 text-[10px] text-slate-400">Vendor workspace</p>
           </div>
-
-          {/* Drawer Nav */}
-          <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
-            {vendorMenuItems.map((item) => {
-              const isActive = pathname === item.href;
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={`flex items-center px-4 py-3 rounded transition-all duration-200 group relative ${
-                    isActive
-                      ? "bg-brand-dark text-white shadow-lg shadow-brand-dark/10"
-                      : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
-                  }`}
-                >
-                  <Icon
-                    className={`h-[18px] w-[18px] shrink-0 transition-colors ${
-                      isActive
-                        ? "text-white"
-                        : "text-gray-400 group-hover:text-brand-dark"
-                    }`}
-                    strokeWidth={isActive ? 2 : 1.5}
-                  />
-                  <span
-                    className={`ml-3 text-[13px] font-bold tracking-tight ${
-                      isActive
-                        ? "text-white"
-                        : "text-gray-500 group-hover:text-gray-900"
-                    }`}
-                  >
-                    {item.name}
-                  </span>
-                </Link>
-              );
-            })}
-          </nav>
-
-          {/* Drawer Bottom – user info */}
-          <div className="p-4 border-t border-gray-100 shrink-0">
-            <div className="flex items-center gap-3 px-2 py-2">
-              <div className="h-8 w-8 rounded-full bg-brand-dark/10 flex items-center justify-center shrink-0">
-                <span className="text-xs font-bold text-brand-dark">
-                  {user?.email?.charAt(0).toUpperCase() || "V"}
-                </span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-gray-900 truncate">
-                  {user?.email || "Vendor"}
-                </p>
-                <span className="inline-block text-[10px] font-bold tracking-widest uppercase text-brand-dark bg-brand-dark/10 px-2 py-0.5 rounded-full mt-0.5">
-                  Vendor
-                </span>
-              </div>
-            </div>
-          </div>
+          <button type="button" aria-label="Close menu" onClick={() => setDrawerOpen(false)} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100">
+            <IconsaxIcon name="close-circle" size={20} />
+          </button>
         </div>
-      </div>
+        <nav aria-label="Mobile vendor menu" className="flex-1 space-y-1 overflow-y-auto p-3">
+          {navItems(primaryNav, true)}
+          <div className="my-3 border-t border-[#edf0ed]" />
+          {navItems(toolsNav, true)}
+          <Link href="/" className="flex items-center gap-3 rounded-lg px-3 py-3 text-xs font-medium text-slate-500">
+            <IconsaxIcon name="home" size={18} /> Visit website
+          </Link>
+        </nav>
+      </aside>
 
-      {/* ── Main Content Area ─────────────────────────────────────────────── */}
-      <div className={`flex-1 flex flex-col ${
-          mounted && sidebarOpen ? 'md:ml-64' : mounted && !sidebarOpen ? 'md:ml-20' : ''
-        } transition-all duration-300 min-w-0`}>
-        {/* Topbar */}
-        <header className="h-16 md:h-20 bg-white/80 backdrop-blur-md border-b border-gray-300 sticky top-0 z-40 transition-colors duration-300">
-          <div className="h-full px-3 md:px-8 flex items-center">
-            {/* Mobile: hamburger button */}
-            <button
-              onClick={() => setMobileDrawerOpen(true)}
-              className="md:hidden p-2 rounded-xl bg-gray-50 text-gray-400 hover:text-brand-dark hover:bg-brand-blue/5 transition-all border border-transparent hover:border-brand-blue/10 mr-2 shrink-0"
-              title="Open Menu"
-            >
-              <Menu className="h-5 w-5" strokeWidth={1.5} />
-            </button>
-
-            {/* Desktop: Sidebar Toggle */}
-            <button 
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="hidden md:flex items-center justify-center p-2.5 rounded-xl bg-gray-50 text-gray-400 hover:text-brand-dark hover:bg-brand-blue/5 transition-all border border-transparent hover:border-brand-blue/10 mr-4 shrink-0"
-              title={sidebarOpen ? "Collapse Sidebar" : "Expand Sidebar"}
-            >
-              {sidebarOpen ? (
-                <PanelLeftClose className="h-5 w-5" strokeWidth={1.5} />
-              ) : (
-                <PanelLeftOpen className="h-5 w-5" strokeWidth={1.5} />
-              )}
-            </button>
-
-            {/* Mobile: centered "Vendor" title */}
-            <div className="flex-1 flex justify-center md:hidden overflow-hidden">
-              <span className="font-bold text-gray-900 text-xs sm:text-sm tracking-tight uppercase truncate px-1">
-                Vendor Portal
-              </span>
-            </div>
-
-            {/* Centered Search */}
-            <div className="flex-1 hidden md:flex justify-center">
-              <div className="relative w-full max-w-md group">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-brand-dark transition-colors" />
-                <input 
-                  type="text" 
-                  placeholder="Search your businesses, reviews, leads..." 
-                  className="w-full pl-10 pr-4 py-2 bg-gray-100/50 border-gray-300 focus:bg-white border focus:border-brand-dark/30 rounded-[6px] text-sm outline-none transition-all placeholder:text-gray-400"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-2 md:space-x-4 ml-3 md:ml-4 shrink-0">
-              {user && user.verification_status && (
-                <div className={`items-center px-3 py-1.5 rounded-full border hidden lg:flex ${
-                  user.verification_status === 'verified' 
-                    ? 'bg-blue-50 text-blue-600 border-blue-100' 
-                    : user.verification_status === 'pending'
-                    ? 'bg-amber-50 text-amber-600 border-amber-100'
-                    : 'bg-gray-50 text-gray-500 border-gray-200'
-                }`}>
-                  {user.verification_status === 'verified' && <VerifiedBadge size={14} className="mr-2" />}
-                  <span className="text-[10px] font-bold uppercase tracking-wider">
-                    {user.verification_status === 'verified' 
-                      ? 'Verified' 
-                      : `Verification: ${user.verification_status}`}
-                  </span>
-                </div>
-              )}
-              <NotificationBell />
-              <div className="h-8 w-px bg-gray-300 mx-1 md:mx-2" />
-              <AuthButton user={user} />
-            </div>
+      {/* Main workspace */}
+      <div className={'flex min-w-0 flex-1 flex-col transition-[margin] duration-200 ' + (expanded ? 'md:ml-[238px]' : 'md:ml-[72px]')}>
+        <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center border-b border-[#e4e9e5] bg-white px-4 sm:px-6">
+          <button type="button" onClick={() => setDrawerOpen(true)} aria-label="Open vendor menu"
+            className="mr-3 rounded-lg p-2 text-[#6d8072] hover:bg-[#f1f6f2] md:hidden">
+            <IconsaxIcon name="menu" size={20} />
+          </button>
+          <button type="button" onClick={() => setExpanded(value => !value)} aria-label={expanded ? 'Collapse sidebar' : 'Expand sidebar'}
+            className="mr-4 hidden rounded-lg border border-[#edf1ed] p-2 text-[#708475] hover:bg-[#f4f8f5] md:inline-flex">
+            <IconsaxIcon name="sidebar-left" size={18} />
+          </button>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[12px] font-bold text-[#294734]">Vendor workspace</p>
+            <p className="mt-0.5 hidden text-[10px] text-[#9eada2] sm:block">SL Business Index · Manage, analyse, grow</p>
+          </div>
+          <div className="flex shrink-0 items-center gap-3">
+            <Link href="/vendor/my-businesses" className="hidden h-8 items-center gap-2 rounded-lg border border-[#e7ece8] px-3 text-[11px] font-semibold text-[#476653] hover:bg-[#f5f9f6] sm:inline-flex">
+              <IconsaxIcon name="shop" size={15} /> My businesses
+            </Link>
+            {user?.verification_status && <div className={'hidden items-center gap-2 rounded-full border px-2.5 py-1.5 text-[10px] font-semibold lg:inline-flex ' +
+              (user.verification_status === 'verified' ? 'border-[#d5ebdb] bg-[#eff8f2] text-[#39815c]' : 'border-[#f0e1bf] bg-[#fff8eb] text-[#a57c36]')}>
+              {user.verification_status === 'verified' && <VerifiedBadge size={13} />}
+              {user.verification_status === 'verified' ? 'Verified vendor' : 'Verification: ' + user.verification_status}
+            </div>}
+            <NotificationBell />
+            <span className="h-7 w-px bg-[#e7ebe7]" />
+            <AuthButton user={user} />
           </div>
         </header>
-
-        {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 pb-20 md:pb-8">
+        <main className="min-h-0 flex-1 overflow-y-auto p-4 pb-20 md:p-8 md:pb-8">
           {children}
         </main>
       </div>
 
-      {/* ── Mobile Bottom Quick-Nav Bar (md:hidden) ───────────────────────── */}
-      <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 flex items-stretch h-16"
-        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-      >
-        {mobileQuickNav.map((item) => {
-          const isActive = pathname === item.href;
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={`flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors ${
-                isActive ? "text-brand-dark" : "text-gray-400"
-              }`}
-            >
-              <Icon
-                className="h-5 w-5 shrink-0"
-                strokeWidth={isActive ? 2 : 1.5}
-              />
-              <span className="text-[10px] font-bold tracking-tight">
-                {item.name}
-              </span>
-            </Link>
-          );
+      <nav aria-label="Mobile quick navigation" className="fixed bottom-0 left-0 right-0 z-50 flex h-16 border-t border-[#e2e9e3] bg-white md:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        {mobileNav.map(item => {
+          const selected = active(item.href);
+          return <Link key={item.href} href={item.href} aria-current={selected ? 'page' : undefined}
+            className={'flex min-w-0 flex-1 flex-col items-center justify-center gap-1 text-[10px] font-semibold ' + (selected ? 'text-[#2b7853]' : 'text-[#94a39a]')}>
+            <IconsaxIcon name={item.icon} size={19} variant={selected ? 'bold' : 'linear'} />
+            <span>{item.name}</span>
+          </Link>;
         })}
       </nav>
     </div>
