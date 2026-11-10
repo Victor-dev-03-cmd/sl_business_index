@@ -1,4 +1,6 @@
-import { createServerClient } from '@supabase/ssr'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
+
+type CookieToSet = { name: string; value: string; options?: CookieOptions }
 import { NextResponse, type NextRequest } from 'next/server'
 
 function isWithin(path: string, prefix: string): boolean {
@@ -39,7 +41,7 @@ export async function proxy(request: NextRequest) {
       getAll() {
         return request.cookies.getAll()
       },
-      setAll(cookiesToSet, headers) {
+      setAll(cookiesToSet: CookieToSet[], headers: Record<string, string> = {}) {
         // Keep the refreshed session consistent for both Server Components and browser.
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
         response = privateNoStore(NextResponse.next({ request }))
