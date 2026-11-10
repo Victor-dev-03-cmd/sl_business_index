@@ -4,14 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
-import {
-  Activity, ArrowRight, ArrowUpRight, CheckCircle2, ChevronRight,
-  Eye, ExternalLink, LayoutDashboard, Megaphone, MessageCircle,
-  MessageSquare, PhoneCall, Plus, RefreshCw, Search,
-  ShieldCheck, Sparkles, Star, Store, Zap, type LucideIcon
-} from 'lucide-react';
+import IconsaxIcon from '../components/IconsaxIcon';
 import VendorAnalytics from './VendorAnalytics';
-import PushNotificationToggle from '@/components/PushNotificationToggle';
 
 interface Business {
   id: string;
@@ -22,85 +16,52 @@ interface Business {
   views: number | null;
   calls: number | null;
 }
-
-interface RecentReview {
+interface Review {
   id: string;
-  user_name: string;
-  businessName: string;
+  user_name: string | null;
+  created_at: string;
   rating: number | null;
-  date: string;
+  businessName: string;
 }
-
-interface Totals {
+interface Metrics {
   views: number;
   calls: number;
-  reviews: number;
   leads: number;
+  reviews: number;
 }
+type StatusFilter = 'all' | 'approved' | 'pending' | 'open';
+type SortKey = 'views' | 'calls' | 'name';
+const DEFAULT_METRICS: Metrics = { views: 0, calls: 0, leads: 0, reviews: 0 };
+const number = (n: number) => new Intl.NumberFormat('en-LK').format(n);
+const smallLabel = 'text-[10px] font-bold uppercase tracking-[0.10em] text-slate-400';
+const panel = 'border border-[#e7ebef] bg-white rounded-xl shadow-[0_1px_2px_rgba(16,24,40,0.025)]';
+const button = 'inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-[#e1e6eb] bg-white px-3 text-xs font-semibold text-slate-600 transition hover:border-[#baccc4] hover:bg-[#f7faf8] disabled:cursor-not-allowed disabled:opacity-50';
 
-const emptyTotals: Totals = { views: 0, calls: 0, reviews: 0, leads: 0 };
-const fmt = (value: number) => new Intl.NumberFormat('en-LK').format(value);
+const kpis = [
+  { id: 'views', title: 'Profile views', icon: 'eye', tone: '#2563eb', explanation: 'All-time visits to your listings' },
+  { id: 'calls', title: 'Call clicks', icon: 'call', tone: '#129568', explanation: 'Clicks on listed phone numbers' },
+  { id: 'leads', title: 'Enquiries', icon: 'message-text', tone: '#8963c8', explanation: 'Received customer enquiries' },
+  { id: 'reviews', title: 'Reviews', icon: 'star', tone: '#ce9a3b', explanation: 'Customer feedback received' },
+] as const;
 
-type MetricTint = 'blue' | 'mint' | 'gold' | 'violet';
-const metricStyles: Record<MetricTint, { icon: string; marker: string }> = {
-  blue: { icon: 'bg-[#eaf2ff] text-[#316de6]', marker: 'bg-[#316de6]' },
-  mint: { icon: 'bg-[#e6f6ee] text-[#16845b]', marker: 'bg-[#16845b]' },
-  gold: { icon: 'bg-[#fff3de] text-[#b88032]', marker: 'bg-[#c99750]' },
-  violet: { icon: 'bg-[#f1ebff] text-[#7556c7]', marker: 'bg-[#7556c7]' },
-};
-
-function MetricCard({ label, count, icon: Icon, tint, description, loading }: {
-  label: string;
-  count: number;
-  icon: LucideIcon;
-  tint: MetricTint;
-  description: string;
-  loading: boolean;
-}) {
-  const tone = metricStyles[tint];
-
-  return (
-    <div className="group relative min-w-0 overflow-hidden rounded-[22px] border border-[#e7ece9] bg-white p-5 shadow-[0_9px_26px_-16px_rgba(13,51,38,0.22)] transition-all duration-300 hover:-translate-y-1 hover:border-[#cadbd2] hover:shadow-[0_18px_35px_-18px_rgba(13,51,38,0.25)] sm:p-6">
-      <div className="flex items-start justify-between">
-        <div className={'flex h-11 w-11 items-center justify-center rounded-2xl ' + tone.icon}>
-          <Icon size={21} strokeWidth={1.85} />
-        </div>
-        <span className="flex items-center gap-1.5 text-[10px] font-semibold tracking-wide text-[#83928b]">
-          <span className={'h-1.5 w-1.5 rounded-full ' + tone.marker} />
-          ALL TIME
-        </span>
-      </div>
-      <div className="mt-6">
-        <p className="text-[12px] font-semibold text-[#64766d]">{label}</p>
-        {loading ? (
-          <div className="mt-2 h-10 w-24 animate-pulse rounded-lg bg-[#eef2f0]" />
-        ) : (
-          <p className="mt-1 text-[34px] font-bold leading-none tracking-[-0.055em] text-[#17382d] sm:text-[38px]">{fmt(count)}</p>
-        )}
-        <p className="mt-3 text-[11px] leading-5 text-[#8b9a93]">{description}</p>
-      </div>
-      <div className={'absolute bottom-0 left-6 right-6 h-[2px] rounded-full opacity-50 ' + tone.marker} />
-    </div>
-  );
+function csvCell(value: string | number): string {
+  let text = String(value);
+  // Prevent formulas from executing when opening an exported CSV in Excel.
+  if (/^\s*[=+@-]/.test(text)) text = "'" + text;
+  return '"' + text.replace(/"/g, '""') + '"';
 }
-
-const quickActions: { title: string; description: string; href: string; icon: LucideIcon; color: string }[] = [
-  { title: 'My listings', description: 'Manage business profiles', href: '/vendor/my-businesses', icon: Store, color: 'bg-[#e5f4ec] text-[#267452]' },
-  { title: 'View enquiries', description: 'Follow up with customers', href: '/vendor/leads', icon: MessageCircle, color: 'bg-[#e9efff] text-[#4b68b7]' },
-  { title: 'Create promotion', description: 'Build your next campaign', href: '/vendor/marketing', icon: Megaphone, color: 'bg-[#fff1e0] text-[#b77b36]' },
-  { title: 'Customer reviews', description: 'Strengthen your reputation', href: '/vendor/reviews', icon: Star, color: 'bg-[#f2edff] text-[#7862be]' },
-];
 
 export default function VendorDashboard() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
-  const [stats, setStats] = useState<Totals>(emptyTotals);
-  const [recentReviews, setRecentReviews] = useState<RecentReview[]>([]);
-  const [planName, setPlanName] = useState('Basic');
-  const [advancedAnalytics, setAdvancedAnalytics] = useState(false);
+  const [metrics, setMetrics] = useState<Metrics>(DEFAULT_METRICS);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [plan, setPlan] = useState('Basic');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [tab, setTab] = useState<'overview' | 'performance'>('overview');
   const [query, setQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [sort, setSort] = useState<SortKey>('views');
+  const [page, setPage] = useState(1);
   const [updatingIds, setUpdatingIds] = useState<string[]>([]);
 
   const load = useCallback(async () => {
@@ -109,60 +70,56 @@ export default function VendorDashboard() {
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError) throw authError;
-      if (!user) throw new Error('Please sign in to view your dashboard.');
+      if (!user) throw new Error('Sign in to access your vendor workspace.');
 
-      const [owned, subscription] = await Promise.all([
+      const [businessResult, subResult] = await Promise.all([
         supabase.from('businesses').select('id,name,logo_url,status,is_open,views,calls').eq('owner_id', user.id),
         supabase.from('subscriptions').select('plan_name').eq('user_id', user.id).eq('status', 'active').maybeSingle(),
       ]);
-      if (owned.error) throw owned.error;
+      if (businessResult.error) throw businessResult.error;
 
-      const list = (owned.data || []) as Business[];
-      setBusinesses(list);
-      setStats({
-        ...emptyTotals,
-        views: list.reduce((sum, b) => sum + Number(b.views || 0), 0),
-        calls: list.reduce((sum, b) => sum + Number(b.calls || 0), 0),
+      const owned = (businessResult.data || []) as Business[];
+      setBusinesses(owned);
+      setPlan(subResult.data?.plan_name || 'Basic');
+      setReviews([]);
+      setMetrics({
+        views: owned.reduce((sum, b) => sum + Number(b.views || 0), 0),
+        calls: owned.reduce((sum, b) => sum + Number(b.calls || 0), 0),
+        leads: 0,
+        reviews: 0,
       });
-      setRecentReviews([]);
+      if (!owned.length) return;
 
-      const selectedPlan = subscription.data?.plan_name || 'Basic';
-      setPlanName(selectedPlan);
-      const details = await supabase.from('subscription_plans').select('advanced_analytics').eq('name', selectedPlan).maybeSingle();
-      setAdvancedAnalytics(Boolean(details.data?.advanced_analytics));
-
-      if (list.length === 0) return;
-
-      const ids = list.map(b => b.id);
-      const [reviewCount, leadCount, recent] = await Promise.all([
-        supabase.from('reviews').select('*', { head: true, count: 'exact' }).in('business_id', ids),
-        supabase.from('leads').select('*', { head: true, count: 'exact' }).in('business_id', ids),
-        supabase.from('reviews').select('id,user_name,rating,created_at,businesses(name)').in('business_id', ids).order('created_at', { ascending: false }).limit(4),
+      const ids = owned.map(b => b.id);
+      const [leadResult, reviewResult, recentResult] = await Promise.all([
+        supabase.from('leads').select('id', { head: true, count: 'exact' }).in('business_id', ids),
+        supabase.from('reviews').select('id', { head: true, count: 'exact' }).in('business_id', ids),
+        supabase.from('reviews').select('id,user_name,rating,created_at,businesses(name)')
+          .in('business_id', ids).order('created_at', { ascending: false }).limit(5),
       ]);
-      if (reviewCount.error) throw reviewCount.error;
-      if (leadCount.error) throw leadCount.error;
-      if (recent.error) throw recent.error;
+      if (leadResult.error) throw leadResult.error;
+      if (reviewResult.error) throw reviewResult.error;
+      if (recentResult.error) throw recentResult.error;
 
-      setStats({
-        views: list.reduce((sum, b) => sum + Number(b.views || 0), 0),
-        calls: list.reduce((sum, b) => sum + Number(b.calls || 0), 0),
-        reviews: reviewCount.count || 0,
-        leads: leadCount.count || 0,
+      setMetrics({
+        views: owned.reduce((sum, b) => sum + Number(b.views || 0), 0),
+        calls: owned.reduce((sum, b) => sum + Number(b.calls || 0), 0),
+        leads: leadResult.count || 0,
+        reviews: reviewResult.count || 0,
       });
-      setRecentReviews((recent.data || []).map(r => {
+      setReviews((recentResult.data || []).map(r => {
         const joined = r.businesses as unknown as { name?: string } | { name?: string }[] | null;
-        const businessName = Array.isArray(joined) ? joined[0]?.name : joined?.name;
         return {
           id: r.id,
-          user_name: r.user_name || 'A customer',
-          businessName: businessName || 'Your business',
+          user_name: r.user_name,
           rating: typeof r.rating === 'number' ? r.rating : null,
-          date: r.created_at,
+          created_at: r.created_at,
+          businessName: Array.isArray(joined) ? joined[0]?.name || 'Your business' : joined?.name || 'Your business',
         };
       }));
     } catch (e) {
-      console.error('Vendor dashboard error', e);
-      setError(e instanceof Error ? e.message : 'Could not load dashboard data.');
+      console.error('Vendor dashboard load error', e);
+      setError(e instanceof Error ? e.message : 'Unable to load your business statistics.');
     } finally {
       setLoading(false);
     }
@@ -172,355 +129,369 @@ export default function VendorDashboard() {
 
   async function toggleOpen(business: Business) {
     if (updatingIds.includes(business.id)) return;
-    setUpdatingIds(previous => [...previous, business.id]);
+    setUpdatingIds(prev => [...prev, business.id]);
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError || !user) throw authError || new Error('Sign in required');
-      const { error: saveError } = await supabase.from('businesses')
+      if (authError || !user) throw authError || new Error('Sign in required.');
+      const { error: updateError } = await supabase.from('businesses')
         .update({ is_open: !business.is_open })
-        .eq('owner_id', user.id)
-        .eq('id', business.id)
-        .select('id').single();
-      if (saveError) throw saveError;
-      setBusinesses(previous => previous.map(item =>
-        item.id === business.id ? { ...item, is_open: !business.is_open } : item
-      ));
-      toast.success('Business opening status updated');
+        .eq('owner_id', user.id).eq('id', business.id).select('id').single();
+      if (updateError) throw updateError;
+      setBusinesses(prev => prev.map(row => row.id === business.id ? { ...row, is_open: !business.is_open } : row));
+      toast.success('Opening status saved.');
     } catch (e) {
-      console.error('Could not update business', e);
-      toast.error('Unable to update business status. Please retry.');
+      console.error('Business update failed', e);
+      toast.error('Could not update your business. Try again.');
     } finally {
-      setUpdatingIds(previous => previous.filter(id => id !== business.id));
+      setUpdatingIds(prev => prev.filter(id => id !== business.id));
     }
   }
 
-  const ids = useMemo(() => businesses.map(b => b.id), [businesses]);
-  const filtered = useMemo(() =>
-    businesses.filter(b => b.name.toLowerCase().includes(query.trim().toLowerCase())),
-    [businesses, query]);
-  const approvedCount = businesses.filter(b => b.status === 'approved').length;
-  const openCount = businesses.filter(b => b.is_open).length;
+  const businessIds = useMemo(() => businesses.map(b => b.id), [businesses]);
+  const activeCount = businesses.filter(b => b.status === 'approved').length;
+  const filtered = useMemo(() => {
+    const term = query.trim().toLowerCase();
+    return businesses.filter(b => {
+      const matchesName = b.name.toLowerCase().includes(term);
+      const matchesStatus =
+        statusFilter === 'all' ||
+        (statusFilter === 'approved' && b.status === 'approved') ||
+        (statusFilter === 'pending' && b.status !== 'approved') ||
+        (statusFilter === 'open' && !!b.is_open);
+      return matchesName && matchesStatus;
+    }).sort((a, b) =>
+      sort === 'name' ? a.name.localeCompare(b.name) :
+      sort === 'calls' ? Number(b.calls || 0) - Number(a.calls || 0) :
+      Number(b.views || 0) - Number(a.views || 0)
+    );
+  }, [businesses, query, statusFilter, sort]);
 
-  const tip = businesses.length === 0
-    ? { title: 'Put your business on the map', detail: 'Create your first listing so customers can discover your services.', href: '/register-business', cta: 'Register a business' }
-    : businesses.some(b => b.status !== 'approved')
-      ? { title: 'Your listing is on its way', detail: 'Check your business details while the verification review is in progress.', href: '/vendor/my-businesses', cta: 'Review my listings' }
-      : stats.reviews === 0
-        ? { title: 'Turn visits into trust', detail: 'Customer feedback helps new visitors feel confident choosing your business.', href: '/vendor/reviews', cta: 'Manage reviews' }
-        : stats.views > 0 && stats.calls === 0
-          ? { title: 'Make every visit count', detail: 'You have profile views. Check your contact details so customers can reach you easily.', href: '/vendor/my-businesses', cta: 'Review contact details' }
-          : { title: 'Keep building momentum', detail: 'Share a fresh offer or promotion to give customers another reason to visit.', href: '/vendor/marketing', cta: 'Create a promotion' };
+  const PAGE_SIZE = 8;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const visible = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const callRate = metrics.views ? (metrics.calls / metrics.views) * 100 : null;
+  const opportunities = [
+    ...(businesses.length === 0 ? [{ icon: 'add-circle', title: 'Add your first business', body: 'Create a business listing to start getting discovered.', href: '/register-business', link: 'Register business' }] : []),
+    ...(businesses.some(b => b.status !== 'approved') ? [{ icon: 'shield-tick', title: 'Listings awaiting review', body: 'Check the status of your submitted business details.', href: '/vendor/my-businesses', link: 'Review listings' }] : []),
+    ...(metrics.views > 0 && metrics.calls === 0 ? [{ icon: 'call', title: 'Make it easy to contact you', body: 'Your listing has views but no recorded call clicks. Check the phone details on your profile.', href: '/vendor/my-businesses', link: 'Check contact details' }] : []),
+    ...(metrics.reviews === 0 && businesses.length > 0 ? [{ icon: 'star', title: 'Build customer trust', body: 'Keep an eye on customer reviews as your business grows.', href: '/vendor/reviews', link: 'Open reviews' }] : []),
+  ].slice(0, 3);
+
+  function exportCsv() {
+    const headers = ['Business', 'Listing status', 'Open status', 'Profile views', 'Call clicks'];
+    const rows = filtered.map(b => [b.name, b.status || 'pending', b.is_open ? 'Open' : 'Closed', Number(b.views || 0), Number(b.calls || 0)]);
+    const csv = '\uFEFF' + [headers, ...rows].map(row => row.map(csvCell).join(',')).join('\r\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = 'slbi-business-performance.csv';
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  }
 
   return (
-    <div className="-m-4 min-h-full bg-[#f5f8f6] p-4 text-[#18352b] md:-m-8 md:p-8">
-      <div className="mx-auto max-w-[1510px] space-y-6 lg:space-y-7">
+    <div className="-m-4 min-h-full bg-[#f8f9fb] p-4 text-slate-800 md:-m-8 md:p-6 xl:p-7">
+      <div className="mx-auto max-w-[1600px] space-y-5">
 
-        {/* Workspace heading */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-[#6d877a]">
-              <LayoutDashboard size={13} /> Workspace <ChevronRight size={11} /> Overview
+        <div className="flex flex-col gap-4 border-b border-[#e7ebef] pb-5 sm:flex-row sm:items-end sm:justify-between">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
+              <IconsaxIcon name="category" size={15} /> Vendor workspace
+              <IconsaxIcon name="arrow-right-2" size={12} /> Overview
             </div>
-            <h1 className="mt-2 text-2xl font-bold tracking-[-0.035em] text-[#14372c] sm:text-[29px]">Business dashboard</h1>
-            <p className="mt-1 text-[13px] text-[#82938a]">One place to understand your reach, customers and progress.</p>
+            <h1 className="text-[24px] font-bold tracking-tight text-[#172d26]">Business overview</h1>
+            <p className="text-[12px] text-slate-500">Your listings, customer engagement and performance in one workspace.</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <PushNotificationToggle />
-            <button onClick={() => void load()} disabled={loading} className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#dfe8e3] bg-white px-4 text-xs font-bold text-[#38584a] shadow-sm transition hover:bg-[#eef5f0] disabled:opacity-50">
-              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Refresh
+            <span className="flex h-9 items-center gap-2 rounded-lg border border-[#dfebe4] bg-[#f1f7f2] px-3 text-[11px] font-semibold text-[#37694c]">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#329368]" /> {plan} plan
+            </span>
+            <button type="button" onClick={() => void load()} disabled={loading} className={button}>
+              <IconsaxIcon name="refresh" size={15} /> Refresh
             </button>
-            <Link href="/vendor/marketing" className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#173e32] px-4 text-xs font-bold text-white shadow-[0_6px_18px_rgba(23,62,50,0.18)] transition hover:bg-[#235d48]">
-              <Plus size={15} /> New promotion
+            <Link href="/vendor/marketing" className="inline-flex h-9 items-center gap-2 rounded-lg bg-[#1c4d3b] px-3.5 text-xs font-bold text-white transition hover:bg-[#2d664f]">
+              <IconsaxIcon name="add" size={17} /> New promotion
             </Link>
           </div>
         </div>
 
         {error && (
-          <div role="alert" className="flex flex-wrap items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
-            <span className="flex-1">{error}</span>
-            <button onClick={() => void load()} className="font-bold underline">Retry</button>
+          <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-800">
+            <span>{error}</span>
+            <button type="button" onClick={() => void load()} className="font-bold underline">Retry loading</button>
           </div>
         )}
 
-        {/* Hero */}
-        <section className="relative isolate overflow-hidden rounded-[28px] bg-gradient-to-br from-[#163b30] via-[#20533f] to-[#103127] px-6 pb-12 pt-7 text-white shadow-[0_22px_55px_-30px_rgba(16,57,42,0.5)] sm:px-8 lg:px-10 lg:pb-14 lg:pt-9">
-          <div aria-hidden="true" className="pointer-events-none absolute -right-16 -top-48 h-[420px] w-[420px] rounded-full border border-white/10 bg-gradient-to-b from-[#b8ddad]/15 to-transparent blur-[1px]" />
-          <div aria-hidden="true" className="pointer-events-none absolute -right-12 top-8 h-64 w-64 rounded-full border-[32px] border-[#c8a66b]/10" />
-          <div aria-hidden="true" className="pointer-events-none absolute bottom-0 right-[18%] h-40 w-40 rounded-full bg-[#4da17d]/15 blur-3xl" />
-          <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-[610px]">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#d4bf86]/25 bg-white/[0.07] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#dfc892]">
-                <Sparkles size={13} /> Your growth workspace
-              </div>
-              <h2 className="text-[28px] font-bold leading-[1.15] tracking-[-0.045em] sm:text-[36px] lg:text-[42px]">
-                More visibility. <span className="text-[#e7c993]">More opportunity.</span>
-              </h2>
-              <p className="mt-3 max-w-[500px] text-[13px] leading-[1.85] text-[#c1d5ca] sm:text-sm">
-                See how people discover your business, keep your listings up to date and take the next step toward more customer connections.
-              </p>
-              <Link href="/vendor/growth" className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#f0d7a7] px-5 py-3 text-xs font-extrabold text-[#193b30] shadow-lg shadow-black/10 transition hover:bg-white">
-                Explore growth tools <ArrowUpRight size={15} />
-              </Link>
-            </div>
-            <div className="grid grid-cols-3 gap-3 rounded-2xl border border-white/15 bg-white/[0.075] p-4 backdrop-blur-sm sm:min-w-[365px] sm:gap-5 sm:p-5">
-              <div>
-                <p className="text-2xl font-bold tracking-tight text-white">{loading ? '—' : fmt(businesses.length)}</p>
-                <p className="mt-1 text-[10px] leading-4 text-[#b6d0c1]">Registered</p>
-              </div>
-              <div className="border-l border-white/15 pl-3 sm:pl-5">
-                <p className="text-2xl font-bold tracking-tight text-white">{loading ? '—' : fmt(approvedCount)}</p>
-                <p className="mt-1 text-[10px] leading-4 text-[#b6d0c1]">Live listings</p>
-              </div>
-              <div className="border-l border-white/15 pl-3 sm:pl-5">
-                <p className="text-2xl font-bold tracking-tight text-white">{loading ? '—' : fmt(openCount)}</p>
-                <p className="mt-1 text-[10px] leading-4 text-[#b6d0c1]">Open now*</p>
-              </div>
-              <p className="col-span-3 border-t border-white/10 pt-2 text-[10px] text-[#9fbcad]">*Based on your manually set business status</p>
-            </div>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <h2 className="text-[13px] font-bold text-[#1d3f31]">Performance snapshot</h2>
+            <span className="rounded-md border border-[#e9edf0] bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-500">All-time</span>
           </div>
-        </section>
-
-        {/* KPI cards */}
-        <section aria-label="Business statistics" className="relative z-10 -mt-10 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
-          <MetricCard label="Profile views" count={stats.views} icon={Eye} tint="blue" description="People viewing your listings" loading={loading} />
-          <MetricCard label="Call clicks" count={stats.calls} icon={PhoneCall} tint="mint" description="Clicks to your phone number" loading={loading} />
-          <MetricCard label="Customer enquiries" count={stats.leads} icon={MessageSquare} tint="violet" description="Leads received across listings" loading={loading} />
-          <MetricCard label="Total reviews" count={stats.reviews} icon={Star} tint="gold" description="Feedback from your customers" loading={loading} />
-        </section>
-
-        {/* Navigation and context */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="inline-flex w-fit items-center gap-1 rounded-xl border border-[#e2eae5] bg-white p-1 shadow-sm" role="tablist" aria-label="Dashboard view">
-            <button type="button" role="tab" aria-selected={tab === 'overview'} onClick={() => setTab('overview')}
-              className={tab === 'overview' ? 'rounded-lg bg-[#1d4b3a] px-4 py-2 text-xs font-bold text-white shadow-sm' : 'rounded-lg px-4 py-2 text-xs font-bold text-[#71857a] hover:bg-[#f0f5f2]'}>
-              Overview
-            </button>
-            <button type="button" role="tab" aria-selected={tab === 'performance'} onClick={() => setTab('performance')}
-              className={tab === 'performance' ? 'rounded-lg bg-[#1d4b3a] px-4 py-2 text-xs font-bold text-white shadow-sm' : 'rounded-lg px-4 py-2 text-xs font-bold text-[#71857a] hover:bg-[#f0f5f2]'}>
-              Performance
-            </button>
-          </div>
-          <p className="flex items-center gap-2 text-[11px] text-[#8a9991]">
-            <Activity size={13} /> KPI totals are all-time; the chart shows recorded daily events.
-          </p>
+          <p className="text-[11px] text-slate-400">Actual recorded figures · No estimated rankings</p>
         </div>
 
-        <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1.8fr)_minmax(310px,1fr)]">
-          <div className="min-w-0 overflow-hidden rounded-[24px] border border-[#e3eae6] bg-white p-5 shadow-[0_10px_35px_-25px_rgba(16,57,42,0.2)] sm:p-6">
-            <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[#b18a50]">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#cba56d]" /> Performance analytics
-                </div>
-                <h3 className="text-[19px] font-bold tracking-[-0.03em] text-[#173a2d]">{tab === 'performance' ? 'Detailed audience engagement' : 'Your audience over time'}</h3>
-                <p className="mt-1 text-xs text-[#85968c]">Real interactions recorded on your business profiles</p>
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+          {kpis.map(kpi => (
+            <div key={kpi.id} className={panel + ' min-w-0 p-4'}>
+              <div className="flex items-start justify-between gap-2">
+                <span className="text-[11px] font-semibold text-slate-500">{kpi.title}</span>
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ backgroundColor: kpi.tone + '12', color: kpi.tone }}>
+                  <IconsaxIcon name={kpi.icon} variant="linear" size={18} />
+                </span>
               </div>
-              <Link href="/vendor/growth" className="inline-flex items-center gap-1 text-xs font-bold text-[#2a7653] hover:underline">
-                Growth OS <ArrowUpRight size={13} />
-              </Link>
-            </div>
-            <VendorAnalytics businessIds={ids} embedded />
-          </div>
-
-          <div className="space-y-5">
-            <div className="relative overflow-hidden rounded-[24px] border border-[#d9e8df] bg-gradient-to-br from-[#ebf5ec] to-[#f7f9f2] p-6 shadow-[0_10px_35px_-25px_rgba(16,57,42,0.15)]">
-              <div aria-hidden="true" className="absolute -right-12 -top-12 h-36 w-36 rounded-full border-[24px] border-[#dbeadd]" />
-              <div className="relative">
-                <div className="inline-flex items-center gap-2 rounded-full bg-[#d9ebd9] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-[#3a7154]">
-                  <Zap size={12} /> Growth opportunity
-                </div>
-                <h3 className="mt-5 max-w-[280px] text-[21px] font-bold leading-tight tracking-[-0.035em] text-[#174530]">{tip.title}</h3>
-                <p className="mt-3 max-w-[310px] text-[12px] leading-6 text-[#638071]">{tip.detail}</p>
-                <Link href={tip.href} className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#194935] px-4 py-3 text-xs font-bold text-white shadow-sm transition hover:bg-[#2a674d]">
-                  {tip.cta} <ArrowRight size={14} />
-                </Link>
-              </div>
-            </div>
-            <div className="rounded-[24px] border border-[#e3eae6] bg-white p-5 shadow-sm sm:p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-xs font-bold text-[#244c39]">
-                  <ShieldCheck size={17} className="text-[#b99353]" /> Your membership
-                </div>
-                <span className="rounded-full bg-[#eff5f0] px-2.5 py-1 text-[10px] font-semibold text-[#346b4e]">{planName}</span>
-              </div>
-              <p className="mt-4 text-[12px] leading-6 text-[#788b7e]">
-                {advancedAnalytics ? 'Advanced analytics are enabled on your plan.' : 'Explore additional tools and reporting options available with higher plans.'}
+              <p className="mt-1.5 text-[26px] font-bold tabular-nums tracking-[-0.04em] text-[#182b25]">
+                {loading ? <span className="inline-block h-7 w-16 animate-pulse rounded bg-slate-100" /> : number(metrics[kpi.id])}
               </p>
-              <Link href="/vendor/billing" className="mt-4 inline-flex items-center gap-2 text-xs font-bold text-[#2c7253] hover:underline">
-                View plan & billing <ArrowUpRight size={13} />
-              </Link>
+              <p className="mt-2 text-[10px] leading-4 text-slate-400">{kpi.explanation}</p>
             </div>
+          ))}
+          <div className={panel + ' col-span-2 min-w-0 p-4 lg:col-span-1'}>
+            <div className="flex items-start justify-between gap-2">
+              <span className="text-[11px] font-semibold text-slate-500">Call-click rate</span>
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#eff5f0] text-[#277650]">
+                <IconsaxIcon name="chart" size={18} />
+              </span>
+            </div>
+            <p className="mt-1.5 text-[26px] font-bold tabular-nums tracking-[-0.04em] text-[#182b25]">
+              {loading ? '—' : callRate === null ? '—' : callRate.toFixed(1) + '%'}
+            </p>
+            <p className="mt-2 text-[10px] leading-4 text-slate-400">Call clicks ÷ views · not unique-user conversion</p>
           </div>
         </div>
 
-        {tab === 'performance' && (
-          <section className="overflow-hidden rounded-[24px] border border-[#e2eae5] bg-white shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#eef2ee] p-5 sm:p-6">
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.75fr)_minmax(300px,0.85fr)]">
+          <section className={panel + ' min-w-0 overflow-hidden'}>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#eef0f2] px-5 py-4">
               <div>
-                <h3 className="text-lg font-bold text-[#153c2e]">Performance by business</h3>
-                <p className="mt-1 text-xs text-[#8a9b90]">All-time recorded views and call clicks for each of your listings.</p>
+                <h2 className="text-[13px] font-bold text-[#23372e]">Engagement trends</h2>
+                <p className="mt-1 text-[11px] text-slate-400">Views, calls and lead activity recorded during the selected period</p>
               </div>
-              <Link href="/vendor/my-businesses" className="inline-flex items-center gap-2 text-xs font-bold text-[#2e7555] hover:underline">Manage listings <ArrowUpRight size={14} /></Link>
+              <Link href="/vendor/growth" className="flex items-center gap-1 text-[11px] font-semibold text-[#28704e] hover:underline">
+                Growth tools <IconsaxIcon name="arrow-right-2" size={13} />
+              </Link>
             </div>
-            {businesses.length === 0 ? (
-              <p className="p-8 text-center text-sm text-[#87988d]">Register a business to see its performance breakdown.</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[520px] text-left">
-                  <thead className="bg-[#f7faf8] text-[10px] uppercase tracking-wider text-[#849b8b]">
-                    <tr><th className="px-6 py-4">Business</th><th className="px-4 py-4">Listing</th><th className="px-4 py-4 text-right">Views</th><th className="px-6 py-4 text-right">Call clicks</th></tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#edf2ee]">
-                    {businesses.map(b => (
-                      <tr key={b.id} className="text-[12px] text-[#31513d] hover:bg-[#f9fbfa]">
-                        <td className="px-6 py-4 font-bold">{b.name}</td>
-                        <td className="px-4 py-4">{b.status === 'approved' ? 'Live' : 'Under review'}</td>
-                        <td className="px-4 py-4 text-right font-semibold">{fmt(Number(b.views || 0))}</td>
-                        <td className="px-6 py-4 text-right font-semibold">{fmt(Number(b.calls || 0))}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+            <div className="p-4 sm:p-5">
+              <VendorAnalytics businessIds={businessIds} embedded />
+            </div>
           </section>
-        )}
 
-        {/* Actions */}
-        <section>
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-bold tracking-[-0.025em] text-[#173a2e]">Your next move</h3>
-              <p className="mt-1 text-[12px] text-[#899a90]">Everything you need, one click away.</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            {quickActions.map(action => {
-              const Icon = action.icon;
-              return (
-                <Link key={action.href} href={action.href} className="group flex min-w-0 flex-col rounded-[20px] border border-[#e4ebe6] bg-white p-4 shadow-[0_8px_24px_-20px_rgba(9,47,30,0.25)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#c8ded0] hover:shadow-lg sm:p-5">
-                  <div className="flex items-center justify-between">
-                    <span className={'flex h-10 w-10 items-center justify-center rounded-xl ' + action.color}><Icon size={19} /></span>
-                    <ArrowUpRight size={15} className="text-[#a9b8af] transition group-hover:text-[#22694a]" />
-                  </div>
-                  <span className="mt-4 text-[13px] font-bold text-[#244535]">{action.title}</span>
-                  <span className="mt-1 text-[11px] leading-5 text-[#92a098]">{action.description}</span>
-                </Link>
-              );
-            })}
-          </div>
-        </section>
-
-        <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1.8fr)_minmax(310px,1fr)]">
-          {/* Listing management */}
-          <section className="min-w-0 overflow-hidden rounded-[24px] border border-[#e2eae5] bg-white shadow-sm">
-            <div className="flex flex-col gap-3 border-b border-[#edf1ee] p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+          <section className={panel + ' min-w-0'}>
+            <div className="flex items-center justify-between border-b border-[#eef0f2] px-5 py-4">
               <div>
-                <h3 className="text-lg font-bold tracking-tight text-[#153c2e]">My businesses</h3>
-                <p className="mt-1 text-xs text-[#91a098]">Manage your listings and opening status</p>
+                <h2 className="text-[13px] font-bold text-[#23372e]">Portfolio health</h2>
+                <p className="mt-1 text-[11px] text-slate-400">Current listing and enquiry overview</p>
               </div>
-              <Link href="/vendor/my-businesses" className="inline-flex items-center gap-1.5 text-xs font-bold text-[#2f7455] hover:underline">View all <ArrowUpRight size={14} /></Link>
+              <IconsaxIcon name="status-up" size={19} color="#3f7860" />
             </div>
-            <div className="border-b border-[#edf1ee] px-5 py-3 sm:px-6">
-              <div className="relative max-w-sm">
-                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#96a79b]" />
-                <input aria-label="Search your businesses" value={query} onChange={event => setQuery(event.target.value)}
-                  placeholder="Search your businesses..." className="h-10 w-full rounded-xl border border-[#e1e9e3] bg-[#f8faf8] pl-10 pr-4 text-xs text-[#244736] outline-none transition focus:border-[#8cb99c] focus:bg-white" />
+            <div className="space-y-4 px-5 py-5">
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { value: businesses.length, label: 'Businesses' },
+                  { value: activeCount, label: 'Published' },
+                  { value: businesses.filter(b => b.is_open).length, label: 'Open*' },
+                ].map(item => (
+                  <div key={item.label} className="rounded-lg border border-[#eef1f0] bg-[#fbfcfb] py-3 text-center">
+                    <p className="text-xl font-bold tabular-nums text-[#203d30]">{loading ? '—' : number(item.value)}</p>
+                    <p className="mt-1 text-[10px] text-slate-500">{item.label}</p>
+                  </div>
+                ))}
               </div>
-            </div>
-            {loading ? (
-              <div className="space-y-3 p-6">{[1, 2].map(i => <div key={i} className="h-16 animate-pulse rounded-xl bg-[#f2f5f2]" />)}</div>
-            ) : businesses.length === 0 ? (
-              <div className="flex flex-col items-center px-6 py-12 text-center">
-                <div className="rounded-2xl bg-[#e9f5ee] p-4"><Store size={26} className="text-[#3b8260]" /></div>
-                <h4 className="mt-4 font-bold text-[#1d4634]">Your first listing starts here</h4>
-                <p className="mt-2 max-w-sm text-xs leading-6 text-[#82968b]">Register your business to start reaching customers across Sri Lanka.</p>
-                <Link href="/register-business" className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#1d4e39] px-4 py-2.5 text-xs font-bold text-white"><Plus size={15} /> Add a business</Link>
-              </div>
-            ) : filtered.length === 0 ? (
-              <div className="p-10 text-center text-sm text-[#859a8d]">No businesses match your search.</div>
-            ) : (
-              <div className="divide-y divide-[#f0f3f0]">
-                {filtered.map(business => {
-                  const isApproved = business.status === 'approved';
-                  const busy = updatingIds.includes(business.id);
-                  return (
-                    <div key={business.id} className="flex flex-wrap items-center gap-3 px-5 py-4 transition hover:bg-[#fbfcfb] sm:gap-4 sm:px-6">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#e3eae5] bg-[#f1f6f2]">
-                        {business.logo_url
-                          ? <img src={business.logo_url} alt={business.name} className="h-full w-full object-cover" />
-                          : <Store size={20} className="text-[#69927b]" />}
-                      </div>
-                      <div className="min-w-0 flex-[1_1_135px]">
-                        <p className="truncate text-[13px] font-bold text-[#244535]">{business.name}</p>
-                        <span className={'mt-1 inline-flex items-center gap-1.5 text-[10px] font-semibold ' + (isApproved ? 'text-[#3e9465]' : 'text-[#bc8b40]')}>
-                          <span className={'h-1.5 w-1.5 rounded-full ' + (isApproved ? 'bg-[#45ad77]' : 'bg-[#d8a052]')} />
-                          {isApproved ? 'Live listing' : business.status === 'rejected' ? 'Needs attention' : 'Under review'}
-                        </span>
-                      </div>
-                      <div className="hidden items-center gap-6 sm:flex">
-                        <div className="text-right"><p className="text-sm font-bold text-[#244535]">{fmt(Number(business.views || 0))}</p><p className="text-[10px] text-[#9cad9f]">Views</p></div>
-                        <div className="text-right"><p className="text-sm font-bold text-[#244535]">{fmt(Number(business.calls || 0))}</p><p className="text-[10px] text-[#9cad9f]">Calls</p></div>
-                      </div>
-                      <div className="ml-auto flex items-center gap-2">
-                        <button type="button" onClick={() => void toggleOpen(business)} disabled={busy}
-                          aria-label={(business.is_open ? 'Mark closed: ' : 'Mark open: ') + business.name}
-                          className={'rounded-full border px-3 py-1.5 text-[10px] font-bold transition disabled:opacity-40 ' + (business.is_open ? 'border-[#ccefd9] bg-[#ecf9f0] text-[#278550]' : 'border-[#e4e8e4] bg-[#f5f6f4] text-[#76857b]')}>
-                          {busy ? 'Saving…' : business.is_open ? 'Open' : 'Closed'}
-                        </button>
-                        <Link href={'/vendor/my-businesses/' + business.id + '/edit'} aria-label={'Edit ' + business.name} className="rounded-lg p-2 text-[#758e7c] transition hover:bg-[#eef5f0] hover:text-[#226442]">
-                          <ExternalLink size={16} />
+              <p className="text-[10px] leading-5 text-slate-400">*Open status reflects your manually selected business availability.</p>
+              <div className="border-t border-[#eef0f2] pt-4">
+                <h3 className="text-[11px] font-bold text-[#263e31]">Recommended actions</h3>
+                {loading ? (
+                  <p className="mt-4 text-[11px] text-slate-400">Loading recommendations…</p>
+                ) : opportunities.length ? (
+                  <div className="mt-2 divide-y divide-[#eef0f2]">
+                    {opportunities.map(opportunity => (
+                      <div key={opportunity.title} className="py-3">
+                        <div className="flex items-center gap-2">
+                          <IconsaxIcon name={opportunity.icon} size={17} color="#386b51" />
+                          <p className="text-[11px] font-semibold text-[#2d4636]">{opportunity.title}</p>
+                        </div>
+                        <p className="mt-1.5 text-[10px] leading-5 text-slate-500">{opportunity.body}</p>
+                        <Link href={opportunity.href} className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-bold text-[#2b7955] hover:underline">
+                          {opportunity.link} <IconsaxIcon name="arrow-right-2" size={11} />
                         </Link>
                       </div>
-                    </div>
-                  );
-                })}
+                    ))}
+                  </div>
+                ) : (
+                  <div className="mt-3 rounded-lg bg-[#f2f7f3] p-3 text-[11px] leading-5 text-[#476b54]">
+                    Your listings are in good shape. Keep customer details and promotions up to date.
+                  </div>
+                )}
               </div>
-            )}
-            <Link href="/vendor/my-businesses" className="flex items-center justify-center gap-2 border-t border-[#edf1ee] py-3.5 text-xs font-bold text-[#48745c] transition hover:bg-[#f6faf7]">Manage all businesses <ArrowRight size={14} /></Link>
-          </section>
-
-          {/* Reviews stream */}
-          <section className="overflow-hidden rounded-[24px] border border-[#e2eae5] bg-white shadow-sm">
-            <div className="flex items-center justify-between border-b border-[#edf1ee] p-5 sm:p-6">
-              <div>
-                <h3 className="text-lg font-bold tracking-tight text-[#153c2e]">Customer voice</h3>
-                <p className="mt-1 text-xs text-[#91a098]">Recent feedback on your listings</p>
-              </div>
-              <div className="rounded-xl bg-[#fff3df] p-2.5 text-[#ba8d3e]"><MessageSquare size={19} /></div>
             </div>
-            {loading ? (
-              <div className="p-6"><div className="h-28 animate-pulse rounded-xl bg-[#f1f6f2]" /></div>
-            ) : recentReviews.length === 0 ? (
-              <div className="px-6 py-9 text-center">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#fff5e6]"><Star size={23} className="text-[#c99b53]" /></div>
-                <h4 className="mt-4 text-sm font-bold text-[#284b39]">No reviews yet</h4>
-                <p className="mx-auto mt-2 max-w-[260px] text-xs leading-6 text-[#8b9d92]">When customers leave a review, you will see their feedback here.</p>
-              </div>
+          </section>
+        </div>
+
+        <section className={panel + ' overflow-hidden'}>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e9edf0] px-5 py-4">
+            <div>
+              <h2 className="text-[14px] font-bold text-[#23392f]">Business performance</h2>
+              <p className="mt-1 text-[11px] text-slate-400">Search, filter and compare your registered business listings</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button type="button" onClick={exportCsv} disabled={!filtered.length} className={button}>
+                <IconsaxIcon name="document-download" size={16} /> Export CSV
+              </button>
+              <Link href="/vendor/my-businesses" className={button}>
+                Manage listings <IconsaxIcon name="arrow-right-2" size={13} />
+              </Link>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 border-b border-[#e9edf0] px-4 py-3 sm:px-5">
+            <div className="relative min-w-[180px] flex-1 sm:max-w-[340px]">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                <IconsaxIcon name="search-normal" size={16} />
+              </span>
+              <input value={query} aria-label="Search businesses" onChange={e => { setQuery(e.target.value); setPage(1); }}
+                placeholder="Search businesses…" className="h-9 w-full rounded-lg border border-[#e1e6ec] bg-white pl-9 pr-3 text-[12px] text-slate-700 outline-none transition focus:border-[#9cb9aa]" />
+            </div>
+            <select aria-label="Filter businesses" value={statusFilter} onChange={e => { setStatusFilter(e.target.value as StatusFilter); setPage(1); }}
+              className="h-9 rounded-lg border border-[#e1e6ec] bg-white px-3 text-xs text-slate-600 focus:border-[#9cb9aa]">
+              <option value="all">All listings</option>
+              <option value="approved">Published</option>
+              <option value="pending">Pending / review</option>
+              <option value="open">Open businesses</option>
+            </select>
+            <select aria-label="Sort businesses" value={sort} onChange={e => { setSort(e.target.value as SortKey); setPage(1); }}
+              className="h-9 rounded-lg border border-[#e1e6ec] bg-white px-3 text-xs text-slate-600 focus:border-[#9cb9aa]">
+              <option value="views">Most viewed</option>
+              <option value="calls">Most calls</option>
+              <option value="name">Name A–Z</option>
+            </select>
+            <span className="ml-auto whitespace-nowrap text-[11px] text-slate-400">{filtered.length} results</span>
+          </div>
+
+          {loading ? (
+            <div className="space-y-2 p-5">{[1, 2, 3].map(i => <div key={i} className="h-12 animate-pulse rounded bg-slate-100" />)}</div>
+          ) : businesses.length === 0 ? (
+            <div className="flex flex-col items-center justify-center gap-2 px-6 py-12 text-center">
+              <IconsaxIcon name="shop" size={30} color="#7c9c8a" />
+              <h3 className="text-sm font-bold text-[#324b3c]">No registered businesses yet</h3>
+              <p className="text-xs text-slate-500">Add your first listing to start tracking its performance.</p>
+              <Link href="/register-business" className="mt-2 rounded-lg bg-[#1c4d3b] px-4 py-2.5 text-xs font-semibold text-white">Register business</Link>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="px-6 py-12 text-center text-xs text-slate-500">No businesses match your filters.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[760px] text-left">
+                <thead className="border-b border-[#e9edf0] bg-[#f9fafb]">
+                  <tr className={smallLabel}>
+                    <th className="w-[36%] px-5 py-3 font-bold">Business name</th>
+                    <th className="px-3 py-3 font-bold">Listing status</th>
+                    <th className="px-3 py-3 text-right font-bold">Views</th>
+                    <th className="px-3 py-3 text-right font-bold">Call clicks</th>
+                    <th className="px-3 py-3 text-center font-bold">Availability</th>
+                    <th className="px-5 py-3 text-right font-bold">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#eef1f3]">
+                  {visible.map(business => {
+                    const published = business.status === 'approved';
+                    const busy = updatingIds.includes(business.id);
+                    return (
+                      <tr key={business.id} className="group transition hover:bg-[#fafcfb]">
+                        <td className="px-5 py-3">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-[#e5ebe7] bg-[#f4f8f5]">
+                              {business.logo_url
+                                ? <img src={business.logo_url} alt="" className="h-full w-full object-cover" />
+                                : <IconsaxIcon name="shop" size={18} color="#648e72" />}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="truncate text-xs font-semibold text-[#233d30]">{business.name}</p>
+                              <p className="mt-0.5 max-w-[220px] truncate font-mono text-[10px] text-slate-400">{business.id.slice(0, 8)}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-3 py-3">
+                          <span className={'inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[10px] font-semibold ' + (published ? 'bg-[#eaf6ee] text-[#2b8b54]' : 'bg-[#fff5e8] text-[#af792c]')}>
+                            <span className={'h-1.5 w-1.5 rounded-full ' + (published ? 'bg-[#2b9c61]' : 'bg-[#d19c45]')} />
+                            {published ? 'Published' : business.status === 'rejected' ? 'Needs attention' : 'Under review'}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3 text-right text-xs font-semibold tabular-nums text-slate-700">{number(Number(business.views || 0))}</td>
+                        <td className="px-3 py-3 text-right text-xs font-semibold tabular-nums text-slate-700">{number(Number(business.calls || 0))}</td>
+                        <td className="px-3 py-3 text-center">
+                          <button type="button" disabled={busy} onClick={() => void toggleOpen(business)}
+                            aria-label={(business.is_open ? 'Mark closed: ' : 'Mark open: ') + business.name}
+                            className={'rounded-md border px-2.5 py-1.5 text-[10px] font-semibold disabled:opacity-50 ' + (business.is_open ? 'border-[#d8efe0] bg-[#f0faf3] text-[#268459]' : 'border-[#e6e9ec] bg-[#f7f8fa] text-slate-500')}>
+                            {busy ? 'Saving…' : business.is_open ? 'Open' : 'Closed'}
+                          </button>
+                        </td>
+                        <td className="px-5 py-3 text-right">
+                          <Link href={'/vendor/my-businesses/' + business.id + '/edit'} aria-label={'Edit ' + business.name}
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-500 hover:bg-[#eef5f0] hover:text-[#26774e]">
+                            <IconsaxIcon name="edit-2" size={17} />
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#e9edf0] px-5 py-3">
+            <p className="text-[11px] text-slate-400">{filtered.length ? (safePage - 1) * PAGE_SIZE + 1 : 0}–{Math.min(safePage * PAGE_SIZE, filtered.length)} of {filtered.length} businesses</p>
+            <div className="flex items-center gap-2">
+              <button type="button" className={button + ' h-8'} disabled={safePage <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}>Previous</button>
+              <span className="text-[11px] text-slate-500">{safePage} / {totalPages}</span>
+              <button type="button" className={button + ' h-8'} disabled={safePage >= totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))}>Next</button>
+            </div>
+          </div>
+        </section>
+
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <section className={panel + ' overflow-hidden'}>
+            <div className="flex items-center justify-between border-b border-[#e9edf0] px-5 py-4">
+              <div><h2 className="text-[13px] font-bold text-[#22392d]">Recent customer activity</h2><p className="mt-1 text-[11px] text-slate-400">Latest reviews on your listings</p></div>
+              <Link href="/vendor/reviews" className="flex items-center gap-1 text-[11px] font-semibold text-[#287750]">All reviews <IconsaxIcon name="arrow-right-2" size={12} /></Link>
+            </div>
+            {loading ? <p className="p-5 text-xs text-slate-400">Loading reviews…</p> : reviews.length === 0 ? (
+              <p className="p-7 text-center text-xs text-slate-400">No customer reviews recorded yet.</p>
             ) : (
-              <div className="divide-y divide-[#eef2ee]">
-                {recentReviews.map(review => (
-                  <div key={review.id} className="px-5 py-4 sm:px-6">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="truncate text-xs font-bold text-[#244735]">{review.user_name}</p>
-                        <p className="mt-1 truncate text-[11px] text-[#95a39a]">{review.businessName}</p>
-                      </div>
-                      <span className="whitespace-nowrap text-[10px] text-[#9aa99f]">{new Date(review.date).toLocaleDateString('en-LK', { day: 'numeric', month: 'short' })}</span>
+              <div className="divide-y divide-[#eef1f3]">
+                {reviews.map(r => (
+                  <div key={r.id} className="flex items-center gap-3 px-5 py-3">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f5f1e8] text-[#b28b4a]"><IconsaxIcon name="star" size={15} /></span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-semibold text-[#2a4433]">{r.user_name || 'Customer'} · {r.businessName}</p>
+                      <p className="mt-1 text-[10px] text-slate-400">{new Date(r.created_at).toLocaleDateString('en-LK', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                     </div>
-                    {review.rating !== null && <div className="mt-2 flex items-center gap-1 text-[#c6974a]"><Star size={13} fill="currentColor" /><span className="text-xs font-bold">{review.rating.toFixed(1)}</span><span className="text-[10px] text-[#a5b0a8]">/ 5</span></div>}
+                    {r.rating !== null && <span className="rounded-md bg-[#fff5e3] px-2 py-1 text-xs font-bold text-[#ae7c34]">{r.rating.toFixed(1)} / 5</span>}
                   </div>
                 ))}
               </div>
             )}
-            <Link href="/vendor/reviews" className="flex items-center justify-center gap-2 border-t border-[#edf1ee] py-3.5 text-xs font-bold text-[#48745c] hover:bg-[#f6faf7]">View all reviews <ArrowRight size={14} /></Link>
+          </section>
+          <section className={panel + ' overflow-hidden'}>
+            <div className="border-b border-[#e9edf0] px-5 py-4"><h2 className="text-[13px] font-bold text-[#22392d]">Quick actions</h2><p className="mt-1 text-[11px] text-slate-400">Common tasks for your business</p></div>
+            <div className="grid grid-cols-2 gap-2 p-4">
+              {[
+                { label: 'My listings', href: '/vendor/my-businesses', icon: 'shop' },
+                { label: 'Customer leads', href: '/vendor/leads', icon: 'people' },
+                { label: 'Marketing', href: '/vendor/marketing', icon: 'flash' },
+                { label: 'Growth OS', href: '/vendor/growth', icon: 'chart' },
+              ].map(action => (
+                <Link key={action.href} href={action.href} className="flex items-center justify-between gap-2 rounded-lg border border-[#e9edf0] p-3 text-xs font-semibold text-[#365242] transition hover:border-[#b6d5c4] hover:bg-[#f8fbf9]">
+                  <span className="flex items-center gap-2"><IconsaxIcon name={action.icon} size={17} color="#427c5c" /> {action.label}</span>
+                  <IconsaxIcon name="arrow-right-2" size={12} />
+                </Link>
+              ))}
+            </div>
           </section>
         </div>
 
-        <div className="flex flex-col items-start justify-between gap-3 border-t border-[#e2eae4] pt-5 text-[11px] text-[#9aaa9f] sm:flex-row sm:items-center">
-          <p>SL Business Index · Vendor Workspace</p>
-          <p className="flex items-center gap-1.5"><CheckCircle2 size={13} /> Statistics reflect your own business data.</p>
-        </div>
+        <p className="pb-3 text-center text-[10px] text-slate-400">SL Business Index · Vendor Intelligence · Metrics are derived from available business and analytics records.</p>
       </div>
     </div>
   );
