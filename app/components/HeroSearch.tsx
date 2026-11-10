@@ -425,11 +425,7 @@ export default function HeroSearch({
                     className="w-full px-4 py-2.5 hover:bg-gray-50 active:bg-gray-100 flex items-center gap-3 transition-colors border-b border-gray-50 last:border-0"
                   >
                     <div className="w-8 h-8 rounded-lg bg-brand-gold/10 flex items-center justify-center shrink-0 border border-brand-gold/15">
-                      {cat.image_url ? (
-                        <img src={cat.image_url} alt={cat.name} className="w-4 h-4 object-contain" />
-                      ) : (
-                        <CategoryIcon name={cat.icon} size={16} className="w-4 h-4 text-brand-gold" />
-                      )}
+                      <CategoryIcon name={cat.icon} categoryName={cat.name} size={20} className="text-brand-gold" />
                     </div>
                     <div className="flex-1 min-w-0 text-left">
                       <p className="text-sm font-medium text-gray-800 truncate">{cat.name}</p>

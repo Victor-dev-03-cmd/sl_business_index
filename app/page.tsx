@@ -15,7 +15,7 @@ export default async function HomePage() {
     queryFn: async () => {
       const { data } = await supabase
         .from('categories')
-        .select('id, name, icon, image_url, parent_id')
+        .select('id, name, icon, parent_id')
         .is('parent_id', null)
         .order('name', { ascending: true })
       return data ?? []
