@@ -11,7 +11,7 @@ Only backend environment variables can contain BILLING_DATABASE_URL. Enable TLS 
 
 ## Release blockers
 Four approved commercial plans/prices are unknown; plans/prices intentionally empty.
-Function activation currently does NOT allocate Growth credits or feature entitlements.
+Verified activation atomically provisions plan-configured feature entitlements and monthly AI credits. These remain staging-only and require server-side enforcement, renewal/reset jobs and authenticated E2E before launch.
 No payment gateway, verified provider webhook, refunds, recurring renewals, authenticated E2E or legal tax invoices have been implemented.
 This migration must NOT run against the existing Supabase production database.
 Existing Supabase subscription rows remain authoritative until migration and reconciliation.
