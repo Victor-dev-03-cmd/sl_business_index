@@ -53,7 +53,7 @@ export default function HomePageClient() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("categories")
-        .select('id, name, icon, image_url, parent_id')
+        .select('id, name, icon, parent_id')
         .is("parent_id", null)
         .order("name", { ascending: true });
       if (error) throw error;
@@ -496,20 +496,8 @@ export default function HomePageClient() {
                 >
                   <div aria-hidden="true" className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-[#F0F2E9] opacity-70 transition-transform duration-300 group-hover:scale-110" />
                   <div className="relative flex w-full items-start justify-between gap-3">
-                    <div className="relative flex h-[58px] w-[58px] shrink-0 items-center justify-center overflow-hidden rounded-[17px] border border-[#F0F2E9] bg-[#F8F7F2] text-[#2B6552] sm:h-[66px] sm:w-[66px]">
-                      {cat.image_url ? (
-                        <Image
-                          src={encodeURI(cat.image_url)}
-                          alt=""
-                          fill
-                          sizes="66px"
-                          className="object-contain p-3"
-                          draggable={false}
-                          unoptimized={cat.image_url.includes("supabase.co")}
-                        />
-                      ) : (
-                        <CategoryIcon name={cat.icon} size={28} className="h-7 w-7" />
-                      )}
+                    <div className="relative flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-[19px] border border-[#E0EADB] bg-[#F0F2E9] text-[#2B6552] transition-colors group-hover:border-[#B0CFB5] group-hover:bg-[#E7F0E6] sm:h-[82px] sm:w-[82px]">
+                      <CategoryIcon name={cat.icon} categoryName={cat.name} size={42} />
                     </div>
                     <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#F0F2E9] bg-white text-[#75AB8D] transition-colors duration-200 group-hover:border-[#CADDCB] group-hover:bg-[#F0F2E9] group-hover:text-[#26483B]">
                       <ArrowUpRight size={16} strokeWidth={1.7} />
@@ -653,13 +641,13 @@ export default function HomePageClient() {
                 <p className="mt-2 text-xs text-stone-500">Please refresh the page or try again shortly.</p>
               </div>
             ) : featuredBusinesses.length > 0 ? (
-              featuredBusinesses.map((business) => (
+              featuredBusinesses.map((business, index) => (
                 <Link
                   key={business.id}
                   href={`/business/${business.slug || business.id}`}
                   prefetch={false}
                   aria-label={`View ${business.name} business profile`}
-                  className="group relative isolate block [contain:layout_paint] [content-visibility:auto] aspect-[9/16] w-[178px] shrink-0 snap-start overflow-hidden rounded-[22px] border border-[#E0EADB] bg-[#1B3430] shadow-[0_3px_12px_rgba(15,40,67,0.07)] transition-colors duration-150 hover:border-[#75AB8D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 sm:w-[207px] lg:w-[229px] xl:w-[237px]"
+                  className="group relative isolate block aspect-[9/16] w-[178px] shrink-0 snap-start overflow-hidden rounded-[22px] border border-[#E0EADB] bg-[#1B3430] shadow-[0_3px_12px_rgba(15,40,67,0.07)] transition-colors duration-150 hover:border-[#75AB8D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 sm:w-[207px] lg:w-[229px] xl:w-[237px]"
                 >
                   {/* 9:16 visual works with landscape photos as well as portrait images. */}
                   <div className="absolute inset-0 overflow-hidden">
@@ -668,7 +656,7 @@ export default function HomePageClient() {
                         src={business.image_url}
                         alt={business.name}
                         fill
-                        loading="lazy"
+                        loading={index < 6 ? "eager" : "lazy"}
                         quality={55}
                         decoding="async"
                         sizes="(max-width: 640px) 178px, (max-width: 1024px) 207px, 237px"
@@ -678,7 +666,7 @@ export default function HomePageClient() {
                       <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#26483B] via-[#1B3430] to-[#152C25]">
                         {business.logo_url ? (
                           <div className="relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-[24px] border border-white/15 bg-white/95 p-4 shadow-xl">
-                            <Image src={business.logo_url} alt={business.name} fill loading="lazy" quality={65} sizes="112px" className="object-contain p-4" />
+                            <Image src={business.logo_url} alt={business.name} fill loading={index < 6 ? "eager" : "lazy"} quality={65} sizes="112px" className="object-contain p-4" />
                           </div>
                         ) : (
                           <BrandIcon name="buildings-2" size={55} color="#F0D9AC" />
@@ -938,11 +926,11 @@ export default function HomePageClient() {
 
       <Testimonials />
 
-      {/* --- GROW WITH SLBI: preserve supplied desktop/mobile campaign artwork --- */}
+      {/* --- GROW WITH SLBI: business listing + developer services --- */}
       <section aria-labelledby="grow-with-slbi-title" className="border-t border-[#F0F2E9] bg-white py-20 sm:py-24 lg:py-28">
         <div className="mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12">
-          <div className="grid items-center gap-10 overflow-hidden rounded-[30px] bg-[#1B3430] px-6 py-10 sm:px-10 sm:py-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-10 lg:px-12 lg:py-12">
-            <div>
+          <div className="grid items-stretch gap-8 overflow-hidden rounded-[30px] bg-[#1B3430] px-6 py-10 sm:px-10 sm:py-12 lg:grid-cols-2 lg:gap-12 lg:px-12 lg:py-12">
+            <div className="flex min-w-0 flex-col justify-center">
               <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#F0D9AC]">For local businesses</p>
               <h2 id="grow-with-slbi-title" className="mt-5 max-w-[580px] text-balance text-[clamp(2.5rem,4vw,4.6rem)] font-semibold leading-[1.07] tracking-[-0.065em] text-white">
                 Get discovered. Grow your reach.
@@ -959,23 +947,49 @@ export default function HomePageClient() {
                 </Link>
               </div>
             </div>
-            <div className="flex min-w-0 items-center justify-center overflow-hidden rounded-[22px] border border-white/15 bg-white/[0.07] p-3 sm:p-4">
-              <Image
-                src="/banner.jpeg"
-                alt="SL Business Index promotional banner"
-                width={1920}
-                height={700}
-                loading="lazy"
-                className="hidden h-auto w-full rounded-[14px] object-contain md:block"
-              />
-              <Image
-                src="/mobile.jpeg"
-                alt="SL Business Index promotional artwork for mobile"
-                width={1080}
-                height={1920}
-                loading="lazy"
-                className="mx-auto block max-h-[440px] w-auto max-w-full rounded-[14px] object-contain md:hidden"
-              />
+            <div className="relative flex min-w-0 flex-col justify-between gap-8 overflow-hidden rounded-[24px] border border-white/20 bg-[#F8F7F2] p-6 text-[#1B3430] shadow-[0_18px_55px_rgba(7,21,17,0.16)] sm:p-8">
+              <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-28 h-64 w-64 rounded-full bg-[#DCEADF]/70 blur-3xl" />
+              <div className="relative">
+                <p className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[#36785E]">
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-[10px] border border-[#D4E5D9] bg-white">
+                    <BrandIcon name="monitor" size={18} />
+                  </span>
+                  Web development &amp; digital solutions
+                </p>
+                <p className="mt-6 text-[13px] font-semibold text-[#2F765C]">Laxsan Dev <span className="font-normal text-stone-500">/ Web Developer</span></p>
+                <h3 className="mt-3 max-w-[520px] text-balance text-[clamp(1.8rem,2.7vw,2.9rem)] font-semibold leading-[1.13] tracking-[-0.055em] text-[#1B3430]">
+                  Your business deserves a website built to stand out.
+                </h3>
+                <p className="mt-4 max-w-[520px] text-[13px] leading-[1.85] text-stone-600 sm:text-[14px]">
+                  From modern business websites and online stores to custom dashboards,
+                  I design and develop responsive digital experiences using React and Next.js.
+                </p>
+              </div>
+              <div className="relative">
+                <div className="grid gap-3 border-t border-[#DDE5DB] pt-5 sm:grid-cols-2">
+                  {[
+                    { icon: "monitor", label: "Business websites" },
+                    { icon: "shopping-cart", label: "Online stores" },
+                    { icon: "element-3", label: "Custom dashboards" },
+                    { icon: "cpu", label: "Full-stack development" },
+                  ].map((service) => (
+                    <span key={service.label} className="inline-flex items-center gap-2 text-[12px] font-semibold text-[#355648]">
+                      <BrandIcon name={service.icon} size={19} />
+                      {service.label}
+                    </span>
+                  ))}
+                </div>
+                <div className="mt-7 flex flex-wrap gap-3">
+                  <a href="https://laxsan-dev.vercel.app/" target="_blank" rel="noopener noreferrer"
+                     className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#1B3430] px-5 text-[12px] font-bold text-white transition-colors hover:bg-[#2F765C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">
+                    View my work <ArrowUpRight size={15} />
+                  </a>
+                  <a href="mailto:laxsan732@gmail.com?subject=Website%20development%20enquiry"
+                     className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#CAD8CB] bg-white px-5 text-[12px] font-bold text-[#1B3430] transition-colors hover:bg-[#EAF3ED] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">
+                    Start a website project <ArrowRight size={15} />
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
         </div>
