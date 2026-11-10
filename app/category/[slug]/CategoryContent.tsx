@@ -339,6 +339,11 @@ export default function CategoryContent({
 
   const town = TOWNS.find((item) => item.name === filters.town);
 
+  // Keep the sort selector valid when location-based ranking is switched off.
+  useEffect(() => {
+    if (!filters.town && sort === "nearest") setSort("recommended");
+  }, [filters.town, sort]);
+
   const { data, isPending, isFetching, isError, refetch } = useQuery({
     queryKey: [
       "category-businesses-v3", category.name, includedCategories.join("|"), currentPage,
