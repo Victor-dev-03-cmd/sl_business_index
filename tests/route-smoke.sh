@@ -53,3 +53,15 @@ for endpoint in /api/billing/hybrid /api/admin/billing/hybrid; do
   fi
   echo "PASS $endpoint fails closed while hybrid billing is disabled"
 done
+
+# Reject malformed password login before any Supabase/Turnstile network call.
+login_status=$(curl --max-time 10 -sS -o /dev/null -w '%{http_code}' \
+  -X POST 'http://127.0.0.1:3099/api/auth/password-login' \
+  -H 'Origin: http://127.0.0.1:3099' \
+  -H 'Content-Type: application/json' \
+  --data '{"email":"test@example.invalid","password":"x"}')
+if [[ "$login_status" != "400" ]]; then
+  echo "FAIL malformed sign-in request: expected 400, got $login_status"
+  exit 1
+fi
+echo "PASS malformed password sign-in fails closed"
