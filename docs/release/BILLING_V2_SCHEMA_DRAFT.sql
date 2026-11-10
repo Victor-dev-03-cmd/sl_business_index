@@ -39,6 +39,12 @@ CREATE UNIQUE INDEX IF NOT EXISTS billing_requests_one_open_plan
  ON public.billing_requests(user_id,plan_id,billing_cycle)
  WHERE status IN ('submitted','reviewing','awaiting_payment');
 
+-- Prevent the same independently verified settlement evidence from being
+-- reused to activate a second request (case/space insensitive).
+CREATE UNIQUE INDEX IF NOT EXISTS billing_requests_unique_settlement_reference
+ ON public.billing_requests(pg_catalog.lower(pg_catalog.btrim(payment_reference)))
+ WHERE status='activated' AND payment_reference IS NOT NULL;
+
 CREATE TABLE IF NOT EXISTS public.billing_request_events (
  id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
  request_id uuid NOT NULL REFERENCES public.billing_requests(id) ON DELETE RESTRICT,
@@ -164,6 +170,10 @@ BEGIN
  END IF;
 
  IF v_status='activated' THEN
+   -- Serialize activation across multiple distinct requests for the SAME user.
+   -- Locking only a request row would permit concurrent active subscriptions.
+   PERFORM pg_catalog.pg_advisory_xact_lock(
+     pg_catalog.hashtextextended(v_req.user_id::text,144));
    IF p_verified IS DISTINCT FROM true OR
       char_length(pg_catalog.btrim(coalesce(p_payment_reference,''))) < 6 OR
       char_length(pg_catalog.btrim(coalesce(p_note,''))) < 12 THEN
