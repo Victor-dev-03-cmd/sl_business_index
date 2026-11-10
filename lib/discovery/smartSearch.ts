@@ -13,6 +13,16 @@ export type SearchPlace = {
   district?: string;
 };
 
+/** Public read-only aliases from the reviewed Supabase search_dictionary table. */
+export type SearchDictionaryEntry = {
+  alias: string;
+  alias_kind: "location" | "category" | "service";
+  intent_key: string;
+  canonical_query: string;
+  categories: string[];
+  specific_service: boolean;
+  town_name: string | null;
+};
 export type SearchIntent = {
   rawQuery: string;
   query: string;
@@ -111,6 +121,37 @@ const SPECIFIC_SYNONYMS: Readonly<Record<string,string>> = {
 
 const GENERIC_WORDS = new Set(["shop","shops","store","stores","business","businesses","service","services","company","companies","place","places","near","nearby","around","in","at","for","me","my","the","best","find","a","an","local"]);
 const PLACE_INDEX = new WeakMap<object, SearchPlace[]>();
+const TOWN_NAME_INDEX = new WeakMap<object, Map<string,SearchPlace>>();
+type IndexedAlias = { phrase: string; entry: SearchDictionaryEntry };
+const DYNAMIC_ALIASES = new WeakMap<object, {
+  locations: IndexedAlias[]; intents: IndexedAlias[];
+}>();
+function dictionaryIndex(rows: readonly SearchDictionaryEntry[]) {
+  let value = DYNAMIC_ALIASES.get(rows);
+  if (!value) {
+    const indexed = rows
+      .filter(row => row && typeof row.alias === "string" &&
+        row.alias.length >= 2 && row.alias.length <= 120)
+      .map(row => ({phrase: scrub(row.alias), entry: row}))
+      .filter(row => row.phrase.length >= 2);
+    const byLength = (a: IndexedAlias,b: IndexedAlias) => b.phrase.length-a.phrase.length;
+    value = {
+      locations: indexed.filter(row => row.entry.alias_kind === "location" && row.entry.town_name).sort(byLength),
+      intents: indexed.filter(row => row.entry.alias_kind === "category" || row.entry.alias_kind === "service").sort(byLength),
+    };
+    DYNAMIC_ALIASES.set(rows,value);
+  }
+  return value;
+}
+function townNames(places: readonly SearchPlace[]) {
+  let names = TOWN_NAME_INDEX.get(places);
+  if (!names) {
+    names = new Map();
+    for (const town of places) if (!names.has(scrub(town.name))) names.set(scrub(town.name),town);
+    TOWN_NAME_INDEX.set(places,names);
+  }
+  return names;
+}
 
 // Curated geographic aliases. Inflected Sinhala and Tamil spellings need an
 // explicit place match; a generic transliterator cannot reliably handle them.
@@ -144,17 +185,24 @@ function containsPhrase(haystack: string, phrase: string) {
   return (" " + haystack + " ").includes(" " + scrub(phrase) + " ");
 }
 
-export function extractSearchPlace(query: string, places: readonly SearchPlace[] = []) {
+export function extractSearchPlace(query: string, places: readonly SearchPlace[] = [], dictionary: readonly SearchDictionaryEntry[] = []) {
   const clean = scrub(query);
   const tokens = clean.split(" ").filter(Boolean);
 
   // Resolve exact curated aliases before English-only town names.
-  const variants = PLACE_ALIASES.flatMap(group =>
-    group.forms.map(form => ({place: group.canonical, form: scrub(form)})),
-  ).sort((a,b) => b.form.length - a.form.length);
+  const indexedLocations = dictionaryIndex(dictionary).locations;
+  const variants = [
+    ...PLACE_ALIASES.flatMap(group =>
+      group.forms.map(form => ({place: group.canonical, form: scrub(form)}))),
+    ...indexedLocations.map(item => ({
+      place: item.entry.town_name as string,
+      form: item.phrase,
+    })),
+  ].sort((a,b) => b.form.length - a.form.length);
+  const placeNames = townNames(places);
   for (const alias of variants) {
     if (!containsPhrase(clean, alias.form)) continue;
-    const town = places.find(place => scrub(place.name) === scrub(alias.place));
+    const town = placeNames.get(scrub(alias.place));
     if (!town) continue;
     const phrase = alias.form.split(" ");
     for (let index=0; index<=tokens.length-phrase.length; index++) {
@@ -196,9 +244,10 @@ export function resolveSmartSearch(
   query: string,
   places: readonly SearchPlace[] = [],
   knownCategories?: readonly string[],
+  dictionary: readonly SearchDictionaryEntry[] = [],
 ): SearchIntent {
   const rawQuery = String(query ?? "").trim().slice(0, 160);
-  const { location, remaining } = extractSearchPlace(rawQuery, places);
+  const { location, remaining } = extractSearchPlace(rawQuery, places, dictionary);
   const normalized = scrub(remaining);
   let best: { group: DictionaryGroup; phrase: string; specific: boolean } | null = null;
 
@@ -214,6 +263,13 @@ export function resolveSmartSearch(
     }
   }
 
+  // The database dictionary extends the built-in safety aliases without
+  // replacing them; longest phrase wins, so "car wash" is not "car repair".
+  const dynamicBest = dictionaryIndex(dictionary).intents
+    .find(item => containsPhrase(normalized, item.phrase));
+  const useDynamic = dynamicBest &&
+    (!best || dynamicBest.phrase.length >= scrub(best.phrase).length);
+
   // Case-preserving raw keywords are not necessary for Postgres; the user-visible
   // search field itself remains unchanged until submission.
   const meaningful = normalized.split(" ").filter(word => !GENERIC_WORDS.has(word));
@@ -223,7 +279,23 @@ export function resolveSmartSearch(
   let label: string | null = null;
   let intentKey: string | null = null;
   let specificService = false;
-  if (best) {
+  if (useDynamic && dynamicBest) {
+    const row = dynamicBest.entry;
+    categories = Array.isArray(row.categories) ? [...row.categories] : [];
+    if (knownCategories?.length) {
+      const matched = categories.filter(name =>
+        knownCategories.some(known => scrub(known) === scrub(name)));
+      if (matched.length) categories = matched;
+    }
+    label = categories[0] || row.canonical_query;
+    intentKey = row.intent_key;
+    specificService = row.specific_service;
+    const rest = normalized.replace(dynamicBest.phrase," ").split(" ")
+      .filter(word => word && !GENERIC_WORDS.has(word) &&
+        !SERVICE_NOISE_WORDS.has(word)).join(" ").trim();
+    const canonical = scrub(row.canonical_query);
+    canonicalQuery = rest ? canonical + " " + rest : canonical;
+  } else if (best) {
     categories = [...best.group.categories];
     if (knownCategories?.length) {
       const matches = categories.filter(name=>knownCategories.some(known => scrub(known) === scrub(name)));
