@@ -63,6 +63,7 @@ END $$;
 RESET ROLE;
 
 SET ROLE slbi_billing_staff;
+SELECT set_config('billing.test_first_order', :'first_order', false);
 SELECT billing.staff_action(
  '00000000-0000-4000-8000-000000000001'::uuid,:'first_order'::uuid,'review','Reviewed');
 SELECT billing.staff_action(
@@ -71,7 +72,7 @@ DO $$ BEGIN
   BEGIN
     PERFORM billing.staff_action(
       '00000000-0000-4000-8000-000000000001'::uuid,
-      (SELECT NULL::uuid),'activate','No independent confirmation','TESTBANK1234',false);
+      current_setting('billing.test_first_order')::uuid,'activate','No independent confirmation','TESTBANK1234',false);
   EXCEPTION WHEN OTHERS THEN NULL; END;
 END $$;
 SELECT billing.staff_action(
@@ -95,6 +96,7 @@ END $$;
 \echo 'PASS: atomic verified manual activation and credits'
 
 SET ROLE slbi_billing_staff;
+SELECT set_config('billing.test_second_order', :'second_order', false);
 SELECT billing.staff_action(
  '00000000-0000-4000-8000-000000000001'::uuid,:'second_order'::uuid,'review','Reviewed second request');
 SELECT billing.staff_action(
@@ -105,7 +107,7 @@ BEGIN
   BEGIN
     PERFORM billing.staff_action(
       '00000000-0000-4000-8000-000000000001'::uuid,
-      (SELECT id FROM billing.orders WHERE cycle='yearly'),'activate',
+      current_setting('billing.test_second_order')::uuid,'activate',
       'Attempt to reuse same independently verified transfer','testbank1234',true);
     RAISE EXCEPTION 'Duplicate bank reference accepted';
   EXCEPTION WHEN unique_violation THEN NULL;
