@@ -8,7 +8,9 @@ export default async function HomePage() {
   const queryClient = new QueryClient()
   const supabase = await createClient()
 
-  await queryClient.prefetchQuery({
+  // Prefetch independent datasets in parallel to reduce initial response latency.
+  await Promise.all([
+  queryClient.prefetchQuery({
     queryKey: ['categories-home'],
     queryFn: async () => {
       const { data } = await supabase
@@ -18,9 +20,9 @@ export default async function HomePage() {
         .order('name', { ascending: true })
       return data ?? []
     },
-  })
+  }),
 
-  await queryClient.prefetchQuery({
+  queryClient.prefetchQuery({
     queryKey: ['featured-businesses-home'],
     queryFn: async () => {
       const { data } = await supabase
@@ -34,7 +36,8 @@ export default async function HomePage() {
         .map((item: any) => item.businesses)
         .filter((b: any) => b && b.status === 'approved')
     },
-  })
+  }),
+  ])
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
