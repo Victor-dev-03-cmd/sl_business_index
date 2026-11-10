@@ -12,6 +12,7 @@ import VoiceSearch from "./VoiceSearch";
 import VerifiedBadge from "./VerifiedBadge";
 import { SL_TOWNS, Town } from "@/lib/towns";
 import { resolveSmartSearch } from "@/lib/discovery/smartSearch";
+import { useSearchDictionary } from "@/lib/discovery/useSearchDictionary";
 
 const sriLankanDistricts = [
   "Ampara", "Anuradhapura", "Badulla", "Batticaloa", "Colombo", "Galle", "Gampaha",
@@ -71,6 +72,7 @@ export default function HeroSearch({
   handleUseCurrentLocation,
 }: HeroSearchProps) {
   const router = useRouter();
+  const searchDictionary = useSearchDictionary();
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [bizSuggestions, setBizSuggestions] = useState<any[]>([]);
@@ -137,13 +139,13 @@ export default function HeroSearch({
   const categorySuggestions = useMemo(() => {
     const query = searchQuery.trim();
     if (!isSearchFocused || areaOpen || query.length < 2) return [];
-    const parsed = resolveSmartSearch(query, SL_TOWNS, categories.map((item) => item.name));
+    const parsed = resolveSmartSearch(query, SL_TOWNS, categories.map((item) => item.name), searchDictionary);
     const recommended = parsed.categories
       .map((name) => categories.find((item) => item.name.toLowerCase() === name.toLowerCase()))
       .filter(Boolean);
     const fuzzy = fuse.search(parsed.query || query, { limit: 5 }).map((result) => result.item);
     return [...new Map([...recommended, ...fuzzy].map((item) => [item.id, item])).values()].slice(0, 5);
-  }, [searchQuery, fuse, isSearchFocused, areaOpen]);
+  }, [searchQuery, fuse, isSearchFocused, areaOpen, categories, searchDictionary]);
 
   // Autocomplete runs only while actively searching, after two characters.
   // Cancel stale requests and reuse recent results to reduce database work.
@@ -195,7 +197,7 @@ export default function HeroSearch({
 
   const handleSearch = (query?: string) => {
     const finalQuery = query || searchQuery;
-    const smartIntent = resolveSmartSearch(finalQuery, SL_TOWNS);
+    const smartIntent = resolveSmartSearch(finalQuery, SL_TOWNS, undefined, searchDictionary);
     let lowerQuery = smartIntent.canonicalQuery;
     let finalLat = "";
     let finalLng = "";

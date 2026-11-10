@@ -19,6 +19,7 @@ import "./nearby-map.css";
 import { sortGeoRank } from "@/lib/discovery/geoRank";
 import { rankHybridSearch, useHybridV2 } from "@/lib/discovery/hybridSearch";
 import { resolveSmartSearch, radiusSteps } from "@/lib/discovery/smartSearch";
+import { useSearchDictionary } from "@/lib/discovery/useSearchDictionary";
 import { recordNearbySample } from "@/lib/discovery/diagnostics";
 
 const LeafletMap = dynamic(() => import("@/components/LeafletMap"), {
@@ -142,6 +143,7 @@ function resultsMessage(count: number) {
 
 export default function NearbyExplorer() {
   const router = useRouter();
+  const searchDictionary = useSearchDictionary();
   const searchParams = useSearchParams();
   const [location, setLocation] = useState<LocationChoice>(() => initialChoice(searchParams));
   const [mapCenter, setMapCenter] = useState(() => {
@@ -218,8 +220,8 @@ export default function NearbyExplorer() {
   }, [categories, category]);
 
   const smartIntent = useMemo(
-    () => resolveSmartSearch(appliedQuery, SL_TOWNS, categories.map((item: any) => String(item.name))),
-    [appliedQuery, categories],
+    () => resolveSmartSearch(appliedQuery, SL_TOWNS, categories.map((item: any) => String(item.name)), searchDictionary),
+    [appliedQuery, categories, searchDictionary],
   );
   const suggestedCategories = category ? [] : smartIntent.categories;
   const normalizedSearch = smartIntent.canonicalQuery;
@@ -572,7 +574,7 @@ export default function NearbyExplorer() {
   const submitSearch = (event?: React.FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
     const query = searchText.trim();
-    const parsed = resolveSmartSearch(query, SL_TOWNS, categories.map((item: any) => String(item.name)));
+    const parsed = resolveSmartSearch(query, SL_TOWNS, categories.map((item: any) => String(item.name)), searchDictionary);
     if (parsed.location?.lat != null && parsed.location.lon != null) {
       applySearch({
         query: parsed.canonicalQuery,
