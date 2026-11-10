@@ -34,6 +34,104 @@ const HeroSearch = dynamic(() => import("./components/HeroSearch"), {
 
 const EMPTY_ARRAY: any[] = [];
 
+type FeaturedBusiness = {
+  id: string;
+  name: string;
+  slug?: string | null;
+  category?: string | null;
+  address?: string | null;
+  image_url?: string | null;
+  logo_url?: string | null;
+  rating?: number | null;
+  is_verified?: boolean | null;
+  can_show_badge?: boolean | null;
+};
+
+// Avoid re-rendering all portrait cards on every scroll-control update.
+// Use lightweight SVGs rather than dozens of asynchronous icon web components
+// inside the carousel. Navbar/category Iconsax styling is unchanged.
+const FeaturedListingCard = React.memo(function FeaturedListingCard({
+  business, index,
+}: { business: FeaturedBusiness; index: number }) {
+  return (
+                <Link
+                  href={`/business/${business.slug || business.id}`}
+                  prefetch={false}
+                  aria-label={`View ${business.name} business profile`}
+                  className="group relative isolate block aspect-[9/16] w-[178px] shrink-0 snap-start overflow-hidden rounded-[22px] border border-[#E0EADB] bg-[#1B3430] shadow-[0_3px_12px_rgba(15,40,67,0.07)] transition-colors duration-150 hover:border-[#75AB8D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 sm:w-[207px] lg:w-[229px] xl:w-[237px]"
+                >
+                  {/* 9:16 visual works with landscape photos as well as portrait images. */}
+                  <div className="absolute inset-0 overflow-hidden">
+                    {business.image_url ? (
+                      <Image
+                        src={business.image_url}
+                        alt={business.name}
+                        fill
+                        loading={index < 3 ? "eager" : "lazy"}
+                        quality={55}
+                        decoding="async"
+                        sizes="(max-width: 640px) 178px, (max-width: 1024px) 207px, 237px"
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#26483B] via-[#1B3430] to-[#152C25]">
+                        {business.logo_url ? (
+                          <div className="relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-[24px] border border-white/15 bg-white/95 p-4 shadow-xl">
+                            <Image src={business.logo_url} alt={business.name} fill loading={index < 3 ? "eager" : "lazy"} quality={65} sizes="112px" className="object-contain p-4" />
+                          </div>
+                        ) : (
+                          <Building2 size={55} strokeWidth={1.6} className="text-[#F0D9AC]" />
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Contrast stays legible without requiring hover or animation. */}
+                  <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0D211B] via-[#0D211B]/65 via-[39%] to-transparent" />
+                  <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/45 to-transparent" />
+
+                  <div className="absolute inset-x-0 top-0 z-10 flex flex-wrap items-start justify-between gap-1.5 p-3 sm:p-4">
+                    {business.is_verified && business.can_show_badge ? (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-white/20 bg-[#F0F2E9]/95 px-2.5 py-1 text-[10px] font-bold text-[#26483B] shadow-sm">
+                        <VerifiedBadge size={12} /> Verified
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center rounded-full border border-white/30 bg-black/25 px-2.5 py-1 text-[10px] font-semibold text-white">
+                        Featured
+                      </span>
+                    )}
+                    {typeof business.rating === "number" && business.rating > 0 && (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-white/25 bg-black/35 px-2.5 py-1 text-[10px] font-semibold text-white">
+                        <Star size={12} className="fill-[#FCD34D] text-[#FCD34D]" />
+                        {business.rating.toFixed(1)}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="absolute inset-x-0 bottom-0 z-10 p-3.5 text-white sm:p-5">
+                    <span className="mb-2 inline-block max-w-full truncate rounded-full border border-white/20 bg-white/15 px-2.5 py-1 text-[10px] font-semibold text-[#F0F2E9]">
+                      {business.category || "Local business"}
+                    </span>
+                    <h3 className="line-clamp-2 text-[17px] font-semibold leading-[1.25] tracking-[-0.035em] drop-shadow-sm sm:text-[20px]">
+                      {business.name}
+                    </h3>
+                    {business.address && (
+                      <p className="mt-2 flex min-w-0 items-center gap-1.5 text-[11px] font-medium text-[#E0EADB]">
+                        <MapPin size={13} className="shrink-0" />
+                        <span className="truncate">{business.address}</span>
+                      </p>
+                    )}
+                    <div className="mt-4 flex items-center justify-between border-t border-white/20 pt-3 text-[11px] font-semibold text-white/90">
+                      <span>View business</span>
+                      <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/25 bg-white/15 transition-colors group-hover:bg-white group-hover:text-[#1B3430]">
+                        <ArrowUpRight size={17} />
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+  );
+});
+
 export default function HomePageClient() {
   const router = useRouter();
 
@@ -221,8 +319,28 @@ export default function HomePageClient() {
     router.push(`/nearby?${params.toString()}`);
   };
 
-  // Keep the homepage light; full category catalog lives at /category.
-  const featuredCategories = categories.slice(0, 24);
+  // Surface high-demand categories ahead of A–Z on this homepage only.
+  // Preserve full category navigation and the original database ordering.
+  const featuredCategories = React.useMemo(() => {
+    const priorities = [
+      /\bfood\b/i,
+      /\b(health(?:care)?|medical|hospital|clinic|doctor|pharmacy)\b/i,
+      /\b(restaurant|dining|cafe|catering)\b/i,
+      /\b(shopping|retail|grocery|supermarket)\b/i,
+      /\b(education|educational|school|tuition|academy|training)\b/i,
+      /\b(travel|tourism|hotel|accommodation)\b/i,
+      /\b(transport|vehicle|automotive|logistics)\b/i,
+      /\b(professional|finance|insurance|banking)\b/i,
+      /\b(construction|industrial|engineering)\b/i,
+    ];
+    const rank = (name: string) => {
+      const match = priorities.findIndex(pattern => pattern.test(name));
+      return match === -1 ? priorities.length : match;
+    };
+    return [...categories]
+      .sort((a, b) => rank(a.name) - rank(b.name) || a.name.localeCompare(b.name))
+      .slice(0, 24);
+  }, [categories]);
 
   return (
     <div className="min-h-[100dvh] bg-white font-normal">
@@ -642,82 +760,7 @@ export default function HomePageClient() {
               </div>
             ) : featuredBusinesses.length > 0 ? (
               featuredBusinesses.map((business, index) => (
-                <Link
-                  key={business.id}
-                  href={`/business/${business.slug || business.id}`}
-                  prefetch={false}
-                  aria-label={`View ${business.name} business profile`}
-                  className="group relative isolate block aspect-[9/16] w-[178px] shrink-0 snap-start overflow-hidden rounded-[22px] border border-[#E0EADB] bg-[#1B3430] shadow-[0_3px_12px_rgba(15,40,67,0.07)] transition-colors duration-150 hover:border-[#75AB8D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 sm:w-[207px] lg:w-[229px] xl:w-[237px]"
-                >
-                  {/* 9:16 visual works with landscape photos as well as portrait images. */}
-                  <div className="absolute inset-0 overflow-hidden">
-                    {business.image_url ? (
-                      <Image
-                        src={business.image_url}
-                        alt={business.name}
-                        fill
-                        loading={index < 6 ? "eager" : "lazy"}
-                        quality={55}
-                        decoding="async"
-                        sizes="(max-width: 640px) 178px, (max-width: 1024px) 207px, 237px"
-                        className="object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#26483B] via-[#1B3430] to-[#152C25]">
-                        {business.logo_url ? (
-                          <div className="relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-[24px] border border-white/15 bg-white/95 p-4 shadow-xl">
-                            <Image src={business.logo_url} alt={business.name} fill loading={index < 6 ? "eager" : "lazy"} quality={65} sizes="112px" className="object-contain p-4" />
-                          </div>
-                        ) : (
-                          <BrandIcon name="buildings-2" size={55} color="#F0D9AC" />
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Contrast stays legible without requiring hover or animation. */}
-                  <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0D211B] via-[#0D211B]/65 via-[39%] to-transparent" />
-                  <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/45 to-transparent" />
-
-                  <div className="absolute inset-x-0 top-0 z-10 flex flex-wrap items-start justify-between gap-1.5 p-3 sm:p-4">
-                    {business.is_verified && business.can_show_badge ? (
-                      <span className="inline-flex items-center gap-1 rounded-full border border-white/20 bg-[#F0F2E9]/95 px-2.5 py-1 text-[10px] font-bold text-[#26483B] shadow-sm">
-                        <VerifiedBadge size={12} /> Verified
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center rounded-full border border-white/30 bg-black/25 px-2.5 py-1 text-[10px] font-semibold text-white">
-                        Featured
-                      </span>
-                    )}
-                    {typeof business.rating === "number" && business.rating > 0 && (
-                      <span className="inline-flex items-center gap-1 rounded-full border border-white/25 bg-black/35 px-2.5 py-1 text-[10px] font-semibold text-white">
-                        <BrandIcon name="star-1" variant="bold" size={12} color="#FCD34D" />
-                        {business.rating.toFixed(1)}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="absolute inset-x-0 bottom-0 z-10 p-3.5 text-white sm:p-5">
-                    <span className="mb-2 inline-block max-w-full truncate rounded-full border border-white/20 bg-white/15 px-2.5 py-1 text-[10px] font-semibold text-[#F0F2E9]">
-                      {business.category || "Local business"}
-                    </span>
-                    <h3 className="line-clamp-2 text-[17px] font-semibold leading-[1.25] tracking-[-0.035em] drop-shadow-sm sm:text-[20px]">
-                      {business.name}
-                    </h3>
-                    {business.address && (
-                      <p className="mt-2 flex min-w-0 items-center gap-1.5 text-[11px] font-medium text-[#E0EADB]">
-                        <BrandIcon name="location" size={13} />
-                        <span className="truncate">{business.address}</span>
-                      </p>
-                    )}
-                    <div className="mt-4 flex items-center justify-between border-t border-white/20 pt-3 text-[11px] font-semibold text-white/90">
-                      <span>View business</span>
-                      <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/25 bg-white/15 transition-colors group-hover:bg-white group-hover:text-[#1B3430]">
-                        <BrandIcon name="arrow-up-right" size={17} />
-                      </span>
-                    </div>
-                  </div>
-                </Link>
+                <FeaturedListingCard key={business.id} business={business} index={index} />
               ))
             ) : (
               <div className="flex min-h-[270px] w-full flex-col items-center justify-center rounded-[22px] border border-dashed border-[#E0EADB] bg-[#F8F7F2] px-6 text-center">
