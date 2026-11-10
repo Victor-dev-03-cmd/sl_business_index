@@ -87,6 +87,39 @@ function LoginForm() {
         }
       }
 
+      // Check the server-side cookie, not just browser-local state, before
+      // navigating to a Proxy-protected route. This avoids silently looping.
+      const verifyServerSession = async (): Promise<{ authenticated?: boolean; reason?: string }> => {
+        const check = await fetch('/api/auth/session-status', {
+          credentials: 'same-origin',
+          cache: 'no-store',
+        });
+        if (!check.ok) return { authenticated: false, reason: 'session_check_unavailable' };
+        return check.json();
+      };
+
+      let serverSession = await verifyServerSession();
+      if (!serverSession.authenticated) {
+        // A valid server-side password login can still race with the browser's
+        // cookie storage. Use the official SSR browser client to persist it,
+        // then check whether the server can actually authenticate the request.
+        const { data: retry, error: retryError } =
+          await supabase.auth.signInWithPassword({ email, password });
+        if (!retryError && retry.session) {
+          serverSession = await verifyServerSession();
+        }
+      }
+      if (!serverSession.authenticated) {
+        setError(
+          serverSession.reason === 'cookie_missing'
+            ? 'Sign-in succeeded, but your browser did not send the login cookie. Check cookie settings for this site.'
+            : 'Sign-in succeeded, but the server could not verify the saved session. Please try a private window.'
+        );
+        setTurnstileToken(null);
+        setChallengeVersion(v => v + 1);
+        return;
+      }
+
       // Full navigation avoids prefetch / client router racing with cookie writes.
       window.location.assign(next);
     } catch {

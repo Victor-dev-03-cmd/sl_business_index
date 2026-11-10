@@ -66,8 +66,32 @@ export async function proxy(request: NextRequest) {
     // getClaims validates the JWT instead of trusting cookie/session contents.
     // It also refreshes expired tokens via the SSR cookie adapter when needed.
     const { data, error } = await supabase.auth.getClaims()
-    const userId = data?.claims?.sub
-    if (error || !userId) return signInRedirect()
+    let userId = !error ? data?.claims?.sub : undefined
+
+    if (!userId) {
+      // With legacy symmetric Supabase JWTs, getClaims() uses remote Auth.
+      // If the JWT check fails unexpectedly, an independent getUser() call
+      // verifies the current account against Supabase Auth before redirecting.
+      // Never trust unverified getSession() or role metadata here.
+      const hasAuthCookie = request.cookies.getAll().some(cookie =>
+        /^sb-[a-z0-9]+-auth-token(?:\\.\\d+)?$/.test(cookie.name)
+      )
+      if (!hasAuthCookie) return signInRedirect()
+      const { data: fresh, error: freshError } = await supabase.auth.getUser()
+      if (freshError || !fresh.user) {
+        console.warn('SLBI_AUTH_PROXY_REJECT', {
+          area: isAdmin ? 'admin' : isVendor ? 'vendor' : 'registration',
+          cookiePresent: true,
+          claimsErrorType: error?.name || 'claims_missing',
+          userErrorType: freshError?.name || 'user_missing',
+        })
+        return signInRedirect()
+      }
+      console.warn('SLBI_AUTH_PROXY_VERIFIED_USER_FALLBACK', {
+        area: isAdmin ? 'admin' : isVendor ? 'vendor' : 'registration',
+      })
+      userId = fresh.user.id
+    }
 
     if (isBusinessRegistration) return response
 

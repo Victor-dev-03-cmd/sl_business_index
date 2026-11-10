@@ -79,3 +79,21 @@ if [[ "$secure_status" != "400" ]]; then
   exit 1
 fi
 echo "PASS HTTPS-origin malformed password request returns 400"
+
+
+# Session endpoint must not leak credentials and should be anonymous before sign-in.
+status_response=$(curl --max-time 10 -sS -D /tmp/slbi-session-headers \
+  'http://127.0.0.1:3099/api/auth/session-status')
+if [[ "$status_response" != *'"authenticated":false'* ]]; then
+  echo "FAIL anonymous session diagnostics must report authenticated=false"
+  exit 1
+fi
+if [[ "$status_response" != *'"authCookiePresent":false'* ]]; then
+  echo "FAIL anonymous session diagnostics must report no auth cookie"
+  exit 1
+fi
+if [[ "$status_response" == *'access_token'* || "$status_response" == *'refresh_token'* ]]; then
+  echo "FAIL session diagnostics must never return tokens"
+  exit 1
+fi
+echo "PASS anonymous session diagnostic is privacy-preserving"
