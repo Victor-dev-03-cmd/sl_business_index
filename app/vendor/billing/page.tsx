@@ -35,6 +35,16 @@ type Plan = {
   advanced_feature_access?: boolean | null;
   functional_features?: Record<string, boolean> | null;
 };
+type BillingRequestSummary = {
+  id: string;
+  plan_name: string;
+  billing_cycle: string;
+  quoted_lkr: number;
+  status: string;
+  created_at: string;
+};
+const billingV2Enabled = process.env.NEXT_PUBLIC_BILLING_V2_ENABLED === 'true';
+
 type Invoice = {
   id: string;
   subscription_id: string;
@@ -83,6 +93,7 @@ export default function VendorBillingPage() {
   const [definitions, setDefinitions] = useState<FeatureDefinition[]>([]);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [billingRequests, setBillingRequests] = useState<BillingRequestSummary[]>([]);
   const [businessCount, setBusinessCount] = useState(0);
   const [monthlyLeads, setMonthlyLeads] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
@@ -104,7 +115,7 @@ export default function VendorBillingPage() {
       if (authError) throw authError;
       if (!user) {
         setSignedIn(false);
-        setSubscriptions([]); setInvoices([]); setBusinessCount(0); setMonthlyLeads(null);
+        setSubscriptions([]); setInvoices([]); setBillingRequests([]); setBusinessCount(0); setMonthlyLeads(null);
         return;
       }
       setSignedIn(true);
@@ -139,6 +150,18 @@ export default function VendorBillingPage() {
       const [invoiceRes, leadsRes] = await Promise.all([invoiceQuery, leadsQuery]);
       if (invoiceRes.error) throw invoiceRes.error;
       setInvoices((invoiceRes.data || []) as Invoice[]);
+      if (billingV2Enabled) {
+        const { data: requestsData, error: requestsError } = await supabase
+          .from('billing_requests')
+          .select('id,plan_name,billing_cycle,quoted_lkr,status,created_at')
+          .eq('user_id', user.id).order('created_at', { ascending: false }).limit(10);
+        if (requestsError) {
+          console.warn('Billing request tracker unavailable', requestsError);
+          setBillingRequests([]);
+        } else {
+          setBillingRequests((requestsData || []) as BillingRequestSummary[]);
+        }
+      }
       if (leadsRes.error) {
         console.warn('Monthly lead count unavailable', leadsRes.error);
         setMonthlyLeads(null);
@@ -214,6 +237,7 @@ export default function VendorBillingPage() {
       }
       setRequestId(result.requestId);
       toast.success('Subscription request registered for review.');
+      if (billingV2Enabled) void load();
     } catch (caught) {
       toast.error(caught instanceof Error ? caught.message : 'Could not submit the request.');
     } finally {
@@ -347,6 +371,33 @@ export default function VendorBillingPage() {
             </div>
           ))}
         </section>
+
+        {billingV2Enabled && (
+          <section className={panel + ' overflow-hidden'} aria-label="Subscription request tracking">
+            <div className="border-b border-[#edf1ee] px-5 py-4">
+              <div className="flex items-center gap-2">
+                <IconsaxIcon name="document-text" size={17} color="#236546" />
+                <h2 className="text-[13px] font-bold text-[#24432f]">My plan requests</h2>
+              </div>
+              <p className="mt-1 text-[11px] text-slate-500">
+                Requests are not paid subscriptions. Activation requires independently verified settlement.
+              </p>
+            </div>
+            {billingRequests.length ? <div className="divide-y divide-[#edf1ee]">
+              {billingRequests.map(request => (
+                <div key={request.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5">
+                  <div>
+                    <p className="text-[12px] font-semibold text-[#2a4a35]">{request.plan_name} · {request.billing_cycle}</p>
+                    <p className="mt-1 text-[10px] text-slate-500">{money(Number(request.quoted_lkr))} listed quote · {formatDate(request.created_at)}</p>
+                  </div>
+                  <span className="rounded-md border border-[#dbe8dd] bg-[#f2f8f3] px-3 py-1.5 text-[10px] font-bold capitalize text-[#327353]">
+                    {request.status.replaceAll('_', ' ')}
+                  </span>
+                </div>
+              ))}
+            </div> : <p className="px-5 py-5 text-[11px] text-slate-500">No tracked requests yet.</p>}
+          </section>
+        )}
 
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(275px,0.85fr)]">
           <section className={panel + ' min-w-0 overflow-hidden'}>
