@@ -19,6 +19,8 @@ const dictionary=[
  entry("adum kade","category","clothing",["Clothing & Brands"],false,null,"si-Latn"),
  entry("biryani shop","service","biryani",["Food & Dining"],true),
  entry("burger shop","service","burger",["Food & Dining"],true),
+ entry("கார் ரிපෙයරிங்","service","car repair",["Repairing & Services"],true,null,"mixed"),
+ entry("கார் ரிපෙයරிங்","service","car repair",["Repairing & Services"],true,null,"mixed"),
  entry("jafna","location","jaffna",[],false,"Jaffna"),
 ];
 const cases=[
