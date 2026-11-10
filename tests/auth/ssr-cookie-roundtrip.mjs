@@ -70,4 +70,19 @@ const verified = await freshClient().auth.getUser();
 assert.equal(verified.error,null,'Second independent server request must reconstruct cookies');
 assert.equal(verified.data.user?.id,userId);
 assert.equal(serverVerified,true,'Auth verification must call the server, not trust an unverified cookie');
-console.log('PASS: multi-chunk SSR auth cookie persisted, reconstructed and server-verified');
+
+// Version 0.3.0 stored raw JSON instead of base64url; users upgrading from
+// that version must be able to verify an older unexpired session safely.
+// A compact fixture stays under a standard browser per-cookie size limit.
+cookieJar.clear();
+const legacySession = {
+  ...session,
+  user: { ...user, user_metadata: {} },
+};
+cookieJar.set('sb-test-supabase-auth-token', JSON.stringify(legacySession));
+serverVerified = false;
+const legacy = await freshClient().auth.getUser();
+assert.equal(legacy.error,null,'Legacy raw JSON SSR session must remain readable after upgrade');
+assert.equal(legacy.data.user?.id,userId);
+assert.equal(serverVerified,true,'Legacy cookies must still require remote Auth verification');
+console.log('PASS: multi-chunk encoded SSR session and legacy raw SSR session are verified securely');
