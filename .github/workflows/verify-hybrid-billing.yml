@@ -32,5 +32,7 @@ jobs:
           persist-credentials: false
       - name: Create independent Billing database
         run: psql -v ON_ERROR_STOP=1 -f database/postgres/billing/001_initial.sql
+      - name: Provision least-privilege roles and cancellation
+        run: psql -v ON_ERROR_STOP=1 -f database/postgres/billing/002_account_cancellation_and_roles.sql
       - name: Test permissions and payment integrity
         run: psql -v ON_ERROR_STOP=1 -f tests/hybrid_billing/verify.sql
