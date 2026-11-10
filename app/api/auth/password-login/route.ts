@@ -24,13 +24,11 @@ export async function POST(request: Request) {
   let acceptedOrigin = false
   try {
     const supplied = new URL(origin || '')
-    // Local production-build smoke tests run on HTTP loopback. Public
-    // production origins must still use HTTPS.
-    const isLoopback = /^(localhost|127\.0\.0\.1|\[::1\])(?::[0-9]+)?$/.test(host)
+    // Public production requests MUST be HTTPS. Next.js local production
+    // smoke tests should use a forwarded HTTPS header, not weaken this rule.
     acceptedOrigin = supplied.host === host &&
       supplied.protocol === protocol + ':' &&
-      (protocol === 'https' || (protocol === 'http' &&
-        (process.env.NODE_ENV !== 'production' || isLoopback)))
+      (protocol === 'https' || process.env.NODE_ENV !== 'production')
   } catch { /* Missing or invalid Origin: reject. */ }
   if (!acceptedOrigin) {
     return json({ error: 'Cross-origin sign-in request rejected.' }, 403)
