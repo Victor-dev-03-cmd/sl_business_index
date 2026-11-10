@@ -74,7 +74,7 @@ export async function proxy(request: NextRequest) {
       // verifies the current account against Supabase Auth before redirecting.
       // Never trust unverified getSession() or role metadata here.
       const hasAuthCookie = request.cookies.getAll().some(cookie =>
-        /^sb-[a-z0-9]+-auth-token(?:\\.\\d+)?$/.test(cookie.name)
+        /^sb-[a-z0-9]+-auth-token(?:\.\d+)?$/.test(cookie.name)
       )
       if (!hasAuthCookie) return signInRedirect()
       const { data: fresh, error: freshError } = await supabase.auth.getUser()
