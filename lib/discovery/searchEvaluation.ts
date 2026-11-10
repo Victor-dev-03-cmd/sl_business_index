@@ -10,7 +10,7 @@ export function ndcgAtK(returnedIds:readonly string[],judgments:readonly Judgmen
  const gain=(v:number,position:number)=>(2**v-1)/Math.log2(position+2);
  const actual=returnedIds.slice(0,k).reduce((sum,id,index)=>sum+gain(weights.get(id)||0,index),0);
  const ideal=judgments.map(j=>j.relevance).sort((a,b)=>b-a).slice(0,k)
-   .reduce((sum,v,index)=>sum+gain(v,index),0);
+   .reduce((sum: number,v,index)=>sum+gain(v,index),0);
  return ideal?actual/ideal:0;
 }
 export const SMARTSEARCH_ALGORITHM = Object.freeze({
