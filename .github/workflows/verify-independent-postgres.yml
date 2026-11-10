@@ -1,0 +1,36 @@
+name: Verify Independent PostgreSQL Billing
+on:
+  pull_request:
+    branches: [main, security/supabase-auth-protected-routes]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  billing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: slbi_billing_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d slbi_billing_ci"
+          --health-interval 5s
+          --health-retries 12
+          --health-timeout 5s
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: slbi_billing_ci
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: psql -v ON_ERROR_STOP=1 -f database/postgres/migrations/001_billing_core.sql
+      - run: psql -v ON_ERROR_STOP=1 -f database/postgres/tests/billing_core.sql
