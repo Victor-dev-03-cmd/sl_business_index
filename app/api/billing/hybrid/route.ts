@@ -73,3 +73,30 @@ export async function POST(request: Request) {
     return json({ error: mapped.message }, mapped.status)
   }
 }
+
+
+export async function DELETE(request: Request) {
+  if (!hybridBillingEnabled()) return json({ error: 'New billing service is not enabled.' }, 503)
+  if (!sameOrigin(request)) return json({ error: 'Cross-origin requests are not allowed.' }, 403)
+  const auth = await signedInVendor()
+  if (!auth.user) return json({ error: 'Sign in with a registered business account.' }, auth.denied)
+  if (!(request.headers.get('content-type') || '').includes('application/json')) {
+    return json({ error: 'A JSON request is required.' }, 415)
+  }
+  let body: { requestId?: unknown }
+  try { body = await request.json() } catch { return json({ error: 'Invalid JSON.' }, 400) }
+  const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  if (typeof body.requestId !== 'string' || !uuid.test(body.requestId)) {
+    return json({ error: 'Invalid billing request reference.' }, 400)
+  }
+  try {
+    await getBillingPool().query('SELECT billing.cancel_request($1::uuid,$2::uuid)', [
+      auth.user.id, body.requestId,
+    ])
+    return json({ success: true, status: 'cancelled' })
+  } catch (error) {
+    const mapped = safeDbError(error)
+    console.error('Hybrid Billing cancellation failed', (error as { code?: string })?.code || 'unavailable')
+    return json({ error: mapped.message }, mapped.status)
+  }
+}
