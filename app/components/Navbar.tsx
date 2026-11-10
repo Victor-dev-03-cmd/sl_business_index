@@ -9,6 +9,7 @@ import CategoriesMenu from "./CategoriesMenu";
 import CategorySubNavbar from "./CategorySubNavbar";
 import AuthButton from "./AuthButton";
 import LogoLink from "./LogoLink";
+import BrandIcon from "./BrandIcon";
 import NotificationBell from "./NotificationBell";
 import LiveCounter from "./LiveCounter";
 import {
@@ -73,7 +74,7 @@ export default function Navbar() {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
     };
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -334,20 +335,20 @@ export default function Navbar() {
           {/* Premium desktop navigation */}
            <nav aria-label="Main navigation" className="hidden lg:flex min-w-0 flex-1 items-center justify-center gap-0.5">
              {[
-               { href: "/", label: "Explore" },
-               { href: "/category", label: "Categories" },
-               { href: "/nearby", label: "Nearby" },
-               { href: "/business-news", label: "Business News" },
-               { href: "/about", label: "About" },
+               { href: "/", label: "Explore", icon: "home-2" },
+               { href: "/category", label: "Categories", icon: "category-2" },
+               { href: "/nearby", label: "Nearby", icon: "location" },
+               { href: "/business-news", label: "Business News", icon: "note-2" },
+               { href: "/about", label: "About", icon: "info-circle" },
              ].map(item => {
                const active = pathname === item.href || (item.href === "/category" && pathname.startsWith("/category/"));
-               return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={cn("inline-flex h-10 items-center gap-1.5 whitespace-nowrap rounded-xl px-3 text-[13px] font-semibold tracking-tight transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500", active ? "bg-stone-100 text-[#1B3430]" : "text-stone-600 hover:bg-stone-50 hover:text-stone-950")}>{item.label}{item.href === "/business-news" && hasNewNews && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />}</Link>;
+               return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={cn("inline-flex h-10 items-center gap-1.5 whitespace-nowrap rounded-xl px-3 text-[13px] font-semibold tracking-tight transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500", active ? "bg-stone-100 text-[#1B3430]" : "text-stone-600 hover:bg-stone-50 hover:text-stone-950")}><BrandIcon name={item.icon} size={17} variant={active ? "bulk" : "linear"} className="text-current" /><span>{item.label}</span>{item.href === "/business-news" && hasNewNews && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />}</Link>;
              })}
              <div className="group relative">
-               <button type="button" aria-label="Resources menu" className="flex h-10 items-center gap-1 rounded-xl px-3 text-[13px] font-semibold text-stone-600 hover:bg-stone-50 hover:text-stone-950">Resources <ChevronDown size={14} /></button>
+               <button type="button" aria-label="Resources menu" className="flex h-10 items-center gap-1 rounded-xl px-3 text-[13px] font-semibold text-stone-600 hover:bg-stone-50 hover:text-stone-950"><BrandIcon name="element-3" size={17} /><span>Resources</span><ChevronDown size={14} /></button>
                <div className="invisible pointer-events-none absolute left-0 top-full z-[80] w-48 translate-y-2 rounded-2xl border border-stone-200 bg-white p-2 opacity-0 shadow-xl transition-all duration-200 group-hover:visible group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:pointer-events-auto group-focus-within:translate-y-0 group-focus-within:opacity-100">
-                 <Link href="/faq" className="block rounded-lg px-3 py-2.5 text-sm text-stone-700 hover:bg-stone-50">Help & FAQ</Link>
-                 <Link href="/contact" className="block rounded-lg px-3 py-2.5 text-sm text-stone-700 hover:bg-stone-50">Contact Us</Link>
+                 <Link href="/faq" className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-stone-700 hover:bg-stone-50"><BrandIcon name="message-question" size={17} />Help & FAQ</Link>
+                 <Link href="/contact" className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-stone-700 hover:bg-stone-50"><BrandIcon name="call" size={17} />Contact Us</Link>
                </div>
              </div>
            </nav>
@@ -359,15 +360,15 @@ export default function Navbar() {
                 href="/business-news?post=true"
                 className="hidden 2xl:flex h-10 items-center gap-1.5 rounded-xl border border-stone-200 px-3 text-xs font-semibold text-stone-700 hover:bg-stone-50"
               >
-                <Plus size={14} /> Add News
+                <BrandIcon name="add" size={15} /> Add News
               </Link>
             )}
             <div className="hidden 2xl:block"><LiveCounter /></div>
-             <Link href="/search" aria-label="Search businesses" className="hidden lg:flex h-10 w-10 items-center justify-center rounded-xl text-stone-600 hover:bg-stone-100 hover:text-stone-950"><Search size={19} /></Link>
+             <Link href="/search" aria-label="Search businesses" className="hidden lg:flex h-10 w-10 items-center justify-center rounded-xl text-stone-600 hover:bg-stone-100 hover:text-stone-950"><BrandIcon name="search-normal-1" size={19} /></Link>
             {fullUserData && <NotificationBell />}
             
             <div className="hidden sm:block"><AuthButton user={fullUserData} /></div>
-             {showRegister && <Link href="/register-business" className="hidden xl:inline-flex h-10 items-center gap-1.5 whitespace-nowrap rounded-xl bg-[#1B3430] px-4 text-xs font-semibold text-white shadow-md transition-all hover:bg-[#26483B] hover:shadow-lg">List Your Business <ArrowUpRight size={15} /></Link>}
+             {showRegister && <Link href="/register-business" className="hidden xl:inline-flex h-10 items-center gap-1.5 whitespace-nowrap rounded-xl bg-[#1B3430] px-4 text-xs font-semibold text-white shadow-md transition-all hover:bg-[#26483B] hover:shadow-lg"><BrandIcon name="buildings-2" size={16} /> List Your Business <ArrowUpRight size={15} /></Link>}
 
             {/* ── Modern two-line toggle ── */}
             <button
@@ -406,7 +407,7 @@ export default function Navbar() {
         <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8">
           <nav aria-label="Business industries" className="flex h-12 items-center gap-1 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <span className="mr-2 inline-flex shrink-0 items-center gap-2 border-r border-stone-200 pr-4 text-[10px] font-bold uppercase tracking-[0.14em] text-[#36785E]">
-              <LayoutGrid size={14} strokeWidth={1.8} /> Industries
+              <BrandIcon name="category-2" size={16} /> Industries
             </span>
             {MAIN_CATEGORY_GROUPS.map((group) => {
               const selected = activeCategory === group && subNavbarOpen;
@@ -430,7 +431,21 @@ export default function Navbar() {
                       : "text-stone-500 hover:bg-white hover:text-[#1B3430]"
                   )}
                 >
-                  {group}
+                  <BrandIcon
+                    name={{
+                      "Manpower Services": "people",
+                      "Care & Lifestyle": "heart",
+                      "Professional & Finance": "briefcase",
+                      "Construction & Industrial": "buildings",
+                      "Technical & Electronics": "cpu",
+                      "Events, Food & Leisure": "calendar",
+                      "Travel & Transport": "airplane",
+                      "Retail & Others": "shop",
+                    }[group] || "category-2"}
+                    size={15}
+                    variant={selected ? "bulk" : "linear"}
+                  />
+                  <span>{group}</span>
                   <ChevronDown size={12} strokeWidth={2} className={cn("shrink-0 transition-transform duration-150", selected && "rotate-180")} />
                 </button>
               );
@@ -461,19 +476,19 @@ export default function Navbar() {
               
               <nav className="flex-1 px-4 py-3 space-y-2">
                 <Link href="/" onClick={close} className="flex items-center gap-3 p-3 text-gray-700 hover:bg-gray-50 rounded-lg">
-                  <Home size={20} /> <span className="font-medium">Home</span>
+                  <BrandIcon name="home-2" size={20} /> <span className="font-medium">Home</span>
                 </Link>
                 <Link href="/nearby" onClick={close} className="flex items-center gap-3 p-3 text-gray-700 hover:bg-gray-50 rounded-lg">
-                  <MapPin size={20} /> <span className="font-medium">Nearby</span>
+                  <BrandIcon name="location" size={20} /> <span className="font-medium">Nearby</span>
                 </Link>
                 <Link href="/about" onClick={close} className="flex items-center gap-3 p-3 text-gray-700 hover:bg-gray-50 rounded-lg">
-                  <Info size={20} /> <span className="font-medium">About</span>
+                  <BrandIcon name="info-circle" size={20} /> <span className="font-medium">About</span>
                 </Link>
                 <Link href="/faq" onClick={close} className="flex items-center gap-3 p-3 text-gray-700 hover:bg-gray-50 rounded-lg">
-                  <HelpIcon size={20} /> <span className="font-medium">FAQ</span>
+                  <BrandIcon name="message-question" size={20} /> <span className="font-medium">FAQ</span>
                 </Link>
                 <Link href="/contact" onClick={close} className="flex items-center gap-3 p-3 text-gray-700 hover:bg-gray-50 rounded-lg">
-                  <Phone size={20} /> <span className="font-medium">Contact</span>
+                  <BrandIcon name="call" size={20} /> <span className="font-medium">Contact</span>
                 </Link>
               </nav>
             </div>
@@ -592,7 +607,7 @@ export default function Navbar() {
                 {/* Home */}
                 <MobileNavLink
                   href="/"
-                  icon={Home}
+                  iconName="home-2"
                   label="Home"
                   onClick={close}
                   variants={itemVariants}
@@ -601,7 +616,7 @@ export default function Navbar() {
                 {/* Nearby */}
                 <MobileNavLink
                   href="/nearby"
-                  icon={MapPin}
+                  iconName="location"
                   label="Nearby"
                   onClick={close}
                   variants={itemVariants}
@@ -610,7 +625,7 @@ export default function Navbar() {
                 {/* About */}
                 <MobileNavLink
                   href="/about"
-                  icon={Info}
+                  iconName="info-circle"
                   label="About"
                   onClick={close}
                   variants={itemVariants}
@@ -619,7 +634,7 @@ export default function Navbar() {
                 {/* SL-News */}
                 <MobileNavLink
                   href="/business-news"
-                  icon={Megaphone}
+                  iconName="note-2"
                   label="SL-News"
                   onClick={close}
                   variants={itemVariants}
@@ -628,7 +643,7 @@ export default function Navbar() {
                 {/* FAQ */}
                 <MobileNavLink
                   href="/faq"
-                  icon={HelpIcon}
+                  iconName="message-question"
                   label="FAQ"
                   onClick={close}
                   variants={itemVariants}
@@ -637,7 +652,7 @@ export default function Navbar() {
                 {/* Contact */}
                 <MobileNavLink
                   href="/contact"
-                  icon={Phone}
+                  iconName="call"
                   label="Contact"
                   onClick={close}
                   variants={itemVariants}
@@ -647,7 +662,7 @@ export default function Navbar() {
                 {showRegister && (
                   <MobileNavLink
                     href="/register-business"
-                    icon={Building2}
+                    iconName="buildings-2"
                     label="Register Business"
                     onClick={close}
                     variants={itemVariants}
@@ -662,7 +677,7 @@ export default function Navbar() {
                     className="w-full flex items-center gap-3 px-3 py-3.5 rounded-xl text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors"
                   >
                     <span className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-brand-blue shrink-0">
-                      <LayoutGrid size={16} />
+                      <BrandIcon name="category-2" size={18} />
                     </span>
                     <span className="flex-1 text-sm font-medium text-left">
                       Categories
@@ -748,7 +763,7 @@ export default function Navbar() {
                     }}
                     className="w-full flex items-center justify-center gap-2 h-11 border border-red-200 text-red-500 rounded-[6px] text-sm font-semibold hover:bg-red-50 active:bg-red-100 transition-colors"
                   >
-                    <LogOut size={16} />
+                    <BrandIcon name="logout" size={17} />
                     Sign Out
                   </button>
                 ) : (
@@ -758,7 +773,7 @@ export default function Navbar() {
                       onClick={close}
                       className="w-full flex items-center justify-center gap-2 h-11 bg-brand-dark text-white rounded-[6px] text-sm font-semibold hover:bg-brand-blue transition-colors shadow-sm"
                     >
-                      <LogIn size={16} />
+                      <BrandIcon name="login" size={17} />
                       Sign In
                     </Link>
                     <Link
@@ -785,14 +800,14 @@ export default function Navbar() {
 ──────────────────────────────────────── */
 function MobileNavLink({
   href,
-  icon: Icon,
+  iconName,
   label,
   onClick,
   variants,
   highlight = false,
 }: {
   href: string;
-  icon: React.ElementType;
+  iconName: string;
   label: string;
   onClick: () => void;
   variants: Variants;
@@ -818,7 +833,7 @@ function MobileNavLink({
               : "bg-gray-100 text-brand-dark",
           )}
         >
-          <Icon size={16} />
+          <BrandIcon name={iconName} size={17} variant="linear" />
         </span>
         <span
           className={cn(
