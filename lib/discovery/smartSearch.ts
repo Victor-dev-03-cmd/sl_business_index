@@ -80,7 +80,7 @@ const GROUPS: readonly DictionaryGroup[] = [
       "කාර් රෙපෙයාර්","කාර් රිපෙයාර්","කාර් රෙපයාර්",
       "කාර් රෙපෙයාර් කරන තැන්","කාර් අලුත්වැඩියා","වාහන අලුත්වැඩියා",
       "වාහන ගරාජ්","කාර් ගරාජ්",
-      "கார் ரிப்பேர்","கார் ரிப்பேரிங்","கார் ரிපෙයரிங்",
+      "கார் ரிப்பேர்","கார் ரிப்பேரிங்","கார் ரிපෙයரிங்","கார் ரிපෙயரிங்",
       "கார் ரிப்பெரிங்","கார் பழுதுபார்ப்பு","வாகன பழுதுபார்ப்பு",
       "கார் மெக்கானிக்","கார் கராஜ்",
     ],
@@ -94,7 +94,7 @@ const SPECIFIC_SYNONYMS: Readonly<Record<string,string>> = {
   "பிரியாணி கடை":"biryani", "බිරියානි":"biryani",
   "பீட்சா":"pizza", "පීසා":"pizza", "pizzas":"pizza",
   "burgers":"burger", "கொத்து":"kottu", "කොත්තු":"kottu",
-  "rice and curry":"rice curry",
+  "rice and curry":"rice curry", "biryani shop":"biryani",
   "car repairs":"car repair", "car repairing":"car repair",
   "car mechanic":"car repair", "auto repair":"car repair",
   "automotive repair":"car repair", "vehicle repair":"car repair",
@@ -104,7 +104,7 @@ const SPECIFIC_SYNONYMS: Readonly<Record<string,string>> = {
   "කාර් අලුත්වැඩියා":"car repair", "වාහන අලුත්වැඩියා":"car repair",
   "වාහන ගරාජ්":"car repair", "කාර් ගරාජ්":"car repair",
   "கார் ரிப்பேர்":"car repair", "கார் ரிப்பேரிங்":"car repair",
-  "கார் ரிපෙයரிங்":"car repair", "கார் ரிப்பெரிங்":"car repair",
+  "கார் ரிපෙයரிங்":"car repair", "கார் ரிපෙயரிங்":"car repair", "கார் ரிப்பெரிங்":"car repair",
   "கார் பழுதுபார்ப்பு":"car repair", "வாகன பழுதுபார்ப்பு":"car repair",
   "கார் மெக்கானிக்":"car repair", "கார் கராஜ்":"car repair",
 };
@@ -241,7 +241,7 @@ export function resolveSmartSearch(
       // Canonical English product name bridges Sinhala/Tamil query text to
       // English-listed services without claiming every category match sells it.
       const canonical = SPECIFIC_SYNONYMS[best.phrase] || best.phrase;
-      const rest = cleaned.replace(best.phrase, " ").split(" ")
+      const rest = normalized.replace(best.phrase, " ").split(" ")
         .filter(word => word && !SERVICE_NOISE_WORDS.has(word)).join(" ").trim();
       canonicalQuery = rest ? (canonical + " " + rest).trim() : canonical;
     } else {
