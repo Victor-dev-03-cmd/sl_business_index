@@ -175,6 +175,23 @@ BEGIN
      RAISE EXCEPTION 'Plan has been deactivated' USING ERRCODE='22023';
    END IF;
 
+   -- Paid Growth OS credits have a SEPARATE entitlement ledger.
+   -- Do not partially activate subscription-only plans if the credit layer
+   -- has not been installed or if the plan mapping is missing. This keeps
+   -- subscriptions, paid invoice and credits atomic under one transaction.
+   IF to_regclass('public.growth_entitlements') IS NULL
+      OR to_regclass('public.growth_credit_plans') IS NULL THEN
+     RAISE EXCEPTION 'Growth OS credit foundation is not installed'
+       USING ERRCODE='55000';
+   END IF;
+   IF NOT EXISTS (
+     SELECT 1 FROM public.growth_credit_plans g
+     WHERE g.plan_name=v_req.plan_name AND g.plan_name <> 'Basic'
+   ) THEN
+     RAISE EXCEPTION 'Configure the paid Growth credit entitlement mapping first'
+       USING ERRCODE='22023';
+   END IF;
+
    -- Ensure this user never keeps two simultaneously active plan records.
    UPDATE public.subscriptions SET status='canceled'
     WHERE user_id=v_req.user_id AND status='active';
@@ -186,6 +203,18 @@ BEGIN
    v_invoice := 'SLBI-MANUAL-'||replace(gen_random_uuid()::text,'-','');
    INSERT INTO public.invoices(id,subscription_id,amount,status)
    VALUES(v_invoice,v_subscription,v_req.quoted_lkr,'paid');
+
+   INSERT INTO public.growth_entitlements
+     (user_id,plan_name,payment_reference,verified_at,expires_at)
+   SELECT v_req.user_id,v_req.plan_name,
+       pg_catalog.left(pg_catalog.btrim(p_payment_reference),200),
+       now(),s.renews_at
+   FROM public.subscriptions s WHERE s.id=v_subscription
+   ON CONFLICT(user_id) DO UPDATE SET
+     plan_name=EXCLUDED.plan_name,
+     payment_reference=EXCLUDED.payment_reference,
+     verified_at=EXCLUDED.verified_at,
+     expires_at=EXCLUDED.expires_at;
  END IF;
 
  UPDATE public.billing_requests SET
