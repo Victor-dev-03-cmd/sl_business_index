@@ -321,10 +321,9 @@ export default function Navbar() {
         }}
       >
         <header 
-          className={cn("relative z-50 border-b bg-[#FCFAF6] transition-[border-color,box-shadow] duration-150", scrolled ? "border-stone-200 shadow-[0_2px_10px_rgba(15,23,42,0.055)]" : "border-stone-100")}
-          onMouseEnter={() => {
-            if (timeoutRef.current) clearTimeout(timeoutRef.current);
-          }}
+          className={cn("relative z-[90] border-b bg-[#FCFAF6] transition-[border-color,box-shadow] duration-150", scrolled ? "border-stone-200 shadow-[0_2px_10px_rgba(15,23,42,0.055)]" : "border-stone-100")}
+          onMouseEnter={closeMegaMenu}
+          onFocusCapture={closeMegaMenu}
         >
         <div className="mx-auto flex h-[76px] max-w-[1440px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           {/* Logo */}
@@ -345,8 +344,8 @@ export default function Navbar() {
                return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={cn("inline-flex h-10 items-center gap-1.5 whitespace-nowrap rounded-xl px-3 text-[13px] font-semibold tracking-tight transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500", active ? "bg-stone-100 text-[#1B3430]" : "text-stone-600 hover:bg-stone-50 hover:text-stone-950")}><BrandIcon name={item.icon} size={17} variant={active ? "bulk" : "linear"} className="text-current" /><span>{item.label}</span>{item.href === "/business-news" && hasNewNews && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />}</Link>;
              })}
              <div className="group relative">
-               <button type="button" aria-label="Resources menu" className="flex h-10 items-center gap-1 rounded-xl px-3 text-[13px] font-semibold text-stone-600 hover:bg-stone-50 hover:text-stone-950"><BrandIcon name="element-3" size={17} /><span>Resources</span><ChevronDown size={14} /></button>
-               <div className="invisible pointer-events-none absolute left-0 top-full z-[80] w-48 translate-y-2 rounded-2xl border border-stone-200 bg-white p-2 opacity-0 shadow-xl transition-all duration-200 group-hover:visible group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:pointer-events-auto group-focus-within:translate-y-0 group-focus-within:opacity-100">
+               <button type="button" aria-label="Resources menu" aria-haspopup="true" className="flex h-10 items-center gap-1 rounded-xl px-3 text-[13px] font-semibold text-stone-600 hover:bg-stone-50 hover:text-stone-950"><BrandIcon name="element-3" size={17} /><span>Resources</span><ChevronDown size={14} /></button>
+               <div className="invisible pointer-events-none absolute left-0 top-full z-[120] w-48 rounded-2xl border border-stone-200 bg-white p-2 opacity-0 shadow-xl transition-opacity duration-150 group-hover:visible group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:visible group-focus-within:pointer-events-auto group-focus-within:opacity-100">
                  <Link href="/faq" className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-stone-700 hover:bg-stone-50"><BrandIcon name="message-question" size={17} />Help & FAQ</Link>
                  <Link href="/contact" className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-stone-700 hover:bg-stone-50"><BrandIcon name="call" size={17} />Contact Us</Link>
                </div>
