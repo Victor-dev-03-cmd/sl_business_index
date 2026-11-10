@@ -8,7 +8,7 @@ const towns=[
  {name:"Colombo",lat:6.9388614,lon:79.8542005,district:"Colombo"},
  {name:"Nuwara Eliya",lat:6.9738863,lon:80.767127,district:"Nuwara Eliya"},
 ];
-test("SmartSearch algorithm version",()=>assert.equal(SMART_SEARCH_VERSION,"1.0.0"));
+test("SmartSearch algorithm version",()=>assert.equal(SMART_SEARCH_VERSION,"1.1.0"));
 test("Jaffna Clothings resolves known place and Clothing & Brands",()=>{
  const r=resolveSmartSearch("Jaffna Clothings",towns,["Clothing & Brands","Food & Dining"]);
  assert.equal(r.location?.name,"Jaffna");

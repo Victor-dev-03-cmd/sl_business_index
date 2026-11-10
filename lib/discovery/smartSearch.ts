@@ -4,7 +4,8 @@
  * and GeoRank consume these signals. Never infer that a business serves a product
  * merely because it belongs to a related category.
  */
-export const SMART_SEARCH_VERSION = "1.0.0";
+import { findIntentCorrection, findTownCorrection } from "./searchCorrections.ts";
+export const SMART_SEARCH_VERSION = "1.1.0";
 
 export type SearchPlace = {
   name: string;
@@ -22,6 +23,7 @@ export type SearchDictionaryEntry = {
   categories: string[];
   specific_service: boolean;
   town_name: string | null;
+  language?: string;
 };
 export type SearchIntent = {
   rawQuery: string;
@@ -32,6 +34,11 @@ export type SearchIntent = {
   intentKey: string | null;
   specificService: boolean;
   location: SearchPlace | null;
+  correction?: {
+    original: string;
+    interpretedAs: string;
+    strategy: "typo" | "phonetic";
+  };
 };
 
 type DictionaryGroup = {
@@ -237,6 +244,23 @@ export function extractSearchPlace(query: string, places: readonly SearchPlace[]
     const after = parts.slice(position + cityParts.length);
     return { location: place, remaining: [...before, ...after].join(" ").trim() };
   }
+  // Only when every exact geographic alias failed: accept an unambiguous
+  // one-edit town correction, never a fabricated coordinate or fuzzy district.
+  if (dictionary.length && places.length && tokens.length <= 8) {
+    for (let width=Math.min(3,tokens.length);width>=1;width--) {
+      for (let index=0;index<=tokens.length-width;index++) {
+        const phrase=tokens.slice(index,index+width).join(" ");
+        if (phrase.length<6 || phrase.length>36)continue;
+        const suggested=findTownCorrection(phrase,dictionary);
+        const townName=suggested?.entry.town_name;
+        const town=townName?placeNames.get(scrub(townName)):null;
+        if (!town)continue;
+        const before=tokens.slice(0,index);
+        if (["in","near","at","around"].includes(before[before.length-1]))before.pop();
+        return { location:town, remaining:[...before,...tokens.slice(index+width)].join(" ").trim() };
+      }
+    }
+  }
   return { location: null, remaining: clean };
 }
 
@@ -269,6 +293,10 @@ export function resolveSmartSearch(
     .find(item => containsPhrase(normalized, item.phrase));
   const useDynamic = dynamicBest &&
     (!best || dynamicBest.phrase.length >= scrub(best.phrase).length);
+  // All exact matches beat approximate matches; fail closed on ambiguity.
+  const approximate = !best && !dynamicBest
+    ? findIntentCorrection(normalized,dictionary)
+    : null;
 
   // Case-preserving raw keywords are not necessary for Postgres; the user-visible
   // search field itself remains unchanged until submission.
@@ -295,6 +323,18 @@ export function resolveSmartSearch(
         !SERVICE_NOISE_WORDS.has(word)).join(" ").trim();
     const canonical = scrub(row.canonical_query);
     canonicalQuery = rest ? canonical + " " + rest : canonical;
+  } else if (approximate) {
+    const row=approximate.entry;
+    categories=Array.isArray(row.categories)?[...row.categories]:[];
+    if (knownCategories?.length) {
+      const matched=categories.filter(name=>
+        knownCategories.some(known=>scrub(known)===scrub(name)));
+      if(matched.length)categories=matched;
+    }
+    label=categories[0]||row.canonical_query;
+    intentKey=row.intent_key;
+    specificService=row.specific_service;
+    canonicalQuery=scrub(row.canonical_query);
   } else if (best) {
     categories = [...best.group.categories];
     if (knownCategories?.length) {
@@ -324,6 +364,11 @@ export function resolveSmartSearch(
   return {
     rawQuery, query: normalized, canonicalQuery: canonicalQuery.slice(0, 100),
     categories, label, intentKey, specificService, location,
+    ...(approximate ? { correction: {
+      original: normalized,
+      interpretedAs: approximate.entry.canonical_query,
+      strategy: approximate.strategy,
+    }} : {}),
   };
 }
 
