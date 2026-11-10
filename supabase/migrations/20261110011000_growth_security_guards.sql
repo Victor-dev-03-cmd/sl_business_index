@@ -5,7 +5,15 @@ CREATE OR REPLACE FUNCTION public.growth_prevent_profile_role_escalation()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=''
 AS $$
 BEGIN
-  IF NEW.role IS DISTINCT FROM OLD.role THEN
+  -- Users may create their own customer profile, but must never choose
+  -- elevated roles when inserting a missing profile.
+  IF TG_OP = 'INSERT' THEN
+    IF NEW.role IS DISTINCT FROM 'customer'::public.user_role
+      AND auth.role() IS DISTINCT FROM 'service_role' THEN
+      RAISE EXCEPTION 'New account roles require trusted provisioning'
+        USING ERRCODE='42501';
+    END IF;
+  ELSIF NEW.role IS DISTINCT FROM OLD.role THEN
     IF auth.role() IS DISTINCT FROM 'service_role' AND NOT EXISTS (
       SELECT 1 FROM public.profiles p
       WHERE p.id=auth.uid() AND p.role IN ('admin','ceo')
@@ -21,7 +29,7 @@ REVOKE ALL ON FUNCTION public.growth_prevent_profile_role_escalation()
   FROM PUBLIC, anon, authenticated;
 DROP TRIGGER IF EXISTS prevent_profile_role_escalation ON public.profiles;
 CREATE TRIGGER prevent_profile_role_escalation
-BEFORE UPDATE ON public.profiles
+BEFORE INSERT OR UPDATE ON public.profiles
 FOR EACH ROW EXECUTE FUNCTION public.growth_prevent_profile_role_escalation();
 
 CREATE OR REPLACE FUNCTION public.growth_protect_business_approval()

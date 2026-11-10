@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { supabase } from "@/lib/supabaseClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -190,9 +191,26 @@ export default function AdminBillingPage() {
     mutationFn: async (formData: any) => {
       // Functional features are primarily stored in functional_features JSONB
       // Keep legacy advanced_feature_access sync'd for backend logic
+      // The production subscription_plans schema has NO "features" column.
+      // Persist only supported columns; otherwise PostgREST rejects every save.
+      const name = String(formData.name || "").trim();
+      const price_monthly = Number(formData.price_monthly);
+      const price_yearly = Number(formData.price_yearly);
+      const max_listings = Number(formData.max_listings);
+      const discount_percentage = Number(formData.discount_percentage);
+      if (!name || name.length > 120) throw new Error("Enter a plan name (max. 120 characters).");
+      if (![price_monthly, price_yearly, max_listings, discount_percentage].every(Number.isFinite) ||
+          ![price_monthly, price_yearly, max_listings, discount_percentage].every(Number.isInteger) ||
+          price_monthly < 0 || price_yearly < 0 || max_listings < 1 ||
+          discount_percentage < 0 || discount_percentage > 100) {
+        throw new Error("Enter valid non-negative whole prices, a positive listing limit, and a 0–100% discount.");
+      }
       const dataToSave = {
-        ...formData,
-        advanced_feature_access: formData.functional_features.advanced_feature_access || false,
+        name,
+        description: String(formData.description || "").trim(),
+        price_monthly, price_yearly, max_listings, discount_percentage,
+        functional_features: formData.functional_features || {},
+        advanced_feature_access: formData.functional_features?.advanced_feature_access === true,
       };
 
       if (selectedPlan) {
@@ -212,7 +230,9 @@ export default function AdminBillingPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-plans"] });
       setShowPlanDialog(false);
       setSelectedPlan(null);
+      toast.success("Subscription plan saved.");
     },
+    onError: (error: Error) => toast.error(error.message || "Unable to save plan."),
   });
 
   const createAnnouncementMutation = useMutation({
@@ -250,8 +270,11 @@ export default function AdminBillingPage() {
         .eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["admin-plans"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-plans"] });
+      toast.success("Plan availability updated.");
+    },
+    onError: (error: Error) => toast.error(error.message || "Unable to update plan."),
   });
 
   const deleteAnnouncementMutation = useMutation({
@@ -293,6 +316,12 @@ export default function AdminBillingPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            {process.env.NEXT_PUBLIC_BILLING_V2_ENABLED === 'true' && (
+              <Link href="/admin/billing/workflow"
+                className="inline-flex h-10 items-center justify-center rounded-lg border border-[#b6d0bd] bg-[#eff7f1] px-4 text-xs font-bold text-[#286141] hover:bg-[#e0efe5]">
+                Payment review workflow
+              </Link>
+            )}
             <Link href="/admin/billing/requests"
               className="inline-flex h-10 items-center justify-center rounded-lg border border-[#b6d0bd] bg-[#eaf4ed] px-4 text-xs font-bold text-[#286141] hover:bg-[#dbede1]">
               Vendor upgrade requests
@@ -523,7 +552,7 @@ export default function AdminBillingPage() {
                       </div>
 
                       <div className="space-y-3 mb-10">
-                        {plan.features.map((f: string, idx: number) => (
+                        {(Array.isArray(plan.features) ? plan.features : []).map((f: string, idx: number) => (
                           <div
                             key={idx}
                             className="flex items-start gap-2 text-sm text-gray-600"
@@ -536,7 +565,7 @@ export default function AdminBillingPage() {
                           </div>
                         ))}
                         {featureDefinitions.map((f: any) => 
-                          plan.functional_features[f.id] && (
+                          plan.functional_features?.[f.id] && (
                             <div
                               key={f.id}
                               className="flex items-start gap-2 text-sm text-brand-blue font-bold"
@@ -763,7 +792,7 @@ export default function AdminBillingPage() {
                   onChange={(e) =>
                     setPlanForm({
                       ...planForm,
-                      max_listings: parseInt(e.target.value),
+                      max_listings: Number(e.target.value),
                     })
                   }
                   className="w-full px-4 py-2 border border-gray-300 rounded-[6px] text-sm outline-none focus:border-brand-blue"
@@ -782,7 +811,7 @@ export default function AdminBillingPage() {
                   onChange={(e) =>
                     setPlanForm({
                       ...planForm,
-                      price_monthly: parseInt(e.target.value),
+                      price_monthly: Number(e.target.value),
                     })
                   }
                   className="w-full px-4 py-2 border border-gray-300 rounded-[6px] text-sm outline-none focus:border-brand-blue"
@@ -798,7 +827,7 @@ export default function AdminBillingPage() {
                   onChange={(e) =>
                     setPlanForm({
                       ...planForm,
-                      price_yearly: parseInt(e.target.value),
+                      price_yearly: Number(e.target.value),
                     })
                   }
                   className="w-full px-4 py-2 border border-gray-300 rounded-[6px] text-sm outline-none focus:border-brand-blue"

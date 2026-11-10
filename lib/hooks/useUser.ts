@@ -1,59 +1,57 @@
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabaseClient';
+import { useQuery } from '@tanstack/react-query'
+import type { User } from '@supabase/supabase-js'
+import { supabase } from '@/lib/supabaseClient'
 
 export interface AuthUser {
-  id: string;
-  email?: string;
-  full_name?: string;
-  username?: string;
-  role?: string;
-  verification_status?: string;
-  avatar_url?: string;
-  hasBusiness?: boolean;
+  id: string
+  email?: string
+  full_name?: string
+  username?: string
+  role?: string
+  verification_status?: string
+  avatar_url?: string
+  hasBusiness?: boolean
 }
 
+/**
+ * Client-side display/profile hook, not an authorization boundary.
+ * Always verify the signed-in user against Supabase Auth before loading a profile.
+ */
 export function useUser() {
   return useQuery({
     queryKey: ['auth-user'],
-    queryFn: async () => {
-      // Use getSession for faster local access instead of getUser
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError || !session?.user) {
-        // Fallback to getUser just in case session is stale but user is valid
-        const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
-        if (authError || !authUser) return null;
-        return fetchProfileAndBusiness(authUser);
-      }
-
-      return fetchProfileAndBusiness(session.user);
+    queryFn: async (): Promise<AuthUser | null> => {
+      const { data: { user }, error } = await supabase.auth.getUser()
+      if (error || !user) return null
+      return fetchProfileAndBusiness(user)
     },
-    staleTime: 2 * 60 * 1000, // Reduced to 2 minutes for better responsiveness
-    gcTime: 5 * 60 * 1000,   
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
     retry: false,
-  });
+  })
 }
 
-async function fetchProfileAndBusiness(authUser: any) {
-  // Parallelize profile and business check
+async function fetchProfileAndBusiness(authUser: User): Promise<AuthUser> {
   const [profileResult, businessResult] = await Promise.all([
-    supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', authUser.id)
-      .single(),
-    supabase
-      .from('businesses')
-      .select('id', { count: 'exact', head: true })
-      .eq('owner_id', authUser.id)
-  ]);
+    supabase.from('profiles').select('full_name,username,role,verification_status,avatar_url')
+      .eq('id', authUser.id).maybeSingle(),
+    supabase.from('businesses').select('id', { count: 'exact', head: true })
+      .eq('owner_id', authUser.id),
+  ])
+  if (profileResult.error || businessResult.error) {
+    console.warn('Could not load full user profile or business ownership')
+  }
+  const profile = profileResult.data
 
-  const profile = profileResult.data;
-  const hasBusiness = (businessResult.count || 0) > 0;
-
+  // Roles only come from the database; never trust user_metadata for access.
   return {
-    ...authUser,
-    ...(profile || {}),
-    hasBusiness
-  } as AuthUser;
+    id: authUser.id,
+    email: authUser.email,
+    full_name: profile?.full_name || undefined,
+    username: profile?.username || undefined,
+    role: profile?.role || undefined,
+    verification_status: profile?.verification_status || undefined,
+    avatar_url: profile?.avatar_url || undefined,
+    hasBusiness: !businessResult.error && (businessResult.count || 0) > 0,
+  }
 }
