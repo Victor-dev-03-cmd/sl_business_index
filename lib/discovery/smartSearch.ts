@@ -77,6 +77,16 @@ const GROUPS: readonly DictionaryGroup[] = [
   },
 ] as const;
 
+// Only explicitly curated, language-aware product synonyms are canonicalized.
+// Unlike category aliases, these never prove product availability for a listing.
+const SPECIFIC_SYNONYMS: Readonly<Record<string,string>> = {
+  "biriyani":"biryani", "briyani":"biryani", "பிரியாணி":"biryani",
+  "பிரியாணி கடை":"biryani", "බිරියානි":"biryani",
+  "பீட்சா":"pizza", "පීසා":"pizza", "pizzas":"pizza",
+  "burgers":"burger", "கொத்து":"kottu", "කොත්තු":"kottu",
+  "rice and curry":"rice curry",
+};
+
 const GENERIC_WORDS = new Set(["shop","shops","store","stores","business","businesses","service","services","company","companies","place","places","near","nearby","around","in","at","for","me","my","the","best","find","a","an","local"]);
 const PLACE_INDEX = new WeakMap<object, SearchPlace[]>();
 
@@ -160,6 +170,11 @@ export function resolveSmartSearch(
     // must stay as a keyword so exact claims can be distinguished from related.
     if (!specificService && (cleaned === best.phrase || scrub(best.phrase) === normalized)) {
       canonicalQuery = best.group.key;
+    } else if (specificService) {
+      // Canonical English product name bridges Sinhala/Tamil query text to
+      // English-listed services without claiming every category match sells it.
+      const canonical = SPECIFIC_SYNONYMS[best.phrase] || best.phrase;
+      canonicalQuery = cleaned.replace(best.phrase, canonical).trim() || canonical;
     } else {
       canonicalQuery = cleaned;
     }

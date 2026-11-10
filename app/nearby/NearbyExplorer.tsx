@@ -17,6 +17,7 @@ import type { Business } from "@/lib/types";
 import VerifiedBadge from "@/app/components/VerifiedBadge";
 import "./nearby-map.css";
 import { sortGeoRank } from "@/lib/discovery/geoRank";
+import { rankHybridSearch, useHybridV2 } from "@/lib/discovery/hybridSearch";
 import { resolveSmartSearch, radiusSteps } from "@/lib/discovery/smartSearch";
 import { recordNearbySample } from "@/lib/discovery/diagnostics";
 
@@ -303,7 +304,13 @@ export default function NearbyExplorer() {
       (!withPhotosOnly || Boolean(item.image_url || item.logo_url))
     );
     if (sortBy === "best-match") {
-      return sortGeoRank(sorted, normalizedSearch, effectiveRadius);
+      // HybridSearch v2 is candidate-limited, evidence-safe, and leaves all
+      // location-only browsing on the existing GeoRank baseline.
+      return useHybridV2(normalizedSearch, sorted.length)
+        ? rankHybridSearch(sorted, normalizedSearch, effectiveRadius, {
+            specificService: smartIntent.specificService,
+          })
+        : sortGeoRank(sorted, normalizedSearch, effectiveRadius);
     } else if (sortBy === "top-rated") {
       sorted.sort((a, b) => (Number(b.rating) || 0) - (Number(a.rating) || 0));
     } else if (sortBy === "alphabetical") {
@@ -315,7 +322,7 @@ export default function NearbyExplorer() {
       );
     }
     return sorted;
-  }, [businesses, sortBy, verifiedOnly, withPhotosOnly, normalizedSearch, effectiveRadius]);
+  }, [businesses, sortBy, verifiedOnly, withPhotosOnly, normalizedSearch, effectiveRadius, smartIntent.specificService]);
 
   useEffect(() => { setResultLimit(30); }, [location.lat, location.lng, appliedQuery, category, radius, sortBy, verifiedOnly, withPhotosOnly]);
 
