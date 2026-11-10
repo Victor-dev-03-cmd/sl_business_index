@@ -2,7 +2,7 @@ name: Verify Next.js Build
 
 on:
   push:
-    branches: [main, feature/vendor-enterprise-iconsax]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
