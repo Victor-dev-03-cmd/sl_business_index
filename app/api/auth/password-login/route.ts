@@ -84,12 +84,13 @@ export async function POST(request: Request) {
       return json({ error: 'Invalid email or password.' }, 401)
     }
 
-    // The session has been obtained by Supabase Auth, not fabricated from input.
-    // This also verifies that the account is readable from Auth.
-    const { data: verified, error: verifyError } = await supabase.auth.getUser()
-    if (verifyError || verified.user?.id !== data.user.id) {
-      return json({ error: 'Sign-in could not be confirmed. Please try again.' }, 503)
-    }
+    // signInWithPassword has already authenticated the credentials against
+    // Supabase Auth and returned the signed-in user + session. Its SSR cookie
+    // adapter writes the session to this Route Handler's response. Calling
+    // getUser() a second time inside the SAME request is redundant and can
+    // falsely fail before the new cookies are available on the next request.
+    // The protected Proxy independently validates getClaims() on navigation.
+    // Never return tokens to the browser in this JSON response.
     return json({ authenticated: true })
   } catch {
     return json({ error: 'Authentication service temporarily unavailable.' }, 503)
