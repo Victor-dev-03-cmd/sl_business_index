@@ -50,12 +50,42 @@ interface LeafletMapProps {
   onMapMove?: (lat: number, lng: number, zoom: number) => void;
   showUserLocation?: boolean;
   tileProvider?: "google" | "osm";
+  modernNearby?: boolean;
+  selectedBusinessId?: string | number;
   wrapperClassName?: string;
 }
 
 // Custom SVG Marker Icon - Pin Shape with Dynamic Color
-const getCustomIcon = (color: string = "#EA4335") =>
-  L.divIcon({
+const modernSymbol = (category: string = "") => {
+  const value = String(category).toLowerCase();
+  if (/food|restaurant|dining|bakery|cafe/.test(value)) return '<path d="M4 3v8M8 3v8M12 3v8M8 11v10M18 3v18M18 3c-3 3-3 6 0 8"/>';
+  if (/health|medical|hospital|doctor|clinic|pharmacy/.test(value)) return '<path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"/>';
+  if (/cloth|fashion|brand|apparel|boutique/.test(value)) return '<path d="M10 6a2 2 0 1 1 4 0c0 1-1 1.7-2 2.5L3 17l2 3h14l2-3-9-8.5"/>';
+  if (/shopping|retail|market|store/.test(value)) return '<path d="M5 8h14l-1.5 13h-11L5 8zM9 9V6a3 3 0 0 1 6 0v3"/>';
+  if (/education|tuition|school|academy/.test(value)) return '<path d="m2 9 10-5 10 5-10 5-10-5zM6 12v5c3 3 9 3 12 0v-5M21 9v8"/>';
+  return '<path d="M4 10h16l-2-6H6l-2 6Z"/><path d="M5 10v10h14V10M9 20v-6h6v6"/>';
+};
+const modernCategoryColor = (category: string = "") => {
+  const value = String(category).toLowerCase();
+  if (/food|restaurant|dining|bakery|cafe/.test(value)) return "#B47749";
+  if (/health|medical|hospital|doctor|clinic/.test(value)) return "#B75967";
+  if (/cloth|fashion|brand|apparel/.test(value)) return "#7465A2";
+  if (/shopping|retail|market/.test(value)) return "#3C866C";
+  if (/education|tuition|school/.test(value)) return "#537AA5";
+  return "#245C4D";
+};
+
+const getCustomIcon = (color: string = "#EA4335", modern = false, active = false, category = "") =>
+  modern
+    ? L.divIcon({
+        html: '<div class="slbi-modern-pin' + (active ? ' active' : '') + '" style="--slbi-marker-color:' + color + '">' +
+          '<span class="slbi-modern-pin-symbol"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">' + modernSymbol(category) + '</svg></span></div>',
+        className: "slbi-modern-marker-icon",
+        iconSize: [44, 48],
+        iconAnchor: [22, 45],
+        popupAnchor: [0, -42],
+      })
+    : L.divIcon({
     html: `<div class="marker-pin-container">
           <div class="marker-pin shadow-lg" style="background-color: ${color};">
             <div class="marker-pin-inner"></div>
@@ -66,6 +96,16 @@ const getCustomIcon = (color: string = "#EA4335") =>
     iconAnchor: [15, 40],
     popupAnchor: [0, -40],
   });
+
+const modernClusterIcon = (cluster: { getChildCount: () => number }) => {
+  const count = cluster.getChildCount();
+  return L.divIcon({
+    html: '<span class="slbi-modern-cluster-inner">' + (count > 99 ? '99+' : String(count)) + '</span>',
+    className: "slbi-modern-cluster-icon",
+    iconSize: [44, 44],
+    iconAnchor: [22, 22],
+  });
+};
 
 // Category to Color Mapping (Google Maps style)
 const getCategoryColor = (category: string = ""): string => {
@@ -301,6 +341,8 @@ function MapContent({
   onMapMove,
   showUserLocation = true,
   tileProvider = "google",
+  modernNearby = false,
+  selectedBusinessId,
 }: LeafletMapProps) {
   const map = useMap();
 
@@ -382,11 +424,12 @@ function MapContent({
           center={center}
           radius={radius}
           pathOptions={{
-            fillColor: "#2a7db4",
-            fillOpacity: 0.1,
-            color: "#2a7db4",
-            weight: 1,
-            dashArray: "5, 5",
+            fillColor: modernNearby ? "#5C9A81" : "#2a7db4",
+            fillOpacity: modernNearby ? 0.045 : 0.1,
+            color: modernNearby ? "#44886D" : "#2a7db4",
+            opacity: modernNearby ? 0.7 : 1,
+            weight: modernNearby ? 1.4 : 1,
+            dashArray: modernNearby ? undefined : "5, 5",
           }}
         />
       )}
@@ -399,6 +442,7 @@ function MapContent({
           spiderfyOnMaxZoom={true}
           showCoverageOnHover={false}
           disableClusteringAtZoom={16}
+          iconCreateFunction={modernNearby ? modernClusterIcon : undefined}
         >
           {businesses.map((biz, idx) => {
             const coords = biz.geometry?.coordinates || [
@@ -409,18 +453,18 @@ function MapContent({
 
             if (!coords[1] || !coords[0]) return null;
 
-            const markerColor = getCategoryColor(props.category);
+            const markerColor = modernNearby ? modernCategoryColor(props.category) : getCategoryColor(props.category);
 
             return (
               <Marker
                 key={biz.id || idx}
                 position={[coords[1], coords[0]]}
-                icon={getCustomIcon(markerColor)}
+                icon={getCustomIcon(markerColor, modernNearby, String(selectedBusinessId ?? "") === String(props.id ?? biz.id), props.category)}
                 eventHandlers={{
                   click: () => onMarkerClick?.(biz),
                 }}
               >
-                <Popup className="business-popup">
+                <Popup className={modernNearby ? "business-popup slbi-business-popup" : "business-popup"}>
                   <div className="w-64 p-0">
                     {props.image_url && (
                       <div className="h-28 w-full relative mb-2">
@@ -488,18 +532,18 @@ function MapContent({
           const props = biz.properties || biz;
           if (!coords[1] || !coords[0]) return null;
 
-          const markerColor = getCategoryColor(props.category);
+          const markerColor = modernNearby ? modernCategoryColor(props.category) : getCategoryColor(props.category);
 
           return (
             <Marker
               key={biz.id || idx}
               position={[coords[1], coords[0]]}
-              icon={getCustomIcon(markerColor)}
+              icon={getCustomIcon(markerColor, modernNearby, String(selectedBusinessId ?? "") === String(props.id ?? biz.id), props.category)}
               eventHandlers={{
                 click: () => onMarkerClick?.(biz),
               }}
             >
-              <Popup className="business-popup">
+              <Popup className={modernNearby ? "business-popup slbi-business-popup" : "business-popup"}>
                 <div className="w-64 p-0">
                   {props.image_url && (
                     <div className="h-28 w-full relative mb-2">

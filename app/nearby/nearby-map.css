@@ -1,0 +1,50 @@
+/* SLBI Nearby Explorer only — Leaflet visuals and map theme. */
+.nearby-map-studio .leaflet-tile-pane { filter: saturate(.66) contrast(.94) brightness(1.07); }
+.nearby-map-studio .leaflet-container { background: #eaf0ea; }
+.slbi-nearby-modern-map .slbi-modern-marker-icon,
+.slbi-nearby-modern-map .slbi-modern-cluster-icon { border: 0 !important; background: transparent !important; }
+.slbi-nearby-modern-map .slbi-modern-pin {
+  width: 36px; height: 36px; position: relative; display: flex; align-items: center; justify-content: center;
+  border: 3px solid #fff; border-radius: 12px; color: #fff;
+  background: var(--slbi-marker-color, #245c4d);
+  box-shadow: 0 3px 10px rgba(24,51,44,.2),0 1px 3px rgba(24,51,44,.13);
+  transform: translate(4px, 1px);
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+.slbi-nearby-modern-map .slbi-modern-pin::after {
+  content: ""; position: absolute; width: 8px; height: 8px; left: 11px; bottom: -5px;
+  border-radius: 0 0 2px 0; background: var(--slbi-marker-color, #245c4d);
+  transform: rotate(45deg); z-index: -1;
+}
+.slbi-nearby-modern-map .slbi-modern-pin-symbol {
+  display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;
+}
+.slbi-nearby-modern-map .slbi-modern-pin.active {
+  outline: 3px solid rgba(98,174,133,.34); outline-offset: 3px;
+  transform: translate(4px, -3px) scale(1.06); box-shadow: 0 5px 16px rgba(24,68,47,.3);
+}
+.slbi-nearby-modern-map .slbi-modern-pin:hover {
+  transform: translate(4px, -3px) scale(1.08); box-shadow: 0 5px 16px rgba(24,68,47,.25);
+}
+.slbi-nearby-modern-map .slbi-modern-cluster-icon { display: flex; align-items: center; justify-content: center; }
+.slbi-nearby-modern-map .slbi-modern-cluster-inner {
+  display: flex; align-items: center; justify-content: center; min-width: 38px; height: 38px; padding: 0 5px;
+  color: #fff; font-size: 12px; font-weight: 750; border: 3px solid #fff; border-radius: 13px;
+  background: #215643; box-shadow: 0 3px 12px rgba(14,49,33,.23);
+}
+.slbi-nearby-modern-map .leaflet-popup-content-wrapper {
+  border: 1px solid #e2eae4; border-radius: 12px; box-shadow: 0 14px 35px rgba(29,58,45,.14);
+}
+.slbi-nearby-modern-map .slbi-business-popup a[href^="/business/"] { background: #1c4d3c; }
+.slbi-nearby-modern-map .slbi-business-popup a[href^="/business/"]:hover { background: #347159; }
+.slbi-nearby-modern-map .leaflet-bar {
+  border: 1px solid rgba(150,170,154,.4); border-radius: 9px;
+  box-shadow: 0 5px 18px rgba(31,67,48,.12); overflow: hidden;
+}
+.slbi-nearby-modern-map .leaflet-bar a { color: #275742; background: #fff; border-color: #edf1ed; }
+.slbi-nearby-modern-map .leaflet-control-attribution {
+  color: #667f6e; font-size: 10px; background: rgba(255,255,255,.85);
+}
+@media (prefers-reduced-motion: reduce) {
+  .slbi-nearby-modern-map .slbi-modern-pin { transition: none; }
+}

@@ -15,7 +15,9 @@ import { supabase } from "@/lib/supabaseClient";
 import { SL_TOWNS, type Town } from "@/lib/towns";
 import type { Business } from "@/lib/types";
 import VerifiedBadge from "@/app/components/VerifiedBadge";
+import "./nearby-map.css";
 import { sortGeoRank } from "@/lib/discovery/geoRank";
+import { rankHybridSearch, useHybridV2 } from "@/lib/discovery/hybridSearch";
 import { resolveSmartSearch, radiusSteps } from "@/lib/discovery/smartSearch";
 import { recordNearbySample } from "@/lib/discovery/diagnostics";
 
@@ -186,7 +188,7 @@ export default function NearbyExplorer() {
   const [draftVerifiedOnly, setDraftVerifiedOnly] = useState(false);
   const [draftWithPhotosOnly, setDraftWithPhotosOnly] = useState(false);
   const [mapExpanded, setMapExpanded] = useState(false);
-  const [mapAppearance, setMapAppearance] = useState<"original" | "soft">("original");
+  const [mapAppearance, setMapAppearance] = useState<"studio" | "classic">("studio");
   const [mapAppearanceOpen, setMapAppearanceOpen] = useState(false);
   const mapAppearanceRef = useRef<HTMLDivElement>(null);
 
@@ -302,7 +304,13 @@ export default function NearbyExplorer() {
       (!withPhotosOnly || Boolean(item.image_url || item.logo_url))
     );
     if (sortBy === "best-match") {
-      return sortGeoRank(sorted, normalizedSearch, effectiveRadius);
+      // HybridSearch v2 is candidate-limited, evidence-safe, and leaves all
+      // location-only browsing on the existing GeoRank baseline.
+      return useHybridV2(normalizedSearch, sorted.length)
+        ? rankHybridSearch(sorted, normalizedSearch, effectiveRadius, {
+            specificService: smartIntent.specificService,
+          })
+        : sortGeoRank(sorted, normalizedSearch, effectiveRadius);
     } else if (sortBy === "top-rated") {
       sorted.sort((a, b) => (Number(b.rating) || 0) - (Number(a.rating) || 0));
     } else if (sortBy === "alphabetical") {
@@ -314,7 +322,7 @@ export default function NearbyExplorer() {
       );
     }
     return sorted;
-  }, [businesses, sortBy, verifiedOnly, withPhotosOnly, normalizedSearch, effectiveRadius]);
+  }, [businesses, sortBy, verifiedOnly, withPhotosOnly, normalizedSearch, effectiveRadius, smartIntent.specificService]);
 
   useEffect(() => { setResultLimit(30); }, [location.lat, location.lng, appliedQuery, category, radius, sortBy, verifiedOnly, withPhotosOnly]);
 
@@ -1252,9 +1260,11 @@ export default function NearbyExplorer() {
         </aside>
 
         <main className={(mobileView === "map" ? "flex" : "hidden") + " relative min-h-0 min-w-0 flex-1 flex-col bg-[#E8ECE4] md:flex"} aria-label="Interactive business map">
-          <div className={"absolute inset-0 " + (mapAppearance === "soft" ? "nearby-map-soft" : "")}>
+          <div className={"absolute inset-0 " + (mapAppearance === "studio" ? "nearby-map-studio" : "")}>
             {(desktopMapEnabled || mobileView === "map") ? <LeafletMap
               tileProvider="osm"
+              modernNearby={mapAppearance === "studio"}
+              selectedBusinessId={selectedBusiness?.id}
               centerLat={mapCenter.lat}
               centerLng={mapCenter.lng}
               userLat={userPosition?.lat}
@@ -1266,7 +1276,7 @@ export default function NearbyExplorer() {
               onMarkerClick={onMarkerClicked}
               onMapMove={onMapMoved}
               onMapClick={onMapClicked}
-              wrapperClassName="h-full w-full overflow-hidden z-0"
+              wrapperClassName="slbi-nearby-modern-map h-full w-full overflow-hidden z-0"
             /> : (
               <div className="flex h-full items-center justify-center bg-[#E7F0E9] text-[13px] text-[#517C64]">
                 Open Map to explore business locations
@@ -1291,8 +1301,8 @@ export default function NearbyExplorer() {
               {mapAppearanceOpen && (
                 <div id="nearby-map-appearance" role="group" aria-label="Map appearance" className="absolute right-0 top-full mt-2 w-52 rounded-[16px] border border-[#DCE5DC] bg-white p-2 shadow-[0_16px_45px_rgba(22,47,42,0.2)]">
                   {([
-                    { id: "original" as const, label: "Original", hint: "Full-color streets" },
-                    { id: "soft" as const, label: "Soft", hint: "Calmer, muted map" },
+                    { id: "studio" as const, label: "Studio", hint: "Modern pins · calmer map" },
+                    { id: "classic" as const, label: "Classic", hint: "Original Leaflet appearance" },
                   ]).map(option => (
                     <button key={option.id} type="button" aria-pressed={mapAppearance === option.id}
                       onClick={() => { setMapAppearance(option.id); setMapAppearanceOpen(false); }}
@@ -1415,12 +1425,7 @@ export default function NearbyExplorer() {
           {activeFiltersCount > 0 && <span className="absolute right-[calc(50%-21px)] top-2 h-2 w-2 rounded-full bg-[#3E94C4]"/>}
         </button>
       </nav>
-      <style jsx global>{`
-        .nearby-map-soft .leaflet-tile-pane {
-          filter: saturate(0.58) contrast(0.94) brightness(1.075);
-        }
-        .nearby-map-soft .leaflet-container { background: #f1f2ec; }
-      `}</style>
+
     </div>
   );
 }
