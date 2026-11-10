@@ -112,11 +112,18 @@ export async function POST(request: NextRequest) {
       return json({ error: 'Invalid email or password.' }, 401)
     }
 
-    // Fail closed rather than announce success with a cookie-less response.
-    // The SSR client may split its session across several cookie chunks.
-    if (signedInResponse.cookies.getAll().length === 0) {
-      console.error('Login session cookie was not written to response')
-      return json({ error: 'Login session could not be established. Please retry.' }, 503)
+    // Supabase SSR writes cookies only when the stored session value changes;
+    // a successful Auth response is NOT guaranteed to emit a new Set-Cookie.
+    // Returning 503 on zero Set-Cookie incorrectly rejects valid credentials.
+    // If a fresh session cookie was not emitted, let the official browser SSR
+    // client persist the session as a recovery path after the server has
+    // already verified Turnstile and authenticated the credentials.
+    // Neither access nor refresh tokens leave this endpoint's JSON response.
+    const hasNewAuthCookie = signedInResponse.cookies.getAll().some(({ name }) =>
+      name.includes('-auth-token')
+    )
+    if (!hasNewAuthCookie) {
+      return json({ authenticated: true, browserSessionRequired: true })
     }
     return signedInResponse
   } catch {
