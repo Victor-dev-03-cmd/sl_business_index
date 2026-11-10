@@ -47,7 +47,8 @@
     "supabase": "^2.120.0",
     "tailwind-merge": "^2.6.1",
     "use-places-autocomplete": "^4.0.1",
-    "zustand": "^5.0.15"
+    "zustand": "^5.0.15",
+    "pg": "8.23.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
@@ -61,6 +62,7 @@
     "eslint-config-next": "16.4.0",
     "tailwindcss": "^4.3.3",
     "tailwindcss-animate": "^1.0.7",
-    "typescript": "^5"
+    "typescript": "^5",
+    "@types/pg": "8.23.1"
   }
 }
