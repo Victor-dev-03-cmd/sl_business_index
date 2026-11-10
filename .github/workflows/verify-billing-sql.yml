@@ -1,0 +1,45 @@
+name: Verify Billing V2 SQL
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  billing-sql:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: slbi_billing_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d slbi_billing_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: slbi_billing_ci
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Prepare ephemeral database
+        run: psql -v ON_ERROR_STOP=1 -f tests/billing_v2/bootstrap.sql
+      - name: Install Growth credit foundation
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261110010000_growth_os_credit_foundation.sql
+      - name: Validate Billing V2 draft SQL
+        run: psql -v ON_ERROR_STOP=1 -f docs/release/BILLING_V2_SCHEMA_DRAFT.sql
+      - name: Verify security, idempotency and atomic activation
+        run: psql -v ON_ERROR_STOP=1 -f tests/billing_v2/verify.sql
