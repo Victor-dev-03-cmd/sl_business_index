@@ -770,7 +770,7 @@ app.post('/billing/upgrade-request', async (c) => {
       .limit(1)
       .maybeSingle()
     if (subError) throw subError
-    if (current?.plan_name === plan.name && current.billing_cycle === billingCycle) {
+    if (current?.plan_name === plan.name && current?.billing_cycle === billingCycle) {
       return c.json({ error: 'This plan is already your active subscription.' }, 409)
     }
 
