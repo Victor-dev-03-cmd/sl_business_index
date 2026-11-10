@@ -316,6 +316,11 @@ export default function AdminBillingPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            {process.env.NEXT_PUBLIC_BILLING_HYBRID_ENABLED === 'true' && (
+              <Link href="/admin/billing/hybrid" className="inline-flex h-10 items-center justify-center rounded-lg border border-[#b6d0bd] bg-[#eff7f1] px-4 text-xs font-bold text-[#286141] hover:bg-[#e0efe5]">
+                PostgreSQL billing workflow
+              </Link>
+            )}
             {process.env.NEXT_PUBLIC_BILLING_V2_ENABLED === 'true' && (
               <Link href="/admin/billing/workflow"
                 className="inline-flex h-10 items-center justify-center rounded-lg border border-[#b6d0bd] bg-[#eff7f1] px-4 text-xs font-bold text-[#286141] hover:bg-[#e0efe5]">
