@@ -701,6 +701,118 @@ app.delete('/push/unsubscribe', async (c) => {
   return c.json({ success: true })
 })
 
+
+// Authenticated subscription upgrade request. This is an enquiry, NOT a payment
+// or activation endpoint. Plan prices are resolved from the server database.
+// The existing admin-owned contact_submissions inbox stores the audit record.
+app.post('/billing/upgrade-request', async (c) => {
+  const authUser = c.get('user')
+  if (!authUser?.id || !authUser.email) {
+    return c.json({ error: 'Please sign in to submit a subscription request.' }, 401)
+  }
+
+  const requestOrigin = c.req.header('origin')
+  const forwardedHost = c.req.header('x-forwarded-host') || c.req.header('host')
+  if (!requestOrigin || !forwardedHost) {
+    return c.json({ error: 'Origin verification is required.' }, 403)
+  }
+  try {
+    const parsedOrigin = new URL(requestOrigin)
+    if (parsedOrigin.host.toLowerCase() !== forwardedHost.toLowerCase() ||
+        !['https:', ...(process.env.NODE_ENV === 'production' ? [] : ['http:'])].includes(parsedOrigin.protocol)) {
+      return c.json({ error: 'Cross-origin subscription requests are not allowed.' }, 403)
+    }
+  } catch {
+    return c.json({ error: 'Invalid request origin.' }, 403)
+  }
+
+  if (!(c.req.header('content-type') || '').toLowerCase().includes('application/json')) {
+    return c.json({ error: 'JSON request body is required.' }, 415)
+  }
+  // Use this request's authenticated Supabase session and existing RLS policies.
+  // Vercel does not have a service-role key configured, and this endpoint must
+  // not require (or expose) one to register an enquiry.
+  const db = c.get('supabase')
+
+  let payload: { planId?: unknown; billingCycle?: unknown }
+  try {
+    payload = await c.req.json()
+  } catch {
+    return c.json({ error: 'Invalid request body.' }, 400)
+  }
+  if (!payload || typeof payload.planId !== 'string' ||
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(payload.planId) ||
+      !['monthly', 'yearly'].includes(String(payload.billingCycle))) {
+    return c.json({ error: 'Select a valid plan and billing period.' }, 400)
+  }
+  const billingCycle = payload.billingCycle as 'monthly' | 'yearly'
+
+  try {
+    const { data: plan, error: planError } = await db
+      .from('subscription_plans')
+      .select('id,name,price_monthly,price_yearly,is_active,discount_percentage')
+      .eq('id', payload.planId)
+      .eq('is_active', true)
+      .maybeSingle()
+    if (planError) throw planError
+    if (!plan) return c.json({ error: 'This subscription plan is not available.' }, 404)
+    const listPrice = Number(billingCycle === 'yearly' ? plan.price_yearly : plan.price_monthly)
+    if (!Number.isFinite(listPrice) || listPrice <= 0) {
+      return c.json({ error: 'Contact support for this plan.' }, 400)
+    }
+    // Do not declare a discount applied; actual payment terms are confirmed by staff.
+    const { data: current, error: subError } = await db
+      .from('subscriptions')
+      .select('plan_name')
+      .eq('user_id', authUser.id)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (subError) throw subError
+    if (current?.plan_name === plan.name) {
+      return c.json({ error: 'This plan is already your active subscription.' }, 409)
+    }
+
+    // Avoid reading the private admin-only contact inbox from a vendor session.
+    // Browser clients never receive a privileged database key.
+
+    const userName = typeof authUser.user_metadata?.full_name === 'string'
+      ? authUser.user_metadata.full_name.slice(0, 120) : authUser.email.split('@')[0]
+    const requestId = crypto.randomUUID()
+    const { error: insertError } = await db
+      .from('contact_submissions')
+      .insert({
+        id: requestId,
+        name: userName || 'Vendor',
+        email: authUser.email,
+        department: 'billing',
+        subject: 'Vendor subscription request: ' + String(plan.name).slice(0, 100),
+        location: 'vendor-billing',
+        message: [
+          'SUBSCRIPTION REQUEST — PAYMENT NOT VERIFIED',
+          'Account user ID: ' + authUser.id,
+          'Current plan: ' + (current?.plan_name || 'No active subscription'),
+          'Requested plan: ' + plan.name,
+          'Billing period: ' + billingCycle,
+          'Listed plan price: LKR ' + listPrice,
+          'Promotional discount configured: ' + Number(plan.discount_percentage || 0) + '% (subject to confirmation)',
+          'Action required: billing team to verify payment independently before manually changing entitlements.',
+        ].join('\n'),
+      })
+    if (insertError) throw insertError
+
+    return c.json({
+      success: true,
+      requestId,
+      message: 'Your request has been registered for review. No payment was taken or plan activated.',
+    }, 201)
+  } catch (error) {
+    console.error('Billing upgrade request failed', error)
+    return c.json({ error: 'Unable to save the upgrade request. Please contact billing support.' }, 500)
+  }
+})
+
 export const GET = handle(app)
 export const POST = handle(app)
 export const PUT = handle(app)

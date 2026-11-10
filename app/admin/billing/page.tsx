@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -267,11 +268,16 @@ export default function AdminBillingPage() {
 
   // --- HELPERS ---
 
-  const totalRevenue = invoices.reduce(
-    (acc, inv) => acc + (inv.amount || 0),
-    0,
+  // Historical records may include free/demo entries. Do not treat every invoice
+  // as realized revenue or assume every active subscription is paid.
+  const paidRecords = invoices.filter((inv) => inv.status === "paid" && Number(inv.amount || 0) > 0);
+  const recordedPaidValue = paidRecords.reduce(
+    (sum, inv) => sum + Number(inv.amount || 0), 0
   );
   const activeSubs = subscriptions.filter((s) => s.status === "active").length;
+  const nominalMonthlyPlanValue = subscriptions
+    .filter((s) => s.status === "active" && Number(s.price || 0) > 0)
+    .reduce((sum, s) => sum + (s.billing_cycle === "yearly" ? Number(s.price || 0) / 12 : Number(s.price || 0)), 0);
 
   return (
     <div className="min-h-full bg-gray-50/30 transition-colors">
@@ -286,6 +292,11 @@ export default function AdminBillingPage() {
             </p>
           </div>
 
+          <div className="flex flex-wrap items-center gap-2">
+            <Link href="/admin/billing/requests"
+              className="inline-flex h-10 items-center justify-center rounded-lg border border-[#b6d0bd] bg-[#eaf4ed] px-4 text-xs font-bold text-[#286141] hover:bg-[#dbede1]">
+              Vendor upgrade requests
+            </Link>
           <div className="flex overflow-x-auto gap-1 p-1 bg-gray-100 rounded-xl border border-gray-200">
             {[
               { id: "revenue", label: "Revenue", icon: TrendingUp },
@@ -306,34 +317,37 @@ export default function AdminBillingPage() {
               </button>
             ))}
           </div>
+          </div>
         </div>
 
         {activeTab === "revenue" && (
           <div className="space-y-12">
+            <p className="rounded-lg border border-amber-100 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-900">
+              Recorded billing amounts and listed subscription charges are not independently verified payment receipts.
+              The figures below are account records, not certified revenue. Verify settlement with your payment provider before financial reporting.
+            </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <StatCard
-                title="Total Revenue"
-                value={`LKR ${totalRevenue.toLocaleString()}`}
-                trend="+12%"
+                title="Recorded Paid Invoice Value"
+                value={`LKR ${recordedPaidValue.toLocaleString()}`}
                 icon={TrendingUp}
                 color="emerald"
               />
               <StatCard
                 title="Active Subscriptions"
                 value={activeSubs.toString()}
-                trend="+5%"
                 icon={Users}
                 color="blue"
               />
               <StatCard
-                title="Avg. Order Value"
-                value={`LKR ${(totalRevenue / (invoices.length || 1)).toLocaleString()}`}
+                title="Avg. Recorded Paid Invoice"
+                value={`LKR ${(recordedPaidValue / (paidRecords.length || 1)).toLocaleString()}`}
                 icon={CreditCard}
                 color="amber"
               />
               <StatCard
-                title="Monthly Recurring"
-                value={`LKR ${(activeSubs * 2500).toLocaleString()}`}
+                title="Nominal Monthly Plan Value"
+                value={`LKR ${nominalMonthlyPlanValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}`}
                 icon={DollarSign}
                 color="purple"
               />
