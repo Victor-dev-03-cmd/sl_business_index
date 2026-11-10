@@ -155,22 +155,10 @@ BEGIN
  -- Provision entitlements and monthly AI credits inside the SAME transaction
  -- as verified bank/provider settlement, avoiding split-brain paid features.
  FOR v_feature IN SELECT jsonb_array_elements_text(coalesce(plan_row.features->'enabled','[]'::jsonb)) LOOP
-  IF v_feature !~ '^[a-z][a-z0-9_.-]{1,127}
- INSERT INTO billing.events(request_id,actor_id,event_type,detail)
- VALUES(r.id,p_actor,'activated',jsonb_build_object('payment_id',pay.id,'note',left(p_note,1400)));
- INSERT INTO billing.outbox(topic,payload,dedupe_key)
- VALUES('billing.activated',jsonb_build_object('user_id',r.user_id,'subscription_id',s_id),
- 'activated:'||r.id::text);
- -- Production cutover still requires provider verification, test accounts,
- -- legal payment/invoice policy and server-only entitlement enforcement.
- RETURN s_id;
-END $$;
-REVOKE ALL ON FUNCTION billing.activate_verified(uuid,uuid,uuid,text) FROM PUBLIC;
-COMMIT;
-
-  THEN RAISE EXCEPTION 'Invalid entitlement key' USING ERRCODE='22023'; END IF;
-  INSERT INTO billing.entitlements(user_id,subscription_id,feature_key,valid_until)
-  VALUES(r.user_id,s_id,v_feature,expires);
+   IF v_feature !~ '^[a-z][a-z0-9_.-]{1,127}$'
+   THEN RAISE EXCEPTION 'Invalid entitlement key' USING ERRCODE='22023'; END IF;
+   INSERT INTO billing.entitlements(user_id,subscription_id,feature_key,valid_until)
+   VALUES(r.user_id,s_id,v_feature,expires);
  END LOOP;
  INSERT INTO billing.credit_wallets(user_id,period_start,credit_limit,credits_remaining)
  VALUES(r.user_id,v_credit_period,plan_row.monthly_credits,plan_row.monthly_credits)
@@ -183,8 +171,6 @@ COMMIT;
  INSERT INTO billing.outbox(topic,payload,dedupe_key)
  VALUES('billing.activated',jsonb_build_object('user_id',r.user_id,'subscription_id',s_id),
  'activated:'||r.id::text);
- -- Entitlement + credit provisioning must be implemented and tested before
- -- enabling any paid features or production financial cutover.
  RETURN s_id;
 END $$;
 REVOKE ALL ON FUNCTION billing.activate_verified(uuid,uuid,uuid,text) FROM PUBLIC;
