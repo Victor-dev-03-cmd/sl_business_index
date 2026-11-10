@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     const supplied = new URL(origin || '')
     // Local production-build smoke tests run on HTTP loopback. Public
     // production origins must still use HTTPS.
-    const isLoopback = /^(localhost|127\\.0\\.0\\.1|\\[::1\\])(?::[0-9]+)?$/.test(host)
+    const isLoopback = /^(localhost|127\.0\.0\.1|\[::1\])(?::[0-9]+)?$/.test(host)
     acceptedOrigin = supplied.host === host &&
       supplied.protocol === protocol + ':' &&
       (protocol === 'https' || (protocol === 'http' &&
