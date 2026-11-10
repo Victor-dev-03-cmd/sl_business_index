@@ -1,7 +1,7 @@
 /** SLBI GeoRank v1.0.0: pure, explainable ranking of approved PostGIS candidates. */
 export const GEO_RANK_VERSION = "1.0.0";
 export type GeoRankBusiness = {
-  id?: string; name?: string|null; category?: string|null; description?: string|null;
+  id?: string | number; name?: string|null; category?: string|null; description?: string|null;
   distance_meters?: number|null; search_rank?: number|null; rating?: number|null;
   image_url?: string|null; logo_url?: string|null; phone?: string|null;
   website_url?: string|null; is_verified?: boolean|null; can_show_badge?: boolean|null;
