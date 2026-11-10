@@ -98,17 +98,11 @@ function LoginForm() {
         return check.json();
       };
 
-      let serverSession = await verifyServerSession();
-      if (!serverSession.authenticated) {
-        // A valid server-side password login can still race with the browser's
-        // cookie storage. Use the official SSR browser client to persist it,
-        // then check whether the server can actually authenticate the request.
-        const { data: retry, error: retryError } =
-          await supabase.auth.signInWithPassword({ email, password });
-        if (!retryError && retry.session) {
-          serverSession = await verifyServerSession();
-        }
-      }
+      // Never issue another independent password sign-in here: the server has
+      // already authenticated and may have issued a second browser sign-in in
+      // the explicit recovery path above. A third login can interleave cookie
+      // writes and produce a mixed/stale chunked session.
+      const serverSession = await verifyServerSession();
       if (!serverSession.authenticated) {
         setError(
           serverSession.reason === 'cookie_missing'

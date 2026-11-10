@@ -14,9 +14,18 @@ export const dynamic = 'force-dynamic'
 export async function GET(request: NextRequest) {
   const responseHeaders = { 'Cache-Control': 'private, no-store, max-age=0' }
   const incomingCookies = request.cookies.getAll()
-  const hasAuthCookie = incomingCookies.some(cookie =>
-    /^sb-[a-z0-9]+-auth-token(?:\.\d+)?$/.test(cookie.name)
+  // A cookie from another Supabase project must not count as a valid session.
+  const projectRef = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    'https://missing.invalid').hostname.split('.')[0]
+  const expectedName = 'sb-' + projectRef + '-auth-token'
+  const matchingCookies = incomingCookies.filter(({ name }) =>
+    name === expectedName || (name.startsWith(expectedName + '.') &&
+      /^[0-9]+$/.test(name.slice(expectedName.length + 1)))
   )
+  const hasAuthCookie = matchingCookies.length > 0
+  const otherAuthCookie = incomingCookies.some(({ name }) =>
+    /^sb-[a-z0-9]+-auth-token(?:\.\d+)?$/.test(name)
+  ) && !hasAuthCookie
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -29,6 +38,17 @@ export async function GET(request: NextRequest) {
   }
 
   const pendingCookies: AuthCookie[] = []
+  // Safe evidence only: neither cookie values nor refresh/access tokens are logged.
+  const cookieEncoding = matchingCookies.length === 0 ? 'none' :
+    matchingCookies.some(c => c.value.startsWith('base64-')) ? 'base64' :
+    matchingCookies.some(c => c.value.trimStart().startsWith('{')) ? 'raw_json' : 'other'
+  const safeErrorType = (error: unknown): string => {
+    const name = error instanceof Error ? error.name : ''
+    return ['AuthSessionMissingError','AuthApiError','AuthInvalidJwtError',
+      'AuthRetryableFetchError','AuthUnknownError','AuthError'].includes(name) ? name : 'other'
+  }
+  let claimsErrorType: string | null = null
+  let userErrorType: string | null = null
   let claimsVerified = false
   let userVerified = false
   try {
@@ -45,18 +65,25 @@ export async function GET(request: NextRequest) {
     })
     const claims = await supabase.auth.getClaims()
     claimsVerified = Boolean(!claims.error && claims.data?.claims?.sub)
+    if (claims.error) claimsErrorType = safeErrorType(claims.error)
     if (!claimsVerified && hasAuthCookie) {
       const fresh = await supabase.auth.getUser()
       userVerified = Boolean(!fresh.error && fresh.data.user?.id)
+      if (fresh.error) userErrorType = safeErrorType(fresh.error)
     }
-  } catch {
-    // Diagnostic is deliberately minimal: do not expose Auth internals.
+  } catch (error) {
+    claimsErrorType = safeErrorType(error)
   }
 
   const authenticated = claimsVerified || userVerified
   const result = NextResponse.json({
     authenticated,
     authCookiePresent: hasAuthCookie,
+    unrelatedAuthCookiePresent: otherAuthCookie,
+    cookieChunks: matchingCookies.length,
+    cookieEncoding,
+    claimsErrorType,
+    userErrorType,
     claimsVerified,
     userVerified,
     reason: authenticated ? 'ok' :

@@ -13,7 +13,6 @@ export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     detectSessionInUrl: true,
     flowType: 'pkce',
-    lockWaitTimeout: 10000,
   },
   realtime: {
     params: {

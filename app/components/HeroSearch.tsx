@@ -428,7 +428,7 @@ export default function HeroSearch({
                       {cat.image_url ? (
                         <img src={cat.image_url} alt={cat.name} className="w-4 h-4 object-contain" />
                       ) : (
-                        <CategoryIcon name={cat.icon} className="w-4 h-4 text-brand-gold" />
+                        <CategoryIcon name={cat.icon} size={16} className="w-4 h-4 text-brand-gold" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0 text-left">
