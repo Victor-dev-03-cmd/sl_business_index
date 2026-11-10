@@ -25,6 +25,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import dynamic from "next/dynamic";
 import VerifiedBadge from "./components/VerifiedBadge";
 import Testimonials from "./components/Testimonials";
+import HeroDiscoveryGraphic from "./components/HeroDiscoveryGraphic";
 
 // Server-render the visible search form: client-only 64px placeholder shifted
 // the entire hero after hydration (a major mobile CLS source).
@@ -33,6 +34,104 @@ const HeroSearch = dynamic(() => import("./components/HeroSearch"), {
 });
 
 const EMPTY_ARRAY: any[] = [];
+
+type FeaturedBusiness = {
+  id: string;
+  name: string;
+  slug?: string | null;
+  category?: string | null;
+  address?: string | null;
+  image_url?: string | null;
+  logo_url?: string | null;
+  rating?: number | null;
+  is_verified?: boolean | null;
+  can_show_badge?: boolean | null;
+};
+
+// Avoid re-rendering all portrait cards on every scroll-control update.
+// Use lightweight SVGs rather than dozens of asynchronous icon web components
+// inside the carousel. Navbar/category Iconsax styling is unchanged.
+const FeaturedListingCard = React.memo(function FeaturedListingCard({
+  business, index,
+}: { business: FeaturedBusiness; index: number }) {
+  return (
+                <Link
+                  href={`/business/${business.slug || business.id}`}
+                  prefetch={false}
+                  aria-label={`View ${business.name} business profile`}
+                  className="group relative isolate block aspect-[9/16] w-[178px] shrink-0 snap-start overflow-hidden rounded-[22px] border border-[#E0EADB] bg-[#1B3430] shadow-[0_3px_12px_rgba(15,40,67,0.07)] transition-colors duration-150 hover:border-[#75AB8D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 sm:w-[207px] lg:w-[229px] xl:w-[237px]"
+                >
+                  {/* 9:16 visual works with landscape photos as well as portrait images. */}
+                  <div className="absolute inset-0 overflow-hidden">
+                    {business.image_url ? (
+                      <Image
+                        src={business.image_url}
+                        alt={business.name}
+                        fill
+                        loading={index < 3 ? "eager" : "lazy"}
+                        quality={55}
+                        decoding="async"
+                        sizes="(max-width: 640px) 178px, (max-width: 1024px) 207px, 237px"
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#26483B] via-[#1B3430] to-[#152C25]">
+                        {business.logo_url ? (
+                          <div className="relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-[24px] border border-white/15 bg-white/95 p-4 shadow-xl">
+                            <Image src={business.logo_url} alt={business.name} fill loading={index < 3 ? "eager" : "lazy"} quality={65} sizes="112px" className="object-contain p-4" />
+                          </div>
+                        ) : (
+                          <Building2 size={55} strokeWidth={1.6} className="text-[#F0D9AC]" />
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Contrast stays legible without requiring hover or animation. */}
+                  <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0D211B] via-[#0D211B]/65 via-[39%] to-transparent" />
+                  <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/45 to-transparent" />
+
+                  <div className="absolute inset-x-0 top-0 z-10 flex flex-wrap items-start justify-between gap-1.5 p-3 sm:p-4">
+                    {business.is_verified && business.can_show_badge ? (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-white/20 bg-[#F0F2E9]/95 px-2.5 py-1 text-[10px] font-bold text-[#26483B] shadow-sm">
+                        <VerifiedBadge size={12} /> Verified
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center rounded-full border border-white/30 bg-black/25 px-2.5 py-1 text-[10px] font-semibold text-white">
+                        Featured
+                      </span>
+                    )}
+                    {typeof business.rating === "number" && business.rating > 0 && (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-white/25 bg-black/35 px-2.5 py-1 text-[10px] font-semibold text-white">
+                        <Star size={12} className="fill-[#FCD34D] text-[#FCD34D]" />
+                        {business.rating.toFixed(1)}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="absolute inset-x-0 bottom-0 z-10 p-3.5 text-white sm:p-5">
+                    <span className="mb-2 inline-block max-w-full truncate rounded-full border border-white/20 bg-white/15 px-2.5 py-1 text-[10px] font-semibold text-[#F0F2E9]">
+                      {business.category || "Local business"}
+                    </span>
+                    <h3 className="line-clamp-2 text-[17px] font-semibold leading-[1.25] tracking-[-0.035em] drop-shadow-sm sm:text-[20px]">
+                      {business.name}
+                    </h3>
+                    {business.address && (
+                      <p className="mt-2 flex min-w-0 items-center gap-1.5 text-[11px] font-medium text-[#E0EADB]">
+                        <MapPin size={13} className="shrink-0" />
+                        <span className="truncate">{business.address}</span>
+                      </p>
+                    )}
+                    <div className="mt-4 flex items-center justify-between border-t border-white/20 pt-3 text-[11px] font-semibold text-white/90">
+                      <span>View business</span>
+                      <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/25 bg-white/15 transition-colors group-hover:bg-white group-hover:text-[#1B3430]">
+                        <ArrowUpRight size={17} />
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+  );
+});
 
 export default function HomePageClient() {
   const router = useRouter();
@@ -54,7 +153,6 @@ export default function HomePageClient() {
       const { data, error } = await supabase
         .from("categories")
         .select('id, name, icon, parent_id')
-        .is("parent_id", null)
         .order("name", { ascending: true });
       if (error) throw error;
       return data;
@@ -221,8 +319,40 @@ export default function HomePageClient() {
     router.push(`/nearby?${params.toString()}`);
   };
 
-  // Keep the homepage light; full category catalog lives at /category.
-  const featuredCategories = categories.slice(0, 24);
+  // The database has only 16 parent groups, while important Food & Dining,
+  // Health & Medical and Shopping & Retail entries are children. Include those
+  // explicitly on the homepage without altering the category table or full directory.
+  const featuredCategories = React.useMemo(() => {
+    const spotlightNames = [
+      "food & dining",
+      "health & medical",
+      "shopping & retail",
+      "hotels & restaurants",
+      "educational institutes & services",
+    ];
+    const broadPriorities = [
+      /\bfood\b/i,
+      /\b(health(?:care)?|medical|hospital|clinic|doctor|pharmacy)\b/i,
+      /\b(restaurant|dining|cafe|catering)\b/i,
+      /\b(shopping|retail|grocery|supermarket)\b/i,
+      /\b(education|educational|school|tuition|academy|training)\b/i,
+      /\b(travel|tourism|hotel|accommodation)\b/i,
+      /\b(transport|vehicle|automotive|logistics)\b/i,
+      /\b(professional|finance|insurance|banking)\b/i,
+      /\b(construction|industrial|engineering)\b/i,
+    ];
+    const normalizedName = (name: string) => name.trim().toLowerCase();
+    const rank = (category: { name: string }) => {
+      const featuredIndex = spotlightNames.indexOf(normalizedName(category.name));
+      if (featuredIndex >= 0) return featuredIndex;
+      const broadIndex = broadPriorities.findIndex(pattern => pattern.test(category.name));
+      return spotlightNames.length + (broadIndex === -1 ? broadPriorities.length : broadIndex);
+    };
+    return [...categories]
+      .filter(category => category.parent_id == null || spotlightNames.includes(normalizedName(category.name)))
+      .sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name))
+      .slice(0, 24);
+  }, [categories]);
 
   return (
     <div className="min-h-[100dvh] bg-white font-normal">
@@ -319,85 +449,8 @@ export default function HomePageClient() {
             </p>
           </div>
 
-          {/* Fully code-based vector scene: no stock imagery, GIF downloads or external animation service. */}
-          <div
-            className="relative z-10 mx-auto flex w-full max-w-[380px] items-center justify-center sm:max-w-[460px] lg:max-w-none"
-            aria-label="Illustration of business discovery across Sri Lanka"
-            role="img"
-          >
-            <div className="relative aspect-[1.03/1] w-full max-w-[550px]">
-              <div className="absolute inset-[7%] rounded-full border border-[#94BAA0]/10 bg-[radial-gradient(circle,rgba(52,112,83,0.20)_0%,rgba(17,45,33,0.05)_67%,transparent_74%)]" />
-              <div
-                aria-hidden="true"
-                className="absolute inset-[7%] rounded-full border border-dashed border-[#E7C58E]/20"
-              />
-              <div
-                aria-hidden="true"
-                className="absolute inset-[17%] rounded-full border border-[#94BAA0]/20"
-              />
-              <svg viewBox="0 0 600 600" fill="none" aria-hidden="true" className="absolute inset-0 h-full w-full">
-                <defs>
-                  <linearGradient id="hero-map-stroke" x1="140" y1="110" x2="460" y2="520" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#F0D9AC" stopOpacity="0.95" />
-                    <stop offset="1" stopColor="#36785E" stopOpacity="0.55" />
-                  </linearGradient>
-                  <linearGradient id="hero-map-fill" x1="280" y1="125" x2="365" y2="510" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#26483B" stopOpacity="0.94" />
-                    <stop offset="1" stopColor="#1B3430" stopOpacity="0.8" />
-                  </linearGradient>
-                </defs>
-                <circle cx="300" cy="300" r="224" stroke="#E7C58E" strokeOpacity=".14" />
-                <circle cx="300" cy="300" r="170" stroke="#E7C58E" strokeOpacity=".13" strokeDasharray="4 12" />
-                <path d="M299 90C275 119 278 148 264 172C249 198 244 227 261 253C272 269 252 287 259 307C266 331 285 347 290 366C296 394 305 419 322 442C337 463 346 493 366 505C383 509 396 491 390 472C384 452 372 434 375 412C379 391 370 369 358 350C345 329 343 307 354 286C364 266 356 245 343 229C327 210 325 185 322 163C320 134 313 106 299 90Z" fill="url(#hero-map-fill)" stroke="url(#hero-map-stroke)" strokeWidth="2.5" strokeLinejoin="round" />
-                <path d="M278 200L308 277L294 364L357 437M308 277L343 329M294 364L324 404" stroke="#DCB179" strokeOpacity=".38" strokeWidth="1.5" strokeDasharray="5 8" />
-                <circle cx="278" cy="200" r="5" fill="#F0D9AC" />
-                <circle cx="308" cy="277" r="5" fill="#F0D9AC" />
-                <circle cx="294" cy="364" r="5" fill="#F0D9AC" />
-                <circle cx="357" cy="437" r="5" fill="#F0D9AC" />
-                <circle cx="308" cy="277" r="19" stroke="#F0D9AC" strokeWidth="2" />
-                <circle cx="294" cy="364" r="19" stroke="#F0D9AC" strokeWidth="2" />
-              </svg>
-
-              <div
-                className="absolute left-[1%] top-[24%] w-[45%] max-w-[225px] rounded-2xl border border-white/15 bg-[#1B3430]/90 p-4 shadow-[0_25px_55px_rgba(0,0,0,0.25)]  sm:p-5"
-              >
-                <div className="mb-3 flex items-center gap-2">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-400/15 text-emerald-200"><Building2 size={18} /></span>
-                  <div className="min-w-0">
-                    <p className="text-[10px] uppercase tracking-[0.12em] text-emerald-300">Find what matters</p>
-                    <p className="text-sm font-semibold text-white">Local businesses</p>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="h-2 w-[82%] rounded-full bg-white/20" />
-                  <div className="h-2 w-[60%] rounded-full bg-white/10" />
-                </div>
-              </div>
-
-              <div
-                className="absolute right-[0%] top-[53%] w-[46%] max-w-[236px] rounded-2xl border border-white/15 bg-[#1B3430]/95 p-4 shadow-[0_25px_60px_rgba(0,0,0,0.28)]  sm:p-5"
-              >
-                <div className="flex items-center gap-2.5">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#E7C58E]/15 text-emerald-200"><MapPin size={19} /></span>
-                  <div>
-                    <p className="text-[10px] uppercase tracking-[0.12em] text-emerald-300">Explore nearby</p>
-                    <p className="text-sm font-semibold text-white">Sri Lanka</p>
-                  </div>
-                </div>
-                <div className="mt-4 flex items-center gap-2 text-[11px] text-[#CADDCB]">
-                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                  Discover local opportunities
-                </div>
-              </div>
-
-              <div
-                className="absolute bottom-[8%] left-[19%] inline-flex items-center gap-2 rounded-full border border-[#E7C58E]/20 bg-[#152C25]/90 px-4 py-3 text-xs font-semibold text-[#E0EADB] shadow-xl "
-              >
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#E7C58E]/15"><Search size={14} /></span>
-                Discover. Connect. Grow.
-              </div>
-            </div>
-          </div>
+          {/* Lightweight cartographic SVG; no heavy looping animations or filters. */}
+          <HeroDiscoveryGraphic />
         </div>
       </section>
 
@@ -642,82 +695,7 @@ export default function HomePageClient() {
               </div>
             ) : featuredBusinesses.length > 0 ? (
               featuredBusinesses.map((business, index) => (
-                <Link
-                  key={business.id}
-                  href={`/business/${business.slug || business.id}`}
-                  prefetch={false}
-                  aria-label={`View ${business.name} business profile`}
-                  className="group relative isolate block aspect-[9/16] w-[178px] shrink-0 snap-start overflow-hidden rounded-[22px] border border-[#E0EADB] bg-[#1B3430] shadow-[0_3px_12px_rgba(15,40,67,0.07)] transition-colors duration-150 hover:border-[#75AB8D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 sm:w-[207px] lg:w-[229px] xl:w-[237px]"
-                >
-                  {/* 9:16 visual works with landscape photos as well as portrait images. */}
-                  <div className="absolute inset-0 overflow-hidden">
-                    {business.image_url ? (
-                      <Image
-                        src={business.image_url}
-                        alt={business.name}
-                        fill
-                        loading={index < 6 ? "eager" : "lazy"}
-                        quality={55}
-                        decoding="async"
-                        sizes="(max-width: 640px) 178px, (max-width: 1024px) 207px, 237px"
-                        className="object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#26483B] via-[#1B3430] to-[#152C25]">
-                        {business.logo_url ? (
-                          <div className="relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-[24px] border border-white/15 bg-white/95 p-4 shadow-xl">
-                            <Image src={business.logo_url} alt={business.name} fill loading={index < 6 ? "eager" : "lazy"} quality={65} sizes="112px" className="object-contain p-4" />
-                          </div>
-                        ) : (
-                          <BrandIcon name="buildings-2" size={55} color="#F0D9AC" />
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Contrast stays legible without requiring hover or animation. */}
-                  <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0D211B] via-[#0D211B]/65 via-[39%] to-transparent" />
-                  <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/45 to-transparent" />
-
-                  <div className="absolute inset-x-0 top-0 z-10 flex flex-wrap items-start justify-between gap-1.5 p-3 sm:p-4">
-                    {business.is_verified && business.can_show_badge ? (
-                      <span className="inline-flex items-center gap-1 rounded-full border border-white/20 bg-[#F0F2E9]/95 px-2.5 py-1 text-[10px] font-bold text-[#26483B] shadow-sm">
-                        <VerifiedBadge size={12} /> Verified
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center rounded-full border border-white/30 bg-black/25 px-2.5 py-1 text-[10px] font-semibold text-white">
-                        Featured
-                      </span>
-                    )}
-                    {typeof business.rating === "number" && business.rating > 0 && (
-                      <span className="inline-flex items-center gap-1 rounded-full border border-white/25 bg-black/35 px-2.5 py-1 text-[10px] font-semibold text-white">
-                        <BrandIcon name="star-1" variant="bold" size={12} color="#FCD34D" />
-                        {business.rating.toFixed(1)}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="absolute inset-x-0 bottom-0 z-10 p-3.5 text-white sm:p-5">
-                    <span className="mb-2 inline-block max-w-full truncate rounded-full border border-white/20 bg-white/15 px-2.5 py-1 text-[10px] font-semibold text-[#F0F2E9]">
-                      {business.category || "Local business"}
-                    </span>
-                    <h3 className="line-clamp-2 text-[17px] font-semibold leading-[1.25] tracking-[-0.035em] drop-shadow-sm sm:text-[20px]">
-                      {business.name}
-                    </h3>
-                    {business.address && (
-                      <p className="mt-2 flex min-w-0 items-center gap-1.5 text-[11px] font-medium text-[#E0EADB]">
-                        <BrandIcon name="location" size={13} />
-                        <span className="truncate">{business.address}</span>
-                      </p>
-                    )}
-                    <div className="mt-4 flex items-center justify-between border-t border-white/20 pt-3 text-[11px] font-semibold text-white/90">
-                      <span>View business</span>
-                      <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/25 bg-white/15 transition-colors group-hover:bg-white group-hover:text-[#1B3430]">
-                        <BrandIcon name="arrow-up-right" size={17} />
-                      </span>
-                    </div>
-                  </div>
-                </Link>
+                <FeaturedListingCard key={business.id} business={business} index={index} />
               ))
             ) : (
               <div className="flex min-h-[270px] w-full flex-col items-center justify-center rounded-[22px] border border-dashed border-[#E0EADB] bg-[#F8F7F2] px-6 text-center">
