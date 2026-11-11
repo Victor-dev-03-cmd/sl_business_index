@@ -91,9 +91,9 @@ export default function VerificationsPage() {
       const rows = ((data as unknown as ExtendedVerification[]) || []);
       const signedRows = await Promise.all(rows.map(async row => {
         const path = proofObjectPath(row.br_document_url);
-        if (!path) return { ...row, br_document_url: null };
+        if (!path) return { ...row, br_document_url: undefined };
         const { data: signed } = await supabase.storage.from('verification-docs').createSignedUrl(path, 900);
-        return { ...row, br_document_url: signed?.signedUrl || null };
+        return { ...row, br_document_url: signed?.signedUrl || undefined };
       }));
       setVerifications(signedRows);
     } catch (error) {
