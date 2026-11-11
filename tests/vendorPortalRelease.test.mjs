@@ -22,10 +22,11 @@ const basePages=[
 test('every major owner portal page is reachable and uses a shared premium shell',()=>{
   assert.match(layout,/VendorQuickActions/);
   assert.match(layout,/vendor-workspace\.css/);
-  assert.match(layout,/vendor-sidebar/);
+  assert.match(layout,/vendor-topbar/);
+  assert.doesNotMatch(layout,/vendor-sidebar/);
   assert.match(layout,/ctrlKey/);
   assert.match(layout,/metaKey/);
-  assert.match(layout,/aria-label="Mobile vendor quick navigation"/);
+  assert.match(layout,/aria-label="Vendor compact navigation"/);
   for(const link of [
     '/vendor/dashboard','/vendor/my-businesses','/vendor/leads','/vendor/reviews',
     '/vendor/insights','/vendor/growth','/vendor/marketing','/vendor/qr-code',
