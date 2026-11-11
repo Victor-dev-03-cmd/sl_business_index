@@ -109,6 +109,24 @@ export default function SearchIntelligencePage() {
       &&(!term||(item.query_text+" "+item.expected_intent).toLocaleLowerCase().includes(term)));
   },[cases,language,filter]);
 
+  const nativeReview=useMutation({
+    mutationFn:async(nextStatus:"reviewed"|"rejected")=>{
+      if(!adminId||!selected)throw new Error("Select a query");
+      const {error}=await supabase.from("search_evaluation_cases")
+        .update({
+          validation_status:nextStatus,
+          validated_by:adminId,
+          validated_at:new Date().toISOString(),
+        }).eq("id",selected.id);
+      if(error)throw error;
+    },
+    onSuccess:()=>{
+      setStatus("Intent review status saved.");
+      qc.invalidateQueries({queryKey:["slbi-search-eval-v3"]});
+    },
+    onError:(error:Error)=>setStatus(error.message),
+  });
+
   const mutation=useMutation({
     mutationFn:async()=>{
       if(!adminId||!selected||!businessId)throw new Error("Select a query and business");
@@ -149,12 +167,13 @@ export default function SearchIntelligencePage() {
             Analytics <ArrowUpRight size={14}/>
           </Link>
         </div>
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
           {[
             {label:"Evaluation queries",value:cases.length,icon:Search},
             {label:"Judgments saved",value:reviews.length,icon:CheckCircle2},
             {label:"Queries reviewed",value:coverage,icon:Languages},
             {label:"Review completion",value:cases.length?Math.round(coverage/cases.length*100)+"%":"0%",icon:BarChart3},
+            {label:"Language intents verified",value:cases.filter(item=>item.validation_status==="reviewed").length,icon:ShieldCheck},
           ].map(tile=>(
             <div key={tile.label} className="rounded-[10px] border border-[#DFE8DF] bg-white p-4">
               <tile.icon size={17} className="text-[#367B59]"/>
@@ -213,6 +232,19 @@ export default function SearchIntelligencePage() {
                 <div className="rounded-[8px] bg-[#F2F7F1] p-3">
                   <p className="text-xs font-semibold">{selected.query_text}</p>
                   <p className="mt-1 text-[11px] text-[#6F8876]">Expected intent: {selected.expected_intent}; taxonomy label is provisional.</p>
+                  <p className="mt-2 text-[11px] font-semibold text-[#4D7A5F]">Intent verification: {selected.validation_status.replaceAll("_"," ")}</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" disabled={nativeReview.isPending}
+                    onClick={()=>nativeReview.mutate("reviewed")}
+                    className="flex-1 rounded-[8px] border border-[#B7D7C1] bg-[#ECF8EF] px-3 py-2.5 text-[11px] font-semibold text-[#327347] disabled:opacity-50">
+                    Verify language & intent
+                  </button>
+                  <button type="button" disabled={nativeReview.isPending}
+                    onClick={()=>nativeReview.mutate("rejected")}
+                    className="rounded-[8px] border border-[#E6C8C8] bg-[#FFF3F2] px-3 py-2.5 text-[11px] font-semibold text-[#99565A] disabled:opacity-50">
+                    Reject alias
+                  </button>
                 </div>
                 <label className="block text-xs font-semibold">
                   Approved business
