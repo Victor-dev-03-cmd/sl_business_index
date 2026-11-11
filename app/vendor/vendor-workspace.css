@@ -188,3 +188,52 @@
   .vendor-settings .vendor-premium-header {padding:20px;}
   .vendor-settings .vendor-setting-section :is(button,a) {max-width:100%;}
 }
+
+/* Owner Settings V3: visible inputs and stable spacing at every breakpoint.
+   The screenshot regression showed labels and inputs visually merging into the
+   white card. These scoped declarations win over global form resets. */
+.vendor-workspace .vendor-settings .vendor-setting-section {
+  width:100%;
+  min-width:0;
+  padding:clamp(20px,2.2vw,30px);
+  border:1px solid #dce7de;
+  border-radius:6px;
+  background-color:#ffffff;
+}
+.vendor-workspace .vendor-settings .vendor-field,
+.vendor-workspace .vendor-settings input.vendor-field,
+.vendor-workspace .vendor-settings select.vendor-field,
+.vendor-workspace .vendor-settings textarea.vendor-field {
+  display:block;
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;
+  min-height:44px;
+  padding:10px 14px;
+  border:1px solid #c5d5c9;
+  border-radius:5px;
+  background-color:#fcfdfa;
+  color:#1e3c29;
+  font-size:13px;
+  line-height:1.45;
+  box-shadow:inset 0 1px 2px rgba(31,67,43,.03);
+}
+.vendor-workspace .vendor-settings .vendor-field:disabled {background:#f1f5f0;color:#6f8374;}
+.vendor-workspace .vendor-settings .vendor-label {
+  display:block;
+  margin-bottom:8px;
+  color:#3e614b;
+  font-size:11px;
+  font-weight:700;
+  line-height:1.5;
+}
+.vendor-workspace .vendor-settings .vendor-setting-section :is(input,select,textarea):focus-visible {
+  outline:2px solid #6aab7b;
+  outline-offset:1px;
+}
+.vendor-workspace .vendor-settings .vendor-setting-section .grid > * {min-width:0;}
+.vendor-workspace .vendor-settings .vendor-setting-section :is(button,a) {border-radius:5px;}
+@media(max-width:639px) {
+  .vendor-workspace .vendor-settings .vendor-setting-section {padding:18px;}
+  .vendor-workspace .vendor-settings .vendor-setting-section .flex {flex-wrap:wrap;}
+}
