@@ -432,9 +432,33 @@
   -ms-overflow-style:none;
 }
 .vendor-topbar-scrollbar::-webkit-scrollbar {display:none;}
-.vendor-topbar-dropdown summary {list-style:none;}
-.vendor-topbar-dropdown summary::-webkit-details-marker {display:none;}
-.vendor-topbar-dropdown[open] summary {background:#FFF1E5;color:#C85D00;}
+/* Precise topbar radius: only interactive controls and floating menus are rounded.
+   Keep the header and content boundaries straight for a restrained workspace. */
+.vendor-topbar-dropdown-trigger[aria-expanded="true"] {
+  background:#FFF1E5;
+  color:#B95400;
+}
+.vendor-topbar-dropdown-trigger[aria-expanded="true"] svg {
+  transform:rotate(180deg);
+}
+.vendor-topbar-dropdown-trigger svg {
+  transition:transform .16s ease;
+}
+.vendor-topbar-dropdown-panel {
+  border-radius:9px;
+  box-shadow:0 15px 38px rgba(22,22,26,.12),0 2px 5px rgba(22,22,26,.035);
+  transform-origin:top right;
+  animation:vendor-menu-reveal .13s ease-out;
+}
+.vendor-topbar-dropdown-link {border-radius:6px;}
+@keyframes vendor-menu-reveal {
+  from {opacity:0;transform:translateY(-3px);}
+  to {opacity:1;transform:translateY(0);}
+}
+@media(prefers-reduced-motion:reduce){
+  .vendor-topbar-dropdown-panel {animation:none;}
+  .vendor-topbar-dropdown-trigger svg {transition:none;}
+}
 .vendor-workspace-v6 .vendor-dashboard-v6 {
   --vendor-dashboard-orange:#FF7900;
   --vendor-dashboard-ink:#1B1B1E;
