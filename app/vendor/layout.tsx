@@ -11,176 +11,118 @@ import IconsaxIcon from './components/IconsaxIcon';
 import VendorQuickActions from './components/VendorQuickActions';
 import './vendor-workspace.css';
 
-const primaryNav = [
-  { name:'Overview', href:'/vendor/dashboard', icon:'category' },
-  { name:'Growth Insights', href:'/vendor/insights', icon:'status-up' },
-  { name:'My Businesses', href:'/vendor/my-businesses', icon:'shop' },
-  { name:'Enquiries', href:'/vendor/leads', icon:'message-text' },
-  { name:'Reviews', href:'/vendor/reviews', icon:'star' },
-];
-const growthNav = [
-  { name:'Growth OS', href:'/vendor/growth', icon:'chart' },
-  { name:'Marketing Studio', href:'/vendor/marketing', icon:'flash' },
-  { name:'QR Studio', href:'/vendor/qr-code', icon:'scan-barcode' },
-];
-const accountNav = [
-  { name:'Billing & Plans', href:'/vendor/billing', icon:'card' },
-  { name:'Settings', href:'/vendor/settings', icon:'setting-2' },
-];
-const quickNav = [
-  { name:'Home', href:'/vendor/dashboard', icon:'category' },
-  { name:'Businesses', href:'/vendor/my-businesses', icon:'shop' },
-  { name:'Enquiries', href:'/vendor/leads', icon:'message-text' },
-  { name:'Insights', href:'/vendor/insights', icon:'status-up' },
-  { name:'Tools', href:'/vendor/growth', icon:'chart' },
-];
 type NavItem = {name:string;href:string;icon:string};
-const allItems: NavItem[] = [...primaryNav,...growthNav,...accountNav];
+const primaryNav:NavItem[]=[
+  {name:'Overview',href:'/vendor/dashboard',icon:'category'},
+  {name:'My Businesses',href:'/vendor/my-businesses',icon:'shop'},
+  {name:'Enquiries',href:'/vendor/leads',icon:'message-text'},
+  {name:'Reviews',href:'/vendor/reviews',icon:'star'},
+  {name:'Growth Insights',href:'/vendor/insights',icon:'status-up'},
+];
+const growthNav:NavItem[]=[
+  {name:'Growth OS',href:'/vendor/growth',icon:'chart'},
+  {name:'Marketing Studio',href:'/vendor/marketing',icon:'flash'},
+  {name:'QR Studio',href:'/vendor/qr-code',icon:'scan-barcode'},
+];
+const accountNav:NavItem[]=[
+  {name:'Billing & Plans',href:'/vendor/billing',icon:'card'},
+  {name:'Settings',href:'/vendor/settings',icon:'setting-2'},
+];
+const allItems=[...primaryNav,...growthNav,...accountNav];
 
-export default function VendorLayout({children}:{children:React.ReactNode}) {
-  const pathname = usePathname();
-  const {data:user,isLoading} = useUser();
-  const [expanded,setExpanded]=useState(true);
-  const [drawerOpen,setDrawerOpen]=useState(false);
+export default function VendorLayout({children}:{children:React.ReactNode}){
+  const pathname=usePathname();
+  const {data:user,isLoading}=useUser();
   const [quickOpen,setQuickOpen]=useState(false);
   const active=(href:string)=>pathname===href||pathname.startsWith(href+'/');
-  const selected=allItems.find(item=>active(item.href));
-  const pageTitle=selected?.name || 'Business Workspace';
+  const currentPage=allItems.find(item=>active(item.href))?.name||'Business Workspace';
 
-  useEffect(()=>{setDrawerOpen(false)},[pathname]);
   useEffect(()=>{
-    const key=(event:KeyboardEvent)=>{
+    const onKey=(event:KeyboardEvent)=>{
       if((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==='k'){
-        event.preventDefault();setQuickOpen(v=>!v);
+        event.preventDefault();
+        setQuickOpen(open=>!open);
       }
-      if(event.key==='Escape'){setQuickOpen(false);setDrawerOpen(false)}
+      if(event.key==='Escape')setQuickOpen(false);
     };
-    document.addEventListener('keydown',key);
-    return()=>document.removeEventListener('keydown',key);
+    document.addEventListener('keydown',onKey);
+    return()=>document.removeEventListener('keydown',onKey);
   },[]);
 
-  function items(list:readonly NavItem[],mobile=false) {
-    return list.map(item=>{
-      const current=active(item.href);
-      return <Link key={item.href} href={item.href} aria-current={current?'page':undefined}
-        title={!expanded&&!mobile?item.name:undefined}
-        className={'vendor-nav-item group relative flex items-center gap-3 rounded-[7px] px-3 py-[11px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#B2D7BC] ' +
-          (current?'vendor-nav-current':'vendor-nav-idle')}>
-        <IconsaxIcon name={item.icon} size={19} variant={current?'bold':'linear'} color={current?'#283A33':'#B9C6D0'}/>
-        {(expanded||mobile)&&<span className="min-w-0 flex-1 truncate text-[12px] font-semibold">{item.name}</span>}
-        {current&&(expanded||mobile)&&<span className="h-[6px] w-[6px] rounded-full bg-[#B7E3AC]"/>}
-      </Link>;
-    });
-  }
-
-  if(isLoading)return <div className="flex min-h-screen items-center justify-center bg-[#F6F8F4]">
-    <div className="flex items-center gap-3 rounded-2xl border border-[#DEE8E0] bg-white px-5 py-4 text-sm font-semibold text-[#35624A] shadow-sm">
-      <div className="h-5 w-5 animate-spin rounded-full border-[2px] border-[#DCECE0] border-t-[#32714B]"/>Preparing your workspace
+  if(isLoading)return <div className="flex min-h-screen items-center justify-center bg-[#F7F7F8]">
+    <div role="status" className="flex items-center gap-3 rounded-lg border border-[#E7E7E9] bg-white px-5 py-4 text-sm font-semibold text-[#242529]">
+      <span className="h-5 w-5 animate-spin rounded-full border-2 border-[#F5D7BB] border-t-[#FF7900]"/>Preparing your workspace
     </div>
   </div>;
 
-  return (
-    <div className="vendor-workspace relative flex h-[100dvh] min-w-0 overflow-hidden bg-[#F2F5F7] text-[#24343D]">
-      {/* Desktop — premium fixed navigation */}
-      <aside aria-label="Vendor desktop navigation" className={'vendor-sidebar fixed inset-y-0 left-0 z-50 hidden flex-col border-r border-[#394752] transition-[width] duration-200 md:flex '+(expanded?'w-[260px]':'w-[76px]')}>
-        <Link href="/vendor/dashboard" className={'flex h-[83px] shrink-0 items-center gap-3 border-b border-white/10 '+(expanded?'px-5':'justify-center px-2')}>
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#F8FBF3] shadow-[0_5px_18px_rgba(0,0,0,.16)]">
-            <img src="/slbi-mark.svg" className="h-8 w-8 object-contain" alt="SLBI"/>
+  return <div className="vendor-workspace vendor-workspace-v6 flex h-[100dvh] min-w-0 flex-col overflow-hidden bg-[#F7F7F8] text-[#202124]">
+    <header className="vendor-topbar relative z-50 shrink-0 border-b border-[#E8E8EB] bg-white">
+      <div className="mx-auto flex h-[76px] w-full max-w-[1840px] items-center gap-4 px-4 sm:px-6 xl:gap-6 xl:px-9">
+        <Link href="/vendor/dashboard" aria-label="SL Business Index owner portal overview" className="flex min-w-0 shrink-0 items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-[#1B1B1D]">
+            <img src="/slbi-mark.svg" alt="" className="h-8 w-8 object-contain"/>
           </span>
-          {expanded&&<div className="min-w-0">
-            <p className="truncate text-[13px] font-black tracking-[.025em] text-white">SL BUSINESS INDEX</p>
-            <p className="mt-1 text-[9px] font-semibold uppercase tracking-[.18em] text-[#9DB0BC]">Owner Growth Portal</p>
-          </div>}
+          <span className="hidden flex-col sm:flex">
+            <span className="text-[13px] font-extrabold tracking-[-.035em] text-[#141416]">SL Business Index</span>
+            <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-[.12em] text-[#99989D]">Owner Portal</span>
+          </span>
         </Link>
-        {expanded&&<div className="mx-4 mt-5 rounded-[9px] border border-[#46535D] bg-[#2B3942] p-3.5">
-          <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-[#8BD8A0] shadow-[0_0_9px_rgba(116,225,149,.45)]"/><p className="text-[10px] font-bold uppercase tracking-[.1em] text-[#BBC8D1]">Business command center</p></div>
-          <p className="mt-2 text-[11px] leading-[1.6] text-[#C8D4DC]">Manage visibility, enquiries and growth from one workspace.</p>
-        </div>}
-        <nav aria-label="Vendor pages" className="min-h-0 flex-1 space-y-5 overflow-y-auto px-3 pb-6 pt-5">
-          <div>
-            {expanded&&<p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[.15em] text-[#97A8B4]">Workspace</p>}
-            <div className="space-y-1">{items(primaryNav)}</div>
-          </div>
-          <div className="border-t border-[#3D4A54] pt-4">
-            {expanded&&<p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[.15em] text-[#97A8B4]">Growth & tools</p>}
-            <div className="space-y-1">{items(growthNav)}</div>
-          </div>
-          <div className="border-t border-[#3D4A54] pt-4">
-            {expanded&&<p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[.15em] text-[#97A8B4]">Account</p>}
-            <div className="space-y-1">{items(accountNav)}</div>
-          </div>
+
+        <nav aria-label="Vendor primary navigation" className="vendor-topbar-primary ml-auto hidden min-w-0 items-center gap-1 rounded-[12px] border border-[#F0EFF1] bg-[#F8F8F9] p-1 xl:flex">
+          {primaryNav.map(item=><Link key={item.href} href={item.href} aria-current={active(item.href)?'page':undefined}
+            className={'vendor-topnav-link flex h-9 shrink-0 items-center gap-1.5 rounded-[8px] px-3 text-[11px] font-semibold transition-colors '+(active(item.href)?'bg-[#FF7900] text-white shadow-[0_4px_10px_rgba(255,121,0,.16)]':'text-[#68686E] hover:bg-white hover:text-[#141416]')}>
+            <IconsaxIcon name={item.icon} size={15} color={active(item.href)?'#FFFFFF':'#86868B'}/>{item.name}
+          </Link>)}
         </nav>
-        <div className="shrink-0 space-y-2 border-t border-white/10 p-3">
-          <button type="button" onClick={()=>setQuickOpen(true)} title="Quick actions (Ctrl+K)" className="flex min-h-10 w-full items-center gap-3 rounded-[7px] border border-[#58666F] bg-[#394854] px-3 text-left text-[12px] font-bold text-[#F4F7F9] transition hover:bg-[#4A5C68]">
-            <IconsaxIcon name="flash" size={18} color="#C4DE9C"/>{expanded&&<><span className="flex-1">Quick actions</span><span className="text-[10px] font-medium text-[#A4C1A8]">⌘K</span></>}
+
+        <div className="ml-auto flex shrink-0 items-center gap-2 xl:ml-0">
+          <details key={'tools-'+pathname} className="vendor-topbar-dropdown group relative hidden xl:block">
+            <summary className="flex h-9 cursor-pointer list-none items-center gap-1.5 rounded-[8px] px-2.5 text-[11px] font-semibold text-[#505158] hover:bg-[#F6F6F8]">
+              Tools <IconsaxIcon name="arrow-down-1" size={13}/>
+            </summary>
+            <nav aria-label="Growth and marketing tools" className="absolute right-0 top-[44px] z-[70] grid w-[234px] gap-1 rounded-xl border border-[#E7E7EA] bg-white p-2 shadow-[0_18px_44px_rgba(17,17,20,.14)]">
+              {growthNav.map(item=><Link key={item.href} href={item.href} className="flex items-center gap-2.5 rounded-md px-3 py-2.5 text-[12px] font-semibold text-[#36373B] hover:bg-[#FFF3E8] hover:text-[#D46100]">
+                <IconsaxIcon name={item.icon} size={16}/>{item.name}
+              </Link>)}
+            </nav>
+          </details>
+          <details key={'account-'+pathname} className="vendor-topbar-dropdown group relative hidden xl:block">
+            <summary className="flex h-9 cursor-pointer list-none items-center gap-1.5 rounded-[8px] px-2.5 text-[11px] font-semibold text-[#505158] hover:bg-[#F6F6F8]">
+              Account <IconsaxIcon name="arrow-down-1" size={13}/>
+            </summary>
+            <nav aria-label="Vendor account pages" className="absolute right-0 top-[44px] z-[70] grid w-[218px] gap-1 rounded-xl border border-[#E7E7EA] bg-white p-2 shadow-[0_18px_44px_rgba(17,17,20,.14)]">
+              {accountNav.map(item=><Link key={item.href} href={item.href} className="flex items-center gap-2.5 rounded-md px-3 py-2.5 text-[12px] font-semibold text-[#36373B] hover:bg-[#FFF3E8] hover:text-[#D46100]">
+                <IconsaxIcon name={item.icon} size={16}/>{item.name}
+              </Link>)}
+              <Link href="/" className="mt-1 border-t border-[#ECECEF] px-3 py-3 text-[11px] font-medium text-[#66676C] hover:text-[#D46100]">Visit public directory</Link>
+            </nav>
+          </details>
+          <button type="button" onClick={()=>setQuickOpen(true)} aria-label="Search actions and tools" title="Search actions (Ctrl+K)"
+            className="hidden h-9 items-center gap-2 rounded-[8px] border border-[#ECECEF] bg-[#FAFAFB] px-3 text-[11px] font-medium text-[#8A8B92] hover:border-[#FFCB9B] hover:text-[#D46100] lg:inline-flex">
+            <IconsaxIcon name="search-normal" size={17}/><span className="hidden 2xl:inline">Search actions</span><span className="rounded border border-[#E9E9ED] bg-white px-1 py-0.5 text-[9px]">⌘K</span>
           </button>
-          <Link href="/" title="View public directory" className="flex h-10 items-center gap-3 rounded-xl px-3 text-[12px] font-semibold text-[#B9C7D0] transition hover:bg-white/10 hover:text-white">
-            <IconsaxIcon name="home" size={18} color="#B9C7D0"/>{expanded&&'Visit directory'}
-          </Link>
-          {expanded&&<div className="truncate rounded-xl border border-[#46545E] bg-[#283741] px-3 py-3">
-            <p className="truncate text-[11px] font-bold text-white">{user?.email||'SLBI vendor'}</p>
-            <p className="mt-1 text-[10px] text-[#B3C4CC]">Business owner workspace</p>
-          </div>}
+          <button type="button" onClick={()=>setQuickOpen(true)} aria-label="Open quick actions" title="Quick actions (Ctrl+K)"
+            className="inline-flex h-9 items-center gap-1.5 rounded-[8px] bg-[#1C1C1E] px-3 text-[11px] font-semibold text-white transition hover:bg-[#39393D]">
+            <IconsaxIcon name="flash" size={16} color="#FF7900"/><span className="hidden md:inline">Quick actions</span>
+          </button>
+          {user?.verification_status==='verified'&&<span className="hidden items-center gap-1 rounded-md border border-[#D6E8DA] bg-[#F0F8F2] px-2 py-1 text-[10px] font-semibold text-[#2B7B4D] 2xl:inline-flex"><VerifiedBadge size={13}/> Verified</span>}
+          <NotificationBell/>
+          <AuthButton user={user}/>
         </div>
-      </aside>
-
-      {/* Mobile drawer */}
-      {drawerOpen&&<button type="button" aria-label="Close vendor navigation" onClick={()=>setDrawerOpen(false)} className="fixed inset-0 z-[60] bg-[#10251C]/70 backdrop-blur-[3px] md:hidden"/>}
-      <aside aria-label="Vendor mobile navigation" className={'vendor-sidebar fixed inset-y-0 left-0 z-[70] flex w-[292px] flex-col shadow-2xl transition-transform duration-200 md:hidden '+(drawerOpen?'translate-x-0':'-translate-x-full')}>
-        <div className="flex h-[75px] shrink-0 items-center gap-3 border-b border-white/10 px-4">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white"><img src="/slbi-mark.svg" className="h-8 w-8" alt="SLBI"/></span>
-          <div className="min-w-0 flex-1"><p className="text-xs font-black text-white">SL Business Index</p><p className="mt-1 text-[10px] text-[#ACCCB5]">Owner Growth Portal</p></div>
-          <button type="button" aria-label="Close menu" onClick={()=>setDrawerOpen(false)} className="rounded-lg border border-white/15 p-2 text-white"><IconsaxIcon name="close-circle" size={20}/></button>
-        </div>
-        <nav className="min-h-0 flex-1 space-y-4 overflow-y-auto p-3">
-          <p className="px-3 text-[10px] font-bold uppercase tracking-widest text-[#A5C4AC]">Workspace</p>
-          <div className="space-y-1">{items(primaryNav,true)}</div>
-          <p className="border-t border-white/15 px-3 pt-4 text-[10px] font-bold uppercase tracking-widest text-[#A5C4AC]">Growth & tools</p>
-          <div className="space-y-1">{items(growthNav,true)}</div>
-          <p className="border-t border-white/15 px-3 pt-4 text-[10px] font-bold uppercase tracking-widest text-[#A5C4AC]">Account</p>
-          <div className="space-y-1">{items(accountNav,true)}</div>
-          <Link href="/" className="flex gap-3 rounded-xl px-3 py-3 text-[12px] font-semibold text-[#B4CCBD]"><IconsaxIcon name="home" size={18}/> Visit directory</Link>
-        </nav>
-        <button type="button" onClick={()=>{setDrawerOpen(false);setQuickOpen(true)}} className="m-3 flex items-center gap-3 rounded-[7px] border border-[#58666F] bg-[#394854] px-4 py-3 text-left text-xs font-bold text-white"><IconsaxIcon name="flash" size={18}/> Open quick actions</button>
-      </aside>
-
-      <div className={'flex min-w-0 flex-1 flex-col transition-[margin] duration-200 '+(expanded?'md:ml-[260px]':'md:ml-[76px]')}>
-        {/* Application header */}
-        <header className="sticky top-0 z-40 flex h-[75px] shrink-0 items-center gap-3 border-b border-[#E2E8EC] bg-white/95 px-4 backdrop-blur-xl sm:px-6 lg:px-8">
-          <button type="button" onClick={()=>setDrawerOpen(true)} aria-label="Open vendor menu" className="rounded-xl border border-[#DCE4E9] p-2.5 text-[#596D7A] transition hover:bg-[#F0F3F5] md:hidden"><IconsaxIcon name="menu" size={20}/></button>
-          <button type="button" onClick={()=>setExpanded(v=>!v)} aria-label={expanded?'Collapse sidebar':'Expand sidebar'} className="hidden rounded-xl border border-[#DDE5EA] bg-white p-2.5 text-[#5D6D78] transition hover:bg-[#F4F6F8] md:flex"><IconsaxIcon name="sidebar-left" size={20}/></button>
-          <div className="min-w-0 flex-1">
-            <p className="hidden text-[10px] font-bold uppercase tracking-[.13em] text-[#9AA6AE] sm:block">Vendor Portal <span className="mx-1.5 text-[#CCD9CE]">/</span> Workspace</p>
-            <p className="truncate text-[14px] font-extrabold tracking-tight text-[#283740] sm:mt-1">{pageTitle}</p>
-          </div>
-          <div className="flex shrink-0 items-center gap-2.5">
-            <button type="button" onClick={()=>setQuickOpen(true)} title="Search tasks and tools (Ctrl+K)" className="hidden h-10 min-w-[178px] items-center gap-2.5 rounded-xl border border-[#E0E7EB] bg-[#F7F9FA] px-3 text-left text-[11px] font-medium text-[#7A8A96] transition hover:border-[#BFCCD2] hover:bg-white lg:flex">
-              <IconsaxIcon name="search-normal" size={17}/><span className="flex-1">Search actions</span><span className="rounded border border-[#DEE9DF] bg-white px-1.5 py-0.5 text-[10px]">⌘K</span>
-            </button>
-            <button type="button" onClick={()=>setQuickOpen(true)} aria-label="Open quick actions" className="inline-flex h-10 items-center gap-1.5 rounded-[7px] bg-[#293D46] px-3 text-[11px] font-bold text-white shadow-[0_4px_12px_rgba(27,94,60,.14)] transition hover:bg-[#1C3038] sm:px-4">
-              <IconsaxIcon name="flash" size={16} color="white"/><span className="hidden sm:inline">Quick actions</span>
-            </button>
-            {user?.verification_status==='verified'&&<span className="hidden items-center gap-1 rounded-full border border-[#D8E8DB] bg-[#F0F7EF] px-2.5 py-1.5 text-[10px] font-bold text-[#40634A] xl:inline-flex"><VerifiedBadge size={13}/> Verified</span>}
-            <NotificationBell/>
-            <span className="hidden h-8 w-px bg-[#DFE7DF] sm:block"/>
-            <AuthButton user={user}/>
-          </div>
-        </header>
-        <main id="vendor-main" className="vendor-content min-h-0 flex-1 overflow-y-auto p-4 pb-24 sm:p-6 md:p-7 md:pb-9 xl:px-9 xl:py-8">
-          {children}
-        </main>
       </div>
 
-      <nav aria-label="Mobile vendor quick navigation" className="fixed bottom-0 left-0 right-0 z-50 flex min-h-16 border-t border-[#E2E7EC] bg-white/95 shadow-[0_-6px_18px_rgba(30,57,39,.07)] backdrop-blur-lg md:hidden" style={{paddingBottom:'env(safe-area-inset-bottom)'}}>
-        {quickNav.map(item=>{
-          const current=active(item.href);
-          return <Link key={item.href} href={item.href} aria-current={current?'page':undefined} className={'flex min-w-0 flex-1 flex-col items-center justify-center gap-1 px-0.5 py-2 text-[9px] font-bold '+(current?'text-[#415B49]':'text-[#8495A0]')}>
-            <span className={'flex h-7 w-9 items-center justify-center rounded-xl '+(current?'bg-[#EDF3E7]':'')}><IconsaxIcon name={item.icon} size={18} variant={current?'bold':'linear'}/></span>
-            <span className="truncate">{item.name}</span>
-          </Link>;
-        })}
+      {/* On narrower screens navigation remains at the top — horizontally scrollable, never a sidebar. */}
+      <nav aria-label="Vendor compact navigation" className="vendor-topbar-scrollbar flex h-[49px] w-full items-center gap-1 overflow-x-auto border-t border-[#F1F1F2] px-4 sm:px-6 xl:hidden">
+        {allItems.map(item=><Link key={item.href} href={item.href} aria-current={active(item.href)?'page':undefined}
+          className={'flex h-9 shrink-0 items-center gap-1.5 rounded-[7px] px-3 text-[11px] font-semibold transition '+(active(item.href)?'bg-[#FF7900] text-white':'text-[#73737A] hover:bg-[#FFF3E8] hover:text-[#B45300]')}>
+          <IconsaxIcon name={item.icon} size={15} color={active(item.href)?'#FFFFFF':'#888990'}/>{item.name}
+        </Link>)}
+        <Link href="/" className="ml-1 shrink-0 border-l border-[#E9E9EB] px-3 py-2 text-[11px] font-medium text-[#73737A]">Visit directory</Link>
       </nav>
-      <VendorQuickActions open={quickOpen} onClose={()=>setQuickOpen(false)}/>
-    </div>
-  );
+    </header>
+    <main id="vendor-main" aria-label={currentPage+' workspace'} className="vendor-content min-h-0 flex-1 overflow-y-auto bg-[#F7F7F8] px-4 py-5 sm:px-6 sm:py-7 xl:px-9 xl:py-8">
+      <div className="mx-auto w-full max-w-[1760px]">{children}</div>
+    </main>
+    <VendorQuickActions open={quickOpen} onClose={()=>setQuickOpen(false)}/>
+  </div>;
 }
