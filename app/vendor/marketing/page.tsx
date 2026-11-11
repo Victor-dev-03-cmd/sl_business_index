@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import Script from 'next/script';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
@@ -141,6 +142,10 @@ export default function MarketingPage() {
       toast.warning('Please select a schedule date');
       return;
     }
+    if (isSchedule && (!Number.isFinite(Date.parse(scheduledAt)) || new Date(scheduledAt).getTime() <= Date.now())) {
+      toast.warning('Select a future date and time for scheduling.');
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -157,7 +162,7 @@ export default function MarketingPage() {
 
       if (error) throw error;
 
-      toast.success(isSchedule ? 'Campaign scheduled successfully!' : 'Campaign posted successfully!');
+      toast.success(isSchedule ? 'Campaign schedule saved in SLBI. External posting is not automatic.' : 'Campaign saved in SLBI. External networks are not automatically published.');
       setActiveTab('history');
       fetchData();
     } catch (error) {
@@ -183,46 +188,47 @@ export default function MarketingPage() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-slate-50 text-slate-900 -m-6 md:-m-8 p-6 md:p-8">
+    <div className="mx-auto max-w-[1460px] space-y-5 pb-5 text-[#243D2D]">
       <Script src="https://js.puter.com/v2/" strategy="afterInteractive" />
       
-      <div className="max-w-7xl mx-auto space-y-10">
-        {/* Pro Header */}
-        <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-8 border-b border-slate-200">
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-brand-blue/5 rounded-xl border border-brand-blue/10 shadow-lg shadow-brand-blue/5">
-                <Megaphone className="w-6 h-6 text-brand-blue" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-black tracking-tight text-slate-900 flex items-center gap-3">
-                  Marketing Studio
-                  <span className="px-2 py-0.5 bg-brand-gold/10 text-brand-gold text-[10px] font-black uppercase tracking-widest rounded border border-brand-gold/20">
-                    Pro
-                  </span>
-                </h1>
-                <p className="text-slate-500 text-sm font-medium">Create and automate high-impact business promotions.</p>
-              </div>
+      <div className="space-y-5">
+        <header className="vendor-premium-header flex flex-col gap-6 px-6 py-7 sm:px-8 sm:py-9 lg:flex-row lg:items-end lg:justify-between">
+          <div className="relative z-10 max-w-2xl">
+            <p className="text-[10px] font-extrabold uppercase tracking-[.18em] text-[#BEDFAF]">Grow your presence / Marketing Studio</p>
+            <h1 className="mt-2 text-[30px] font-extrabold tracking-[-.05em] text-white sm:text-[35px]">Make every campaign count.</h1>
+            <p className="mt-2 text-[12px] leading-6 text-[#DCEBDD]">Plan professional business promotions, manage creative assets and review saved SLBI campaign activity from one workspace.</p>
+            <div className="mt-4 flex flex-wrap gap-2 text-[10px] font-bold text-[#D4EDD6]">
+              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5">Campaign workspace</span>
+              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5">Design preview</span>
+              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5">Scheduled records</span>
             </div>
           </div>
-
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={() => setShowEditor(true)}
-              className="group relative flex items-center gap-2 px-6 py-3 bg-brand-blue hover:bg-brand-blue/90 text-white text-sm font-bold rounded-xl transition-all shadow-xl shadow-brand-blue/20 active:scale-95"
-            >
-              <Sparkles size={18} className="group-hover:rotate-12 transition-transform" />
-              Open Pro Design Editor
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-brand-gold rounded-full animate-pulse border-2 border-slate-50" />
+          <div className="relative z-10 flex flex-wrap items-center gap-2">
+            <Link href="/vendor/insights" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 text-[12px] font-bold text-white transition hover:bg-white/20">
+              <History size={16}/> Growth insights
+            </Link>
+            <button type="button" onClick={() => setShowEditor(true)}
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/20 bg-[#F6FAEE] px-4 text-[12px] font-bold text-[#245F3F] transition hover:bg-white">
+              <Sparkles size={16}/> Open design editor
             </button>
           </div>
         </header>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {[
+            { label:'Saved campaign records',value:campaigns.length,info:'Existing RLS-approved campaign records',icon:Megaphone },
+            { label:'Scheduled records',value:campaigns.filter(c=>c.status==='scheduled').length,info:'Dates saved; external posting not automatic',icon:Calendar },
+            { label:'Published or approved records',value:campaigns.filter(c=>c.status==='posted'||c.status==='approved').length,info:'Internal statuses, not verified social impressions',icon:CheckCircle2 },
+          ].map(item=><div key={item.label} className="vendor-premium-card flex items-start justify-between gap-2 p-5">
+            <div><p className="text-[11px] font-bold text-[#68806D]">{item.label}</p><p className="mt-2 text-[28px] font-extrabold tabular-nums tracking-[-.045em] text-[#224832]">{loading?'—':item.value}</p><p className="mt-1 text-[10px] leading-5 text-[#8C9B8D]">{item.info}</p></div>
+            <span className="rounded-xl bg-[#E9F4E9] p-2.5 text-[#39774D]"><item.icon size={19}/></span>
+          </div>)}
+        </div>
 
         {/* Dashboard Grid */}
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+        <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-12">
           
           {/* Navigation & Controls (XL: 4 cols) */}
-          <div className="xl:col-span-4 space-y-6">
+          <div className="space-y-5 xl:col-span-4">
             
             {/* Nav Cards */}
             <div className="grid grid-cols-2 gap-3">
@@ -253,7 +259,7 @@ export default function MarketingPage() {
             </div>
 
             {/* Editor Forms */}
-            <div className="bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden">
+            <div className="vendor-premium-panel overflow-hidden">
               <div className="p-6">
                 <AnimatePresence mode="wait">
                   {activeTab === 'create' && (
@@ -309,7 +315,7 @@ export default function MarketingPage() {
                         className="w-full py-3.5 bg-brand-blue hover:bg-brand-blue/90 text-white rounded-xl font-bold text-sm shadow-lg shadow-brand-blue/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.98]"
                       >
                         {submitting ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
-                        Post to Network
+                        Save SLBI campaign
                       </button>
                     </motion.div>
                   )}
@@ -371,7 +377,7 @@ export default function MarketingPage() {
                         className="w-full py-3.5 bg-brand-gold hover:bg-brand-gold/90 text-white rounded-xl font-bold text-sm shadow-lg shadow-brand-gold/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.98]"
                       >
                         {submitting ? <Loader2 className="animate-spin" size={18} /> : <Calendar size={18} />}
-                        Schedule Campaign
+                        Save planned schedule
                       </button>
                     </motion.div>
                   )}
@@ -397,7 +403,7 @@ export default function MarketingPage() {
                           </div>
                         ) : campaigns.length === 0 ? (
                           <div className="py-20 text-center bg-slate-50 rounded-2xl border border-slate-200">
-                            <p className="text-xs text-slate-500 italic">No campaigns launched yet.</p>
+                            <p className="text-xs text-slate-500 italic">No saved campaigns yet. Create your first campaign to start a history.</p>
                           </div>
                         ) : (
                           campaigns.map((c) => (
@@ -413,8 +419,8 @@ export default function MarketingPage() {
           </div>
 
           {/* Real-time Preview (XL: 8 cols) */}
-          <div className="xl:col-span-8 space-y-6">
-            <div className="bg-white border border-slate-200 rounded-3xl shadow-xl overflow-hidden min-h-[600px] flex flex-col">
+          <div className="space-y-5 xl:col-span-8">
+            <div className="vendor-premium-panel flex min-h-[600px] flex-col overflow-hidden">
               <div className="p-6 border-b border-slate-200 bg-slate-50/50 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="flex gap-1.5">
@@ -422,12 +428,12 @@ export default function MarketingPage() {
                     <div className="w-3 h-3 rounded-full bg-amber-400" />
                     <div className="w-3 h-3 rounded-full bg-emerald-400" />
                   </div>
-                  <span className="text-xs font-black text-slate-500 uppercase tracking-widest ml-2">Live Preview Engine</span>
+                  <span className="text-xs font-black text-slate-500 uppercase tracking-widest ml-2">Design preview · not published</span>
                 </div>
                 <div className="flex items-center gap-2">
                    <div className="px-2 py-1 bg-emerald-500/5 text-emerald-600 text-[10px] font-black uppercase rounded border border-emerald-500/10 flex items-center gap-1.5">
                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                     Optimized
+                     Visual preview
                    </div>
                 </div>
               </div>
@@ -449,16 +455,16 @@ export default function MarketingPage() {
                       key={bannerText}
                       initial={{ scale: 0.9, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
-                      className="text-5xl md:text-7xl font-black text-white drop-shadow-2xl leading-tight"
+                      className="break-words text-[clamp(1.9rem,4.8vw,4.5rem)] font-extrabold leading-tight text-white drop-shadow-lg"
                     >
                       {bannerText}
                     </motion.h2>
                     <p className="text-white/80 text-lg md:text-xl font-medium tracking-wide">
-                      Exclusive offer for our community.<br/>Visit us today!
+                      Your promotion, visually previewed.<br/>Review before publishing.
                     </p>
                     <div className="pt-4">
-                      <div className="inline-flex items-center gap-3 bg-white text-slate-900 px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-2xl hover:scale-105 transition-transform cursor-pointer">
-                        Claim Offer
+                      <div className="inline-flex items-center gap-3 rounded-xl border border-white/30 bg-white/90 px-6 py-3 text-[11px] font-extrabold uppercase tracking-widest text-[#254B33] shadow-lg">
+                        Sample call to action
                         <ChevronRight size={18} />
                       </div>
                     </div>
@@ -467,7 +473,7 @@ export default function MarketingPage() {
                   {/* Pro Badge */}
                   <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 text-white/40 text-[10px] font-bold uppercase tracking-widest">
                     <Sparkles size={12} className="text-brand-gold" />
-                    Verified SL Business Partner
+                    SLBI Creative Preview
                   </div>
                 </motion.div>
 
@@ -477,13 +483,13 @@ export default function MarketingPage() {
 
               <div className="p-6 bg-white border-t border-slate-200 flex items-center justify-between">
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                  Estimated reach: <span className="text-slate-900">2.5k - 5k impressions</span>
+                  Actual reach is measured in Growth Insights, not estimated here.
                 </p>
                 <button 
-                  onClick={() => toast.info('Advanced optimization in progress...')}
+                  onClick={() => setShowEditor(true)}
                   className="text-xs text-brand-blue font-bold flex items-center gap-2 hover:bg-brand-blue/5 px-3 py-1.5 rounded-lg transition-all"
                 >
-                  <Download size={14} /> Download Asset
+                  <Sparkles size={14} /> Open editor
                 </button>
               </div>
             </div>
@@ -509,10 +515,10 @@ function TabButton({ active, onClick, icon, label }: { active: boolean, onClick:
   return (
     <button
       onClick={onClick}
-      className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border transition-all active:scale-95 ${
+      className={`flex min-h-24 flex-col items-center justify-center gap-2 rounded-[14px] border p-4 transition-colors ${
         active 
-          ? 'bg-brand-blue/5 border-brand-blue/20 text-brand-blue shadow-lg shadow-brand-blue/5' 
-          : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-600'
+          ? 'border-[#A8D0B1] bg-[#EAF6EC] text-[#1F6943] shadow-[0_4px_16px_rgba(38,93,50,.07)]' 
+          : 'border-[#E1EAE0] bg-white text-[#738A79] hover:bg-[#F7FAF5] hover:text-[#3D7150]'
       }`}
     >
       {icon}
@@ -601,7 +607,7 @@ function CampaignCard({ campaign }: { campaign: Campaign }) {
           <div className="flex items-center gap-1">
              {isLive ? (
                <span className="flex items-center gap-1 text-[8px] font-black text-emerald-600 uppercase tracking-widest">
-                 <CheckCircle2 size={8} /> Live
+                 <CheckCircle2 size={8} /> Saved
                </span>
              ) : (
                <span className="flex items-center gap-1 text-[8px] font-black text-amber-600 uppercase tracking-widest">
@@ -640,9 +646,9 @@ function CampaignCard({ campaign }: { campaign: Campaign }) {
             </div>
           ))}
         </div>
-        <button className="text-[10px] font-black text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-widest">
-          View Stats
-        </button>
+        <Link href="/vendor/insights" className="text-[10px] font-extrabold uppercase tracking-widest text-[#3D7350] hover:underline">
+          Recorded insights
+        </Link>
       </div>
     </div>
   );
