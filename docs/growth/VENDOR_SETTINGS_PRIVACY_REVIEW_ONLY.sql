@@ -1,7 +1,11 @@
--- REVIEW-ONLY schema plan — not applied to the production Supabase project.
--- Precondition: code changes on draft PR #29 checked, admin/vendor signed-URL
--- proof viewers verified, owner/admin storage read policies verified.
--- Start with the storage migration AFTER all public URL consumers are replaced.
+-- HISTORICAL REVIEW PLAN — some parts were APPLIED to production on 2026-11-11.
+-- Notification preferences table and owner-scoped RLS: applied as
+--   vendor_notification_preferences_owner_scoped_v1.
+-- Verification bucket private + owner/business insert policy: applied as
+--   private_verification_documents_owner_path_v1.
+-- Do NOT execute this file wholesale as an additional migration.
+-- Signed-URL authenticated owner/admin browser acceptance remains required.
+-- Other security guards and secure ingestion RPCs remain separately gated.
 
 begin;
 
