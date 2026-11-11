@@ -294,7 +294,7 @@ export default function SettingsPage() {
       <div className="vendor-settings-layout grid min-w-0 items-start gap-4 xl:grid-cols-[238px_minmax(0,1fr)]">
         <div className="vendor-premium-card vendor-settings-nav min-w-0 overflow-hidden p-2 xl:sticky xl:top-5">
           <p className="px-3 pb-3 pt-4 text-[10px] font-bold uppercase tracking-[.17em] text-[#8B9F90]">Workspace settings</p>
-          <nav aria-label="Vendor settings sections" className="flex min-w-0 gap-1 overflow-x-auto pb-1 xl:block xl:space-y-1 xl:overflow-visible xl:pb-0" role="tablist">
+          <nav aria-label="Vendor settings sections" className="vendor-settings-tabs flex min-w-0 gap-1 overflow-x-auto pb-1 xl:block xl:space-y-1 xl:overflow-visible xl:pb-0" role="tablist">
             {tabList.map(item=><button type="button" role="tab" id={'tab-'+item.id} aria-selected={activeTab===item.id} aria-controls={'panel-'+item.id} key={item.id} onClick={()=>selectTab(item.id)}
               className={'flex min-h-12 min-w-[156px] flex-1 items-center gap-2 rounded-md px-3 py-2 text-left transition xl:min-w-0 xl:w-full xl:gap-3 xl:py-3 '+(activeTab===item.id?'bg-[#E8F4E9] text-[#215F3D]':'text-[#617C68] hover:bg-[#F6F9F4] hover:text-[#29553A]')}>
               <span className={'flex h-9 w-9 shrink-0 items-center justify-center rounded-md '+(activeTab===item.id?'bg-white text-[#267048]':'bg-[#F3F6F1] text-[#7D9582]')}><item.icon size={17}/></span>
