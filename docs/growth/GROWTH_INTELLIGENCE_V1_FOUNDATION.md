@@ -1,6 +1,6 @@
 # SLBI Growth Intelligence & Lead Attribution — v1 Foundation
 
-**Status:** Development branch only. Not approved or activated in production.
+**Status:** Development branch only; reporting UI and fail-closed ingestion code staged. Not approved or activated in production.
 **Previous live release:** `5a4611702ecb0b2289967bc495bb049a03ab0e13`
 **Release agreement:** Complete development, security, integration tests and one final reviewed production release. Do not merge this branch yet.
 
@@ -56,4 +56,22 @@ Attribution channels should eventually be allowlisted: `home_featured`, `nearby_
 
 Live collection pipeline, new tables/migrations, payment or subscription changes, user fingerprinting, unverified recommendation personalization and semantic default for arbitrary queries.
 
-This file documents a real start to Growth Intelligence without claiming the module is already implemented or deployed.
+## Implemented on the draft branch (not deployed)
+
+- Owner-scoped `/vendor/insights` with event/lead cards, last 7/30/90 day trends, business-level drilldown and recorded CRM lead origins. It queries existing RLS-protected `analytics_logs`, `leads`, and `businesses`, and shows a warning for capped datasets.
+- Iconsax navigation from vendor sidebar, dashboard and Growth OS. No new analytics data is fabricated; no raw GPS/visitor identity is displayed.
+- Missing `/api/analytics/log` route added, but it returns no-op until `GROWTH_EVENT_INGESTION_ENABLED=true`. It validates same-origin, DNT/GPC opt-out, approved business/type/channel, strict request size, trusted Vercel-proxy client IP and HMAC-hashed hourly rate limiting. No raw client IP, search text or coordinates are written.
+- `docs/growth/SECURE_EVENT_INGESTION_REVIEW_ONLY.sql` proposes atomic hourly limits, service-role-only invoker RPC and revocation of anonymous direct analytics INSERT. It has **NOT** been applied to any database and is intentionally not in the deployed migration directory.
+- Existing business detail event requests use opaque random event IDs and a fixed, evidence-based channel; legacy city and freeform metadata are no longer submitted.
+- New tests `growthIngestion.test.mjs` cover malformed/forged inputs, origin/privacy boundaries, SQL permissions, and vendor-owned querying.
+
+## Open blockers for production activation
+
+1. Supabase server-only `SUPABASE_SECRET_KEY` or `SUPABASE_SERVICE_ROLE_KEY` not configured in current Vercel project environment; a new secret must be provisioned and protected.
+2. Separate `GROWTH_RATE_LIMIT_SECRET` and private `GROWTH_EVENT_INGESTION_ENABLED` not configured. Do not create/enabled them before migration/approval.
+3. Promote the reviewed SQL to a properly generated migration, apply in a staging project, validate grants/RLS/abuse limits, and plan 48-hour bucket retention cleanup.
+4. Existing `leads` public INSERT policy remains wide open. Mobile app and web legacy lead submissions must migrate safely before it can be revoked. Existing lead-form `lead_form_submit` telemetry is intentionally not ingested as an ordinary anonymous click.
+5. The future `/vendor/insights` reporting page requires authenticated vendor acceptance and live visual checks; regression CI alone does not verify browser UX.
+6. Review privacy/consent notice and conduct production release checklist. One final controlled deploy only after all prerequisites pass.
+
+This file records delivered development work and explicit remaining gates; it does not claim Growth Intelligence is already deployed or that event ingestion is live.
