@@ -376,3 +376,24 @@
   .vendor-workspace .vendor-dashboard-v5 .vendor-overview-heading,
   .vendor-workspace .vendor-settings-v5 .vendor-settings-header {padding:20px;}
 }
+
+/* Existing Growth OS, Insights, Billing and Leads pages retain their white-on-
+   dark hero typography while their forest backdrop is shifted to neutral ink. */
+.vendor-workspace .vendor-premium-header {
+  background:linear-gradient(118deg,#243741 0%,#304652 60%,#3D5360 100%);
+  border-color:#3E5662;
+  color:#F7FAFB;
+  box-shadow:0 8px 24px rgba(24,39,47,.10);
+}
+.vendor-workspace .vendor-premium-card,
+.vendor-workspace .vendor-premium-panel {
+  background:#FFFFFF;
+  background-image:none;
+  border-color:#E3E9ED;
+  box-shadow:0 2px 12px rgba(24,39,47,.026);
+}
+.vendor-workspace .vendor-muted-callout {
+  background:#F5F7F9;
+  border-color:#E1E7EB;
+  color:#516674;
+}
