@@ -38,10 +38,10 @@ const panel = 'vendor-executive-card rounded-[13px] border border-[#ECECEF] bg-w
 const button = 'inline-flex h-9 items-center justify-center gap-2 rounded-[7px] border border-[#E7E7E9] bg-white px-3 text-xs font-semibold text-[#49494E] transition hover:border-[#FFBE86] hover:bg-[#FFF7F0] disabled:cursor-not-allowed disabled:opacity-50';
 
 const kpis = [
-  { id: 'views', title: 'Profile views', icon: 'eye', tone: '#2563eb', explanation: 'All-time visits to your listings' },
-  { id: 'calls', title: 'Call clicks', icon: 'call', tone: '#129568', explanation: 'Clicks on listed phone numbers' },
-  { id: 'leads', title: 'Enquiries', icon: 'message-text', tone: '#8963c8', explanation: 'Received customer enquiries' },
-  { id: 'reviews', title: 'Reviews', icon: 'star', tone: '#ce9a3b', explanation: 'Customer feedback received' },
+  { id: 'views', title: 'Profile views', icon: 'eye', tone: '#FF7900', explanation: 'All-time visits to your listings' },
+  { id: 'calls', title: 'Call clicks', icon: 'call', tone: '#242428', explanation: 'Clicks on listed phone numbers' },
+  { id: 'leads', title: 'Enquiries', icon: 'message-text', tone: '#E49B5B', explanation: 'Received customer enquiries' },
+  { id: 'reviews', title: 'Reviews', icon: 'star', tone: '#B28C6D', explanation: 'Customer feedback received' },
 ] as const;
 
 function csvCell(value: string | number): string {
@@ -231,8 +231,8 @@ export default function VendorDashboard() {
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <h2 className="text-[13px] font-bold text-[#1d3f31]">Performance snapshot</h2>
-            <span className="rounded-md border border-[#e9edf0] bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-500">All-time</span>
+            <h2 className="text-[13px] font-bold text-[#27272A]">Performance snapshot</h2>
+            <span className="rounded-md border border-[#EEEAEB] bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-500">All-time</span>
           </div>
           <p className="text-[11px] text-slate-400">Recorded counters · Not unique visitors or verified sales</p>
         </div>
@@ -273,8 +273,8 @@ export default function VendorDashboard() {
             {label:'Reputation center',detail:'Read and reply to reviews',href:'/vendor/reviews',icon:'star'},
             {label:'Growth performance',detail:'View customer activity signals',href:'/vendor/insights',icon:'status-up'},
           ].map(action=><Link key={action.href} href={action.href} className="vendor-dashboard-shortcut group flex items-center gap-3 rounded-[9px] border border-[#E4E9ED] bg-white p-4 transition hover:border-[#BFC9D0] hover:bg-[#FAFCFD]">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[7px] bg-[#F0F3F6] text-[#425868]"><IconsaxIcon name={action.icon} size={20}/></span>
-            <span className="min-w-0 flex-1"><span className="block text-[12px] font-bold text-[#2E513B]">{action.label}</span><span className="mt-1 block text-[10px] leading-4 text-[#7D9381]">{action.detail}</span></span>
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[7px] bg-[#FFF3E9] text-[#D26A13]"><IconsaxIcon name={action.icon} size={20}/></span>
+            <span className="min-w-0 flex-1"><span className="block text-[12px] font-bold text-[#29292E]">{action.label}</span><span className="mt-1 block text-[10px] leading-4 text-[#85858C]">{action.detail}</span></span>
             <IconsaxIcon name="arrow-right-2" size={14}/>
           </Link>)}
         </section>
@@ -283,10 +283,10 @@ export default function VendorDashboard() {
           <section className={panel + ' min-w-0 overflow-hidden'}>
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#eef0f2] px-5 py-4">
               <div>
-                <h2 className="text-[13px] font-bold text-[#23372e]">Engagement trends</h2>
+                <h2 className="text-[13px] font-bold text-[#27272C]">Engagement trends</h2>
                 <p className="mt-1 text-[11px] text-slate-400">Views, calls and lead activity recorded during the selected period</p>
               </div>
-              <Link href="/vendor/growth" className="flex items-center gap-1 text-[11px] font-semibold text-[#28704e] hover:underline">
+              <Link href="/vendor/growth" className="flex items-center gap-1 text-[11px] font-semibold text-[#D76A09] hover:underline">
                 Growth tools <IconsaxIcon name="arrow-right-2" size={13} />
               </Link>
             </div>
@@ -298,10 +298,10 @@ export default function VendorDashboard() {
           <section className={panel + ' min-w-0'}>
             <div className="flex items-center justify-between border-b border-[#eef0f2] px-5 py-4">
               <div>
-                <h2 className="text-[13px] font-bold text-[#23372e]">Portfolio health</h2>
+                <h2 className="text-[13px] font-bold text-[#27272C]">Portfolio health</h2>
                 <p className="mt-1 text-[11px] text-slate-400">Current listing and enquiry overview</p>
               </div>
-              <IconsaxIcon name="status-up" size={19} color="#3f7860" />
+              <IconsaxIcon name="status-up" size={19} color="#F47A1B" />
             </div>
             <div className="space-y-4 px-5 py-5">
               <div className="grid grid-cols-3 gap-2">
@@ -311,14 +311,28 @@ export default function VendorDashboard() {
                   { value: businesses.filter(b => b.is_open).length, label: 'Open*' },
                 ].map(item => (
                   <div key={item.label} className="rounded-lg border border-[#eef1f0] bg-[#fbfcfb] py-3 text-center">
-                    <p className="text-xl font-bold tabular-nums text-[#203d30]">{loading ? '—' : number(item.value)}</p>
+                    <p className="text-xl font-bold tabular-nums text-[#27272A]">{loading ? '—' : number(item.value)}</p>
                     <p className="mt-1 text-[10px] text-slate-500">{item.label}</p>
                   </div>
                 ))}
               </div>
+              <div className="flex items-center gap-4 rounded-[11px] border border-[#F0EBE6] bg-[#FFF9F4] px-4 py-4">
+                <div role="img" aria-label={loading?'Listing publication percentage loading':(businesses.length?Math.round(activeCount/businesses.length*100):0)+' percent of owned listings published'}
+                  className="flex h-28 w-28 shrink-0 items-center justify-center rounded-full p-[12px]"
+                  style={{background:businesses.length?'conic-gradient(#FF7900 '+Math.round(activeCount/businesses.length*100)+'%, #F0E9E3 0%)':'#F0E9E3'}}>
+                  <div className="flex h-full w-full flex-col items-center justify-center rounded-full bg-white">
+                    <span className="text-[25px] font-extrabold tabular-nums text-[#222226]">{loading?'—':businesses.length?Math.round(activeCount/businesses.length*100)+'%':'0%'}</span>
+                    <span className="mt-0.5 text-[9px] font-semibold text-[#97939A]">Published</span>
+                  </div>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[12px] font-bold text-[#2A292D]">Listing readiness</p>
+                  <p className="mt-2 text-[11px] leading-5 text-[#8C8580]">Share of your owned listings approved for directory display. Not a sales or customer conversion metric.</p>
+                </div>
+              </div>
               <p className="text-[10px] leading-5 text-slate-400">*Open status reflects your manually selected business availability.</p>
               <div className="border-t border-[#eef0f2] pt-4">
-                <h3 className="text-[11px] font-bold text-[#263e31]">Recommended actions</h3>
+                <h3 className="text-[11px] font-bold text-[#27272A]">Recommended actions</h3>
                 {loading ? (
                   <p className="mt-4 text-[11px] text-slate-400">Loading recommendations…</p>
                 ) : opportunities.length ? (
@@ -326,18 +340,18 @@ export default function VendorDashboard() {
                     {opportunities.map(opportunity => (
                       <div key={opportunity.title} className="py-3">
                         <div className="flex items-center gap-2">
-                          <IconsaxIcon name={opportunity.icon} size={17} color="#386b51" />
-                          <p className="text-[11px] font-semibold text-[#2d4636]">{opportunity.title}</p>
+                          <IconsaxIcon name={opportunity.icon} size={17} color="#E37517" />
+                          <p className="text-[11px] font-semibold text-[#38383C]">{opportunity.title}</p>
                         </div>
                         <p className="mt-1.5 text-[10px] leading-5 text-slate-500">{opportunity.body}</p>
-                        <Link href={opportunity.href} className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-bold text-[#2b7955] hover:underline">
+                        <Link href={opportunity.href} className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-bold text-[#DC6A00] hover:underline">
                           {opportunity.link} <IconsaxIcon name="arrow-right-2" size={11} />
                         </Link>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="mt-3 rounded-lg bg-[#f2f7f3] p-3 text-[11px] leading-5 text-[#476b54]">
+                  <div className="mt-3 rounded-lg bg-[#FFF6EC] p-3 text-[11px] leading-5 text-[#795E4B]">
                     Your listings are in good shape. Keep customer details and promotions up to date.
                   </div>
                 )}
@@ -347,9 +361,9 @@ export default function VendorDashboard() {
         </div>
 
         <section className={panel + ' overflow-hidden'}>
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e9edf0] px-5 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#EEEAEB] px-5 py-4">
             <div>
-              <h2 className="text-[14px] font-bold text-[#23392f]">Business performance</h2>
+              <h2 className="text-[14px] font-bold text-[#27272C]">Business performance</h2>
               <p className="mt-1 text-[11px] text-slate-400">Search, filter and compare your registered business listings</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -362,7 +376,7 @@ export default function VendorDashboard() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 border-b border-[#e9edf0] px-4 py-3 sm:px-5">
+          <div className="flex flex-wrap items-center gap-2 border-b border-[#EEEAEB] px-4 py-3 sm:px-5">
             <div className="relative min-w-[180px] flex-1 sm:max-w-[340px]">
               <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
                 <IconsaxIcon name="search-normal" size={16} />
@@ -393,14 +407,14 @@ export default function VendorDashboard() {
               <IconsaxIcon name="shop" size={30} color="#7c9c8a" />
               <h3 className="text-sm font-bold text-[#324b3c]">No registered businesses yet</h3>
               <p className="text-xs text-slate-500">Add your first listing to start tracking its performance.</p>
-              <Link href="/register-business" className="mt-2 rounded-lg bg-[#1c4d3b] px-4 py-2.5 text-xs font-semibold text-white">Register business</Link>
+              <Link href="/register-business" className="mt-2 rounded-lg bg-[#1F1F21] px-4 py-2.5 text-xs font-semibold text-white">Register business</Link>
             </div>
           ) : filtered.length === 0 ? (
             <div className="px-6 py-12 text-center text-xs text-slate-500">No businesses match your filters.</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[760px] text-left">
-                <thead className="border-b border-[#e9edf0] bg-[#f9fafb]">
+                <thead className="border-b border-[#EEEAEB] bg-[#f9fafb]">
                   <tr className={smallLabel}>
                     <th className="w-[36%] px-5 py-3 font-bold">Business name</th>
                     <th className="px-3 py-3 font-bold">Listing status</th>
@@ -421,10 +435,10 @@ export default function VendorDashboard() {
                             <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-[#e5ebe7] bg-[#f4f8f5]">
                               {business.logo_url
                                 ? <img src={business.logo_url} alt="" className="h-full w-full object-cover" />
-                                : <IconsaxIcon name="shop" size={18} color="#648e72" />}
+                                : <IconsaxIcon name="shop" size={18} color="#C8762A" />}
                             </div>
                             <div className="min-w-0">
-                              <p className="truncate text-xs font-semibold text-[#233d30]">{business.name}</p>
+                              <p className="truncate text-xs font-semibold text-[#28282D]">{business.name}</p>
                               <p className="mt-0.5 max-w-[220px] truncate font-mono text-[10px] text-slate-400">{business.id.slice(0, 8)}</p>
                             </div>
                           </div>
@@ -457,7 +471,7 @@ export default function VendorDashboard() {
               </table>
             </div>
           )}
-          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#e9edf0] px-5 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#EEEAEB] px-5 py-3">
             <p className="text-[11px] text-slate-400">{filtered.length ? (safePage - 1) * PAGE_SIZE + 1 : 0}–{Math.min(safePage * PAGE_SIZE, filtered.length)} of {filtered.length} businesses</p>
             <div className="flex items-center gap-2">
               <button type="button" className={button + ' h-8'} disabled={safePage <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}>Previous</button>
@@ -469,8 +483,8 @@ export default function VendorDashboard() {
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <section className={panel + ' overflow-hidden'}>
-            <div className="flex items-center justify-between border-b border-[#e9edf0] px-5 py-4">
-              <div><h2 className="text-[13px] font-bold text-[#22392d]">Recent customer activity</h2><p className="mt-1 text-[11px] text-slate-400">Latest reviews on your listings</p></div>
+            <div className="flex items-center justify-between border-b border-[#EEEAEB] px-5 py-4">
+              <div><h2 className="text-[13px] font-bold text-[#27272C]">Recent customer activity</h2><p className="mt-1 text-[11px] text-slate-400">Latest reviews on your listings</p></div>
               <Link href="/vendor/reviews" className="flex items-center gap-1 text-[11px] font-semibold text-[#287750]">All reviews <IconsaxIcon name="arrow-right-2" size={12} /></Link>
             </div>
             {loading ? <p className="p-5 text-xs text-slate-400">Loading reviews…</p> : reviews.length === 0 ? (
@@ -481,7 +495,7 @@ export default function VendorDashboard() {
                   <div key={r.id} className="flex items-center gap-3 px-5 py-3">
                     <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f5f1e8] text-[#b28b4a]"><IconsaxIcon name="star" size={15} /></span>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-xs font-semibold text-[#2a4433]">{r.user_name || 'Customer'} · {r.businessName}</p>
+                      <p className="truncate text-xs font-semibold text-[#343439]">{r.user_name || 'Customer'} · {r.businessName}</p>
                       <p className="mt-1 text-[10px] text-slate-400">{new Date(r.created_at).toLocaleDateString('en-LK', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                     </div>
                     {r.rating !== null && <span className="rounded-md bg-[#fff5e3] px-2 py-1 text-xs font-bold text-[#ae7c34]">{r.rating.toFixed(1)} / 5</span>}
@@ -491,7 +505,7 @@ export default function VendorDashboard() {
             )}
           </section>
           <section className={panel + ' overflow-hidden'}>
-            <div className="border-b border-[#e9edf0] px-5 py-4"><h2 className="text-[13px] font-bold text-[#22392d]">Quick actions</h2><p className="mt-1 text-[11px] text-slate-400">Common tasks for your business</p></div>
+            <div className="border-b border-[#EEEAEB] px-5 py-4"><h2 className="text-[13px] font-bold text-[#27272C]">Quick actions</h2><p className="mt-1 text-[11px] text-slate-400">Common tasks for your business</p></div>
             <div className="grid grid-cols-2 gap-2 p-4">
               {[
                 { label: 'My listings', href: '/vendor/my-businesses', icon: 'shop' },
@@ -505,8 +519,8 @@ export default function VendorDashboard() {
                 { label: 'Profile settings', href: '/vendor/settings', icon: 'setting-2' },
                 { label: 'Register business', href: '/register-business', icon: 'add' },
               ].map(action => (
-                <Link key={action.href} href={action.href} className="flex items-center justify-between gap-2 rounded-lg border border-[#e9edf0] p-3 text-xs font-semibold text-[#365242] transition hover:border-[#b6d5c4] hover:bg-[#f8fbf9]">
-                  <span className="flex items-center gap-2"><IconsaxIcon name={action.icon} size={17} color="#427c5c" /> {action.label}</span>
+                <Link key={action.href} href={action.href} className="flex items-center justify-between gap-2 rounded-lg border border-[#EEEAEB] p-3 text-xs font-semibold text-[#424247] transition hover:border-[#FFCCA6] hover:bg-[#FFFAF5]">
+                  <span className="flex items-center gap-2"><IconsaxIcon name={action.icon} size={17} color="#E27417" /> {action.label}</span>
                   <IconsaxIcon name="arrow-right-2" size={12} />
                 </Link>
               ))}
