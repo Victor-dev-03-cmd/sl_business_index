@@ -293,7 +293,7 @@ export default function SettingsPage() {
       {error&&<div role="alert" className="rounded-xl border border-[#E9D3BE] bg-[#FFF9ED] p-4 text-[12px] text-[#875E38]">{error}<Link href="/login?redirect=/vendor/settings" className="ml-2 underline">Sign in</Link></div>}
       {loading&&<div role="status" className="vendor-premium-panel flex items-center gap-3 p-5 text-sm text-[#50745C]"><Loader2 className="animate-spin" size={18}/> Loading your settings…</div>}
 
-      <div className="grid min-w-0 grid-cols-1 items-start gap-5 lg:grid-cols-[236px_minmax(0,1fr)] lg:gap-6">
+      <div className="grid min-w-0 grid-cols-1 items-start gap-5 lg:grid-cols-[238px_minmax(0,1fr)] lg:gap-6">
         <div className="vendor-settings-navigation min-w-0 overflow-hidden rounded-[10px] border border-[#E4E9ED] bg-white p-2 shadow-[0_2px_14px_rgba(23,41,50,.03)] lg:sticky lg:top-5">
           <p className="px-3 pb-3 pt-4 text-[10px] font-bold uppercase tracking-[.17em] text-[#8B9F90]">Workspace settings</p>
           <nav aria-label="Vendor settings sections" className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-1" role="tablist" aria-orientation="vertical">
