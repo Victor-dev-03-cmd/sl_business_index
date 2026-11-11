@@ -60,12 +60,20 @@ test('Settings saves actual account/business data and does not expose fake contr
 test('marketing and QR studios avoid invented reach and offer functional links',()=>{
   assert.match(marketing,/vendor-premium-header/);
   assert.match(marketing,/vendor\/insights/);
+  assert.match(marketing,/Consent-first email marketing/);
+  assert.match(marketing,/Campaign record library/);
+  assert.match(marketing,/saveCampaign/);
+  assert.doesNotMatch(marketing,/MarketingDesignEditor|EditorCanvas|showEditor/);
   assert.doesNotMatch(marketing,/2\.5k - 5k impressions/);
   assert.doesNotMatch(marketing,/toast\.info\('Advanced optimization in progress/);
   assert.doesNotMatch(marketing,/View Stats/);
   assert.match(qr,/vendor-premium-header/);
-  assert.match(qr,/checkingQR/);
-  assert.match(qr,/vendor\/insights/);
+  assert.match(qr,/setChecking/);
+  assert.match(qr,/QRCodeCanvas/);
+  assert.match(qr,/QRCodeSVG/);
+  assert.match(qr,/downloadPNG/);
+  assert.match(qr,/downloadSVG/);
+  assert.match(qr,/requestAssignment/);
   assert.doesNotMatch(qr,/Trackable Scans/);
 });
 
@@ -98,4 +106,13 @@ test('command palette traps focus and restores it after closing',()=>{
   assert.match(actions,/event\.key!=='Tab'/);
   assert.match(actions,/previous\?\.focus\(\)/);
   assert.match(actions,/aria-modal="true"/);
+});
+
+test('settings layout is scoped, responsive and avoids oversized radii',()=>{
+  assert.match(settings,/vendor-settings-grid/);
+  assert.match(settings,/vendor-settings-navigation/);
+  assert.match(settings,/vendor-settings-panels/);
+  assert.match(style,/\.vendor-settings \.vendor-settings-grid/);
+  assert.match(style,/@media\(max-width:540px\)/);
+  assert.match(style,/\.vendor-setting-section\s*\{/);
 });
