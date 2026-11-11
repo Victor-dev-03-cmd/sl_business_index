@@ -86,6 +86,7 @@ alter table public.businesses enable row level security;
 alter table public.profiles enable row level security;
 alter table public.verifications enable row level security;
 grant usage on schema public,auth,storage to anon,authenticated,service_role;
+grant select,insert,update,delete on auth.users to service_role;
 grant select on public.businesses to anon,authenticated,service_role;
 grant select,insert on public.analytics_logs to anon,authenticated,service_role;
 grant select,insert on public.leads to anon,authenticated,service_role;
