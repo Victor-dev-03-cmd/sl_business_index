@@ -16,6 +16,10 @@ export const VENDOR_QUICK_ACTIONS = [
   { title:'Business QR codes', description:'Print or download a code linked to your profile', href:'/vendor/qr-code', icon:'scan-barcode', group:'Tools', keywords:'qr print download scan' },
   { title:'Billing & plans', description:'Review your subscription and invoices', href:'/vendor/billing', icon:'card', group:'Account', keywords:'payment invoice subscription' },
   { title:'Account & verification', description:'Profile, business verification and local SEO', href:'/vendor/settings', icon:'setting-2', group:'Account', keywords:'settings notification profile secure' },
+  { title:'Verify a business', description:'Open the verification form and document checklist', href:'/vendor/settings?tab=verification', icon:'shield-tick', group:'Account', keywords:'verify upload business registration' },
+  { title:'Optimize local discovery', description:'Edit service radius and approved SEO keywords', href:'/vendor/settings?tab=optimization', icon:'search-normal', group:'Growth', keywords:'seo visibility location keywords ranking' },
+  { title:'Notification preferences', description:'Choose which account updates to receive', href:'/vendor/settings?tab=notifications', icon:'sms', group:'Account', keywords:'email alerts notification preferences' },
+  { title:'Account security', description:'Change your password and review security information', href:'/vendor/settings?tab=security', icon:'shield-tick', group:'Account', keywords:'password login security' },
 ] as const;
 
 export default function VendorQuickActions({ open, onClose }:{open:boolean;onClose:()=>void}) {
