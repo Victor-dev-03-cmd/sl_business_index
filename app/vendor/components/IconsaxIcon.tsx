@@ -64,6 +64,7 @@ export default function IconsaxIcon({
   useEffect(() => {
     let cancelled = false;
     let observer: MutationObserver | undefined;
+    let iconReady = false;
     setRendered(false);
 
     const attach = async () => {
@@ -81,11 +82,13 @@ export default function IconsaxIcon({
       const check = () => {
         if (cancelled) return;
         const svg = node.shadowRoot?.querySelector('svg') || node.querySelector('svg');
-        if (svg && !svg.querySelector('title[data-error]')) setRendered(true);
+        if (svg && !svg.querySelector('title[data-error]')) { iconReady = true; setRendered(true); observer?.disconnect(); }
       };
       check();
-      observer = new MutationObserver(check);
-      observer.observe(node.shadowRoot || node, { childList: true, subtree: true, attributes: false });
+      if (!iconReady) {
+        observer = new MutationObserver(check);
+        observer.observe(node.shadowRoot || node, { childList: true, subtree: true, attributes: false });
+      }
     };
     void attach();
     return () => { cancelled = true; observer?.disconnect(); };

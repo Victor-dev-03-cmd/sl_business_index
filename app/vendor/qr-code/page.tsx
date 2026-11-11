@@ -1,4 +1,5 @@
 'use client';
+import { neo } from '../components/neumorphic';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
@@ -16,8 +17,8 @@ const tones=[
   {name:'Midnight',fg:'#17283A',accent:'#2D5276'},
   {name:'Black',fg:'#111827',accent:'#222222'},
 ] as const;
-const panel='rounded-[10px] border border-[#E9E9EC] bg-white shadow-[0_3px_16px_rgba(25,25,31,.028)]';
-const input='min-h-11 w-full rounded-[6px] border border-[#DBDBDF] bg-white px-3 text-[12px] text-[#2C2C31] outline-none focus:border-[#FF7900]';
+const panel = neo.card;
+const input = neo.input;
 const layouts:{key:Format;title:string;sub:string}[]=[
   {key:'counter',title:'Counter display',sub:'A clear invitation for customers at checkout'},
   {key:'window',title:'Window sticker',sub:'High-contrast label for storefront entrances'},
@@ -161,8 +162,8 @@ export default function VendorQRStudioPage(){
   };
   if(loading)return <div role="status" className={panel+' p-8 text-sm text-[#2C2C31]'}>Loading QR workspace…</div>;
   if(!signedIn)return <div className={panel+' p-8 text-sm'}>Sign in to access your QR Studio. <Link href="/login?redirect=/vendor/qr-code" className="font-bold text-[#2C2C31] underline">Sign in</Link></div>;
-  return <div className="vendor-page-v7 vendor-page-v9 mx-auto w-full max-w-[1600px] space-y-5 pb-8 text-[#28282D]">
-    <header className="vendor-owner-heading grid gap-3 border border-[#E9E9EC] bg-white p-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+  return <div className={neo.page + " mx-auto w-full  space-y-5 pb-8 text-[#28282D]"}>
+    <header className={neo.hero + " grid gap-3 p-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-end"}>
       <div><p className="text-[10px] font-bold uppercase tracking-[.18em] text-[#B3611E]">Digital storefront / QR Studio</p>
         <h1 className="mt-2 text-[30px] font-bold tracking-[-.04em]">QR Studio</h1><p className="mt-1 max-w-[690px] text-[12px] leading-6 text-[#777780]">Create a professionally branded scan experience for your real directory listing. Configure, preview, export and print without leaving your workspace.</p></div>
       <div className="flex flex-wrap gap-2"><Link href="/vendor/insights" className="flex h-10 items-center gap-2 border border-[#DEDEE2] px-4 text-[11px] font-bold text-[#505058]"><IconsaxIcon name="status-up" size={16}/> Growth insights</Link>

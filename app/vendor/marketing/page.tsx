@@ -1,4 +1,5 @@
 'use client';
+import { neo } from '../components/neumorphic';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
@@ -11,8 +12,8 @@ type Campaign = {id:string;business_id:string|null;banner_text:string;banner_col
 type Objective = 'awareness'|'promotion'|'enquiries'|'announcement';
 type Language = 'English'|'தமிழ்'|'සිංහල';
 type Section = 'overview'|'social'|'email'|'calendar'|'library';
-const card='rounded-[10px] border border-[#E9E9EC] bg-white shadow-[0_3px_16px_rgba(25,25,31,.028)]';
-const input='w-full min-h-10 rounded-[6px] border border-[#DBDBDF] bg-white px-3 py-2.5 text-[12px] text-[#2C2C31] outline-none focus:border-[#FF7900] focus:ring-2 focus:ring-[#FFE3CA]';
+const card = neo.card;
+const input = neo.input;
 const objectives: {key:Objective;title:string;description:string}[]=[
   {key:'awareness',title:'Brand awareness',description:'Introduce your business and what makes it useful'},
   {key:'promotion',title:'Offer / promotion',description:'Communicate a real offer and its conditions'},
@@ -181,8 +182,8 @@ export default function MarketingPage() {
   ];
   const launch=(target:Section)=>{setSection(target);document.getElementById('marketing-workspace')?.scrollIntoView({behavior:'smooth',block:'start'});};
   return (
-    <div className="vendor-page-v7 vendor-page-v9 mx-auto w-full max-w-[1600px] space-y-5 pb-8 text-[#28282D]">
-      <header className="vendor-owner-heading grid gap-5 border border-[#E9E9EC] bg-white px-5 py-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-end md:px-7">
+    <div className={neo.page + " mx-auto w-full  space-y-5 pb-8 text-[#28282D]"}>
+      <header className={neo.hero + " grid gap-5 px-5 py-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-end md:px-7"}>
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#B3611E]">SLBI Growth OS / Marketing Engine</p>
           <h1 className="mt-2 text-[28px] font-bold tracking-[-.045em] md:text-[34px]">Marketing Studio</h1>
