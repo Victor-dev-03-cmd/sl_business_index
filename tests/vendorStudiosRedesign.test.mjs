@@ -78,6 +78,6 @@ test('creative library accepts reviewed media, does not run canvas publishing',(
   assert.doesNotMatch(upload,/MarketingDesignEditor|canvas\.toDataURL/);
   assert.match(marketingRls,/qr_one_assigned_per_business/);
   assert.match(marketingRls,/vendor_id=\(select auth\.uid\(\)\)/);
-  assert.match(marketingRls,/business_id.*business_id/);
+  assert.match(marketingRls,/b\.id=promotions\.business_id and b\.owner_id=/);
   assert.match(marketingRls,/NOT applied to production/);
 });
