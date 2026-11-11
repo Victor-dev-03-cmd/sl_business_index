@@ -1,0 +1,42 @@
+name: SemanticSearch v3 Real Model Research
+
+on:
+  push:
+    branches:
+      - research/semanticsearch-v3-evaluation-vector-gates-20261111
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  evaluate-multilingual-e5:
+    name: Offline model-backed evaluation (research only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: requirements-semantic-research.txt
+      - name: Install pinned evaluation dependencies
+        run: python -m pip install -r requirements-semantic-research.txt
+      - name: Evaluate real multilingual embeddings against category-proxy labels
+        run: |
+          python scripts/benchmark-semantic-v3.py \
+            --model intfloat/multilingual-e5-small \
+            --max-queries 240 \
+            --batch-size 16 \
+            --output semantic-v3-research-report.json
+      - name: Upload research report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: semantic-v3-research-report
+          path: semantic-v3-research-report.json
+          if-no-files-found: ignore
+          retention-days: 7
