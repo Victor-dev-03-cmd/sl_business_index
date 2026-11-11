@@ -13,7 +13,7 @@ type Status = 'all' | 'approved' | 'pending' | 'rejected' | 'suspended';
 type Sort = 'newest' | 'oldest' | 'name' | 'views';
 type BusinessRecord = Business & { views?: number | null; calls?: number | null; is_open?: boolean | null };
 const panel = 'vendor-premium-card';
-const button = 'inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-[#e1e6eb] bg-white px-3 text-xs font-semibold text-slate-600 transition hover:border-[#baccc4] hover:bg-[#f7faf8] disabled:cursor-not-allowed disabled:opacity-50';
+const button = 'inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-[#e1e6eb] bg-white px-3 text-xs font-semibold text-slate-600 transition hover:border-[#E6A67D] hover:bg-[#FFF8F2] disabled:cursor-not-allowed disabled:opacity-50';
 const number = (value: number) => new Intl.NumberFormat('en-LK').format(value);
 const statuses: Status[] = ['all', 'approved', 'pending', 'rejected', 'suspended'];
 
@@ -145,20 +145,20 @@ export default function MyBusinessesPage() {
     <div className="mx-auto max-w-xl py-16 text-center">
       <h1 className="text-xl font-bold text-[#1c3f2f]">Sign in to manage your businesses</h1>
       <p className="mt-2 text-sm text-slate-500">Your registered business listings are available in your vendor account.</p>
-      <Link href="/login?redirect=/vendor/my-businesses" className="mt-5 inline-flex rounded-lg bg-[#1c4d3b] px-5 py-2.5 text-xs font-bold text-white">Sign in</Link>
+      <Link href="/login?redirect=/vendor/my-businesses" className="mt-5 inline-flex rounded-lg bg-[#202024] px-5 py-2.5 text-xs font-bold text-white">Sign in</Link>
     </div>
   );
 
   return (
-    <div className="mx-auto min-h-full max-w-[1500px] pb-6 text-[#283F30]">
+    <div className="vendor-page-v7 mx-auto min-h-full w-full max-w-[1600px] pb-7 text-[#28282D]">
       <div className="space-y-5">
-        <header className="vendor-premium-card flex flex-col gap-5 border-t-4 border-t-[#2D6749] px-5 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-6">
+        <header className="vendor-owner-heading vendor-premium-card flex flex-col gap-5 border border-[#E9E9EC] px-5 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-6">
           <div className="space-y-1.5">
             <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
               <IconsaxIcon name="category" size={15} /> Vendor workspace
               <IconsaxIcon name="arrow-right-2" size={12} /> My Businesses
             </div>
-            <h1 className="text-[24px] font-bold tracking-tight text-[#172d26]">My Businesses</h1>
+            <h1 className="text-[24px] font-bold tracking-tight text-[#1B1B1F]">My Businesses</h1>
             <p className="text-[12px] text-slate-500">Manage your directory presence, listing details and publication status.</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -166,7 +166,7 @@ export default function MyBusinessesPage() {
               <IconsaxIcon name="refresh" size={15} /> Refresh
             </button>
             <Link href={limitReached ? '/vendor/billing' : '/register-business'}
-              className="inline-flex h-9 items-center gap-2 rounded-lg bg-[#1c4d3b] px-3.5 text-xs font-bold text-white transition hover:bg-[#2d664f]">
+              className="inline-flex h-9 items-center gap-2 rounded-lg bg-[#202024] px-3.5 text-xs font-bold text-white transition hover:bg-[#39393E]">
               <IconsaxIcon name={limitReached ? 'card' : 'add'} size={17} color="#ffffff" />
               {limitReached ? 'Upgrade plan' : 'Register business'}
             </Link>
@@ -181,7 +181,7 @@ export default function MyBusinessesPage() {
         )}
 
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-[13px] font-bold text-[#1d3f31]">Portfolio overview</h2>
+          <h2 className="text-[13px] font-bold text-[#2C2C32]">Portfolio overview</h2>
           <span className="rounded-md border border-[#e9edf0] bg-white px-2 py-1 text-[10px] font-semibold text-slate-500">Your listings only</span>
         </div>
         <section aria-label="Business portfolio summary" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -198,7 +198,7 @@ export default function MyBusinessesPage() {
                   <IconsaxIcon name={item.icon} size={18} />
                 </span>
               </div>
-              <p className="mt-1.5 text-[26px] font-bold tabular-nums tracking-[-0.04em] text-[#182b25]">{loading ? '—' : number(item.value)}</p>
+              <p className="mt-1.5 text-[26px] font-bold tabular-nums tracking-[-0.04em] text-[#1D1D20]">{loading ? '—' : number(item.value)}</p>
               <p className="mt-2 text-[10px] leading-4 text-slate-400">{item.hint}</p>
             </div>
           ))}
@@ -226,7 +226,7 @@ export default function MyBusinessesPage() {
         <section className={panel + ' overflow-hidden'}>
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e9edf0] px-5 py-4">
             <div>
-              <h2 className="text-[13px] font-bold text-[#23392f]">Business directory</h2>
+              <h2 className="text-[13px] font-bold text-[#313137]">Business directory</h2>
               <p className="mt-1 text-[11px] text-slate-400">Search, review and manage your business profiles</p>
             </div>
             <button type="button" onClick={exportCsv} disabled={!filtered.length} className={button}>
@@ -267,7 +267,7 @@ export default function MyBusinessesPage() {
               <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#eff6f1] text-[#347653]"><IconsaxIcon name="shop" size={24} /></span>
               <h3 className="text-[13px] font-bold text-[#223d2c]">No businesses registered yet</h3>
               <p className="max-w-sm text-[11px] leading-5 text-slate-500">Create your first business listing to appear in the Sri Lanka business directory.</p>
-              <Link href="/register-business" className="mt-1 rounded-lg bg-[#1c4d3b] px-4 py-2.5 text-[11px] font-bold text-white">Register your first business</Link>
+              <Link href="/register-business" className="mt-1 rounded-lg bg-[#202024] px-4 py-2.5 text-[11px] font-bold text-white">Register your first business</Link>
             </div>
           ) : !filtered.length ? (
             <div className="py-12 text-center">
@@ -395,7 +395,7 @@ export default function MyBusinessesPage() {
               </div>
             </div>
             <div className="flex flex-wrap gap-2 border-t border-[#edf0ee] bg-white p-4">
-              <Link href={`/vendor/my-businesses/${encodeURIComponent(String(selected.id))}/edit`} className="inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-lg bg-[#1c4d3b] px-3 text-xs font-bold text-white"><IconsaxIcon name="setting-2" size={15} color="#fff" /> Edit details</Link>
+              <Link href={`/vendor/my-businesses/${encodeURIComponent(String(selected.id))}/edit`} className="inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-lg bg-[#202024] px-3 text-xs font-bold text-white"><IconsaxIcon name="setting-2" size={15} color="#fff" /> Edit details</Link>
               {selected.status === 'approved' && <>
                 <Link href={listingUrl(selected)} target="_blank" rel="noopener noreferrer" className={button}>View profile</Link>
                 <button type="button" onClick={() => void copyProfile(selected)} className={button}>Copy link</button>
