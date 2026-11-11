@@ -59,6 +59,23 @@ function normalizeObjectPath(raw:string|null){
 
 export default function SettingsPage() {
   const [activeTab,setActiveTab]=useState<Tab>('profile');
+  // Section deep links make the command palette and bookmarks actionable.
+  // Read the query only after mount to keep SSR and client hydration identical.
+  useEffect(()=>{
+    const selectFromUrl=()=>{
+      const query=new URLSearchParams(window.location.search).get('tab');
+      if(query&&tabList.some(section=>section.id===query))setActiveTab(query as Tab);
+    };
+    selectFromUrl();
+    window.addEventListener('popstate',selectFromUrl);
+    return()=>window.removeEventListener('popstate',selectFromUrl);
+  },[]);
+  const selectTab=(tab:Tab)=>{
+    setActiveTab(tab);
+    const next=new URL(window.location.href);
+    next.searchParams.set('tab',tab);
+    window.history.replaceState(window.history.state,'',next.pathname+next.search+next.hash);
+  };
   const [loading,setLoading]=useState(true);
   const [saving,setSaving]=useState(false);
   const [userId,setUserId]=useState<string|null>(null);
@@ -270,7 +287,7 @@ export default function SettingsPage() {
         <div className="vendor-premium-card overflow-hidden p-2 lg:sticky lg:top-5">
           <p className="px-3 pb-3 pt-4 text-[10px] font-bold uppercase tracking-[.17em] text-[#8B9F90]">Workspace settings</p>
           <nav aria-label="Vendor settings sections" className="space-y-1" role="tablist" aria-orientation="vertical">
-            {tabList.map(item=><button type="button" role="tab" id={'tab-'+item.id} aria-selected={activeTab===item.id} aria-controls={'panel-'+item.id} key={item.id} onClick={()=>setActiveTab(item.id)}
+            {tabList.map(item=><button type="button" role="tab" id={'tab-'+item.id} aria-selected={activeTab===item.id} aria-controls={'panel-'+item.id} key={item.id} onClick={()=>selectTab(item.id)}
               className={'flex min-h-12 w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition '+(activeTab===item.id?'bg-[#E8F4E9] text-[#215F3D]':'text-[#617C68] hover:bg-[#F6F9F4] hover:text-[#29553A]')}>
               <span className={'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl '+(activeTab===item.id?'bg-white text-[#267048]':'bg-[#F3F6F1] text-[#7D9582]')}><item.icon size={17}/></span>
               <span className="flex-1"><span className="block text-[12px] font-bold">{item.name}</span><span className="mt-0.5 block text-[10px] opacity-70">{item.detail}</span></span>
