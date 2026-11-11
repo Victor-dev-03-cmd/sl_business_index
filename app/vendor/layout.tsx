@@ -70,8 +70,8 @@ export default function VendorLayout({children}:{children:React.ReactNode}){
 
         <nav aria-label="Vendor primary navigation" className="vendor-topbar-primary ml-auto hidden min-w-0 items-center gap-1 rounded-[12px] border border-[#F0EFF1] bg-[#F8F8F9] p-1 xl:flex">
           {primaryNav.map(item=><Link key={item.href} href={item.href} aria-current={active(item.href)?'page':undefined}
-            className={'vendor-topnav-link flex h-9 shrink-0 items-center gap-1.5 rounded-[8px] px-3 text-[11px] font-semibold transition-colors '+(active(item.href)?'bg-[#FF7900] text-white shadow-[0_4px_10px_rgba(255,121,0,.16)]':'text-[#68686E] hover:bg-white hover:text-[#141416]')}>
-            <IconsaxIcon name={item.icon} size={15} color={active(item.href)?'#FFFFFF':'#86868B'}/>{item.name}
+            className={'vendor-topnav-link flex h-9 shrink-0 items-center gap-1.5 rounded-[8px] px-3 text-[11px] font-semibold transition-colors '+(active(item.href)?'bg-[#FF7900] text-[#18181A] shadow-[0_4px_10px_rgba(255,121,0,.16)]':'text-[#68686E] hover:bg-white hover:text-[#141416]')}>
+            <IconsaxIcon name={item.icon} size={15} color={active(item.href)?'#18181A':'#86868B'}/>{item.name}
           </Link>)}
         </nav>
 
@@ -114,8 +114,8 @@ export default function VendorLayout({children}:{children:React.ReactNode}){
       {/* On narrower screens navigation remains at the top — horizontally scrollable, never a sidebar. */}
       <nav aria-label="Vendor compact navigation" className="vendor-topbar-scrollbar flex h-[49px] w-full items-center gap-1 overflow-x-auto border-t border-[#F1F1F2] px-4 sm:px-6 xl:hidden">
         {allItems.map(item=><Link key={item.href} href={item.href} aria-current={active(item.href)?'page':undefined}
-          className={'flex h-9 shrink-0 items-center gap-1.5 rounded-[7px] px-3 text-[11px] font-semibold transition '+(active(item.href)?'bg-[#FF7900] text-white':'text-[#73737A] hover:bg-[#FFF3E8] hover:text-[#B45300]')}>
-          <IconsaxIcon name={item.icon} size={15} color={active(item.href)?'#FFFFFF':'#888990'}/>{item.name}
+          className={'flex h-9 shrink-0 items-center gap-1.5 rounded-[7px] px-3 text-[11px] font-semibold transition '+(active(item.href)?'bg-[#FF7900] text-[#18181A]':'text-[#73737A] hover:bg-[#FFF3E8] hover:text-[#B45300]')}>
+          <IconsaxIcon name={item.icon} size={15} color={active(item.href)?'#18181A':'#888990'}/>{item.name}
         </Link>)}
         <Link href="/" className="ml-1 shrink-0 border-l border-[#E9E9EB] px-3 py-2 text-[11px] font-medium text-[#73737A]">Visit directory</Link>
       </nav>
