@@ -87,7 +87,7 @@ test('QR Studio provides branded presets and print/download without fake scan co
 
 test('Settings alignment uses restrained corners and responsive minimum widths',()=>{
   assert.match(settings,/vendor-settings/);
-  assert.match(settings,/xl:grid-cols-\[238px_minmax\(0,1fr\)\]/);
+  assert.match(settings,/lg:grid-cols-\[238px_minmax\(0,1fr\)\]/);
   assert.match(style,/\.vendor-settings :is\(input,select,textarea\)/);
   assert.match(style,/border-radius:8px/);
 });
