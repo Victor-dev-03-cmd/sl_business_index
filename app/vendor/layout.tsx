@@ -12,6 +12,7 @@ import IconsaxIcon from './components/IconsaxIcon';
 const primaryNav = [
   { name: 'Dashboard', href: '/vendor/dashboard', icon: 'category' },
   { name: 'Growth OS', href: '/vendor/growth', icon: 'chart' },
+  { name: 'Insights', href: '/vendor/insights', icon: 'status-up' },
   { name: 'My Businesses', href: '/vendor/my-businesses', icon: 'shop' },
   { name: 'Leads', href: '/vendor/leads', icon: 'people' },
   { name: 'Reviews', href: '/vendor/reviews', icon: 'star' },
@@ -26,6 +27,7 @@ const mobileNav = [
   { name: 'Dashboard', href: '/vendor/dashboard', icon: 'category' },
   { name: 'Businesses', href: '/vendor/my-businesses', icon: 'shop' },
   { name: 'Leads', href: '/vendor/leads', icon: 'people' },
+  { name: 'Insights', href: '/vendor/insights', icon: 'status-up' },
   { name: 'Settings', href: '/vendor/settings', icon: 'setting-2' },
 ];
 
