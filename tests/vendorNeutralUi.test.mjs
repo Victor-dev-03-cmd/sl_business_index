@@ -8,6 +8,7 @@ const styles=read('app/vendor/vendor-workspace.css');
 const dashboard=read('app/vendor/dashboard/page.tsx');
 const analytics=read('app/vendor/dashboard/VendorAnalytics.tsx');
 const settings=read('app/vendor/settings/page.tsx');
+const settingsCss=read('app/vendor/settings/settings-studio.css');
 const root=read('app/layout.tsx');
 
 test('owner portal keeps Inter and uses luxury orange/charcoal top navigation',()=>{
@@ -43,28 +44,22 @@ test('overview uses real owner metrics, orange chart and truthful published-list
   assert.doesNotMatch(dashboard,/Total Revenue|Total Profit|Confirmed Sales/);
 });
 
-test('Settings Optimization V10 uses a bounded editor with visible Save and no clipped Add button',()=>{
-  assert.match(settings,/vendor-settings-v10/);
-  assert.match(settings,/settings-v10-opt/);
-  assert.match(settings,/settings-v10-intro/);
-  assert.match(settings,/settings-v10-content/);
-  assert.match(settings,/settings-v10-keyword-row/);
-  assert.match(settings,/settings-v10-keyword-input/);
-  assert.match(settings,/settings-v10-add-button/);
-  assert.match(settings,/settings-v10-save-card/);
-  assert.match(settings,/settings-v10-save-button/);
+test('Settings Studio uses an isolated layout with bounded keyword controls and Save action',()=>{
+  assert.match(settings,/data-testid="vendor-settings-studio"/);
+  assert.match(settings,/import '\.\/settings-studio\.css'/);
+  assert.match(settings,/className="ss-layout"/);
+  assert.match(settings,/ss-discovery-grid/);
+  assert.match(settings,/ss-keyword-row/);
+  assert.match(settings,/ss-add-button/);
+  assert.match(settings,/ss-action-bar ss-optimization-actions/);
+  assert.match(settings,/ss-save-button/);
   assert.match(settings,/onClick=\{addKeyword\}/);
   assert.match(settings,/onClick=\{\(\)=>void saveOptimization\(\)\}/);
-  assert.match(settings,/disabled=\{saving\|\|!selectedBusinessId\}/);
-  assert.match(styles,/Vendor Settings V10/);
-  assert.match(styles,/\.settings-v10-keyword-row \{/);
-  assert.match(styles,/grid-template-columns:minmax\(0,1fr\) 108px/);
-  assert.match(styles,/\.settings-v10-keyword-input \{/);
-  assert.match(styles,/width:100%!important/);
-  assert.match(styles,/\.settings-v10-save-button \{/);
-  assert.match(styles,/\.settings-v10-side-column \{/);
-  assert.match(styles,/@media\(max-width:420px\)/);
-  assert.doesNotMatch(settings,/vendor-keyword-input min-w-0 flex-1/);
+  assert.doesNotMatch(settings,/vendor-settings-v[3589]|settings-v10-opt/);
+  assert.match(settingsCss,/grid-template-columns:minmax\(0,\.9fr\) minmax\(0,1\.1fr\)/);
+  assert.match(settingsCss,/@media\(max-width:1180px\)/);
+  assert.match(settingsCss,/@media\(max-width:590px\)/);
+  assert.match(settingsCss,/\.ss-keyword-row \{display:grid/);
 });
 
 test('centered desktop top navigation exposes reversible, dismissible dropdowns with restrained corners',()=>{
@@ -83,7 +78,7 @@ test('centered desktop top navigation exposes reversible, dismissible dropdowns 
 });
 
 test('owner workspace pages share restrained V7 shell without losing independent page flows',()=>{
-  const routes=['my-businesses','leads','reviews','insights','growth','marketing','qr-code','billing','settings'];
+  const routes=['my-businesses','leads','reviews','insights','growth','marketing','qr-code','billing'];
   for(const route of routes){
     const page=read('app/vendor/'+route+'/page.tsx');
     assert.match(page,/vendor-page-v7/,'missing shared shell: '+route);
@@ -99,26 +94,23 @@ test('owner workspace pages share restrained V7 shell without losing independent
   assert.match(styles,/border-left:3px solid #FF7900/);
 });
 
-test('V8 Settings rebuild keeps five working panels, labeled fields and explicit actions',()=>{
-  assert.match(settings,/vendor-settings-v8/);
-  assert.match(settings,/settings-v8-hero/);
-  assert.match(settings,/settings-v8-rail/);
-  assert.match(settings,/settings-v8-preference-list/);
-  assert.match(settings,/settings-v8-form-grid/);
-  assert.match(settings,/aria-selected=\{activeTab===item.id\}/);
+test('Settings Studio keeps five data-backed panels and accessible labels',()=>{
   for(const tab of ['profile','verification','optimization','notifications','security'])
-    assert.ok(settings.includes("activeTab==='"+tab+"'"),'missing settings section '+tab);
+    assert.ok(settings.includes("activeTab==='"+tab+"'"),'missing panel '+tab);
   for(const action of ['saveProfile','submitVerification','saveOptimization','savePreferences','changePassword'])
     assert.ok(settings.includes(action),'missing action '+action);
-  assert.doesNotMatch(settings,/bg-\[#E7F1D5\]/);
-  assert.match(styles,/Vendor Settings V8/);
-  assert.match(styles,/\.vendor-workspace-v6 \.vendor-settings-v8 \.settings-v8-hero/);
-  assert.match(styles,/\.vendor-workspace-v6 \.vendor-settings-v8 :is\(input,textarea,select\)\.vendor-field/);
-  assert.match(styles,/border-color:#F4A362/);
+  for(const label of ['vendor-email','vendor-name','verification-business','seo-business','vendor-seo-keyword','vendor-password','vendor-confirm'])
+    assert.ok(settings.includes('htmlFor="'+label+'"'),'missing label '+label);
+  assert.match(settings,/aria-label="Vendor settings sections"/);
+  assert.match(settings,/NEXT_PUBLIC_VERIFICATION_PRIVATE_READY/);
+  assert.match(settings,/supabase\.auth\.updateUser/);
+  assert.match(settingsCss,/\.slbi-settings \.ss-panel/);
+  assert.match(settingsCss,/box-shadow:inset 4px 4px 9px/);
+  assert.match(settingsCss,/prefers-reduced-motion/);
 });
 
 test('orange-charcoal V9 spans dashboard, Tools and Account without generic green UI surfaces',()=>{
-  const routes=['dashboard','my-businesses','leads','reviews','insights','growth','marketing','qr-code','billing','settings'];
+  const routes=['dashboard','my-businesses','leads','reviews','insights','growth','marketing','qr-code','billing'];
   for(const route of routes){
     const page=read('app/vendor/'+route+'/page.tsx');
     assert.match(page,/vendor-page-v9/,'missing v9 surface: '+route);

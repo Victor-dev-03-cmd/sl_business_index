@@ -4,19 +4,20 @@ import {readFileSync} from 'node:fs';
 
 const read=(name)=>readFileSync(new URL('../'+name,import.meta.url),'utf8');
 const settings=read('app/vendor/settings/page.tsx');
-const style=read('app/vendor/vendor-workspace.css');
+const style=read('app/vendor/settings/settings-studio.css');
 const qr=read('app/vendor/qr-code/page.tsx');
 const marketing=read('app/vendor/marketing/page.tsx');
 
-test('settings profile uses accessible V8 soft-neumorphic controls and aligned responsive grid',()=>{
-  assert.match(settings,/const field='vendor-field settings-v8-field block h-11 w-full/);
-  assert.match(settings,/settings-v8-form-grid grid grid-cols-1 items-start gap-x-7 gap-y-6 md:grid-cols-2/);
-  assert.match(settings,/vendor-setting-section settings-v8-section w-full min-w-0 space-y-6/);
-  assert.match(settings,/className="min-w-0"><label className=\{label\} htmlFor="vendor-email"/);
-  assert.match(settings,/lg:grid-cols-\[238px_minmax\(0,1fr\)\]/);
-  assert.match(style,/\.vendor-workspace-v6 \.vendor-settings-v8 :is\(input,textarea,select\)\.vendor-field/);
-  assert.match(style,/border-radius:7px/);
-  assert.match(style,/border:1px solid #D9D9E0/);
+test('settings studio profile form is aligned and independent from prior CSS layers',()=>{
+  assert.match(settings,/className="slbi-settings"/);
+  assert.match(settings,/ss-form-grid/);
+  assert.match(settings,/htmlFor="vendor-email"/);
+  assert.match(settings,/htmlFor="vendor-name"/);
+  assert.match(settings,/ss-profile-identity/);
+  assert.match(style,/\.slbi-settings \.ss-form-grid/);
+  assert.match(style,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(style,/@media\(max-width:590px\)/);
+  assert.match(style,/box-shadow:inset 3px 3px 7px/);
 });
 
 test('QR studio exports high-res raster, independent SVG and fitted A4 PDF',()=>{

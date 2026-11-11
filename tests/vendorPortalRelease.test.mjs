@@ -86,11 +86,17 @@ test('QR Studio provides branded presets and print/download without fake scan co
   assert.doesNotMatch(qr,/Trackable Scans|fakeScanCount/);
 });
 
-test('Settings alignment uses restrained corners and responsive minimum widths',()=>{
-  assert.match(settings,/vendor-settings/);
-  assert.match(settings,/lg:grid-cols-\[238px_minmax\(0,1fr\)\]/);
-  assert.match(style,/\.vendor-settings :is\(input,select,textarea\)/);
-  assert.match(style,/border-radius:8px/);
+test('Settings layout is structurally isolated, responsive and keeps real action bar',()=>{
+  const studio=load('app/vendor/settings/settings-studio.css');
+  assert.match(settings,/className="slbi-settings"/);
+  assert.match(settings,/className="ss-layout"/);
+  assert.match(settings,/className="ss-navigation"/);
+  assert.match(settings,/className="ss-panel ss-optimization"/);
+  assert.match(settings,/ss-keyword-row/);
+  assert.match(settings,/ss-action-bar ss-optimization-actions/);
+  assert.match(studio,/\.slbi-settings \.ss-layout/);
+  assert.match(studio,/@media\(max-width:820px\)/);
+  assert.match(studio,/border-radius:8px/);
 });
 
 test('private verification access is staged without claiming unreviewed RLS is deployed',()=>{
