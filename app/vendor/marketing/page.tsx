@@ -132,7 +132,7 @@ export default function MarketingPage() {
     const typeface='system-ui, "Noto Sans Tamil", "Noto Sans Sinhala", sans-serif';
     const wrap=(value:string,font:string,maxWidth:number,maxLines:number)=>{
       ctx.font=font;
-      const words=value.trim().split(/\\s+/);
+      const words=value.trim().split(/\s+/);
       const lines:string[]=[];let line='';
       for(const word of words){
         const next=line?line+' '+word:word;
