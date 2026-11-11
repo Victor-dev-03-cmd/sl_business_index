@@ -280,7 +280,7 @@ export default function MarketingStudio() {
           {activeTab==='library'&&<div className={card+' p-5 sm:p-6'}>
             <p className="text-[10px] font-bold uppercase tracking-widest text-[#568565]">Content workspace</p><h2 className="mt-2 text-[20px] font-bold">Saved campaign library</h2>
             <p className="mt-1 text-[12px] text-[#789080]">Your real draft, planned and previously submitted media records.</p>
-            <div className="mt-4"><CreativeLibraryUpload business={selected} onSuccess={()=>{void load()}}/></div>
+            <div className="mt-4"><CreativeLibraryUpload business={selected||null} onSuccess={()=>{void load()}}/></div>
             <div className="mt-5 grid gap-3 md:grid-cols-2">
               {campaignsForBusiness.map(c=><article key={'c'+c.id} className="rounded-md border border-[#DCE7DC] bg-[#FBFDFB] p-4">
                 <div className="flex justify-between gap-2"><span className="text-[10px] font-extrabold uppercase text-[#4C865E]">{c.status==='posted'?'Legacy posted status':c.status||'Draft'}</span><span className="text-[10px] text-[#93A399]">{formatDay(c.created_at)}</span></div>
