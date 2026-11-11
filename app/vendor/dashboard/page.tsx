@@ -34,8 +34,8 @@ type SortKey = 'views' | 'calls' | 'name';
 const DEFAULT_METRICS: Metrics = { views: 0, calls: 0, leads: 0, reviews: 0 };
 const number = (n: number) => new Intl.NumberFormat('en-LK').format(n);
 const smallLabel = 'text-[10px] font-bold uppercase tracking-[0.10em] text-slate-400';
-const panel = 'vendor-premium-card rounded-[10px] border border-[#E4EAEE] bg-white shadow-[0_2px_14px_rgba(23,41,50,.025)]';
-const button = 'inline-flex h-9 items-center justify-center gap-2 rounded-[6px] border border-[#DCE4E9] bg-white px-3 text-xs font-semibold text-[#46535E] transition hover:border-[#B8C7D0] hover:bg-[#F6F8FA] disabled:cursor-not-allowed disabled:opacity-50';
+const panel = 'vendor-executive-card rounded-[13px] border border-[#ECECEF] bg-white shadow-[0_8px_28px_rgba(27,27,28,.035)]';
+const button = 'inline-flex h-9 items-center justify-center gap-2 rounded-[7px] border border-[#E7E7E9] bg-white px-3 text-xs font-semibold text-[#49494E] transition hover:border-[#FFBE86] hover:bg-[#FFF7F0] disabled:cursor-not-allowed disabled:opacity-50';
 
 const kpis = [
   { id: 'views', title: 'Profile views', icon: 'eye', tone: '#2563eb', explanation: 'All-time visits to your listings' },
@@ -193,54 +193,34 @@ export default function VendorDashboard() {
   }
 
   return (
-    <div className="vendor-dashboard-v5 mx-auto min-h-full w-full max-w-[1680px] space-y-5 pb-7 text-[#283640]">
+    <div className="vendor-dashboard-v5 vendor-dashboard-v6 mx-auto min-h-full w-full max-w-[1760px] space-y-6 pb-9 text-[#232326]">
       <div className="space-y-5">
 
-        <header className="vendor-overview-heading rounded-[10px] border border-[#E3E9EC] bg-white px-5 py-6 shadow-[0_2px_14px_rgba(30,47,57,.025)] sm:px-7 sm:py-7">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-            <div className="min-w-0 max-w-2xl">
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#89949D]">SLBI / Owner workspace</p>
-                <span className="rounded-[5px] border border-[#E2E9DC] bg-[#F5F8EF] px-2.5 py-1 text-[10px] font-semibold text-[#526C43]">{plan} plan</span>
+        <header className="vendor-overview-heading overflow-hidden rounded-[16px] border border-[#ECEAEC] bg-white px-6 py-7 shadow-[0_12px_35px_rgba(22,22,24,.035)] sm:px-8 sm:py-8">
+          <div className="grid items-center gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(270px,350px)]">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="h-2 w-2 rounded-full bg-[#FF7900]"/>
+                <p className="text-[10px] font-extrabold uppercase tracking-[.19em] text-[#9C9CA1]">SLBI / Owner intelligence</p>
+                <span className="rounded-[5px] border border-[#F5D5BD] bg-[#FFF6EF] px-2.5 py-1 text-[10px] font-semibold text-[#BC5E0B]">{plan} plan</span>
               </div>
-              <h1 className="mt-3 text-[27px] font-semibold tracking-[-.045em] text-[#18272D] sm:text-[32px]">Your business overview</h1>
-              <p className="mt-1.5 text-[12px] leading-6 text-[#73808A]">Keep listings accurate, manage enquiries and understand real customer engagement.</p>
+              <h1 className="mt-4 text-[34px] font-extrabold leading-[1.12] tracking-[-.055em] text-[#171719] sm:text-[42px]">Your business. <span className="text-[#FF7900]">In focus.</span></h1>
+              <p className="mt-3 max-w-[650px] text-[13px] leading-6 text-[#808087]">Manage listings, customer enquiries and recorded business activity from one clear workspace.</p>
+              <div className="mt-6 flex flex-wrap items-center gap-2">
+                <button type="button" onClick={exportCsv} disabled={loading||!businesses.length} className="inline-flex h-10 items-center gap-2 rounded-[7px] border border-[#E6E6E8] bg-white px-4 text-[11px] font-semibold text-[#343439] hover:border-[#FFBA82] hover:bg-[#FFF8F2] disabled:opacity-50"><IconsaxIcon name="document-download" size={16}/> Export report</button>
+                <button type="button" onClick={()=>void load()} disabled={loading} className="inline-flex h-10 items-center gap-2 rounded-[7px] border border-[#E6E6E8] bg-white px-4 text-[11px] font-semibold text-[#343439] hover:border-[#FFBA82] hover:bg-[#FFF8F2] disabled:opacity-50"><IconsaxIcon name="refresh" size={16}/> Refresh</button>
+                <Link href="/vendor/marketing" className="inline-flex h-10 items-center gap-2 rounded-[7px] bg-[#1D1D20] px-4 text-[11px] font-semibold text-white hover:bg-[#333338]"><IconsaxIcon name="add" size={16} color="#FF7900"/> New campaign</Link>
+              </div>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <button type="button" onClick={exportCsv} disabled={loading||!businesses.length} className="inline-flex h-10 items-center gap-2 rounded-[6px] border border-[#DDE5E8] bg-white px-4 text-[11px] font-semibold text-[#33444F] hover:bg-[#F7F9FA] disabled:opacity-50">
-                <IconsaxIcon name="document-download" size={16}/> Export report
-              </button>
-              <button type="button" onClick={()=>void load()} disabled={loading} className="inline-flex h-10 items-center gap-2 rounded-[6px] border border-[#DDE5E8] bg-white px-3 text-[11px] font-semibold text-[#33444F] hover:bg-[#F7F9FA] disabled:opacity-50">
-                <IconsaxIcon name="refresh" size={16}/> Refresh
-              </button>
-              <Link href="/vendor/marketing" className="inline-flex h-10 items-center gap-2 rounded-[6px] bg-[#25383E] px-4 text-[11px] font-semibold text-white hover:bg-[#17292F]">
-                <IconsaxIcon name="add" size={16} color="white"/> New campaign
-              </Link>
+            <div className="relative overflow-hidden rounded-[13px] bg-[#1C1C1F] px-6 py-5 text-white shadow-[0_18px_32px_rgba(26,26,28,.12)]">
+              <span aria-hidden="true" className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full border-[25px] border-[#FF7900]/15"/>
+              <p className="text-[10px] font-bold uppercase tracking-[.19em] text-[#B2B2B7]">Portfolio pulse</p>
+              <div className="mt-4 flex items-end gap-3"><span className="text-[48px] font-extrabold leading-none tracking-[-.06em] text-white">{loading?'—':number(businesses.length)}</span><span className="pb-1.5 text-[12px] font-medium text-[#B6B6BC]">owned listings</span></div>
+              <div className="mt-5 h-[5px] w-full overflow-hidden rounded-full bg-[#3A3A40]"><div className="h-full rounded-full bg-[#FF7900]" style={{width:businesses.length?Math.min(100,(activeCount/businesses.length)*100)+'%':'0%'}}/></div>
+              <div className="mt-3 flex items-center justify-between gap-2 text-[11px]"><span className="text-[#B7B7BC]">Published directory listings</span><span className="font-bold text-[#FF982F]">{loading?'—':number(activeCount)} / {loading?'—':number(businesses.length)}</span></div>
             </div>
           </div>
-          <nav aria-label="Dashboard section shortcuts" className="mt-6 flex w-full flex-wrap items-center gap-1 border-t border-[#EDF0F2] pt-4">
-            {[
-              {name:'Overview',href:'/vendor/dashboard',current:true},
-              {name:'My businesses',href:'/vendor/my-businesses',current:false},
-              {name:'Enquiries',href:'/vendor/leads',current:false},
-              {name:'Insights',href:'/vendor/insights',current:false},
-              {name:'Reviews',href:'/vendor/reviews',current:false},
-            ].map(item=><Link key={item.href} href={item.href} aria-current={item.current?'page':undefined} className={'rounded-[6px] px-3.5 py-2 text-[11px] font-semibold transition '+(item.current?'bg-[#D5EEA8] text-[#26372D]':'text-[#6C7B84] hover:bg-[#F3F6F8] hover:text-[#283A43]')}>{item.name}</Link>)}
-          </nav>
         </header>
-
-        <section aria-label="Owner quick launch actions" className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          {[
-            {label:'Manage listings',detail:'Keep your business details current',href:'/vendor/my-businesses',icon:'shop'},
-            {label:'Respond to leads',detail:'Follow up with enquiries',href:'/vendor/leads',icon:'message-text'},
-            {label:'Reputation center',detail:'Read and reply to reviews',href:'/vendor/reviews',icon:'star'},
-            {label:'Growth performance',detail:'View customer activity signals',href:'/vendor/insights',icon:'status-up'},
-          ].map(action=><Link key={action.href} href={action.href} className="vendor-dashboard-shortcut group flex items-center gap-3 rounded-[9px] border border-[#E4E9ED] bg-white p-4 transition hover:border-[#BFC9D0] hover:bg-[#FAFCFD]">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[7px] bg-[#F0F3F6] text-[#425868]"><IconsaxIcon name={action.icon} size={20}/></span>
-            <span className="min-w-0 flex-1"><span className="block text-[12px] font-bold text-[#2E513B]">{action.label}</span><span className="mt-1 block text-[10px] leading-4 text-[#7D9381]">{action.detail}</span></span>
-            <IconsaxIcon name="arrow-right-2" size={14}/>
-          </Link>)}
-        </section>
 
         {error && (
           <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-800">
@@ -285,6 +265,19 @@ export default function VendorDashboard() {
             <p className="mt-2 text-[10px] leading-4 text-slate-400">Call clicks ÷ views · not unique-user conversion</p>
           </div>
         </div>
+
+        <section aria-label="Owner quick launch actions" className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {[
+            {label:'Manage listings',detail:'Keep your business details current',href:'/vendor/my-businesses',icon:'shop'},
+            {label:'Respond to leads',detail:'Follow up with enquiries',href:'/vendor/leads',icon:'message-text'},
+            {label:'Reputation center',detail:'Read and reply to reviews',href:'/vendor/reviews',icon:'star'},
+            {label:'Growth performance',detail:'View customer activity signals',href:'/vendor/insights',icon:'status-up'},
+          ].map(action=><Link key={action.href} href={action.href} className="vendor-dashboard-shortcut group flex items-center gap-3 rounded-[9px] border border-[#E4E9ED] bg-white p-4 transition hover:border-[#BFC9D0] hover:bg-[#FAFCFD]">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[7px] bg-[#F0F3F6] text-[#425868]"><IconsaxIcon name={action.icon} size={20}/></span>
+            <span className="min-w-0 flex-1"><span className="block text-[12px] font-bold text-[#2E513B]">{action.label}</span><span className="mt-1 block text-[10px] leading-4 text-[#7D9381]">{action.detail}</span></span>
+            <IconsaxIcon name="arrow-right-2" size={14}/>
+          </Link>)}
+        </section>
 
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.75fr)_minmax(300px,0.85fr)]">
           <section className={panel + ' min-w-0 overflow-hidden'}>
