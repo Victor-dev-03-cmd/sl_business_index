@@ -278,8 +278,8 @@ export default function SettingsPage() {
   const initials=(profile.full_name||profile.email||'V').trim().split(/\s+/).slice(0,2).map(n=>n[0]?.toUpperCase()||'').join('');
   const submitLabel=verified?'Verified':pending?'Under review':'Submit for review';
   return (
-    <div className="vendor-settings vendor-settings-v5 mx-auto w-full max-w-[1680px] min-w-0 space-y-5 pb-7 text-[#283842]">
-      <header className="vendor-settings-header flex flex-col gap-5 rounded-[10px] border border-[#E3E9EC] bg-white px-5 py-6 shadow-[0_2px_14px_rgba(23,41,50,.025)] sm:px-7 lg:flex-row lg:items-center lg:justify-between">
+    <div className="vendor-page-v7 vendor-settings vendor-settings-v5 mx-auto w-full max-w-[1680px] min-w-0 space-y-5 pb-7 text-[#283842]">
+      <header className="vendor-owner-heading vendor-settings-header flex flex-col gap-5 rounded-[10px] border border-[#E3E9EC] bg-white px-5 py-6 shadow-[0_2px_14px_rgba(23,41,50,.025)] sm:px-7 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0 max-w-[760px]">
           <p className="text-[10px] font-bold uppercase tracking-[.15em] text-[#8B98A2]">Account & workspace / Settings</p>
           <h1 className="mt-2 text-[27px] font-semibold tracking-[-.045em] text-[#1A2B34] sm:text-[31px]">Workspace settings</h1>
