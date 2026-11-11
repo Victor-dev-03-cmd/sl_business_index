@@ -8,7 +8,6 @@ const styles=read('app/vendor/vendor-workspace.css');
 const dashboard=read('app/vendor/dashboard/page.tsx');
 const analytics=read('app/vendor/dashboard/VendorAnalytics.tsx');
 const settings=read('app/vendor/settings/page.tsx');
-const settingsCss=read('app/vendor/settings/settings-studio.css');
 const root=read('app/layout.tsx');
 
 test('owner portal keeps Inter and uses luxury orange/charcoal top navigation',()=>{
@@ -27,8 +26,8 @@ test('owner portal keeps Inter and uses luxury orange/charcoal top navigation',(
 });
 
 test('overview uses real owner metrics, orange chart and truthful published-listing ring',()=>{
-  assert.match(dashboard,/vendor-dashboard-v6/);
-  assert.match(dashboard,/vendor-overview-heading/);
+  assert.match(dashboard,/neo\.page/);
+  assert.match(dashboard,/neo\.hero/);
   assert.match(dashboard,/Portfolio pulse/);
   assert.match(dashboard,/Listing readiness/);
   assert.match(dashboard,/Export report/);
@@ -44,24 +43,17 @@ test('overview uses real owner metrics, orange chart and truthful published-list
   assert.doesNotMatch(dashboard,/Total Revenue|Total Profit|Confirmed Sales/);
 });
 
-test('Settings Studio uses an isolated layout with bounded keyword controls and Save action',()=>{
+test('Settings Studio uses version-free Tailwind neumorphism and responsive controls',()=>{
   assert.match(settings,/data-testid="vendor-settings-studio"/);
-  assert.match(settings,/import '\.\/settings-studio\.css'/);
-  assert.match(settings,/className="ss-layout"/);
-  assert.match(settings,/ss-discovery-grid/);
-  assert.match(settings,/ss-keyword-row/);
-  assert.match(settings,/ss-add-button/);
-  assert.match(settings,/ss-action-bar ss-optimization-actions/);
-  assert.match(settings,/ss-save-button/);
+  assert.doesNotMatch(settings,/settings-studio\.css|vendor-settings-v\d+|settings-v\d+-/);
+  assert.match(settings,/lg:grid-cols-\[250px_minmax\(0,1fr\)\]/);
+  assert.match(settings,/xl:grid-cols-2/);
+  assert.match(settings,/shadow-\[inset_4px_4px_8px_/);
+  assert.match(settings,/flex flex-col gap-2 sm:flex-row/);
   assert.match(settings,/onClick=\{addKeyword\}/);
   assert.match(settings,/onClick=\{\(\)=>void saveOptimization\(\)\}/);
-  assert.doesNotMatch(settings,/vendor-settings-v[3589]|settings-v10-opt/);
-  assert.match(settingsCss,/grid-template-columns:minmax\(0,\.9fr\) minmax\(0,1\.1fr\)/);
-  assert.match(settingsCss,/@media\(max-width:1180px\)/);
-  assert.match(settingsCss,/@media\(max-width:590px\)/);
-  assert.match(settingsCss,/\.ss-keyword-row \{display:grid/);
+  assert.doesNotMatch(styles,/vendor-settings-v\d+|settings-v\d+-/);
 });
-
 test('centered desktop top navigation exposes reversible, dismissible dropdowns with restrained corners',()=>{
   assert.match(vendorLayout,/vendor-topbar-center absolute left-1\/2 hidden -translate-x-1\/2/);
   assert.match(vendorLayout,/min-\[1400px\]:flex/);
@@ -81,20 +73,20 @@ test('owner workspace pages share restrained V7 shell without losing independent
   const routes=['my-businesses','leads','reviews','insights','growth','marketing','qr-code','billing'];
   for(const route of routes){
     const page=read('app/vendor/'+route+'/page.tsx');
-    assert.match(page,/vendor-page-v7/,'missing shared shell: '+route);
+    assert.match(page,/neo\.page/,'missing shared Tailwind shell: '+route);
     if(!['settings','insights'].includes(route)){
-      assert.match(page,/vendor-owner-heading/,'missing header style: '+route);
+      assert.match(page,/neo\.hero/,'missing neumorphic header: '+route);
       assert.doesNotMatch(page,/border-t-4 border-t-\[#2D6749\]/,'outdated thick green header: '+route);
     }
   }
-  for(const selector of ['.vendor-owner-heading','.vendor-premium-header','.vendor-executive-card','.vendor-topbar-dropdown-panel']){
-    assert.ok(styles.includes(selector),'missing restrained style: '+selector);
-  }
-  assert.match(styles,/\.vendor-workspace-v6 \.vendor-page-v7 table thead/);
-  assert.match(styles,/border-left:3px solid #FF7900/);
+  const tokens=read('app/vendor/components/neumorphic.ts');
+  for(const selector of ['hero:','heroDark:','card:','tile:','inset:','input:'])
+    assert.ok(tokens.includes(selector),'missing design token: '+selector);
+  assert.match(styles,/\\.vendor-topbar-dropdown-panel/);
+  assert.doesNotMatch(styles,/vendor-page-v7|vendor-page-v9|vendor-settings-v10/);
 });
 
-test('Settings Studio keeps five data-backed panels and accessible labels',()=>{
+test('Settings retains five real data-backed sections and accessible form controls',()=>{
   for(const tab of ['profile','verification','optimization','notifications','security'])
     assert.ok(settings.includes("activeTab==='"+tab+"'"),'missing panel '+tab);
   for(const action of ['saveProfile','submitVerification','saveOptimization','savePreferences','changePassword'])
@@ -104,22 +96,22 @@ test('Settings Studio keeps five data-backed panels and accessible labels',()=>{
   assert.match(settings,/aria-label="Vendor settings sections"/);
   assert.match(settings,/NEXT_PUBLIC_VERIFICATION_PRIVATE_READY/);
   assert.match(settings,/supabase\.auth\.updateUser/);
-  assert.match(settingsCss,/\.slbi-settings \.ss-panel/);
-  assert.match(settingsCss,/box-shadow:inset 4px 4px 9px/);
-  assert.match(settingsCss,/prefers-reduced-motion/);
+  assert.match(settings,/const field='block h-12/);
+  assert.match(settings,/md:grid-cols-2/);
 });
-
-test('orange-charcoal V9 spans dashboard, Tools and Account without generic green UI surfaces',()=>{
+test('orange-charcoal neumorphism spans owner pages without versioned CSS selectors',()=>{
   const routes=['dashboard','my-businesses','leads','reviews','insights','growth','marketing','qr-code','billing'];
   for(const route of routes){
     const page=read('app/vendor/'+route+'/page.tsx');
-    assert.match(page,/vendor-page-v9/,'missing v9 surface: '+route);
+    assert.match(page,/import \\{ neo \\}/,'missing Tailwind tokens: '+route);
+    assert.doesNotMatch(page,/vendor-page-v\\d+|vendor-dashboard-v\\d+/);
   }
   const editForm=read('app/vendor/my-businesses/[id]/edit/EditBusinessForm.tsx');
   const hybrid=read('app/vendor/billing/hybrid/page.tsx');
-  assert.match(editForm,/vendor-page-v9/);
-  assert.match(hybrid,/vendor-page-v9/);
-  assert.match(styles,/Vendor Portal V9/);
-  assert.match(styles,/--vendor-highlight:#FF7900/);
-  assert.match(styles,/prefers-reduced-motion/);
+  assert.match(editForm,/neo\\.card/);
+  assert.match(hybrid,/neo\\.card/);
+  const tokens=read('app/vendor/components/neumorphic.ts');
+  assert.match(tokens,/#ff7900/);
+  assert.match(tokens,/motion-reduce:transition-none/);
+  assert.doesNotMatch(styles,/vendor-settings-v\\d+|vendor-page-v\\d+/);
 });

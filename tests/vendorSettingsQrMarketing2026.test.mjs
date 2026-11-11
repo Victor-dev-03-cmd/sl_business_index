@@ -4,22 +4,18 @@ import {readFileSync} from 'node:fs';
 
 const read=(name)=>readFileSync(new URL('../'+name,import.meta.url),'utf8');
 const settings=read('app/vendor/settings/page.tsx');
-const style=read('app/vendor/settings/settings-studio.css');
 const qr=read('app/vendor/qr-code/page.tsx');
 const marketing=read('app/vendor/marketing/page.tsx');
 
-test('settings studio profile form is aligned and independent from prior CSS layers',()=>{
-  assert.match(settings,/className="slbi-settings"/);
-  assert.match(settings,/ss-form-grid/);
+test('settings profile form uses Tailwind, responsive grid and named fields',()=>{
+  assert.match(settings,/data-testid="vendor-settings-studio"/);
+  assert.match(settings,/md:grid-cols-2/);
   assert.match(settings,/htmlFor="vendor-email"/);
   assert.match(settings,/htmlFor="vendor-name"/);
-  assert.match(settings,/ss-profile-identity/);
-  assert.match(style,/\.slbi-settings \.ss-form-grid/);
-  assert.match(style,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
-  assert.match(style,/@media\(max-width:590px\)/);
-  assert.match(style,/box-shadow:inset 3px 3px 7px/);
+  assert.match(settings,/Complete your profile/);
+  assert.match(settings,/shadow-\[inset_4px_4px_8px_/);
+  assert.doesNotMatch(settings,/settings-studio\.css|settings-v8-|vendor-settings-v10/);
 });
-
 test('QR studio exports high-res raster, independent SVG and fitted A4 PDF',()=>{
   assert.match(qr,/QRCodeCanvas, QRCodeSVG/);
   assert.match(qr,/const renderPosterCanvas=/);

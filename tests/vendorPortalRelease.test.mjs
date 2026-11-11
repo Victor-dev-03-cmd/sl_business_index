@@ -38,7 +38,7 @@ test('every major owner portal page is reachable and uses a shared premium shell
   assert.match(style,/prefers-reduced-motion/);
   assert.match(style,/vendor-premium-header/);
   for(const path of basePages) {
-    assert.ok(load(path).includes(path==='app/vendor/dashboard/page.tsx'?'vendor-dashboard-v6':'vendor-premium-'),'no shared design style in '+path);
+    assert.match(load(path),/import \\{ neo \\}/,'missing shared Tailwind tokens in '+path);
   }
 });
 
@@ -86,19 +86,15 @@ test('QR Studio provides branded presets and print/download without fake scan co
   assert.doesNotMatch(qr,/Trackable Scans|fakeScanCount/);
 });
 
-test('Settings layout is structurally isolated, responsive and keeps real action bar',()=>{
-  const studio=load('app/vendor/settings/settings-studio.css');
-  assert.match(settings,/className="slbi-settings"/);
-  assert.match(settings,/className="ss-layout"/);
-  assert.match(settings,/className="ss-navigation"/);
-  assert.match(settings,/className="ss-panel ss-optimization"/);
-  assert.match(settings,/ss-keyword-row/);
-  assert.match(settings,/ss-action-bar ss-optimization-actions/);
-  assert.match(studio,/\.slbi-settings \.ss-layout/);
-  assert.match(studio,/@media\(max-width:820px\)/);
-  assert.match(studio,/border-radius:8px/);
+test('Settings layout has responsive Tailwind forms without old stylesheet dependency',()=>{
+  assert.match(settings,/data-testid="vendor-settings-studio"/);
+  assert.match(settings,/lg:grid-cols-\[250px_minmax\(0,1fr\)\]/);
+  assert.match(settings,/aria-label="Settings navigation"/);
+  assert.match(settings,/flex flex-col gap-2 sm:flex-row/);
+  assert.match(settings,/Save discovery settings/);
+  assert.match(settings,/shadow-\[inset_5px_5px_11px_/);
+  assert.doesNotMatch(settings,/settings-studio\.css/);
 });
-
 test('private verification access is staged without claiming unreviewed RLS is deployed',()=>{
   assert.match(admin,/createSignedUrl/);
   assert.match(admin,/proofObjectPath/);
