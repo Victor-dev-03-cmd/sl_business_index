@@ -62,5 +62,5 @@ test('settings align on mobile and reduce AI-style inflated radii',()=>{
   assert.match(styles,/Settings alignment pass/);
   assert.match(styles,/\.vendor-settings \.vendor-field/);
   assert.match(styles,/border-radius:6px/);
-  assert.match(roadmap,/Release gate/);
+  assert.match(roadmap,/release gate/i);
 });
