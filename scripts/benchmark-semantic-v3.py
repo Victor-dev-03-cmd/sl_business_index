@@ -184,7 +184,7 @@ def main() -> int:
             ],
         }
         args.export_beta_fixture.parent.mkdir(parents=True, exist_ok=True)
-        args.export_beta_fixture.write_text(json.dumps(beta, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+        args.export_beta_fixture.write_text("export const E5_BETA = " + json.dumps(beta, ensure_ascii=False, separators=(",", ":")) + " as const;\n", encoding="utf-8")
         print(f"Experimental E5 beta fixture: {len(docs)} approved snapshot businesses, {len(canonical_queries)} canonical intents", file=sys.stderr)
     if args.output:
         args.output.parent.mkdir(parents=True,exist_ok=True)
