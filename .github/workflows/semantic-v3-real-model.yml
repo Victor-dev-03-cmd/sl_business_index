@@ -1,9 +1,8 @@
 name: SemanticSearch v3 Real Model Research
 
 on:
-  push:
-    branches:
-      - research/semanticsearch-v3-evaluation-vector-gates-20261111
+  pull_request:
+    branches: [main]
     paths:
       - 'scripts/benchmark-semantic-v3.py'
       - 'requirements-semantic-research.txt'
