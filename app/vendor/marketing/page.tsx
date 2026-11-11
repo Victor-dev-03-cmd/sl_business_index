@@ -57,6 +57,8 @@ export default function MarketingPage() {
   const [error,setError]=useState('');
   const [userId,setUserId]=useState<string|null>(null);
   const [search,setSearch]=useState('');
+  const [posterSize,setPosterSize]=useState<'square'|'portrait'|'story'>('square');
+  const [posterPalette,setPosterPalette]=useState<'forest'|'navy'|'cream'>('forest');
 
   const load=useCallback(async()=>{
     setLoading(true);setError('');
@@ -109,6 +111,66 @@ export default function MarketingPage() {
       setSection('library');void load();
     } catch(err){toast.error(err instanceof Error?err.message:'Could not save campaign.');}
     finally{setSaving(false);}
+  };
+  const exportBrandedCreative=()=>{
+    if(!business){toast.error('Select an owned business first.');return;}
+    if(!clean(offer)){toast.error('Enter a factual campaign message to create a poster.');return;}
+    const dimensions={square:[1080,1080],portrait:[1080,1350],story:[1080,1920]} as const;
+    const [width,height]=dimensions[posterSize];
+    const palettes={
+      forest:{bg:'#173F2D',soft:'#23543D',accent:'#B4D8A9',text:'#F8FBF6'},
+      navy:{bg:'#192D43',soft:'#273F58',accent:'#B1D0E4',text:'#FAFBFE'},
+      cream:{bg:'#F3F0E5',soft:'#DFE7D7',accent:'#265E43',text:'#203A2A'},
+    } as const;
+    const p=palettes[posterPalette];
+    const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;
+    const ctx=canvas.getContext('2d');if(!ctx){toast.error('Canvas unavailable');return;}
+    ctx.fillStyle=p.bg;ctx.fillRect(0,0,width,height);
+    ctx.fillStyle=p.soft;ctx.fillRect(width*.64,0,width*.36,height);
+    ctx.fillStyle=p.accent;ctx.fillRect(0,0,13,height);
+    const left=88,contentWidth=width-176;
+    const typeface='system-ui, "Noto Sans Tamil", "Noto Sans Sinhala", sans-serif';
+    const wrap=(value:string,font:string,maxWidth:number,maxLines:number)=>{
+      ctx.font=font;
+      const words=value.trim().split(/\\s+/);
+      const lines:string[]=[];let line='';
+      for(const word of words){
+        const next=line?line+' '+word:word;
+        if(ctx.measureText(next).width>maxWidth&&line){lines.push(line);line=word;}
+        else line=next;
+      }
+      if(line)lines.push(line);
+      if(lines.length>maxLines){
+        const clipped=lines.slice(0,maxLines);
+        while(clipped[maxLines-1].length>2&&ctx.measureText(clipped[maxLines-1]+'…').width>maxWidth)
+          clipped[maxLines-1]=clipped[maxLines-1].slice(0,-1);
+        clipped[maxLines-1]+='…';
+        return clipped;
+      }
+      return lines;
+    };
+    ctx.textBaseline='top';ctx.textAlign='left';
+    ctx.fillStyle=p.accent;ctx.font='700 25px '+typeface;
+    ctx.fillText('SLBI  /  BUSINESS CAMPAIGN',left,82);
+    ctx.fillStyle=p.text;
+    const names=wrap(business.name,'800 57px '+typeface,contentWidth,2);
+    names.forEach((line,i)=>{ctx.font='800 57px '+typeface;ctx.fillText(line,left,150+i*74);});
+    const top=Math.max(height*.35,330);
+    ctx.fillStyle=p.accent;ctx.fillRect(left,top-44,100,5);
+    ctx.fillStyle=p.text;
+    const message=wrap(clean(offer,240),'700 67px '+typeface,contentWidth,6);
+    message.forEach((line,i)=>{ctx.font='700 67px '+typeface;ctx.fillText(line,left,top+i*89);});
+    const footerY=height-260;
+    ctx.fillStyle=p.accent;ctx.fillRect(left,footerY,contentWidth,2);
+    ctx.fillStyle=p.text;ctx.font='600 29px '+typeface;
+    const action=clean(cta,120)||'Contact us for details';
+    const actionLines=wrap(action,'600 29px '+typeface,contentWidth,2);
+    actionLines.forEach((line,i)=>ctx.fillText(line,left,footerY+30+i*39));
+    ctx.font='500 21px '+typeface;ctx.fillStyle=p.accent;
+    ctx.fillText('SLBUSINESSINDEX.COM  ·  DRAFT — REVIEW BEFORE PUBLISHING',left,height-79);
+    const a=document.createElement('a');a.href=canvas.toDataURL('image/png');
+    a.download='slbi-'+business.id.slice(0,8)+'-'+posterSize+'-'+language+'.png';a.click();
+    toast.success('Branded '+posterSize+' draft downloaded for review.');
   };
   const tabs:{key:Section;name:string;icon:string}[]=[
     {key:'overview',name:'Overview',icon:'category'},
@@ -221,6 +283,25 @@ export default function MarketingPage() {
                 <div className="mt-4 flex flex-wrap gap-2">
                   <button type="button" onClick={()=>{void navigator.clipboard.writeText(preview).then(()=>toast.success('Copy saved to clipboard')).catch(()=>toast.error('Could not copy text'));}} className="border border-[#D1E1D3] px-3 py-2.5 text-[11px] font-semibold text-[#2B6748]">Copy caption</button>
                   <button type="button" onClick={()=>downloadText('slbi-campaign-'+language+'.txt',preview)} className="border border-[#D1E1D3] px-3 py-2.5 text-[11px] font-semibold text-[#2B6748]">Export text</button>
+                </div>
+                <div className="mt-5 border-t border-[#E2ECE3] pt-5">
+                  <h4 className="text-[12px] font-bold">Branded creative export</h4>
+                  <p className="mt-1 text-[11px] leading-5 text-[#819184]">Generate an editable-brief-based PNG design for social sharing. It only uses the business name and the text you supply; it is not an AI-generated image or an automatically published post.</p>
+                  <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <label className="text-[11px] font-semibold text-[#536E5D]">Canvas format
+                      <select value={posterSize} onChange={e=>setPosterSize(e.target.value as typeof posterSize)} className={input+' mt-1.5'}>
+                        <option value="square">Square · 1080 × 1080</option><option value="portrait">Portrait · 1080 × 1350</option><option value="story">Story · 1080 × 1920</option>
+                      </select>
+                    </label>
+                    <label className="text-[11px] font-semibold text-[#536E5D]">Brand palette
+                      <select value={posterPalette} onChange={e=>setPosterPalette(e.target.value as typeof posterPalette)} className={input+' mt-1.5'}>
+                        <option value="forest">Forest</option><option value="navy">Navy</option><option value="cream">Cream</option>
+                      </select>
+                    </label>
+                  </div>
+                  <button type="button" disabled={!business||!clean(offer)} onClick={exportBrandedCreative} className="mt-3 w-full border border-[#C9DACC] bg-[#EFF6EF] px-3 py-3 text-[11px] font-bold text-[#296744] disabled:opacity-40">
+                    Download branded PNG draft
+                  </button>
                 </div>
                 <div className="mt-5 border-t border-[#E2ECE3] pt-5"><h4 className="text-[12px] font-bold">Next design phase</h4><p className="mt-1 text-[11px] leading-5 text-[#819184]">Model-generated creative variations, editable typography, human approval and social-platform API integrations are separate gated features—not a canvas editor or simulated publishing.</p></div>
               </div>
