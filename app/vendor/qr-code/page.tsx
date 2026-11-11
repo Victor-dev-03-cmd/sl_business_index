@@ -1,488 +1,228 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { QRCodeCanvas } from 'qrcode.react';
-import { 
-  Download, 
-  Printer, 
-  Store, 
-  QrCode, 
-  Info, 
-  ChevronRight, 
-  CheckCircle2,
-  Building2,
-  Share2,
-  ExternalLink,
-  Loader2
-} from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
-import { Business } from '@/lib/types';
 import { toast } from 'sonner';
-import { Skeleton } from '@/components/ui/skeleton';
+import IconsaxIcon from '../components/IconsaxIcon';
 
-export default function VendorQRCodePage() {
-  const [businesses, setBusinesses] = useState<Business[]>([]);
-  const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
-  const [assignedQR, setAssignedQR] = useState<any | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [requestingQR, setRequestingQR] = useState(false);
-  const [checkingQR, setCheckingQR] = useState(false);
-  const qrRef = useRef<HTMLDivElement>(null);
+type Business={id:string;name:string;slug:string|null;category:string;status:string|null};
+type Assigned={id:string;serial_id:string;short_link:string;status:string};
+type Format='counter'|'window'|'card';
+type Size=256|512|1024;
+const tones=[
+  {name:'Forest',fg:'#174A32',accent:'#316E4B'},
+  {name:'Midnight',fg:'#17283A',accent:'#2D5276'},
+  {name:'Black',fg:'#111827',accent:'#222222'},
+] as const;
+const panel='border border-[#DEE7DF] bg-white shadow-[0_3px_15px_rgba(27,64,40,.035)]';
+const input='min-h-11 w-full border border-[#D8E3DA] bg-white px-3 text-[12px] text-[#264734] outline-none focus:border-[#70A27A]';
+const layouts:{key:Format;title:string;sub:string}[]=[
+  {key:'counter',title:'Counter display',sub:'A clear invitation for customers at checkout'},
+  {key:'window',title:'Window sticker',sub:'High-contrast label for storefront entrances'},
+  {key:'card',title:'Business card',sub:'Compact composition with scan-first layout'},
+];
+const safeFileName=(text:string)=>text.replace(/[^a-z0-9_-]+/gi,'-').replace(/-+/g,'-').slice(0,70)||'business';
+export default function VendorQRStudioPage(){
+  const [businesses,setBusinesses]=useState<Business[]>([]);
+  const [selectedId,setSelectedId]=useState('');
+  const [assigned,setAssigned]=useState<Assigned|null>(null);
+  const [busy,setBusy]=useState(false);
+  const [requesting,setRequesting]=useState(false);
+  const [loading,setLoading]=useState(true);
+  const [signedIn,setSignedIn]=useState(false);
+  const [error,setError]=useState('');
+  const [format,setFormat]=useState<Format>('counter');
+  const [tone,setTone]=useState<(typeof tones)[number]['name']>('Forest');
+  const [size,setSize]=useState<Size>(512);
+  const [includeTitle,setIncludeTitle]=useState(true);
+  const [includeLink,setIncludeLink]=useState(true);
+  const [includeLogo,setIncludeLogo]=useState(true);
+  const [caption,setCaption]=useState('SCAN TO VIEW OUR BUSINESS');
+  const [readyToPrint,setReadyToPrint]=useState(false);
+  const canvasRef=useRef<HTMLCanvasElement>(null);
+  const posterRef=useRef<HTMLDivElement>(null);
+  const business=businesses.find(b=>b.id===selectedId)||null;
+  const chosenTone=tones.find(t=>t.name===tone)||tones[0];
+  const directUrl='https://www.slbusinessindex.com/business/'+encodeURIComponent(business?.slug||business?.id||'');
+  const qrUrl=assigned?'https://www.slbusinessindex.com/q/'+encodeURIComponent(assigned.serial_id):directUrl;
 
-  useEffect(() => {
-    fetchBusinesses();
-  }, []);
-
-  useEffect(() => {
-    if (!selectedBusiness?.id) { setAssignedQR(null); return; }
-    let active = true;
-    setAssignedQR(null);
-    setCheckingQR(true);
-    const loadQR = async () => {
-      try {
-        const { data, error } = await supabase.from('qr_inventory')
-          .select('*').eq('business_id', selectedBusiness.id).maybeSingle();
-        if (error) throw error;
-        if (active) setAssignedQR(data);
-      } catch {
-        if (active) toast.error('Unable to load this business QR code.');
-      } finally {
-        if (active) setCheckingQR(false);
-      }
-    };
-    void loadQR();
-    return () => { active = false; };
-  }, [selectedBusiness?.id]);
-
-  const fetchBusinesses = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from('businesses')
-        .select('*')
-        .eq('owner_id', user?.id)
-        .order('name', { ascending: true });
-
-      if (error) throw error;
-      setBusinesses(data || []);
-      if (data && data.length > 0) {
-        setSelectedBusiness(data[0]);
-      }
-    } catch (err) {
-      console.error('Error fetching businesses:', err);
-      toast.error('Failed to load businesses');
-    } finally {
-      setLoading(false);
-    }
+  const load=useCallback(async()=>{
+    setLoading(true);setError('');
+    try{
+      const {data:{user},error:authError}=await supabase.auth.getUser();
+      if(authError)throw authError;
+      if(!user){setSignedIn(false);return;}
+      setSignedIn(true);
+      const r=await supabase.from('businesses').select('id,name,slug,category,status').eq('owner_id',user.id).order('name');
+      if(r.error)throw r.error;
+      const rows=(r.data||[]) as Business[];
+      setBusinesses(rows);setSelectedId(old=>rows.some(b=>b.id===old)?old:rows[0]?.id||'');
+    }catch(e){setError(e instanceof Error?e.message:'Unable to load QR Studio.');}
+    finally{setLoading(false);}
+  },[]);
+  useEffect(()=>{void load()},[load]);
+  useEffect(()=>{
+    if(!selectedId){setAssigned(null);return;}
+    let mounted=true;setBusy(true);setAssigned(null);
+    void (async()=>{const r=await supabase.from('qr_inventory').select('id,serial_id,short_link,status').eq('business_id',selectedId).maybeSingle();
+      if(!mounted)return;if(r.error)setError('Could not read assigned QR code.');else setAssigned(r.data as Assigned|null);setBusy(false);
+    })();
+    return()=>{mounted=false};
+  },[selectedId]);
+  const requestQR=async()=>{
+    if(!business||requesting)return;
+    setRequesting(true);
+    try{
+      const r=await fetch('/api/qr/request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({business_id:business.id})});
+      const result=await r.json() as {success?:boolean;error?:string;qr?:Assigned};
+      if(!r.ok||!result.success||!result.qr)throw new Error(result.error||'QR assignment failed.');
+      setAssigned(result.qr);toast.success('Business QR assigned.');
+    }catch(e){toast.error(e instanceof Error?e.message:'Could not generate QR.');}
+    finally{setRequesting(false);}
   };
-
-  const handleRequestQR = async () => {
-    if (!selectedBusiness) return;
-    
-    setRequestingQR(true);
-    try {
-      const response = await fetch('/api/qr/request', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ business_id: selectedBusiness?.id }),
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        setAssignedQR(data.qr);
-        toast.success('Professional QR Code generated successfully!');
-      } else {
-        toast.error(data.error || 'Failed to generate QR code');
-      }
-    } catch (err) {
-      console.error('Error requesting QR:', err);
-      toast.error('An unexpected error occurred');
-    } finally {
-      setRequestingQR(false);
-    }
+  const copyLink=async()=>{try{await navigator.clipboard.writeText(qrUrl);toast.success('Business QR link copied.');}catch{toast.error('Unable to copy link.')}};
+  const share=async()=>{
+    if(!business)return;
+    try{
+      if(navigator.share)await navigator.share({title:business.name,url:qrUrl});
+      else await copyLink();
+    }catch(e){if(!(e instanceof Error&&e.name==='AbortError'))toast.error('Unable to share link.');}
   };
-
-  const handleDownload = () => {
-    if (!selectedBusiness) return;
-    
-    const canvas = document.querySelector('canvas');
-    if (!canvas) {
-      toast.error('Could not find QR code to download');
-      return;
+  const exportPNG=()=>{
+    const source=canvasRef.current;
+    if(!source||!assigned||!business)return;
+    const scale=2,margin=42;
+    const width=760,height=format==='card'?550:940;
+    const image=document.createElement('canvas');image.width=width*scale;image.height=height*scale;
+    const ctx=image.getContext('2d');if(!ctx)return;
+    ctx.scale(scale,scale);ctx.fillStyle='#ffffff';ctx.fillRect(0,0,width,height);
+    ctx.fillStyle=chosenTone.accent;ctx.fillRect(0,0,width,format==='window'?24:12);
+    ctx.fillStyle=chosenTone.fg;ctx.textAlign='center';
+    const qrDimension=format==='card'?342:480;
+    let top=format==='card'?96:190;
+    if(includeTitle){
+      ctx.font='700 34px Arial, sans-serif';
+      const name=business.name.length>36?business.name.slice(0,33)+'…':business.name;
+      ctx.fillText(name,width/2,format==='card'?64:115,width-2*margin);
+      if(format!=='card'){ctx.font='16px Arial, sans-serif';ctx.fillStyle='#5D7565';ctx.fillText('SL BUSINESS INDEX · VERIFIED DIRECTORY LINK',width/2,151);}
     }
-
-    try {
-      // Create a temporary canvas to add some padding and branding
-      const padding = 60;
-      const finalCanvas = document.createElement('canvas');
-      const ctx = finalCanvas.getContext('2d');
-      if (!ctx) return;
-
-      finalCanvas.width = canvas.width + (padding * 2);
-      finalCanvas.height = canvas.height + (padding * 2) + 100;
-
-      // Background with subtle border
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
-      
-      // Top accent bar (brand-dark)
-      ctx.fillStyle = '#053765';
-      ctx.fillRect(0, 0, finalCanvas.width, 15);
-
-      // Draw QR Code
-      ctx.drawImage(canvas, padding, padding + 20);
-
-      // Add Business Name
-      ctx.fillStyle = '#053765';
-      ctx.font = 'bold 32px sans-serif';
-      ctx.textAlign = 'center';
-      const displayName = (selectedBusiness?.name || '').length > 25 
-        ? selectedBusiness?.name.substring(0, 22) + '...' 
-        : selectedBusiness?.name;
-      ctx.fillText(displayName, finalCanvas.width / 2, finalCanvas.height - 70);
-      
-      // Add Platform Name
-      ctx.font = 'bold 16px sans-serif';
-      ctx.fillStyle = '#dfb85d'; // brand-sand
-      ctx.fillText('SRI LANKA BUSINESS INDEX', finalCanvas.width / 2, finalCanvas.height - 40);
-
-      // Add Instructions
-      ctx.font = '14px sans-serif';
-      ctx.fillStyle = '#6b7280';
-      ctx.fillText('Scan to view photos, reviews & details', finalCanvas.width / 2, finalCanvas.height - 20);
-
-      const url = finalCanvas.toDataURL('image/png');
-      const link = document.createElement('a');
-      link.download = `QR-${(selectedBusiness?.name || 'Business').replace(/[^a-z0-9]/gi, '-')}.png`;
-      link.href = url;
-      link.click();
-      
-      toast.success('Professional QR Code ready!');
-    } catch (err) {
-      console.error('Download error:', err);
-      toast.error('Failed to generate download');
-    }
+    const destLeft=(width-qrDimension)/2;
+    ctx.fillStyle='#fff';ctx.fillRect(destLeft-18,top-18,qrDimension+36,qrDimension+36);
+    ctx.drawImage(source,destLeft,top,qrDimension,qrDimension);
+    ctx.fillStyle=chosenTone.fg;ctx.font='700 23px Arial, sans-serif';
+    ctx.fillText(caption.slice(0,64),width/2,top+qrDimension+66,width-2*margin);
+    if(includeLink){ctx.font='16px Arial, sans-serif';ctx.fillStyle='#647768';ctx.fillText(qrUrl,width/2,top+qrDimension+106,width-2*margin);}
+    ctx.font='13px Arial, sans-serif';ctx.fillStyle='#8A9E90';ctx.fillText('Powered by SLBusinessIndex.com',width/2,height-30);
+    const a=document.createElement('a');a.href=image.toDataURL('image/png');a.download='slbi-'+safeFileName(business.name)+'-'+format+'-'+size+'.png';a.click();
+    toast.success('Print-quality PNG downloaded.');
   };
-
-  const handlePrint = () => {
-    if (!selectedBusiness) return;
-    window.print();
+  const printCard=()=>{
+    if(!assigned)return;setReadyToPrint(true);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{window.print();setReadyToPrint(false)}));
   };
-
-  if (loading) {
-    return (
-      <div className="mx-auto max-w-[1460px] space-y-5">
-        <div className="flex flex-col space-y-2">
-          <Skeleton className="h-10 w-64" />
-          <Skeleton className="h-5 w-96" />
+  if(loading)return <div role="status" className={panel+' p-8 text-sm text-[#4B7459]'}>Loading QR workspace…</div>;
+  if(!signedIn)return <div className={panel+' p-8 text-sm'}>Sign in to access your QR Studio. <Link href="/login?redirect=/vendor/qr-code" className="font-bold text-[#286846] underline">Sign in</Link></div>;
+  return <div className="mx-auto max-w-[1470px] space-y-5 pb-8 text-[#263E2D]">
+    <header className="grid gap-3 border-b border-[#D7E5DA] bg-white p-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+      <div><p className="text-[10px] font-bold uppercase tracking-[.18em] text-[#5F946B]">Digital storefront / QR Studio</p>
+        <h1 className="mt-2 text-[30px] font-bold tracking-[-.04em]">QR Studio</h1><p className="mt-1 max-w-[690px] text-[12px] leading-6 text-[#728578]">Create a professionally branded scan experience for your real directory listing. Configure, preview, export and print without leaving your workspace.</p></div>
+      <div className="flex flex-wrap gap-2"><Link href="/vendor/insights" className="flex h-10 items-center gap-2 border border-[#D1E1D4] px-4 text-[11px] font-bold text-[#336E4A]"><IconsaxIcon name="status-up" size={16}/> Growth insights</Link>
+        <button type="button" onClick={()=>void load()} className="flex h-10 items-center gap-2 border border-[#D1E1D4] px-4 text-[11px] font-bold text-[#336E4A]"><IconsaxIcon name="refresh" size={16}/> Refresh</button></div>
+    </header>
+    {error&&<div role="alert" className="border border-[#EABBB5] bg-[#FFF7F5] p-4 text-[12px] text-[#8D5245]">{error}</div>}
+    <div className="grid gap-3 sm:grid-cols-3">{[
+      ['Linked listings',String(businesses.length),'Your owned directory profiles','shop'],
+      ['QR status',busy?'Checking…':assigned?'Assigned':'Not assigned','Assigned to selected business','scan-barcode'],
+      ['Export','PNG · Print','High-resolution download options','document-download'],
+    ].map(item=><div key={item[0]} className={panel+' flex items-start justify-between p-5'}><div><p className="text-[10px] font-bold text-[#748A7A]">{item[0]}</p><p className="mt-2 text-[22px] font-bold text-[#234934]">{item[1]}</p><p className="mt-1 text-[10px] text-[#8B9B8F]">{item[2]}</p></div><span className="bg-[#E8F2E9] p-2.5 text-[#397750]"><IconsaxIcon name={item[3]} size={19}/></span></div>)}</div>
+    {!businesses.length?<section className={panel+' space-y-3 p-8'}><h2 className="text-lg font-bold">Start with a business listing</h2><p className="text-[12px] text-[#748978]">Register or claim an owned business before assigning a QR code.</p><Link className="inline-flex bg-[#255C3E] px-4 py-3 text-xs font-bold text-white" href="/register-business">Register business</Link></section>:
+    <div className="grid items-start gap-5 xl:grid-cols-[330px_minmax(0,1fr)_250px]">
+      <section className={panel+' min-w-0 p-5'}>
+        <p className="text-[10px] font-bold uppercase tracking-[.15em] text-[#6A9577]">01 · Business</p>
+        <h2 className="mt-1 text-[17px] font-bold">Configure your QR</h2>
+        <label className="mt-5 block text-[11px] font-semibold text-[#58725F]">Linked listing
+          <select value={selectedId} onChange={e=>setSelectedId(e.target.value)} className={input+' mt-1.5'}>{businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select></label>
+        <div className="mt-4 border border-[#DFE9E1] bg-[#F7FAF7] p-3 text-[11px]"><p className="font-bold text-[#365D41]">{business?.name}</p><p className="mt-1 text-[#819184]">{business?.category} · {business?.status||'Unknown status'}</p></div>
+        {!assigned&&!busy&&<button disabled={requesting||!business} type="button" onClick={()=>void requestQR()} className="mt-4 w-full bg-[#255D3F] px-4 py-3 text-[12px] font-bold text-white disabled:opacity-50">{requesting?'Requesting…':'Assign professional QR'}</button>}
+        <div className="mt-6 border-t border-[#E6ECE5] pt-5"><p className="text-[10px] font-bold uppercase tracking-[.15em] text-[#73977A]">02 · Layout presets</p>
+          <div className="mt-3 grid gap-2">{layouts.map(l=><button key={l.key} type="button" onClick={()=>setFormat(l.key)} aria-pressed={format===l.key}
+            className={'border-l-[3px] p-3 text-left '+(format===l.key?'border-[#2F8955] bg-[#EEF6EF]':'border-[#E3E9E3] hover:bg-[#F8FAF7]')}>
+            <strong className="text-[12px]">{l.title}</strong><span className="mt-1 block text-[10px] leading-4 text-[#819284]">{l.sub}</span>
+          </button>)}</div>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-1">
-            <Skeleton className="h-[400px] w-full rounded-xl" />
-          </div>
-          <div className="lg:col-span-2">
-            <Skeleton className="h-[400px] w-full rounded-xl" />
-          </div>
+        <div className="mt-6 border-t border-[#E6ECE5] pt-5"><p className="text-[10px] font-bold uppercase tracking-[.15em] text-[#73977A]">03 · Visual options</p>
+          <div className="mt-4 flex flex-wrap gap-2">{tones.map(t=><button key={t.name} type="button" aria-pressed={tone===t.name} onClick={()=>setTone(t.name)} className={'flex items-center gap-2 border px-3 py-2 text-[11px] '+(tone===t.name?'border-[#5F9D72] bg-[#EDF7F0]':'border-[#DEE6DE]')}>
+            <span className="h-3 w-3" style={{background:t.fg}}/>{t.name}</button>)}</div>
+          <label className="mt-4 block text-[11px] font-semibold text-[#58725F]">Export resolution
+            <select value={size} onChange={e=>setSize(Number(e.target.value) as Size)} className={input+' mt-1.5'}>
+              <option value={256}>256 px — small</option><option value={512}>512 px — standard</option><option value={1024}>1024 px — high detail</option>
+            </select></label>
+          <label className="mt-4 block text-[11px] font-semibold text-[#58725F]">Call-to-scan label
+            <input className={input+' mt-1.5'} maxLength={64} value={caption} onChange={e=>setCaption(e.target.value)}/></label>
+          <div className="mt-4 space-y-2">{[
+            ['Business name',includeTitle,setIncludeTitle],
+            ['Link below code',includeLink,setIncludeLink],
+            ['Directory mark',includeLogo,setIncludeLogo],
+          ].map(([title,value,setter])=><label key={String(title)} className="flex items-center justify-between gap-3 text-[11px] font-medium text-[#5B7462]">
+            <span>{String(title)}</span><input type="checkbox" checked={value as boolean} onChange={e=>(setter as (v:boolean)=>void)(e.target.checked)} className="accent-[#36784F]"/></label>)}</div>
         </div>
-      </div>
-    );
-  }
-
-  if (businesses.length === 0) {
-    return (
-      <div className="vendor-premium-panel flex min-h-[60dvh] flex-col items-center justify-center border-dashed p-10 text-center">
-        <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
-          <Store className="w-10 h-10 text-gray-300" />
+      </section>
+      <section className={panel+' min-w-0 overflow-hidden'}>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E1E9E2] bg-[#F9FBF8] p-5">
+          <div><p className="text-[10px] font-bold uppercase tracking-wider text-[#6A9577]">Live preview</p><h2 className="mt-1 text-[16px] font-bold">Production-ready scan card</h2></div>
+          <span className={'border px-2.5 py-1 text-[10px] font-bold '+(assigned?'border-[#C6DFD0] bg-[#ECF6EE] text-[#347B50]':'border-[#E3DEBF] bg-[#FAF6E9] text-[#967C3A]')}>{assigned?'Assigned':'Preview only'}</span>
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">No Businesses Found</h2>
-        <p className="text-gray-500 max-w-md mb-8">
-          You need to register at least one business to generate a QR code.
-        </p>
-        <a 
-          href="/register-business"
-          className="vendor-primary-button"
-        >
-          Register Business
-        </a>
-      </div>
-    );
-  }
-
-  const businessUrl = typeof window !== 'undefined' 
-    ? assignedQR 
-      ? `${window.location.origin}/q/${assignedQR.serial_id}`
-      : `${window.location.origin}/business/${selectedBusiness?.slug || selectedBusiness?.id || ''}`
-    : '';
-
-  return (
-    <div className="mx-auto max-w-[1460px] space-y-5 pb-5">
-      <div className="vendor-premium-header flex flex-col gap-5 px-6 py-7 sm:px-8 sm:py-9 lg:flex-row lg:items-end lg:justify-between">
-        <div className="relative z-10 max-w-2xl">
-          <p className="text-[10px] font-extrabold uppercase tracking-[.18em] text-[#BBDDAD]">Digital storefront / QR studio</p>
-          <h1 className="mt-2 text-[30px] font-extrabold tracking-[-.045em] text-white sm:text-[35px]">Turn every visit into a connection.</h1>
-          <p className="mt-2 text-[12px] leading-6 text-[#D5E8D8]">A branded, scannable route to your directory profile. Select a business, generate a QR code, then print or share it.</p>
-          <div className="mt-4 flex flex-wrap items-center gap-2 text-[10px] font-bold text-[#CFE8D1]">
-            <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5">Business-linked QR</span>
-            <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5">Print-ready</span>
-            <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5">Shareable link</span>
-          </div>
-        </div>
-        <div className="relative z-10 flex flex-wrap gap-2">
-          {assignedQR ? (
-            <>
-              <button 
-                onClick={handlePrint}
-                className="inline-flex h-11 items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-4 text-[12px] font-bold text-white transition hover:bg-white/20"
-              >
-                <Printer size={18} /> Print
-              </button>
-              <button 
-                onClick={handleDownload}
-                className="inline-flex h-11 items-center gap-2 rounded-xl border border-white/20 bg-[#F1FAEF] px-4 text-[12px] font-bold text-[#225A3A] transition hover:bg-white"
-              >
-                <Download size={18} /> Download PNG
-              </button>
-            </>
-          ) : (
-            <button 
-              onClick={handleRequestQR}
-              disabled={requestingQR}
-              className="inline-flex h-11 items-center gap-2 rounded-xl border border-white/20 bg-[#F1FAEF] px-4 text-[12px] font-bold text-[#225A3A] transition hover:bg-white disabled:opacity-50"
-            >
-              {requestingQR ? <Loader2 className="animate-spin" size={18} /> : <QrCode size={18} />}
-              Request Professional QR
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-12">
-        {/* Left Column: Selector */}
-        <div className="lg:col-span-4 space-y-6">
-          <div className="vendor-premium-panel overflow-hidden">
-            <div className="border-b border-[#E6EEE5] bg-[#FAFCF9] p-5">
-              <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider flex items-center gap-2">
-                <Store size={16} className="text-brand-blue" />
-                Select Business
-              </h2>
+        <div className="flex min-h-[650px] flex-col items-center justify-center bg-[#EFF4F0] p-5 sm:p-9">
+          <div ref={posterRef} id="slbi-qr-print-area" className={'flex w-full flex-col items-center border border-[#E2E9E0] bg-white px-5 py-10 text-center shadow-[0_15px_40px_rgba(24,54,36,.10)] '+(format==='card'?'max-w-[460px]':'max-w-[385px]')} style={{borderTop:'7px solid '+chosenTone.accent}}>
+            {includeTitle&&<div className="w-full"><h3 className="break-words text-[20px] font-extrabold leading-[1.3]" style={{color:chosenTone.fg}}>{business?.name}</h3><p className="mt-2 text-[9px] font-semibold uppercase tracking-[.17em] text-[#86988A]">SL Business Index · Business Profile</p></div>}
+            <div className="mt-7 border border-[#EBEFE9] bg-white p-3">
+              <QRCodeCanvas ref={canvasRef} value={qrUrl} level="H" size={Math.min(size,350)} marginSize={2}
+                fgColor={chosenTone.fg} bgColor="#FFFFFF"
+                imageSettings={includeLogo?{src:'/slbi-mark.svg',width:42,height:42,excavate:true}:undefined}/>
             </div>
-            <div className="divide-y divide-gray-50">
-              {businesses.map((biz) => (
-                <button
-                  key={biz.id}
-                  onClick={() => setSelectedBusiness(biz)}
-                  className={`w-full p-4 flex items-center gap-4 transition-all text-left hover:bg-gray-50 ${
-                    selectedBusiness?.id === biz.id ? 'bg-blue-50/50 ring-1 ring-inset ring-brand-blue/20' : ''
-                  }`}
-                >
-                  <div className="w-12 h-12 rounded-lg bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-200">
-                    {biz.logo_url ? (
-                      <img src={biz.logo_url} alt={biz.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400">
-                        <Building2 size={20} />
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-bold truncate ${selectedBusiness?.id === biz.id ? 'text-brand-blue' : 'text-gray-900'}`}>
-                      {biz.name}
-                    </p>
-                    <p className="text-xs text-gray-500 truncate">{biz.category}</p>
-                  </div>
-                  {selectedBusiness?.id === biz.id && (
-                    <CheckCircle2 size={18} className="text-brand-blue" />
-                  )}
-                </button>
-              ))}
-            </div>
+            <p className="mt-6 break-words text-[13px] font-bold tracking-[.06em]" style={{color:chosenTone.fg}}>{caption}</p>
+            {includeLink&&<p className="mt-3 max-w-full break-all text-[10px] leading-5 text-[#7D9382]">{qrUrl}</p>}
+            <p className="mt-7 text-[9px] font-medium uppercase tracking-[.12em] text-[#94A498]">Powered by SLBusinessIndex.com</p>
           </div>
-
-          <div className="vendor-muted-callout">
-            <div className="flex gap-3">
-              <div className="w-8 h-8 bg-brand-blue/10 rounded-full flex items-center justify-center shrink-0">
-                <Info size={16} className="text-brand-blue" />
-              </div>
-              <div className="space-y-2">
-                <h3 className="text-sm font-bold text-brand-blue">QR Code Tips</h3>
-                <ul className="text-xs text-gray-600 space-y-2 leading-relaxed">
-                  <li className="flex items-start gap-2">
-                    <span className="mt-1 w-1 h-1 rounded-full bg-brand-blue shrink-0" />
-                    Place printed QR codes at eye level on your shop windows or checkout.
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="mt-1 w-1 h-1 rounded-full bg-brand-blue shrink-0" />
-                    Include the QR code on your business cards and marketing flyers.
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="mt-1 w-1 h-1 rounded-full bg-brand-blue shrink-0" />
-                    Customers can instantly view your reviews, photos, and contact info.
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
+          {assigned&&<p className="mt-5 text-[10px] font-medium text-[#718574]">Serial {assigned.serial_id} · Scan test required before printing in bulk</p>}
         </div>
-
-        {/* Right Column: QR Preview */}
-        <div className="lg:col-span-8">
-          {checkingQR && <p role="status" className="mb-3 rounded-xl border border-[#DCE8D9] bg-white px-4 py-3 text-xs font-semibold text-[#4F785D]"><Loader2 size={14} className="mr-2 inline animate-spin"/>Checking QR assignment…</p>}
-          <div className="vendor-premium-panel flex min-h-[600px] flex-col overflow-hidden">
-            {assignedQR ? (
-              <>
-                <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-                  <h2 className="text-[13px] font-extrabold text-[#2C4B36]">Print & share preview</h2>
-                  <div className="flex items-center gap-2 px-3 py-1 bg-green-50 text-green-700 rounded-full text-[10px] font-bold uppercase">
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                    Assigned QR
-                  </div>
-                </div>
-                
-                <div className="flex-1 p-8 md:p-12 flex flex-col items-center justify-center bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:20px_20px]">
-                  {/* This is the printable area */}
-                  <div 
-                    id="printable-qr"
-                    ref={qrRef}
-                    className="bg-white p-12 rounded-3xl shadow-2xl border border-gray-100 flex flex-col items-center text-center max-w-sm w-full transition-transform hover:scale-[1.02] duration-500"
-                  >
-                    <div className="mb-8 w-full flex flex-col items-center">
-                      <div className="w-16 h-16 bg-brand-dark rounded-2xl flex items-center justify-center mb-4 shadow-lg">
-                        <QrCode className="w-8 h-8 text-white" />
-                      </div>
-                      <h3 className="text-xl font-bold text-gray-900 line-clamp-1 px-4">{selectedBusiness?.name}</h3>
-                      <p className="text-xs text-gray-500 uppercase tracking-widest mt-1">Official Directory Listing</p>
-                    </div>
-
-                    <div className="relative group p-4 bg-white rounded-2xl border-4 border-gray-50">
-                      <QRCodeCanvas
-                        value={businessUrl}
-                        size={240}
-                        level="H"
-                        includeMargin={false}
-                        imageSettings={{
-                          src: "/slbi-mark.svg",
-                          x: undefined,
-                          y: undefined,
-                          height: 40,
-                          width: 40,
-                          excavate: true,
-                        }}
-                      />
-                    </div>
-
-                    <div className="mt-10 space-y-2">
-                      <p className="text-sm font-bold text-brand-dark">Scan to Explore</p>
-                      <div className="flex items-center justify-center gap-2 py-2 px-4 bg-gray-50 rounded-full border border-gray-100">
-                        <span className="text-[10px] font-medium text-gray-400 font-mono tracking-tighter">
-                          slbusinessindex.com/q/{assignedQR.serial_id}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-8 flex flex-col items-center text-center no-print">
-                      <span className="text-[10px] font-black text-brand-gold uppercase tracking-[0.3em] mb-1">Serial ID</span>
-                      <span className="text-2xl font-mono font-black text-brand-dark tracking-tighter">{assignedQR.serial_id}</span>
-                  </div>
-
-                  {/* Quick Actions */}
-                  <div className="mt-12 flex flex-wrap justify-center gap-4 no-print">
-                    <button 
-                      onClick={() => {
-                        navigator.clipboard.writeText(businessUrl);
-                        toast.success('Link copied to clipboard');
-                      }}
-                      className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-full text-xs font-bold hover:border-brand-blue hover:text-brand-blue transition-all"
-                    >
-                      <Share2 size={14} /> Copy Link
-                    </button>
-                    <a 
-                      href={businessUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-full text-xs font-bold hover:border-brand-blue hover:text-brand-blue transition-all"
-                    >
-                      <ExternalLink size={14} /> View Live
-                    </a>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="flex-1 flex flex-col items-center justify-center p-12 text-center space-y-8">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-brand-blue/10 rounded-full animate-pulse scale-150"></div>
-                  <div className="relative w-24 h-24 bg-brand-blue/10 rounded-full flex items-center justify-center">
-                    <QrCode className="w-12 h-12 text-brand-blue" />
-                  </div>
-                </div>
-                
-                <div className="max-w-md space-y-4">
-                  <h2 className="text-[23px] font-extrabold tracking-tight text-[#254832]">Your QR studio is ready</h2>
-                  <p className="text-gray-500 leading-relaxed">
-                    Generate a serial-numbered QR code for this listing. You can print it for your counter, flyers or business cards. Scan counts are available only when tracking is configured.
-                  </p>
-                </div>
-
-                <button 
-                  onClick={handleRequestQR}
-                  disabled={requestingQR}
-                  className="flex items-center gap-3 px-8 py-4 bg-brand-dark text-white rounded-xl font-bold hover:bg-brand-blue transition-all shadow-xl shadow-brand-dark/10 disabled:opacity-50 group"
-                >
-                  {requestingQR ? <Loader2 className="animate-spin" size={20} /> : <QrCode size={20} className="group-hover:rotate-12 transition-transform" />}
-                  Generate Professional QR Code
-                </button>
-
-                <div className="grid grid-cols-2 gap-4 w-full max-w-sm mt-8">
-                  <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Benefit 1</p>
-                    <p className="text-xs font-bold text-gray-700">Direct listing access</p>
-                  </div>
-                  <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Benefit 2</p>
-                    <p className="text-xs font-bold text-gray-700">Download and print</p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+        <div className="grid gap-2 border-t border-[#E0E8E0] p-4 sm:grid-cols-3">
+          <button type="button" disabled={!assigned} onClick={exportPNG} className="flex min-h-11 items-center justify-center gap-2 bg-[#245D3F] px-3 text-[12px] font-bold text-white disabled:opacity-40"><IconsaxIcon name="document-download" size={16} color="white"/> Download PNG</button>
+          <button type="button" disabled={!assigned} onClick={printCard} className="flex min-h-11 items-center justify-center gap-2 border border-[#D5E2D7] text-[12px] font-bold text-[#39694A] disabled:opacity-40"><IconsaxIcon name="document-download" size={16}/> Print layout</button>
+          <button type="button" onClick={()=>void copyLink()} className="flex min-h-11 items-center justify-center gap-2 border border-[#D5E2D7] text-[12px] font-bold text-[#39694A]"><IconsaxIcon name="document-download" size={16}/> Copy link</button>
         </div>
-      </div>
-
-      <div className="grid gap-3 md:grid-cols-3">
-        {[
-          {label:'Public listing',text:'Check your public customer experience',href:selectedBusiness ? '/business/'+(selectedBusiness.slug||selectedBusiness.id) : '/vendor/my-businesses'},
-          {label:'Growth insights',text:'Review recorded views and enquiries',href:'/vendor/insights'},
-          {label:'Marketing studio',text:'Share the QR alongside a campaign',href:'/vendor/marketing'},
-        ].map(item => <Link key={item.label} href={item.href} className="vendor-premium-card flex items-center justify-between gap-3 p-4 text-left hover:bg-[#F5FAF3]">
-          <span><span className="block text-[12px] font-bold text-[#2B5138]">{item.label}</span><span className="mt-1 block text-[11px] text-[#839687]">{item.text}</span></span><ChevronRight size={17} className="shrink-0 text-[#659373]"/>
-        </Link>)}
-      </div>
-      <style jsx global>{`
-        @media print {
-          body * {
-            visibility: hidden;
-          }
-          #printable-qr, #printable-qr * {
-            visibility: visible;
-          }
-          #printable-qr {
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%) scale(1.5);
-            border: none !important;
-            shadow: none !important;
-          }
-          .no-print {
-            display: none !important;
-          }
-        }
-      `}</style>
-    </div>
-  );
+      </section>
+      <aside className="space-y-4">
+        <div className={panel+' p-5'}><p className="text-[10px] font-bold uppercase tracking-wider text-[#5D9570]">Quick actions</p>
+          <div className="mt-4 grid gap-2">{[
+            ['Open listing',()=>{if(business)window.open(directUrl,'_blank','noopener,noreferrer')},'home'],
+            ['Copy destination',()=>void copyLink(),'document-download'],
+            ['Share QR link',()=>void share(),'flash'],
+            ['Print material',printCard,'document-download'],
+          ].map(([name,fn,icon])=><button key={String(name)} type="button" disabled={!business||(name==='Print material'&&!assigned)}
+            onClick={fn as ()=>void} className="flex min-h-11 items-center justify-between border border-[#DEE7E0] px-3 text-left text-[11px] font-semibold text-[#3A6449] transition hover:bg-[#F3F8F4] disabled:opacity-40"><span>{String(name)}</span><IconsaxIcon name={String(icon)} size={16}/></button>)}</div>
+        </div>
+        <div className={panel+' p-5'}><h3 className="text-[13px] font-bold">Deployment checklist</h3>
+          <div className="mt-4 space-y-3">{[
+            'Scan with two phone cameras',
+            'Verify the correct business page',
+            'Test readability at printed size',
+            'Place at counters and entrances',
+            'Use approved business details only',
+          ].map((item,i)=><div key={item} className="flex items-start gap-2 text-[11px] text-[#6E8372]"><span className="text-[#43815A]">{i+1}.</span>{item}</div>)}</div>
+        </div>
+        <div className="border-l-[3px] border-[#CBAD65] bg-[#FBF7EA] px-4 py-3 text-[11px] leading-5 text-[#907747]">Scan analytics are not recorded unless an independently verified tracking pipeline exists. This screen does not claim scan counts.</div>
+      </aside>
+    </div>}
+    <style jsx global>{`
+      @media print {
+        body * { visibility:hidden !important; }
+        #slbi-qr-print-area, #slbi-qr-print-area * { visibility:visible !important; }
+        #slbi-qr-print-area { position:fixed;top:10mm;left:10mm;width:180mm;max-width:none !important;box-shadow:none !important;border:1px solid #eee !important;page-break-inside:avoid; }
+        @page { size:A4; margin:10mm; }
+      }
+    `}</style>
+  </div>;
 }
