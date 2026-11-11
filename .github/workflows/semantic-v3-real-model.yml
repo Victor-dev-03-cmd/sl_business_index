@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - research/semanticsearch-v3-evaluation-vector-gates-20261111
+    paths:
+      - 'scripts/benchmark-semantic-v3.py'
+      - 'requirements-semantic-research.txt'
+      - 'tests/fixtures/semantic-v3-category-proxy.json'
+      - '.github/workflows/semantic-v3-real-model.yml'
   workflow_dispatch:
 
 permissions:
@@ -29,12 +34,14 @@ jobs:
         run: |
           python scripts/benchmark-semantic-v3.py \
             --model intfloat/multilingual-e5-small \
+            --model-revision 614241f622f53c4eeff9890bdc4f31cfecc418b3 \
             --max-queries 240 \
             --batch-size 16 \
             --query-mode raw \
             --output semantic-v3-raw-report.json
           python scripts/benchmark-semantic-v3.py \
             --model intfloat/multilingual-e5-small \
+            --model-revision 614241f622f53c4eeff9890bdc4f31cfecc418b3 \
             --max-queries 240 \
             --batch-size 16 \
             --query-mode canonical \
