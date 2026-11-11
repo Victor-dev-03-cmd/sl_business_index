@@ -1,0 +1,3511 @@
+{
+  "schema_version": "0.2",
+  "description": "Stratified 240-query category proxy search evaluation using approved public SLBI business names and reviewed aliases",
+  "human_judged": false,
+  "semantic_model_results_included": false,
+  "candidates": [
+    {
+      "id": "46126367-4d97-4e07-8726-1e8ffb080181",
+      "name": "koreanskin.lk",
+      "category": "Beauty & Health"
+    },
+    {
+      "id": "49cc70d2-aab4-4016-945f-a3e777fca6fc",
+      "name": "Stella Fancy",
+      "category": "Beauty & Health"
+    },
+    {
+      "id": "564a8c6b-7006-48bc-a0a3-58320ccf060b",
+      "name": "Vishaka Multi Spot",
+      "category": "Book & Print Corner"
+    },
+    {
+      "id": "4e2d3047-5e20-444a-a0e0-59e1d26295f7",
+      "name": "Meesha Apparel",
+      "category": "Clothing & Brands"
+    },
+    {
+      "id": "b81ac74a-7fbc-4a35-a495-66aa8b730a50",
+      "name": "Next Level Education",
+      "category": "Educational institutes & Services"
+    },
+    {
+      "id": "3f90c71e-a0c8-4572-b3ce-f81278f3cc72",
+      "name": "N mobile",
+      "category": "Electrical Equipment and Services"
+    },
+    {
+      "id": "f44f118c-0829-4ec6-b065-008c80e89a3a",
+      "name": "Evergreen celibrations PVT LTD",
+      "category": "Event Planner"
+    },
+    {
+      "id": "ad8cb9e8-c9b5-4340-bd9a-9b854e863ea3",
+      "name": "Roy Digital Jaffna",
+      "category": "Event Planner"
+    },
+    {
+      "id": "9e675d46-4bc0-4e7c-b83a-c3642febdfa5",
+      "name": "Nescafe Machine Rentals\t",
+      "category": "Events, Food & Leisure"
+    },
+    {
+      "id": "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+      "name": "Kuputhu family Restaurant ",
+      "category": "Food & Dining"
+    },
+    {
+      "id": "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+      "name": "Kuputu hotel ",
+      "category": "Food & Dining"
+    },
+    {
+      "id": "11dc43b7-4718-4928-b987-1ff7f8cf1337",
+      "name": "Printhavam ice cream house ",
+      "category": "Food & Dining"
+    },
+    {
+      "id": "c14c3d60-5ff8-414b-9961-41f4e365d029",
+      "name": "LankaSolve",
+      "category": "Legal, Government & Services"
+    },
+    {
+      "id": "d0c73655-17dd-438c-9951-08107e52f852",
+      "name": "Arud graphics",
+      "category": "Media & Advertising"
+    },
+    {
+      "id": "1b90b54e-d5a1-484d-abf8-b9754110bdd6",
+      "name": "Vallipuram Digital Center",
+      "category": "Media & Communications"
+    },
+    {
+      "id": "9045c050-2565-416f-b9e5-098d320753da",
+      "name": "Asroz",
+      "category": "Professional Services"
+    },
+    {
+      "id": "1eccb6ec-3c4e-44b7-aaca-2bbbc5421e09",
+      "name": "Laxsan Dev",
+      "category": "Professional Services"
+    },
+    {
+      "id": "74d40931-3d97-4c20-86f4-75ef91ddbde8",
+      "name": "Raks car wash",
+      "category": "Repairing & Services"
+    },
+    {
+      "id": "0864bfa6-7a0e-4aba-8dcd-c274e62fa443",
+      "name": "smart gsm",
+      "category": "Retail & Others"
+    },
+    {
+      "id": "3afb50c1-6123-4cab-8175-3da766c37269",
+      "name": "Bag LK",
+      "category": "Shopping & Retail"
+    },
+    {
+      "id": "2871754b-25a3-4aef-b1ab-e7dd2410e6e9",
+      "name": "MA Holidays Travels & Tours ( pvt) Ltd",
+      "category": "Travel & Tourism"
+    },
+    {
+      "id": "da9d7b2e-51e0-4ddd-ab86-819bdea6f09b",
+      "name": "Lanka Taxis",
+      "category": "Travel & Transportation"
+    }
+  ],
+  "queries": [
+    {
+      "query": "academy",
+      "language": "en",
+      "canonical_query": "education",
+      "relevant_business_ids": [
+        "b81ac74a-7fbc-4a35-a495-66aa8b730a50"
+      ],
+      "categories": [
+        "Educational institutes & Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "academy in Jaffna",
+      "language": "en",
+      "canonical_query": "education",
+      "relevant_business_ids": [
+        "b81ac74a-7fbc-4a35-a495-66aa8b730a50"
+      ],
+      "categories": [
+        "Educational institutes & Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "academy near Colombo",
+      "language": "en",
+      "canonical_query": "education",
+      "relevant_business_ids": [
+        "b81ac74a-7fbc-4a35-a495-66aa8b730a50"
+      ],
+      "categories": [
+        "Educational institutes & Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "apparel",
+      "language": "en",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "apparel in Jaffna",
+      "language": "en",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "apparel near Colombo",
+      "language": "en",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "boutique",
+      "language": "en",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "boutique in Jaffna",
+      "language": "en",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "boutique near Colombo",
+      "language": "en",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "bus service",
+      "language": "en",
+      "canonical_query": "travel",
+      "relevant_business_ids": [
+        "2871754b-25a3-4aef-b1ab-e7dd2410e6e9",
+        "da9d7b2e-51e0-4ddd-ab86-819bdea6f09b"
+      ],
+      "categories": [
+        "Travel & Tourism",
+        "Travel & Transportation"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "bus service in Jaffna",
+      "language": "en",
+      "canonical_query": "travel",
+      "relevant_business_ids": [
+        "2871754b-25a3-4aef-b1ab-e7dd2410e6e9",
+        "da9d7b2e-51e0-4ddd-ab86-819bdea6f09b"
+      ],
+      "categories": [
+        "Travel & Tourism",
+        "Travel & Transportation"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "bus service near Colombo",
+      "language": "en",
+      "canonical_query": "travel",
+      "relevant_business_ids": [
+        "2871754b-25a3-4aef-b1ab-e7dd2410e6e9",
+        "da9d7b2e-51e0-4ddd-ab86-819bdea6f09b"
+      ],
+      "categories": [
+        "Travel & Tourism",
+        "Travel & Transportation"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "cab",
+      "language": "en",
+      "canonical_query": "travel",
+      "relevant_business_ids": [
+        "2871754b-25a3-4aef-b1ab-e7dd2410e6e9",
+        "da9d7b2e-51e0-4ddd-ab86-819bdea6f09b"
+      ],
+      "categories": [
+        "Travel & Tourism",
+        "Travel & Transportation"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "cab in Jaffna",
+      "language": "en",
+      "canonical_query": "travel",
+      "relevant_business_ids": [
+        "2871754b-25a3-4aef-b1ab-e7dd2410e6e9",
+        "da9d7b2e-51e0-4ddd-ab86-819bdea6f09b"
+      ],
+      "categories": [
+        "Travel & Tourism",
+        "Travel & Transportation"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "cab near Colombo",
+      "language": "en",
+      "canonical_query": "travel",
+      "relevant_business_ids": [
+        "2871754b-25a3-4aef-b1ab-e7dd2410e6e9",
+        "da9d7b2e-51e0-4ddd-ab86-819bdea6f09b"
+      ],
+      "categories": [
+        "Travel & Tourism",
+        "Travel & Transportation"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "cafe",
+      "language": "en",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "cafe in Jaffna",
+      "language": "en",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "cafe near Colombo",
+      "language": "en",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "car hire",
+      "language": "en",
+      "canonical_query": "travel",
+      "relevant_business_ids": [
+        "2871754b-25a3-4aef-b1ab-e7dd2410e6e9",
+        "da9d7b2e-51e0-4ddd-ab86-819bdea6f09b"
+      ],
+      "categories": [
+        "Travel & Tourism",
+        "Travel & Transportation"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "car hire in Jaffna",
+      "language": "en",
+      "canonical_query": "travel",
+      "relevant_business_ids": [
+        "2871754b-25a3-4aef-b1ab-e7dd2410e6e9",
+        "da9d7b2e-51e0-4ddd-ab86-819bdea6f09b"
+      ],
+      "categories": [
+        "Travel & Tourism",
+        "Travel & Transportation"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "car hire near Colombo",
+      "language": "en",
+      "canonical_query": "travel",
+      "relevant_business_ids": [
+        "2871754b-25a3-4aef-b1ab-e7dd2410e6e9",
+        "da9d7b2e-51e0-4ddd-ab86-819bdea6f09b"
+      ],
+      "categories": [
+        "Travel & Tourism",
+        "Travel & Transportation"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "car rental",
+      "language": "en",
+      "canonical_query": "travel",
+      "relevant_business_ids": [
+        "2871754b-25a3-4aef-b1ab-e7dd2410e6e9",
+        "da9d7b2e-51e0-4ddd-ab86-819bdea6f09b"
+      ],
+      "categories": [
+        "Travel & Tourism",
+        "Travel & Transportation"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "car rental in Jaffna",
+      "language": "en",
+      "canonical_query": "travel",
+      "relevant_business_ids": [
+        "2871754b-25a3-4aef-b1ab-e7dd2410e6e9",
+        "da9d7b2e-51e0-4ddd-ab86-819bdea6f09b"
+      ],
+      "categories": [
+        "Travel & Tourism",
+        "Travel & Transportation"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "car rental near Colombo",
+      "language": "en",
+      "canonical_query": "travel",
+      "relevant_business_ids": [
+        "2871754b-25a3-4aef-b1ab-e7dd2410e6e9",
+        "da9d7b2e-51e0-4ddd-ab86-819bdea6f09b"
+      ],
+      "categories": [
+        "Travel & Tourism",
+        "Travel & Transportation"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "classes",
+      "language": "en",
+      "canonical_query": "education",
+      "relevant_business_ids": [
+        "b81ac74a-7fbc-4a35-a495-66aa8b730a50"
+      ],
+      "categories": [
+        "Educational institutes & Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "classes in Jaffna",
+      "language": "en",
+      "canonical_query": "education",
+      "relevant_business_ids": [
+        "b81ac74a-7fbc-4a35-a495-66aa8b730a50"
+      ],
+      "categories": [
+        "Educational institutes & Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "classes near Colombo",
+      "language": "en",
+      "canonical_query": "education",
+      "relevant_business_ids": [
+        "b81ac74a-7fbc-4a35-a495-66aa8b730a50"
+      ],
+      "categories": [
+        "Educational institutes & Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "cloth shop",
+      "language": "en",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "cloth shop in Jaffna",
+      "language": "en",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "cloth shop near Colombo",
+      "language": "en",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "clothes",
+      "language": "en",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "clothes in Jaffna",
+      "language": "en",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "clothes near Colombo",
+      "language": "en",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "clothing",
+      "language": "en",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "clothing in Jaffna",
+      "language": "en",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "clothing near Colombo",
+      "language": "en",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "clothing shop",
+      "language": "en",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "clothing shop in Jaffna",
+      "language": "en",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "clothing shop near Colombo",
+      "language": "en",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "clothings",
+      "language": "en",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "clothings in Jaffna",
+      "language": "en",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "clothings near Colombo",
+      "language": "en",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "coffee shop",
+      "language": "en",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "coffee shop in Jaffna",
+      "language": "en",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "coffee shop near Colombo",
+      "language": "en",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "college",
+      "language": "en",
+      "canonical_query": "education",
+      "relevant_business_ids": [
+        "b81ac74a-7fbc-4a35-a495-66aa8b730a50"
+      ],
+      "categories": [
+        "Educational institutes & Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "college in Jaffna",
+      "language": "en",
+      "canonical_query": "education",
+      "relevant_business_ids": [
+        "b81ac74a-7fbc-4a35-a495-66aa8b730a50"
+      ],
+      "categories": [
+        "Educational institutes & Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "college near Colombo",
+      "language": "en",
+      "canonical_query": "education",
+      "relevant_business_ids": [
+        "b81ac74a-7fbc-4a35-a495-66aa8b730a50"
+      ],
+      "categories": [
+        "Educational institutes & Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "ஆடை அங்காடி",
+      "language": "ta",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "ஆடை அங்காடி in Jaffna",
+      "language": "ta",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "ஆடை அங்காடி near Colombo",
+      "language": "ta",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "ஆடை கடை",
+      "language": "ta",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "ஆடை கடை in Jaffna",
+      "language": "ta",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "ஆடை கடை near Colombo",
+      "language": "ta",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "ஆடை கடைகள்",
+      "language": "ta",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "ஆடை கடைகள் in Jaffna",
+      "language": "ta",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "ஆடை கடைகள் near Colombo",
+      "language": "ta",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "ஆடை விற்பனை",
+      "language": "ta",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "ஆடை விற்பனை in Jaffna",
+      "language": "ta",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "ஆடை விற்பனை near Colombo",
+      "language": "ta",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "ஆடைகள்",
+      "language": "ta",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "ஆடைகள் in Jaffna",
+      "language": "ta",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "ஆடைகள் near Colombo",
+      "language": "ta",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "உடை கடை",
+      "language": "ta",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "உடை கடை in Jaffna",
+      "language": "ta",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "உடை கடை near Colombo",
+      "language": "ta",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "உடைகள்",
+      "language": "ta",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "உடைகள் in Jaffna",
+      "language": "ta",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "உடைகள் near Colombo",
+      "language": "ta",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "உணவகங்கள்",
+      "language": "ta",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "உணவகங்கள் in Jaffna",
+      "language": "ta",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "உணவகங்கள் near Colombo",
+      "language": "ta",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "உணவகம்",
+      "language": "ta",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "உணவகம் in Jaffna",
+      "language": "ta",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "உணவகம் near Colombo",
+      "language": "ta",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "உணவு",
+      "language": "ta",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "உணவு in Jaffna",
+      "language": "ta",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "உணவு near Colombo",
+      "language": "ta",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "உணவுக்கடை",
+      "language": "ta",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "உணவுக்கடை in Jaffna",
+      "language": "ta",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "உணவுக்கடை near Colombo",
+      "language": "ta",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "கடை",
+      "language": "ta",
+      "canonical_query": "shopping",
+      "relevant_business_ids": [
+        "0864bfa6-7a0e-4aba-8dcd-c274e62fa443",
+        "3afb50c1-6123-4cab-8175-3da766c37269"
+      ],
+      "categories": [
+        "Shopping & Retail",
+        "Retail & Others"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "கடை in Jaffna",
+      "language": "ta",
+      "canonical_query": "shopping",
+      "relevant_business_ids": [
+        "0864bfa6-7a0e-4aba-8dcd-c274e62fa443",
+        "3afb50c1-6123-4cab-8175-3da766c37269"
+      ],
+      "categories": [
+        "Shopping & Retail",
+        "Retail & Others"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "கடை near Colombo",
+      "language": "ta",
+      "canonical_query": "shopping",
+      "relevant_business_ids": [
+        "0864bfa6-7a0e-4aba-8dcd-c274e62fa443",
+        "3afb50c1-6123-4cab-8175-3da766c37269"
+      ],
+      "categories": [
+        "Shopping & Retail",
+        "Retail & Others"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "கடைகள்",
+      "language": "ta",
+      "canonical_query": "shopping",
+      "relevant_business_ids": [
+        "0864bfa6-7a0e-4aba-8dcd-c274e62fa443",
+        "3afb50c1-6123-4cab-8175-3da766c37269"
+      ],
+      "categories": [
+        "Shopping & Retail",
+        "Retail & Others"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "கடைகள் in Jaffna",
+      "language": "ta",
+      "canonical_query": "shopping",
+      "relevant_business_ids": [
+        "0864bfa6-7a0e-4aba-8dcd-c274e62fa443",
+        "3afb50c1-6123-4cab-8175-3da766c37269"
+      ],
+      "categories": [
+        "Shopping & Retail",
+        "Retail & Others"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "கடைகள் near Colombo",
+      "language": "ta",
+      "canonical_query": "shopping",
+      "relevant_business_ids": [
+        "0864bfa6-7a0e-4aba-8dcd-c274e62fa443",
+        "3afb50c1-6123-4cab-8175-3da766c37269"
+      ],
+      "categories": [
+        "Shopping & Retail",
+        "Retail & Others"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "கல்வி",
+      "language": "ta",
+      "canonical_query": "education",
+      "relevant_business_ids": [
+        "b81ac74a-7fbc-4a35-a495-66aa8b730a50"
+      ],
+      "categories": [
+        "Educational institutes & Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "கல்வி in Jaffna",
+      "language": "ta",
+      "canonical_query": "education",
+      "relevant_business_ids": [
+        "b81ac74a-7fbc-4a35-a495-66aa8b730a50"
+      ],
+      "categories": [
+        "Educational institutes & Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "கல்வி near Colombo",
+      "language": "ta",
+      "canonical_query": "education",
+      "relevant_business_ids": [
+        "b81ac74a-7fbc-4a35-a495-66aa8b730a50"
+      ],
+      "categories": [
+        "Educational institutes & Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "கல்வி நிலையம்",
+      "language": "ta",
+      "canonical_query": "education",
+      "relevant_business_ids": [
+        "b81ac74a-7fbc-4a35-a495-66aa8b730a50"
+      ],
+      "categories": [
+        "Educational institutes & Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "கல்வி நிலையம் in Jaffna",
+      "language": "ta",
+      "canonical_query": "education",
+      "relevant_business_ids": [
+        "b81ac74a-7fbc-4a35-a495-66aa8b730a50"
+      ],
+      "categories": [
+        "Educational institutes & Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "கல்வி நிலையம் near Colombo",
+      "language": "ta",
+      "canonical_query": "education",
+      "relevant_business_ids": [
+        "b81ac74a-7fbc-4a35-a495-66aa8b730a50"
+      ],
+      "categories": [
+        "Educational institutes & Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "காய்கறி கடை",
+      "language": "ta",
+      "canonical_query": "shopping",
+      "relevant_business_ids": [
+        "0864bfa6-7a0e-4aba-8dcd-c274e62fa443",
+        "3afb50c1-6123-4cab-8175-3da766c37269"
+      ],
+      "categories": [
+        "Shopping & Retail",
+        "Retail & Others"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "காய்கறி கடை in Jaffna",
+      "language": "ta",
+      "canonical_query": "shopping",
+      "relevant_business_ids": [
+        "0864bfa6-7a0e-4aba-8dcd-c274e62fa443",
+        "3afb50c1-6123-4cab-8175-3da766c37269"
+      ],
+      "categories": [
+        "Shopping & Retail",
+        "Retail & Others"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "காய்கறி கடை near Colombo",
+      "language": "ta",
+      "canonical_query": "shopping",
+      "relevant_business_ids": [
+        "0864bfa6-7a0e-4aba-8dcd-c274e62fa443",
+        "3afb50c1-6123-4cab-8175-3da766c37269"
+      ],
+      "categories": [
+        "Shopping & Retail",
+        "Retail & Others"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "අධ්‍යාපන",
+      "language": "si",
+      "canonical_query": "education",
+      "relevant_business_ids": [
+        "b81ac74a-7fbc-4a35-a495-66aa8b730a50"
+      ],
+      "categories": [
+        "Educational institutes & Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "අධ්‍යාපන in Jaffna",
+      "language": "si",
+      "canonical_query": "education",
+      "relevant_business_ids": [
+        "b81ac74a-7fbc-4a35-a495-66aa8b730a50"
+      ],
+      "categories": [
+        "Educational institutes & Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "අධ්‍යාපන near Colombo",
+      "language": "si",
+      "canonical_query": "education",
+      "relevant_business_ids": [
+        "b81ac74a-7fbc-4a35-a495-66aa8b730a50"
+      ],
+      "categories": [
+        "Educational institutes & Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "අලුත්වැඩියා",
+      "language": "si",
+      "canonical_query": "repair",
+      "relevant_business_ids": [
+        "3f90c71e-a0c8-4572-b3ce-f81278f3cc72",
+        "74d40931-3d97-4c20-86f4-75ef91ddbde8"
+      ],
+      "categories": [
+        "Repairing & Services",
+        "Electrical Equipment and Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "අලුත්වැඩියා in Jaffna",
+      "language": "si",
+      "canonical_query": "repair",
+      "relevant_business_ids": [
+        "3f90c71e-a0c8-4572-b3ce-f81278f3cc72",
+        "74d40931-3d97-4c20-86f4-75ef91ddbde8"
+      ],
+      "categories": [
+        "Repairing & Services",
+        "Electrical Equipment and Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "අලුත්වැඩියා near Colombo",
+      "language": "si",
+      "canonical_query": "repair",
+      "relevant_business_ids": [
+        "3f90c71e-a0c8-4572-b3ce-f81278f3cc72",
+        "74d40931-3d97-4c20-86f4-75ef91ddbde8"
+      ],
+      "categories": [
+        "Repairing & Services",
+        "Electrical Equipment and Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "අලුත්වැඩියා කඩ",
+      "language": "si",
+      "canonical_query": "repair",
+      "relevant_business_ids": [
+        "3f90c71e-a0c8-4572-b3ce-f81278f3cc72",
+        "74d40931-3d97-4c20-86f4-75ef91ddbde8"
+      ],
+      "categories": [
+        "Repairing & Services",
+        "Electrical Equipment and Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "අලුත්වැඩියා කඩ in Jaffna",
+      "language": "si",
+      "canonical_query": "repair",
+      "relevant_business_ids": [
+        "3f90c71e-a0c8-4572-b3ce-f81278f3cc72",
+        "74d40931-3d97-4c20-86f4-75ef91ddbde8"
+      ],
+      "categories": [
+        "Repairing & Services",
+        "Electrical Equipment and Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "අලුත්වැඩියා කඩ near Colombo",
+      "language": "si",
+      "canonical_query": "repair",
+      "relevant_business_ids": [
+        "3f90c71e-a0c8-4572-b3ce-f81278f3cc72",
+        "74d40931-3d97-4c20-86f4-75ef91ddbde8"
+      ],
+      "categories": [
+        "Repairing & Services",
+        "Electrical Equipment and Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "අලුත්වැඩියා කරන තැන්",
+      "language": "si",
+      "canonical_query": "repair",
+      "relevant_business_ids": [
+        "3f90c71e-a0c8-4572-b3ce-f81278f3cc72",
+        "74d40931-3d97-4c20-86f4-75ef91ddbde8"
+      ],
+      "categories": [
+        "Repairing & Services",
+        "Electrical Equipment and Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "අලුත්වැඩියා කරන තැන් in Jaffna",
+      "language": "si",
+      "canonical_query": "repair",
+      "relevant_business_ids": [
+        "3f90c71e-a0c8-4572-b3ce-f81278f3cc72",
+        "74d40931-3d97-4c20-86f4-75ef91ddbde8"
+      ],
+      "categories": [
+        "Repairing & Services",
+        "Electrical Equipment and Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "අලුත්වැඩියා කරන තැන් near Colombo",
+      "language": "si",
+      "canonical_query": "repair",
+      "relevant_business_ids": [
+        "3f90c71e-a0c8-4572-b3ce-f81278f3cc72",
+        "74d40931-3d97-4c20-86f4-75ef91ddbde8"
+      ],
+      "categories": [
+        "Repairing & Services",
+        "Electrical Equipment and Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "අවන්හල",
+      "language": "si",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "අවන්හල in Jaffna",
+      "language": "si",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "අවන්හල near Colombo",
+      "language": "si",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "අවන්හල්",
+      "language": "si",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "අවන්හල් in Jaffna",
+      "language": "si",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "අවන්හල් near Colombo",
+      "language": "si",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "ආහාර",
+      "language": "si",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "ආහාර in Jaffna",
+      "language": "si",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "ආහාර near Colombo",
+      "language": "si",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "ආහාර කඩ",
+      "language": "si",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "ආහාර කඩ in Jaffna",
+      "language": "si",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "ආහාර කඩ near Colombo",
+      "language": "si",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "ඇඳුම්",
+      "language": "si",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "ඇඳුම් in Jaffna",
+      "language": "si",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "ඇඳුම් near Colombo",
+      "language": "si",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "ඇඳුම් කඩ",
+      "language": "si",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "ඇඳුම් කඩ in Jaffna",
+      "language": "si",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "ඇඳුම් කඩ near Colombo",
+      "language": "si",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "ඇඳුම් වෙළඳසැල",
+      "language": "si",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "ඇඳුම් වෙළඳසැල in Jaffna",
+      "language": "si",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "ඇඳුම් වෙළඳසැල near Colombo",
+      "language": "si",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "ඇඳුම් සාප්පු",
+      "language": "si",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "ඇඳුම් සාප්පු in Jaffna",
+      "language": "si",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "ඇඳුම් සාප්පු near Colombo",
+      "language": "si",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "උපකාරක පන්ති",
+      "language": "si",
+      "canonical_query": "education",
+      "relevant_business_ids": [
+        "b81ac74a-7fbc-4a35-a495-66aa8b730a50"
+      ],
+      "categories": [
+        "Educational institutes & Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "උපකාරක පන්ති in Jaffna",
+      "language": "si",
+      "canonical_query": "education",
+      "relevant_business_ids": [
+        "b81ac74a-7fbc-4a35-a495-66aa8b730a50"
+      ],
+      "categories": [
+        "Educational institutes & Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "උපකාරක පන්ති near Colombo",
+      "language": "si",
+      "canonical_query": "education",
+      "relevant_business_ids": [
+        "b81ac74a-7fbc-4a35-a495-66aa8b730a50"
+      ],
+      "categories": [
+        "Educational institutes & Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "කඩවල්",
+      "language": "si",
+      "canonical_query": "shopping",
+      "relevant_business_ids": [
+        "0864bfa6-7a0e-4aba-8dcd-c274e62fa443",
+        "3afb50c1-6123-4cab-8175-3da766c37269"
+      ],
+      "categories": [
+        "Shopping & Retail",
+        "Retail & Others"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "කඩවල් in Jaffna",
+      "language": "si",
+      "canonical_query": "shopping",
+      "relevant_business_ids": [
+        "0864bfa6-7a0e-4aba-8dcd-c274e62fa443",
+        "3afb50c1-6123-4cab-8175-3da766c37269"
+      ],
+      "categories": [
+        "Shopping & Retail",
+        "Retail & Others"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "කඩවල් near Colombo",
+      "language": "si",
+      "canonical_query": "shopping",
+      "relevant_business_ids": [
+        "0864bfa6-7a0e-4aba-8dcd-c274e62fa443",
+        "3afb50c1-6123-4cab-8175-3da766c37269"
+      ],
+      "categories": [
+        "Shopping & Retail",
+        "Retail & Others"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "කාර්මික සේවා",
+      "language": "si",
+      "canonical_query": "repair",
+      "relevant_business_ids": [
+        "3f90c71e-a0c8-4572-b3ce-f81278f3cc72",
+        "74d40931-3d97-4c20-86f4-75ef91ddbde8"
+      ],
+      "categories": [
+        "Repairing & Services",
+        "Electrical Equipment and Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "කාර්මික සේවා in Jaffna",
+      "language": "si",
+      "canonical_query": "repair",
+      "relevant_business_ids": [
+        "3f90c71e-a0c8-4572-b3ce-f81278f3cc72",
+        "74d40931-3d97-4c20-86f4-75ef91ddbde8"
+      ],
+      "categories": [
+        "Repairing & Services",
+        "Electrical Equipment and Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "කාර්මික සේවා near Colombo",
+      "language": "si",
+      "canonical_query": "repair",
+      "relevant_business_ids": [
+        "3f90c71e-a0c8-4572-b3ce-f81278f3cc72",
+        "74d40931-3d97-4c20-86f4-75ef91ddbde8"
+      ],
+      "categories": [
+        "Repairing & Services",
+        "Electrical Equipment and Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "කැෆේ",
+      "language": "si",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "කැෆේ in Jaffna",
+      "language": "si",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "කැෆේ near Colombo",
+      "language": "si",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "adai kadai",
+      "language": "ta-Latn",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "adai kadai in Jaffna",
+      "language": "ta-Latn",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "adai kadai near Colombo",
+      "language": "ta-Latn",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "car vaadagai",
+      "language": "ta-Latn",
+      "canonical_query": "travel",
+      "relevant_business_ids": [
+        "2871754b-25a3-4aef-b1ab-e7dd2410e6e9",
+        "da9d7b2e-51e0-4ddd-ab86-819bdea6f09b"
+      ],
+      "categories": [
+        "Travel & Tourism",
+        "Travel & Transportation"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "car vaadagai in Jaffna",
+      "language": "ta-Latn",
+      "canonical_query": "travel",
+      "relevant_business_ids": [
+        "2871754b-25a3-4aef-b1ab-e7dd2410e6e9",
+        "da9d7b2e-51e0-4ddd-ab86-819bdea6f09b"
+      ],
+      "categories": [
+        "Travel & Tourism",
+        "Travel & Transportation"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "car vaadagai near Colombo",
+      "language": "ta-Latn",
+      "canonical_query": "travel",
+      "relevant_business_ids": [
+        "2871754b-25a3-4aef-b1ab-e7dd2410e6e9",
+        "da9d7b2e-51e0-4ddd-ab86-819bdea6f09b"
+      ],
+      "categories": [
+        "Travel & Tourism",
+        "Travel & Transportation"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "dress kadai",
+      "language": "ta-Latn",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "dress kadai in Jaffna",
+      "language": "ta-Latn",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "dress kadai near Colombo",
+      "language": "ta-Latn",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "dress kaday",
+      "language": "ta-Latn",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "dress kaday in Jaffna",
+      "language": "ta-Latn",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "dress kaday near Colombo",
+      "language": "ta-Latn",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "hotel sapadu",
+      "language": "ta-Latn",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "hotel sapadu in Jaffna",
+      "language": "ta-Latn",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "hotel sapadu near Colombo",
+      "language": "ta-Latn",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "kadai",
+      "language": "ta-Latn",
+      "canonical_query": "shopping",
+      "relevant_business_ids": [
+        "0864bfa6-7a0e-4aba-8dcd-c274e62fa443",
+        "3afb50c1-6123-4cab-8175-3da766c37269"
+      ],
+      "categories": [
+        "Shopping & Retail",
+        "Retail & Others"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "kadai in Jaffna",
+      "language": "ta-Latn",
+      "canonical_query": "shopping",
+      "relevant_business_ids": [
+        "0864bfa6-7a0e-4aba-8dcd-c274e62fa443",
+        "3afb50c1-6123-4cab-8175-3da766c37269"
+      ],
+      "categories": [
+        "Shopping & Retail",
+        "Retail & Others"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "kadai near Colombo",
+      "language": "ta-Latn",
+      "canonical_query": "shopping",
+      "relevant_business_ids": [
+        "0864bfa6-7a0e-4aba-8dcd-c274e62fa443",
+        "3afb50c1-6123-4cab-8175-3da766c37269"
+      ],
+      "categories": [
+        "Shopping & Retail",
+        "Retail & Others"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "kadaigal",
+      "language": "ta-Latn",
+      "canonical_query": "shopping",
+      "relevant_business_ids": [
+        "0864bfa6-7a0e-4aba-8dcd-c274e62fa443",
+        "3afb50c1-6123-4cab-8175-3da766c37269"
+      ],
+      "categories": [
+        "Shopping & Retail",
+        "Retail & Others"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "kadaigal in Jaffna",
+      "language": "ta-Latn",
+      "canonical_query": "shopping",
+      "relevant_business_ids": [
+        "0864bfa6-7a0e-4aba-8dcd-c274e62fa443",
+        "3afb50c1-6123-4cab-8175-3da766c37269"
+      ],
+      "categories": [
+        "Shopping & Retail",
+        "Retail & Others"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "kadaigal near Colombo",
+      "language": "ta-Latn",
+      "canonical_query": "shopping",
+      "relevant_business_ids": [
+        "0864bfa6-7a0e-4aba-8dcd-c274e62fa443",
+        "3afb50c1-6123-4cab-8175-3da766c37269"
+      ],
+      "categories": [
+        "Shopping & Retail",
+        "Retail & Others"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "kalvi",
+      "language": "ta-Latn",
+      "canonical_query": "education",
+      "relevant_business_ids": [
+        "b81ac74a-7fbc-4a35-a495-66aa8b730a50"
+      ],
+      "categories": [
+        "Educational institutes & Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "kalvi in Jaffna",
+      "language": "ta-Latn",
+      "canonical_query": "education",
+      "relevant_business_ids": [
+        "b81ac74a-7fbc-4a35-a495-66aa8b730a50"
+      ],
+      "categories": [
+        "Educational institutes & Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "kalvi near Colombo",
+      "language": "ta-Latn",
+      "canonical_query": "education",
+      "relevant_business_ids": [
+        "b81ac74a-7fbc-4a35-a495-66aa8b730a50"
+      ],
+      "categories": [
+        "Educational institutes & Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "maligai kadai",
+      "language": "ta-Latn",
+      "canonical_query": "shopping",
+      "relevant_business_ids": [
+        "0864bfa6-7a0e-4aba-8dcd-c274e62fa443",
+        "3afb50c1-6123-4cab-8175-3da766c37269"
+      ],
+      "categories": [
+        "Shopping & Retail",
+        "Retail & Others"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "maligai kadai in Jaffna",
+      "language": "ta-Latn",
+      "canonical_query": "shopping",
+      "relevant_business_ids": [
+        "0864bfa6-7a0e-4aba-8dcd-c274e62fa443",
+        "3afb50c1-6123-4cab-8175-3da766c37269"
+      ],
+      "categories": [
+        "Shopping & Retail",
+        "Retail & Others"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "maligai kadai near Colombo",
+      "language": "ta-Latn",
+      "canonical_query": "shopping",
+      "relevant_business_ids": [
+        "0864bfa6-7a0e-4aba-8dcd-c274e62fa443",
+        "3afb50c1-6123-4cab-8175-3da766c37269"
+      ],
+      "categories": [
+        "Shopping & Retail",
+        "Retail & Others"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "mechanic kadai",
+      "language": "ta-Latn",
+      "canonical_query": "repair",
+      "relevant_business_ids": [
+        "3f90c71e-a0c8-4572-b3ce-f81278f3cc72",
+        "74d40931-3d97-4c20-86f4-75ef91ddbde8"
+      ],
+      "categories": [
+        "Repairing & Services",
+        "Electrical Equipment and Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "mechanic kadai in Jaffna",
+      "language": "ta-Latn",
+      "canonical_query": "repair",
+      "relevant_business_ids": [
+        "3f90c71e-a0c8-4572-b3ce-f81278f3cc72",
+        "74d40931-3d97-4c20-86f4-75ef91ddbde8"
+      ],
+      "categories": [
+        "Repairing & Services",
+        "Electrical Equipment and Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "mechanic kadai near Colombo",
+      "language": "ta-Latn",
+      "canonical_query": "repair",
+      "relevant_business_ids": [
+        "3f90c71e-a0c8-4572-b3ce-f81278f3cc72",
+        "74d40931-3d97-4c20-86f4-75ef91ddbde8"
+      ],
+      "categories": [
+        "Repairing & Services",
+        "Electrical Equipment and Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "padasalai",
+      "language": "ta-Latn",
+      "canonical_query": "education",
+      "relevant_business_ids": [
+        "b81ac74a-7fbc-4a35-a495-66aa8b730a50"
+      ],
+      "categories": [
+        "Educational institutes & Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "padasalai in Jaffna",
+      "language": "ta-Latn",
+      "canonical_query": "education",
+      "relevant_business_ids": [
+        "b81ac74a-7fbc-4a35-a495-66aa8b730a50"
+      ],
+      "categories": [
+        "Educational institutes & Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "padasalai near Colombo",
+      "language": "ta-Latn",
+      "canonical_query": "education",
+      "relevant_business_ids": [
+        "b81ac74a-7fbc-4a35-a495-66aa8b730a50"
+      ],
+      "categories": [
+        "Educational institutes & Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "payana sevai",
+      "language": "ta-Latn",
+      "canonical_query": "travel",
+      "relevant_business_ids": [
+        "2871754b-25a3-4aef-b1ab-e7dd2410e6e9",
+        "da9d7b2e-51e0-4ddd-ab86-819bdea6f09b"
+      ],
+      "categories": [
+        "Travel & Tourism",
+        "Travel & Transportation"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "payana sevai in Jaffna",
+      "language": "ta-Latn",
+      "canonical_query": "travel",
+      "relevant_business_ids": [
+        "2871754b-25a3-4aef-b1ab-e7dd2410e6e9",
+        "da9d7b2e-51e0-4ddd-ab86-819bdea6f09b"
+      ],
+      "categories": [
+        "Travel & Tourism",
+        "Travel & Transportation"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "payana sevai near Colombo",
+      "language": "ta-Latn",
+      "canonical_query": "travel",
+      "relevant_business_ids": [
+        "2871754b-25a3-4aef-b1ab-e7dd2410e6e9",
+        "da9d7b2e-51e0-4ddd-ab86-819bdea6f09b"
+      ],
+      "categories": [
+        "Travel & Tourism",
+        "Travel & Transportation"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "repair kadai",
+      "language": "ta-Latn",
+      "canonical_query": "repair",
+      "relevant_business_ids": [
+        "3f90c71e-a0c8-4572-b3ce-f81278f3cc72",
+        "74d40931-3d97-4c20-86f4-75ef91ddbde8"
+      ],
+      "categories": [
+        "Repairing & Services",
+        "Electrical Equipment and Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "repair kadai in Jaffna",
+      "language": "ta-Latn",
+      "canonical_query": "repair",
+      "relevant_business_ids": [
+        "3f90c71e-a0c8-4572-b3ce-f81278f3cc72",
+        "74d40931-3d97-4c20-86f4-75ef91ddbde8"
+      ],
+      "categories": [
+        "Repairing & Services",
+        "Electrical Equipment and Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "repair kadai near Colombo",
+      "language": "ta-Latn",
+      "canonical_query": "repair",
+      "relevant_business_ids": [
+        "3f90c71e-a0c8-4572-b3ce-f81278f3cc72",
+        "74d40931-3d97-4c20-86f4-75ef91ddbde8"
+      ],
+      "categories": [
+        "Repairing & Services",
+        "Electrical Equipment and Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "repairing kadai",
+      "language": "ta-Latn",
+      "canonical_query": "repair",
+      "relevant_business_ids": [
+        "3f90c71e-a0c8-4572-b3ce-f81278f3cc72",
+        "74d40931-3d97-4c20-86f4-75ef91ddbde8"
+      ],
+      "categories": [
+        "Repairing & Services",
+        "Electrical Equipment and Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "repairing kadai in Jaffna",
+      "language": "ta-Latn",
+      "canonical_query": "repair",
+      "relevant_business_ids": [
+        "3f90c71e-a0c8-4572-b3ce-f81278f3cc72",
+        "74d40931-3d97-4c20-86f4-75ef91ddbde8"
+      ],
+      "categories": [
+        "Repairing & Services",
+        "Electrical Equipment and Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "repairing kadai near Colombo",
+      "language": "ta-Latn",
+      "canonical_query": "repair",
+      "relevant_business_ids": [
+        "3f90c71e-a0c8-4572-b3ce-f81278f3cc72",
+        "74d40931-3d97-4c20-86f4-75ef91ddbde8"
+      ],
+      "categories": [
+        "Repairing & Services",
+        "Electrical Equipment and Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "ripair kadai",
+      "language": "ta-Latn",
+      "canonical_query": "repair",
+      "relevant_business_ids": [
+        "3f90c71e-a0c8-4572-b3ce-f81278f3cc72",
+        "74d40931-3d97-4c20-86f4-75ef91ddbde8"
+      ],
+      "categories": [
+        "Repairing & Services",
+        "Electrical Equipment and Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "ripair kadai in Jaffna",
+      "language": "ta-Latn",
+      "canonical_query": "repair",
+      "relevant_business_ids": [
+        "3f90c71e-a0c8-4572-b3ce-f81278f3cc72",
+        "74d40931-3d97-4c20-86f4-75ef91ddbde8"
+      ],
+      "categories": [
+        "Repairing & Services",
+        "Electrical Equipment and Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "ripair kadai near Colombo",
+      "language": "ta-Latn",
+      "canonical_query": "repair",
+      "relevant_business_ids": [
+        "3f90c71e-a0c8-4572-b3ce-f81278f3cc72",
+        "74d40931-3d97-4c20-86f4-75ef91ddbde8"
+      ],
+      "categories": [
+        "Repairing & Services",
+        "Electrical Equipment and Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "saapadu",
+      "language": "ta-Latn",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "saapadu in Jaffna",
+      "language": "ta-Latn",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "saapadu near Colombo",
+      "language": "ta-Latn",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "adum kade",
+      "language": "si-Latn",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "adum kade in Jaffna",
+      "language": "si-Latn",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "adum kade near Colombo",
+      "language": "si-Latn",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "adum kadey",
+      "language": "si-Latn",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "adum kadey in Jaffna",
+      "language": "si-Latn",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "adum kadey near Colombo",
+      "language": "si-Latn",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "adum shop",
+      "language": "si-Latn",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "adum shop in Jaffna",
+      "language": "si-Latn",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "adum shop near Colombo",
+      "language": "si-Latn",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "adyaapanaya",
+      "language": "si-Latn",
+      "canonical_query": "education",
+      "relevant_business_ids": [
+        "b81ac74a-7fbc-4a35-a495-66aa8b730a50"
+      ],
+      "categories": [
+        "Educational institutes & Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "adyaapanaya in Jaffna",
+      "language": "si-Latn",
+      "canonical_query": "education",
+      "relevant_business_ids": [
+        "b81ac74a-7fbc-4a35-a495-66aa8b730a50"
+      ],
+      "categories": [
+        "Educational institutes & Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "adyaapanaya near Colombo",
+      "language": "si-Latn",
+      "canonical_query": "education",
+      "relevant_business_ids": [
+        "b81ac74a-7fbc-4a35-a495-66aa8b730a50"
+      ],
+      "categories": [
+        "Educational institutes & Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "aharam",
+      "language": "si-Latn",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "aharam in Jaffna",
+      "language": "si-Latn",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "aharam near Colombo",
+      "language": "si-Latn",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "awanhala",
+      "language": "si-Latn",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "awanhala in Jaffna",
+      "language": "si-Latn",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "awanhala near Colombo",
+      "language": "si-Latn",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "badu kade",
+      "language": "si-Latn",
+      "canonical_query": "shopping",
+      "relevant_business_ids": [
+        "0864bfa6-7a0e-4aba-8dcd-c274e62fa443",
+        "3afb50c1-6123-4cab-8175-3da766c37269"
+      ],
+      "categories": [
+        "Shopping & Retail",
+        "Retail & Others"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "badu kade in Jaffna",
+      "language": "si-Latn",
+      "canonical_query": "shopping",
+      "relevant_business_ids": [
+        "0864bfa6-7a0e-4aba-8dcd-c274e62fa443",
+        "3afb50c1-6123-4cab-8175-3da766c37269"
+      ],
+      "categories": [
+        "Shopping & Retail",
+        "Retail & Others"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "badu kade near Colombo",
+      "language": "si-Latn",
+      "canonical_query": "shopping",
+      "relevant_business_ids": [
+        "0864bfa6-7a0e-4aba-8dcd-c274e62fa443",
+        "3afb50c1-6123-4cab-8175-3da766c37269"
+      ],
+      "categories": [
+        "Shopping & Retail",
+        "Retail & Others"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "bath kade",
+      "language": "si-Latn",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "bath kade in Jaffna",
+      "language": "si-Latn",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "bath kade near Colombo",
+      "language": "si-Latn",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "fashion kade",
+      "language": "si-Latn",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "fashion kade in Jaffna",
+      "language": "si-Latn",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "fashion kade near Colombo",
+      "language": "si-Latn",
+      "canonical_query": "clothing",
+      "relevant_business_ids": [
+        "4e2d3047-5e20-444a-a0e0-59e1d26295f7"
+      ],
+      "categories": [
+        "Clothing & Brands"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "gamana",
+      "language": "si-Latn",
+      "canonical_query": "travel",
+      "relevant_business_ids": [
+        "2871754b-25a3-4aef-b1ab-e7dd2410e6e9",
+        "da9d7b2e-51e0-4ddd-ab86-819bdea6f09b"
+      ],
+      "categories": [
+        "Travel & Tourism",
+        "Travel & Transportation"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "gamana in Jaffna",
+      "language": "si-Latn",
+      "canonical_query": "travel",
+      "relevant_business_ids": [
+        "2871754b-25a3-4aef-b1ab-e7dd2410e6e9",
+        "da9d7b2e-51e0-4ddd-ab86-819bdea6f09b"
+      ],
+      "categories": [
+        "Travel & Tourism",
+        "Travel & Transportation"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "gamana near Colombo",
+      "language": "si-Latn",
+      "canonical_query": "travel",
+      "relevant_business_ids": [
+        "2871754b-25a3-4aef-b1ab-e7dd2410e6e9",
+        "da9d7b2e-51e0-4ddd-ab86-819bdea6f09b"
+      ],
+      "categories": [
+        "Travel & Tourism",
+        "Travel & Transportation"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "garage",
+      "language": "si-Latn",
+      "canonical_query": "repair",
+      "relevant_business_ids": [
+        "3f90c71e-a0c8-4572-b3ce-f81278f3cc72",
+        "74d40931-3d97-4c20-86f4-75ef91ddbde8"
+      ],
+      "categories": [
+        "Repairing & Services",
+        "Electrical Equipment and Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "garage in Jaffna",
+      "language": "si-Latn",
+      "canonical_query": "repair",
+      "relevant_business_ids": [
+        "3f90c71e-a0c8-4572-b3ce-f81278f3cc72",
+        "74d40931-3d97-4c20-86f4-75ef91ddbde8"
+      ],
+      "categories": [
+        "Repairing & Services",
+        "Electrical Equipment and Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "garage near Colombo",
+      "language": "si-Latn",
+      "canonical_query": "repair",
+      "relevant_business_ids": [
+        "3f90c71e-a0c8-4572-b3ce-f81278f3cc72",
+        "74d40931-3d97-4c20-86f4-75ef91ddbde8"
+      ],
+      "categories": [
+        "Repairing & Services",
+        "Electrical Equipment and Services"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "kaema",
+      "language": "si-Latn",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "kaema in Jaffna",
+      "language": "si-Latn",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "kaema near Colombo",
+      "language": "si-Latn",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "kema",
+      "language": "si-Latn",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "kema in Jaffna",
+      "language": "si-Latn",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "kema near Colombo",
+      "language": "si-Latn",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "kema kade",
+      "language": "si-Latn",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "kema kade in Jaffna",
+      "language": "si-Latn",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "kema kade near Colombo",
+      "language": "si-Latn",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "kema kadey",
+      "language": "si-Latn",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "kema kadey in Jaffna",
+      "language": "si-Latn",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "kema kadey near Colombo",
+      "language": "si-Latn",
+      "canonical_query": "food",
+      "relevant_business_ids": [
+        "1a127f44-28ff-4bb0-bd3b-ed08f400e9da",
+        "66113318-e3e8-4a5f-b8d1-c02f236dbaf2",
+        "11dc43b7-4718-4928-b987-1ff7f8cf1337"
+      ],
+      "categories": [
+        "Food & Dining"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "kuli ratha",
+      "language": "si-Latn",
+      "canonical_query": "travel",
+      "relevant_business_ids": [
+        "2871754b-25a3-4aef-b1ab-e7dd2410e6e9",
+        "da9d7b2e-51e0-4ddd-ab86-819bdea6f09b"
+      ],
+      "categories": [
+        "Travel & Tourism",
+        "Travel & Transportation"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "kuli ratha in Jaffna",
+      "language": "si-Latn",
+      "canonical_query": "travel",
+      "relevant_business_ids": [
+        "2871754b-25a3-4aef-b1ab-e7dd2410e6e9",
+        "da9d7b2e-51e0-4ddd-ab86-819bdea6f09b"
+      ],
+      "categories": [
+        "Travel & Tourism",
+        "Travel & Transportation"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    },
+    {
+      "query": "kuli ratha near Colombo",
+      "language": "si-Latn",
+      "canonical_query": "travel",
+      "relevant_business_ids": [
+        "2871754b-25a3-4aef-b1ab-e7dd2410e6e9",
+        "da9d7b2e-51e0-4ddd-ab86-819bdea6f09b"
+      ],
+      "categories": [
+        "Travel & Tourism",
+        "Travel & Transportation"
+      ],
+      "judgment_basis": "category-proxy",
+      "review_status": "pending_native_speaker_review"
+    }
+  ],
+  "review_note": "Relevance labels are categories only, not validated business-level intent or true service availability. No claim of model accuracy."
+}
