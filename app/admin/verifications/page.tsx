@@ -27,6 +27,16 @@ import { VerificationWithBusiness } from "@/lib/admin-types";
 import { toast } from "sonner";
 import { approveVerificationAction, rejectVerificationAction } from "@/app/actions/verifications";
 
+// Private verification documents must be viewed through authenticated,
+// short-lived signed URLs. Legacy public URLs are converted to object paths.
+function proofObjectPath(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  if (raw.startsWith('storage://verification-docs/')) return raw.slice('storage://verification-docs/'.length);
+  const match = raw.match(/\/storage\/v1\/object\/(?:public|sign)\/verification-docs\/([^?#]+)/);
+  if (!match) return null;
+  try { return decodeURIComponent(match[1]); } catch { return null; }
+}
+
 // Extend the type to include owner_id which we need for profile updates
 interface ExtendedVerification extends VerificationWithBusiness {
   businesses: {
@@ -78,7 +88,14 @@ export default function VerificationsPage() {
       const { data, error } = await query;
 
       if (error) throw error;
-      setVerifications((data as unknown as ExtendedVerification[]) || []);
+      const rows = ((data as unknown as ExtendedVerification[]) || []);
+      const signedRows = await Promise.all(rows.map(async row => {
+        const path = proofObjectPath(row.br_document_url);
+        if (!path) return { ...row, br_document_url: null };
+        const { data: signed } = await supabase.storage.from('verification-docs').createSignedUrl(path, 900);
+        return { ...row, br_document_url: signed?.signedUrl || null };
+      }));
+      setVerifications(signedRows);
     } catch (error) {
       console.error("Error fetching verifications:", error);
     } finally {
@@ -348,12 +365,19 @@ export default function VerificationsPage() {
                       <td className="px-6 py-4">
                         {v.br_document_url ? (
                           <div className="relative group h-16 w-24 rounded-lg overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center shadow-sm">
-                            <img
-                              src={v.br_document_url}
-                              alt="Verification Document"
-                              className="h-full w-full object-cover group-hover:scale-110 transition-transform cursor-pointer"
-                              onClick={() => setSelectedImage(v.br_document_url || null)}
-                            />
+                            {/\\.pdf(?:\\?|$)/i.test(v.br_document_url) ? (
+                              <button type="button" className="flex h-full w-full flex-col items-center justify-center gap-1 text-[10px] font-bold text-[#30694D]"
+                                onClick={() => setSelectedImage(v.br_document_url || null)} aria-label="Open verified PDF document">
+                                <FileText size={22} /> View PDF
+                              </button>
+                            ) : (
+                              <img
+                                src={v.br_document_url}
+                                alt="Verification document (authenticated, temporary access)"
+                                className="h-full w-full cursor-pointer object-cover transition-transform group-hover:scale-110"
+                                onClick={() => setSelectedImage(v.br_document_url || null)}
+                              />
+                            )}
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity pointer-events-none">
                               <Maximize2 className="text-white" size={16} />
                             </div>
@@ -463,11 +487,11 @@ export default function VerificationsPage() {
               </div>
             </div>
             <div className="aspect-[16/10] relative bg-gray-900 flex items-center justify-center">
-              <img 
-                src={selectedImage} 
-                alt="BR Document Full View" 
-                className="max-w-full max-h-full object-contain"
-              />
+              {/\\.pdf(?:\\?|$)/i.test(selectedImage) ? (
+                <iframe title="Business registration document PDF" src={selectedImage} className="h-[75vh] w-full rounded-lg bg-white" />
+              ) : (
+                <img src={selectedImage} alt="Business verification proof (temporary signed URL)" className="max-h-full max-w-full object-contain" />
+              )}
             </div>
             <div className="p-4 bg-white flex justify-between items-center">
               <p className="text-xs text-gray-400 italic">Click outside or press (X) to close</p>
