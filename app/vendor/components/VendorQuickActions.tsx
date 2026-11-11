@@ -33,6 +33,15 @@ export default function VendorQuickActions({ open, onClose }:{open:boolean;onClo
     return VENDOR_QUICK_ACTIONS.filter(a=>!q||[a.title,a.description,a.group,a.keywords].join(' ').toLowerCase().includes(q));
   },[query]);
 
+  const navigateAction=(href:string)=>{
+    // Query-only transitions within an already mounted Settings route need an
+    // explicit tab event; a URL navigation may reuse the existing component.
+    if(pathname==='/vendor/settings'&&href.startsWith('/vendor/settings?')){
+      const tab=new URLSearchParams(href.split('?')[1]||'').get('tab');
+      if(tab)window.dispatchEvent(new CustomEvent('slbi:settings-tab',{detail:tab}));
+    }
+    onClose();
+  };
   if(!open)return null;
   return (
     <div className="fixed inset-0 z-[100] flex items-start justify-center bg-[#091A15]/75 px-3 pt-[min(12vh,110px)] backdrop-blur-[5px]" role="presentation" onMouseDown={event=>{if(event.target===event.currentTarget)onClose()}}>
@@ -48,7 +57,7 @@ export default function VendorQuickActions({ open, onClose }:{open:boolean;onClo
           <p className="px-2 pb-2 text-[10px] font-bold uppercase tracking-[.15em] text-[#7C9885]">Go straight to the work</p>
           <div className="grid gap-2 sm:grid-cols-2">
             {filtered.map(item=>(
-              <Link key={item.href} href={item.href} onClick={onClose}
+              <Link key={item.href} href={item.href} onClick={()=>navigateAction(item.href)}
                 className="group flex items-start gap-3 rounded-[13px] border border-transparent px-3 py-3 transition hover:border-[#CFE2D5] hover:bg-[#EDF6EF] focus-visible:border-[#679878] focus-visible:outline-none">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#D9E9DE] bg-[#EDF5EF] text-[#2C7550] transition group-hover:bg-white"><IconsaxIcon name={item.icon} size={20}/></div>
                 <div className="min-w-0 flex-1">
