@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import './settings-studio.css';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import { User, ShieldCheck, MapPin, Bell, Save, UploadCloud, Globe, Search,
@@ -278,205 +279,181 @@ export default function SettingsPage() {
   const initials=(profile.full_name||profile.email||'V').trim().split(/\s+/).slice(0,2).map(n=>n[0]?.toUpperCase()||'').join('');
   const submitLabel=verified?'Verified':pending?'Under review':'Submit for review';
   return (
-    <div className="vendor-page-v7 vendor-page-v9 vendor-settings vendor-settings-v5 vendor-settings-v8 vendor-settings-v10 mx-auto w-full max-w-[1600px] min-w-0 space-y-6 pb-9 text-[#252529]">
-      <header className="vendor-owner-heading vendor-settings-header settings-v8-hero relative flex flex-col gap-5 overflow-hidden border border-[#29292E] bg-[#1C1C20] px-6 py-7 sm:px-9 sm:py-9 lg:flex-row lg:items-center lg:justify-between">
-        <div className="min-w-0 max-w-[760px]">
-          <p className="text-[10px] font-bold uppercase tracking-[.15em] text-[#FFB978]">Account & workspace / Settings</p>
-          <h1 className="mt-2 text-[27px] font-semibold tracking-[-.045em] text-white sm:text-[34px]">Workspace settings</h1>
-          <p className="mt-2 text-[12px] leading-6 text-[#C2C2C8]">Control account details, verify businesses and adjust discovery preferences in one place.</p>
+    <div className="slbi-settings" data-testid="vendor-settings-studio">
+      <header className="ss-hero">
+        <div className="ss-hero-main">
+          <div className="ss-hero-overline"><span className="ss-hero-dot"/> SLBI OWNER PORTAL <span className="ss-hero-divider">/</span> ACCOUNT SETTINGS</div>
+          <h1>Workspace settings</h1>
+          <p>Manage your identity, business verification, discoverability and account preferences in one secure workspace.</p>
         </div>
-        <div className="flex shrink-0 flex-wrap gap-2">
-          <Link href="/vendor/my-businesses" className="inline-flex h-10 items-center gap-2 rounded-[6px] border border-[#65656D] bg-[#36363D] px-4 text-[11px] font-semibold text-white hover:bg-[#494950]"><Building2 size={15}/> Manage businesses <ArrowUpRight size={13}/></Link>
-          <button type="button" onClick={()=>void load()} disabled={loading} className="inline-flex h-10 items-center gap-2 rounded-[6px] bg-[#FF7900] px-4 text-[11px] font-semibold text-[#18181B] hover:bg-[#FF922E] disabled:opacity-50"><RefreshCcw size={15}/> Refresh</button>
+        <div className="ss-hero-actions">
+          <Link href="/vendor/my-businesses" className="ss-hero-link"><Building2 size={16}/> My businesses <ArrowUpRight size={14}/></Link>
+          <button type="button" onClick={()=>void load()} disabled={loading} className="ss-hero-refresh"><RefreshCcw size={16} className={loading?'animate-spin':''}/> Refresh</button>
         </div>
       </header>
-      {error&&<div role="alert" className="rounded-xl border border-[#E9D3BE] bg-[#FFF9ED] p-4 text-[12px] text-[#875E38]">{error}<Link href="/login?redirect=/vendor/settings" className="ml-2 underline">Sign in</Link></div>}
-      {loading&&<div role="status" className="vendor-premium-panel flex items-center gap-3 p-5 text-sm text-[#2C2C31]"><Loader2 className="animate-spin" size={18}/> Loading your settings…</div>}
 
-      <div className="grid min-w-0 grid-cols-1 items-start gap-5 lg:grid-cols-[238px_minmax(0,1fr)] lg:gap-7">
-        <div className="vendor-settings-navigation settings-v8-rail min-w-0 overflow-hidden rounded-[10px] border border-[#E9E9ED] bg-white p-2.5 lg:sticky lg:top-5">
-          <p className="px-3 pb-3 pt-4 text-[10px] font-bold uppercase tracking-[.17em] text-[#91919A]">Workspace settings</p>
-          <nav aria-label="Vendor settings sections" className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-1" role="tablist" aria-orientation="vertical">
-            {tabList.map(item=><button type="button" role="tab" id={'tab-'+item.id} aria-selected={activeTab===item.id} aria-controls={'panel-'+item.id} key={item.id} onClick={()=>selectTab(item.id)}
-              className={'flex min-h-12 w-full items-center gap-3 rounded-[7px] px-3 py-3 text-left transition '+(activeTab===item.id?'bg-[#FFF1E7] text-[#222226]':'text-[#6C6C74] hover:bg-[#F5F5F7] hover:text-[#222226]')}>
-              <span className={'flex h-9 w-9 shrink-0 items-center justify-center rounded-[7px] '+(activeTab===item.id?'bg-[#FF7900] text-[#1C1C20]':'bg-[#F2F2F4] text-[#777780]')}><item.icon size={17}/></span>
-              <span className="flex-1"><span className="block text-[12px] font-bold">{item.name}</span><span className="mt-0.5 block text-[10px] opacity-70">{item.detail}</span></span>
+      {error&&<div role="alert" className="ss-alert ss-alert-error">{error} <Link href="/login?redirect=/vendor/settings">Sign in</Link></div>}
+      {loading&&<div role="status" className="ss-loading"><Loader2 size={18} className="animate-spin"/> Loading your workspace preferences…</div>}
+
+      <div className="ss-layout">
+        <aside className="ss-navigation" aria-label="Settings navigation">
+          <div className="ss-nav-heading">WORKSPACE SETTINGS</div>
+          <nav aria-label="Vendor settings sections">
+            {tabList.map(item=><button type="button" key={item.id} aria-current={activeTab===item.id?'page':undefined}
+              onClick={()=>selectTab(item.id)} className={'ss-nav-item '+(activeTab===item.id?'ss-nav-item-active':'')}>
+              <span className="ss-nav-icon"><item.icon size={19}/></span>
+              <span className="ss-nav-copy"><strong>{item.name}</strong><span>{item.detail}</span></span>
+              <ArrowUpRight size={14} className="ss-nav-arrow"/>
             </button>)}
           </nav>
-          <div className="mx-2 mt-3 rounded-[7px] border border-[#E6EBEF] bg-[#F7F9FA] px-4 py-3 text-[11px] leading-[1.6] text-[#71808C]">
-            Need help? <Link href="/vendor/leads" className="font-bold text-[#D95F00] underline underline-offset-2">Your enquiry inbox</Link> remains accessible from the main portal.
+          <div className="ss-nav-foot">
+            <span className="ss-nav-foot-icon"><ShieldCheck size={17}/></span>
+            <p>Account-scoped preferences. Need help? <Link href="/vendor/leads">Open your enquiry inbox</Link>.</p>
           </div>
-        </div>
-        <div className="vendor-settings-panels settings-v8-panels min-w-0 w-full space-y-6">
-          {activeTab==='profile'&&<section role="tabpanel" id="panel-profile" aria-labelledby="tab-profile" className="vendor-setting-section settings-v8-section w-full min-w-0 space-y-6 border border-[#E7E7EC] bg-white p-5 shadow-sm sm:p-7">
-            <div><p className="vendor-kicker">Personal profile</p><h2 className="mt-1 text-[22px] font-extrabold text-[#2C2C31]">Account identity</h2><p className="mt-1 text-[12px] text-[#7C8994]">This information belongs to your account, not to any single business listing.</p></div>
-            <div className="settings-v8-profile-card flex flex-wrap items-center gap-4 rounded-[10px] border border-[#ECECF0] bg-[#F8F8FA] p-5">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[9px] bg-[#242428] text-xl font-extrabold text-white">{initials||'V'}</div>
-              <div><p className="text-[14px] font-bold text-[#29292D]">{profile.full_name||'Complete your profile'}</p><p className="mt-1 text-[11px] text-[#85858E]">{profile.email||'Email is linked to your signed-in account'}</p><span className="mt-2 inline-flex items-center gap-1 rounded-full border border-[#E9D4C1] bg-[#FFF4EA] px-2 py-1 text-[10px] font-semibold text-[#B45408]"><ShieldCheck size={12}/> Account owner</span></div>
+        </aside>
+
+        <main className="ss-main">
+          {activeTab==='profile'&&<section aria-labelledby="ss-profile-heading" className="ss-panel" id="panel-profile">
+            <div className="ss-section-heading">
+              <span className="ss-eyebrow"><User size={15}/> PROFILE & IDENTITY</span>
+              <h2 id="ss-profile-heading">Account profile</h2>
+              <p>Keep the details associated with your vendor account accurate. Listing details are managed separately.</p>
             </div>
-            <div className="settings-v8-form-grid grid grid-cols-1 items-start gap-x-7 gap-y-6 md:grid-cols-2">
-              <div className="min-w-0"><label className={label} htmlFor="vendor-name">Full name</label><input id="vendor-name" className={field} maxLength={100} autoComplete="name" value={profile.full_name} onChange={e=>setProfile(v=>({...v,full_name:e.target.value}))}/></div>
-              <div className="min-w-0"><label className={label} htmlFor="vendor-email">Account email</label><input id="vendor-email" className={field} type="email" disabled value={profile.email}/><p className="mt-1.5 text-[10px] text-[#777780]">Email changes require authentication verification.</p></div>
-              <div className="min-w-0"><label className={label} htmlFor="vendor-phone">Contact phone</label><input id="vendor-phone" className={field} type="tel" maxLength={30} autoComplete="tel" value={profile.phone} onChange={e=>setProfile(v=>({...v,phone:e.target.value}))}/></div>
-              <div className="min-w-0"><label className={label} htmlFor="vendor-job">Role or job title</label><input id="vendor-job" className={field} maxLength={100} value={profile.job_title} onChange={e=>setProfile(v=>({...v,job_title:e.target.value}))} placeholder="Founder, Owner, Manager…"/></div>
+            <div className="ss-profile-identity">
+              <div className="ss-avatar">{initials||'V'}</div>
+              <div><strong>{profile.full_name||'Complete your profile'}</strong><span>{profile.email||'Signed-in email address'}</span></div>
+              <span className="ss-profile-role"><ShieldCheck size={13}/> Account owner</span>
             </div>
-            <div className="vendor-settings-savebar flex flex-wrap items-center justify-between gap-4 border-t border-[#E7EBEF] pt-5"><p className="min-w-0 text-[11px] leading-5 text-[#777780]">Only your profile details will be updated.</p><button type="button" onClick={()=>void saveProfile()} disabled={saving||!userId} className="vendor-primary-button">{saving?<Loader2 size={16} className="animate-spin"/>:<Save size={16}/>} Save profile</button></div>
+            <div className="ss-form-grid">
+              <div className="ss-field"><label htmlFor="vendor-name">Full name</label><input id="vendor-name" type="text" maxLength={100} autoComplete="name" value={profile.full_name} onChange={e=>setProfile(v=>({...v,full_name:e.target.value}))}/></div>
+              <div className="ss-field"><label htmlFor="vendor-email">Account email</label><input id="vendor-email" type="email" disabled value={profile.email}/><p className="ss-field-hint">Changing your email requires authentication verification.</p></div>
+              <div className="ss-field"><label htmlFor="vendor-phone">Contact phone</label><input id="vendor-phone" type="tel" maxLength={30} autoComplete="tel" value={profile.phone} onChange={e=>setProfile(v=>({...v,phone:e.target.value}))}/></div>
+              <div className="ss-field"><label htmlFor="vendor-job">Role or job title</label><input id="vendor-job" type="text" maxLength={100} value={profile.job_title} onChange={e=>setProfile(v=>({...v,job_title:e.target.value}))} placeholder="Founder, Owner, Manager…"/></div>
+            </div>
+            <div className="ss-action-bar"><p>Changes here affect your account profile only.</p><button type="button" className="ss-save-button" disabled={saving||!userId} onClick={()=>void saveProfile()}>{saving?<Loader2 size={17} className="animate-spin"/>:<Save size={17}/>} Save profile</button></div>
           </section>}
 
-          {activeTab==='verification'&&<section role="tabpanel" id="panel-verification" aria-labelledby="tab-verification" className="vendor-setting-section settings-v8-section space-y-5">
-            <div><p className="vendor-kicker">Trust & verification</p><h2 className="mt-1 text-[22px] font-extrabold">Verification center</h2><p className="mt-1 text-[12px] leading-5 text-[#7B8792]">Submit official registration information for administrator review. Submission alone never grants a verified badge.</p></div>
-            <div className="settings-v8-context-card rounded-[9px] border border-[#E8E8ED] bg-[#F8F8FA] p-5">
-              <label className={label} htmlFor="verification-business">Business under review</label>
-              <select id="verification-business" className={field} value={selectedBusinessId} onChange={e=>setSelectedBusinessId(e.target.value)} disabled={!businesses.length}>
-                {businesses.length===0?<option value="">No businesses registered</option>:businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}
-              </select>
-              <span className={'mt-3 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold '+statusColor(verificationState)}><FileCheck2 size={13}/>{statusLabel(verificationState)}</span>
-              {verification?.created_at&&<p className="mt-2 text-[11px] text-[#777780]">Last request: {new Date(verification.created_at).toLocaleDateString('en-LK')}</p>}
+          {activeTab==='verification'&&<section aria-labelledby="ss-verification-heading" className="ss-panel" id="panel-verification">
+            <div className="ss-section-heading">
+              <span className="ss-eyebrow"><ShieldCheck size={15}/> BUSINESS TRUST</span>
+              <h2 id="ss-verification-heading">Business verification</h2>
+              <p>Submit registration details for manual review. Submission does not automatically grant a verified status.</p>
             </div>
-            {pending&&<p className="rounded-xl border border-[#EEE0B9] bg-[#FFF9E8] p-4 text-[12px] font-medium text-[#917038]">Your verification request is under manual review. New submissions are paused until this request is resolved.</p>}
-            {verified&&<p className="rounded-xl border border-[#CAE8D2] bg-[#F0FAF1] p-4 text-[12px] font-medium text-[#2C2C31]"><CheckCircle2 size={17} className="mr-2 inline"/>This business has a verified status.</p>}
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div><label className={label} htmlFor="business-type">Registration type</label><select id="business-type" className={field} value={businessType} onChange={e=>setBusinessType(e.target.value as typeof businessType)} disabled={pending||verified}><option value="pvt_ltd">Private limited (PVT)</option><option value="local_business">Registered sole proprietorship</option></select></div>
-              <div><label className={label} htmlFor="br-number">Business registration number</label><input id="br-number" className={field} maxLength={64} value={brNumber} onChange={e=>setBrNumber(e.target.value)} disabled={pending||verified} placeholder={businessType==='pvt_ltd'?'PV00212345':'123/2024/ABC'}/></div>
-              <div><label className={label} htmlFor="tin-number">TIN (optional)</label><input id="tin-number" className={field} maxLength={64} value={tinNumber} onChange={e=>setTinNumber(e.target.value)} disabled={pending||verified}/></div>
-              <div><label className={label} htmlFor="svat-number">SVAT (optional)</label><input id="svat-number" className={field} maxLength={64} value={svatNumber} onChange={e=>setSvatNumber(e.target.value)} disabled={pending||verified}/></div>
-            </div>
-            <div className="settings-v8-upload rounded-[9px] border border-dashed border-[#F3C59F] bg-[#FFFAF6] p-5">
-              <div className="flex items-center gap-3"><span className="rounded-[8px] bg-[#FFF0E2] p-3 text-[#C45B00]"><UploadCloud size={22}/></span><div><p className="text-[12px] font-bold text-[#25252B]">Registration document</p><p className="mt-1 text-[11px] text-[#777780]">JPG, PNG or PDF · 10 MB maximum · private access after security migration</p></div></div>
-              <input type="file" aria-label="Select registration document" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" disabled={pending||verified||!privateDocsReady||!selectedBusinessId} className="mt-4 block w-full rounded-xl border border-[#E7E7EC] bg-white p-3 text-[12px] text-[#2C2C31] file:mr-3 file:rounded-lg file:border-0 file:bg-[#EFF3F6] file:px-3 file:py-2 file:font-bold file:text-[#A94D00]" onChange={e=>setVerificationFile(e.target.files?.[0]||null)}/>
-              {verificationFile&&<p className="mt-2 text-[11px] font-semibold text-[#2C2C31]">Selected: {verificationFile.name}</p>}
-              {documentPreview&&<a href={documentPreview} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-2 text-[11px] font-bold text-[#2C2C31] underline">View submitted document <ArrowUpRight size={13}/></a>}
-              {!privateDocsReady&&<p role="status" className="mt-3 rounded-lg border border-[#EADDB8] bg-[#FFF9E8] p-3 text-[11px] leading-5 text-[#906F2E]">Secure document storage upgrade is pending. New uploads are disabled to protect sensitive IDs and registration documents. Your existing requests remain visible to administrators.</p>}
-            </div>
-            <div className="vendor-settings-savebar flex flex-wrap justify-end gap-3 border-t border-[#E7EBEF] pt-5"><button type="button" className="vendor-primary-button" disabled={saving||!selectedBusinessId||pending||verified||!privateDocsReady||!verificationFile} onClick={()=>void submitVerification()}>{saving?<Loader2 size={16} className="animate-spin"/>:<ShieldCheck size={16}/>} {submitLabel}</button></div>
-          </section>}
-
-          {activeTab==='optimization'&&<section role="tabpanel" id="panel-optimization" aria-labelledby="tab-optimization" className="settings-v10-opt">
-            <div className="settings-v10-intro">
-              <div className="settings-v10-intro-copy">
-                <div className="settings-v10-eyebrow"><Globe size={14}/> LOCAL DISCOVERY SETTINGS</div>
-                <h2>Reach & discoverability</h2>
-                <p>Fine-tune where you serve and how you describe your business. Changes are saved to your selected listing.</p>
-              </div>
-              <div className="settings-v10-business-picker">
-                <label htmlFor="seo-business">Editing business</label>
-                <select id="seo-business" className={field} value={selectedBusinessId} disabled={!businesses.length} onChange={e=>setSelectedBusinessId(e.target.value)}>
+            <div className="ss-selection-card">
+              <div className="ss-field"><label htmlFor="verification-business">Business to verify</label>
+                <select id="verification-business" value={selectedBusinessId} onChange={e=>setSelectedBusinessId(e.target.value)} disabled={!businesses.length}>
                   {businesses.length===0?<option value="">No businesses registered</option>:businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}
                 </select>
               </div>
+              <span className={'ss-status-pill '+(verified?'ss-status-success':pending?'ss-status-pending':'ss-status-default')}><FileCheck2 size={15}/>{statusLabel(verificationState)}</span>
+              {verification?.created_at&&<p className="ss-field-hint">Last request: {new Date(verification.created_at).toLocaleDateString('en-LK')}</p>}
+            </div>
+            {pending&&<div className="ss-alert ss-alert-warning">A request is under review. New submissions are paused until it is resolved.</div>}
+            {verified&&<div className="ss-alert ss-alert-success"><CheckCircle2 size={17}/> This business has a verified status.</div>}
+            <div className="ss-form-grid ss-spacing-top">
+              <div className="ss-field"><label htmlFor="business-type">Registration type</label><select id="business-type" value={businessType} onChange={e=>setBusinessType(e.target.value as typeof businessType)} disabled={pending||verified}><option value="pvt_ltd">Private limited (PVT)</option><option value="local_business">Registered sole proprietorship</option></select></div>
+              <div className="ss-field"><label htmlFor="br-number">Business registration number</label><input id="br-number" type="text" maxLength={64} value={brNumber} onChange={e=>setBrNumber(e.target.value)} disabled={pending||verified} placeholder={businessType==='pvt_ltd'?'PV00212345':'123/2024/ABC'}/></div>
+              <div className="ss-field"><label htmlFor="tin-number">TIN (optional)</label><input id="tin-number" type="text" maxLength={64} value={tinNumber} onChange={e=>setTinNumber(e.target.value)} disabled={pending||verified}/></div>
+              <div className="ss-field"><label htmlFor="svat-number">SVAT (optional)</label><input id="svat-number" type="text" maxLength={64} value={svatNumber} onChange={e=>setSvatNumber(e.target.value)} disabled={pending||verified}/></div>
+            </div>
+            <div className="ss-document-card">
+              <span className="ss-section-icon"><UploadCloud size={21}/></span>
+              <div className="ss-document-content">
+                <h3>Registration document</h3>
+                <p>JPG, PNG or PDF · Maximum 10 MB · Private storage access required</p>
+                <input type="file" aria-label="Select registration document" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
+                  disabled={pending||verified||!privateDocsReady||!selectedBusinessId} onChange={e=>setVerificationFile(e.target.files?.[0]||null)}/>
+                {verificationFile&&<p className="ss-field-hint">Selected: {verificationFile.name}</p>}
+                {documentPreview&&<a href={documentPreview} target="_blank" rel="noreferrer" className="ss-document-link">View submitted document <ArrowUpRight size={14}/></a>}
+                {!privateDocsReady&&<div role="status" className="ss-alert ss-alert-warning">Secure document uploads are disabled until private storage migration is approved. Existing requests remain visible.</div>}
+              </div>
+            </div>
+            <div className="ss-action-bar"><p>Official registration documents are reviewed by the SLBI team.</p><button type="button" className="ss-save-button" disabled={saving||!selectedBusinessId||pending||verified||!privateDocsReady||!verificationFile} onClick={()=>void submitVerification()}>{saving?<Loader2 size={17} className="animate-spin"/>:<ShieldCheck size={17}/>} {submitLabel}</button></div>
+          </section>}
+
+          {activeTab==='optimization'&&<section aria-labelledby="ss-optimization-heading" className="ss-panel ss-optimization" id="panel-optimization">
+            <div className="ss-section-heading">
+              <span className="ss-eyebrow"><Globe size={15}/> BUSINESS DISCOVERABILITY</span>
+              <h2 id="ss-optimization-heading">Local reach & SEO</h2>
+              <p>Manage your service area and search terms without changing your business profile or guaranteeing rankings.</p>
+            </div>
+            <div className="ss-selection-card ss-selection-inline">
+              <div className="ss-field"><label htmlFor="seo-business">Editing business</label>
+                <select id="seo-business" value={selectedBusinessId} disabled={!businesses.length} onChange={e=>setSelectedBusinessId(e.target.value)}>{businesses.length===0?<option value="">No businesses registered</option>:businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select>
+              </div>
+              <span className="ss-selection-meta"><MapPin size={15}/> Changes are saved per business</span>
             </div>
 
-            <div className="settings-v10-content">
-              <div className="settings-v10-main-column">
-                <article className="settings-v10-raised settings-v10-radius-card">
-                  <div className="settings-v10-card-heading">
-                    <span className="settings-v10-icon"><MapPin size={20}/></span>
-                    <div className="settings-v10-heading-copy">
-                      <p className="settings-v10-eyebrow">01 / SERVICE AREA</p>
-                      <h3>Service radius</h3>
-                      <p>Choose how far your business can provide its services.</p>
-                    </div>
-                    <div className="settings-v10-radius-value"><strong>{radius}</strong><span>km</span></div>
-                  </div>
-                  <div className="settings-v10-slider-well">
-                    <input type="range" min={1} max={50} step={1} value={radius} onChange={e=>setRadius(Number(e.target.value))} disabled={!selectedBusinessId} aria-label="Business service radius"/>
-                    <div className="settings-v10-slider-labels"><span>1 km · Nearby</span><span>50 km · Wider area</span></div>
-                  </div>
-                  <div className="settings-v10-info">
-                    <MapPin size={17}/>
-                    <p>Your saved radius is a business preference. Search visibility still depends on verified locations, query relevance and selected filters.</p>
-                  </div>
-                </article>
-
-                <article className="settings-v10-raised settings-v10-keyword-card">
-                  <div className="settings-v10-card-heading">
-                    <span className="settings-v10-icon"><Search size={20}/></span>
-                    <div className="settings-v10-heading-copy">
-                      <p className="settings-v10-eyebrow">02 / SEARCH DISCOVERY</p>
-                      <h3>Search keywords</h3>
-                      <p>Add up to 10 relevant terms, with a maximum of 50 characters each.</p>
-                    </div>
-                    <span className="settings-v10-count">{keywords.length}/10</span>
-                  </div>
-                  <div className="settings-v10-keyword-entry">
-                    <label htmlFor="vendor-seo-keyword">Add a search term</label>
-                    <div className="settings-v10-keyword-row">
-                      <input id="vendor-seo-keyword" className={field+' settings-v10-keyword-input'} maxLength={50} value={newKeyword}
-                        onChange={e=>setNewKeyword(e.target.value)}
-                        onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addKeyword()}}}
-                        placeholder="e.g. plumbing, laptop repair, web design"/>
-                      <button type="button" onClick={addKeyword} disabled={!newKeyword.trim()||keywords.length>=10}
-                        aria-label="Add keyword" className="settings-v10-add-button"><Plus size={17}/> Add</button>
-                    </div>
-                  </div>
-                  <div className="settings-v10-keyword-well">
-                    <div className="settings-v10-keywords-head"><span>Selected keywords</span><span>{keywords.length} of 10</span></div>
-                    <div className="settings-v10-keyword-chips">
-                      {keywords.map(k=><span key={k} className="settings-v10-chip">
-                        <span>{k}</span>
-                        <button type="button" onClick={()=>setKeywords(prev=>prev.filter(t=>t!==k))} aria-label={'Remove '+k} title={'Remove '+k}><X size={13}/></button>
-                      </span>)}
-                      {keywords.length===0&&<p className="settings-v10-empty">No keywords yet. Add terms that accurately describe your services.</p>}
-                    </div>
-                  </div>
-                </article>
-              </div>
-
-              <aside className="settings-v10-side-column" aria-label="Discovery guidance and save actions">
-                <div className="settings-v10-raised settings-v10-guidance">
-                  <p className="settings-v10-eyebrow">OPTIMIZATION GUIDE</p>
-                  <h3>Keep it relevant.</h3>
-                  <p>Clear business details are more useful than a long list of generic keywords.</p>
-                  <div className="settings-v10-tip"><span>01</span><p>Choose the radius your team can genuinely cover.</p></div>
-                  <div className="settings-v10-tip"><span>02</span><p>Use specific services and local terminology.</p></div>
-                  <div className="settings-v10-tip"><span>03</span><p>A keyword does not guarantee a search ranking.</p></div>
+            <div className="ss-discovery-grid">
+              <article className="ss-subcard ss-radius-card">
+                <div className="ss-card-title"><span className="ss-section-icon"><MapPin size={19}/></span><div><span>01 / SERVICE AREA</span><h3>Service radius</h3></div></div>
+                <p className="ss-card-description">Set the distance your business can genuinely serve.</p>
+                <div className="ss-radius-readout"><strong>{radius}</strong><span>kilometres</span></div>
+                <div className="ss-recessed ss-slider-container">
+                  <input type="range" aria-label="Business service radius" min={1} max={50} step={1} value={radius} onChange={e=>setRadius(Number(e.target.value))} disabled={!selectedBusinessId}/>
+                  <div className="ss-slider-labels"><span>1 km</span><span>50 km</span></div>
                 </div>
-                <div className="settings-v10-save-card">
-                  <div className="settings-v10-save-icon"><Save size={20}/></div>
-                  <h3>Save discovery settings</h3>
-                  <p>Apply the service radius and keyword list to your selected business.</p>
-                  <button type="button" onClick={()=>void saveOptimization()} disabled={saving||!selectedBusinessId} className="settings-v10-save-button">
-                    {saving?<Loader2 size={17} className="animate-spin"/>:<Save size={17}/>}
-                    {saving?'Saving changes…':'Save changes'}
-                    {!saving&&<ArrowUpRight size={17}/>}
-                  </button>
-                  <span className="settings-v10-save-note">Your changes are stored only after you save.</span>
+                <p className="ss-card-note">Search ranking also depends on location accuracy, relevance and user filters.</p>
+              </article>
+              <article className="ss-subcard ss-keywords-card">
+                <div className="ss-card-title"><span className="ss-section-icon"><Search size={19}/></span><div><span>02 / SEARCH DISCOVERY</span><h3>Search keywords</h3></div><span className="ss-keyword-count">{keywords.length}/10</span></div>
+                <p className="ss-card-description">Use specific services and terms customers actually search for.</p>
+                <div className="ss-field ss-keyword-field"><label htmlFor="vendor-seo-keyword">Add a keyword</label>
+                  <div className="ss-keyword-row">
+                    <input id="vendor-seo-keyword" type="text" maxLength={50} value={newKeyword} onChange={e=>setNewKeyword(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addKeyword()}}} placeholder="e.g. laptop repair"/>
+                    <button type="button" className="ss-add-button" disabled={!newKeyword.trim()||keywords.length>=10} aria-label="Add keyword" onClick={addKeyword}><Plus size={16}/> Add</button>
+                  </div>
                 </div>
-              </aside>
+                <div className="ss-keyword-tray">
+                  <div className="ss-tray-label"><span>Current keywords</span><span>{keywords.length} of 10</span></div>
+                  <div className="ss-keyword-list">{keywords.map(k=><span key={k} className="ss-chip"><span>{k}</span><button type="button" onClick={()=>setKeywords(prev=>prev.filter(t=>t!==k))} aria-label={'Remove '+k}><X size={13}/></button></span>)}{keywords.length===0&&<span className="ss-empty">No keywords yet.</span>}</div>
+                </div>
+              </article>
+            </div>
+            <div className="ss-action-bar ss-optimization-actions">
+              <p><ShieldCheck size={17}/> Changes are saved only to your selected business. No ranking is guaranteed.</p>
+              <button type="button" className="ss-save-button" disabled={saving||!selectedBusinessId} onClick={()=>void saveOptimization()}>{saving?<Loader2 size={17} className="animate-spin"/>:<Save size={17}/>} {saving?'Saving…':'Save discovery settings'}</button>
             </div>
           </section>}
 
-          {activeTab==='notifications'&&<section role="tabpanel" id="panel-notifications" aria-labelledby="tab-notifications" className="vendor-setting-section settings-v8-section space-y-5">
-            <div><p className="vendor-kicker">Communication preferences</p><h2 className="mt-1 text-[22px] font-extrabold">Notification preferences</h2><p className="mt-2 text-[12px] leading-6 text-[#7B8994]">Save the kinds of optional business updates you want. Essential security and verification notices remain available.</p></div>
-            {!prefsAvailable&&<p role="status" className="rounded-xl border border-[#EADDB9] bg-[#FFF9E9] p-4 text-[11px] text-[#947135]">Preferences storage is not yet configured. Switches cannot be saved until the reviewed database migration is applied.</p>}
-            <div className="settings-v8-preference-list divide-y divide-[#ECECF0] rounded-[9px] border border-[#E9E9ED] bg-[#FBFBFC]">
+          {activeTab==='notifications'&&<section aria-labelledby="ss-notifications-heading" className="ss-panel" id="panel-notifications">
+            <div className="ss-section-heading">
+              <span className="ss-eyebrow"><Bell size={15}/> COMMUNICATION</span>
+              <h2 id="ss-notifications-heading">Notification preferences</h2>
+              <p>Choose the optional business updates you wish to receive. Essential security and verification notices are separate.</p>
+            </div>
+            {!prefsAvailable&&<div role="status" className="ss-alert ss-alert-warning">Preferences storage is not yet configured. Saving is disabled until the reviewed migration is applied.</div>}
+            <div className="ss-preference-list">
               {([
-                {key:'reviews',title:'New reviews',text:'Optional updates when customers leave reviews.',icon:User},
-                {key:'leads',title:'New enquiries',text:'Optional notifications for enquiries on owned listings.',icon:Mail},
-                {key:'weekly_digest',title:'Weekly summary',text:'Periodic business activity digest, if delivery is enabled.',icon:Globe},
-                {key:'marketing_tips',title:'Growth tips',text:'Optional educational marketing updates.',icon:Bell},
-              ] as const).map(item=><label key={item.key} className="flex cursor-pointer items-center gap-3 p-4 sm:p-5">
-                <span className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-[7px] bg-[#FFF0E2] text-[#C75D06] sm:flex"><item.icon size={18}/></span>
-                <span className="min-w-0 flex-1"><span className="block text-[12px] font-bold text-[#24242A]">{item.title}</span><span className="mt-1 block text-[11px] leading-5 text-[#82828B]">{item.text}</span></span>
-                <input type="checkbox" checked={prefs[item.key]} disabled={!prefsAvailable} onChange={e=>setPrefs(v=>({...v,[item.key]:e.target.checked}))} className="h-5 w-5 shrink-0 accent-[#FF7900]" aria-label={item.title}/>
+                {key:'reviews',title:'New reviews',text:'Optional updates when customers review your businesses.',icon:User},
+                {key:'leads',title:'New enquiries',text:'Enquiry notifications on your owned listings.',icon:Mail},
+                {key:'weekly_digest',title:'Weekly summary',text:'Periodic recap when delivery is enabled.',icon:Globe},
+                {key:'marketing_tips',title:'Growth tips',text:'Optional marketing and educational updates.',icon:Bell},
+              ] as const).map(item=><label key={item.key} className="ss-preference-row">
+                <span className="ss-section-icon"><item.icon size={19}/></span>
+                <span className="ss-preference-copy"><strong>{item.title}</strong><span>{item.text}</span></span>
+                <input type="checkbox" checked={prefs[item.key]} disabled={!prefsAvailable} onChange={e=>setPrefs(v=>({...v,[item.key]:e.target.checked}))} aria-label={item.title}/>
               </label>)}
             </div>
-            <p className="text-[11px] leading-5 text-[#777780]">Preferences are stored with your vendor account. Delivery of future emails/push messages is subject to the messaging service and explicit opt-in; saving a setting does not guarantee delivery.</p>
-            <div className="flex justify-end border-t border-[#E7E7EC] pt-5"><button type="button" className="vendor-primary-button" onClick={()=>void savePreferences()} disabled={saving||!prefsAvailable||!userId}><Save size={16}/> Save preferences</button></div>
+            <div className="ss-action-bar"><p>Saving a preference does not guarantee email or push delivery.</p><button type="button" className="ss-save-button" disabled={saving||!prefsAvailable||!userId} onClick={()=>void savePreferences()}>{saving?<Loader2 size={17} className="animate-spin"/>:<Save size={17}/>} Save preferences</button></div>
           </section>}
 
-          {activeTab==='security'&&<section role="tabpanel" id="panel-security" aria-labelledby="tab-security" className="vendor-setting-section settings-v8-section space-y-6">
-            <div><p className="vendor-kicker">Owner security</p><h2 className="mt-1 text-[22px] font-extrabold">Protect your account</h2><p className="mt-2 text-[12px] leading-6 text-[#7B8792]">Update your password. Other signed-in devices may retain a session until revoked; review your account security if access is unexpected.</p></div>
-            <div className="settings-v8-context-card rounded-[9px] border border-[#E6E6EB] bg-[#F8F8FA] p-4 text-[12px] text-[#66666F]"><LockKeyhole className="mr-2 inline" size={18}/> Password changes are handled through Supabase Auth, not stored in vendor business tables.</div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div><label className={label} htmlFor="vendor-password">New password</label><div className="relative"><input id="vendor-password" className={field+' pr-12'} type={showPassword?'text':'password'} autoComplete="new-password" maxLength={128} value={newPassword} onChange={e=>setNewPassword(e.target.value)} placeholder="12 characters or more"/><button type="button" aria-label={showPassword?'Hide password':'Show password'} onClick={()=>setShowPassword(v=>!v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5C5C64] hover:text-[#C85B00]">{showPassword?<EyeOff size={17}/>:<Eye size={17}/>}</button></div></div>
-              <div><label className={label} htmlFor="vendor-confirm">Confirm new password</label><input id="vendor-confirm" className={field} type={showPassword?'text':'password'} autoComplete="new-password" maxLength={128} value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)}/></div>
+          {activeTab==='security'&&<section aria-labelledby="ss-security-heading" className="ss-panel" id="panel-security">
+            <div className="ss-section-heading">
+              <span className="ss-eyebrow"><LockKeyhole size={15}/> ACCOUNT PROTECTION</span>
+              <h2 id="ss-security-heading">Password & security</h2>
+              <p>Set a strong password for your vendor account. Existing sessions on other devices may remain active until revoked.</p>
             </div>
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#E7E7EC] pt-5"><Link href="/vendor/billing" className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#C85B00] hover:underline">Manage billing security <ArrowUpRight size={13}/></Link><button type="button" className="vendor-primary-button" onClick={()=>void changePassword()} disabled={saving||!userId||newPassword.length<12||newPassword!==confirmPassword}><LockKeyhole size={15}/> Update password</button></div>
+            <div className="ss-security-note"><ShieldCheck size={20}/><div><strong>Protected by Supabase Auth</strong><p>Password updates are handled by the authentication provider, not stored in business tables.</p></div></div>
+            <div className="ss-form-grid">
+              <div className="ss-field"><label htmlFor="vendor-password">New password</label><div className="ss-password-wrap"><input id="vendor-password" type={showPassword?'text':'password'} autoComplete="new-password" maxLength={128} value={newPassword} onChange={e=>setNewPassword(e.target.value)} placeholder="12 characters or more"/><button type="button" aria-label={showPassword?'Hide password':'Show password'} onClick={()=>setShowPassword(v=>!v)}>{showPassword?<EyeOff size={18}/>:<Eye size={18}/>}</button></div></div>
+              <div className="ss-field"><label htmlFor="vendor-confirm">Confirm new password</label><input id="vendor-confirm" type={showPassword?'text':'password'} autoComplete="new-password" maxLength={128} value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)}/></div>
+            </div>
+            <div className="ss-action-bar"><Link href="/vendor/billing" className="ss-inline-link">Manage billing security <ArrowUpRight size={15}/></Link><button type="button" className="ss-save-button" disabled={saving||!userId||newPassword.length<12||newPassword!==confirmPassword} onClick={()=>void changePassword()}>{saving?<Loader2 size={17} className="animate-spin"/>:<LockKeyhole size={17}/>} Update password</button></div>
           </section>}
-        </div>
+        </main>
       </div>
-      <p className="pb-4 text-center text-[10px] text-[#888890]">SL Business Index · Owner Growth Portal · Changes are validated and restricted to your account and owned businesses.</p>
+      <p className="ss-footer">SL Business Index · Owner Growth Portal · Changes are restricted to your account and owned businesses.</p>
     </div>
   );
 }
