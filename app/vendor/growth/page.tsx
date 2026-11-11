@@ -22,7 +22,7 @@ type LedgerEntry = {
 };
 
 const panel = 'vendor-premium-card';
-const button = 'inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-[#e1e6eb] bg-white px-3 text-xs font-semibold text-slate-600 transition hover:border-[#baccc4] hover:bg-[#f7faf8] disabled:cursor-not-allowed disabled:opacity-50';
+const button = 'inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-[#e1e6eb] bg-white px-3 text-xs font-semibold text-slate-600 transition hover:border-[#E6A67D] hover:bg-[#FFF8F2] disabled:cursor-not-allowed disabled:opacity-50';
 const format = (n: number) => new Intl.NumberFormat('en-LK').format(n);
 const plannedTools = [
   { title: 'Domain SEO Studio', icon: 'global', description: 'Domain verification, website audits and keyword tracking.', cost: '10 credits / audit', label: 'SEO & discovery' },
@@ -80,15 +80,15 @@ export default function VendorGrowthCenterPage() {
     : '—';
 
   return (
-    <div className="mx-auto min-h-full max-w-[1500px] pb-6 text-[#283F30]">
+    <div className="vendor-page-v7 mx-auto min-h-full w-full max-w-[1600px] pb-7 text-[#28282D]">
       <div className="space-y-5">
-        <header className="vendor-premium-card flex flex-col gap-5 border-t-4 border-t-[#2D6749] px-5 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-6">
+        <header className="vendor-owner-heading vendor-premium-card flex flex-col gap-5 border border-[#E9E9EC] px-5 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-6">
           <div className="space-y-1.5">
             <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
               <IconsaxIcon name="category" size={15} /> Vendor workspace
               <IconsaxIcon name="arrow-right-2" size={12} /> Growth OS
             </div>
-            <h1 className="text-[24px] font-bold tracking-tight text-[#172d26]">Growth OS</h1>
+            <h1 className="text-[24px] font-bold tracking-tight text-[#1B1B1F]">Growth OS</h1>
             <p className="text-[12px] text-slate-500">Manage growth credits, monitor usage and discover upcoming marketing tools.</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -101,7 +101,7 @@ export default function VendorGrowthCenterPage() {
             <button type="button" onClick={() => void reload()} disabled={loading} className={button}>
               <IconsaxIcon name="refresh" size={15} /> Refresh
             </button>
-            <Link href="/vendor/billing" className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-[#1c4d3b] px-3.5 text-xs font-bold text-white transition hover:bg-[#2d664f]">
+            <Link href="/vendor/billing" className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-[#202024] px-3.5 text-xs font-bold text-white transition hover:bg-[#39393E]">
               <IconsaxIcon name="card" size={16} color="#ffffff" /> Billing plans
             </Link>
           </div>
@@ -115,7 +115,7 @@ export default function VendorGrowthCenterPage() {
         )}
 
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-[13px] font-bold text-[#1d3f31]">Credit overview</h2>
+          <h2 className="text-[13px] font-bold text-[#2C2C32]">Credit overview</h2>
           <span className="rounded-md border border-[#e9edf0] bg-white px-2 py-1 text-[10px] font-semibold text-slate-500">Current billing period</span>
         </div>
 
@@ -132,7 +132,7 @@ export default function VendorGrowthCenterPage() {
                   <IconsaxIcon name={item.icon} size={18} />
                 </span>
               </div>
-              <p className="mt-1.5 text-[26px] font-bold tabular-nums tracking-[-0.04em] text-[#182b25]">
+              <p className="mt-1.5 text-[26px] font-bold tabular-nums tracking-[-0.04em] text-[#1D1D20]">
                 {loading || !wallet ? '—' : format(item.value)}
               </p>
               <p className="mt-2 text-[10px] leading-4 text-slate-400">{item.detail}</p>
@@ -145,7 +145,7 @@ export default function VendorGrowthCenterPage() {
                 <IconsaxIcon name="calendar" size={18} />
               </span>
             </div>
-            <p className="mt-2 text-[20px] font-bold tracking-tight text-[#182b25]">{loading ? '—' : resetDate}</p>
+            <p className="mt-2 text-[20px] font-bold tracking-tight text-[#1D1D20]">{loading ? '—' : resetDate}</p>
             <p className="mt-3 text-[10px] text-slate-400">Plan-defined credit renewal</p>
           </div>
         </section>
@@ -154,7 +154,7 @@ export default function VendorGrowthCenterPage() {
           <section className={panel + ' min-w-0 overflow-hidden'}>
             <div className="flex items-center justify-between border-b border-[#eef0f2] px-5 py-4">
               <div>
-                <h2 className="text-[13px] font-bold text-[#23372e]">Credit utilization</h2>
+                <h2 className="text-[13px] font-bold text-[#313137]">Credit utilization</h2>
                 <p className="mt-1 text-[11px] text-slate-400">Live wallet figures, not forecasted usage</p>
               </div>
               <IconsaxIcon name="chart" size={19} color="#3f7860" />
@@ -184,7 +184,7 @@ export default function VendorGrowthCenterPage() {
           </section>
           <section className={panel + ' min-w-0 overflow-hidden'}>
             <div className="border-b border-[#eef0f2] px-5 py-4">
-              <h2 className="text-[13px] font-bold text-[#23372e]">Billing protection</h2>
+              <h2 className="text-[13px] font-bold text-[#313137]">Billing protection</h2>
               <p className="mt-1 text-[11px] text-slate-400">Verified credits and account entitlements</p>
             </div>
             <div className="px-5 py-5">
@@ -203,7 +203,7 @@ export default function VendorGrowthCenterPage() {
         <section>
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <div>
-              <h2 className="text-[13px] font-bold text-[#1d3f31]">Growth tools</h2>
+              <h2 className="text-[13px] font-bold text-[#2C2C32]">Growth tools</h2>
               <p className="mt-1 text-[11px] text-slate-400">Planned features only. No credits are deducted until a tool is enabled.</p>
             </div>
             <span className="rounded-md border border-[#e9edf0] bg-white px-2 py-1 text-[10px] font-semibold text-slate-500">Roadmap</span>
@@ -218,7 +218,7 @@ export default function VendorGrowthCenterPage() {
                   <span className="rounded-md border border-[#f0e5cf] bg-[#fdf8ed] px-2 py-1 text-[10px] font-semibold text-[#99784d]">Coming soon</span>
                 </div>
                 <p className="mt-4 text-[10px] font-semibold uppercase tracking-wider text-slate-400">{tool.label}</p>
-                <h3 className="mt-1 text-[13px] font-bold text-[#23372e]">{tool.title}</h3>
+                <h3 className="mt-1 text-[13px] font-bold text-[#313137]">{tool.title}</h3>
                 <p className="mt-2 min-h-[42px] flex-1 text-[11px] leading-5 text-slate-500">{tool.description}</p>
                 <div className="mt-4 border-t border-[#edf0ee] pt-3 text-[10px] font-medium text-slate-500">
                   {tool.cost} <span className="text-slate-400">· Not active</span>
@@ -231,7 +231,7 @@ export default function VendorGrowthCenterPage() {
         <section className={panel + ' overflow-hidden'}>
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e9edf0] px-5 py-4">
             <div>
-              <h2 className="text-[13px] font-bold text-[#23372e]">Credit activity</h2>
+              <h2 className="text-[13px] font-bold text-[#313137]">Credit activity</h2>
               <p className="mt-1 text-[11px] text-slate-400">Latest recorded wallet transactions</p>
             </div>
             <span className="text-[10px] text-slate-400">Last 10 entries</span>
