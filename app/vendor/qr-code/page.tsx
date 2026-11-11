@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import Link from 'next/link';
 import { QRCodeCanvas } from 'qrcode.react';
 import { 
   Download, 
@@ -26,6 +27,7 @@ export default function VendorQRCodePage() {
   const [assignedQR, setAssignedQR] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [requestingQR, setRequestingQR] = useState(false);
+  const [checkingQR, setCheckingQR] = useState(false);
   const qrRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -33,26 +35,25 @@ export default function VendorQRCodePage() {
   }, []);
 
   useEffect(() => {
-    if (selectedBusiness?.id) {
-      checkAssignedQR(selectedBusiness.id);
-    }
-  }, [selectedBusiness?.id]);
-
-  const checkAssignedQR = async (businessId: string | number) => {
-    try {
-      const { data, error } = await supabase
-        .from('qr_inventory')
-        .select('*')
-        .eq('business_id', businessId)
-        .maybeSingle();
-
-      if (!error) {
-        setAssignedQR(data);
+    if (!selectedBusiness?.id) { setAssignedQR(null); return; }
+    let active = true;
+    setAssignedQR(null);
+    setCheckingQR(true);
+    const loadQR = async () => {
+      try {
+        const { data, error } = await supabase.from('qr_inventory')
+          .select('*').eq('business_id', selectedBusiness.id).maybeSingle();
+        if (error) throw error;
+        if (active) setAssignedQR(data);
+      } catch {
+        if (active) toast.error('Unable to load this business QR code.');
+      } finally {
+        if (active) setCheckingQR(false);
       }
-    } catch (err) {
-      console.error('Error checking assigned QR:', err);
-    }
-  };
+    };
+    void loadQR();
+    return () => { active = false; };
+  }, [selectedBusiness?.id]);
 
   const fetchBusinesses = async () => {
     try {
@@ -175,7 +176,7 @@ export default function VendorQRCodePage() {
 
   if (loading) {
     return (
-      <div className="space-y-8 animate-in fade-in duration-500">
+      <div className="mx-auto max-w-[1460px] space-y-5">
         <div className="flex flex-col space-y-2">
           <Skeleton className="h-10 w-64" />
           <Skeleton className="h-5 w-96" />
@@ -194,7 +195,7 @@ export default function VendorQRCodePage() {
 
   if (businesses.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60dvh] bg-white rounded-2xl border border-dashed border-gray-300 p-12 text-center">
+      <div className="vendor-premium-panel flex min-h-[60dvh] flex-col items-center justify-center border-dashed p-10 text-center">
         <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
           <Store className="w-10 h-10 text-gray-300" />
         </div>
@@ -204,7 +205,7 @@ export default function VendorQRCodePage() {
         </p>
         <a 
           href="/register-business"
-          className="px-8 py-3 bg-brand-dark text-white rounded-lg font-bold hover:bg-brand-blue transition-all"
+          className="vendor-primary-button"
         >
           Register Business
         </a>
@@ -219,27 +220,30 @@ export default function VendorQRCodePage() {
     : '';
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-normal text-gray-900 tracking-tight">Business QR Code</h1>
-          <p className="text-gray-500 mt-1 flex items-center gap-2">
-            Generate and download professional QR codes for your storefront.
-          </p>
+    <div className="mx-auto max-w-[1460px] space-y-5 pb-5">
+      <div className="vendor-premium-header flex flex-col gap-5 px-6 py-7 sm:px-8 sm:py-9 lg:flex-row lg:items-end lg:justify-between">
+        <div className="relative z-10 max-w-2xl">
+          <p className="text-[10px] font-extrabold uppercase tracking-[.18em] text-[#BBDDAD]">Digital storefront / QR studio</p>
+          <h1 className="mt-2 text-[30px] font-extrabold tracking-[-.045em] text-white sm:text-[35px]">Turn every visit into a connection.</h1>
+          <p className="mt-2 text-[12px] leading-6 text-[#D5E8D8]">A branded, scannable route to your directory profile. Select a business, generate a QR code, then print or share it.</p>
+          <div className="mt-4 flex flex-wrap items-center gap-2 text-[10px] font-bold text-[#CFE8D1]">
+            <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5">Business-linked QR</span>
+            <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5">Print-ready</span>
+            <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5">Shareable link</span>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="relative z-10 flex flex-wrap gap-2">
           {assignedQR ? (
             <>
               <button 
                 onClick={handlePrint}
-                className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-[6px] text-sm font-bold hover:bg-gray-50 transition-all"
+                className="inline-flex h-11 items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-4 text-[12px] font-bold text-white transition hover:bg-white/20"
               >
                 <Printer size={18} /> Print
               </button>
               <button 
                 onClick={handleDownload}
-                className="flex items-center gap-2 px-5 py-2.5 bg-brand-dark text-white rounded-[6px] text-sm font-bold hover:bg-brand-blue transition-all shadow-lg shadow-brand-dark/10"
+                className="inline-flex h-11 items-center gap-2 rounded-xl border border-white/20 bg-[#F1FAEF] px-4 text-[12px] font-bold text-[#225A3A] transition hover:bg-white"
               >
                 <Download size={18} /> Download PNG
               </button>
@@ -248,7 +252,7 @@ export default function VendorQRCodePage() {
             <button 
               onClick={handleRequestQR}
               disabled={requestingQR}
-              className="flex items-center gap-2 px-6 py-3 bg-brand-dark text-white rounded-[6px] text-sm font-bold hover:bg-brand-blue transition-all shadow-lg shadow-brand-dark/10 disabled:opacity-50"
+              className="inline-flex h-11 items-center gap-2 rounded-xl border border-white/20 bg-[#F1FAEF] px-4 text-[12px] font-bold text-[#225A3A] transition hover:bg-white disabled:opacity-50"
             >
               {requestingQR ? <Loader2 className="animate-spin" size={18} /> : <QrCode size={18} />}
               Request Professional QR
@@ -257,11 +261,11 @@ export default function VendorQRCodePage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-12">
         {/* Left Column: Selector */}
         <div className="lg:col-span-4 space-y-6">
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-gray-100 bg-gray-50/50">
+          <div className="vendor-premium-panel overflow-hidden">
+            <div className="border-b border-[#E6EEE5] bg-[#FAFCF9] p-5">
               <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider flex items-center gap-2">
                 <Store size={16} className="text-brand-blue" />
                 Select Business
@@ -299,7 +303,7 @@ export default function VendorQRCodePage() {
             </div>
           </div>
 
-          <div className="bg-blue-50/50 rounded-2xl p-6 border border-blue-100">
+          <div className="vendor-muted-callout">
             <div className="flex gap-3">
               <div className="w-8 h-8 bg-brand-blue/10 rounded-full flex items-center justify-center shrink-0">
                 <Info size={16} className="text-brand-blue" />
@@ -327,14 +331,15 @@ export default function VendorQRCodePage() {
 
         {/* Right Column: QR Preview */}
         <div className="lg:col-span-8">
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm h-full overflow-hidden flex flex-col min-h-[600px]">
+          {checkingQR && <p role="status" className="mb-3 rounded-xl border border-[#DCE8D9] bg-white px-4 py-3 text-xs font-semibold text-[#4F785D]"><Loader2 size={14} className="mr-2 inline animate-spin"/>Checking QR assignment…</p>}
+          <div className="vendor-premium-panel flex min-h-[600px] flex-col overflow-hidden">
             {assignedQR ? (
               <>
                 <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-                  <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Professional Preview</h2>
+                  <h2 className="text-[13px] font-extrabold text-[#2C4B36]">Print & share preview</h2>
                   <div className="flex items-center gap-2 px-3 py-1 bg-green-50 text-green-700 rounded-full text-[10px] font-bold uppercase">
                     <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                    Professional Index
+                    Assigned QR
                   </div>
                 </div>
                 
@@ -417,9 +422,9 @@ export default function VendorQRCodePage() {
                 </div>
                 
                 <div className="max-w-md space-y-4">
-                  <h2 className="text-2xl font-normal text-gray-900 tracking-tight">No Professional QR Assigned</h2>
+                  <h2 className="text-[23px] font-extrabold tracking-tight text-[#254832]">Your QR studio is ready</h2>
                   <p className="text-gray-500 leading-relaxed">
-                    Link your business to our professional indexing system to generate a serial-numbered QR code. This allows for better tracking and a more professional storefront presence.
+                    Generate a serial-numbered QR code for this listing. You can print it for your counter, flyers or business cards. Scan counts are available only when tracking is configured.
                   </p>
                 </div>
 
@@ -435,11 +440,11 @@ export default function VendorQRCodePage() {
                 <div className="grid grid-cols-2 gap-4 w-full max-w-sm mt-8">
                   <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Benefit 1</p>
-                    <p className="text-xs font-bold text-gray-700">Trackable Scans</p>
+                    <p className="text-xs font-bold text-gray-700">Direct listing access</p>
                   </div>
                   <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Benefit 2</p>
-                    <p className="text-xs font-bold text-gray-700">Serial Indexing</p>
+                    <p className="text-xs font-bold text-gray-700">Download and print</p>
                   </div>
                 </div>
               </div>
@@ -448,6 +453,15 @@ export default function VendorQRCodePage() {
         </div>
       </div>
 
+      <div className="grid gap-3 md:grid-cols-3">
+        {[
+          {label:'Public listing',text:'Check your public customer experience',href:selectedBusiness ? '/business/'+(selectedBusiness.slug||selectedBusiness.id) : '/vendor/my-businesses'},
+          {label:'Growth insights',text:'Review recorded views and enquiries',href:'/vendor/insights'},
+          {label:'Marketing studio',text:'Share the QR alongside a campaign',href:'/vendor/marketing'},
+        ].map(item => <Link key={item.label} href={item.href} className="vendor-premium-card flex items-center justify-between gap-3 p-4 text-left hover:bg-[#F5FAF3]">
+          <span><span className="block text-[12px] font-bold text-[#2B5138]">{item.label}</span><span className="mt-1 block text-[11px] text-[#839687]">{item.text}</span></span><ChevronRight size={17} className="shrink-0 text-[#659373]"/>
+        </Link>)}
+      </div>
       <style jsx global>{`
         @media print {
           body * {
