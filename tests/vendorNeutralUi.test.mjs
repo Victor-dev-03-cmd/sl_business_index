@@ -71,3 +71,20 @@ test('centered desktop top navigation exposes reversible, dismissible dropdowns 
   assert.match(styles,/\.vendor-topbar-dropdown-panel \{/);
   assert.match(styles,/\.vendor-topbar-dropdown-link \{border-radius:6px;\}/);
 });
+
+test('owner workspace pages share restrained V7 shell without losing independent page flows',()=>{
+  const routes=['my-businesses','leads','reviews','insights','growth','marketing','qr-code','billing','settings'];
+  for(const route of routes){
+    const page=read('app/vendor/'+route+'/page.tsx');
+    assert.match(page,/vendor-page-v7/,'missing shared shell: '+route);
+    if(!['settings','insights'].includes(route)){
+      assert.match(page,/vendor-owner-heading/,'missing header style: '+route);
+      assert.doesNotMatch(page,/border-t-4 border-t-\[#2D6749\]/,'outdated thick green header: '+route);
+    }
+  }
+  for(const selector of ['.vendor-owner-heading','.vendor-premium-header','.vendor-executive-card','.vendor-topbar-dropdown-panel']){
+    assert.ok(styles.includes(selector),'missing restrained style: '+selector);
+  }
+  assert.match(styles,/\.vendor-workspace-v6 \.vendor-page-v7 table thead/);
+  assert.match(styles,/border-left:3px solid #FF7900/);
+});
