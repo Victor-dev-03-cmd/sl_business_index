@@ -78,7 +78,7 @@ export default function VendorLayout({children}:{children:React.ReactNode}){
         <div className="ml-auto flex shrink-0 items-center gap-2 xl:ml-0">
           <details key={'tools-'+pathname} className="vendor-topbar-dropdown group relative hidden xl:block">
             <summary className="flex h-9 cursor-pointer list-none items-center gap-1.5 rounded-[8px] px-2.5 text-[11px] font-semibold text-[#505158] hover:bg-[#F6F6F8]">
-              Tools <IconsaxIcon name="arrow-down-1" size={13}/>
+              Tools <IconsaxIcon name="arrow-down-2" size={13}/>
             </summary>
             <nav aria-label="Growth and marketing tools" className="absolute right-0 top-[44px] z-[70] grid w-[234px] gap-1 rounded-xl border border-[#E7E7EA] bg-white p-2 shadow-[0_18px_44px_rgba(17,17,20,.14)]">
               {growthNav.map(item=><Link key={item.href} href={item.href} className="flex items-center gap-2.5 rounded-md px-3 py-2.5 text-[12px] font-semibold text-[#36373B] hover:bg-[#FFF3E8] hover:text-[#D46100]">
@@ -88,7 +88,7 @@ export default function VendorLayout({children}:{children:React.ReactNode}){
           </details>
           <details key={'account-'+pathname} className="vendor-topbar-dropdown group relative hidden xl:block">
             <summary className="flex h-9 cursor-pointer list-none items-center gap-1.5 rounded-[8px] px-2.5 text-[11px] font-semibold text-[#505158] hover:bg-[#F6F6F8]">
-              Account <IconsaxIcon name="arrow-down-1" size={13}/>
+              Account <IconsaxIcon name="arrow-down-2" size={13}/>
             </summary>
             <nav aria-label="Vendor account pages" className="absolute right-0 top-[44px] z-[70] grid w-[218px] gap-1 rounded-xl border border-[#E7E7EA] bg-white p-2 shadow-[0_18px_44px_rgba(17,17,20,.14)]">
               {accountNav.map(item=><Link key={item.href} href={item.href} className="flex items-center gap-2.5 rounded-md px-3 py-2.5 text-[12px] font-semibold text-[#36373B] hover:bg-[#FFF3E8] hover:text-[#D46100]">
