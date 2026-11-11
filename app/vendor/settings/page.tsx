@@ -276,7 +276,7 @@ export default function SettingsPage() {
   const initials=(profile.full_name||profile.email||'V').trim().split(/\s+/).slice(0,2).map(n=>n[0]?.toUpperCase()||'').join('');
   const submitLabel=verified?'Verified':pending?'Under review':'Submit for review';
   return (
-    <div className="mx-auto max-w-[1460px] space-y-5 text-[#213B2C]">
+    <div className="vendor-settings mx-auto max-w-[1460px] min-w-0 space-y-5 text-[#213B2C]">
       <header className="vendor-premium-header flex flex-col gap-5 px-6 py-7 sm:px-8 sm:py-9 lg:flex-row lg:items-end lg:justify-between">
         <div className="relative z-10 max-w-2xl">
           <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[.17em] text-[#D0EDCA]"><ShieldCheck size={14}/> Owner command center · Settings</div>
@@ -284,33 +284,33 @@ export default function SettingsPage() {
           <p className="mt-2 text-[12px] leading-6 text-[#D6E9D9]">Manage account identity, business verification, local discoverability and communication preferences in one secure place.</p>
         </div>
         <div className="relative z-10 flex flex-wrap gap-2">
-          <Link href="/vendor/my-businesses" className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 text-xs font-bold text-white hover:bg-white/20"><Building2 size={15}/> Manage businesses <ArrowUpRight size={13}/></Link>
-          <button type="button" onClick={()=>void load()} disabled={loading} className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/20 bg-[#F3FAEE] px-4 text-xs font-bold text-[#1F5636] hover:bg-white"><RefreshCcw size={15}/> Refresh</button>
+          <Link href="/vendor/my-businesses" className="inline-flex h-10 items-center gap-2 rounded-md border border-white/25 bg-white/10 px-4 text-xs font-bold text-white hover:bg-white/20"><Building2 size={15}/> Manage businesses <ArrowUpRight size={13}/></Link>
+          <button type="button" onClick={()=>void load()} disabled={loading} className="inline-flex h-10 items-center gap-2 rounded-md border border-white/20 bg-[#F3FAEE] px-4 text-xs font-bold text-[#1F5636] hover:bg-white"><RefreshCcw size={15}/> Refresh</button>
         </div>
       </header>
-      {error&&<div role="alert" className="rounded-xl border border-[#E9D3BE] bg-[#FFF9ED] p-4 text-[12px] text-[#875E38]">{error}<Link href="/login?redirect=/vendor/settings" className="ml-2 underline">Sign in</Link></div>}
+      {error&&<div role="alert" className="rounded-md border border-[#E9D3BE] bg-[#FFF9ED] p-4 text-[12px] text-[#875E38]">{error}<Link href="/login?redirect=/vendor/settings" className="ml-2 underline">Sign in</Link></div>}
       {loading&&<div role="status" className="vendor-premium-panel flex items-center gap-3 p-5 text-sm text-[#50745C]"><Loader2 className="animate-spin" size={18}/> Loading your settings…</div>}
 
-      <div className="grid items-start gap-5 lg:grid-cols-[260px_minmax(0,1fr)]">
-        <div className="vendor-premium-card overflow-hidden p-2 lg:sticky lg:top-5">
+      <div className="vendor-settings-layout grid min-w-0 items-start gap-4 xl:grid-cols-[238px_minmax(0,1fr)]">
+        <div className="vendor-premium-card vendor-settings-nav min-w-0 overflow-hidden p-2 xl:sticky xl:top-5">
           <p className="px-3 pb-3 pt-4 text-[10px] font-bold uppercase tracking-[.17em] text-[#8B9F90]">Workspace settings</p>
-          <nav aria-label="Vendor settings sections" className="space-y-1" role="tablist" aria-orientation="vertical">
+          <nav aria-label="Vendor settings sections" className="vendor-settings-tabs flex min-w-0 gap-1 overflow-x-auto pb-1 xl:block xl:space-y-1 xl:overflow-visible xl:pb-0" role="tablist">
             {tabList.map(item=><button type="button" role="tab" id={'tab-'+item.id} aria-selected={activeTab===item.id} aria-controls={'panel-'+item.id} key={item.id} onClick={()=>selectTab(item.id)}
-              className={'flex min-h-12 w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition '+(activeTab===item.id?'bg-[#E8F4E9] text-[#215F3D]':'text-[#617C68] hover:bg-[#F6F9F4] hover:text-[#29553A]')}>
-              <span className={'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl '+(activeTab===item.id?'bg-white text-[#267048]':'bg-[#F3F6F1] text-[#7D9582]')}><item.icon size={17}/></span>
-              <span className="flex-1"><span className="block text-[12px] font-bold">{item.name}</span><span className="mt-0.5 block text-[10px] opacity-70">{item.detail}</span></span>
+              className={'flex min-h-12 min-w-[156px] flex-1 items-center gap-2 rounded-md px-3 py-2 text-left transition xl:min-w-0 xl:w-full xl:gap-3 xl:py-3 '+(activeTab===item.id?'bg-[#E8F4E9] text-[#215F3D]':'text-[#617C68] hover:bg-[#F6F9F4] hover:text-[#29553A]')}>
+              <span className={'flex h-9 w-9 shrink-0 items-center justify-center rounded-md '+(activeTab===item.id?'bg-white text-[#267048]':'bg-[#F3F6F1] text-[#7D9582]')}><item.icon size={17}/></span>
+              <span className="min-w-0 flex-1"><span className="block text-[12px] font-bold leading-5">{item.name}</span><span className="mt-0.5 block text-[10px] opacity-70">{item.detail}</span></span>
             </button>)}
           </nav>
-          <div className="mx-2 mt-3 rounded-xl bg-[#F3F8F1] px-4 py-3 text-[11px] leading-[1.6] text-[#668274]">
+          <div className="mx-2 mt-3 rounded-md bg-[#F3F8F1] px-4 py-3 text-[11px] leading-[1.6] text-[#668274]">
             Need help? <Link href="/vendor/leads" className="font-bold text-[#2B6945] underline underline-offset-2">Your enquiry inbox</Link> remains accessible from the main portal.
           </div>
         </div>
-        <div className="min-w-0 space-y-5">
+        <div className="vendor-settings-body min-w-0 space-y-5">
           {activeTab==='profile'&&<section role="tabpanel" id="panel-profile" aria-labelledby="tab-profile" className="vendor-setting-section space-y-6">
             <div><p className="vendor-kicker">Personal profile</p><h2 className="mt-1 text-[22px] font-extrabold text-[#213F2D]">Account identity</h2><p className="mt-1 text-[12px] text-[#829787]">This information belongs to your account, not to any single business listing.</p></div>
-            <div className="flex flex-wrap items-center gap-4 rounded-[16px] border border-[#E5ECE5] bg-[#FAFCF8] p-4">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[18px] bg-[#254E38] text-xl font-extrabold text-white">{initials||'V'}</div>
-              <div><p className="text-[14px] font-bold text-[#274A34]">{profile.full_name||'Complete your profile'}</p><p className="mt-1 text-[11px] text-[#718675]">{profile.email||'Email is linked to your signed-in account'}</p><span className="mt-2 inline-flex items-center gap-1 rounded-full border border-[#D8E7DC] bg-white px-2 py-1 text-[10px] font-semibold text-[#587C60]"><ShieldCheck size={12}/> Account owner</span></div>
+            <div className="flex flex-wrap items-center gap-4 rounded-lg border border-[#E5ECE5] bg-[#FAFCF8] p-4">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[#254E38] text-xl font-extrabold text-white">{initials||'V'}</div>
+              <div className="min-w-0"><p className="break-words text-[14px] font-bold text-[#274A34]">{profile.full_name||'Complete your profile'}</p><p className="mt-1 break-all text-[11px] text-[#718675]">{profile.email||'Email is linked to your signed-in account'}</p><span className="mt-2 inline-flex items-center gap-1 rounded-full border border-[#D8E7DC] bg-white px-2 py-1 text-[10px] font-semibold text-[#587C60]"><ShieldCheck size={12}/> Account owner</span></div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div><label className={label} htmlFor="vendor-name">Full name</label><input id="vendor-name" className={field} maxLength={100} autoComplete="name" value={profile.full_name} onChange={e=>setProfile(v=>({...v,full_name:e.target.value}))}/></div>
@@ -323,7 +323,7 @@ export default function SettingsPage() {
 
           {activeTab==='verification'&&<section role="tabpanel" id="panel-verification" aria-labelledby="tab-verification" className="vendor-setting-section space-y-5">
             <div><p className="vendor-kicker">Trust & verification</p><h2 className="mt-1 text-[22px] font-extrabold">Verification center</h2><p className="mt-1 text-[12px] leading-5 text-[#819486]">Submit official registration information for administrator review. Submission alone never grants a verified badge.</p></div>
-            <div className="rounded-xl border border-[#DBE9D9] bg-[#F5FAF3] p-4">
+            <div className="rounded-md border border-[#DBE9D9] bg-[#F5FAF3] p-4">
               <label className={label} htmlFor="verification-business">Business under review</label>
               <select id="verification-business" className={field} value={selectedBusinessId} onChange={e=>setSelectedBusinessId(e.target.value)} disabled={!businesses.length}>
                 {businesses.length===0?<option value="">No businesses registered</option>:businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}
@@ -331,17 +331,17 @@ export default function SettingsPage() {
               <span className={'mt-3 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold '+statusColor(verificationState)}><FileCheck2 size={13}/>{statusLabel(verificationState)}</span>
               {verification?.created_at&&<p className="mt-2 text-[11px] text-[#728775]">Last request: {new Date(verification.created_at).toLocaleDateString('en-LK')}</p>}
             </div>
-            {pending&&<p className="rounded-xl border border-[#EEE0B9] bg-[#FFF9E8] p-4 text-[12px] font-medium text-[#917038]">Your verification request is under manual review. New submissions are paused until this request is resolved.</p>}
-            {verified&&<p className="rounded-xl border border-[#CAE8D2] bg-[#F0FAF1] p-4 text-[12px] font-medium text-[#32754E]"><CheckCircle2 size={17} className="mr-2 inline"/>This business has a verified status.</p>}
+            {pending&&<p className="rounded-md border border-[#EEE0B9] bg-[#FFF9E8] p-4 text-[12px] font-medium text-[#917038]">Your verification request is under manual review. New submissions are paused until this request is resolved.</p>}
+            {verified&&<p className="rounded-md border border-[#CAE8D2] bg-[#F0FAF1] p-4 text-[12px] font-medium text-[#32754E]"><CheckCircle2 size={17} className="mr-2 inline"/>This business has a verified status.</p>}
             <div className="grid gap-4 sm:grid-cols-2">
               <div><label className={label} htmlFor="business-type">Registration type</label><select id="business-type" className={field} value={businessType} onChange={e=>setBusinessType(e.target.value as typeof businessType)} disabled={pending||verified}><option value="pvt_ltd">Private limited (PVT)</option><option value="local_business">Registered sole proprietorship</option></select></div>
               <div><label className={label} htmlFor="br-number">Business registration number</label><input id="br-number" className={field} maxLength={64} value={brNumber} onChange={e=>setBrNumber(e.target.value)} disabled={pending||verified} placeholder={businessType==='pvt_ltd'?'PV00212345':'123/2024/ABC'}/></div>
               <div><label className={label} htmlFor="tin-number">TIN (optional)</label><input id="tin-number" className={field} maxLength={64} value={tinNumber} onChange={e=>setTinNumber(e.target.value)} disabled={pending||verified}/></div>
               <div><label className={label} htmlFor="svat-number">SVAT (optional)</label><input id="svat-number" className={field} maxLength={64} value={svatNumber} onChange={e=>setSvatNumber(e.target.value)} disabled={pending||verified}/></div>
             </div>
-            <div className="rounded-[15px] border border-dashed border-[#BCD8C4] bg-[#F9FCF8] p-5">
-              <div className="flex items-center gap-3"><span className="rounded-xl bg-[#EAF4EB] p-3 text-[#3C8154]"><UploadCloud size={22}/></span><div><p className="text-[12px] font-bold text-[#2E513D]">Registration document</p><p className="mt-1 text-[11px] text-[#839386]">JPG, PNG or PDF · 10 MB maximum · private access after security migration</p></div></div>
-              <input type="file" aria-label="Select registration document" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" disabled={pending||verified||!privateDocsReady||!selectedBusinessId} className="mt-4 block w-full rounded-xl border border-[#E2EAE2] bg-white p-3 text-[12px] text-[#477153] file:mr-3 file:rounded-lg file:border-0 file:bg-[#E8F3EA] file:px-3 file:py-2 file:font-bold file:text-[#3C724A]" onChange={e=>setVerificationFile(e.target.files?.[0]||null)}/>
+            <div className="rounded-lg border border-dashed border-[#BCD8C4] bg-[#F9FCF8] p-5">
+              <div className="flex items-center gap-3"><span className="rounded-md bg-[#EAF4EB] p-3 text-[#3C8154]"><UploadCloud size={22}/></span><div><p className="text-[12px] font-bold text-[#2E513D]">Registration document</p><p className="mt-1 text-[11px] text-[#839386]">JPG, PNG or PDF · 10 MB maximum · private access after security migration</p></div></div>
+              <input type="file" aria-label="Select registration document" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" disabled={pending||verified||!privateDocsReady||!selectedBusinessId} className="mt-4 block w-full rounded-md border border-[#E2EAE2] bg-white p-3 text-[12px] text-[#477153] file:mr-3 file:rounded-lg file:border-0 file:bg-[#E8F3EA] file:px-3 file:py-2 file:font-bold file:text-[#3C724A]" onChange={e=>setVerificationFile(e.target.files?.[0]||null)}/>
               {verificationFile&&<p className="mt-2 text-[11px] font-semibold text-[#42754B]">Selected: {verificationFile.name}</p>}
               {documentPreview&&<a href={documentPreview} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-2 text-[11px] font-bold text-[#2D7853] underline">View submitted document <ArrowUpRight size={13}/></a>}
               {!privateDocsReady&&<p role="status" className="mt-3 rounded-lg border border-[#EADDB8] bg-[#FFF9E8] p-3 text-[11px] leading-5 text-[#906F2E]">Secure document storage upgrade is pending. New uploads are disabled to protect sensitive IDs and registration documents. Your existing requests remain visible to administrators.</p>}
@@ -357,15 +357,15 @@ export default function SettingsPage() {
               <select id="seo-business" className={field} value={selectedBusinessId} disabled={!businesses.length} onChange={e=>setSelectedBusinessId(e.target.value)}>{businesses.length===0?<option value="">No businesses registered</option>:businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select>
             </div>
             <div className="vendor-setting-section">
-              <div className="flex items-center justify-between gap-3"><div><p className="vendor-kicker">Local intelligence</p><h3 className="mt-1 text-[17px] font-bold text-[#254935]">Service radius</h3></div><span className="rounded-xl border border-[#D9E8D9] bg-[#F0F7EE] px-4 py-2 text-[14px] font-extrabold tabular-nums text-[#24613F]">{radius} km</span></div>
+              <div className="flex items-center justify-between gap-3"><div><p className="vendor-kicker">Local intelligence</p><h3 className="mt-1 text-[17px] font-bold text-[#254935]">Service radius</h3></div><span className="rounded-md border border-[#D9E8D9] bg-[#F0F7EE] px-4 py-2 text-[14px] font-extrabold tabular-nums text-[#24613F]">{radius} km</span></div>
               <p className="mt-2 text-[12px] text-[#7B917E]">Set the distance your business says it can serve, from 1 to 50 kilometres.</p>
               <input type="range" min={1} max={50} step={1} value={radius} onChange={e=>setRadius(Number(e.target.value))} disabled={!selectedBusinessId} aria-label="Business service radius" className="mt-6 w-full accent-[#2F8050]"/>
               <div className="mt-2 flex justify-between text-[10px] font-semibold text-[#8BA092]"><span>1 km</span><span>50 km</span></div>
-              <div className="mt-5 flex items-center gap-3 rounded-xl border border-[#E6EFE4] bg-[#F5FAF4] p-4"><MapPin className="shrink-0 text-[#3D8855]" size={22}/><p className="text-[11px] leading-5 text-[#62846B]">Saved radius is a business profile preference. Exact discovery ranking still depends on verified locations, query relevance and user-selected filters.</p></div>
+              <div className="mt-5 flex items-center gap-3 rounded-md border border-[#E6EFE4] bg-[#F5FAF4] p-4"><MapPin className="shrink-0 text-[#3D8855]" size={22}/><p className="text-[11px] leading-5 text-[#62846B]">Saved radius is a business profile preference. Exact discovery ranking still depends on verified locations, query relevance and user-selected filters.</p></div>
             </div>
             <div className="vendor-setting-section">
-              <div className="flex items-center gap-3"><span className="rounded-xl bg-[#EAF5EC] p-3 text-[#377C4E]"><Search size={20}/></span><div><h3 className="text-[17px] font-bold">Search keywords</h3><p className="mt-1 text-[11px] text-[#809784]">Maximum 10 relevant terms · up to 50 characters each</p></div></div>
-              <div className="mt-5 flex gap-2"><input className={field} maxLength={50} value={newKeyword} onChange={e=>setNewKeyword(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addKeyword()}}} placeholder="e.g. plumbing, bike service…"/><button type="button" onClick={addKeyword} disabled={!newKeyword.trim()||keywords.length>=10} aria-label="Add keyword" className="vendor-outline-button"><Plus size={16}/> Add</button></div>
+              <div className="flex items-center gap-3"><span className="rounded-md bg-[#EAF5EC] p-3 text-[#377C4E]"><Search size={20}/></span><div><h3 className="text-[17px] font-bold">Search keywords</h3><p className="mt-1 text-[11px] text-[#809784]">Maximum 10 relevant terms · up to 50 characters each</p></div></div>
+              <div className="mt-5 flex flex-col gap-2 sm:flex-row"><input className={field+' min-w-0 flex-1'} maxLength={50} value={newKeyword} onChange={e=>setNewKeyword(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addKeyword()}}} placeholder="e.g. plumbing, bike service…"/><button type="button" onClick={addKeyword} disabled={!newKeyword.trim()||keywords.length>=10} aria-label="Add keyword" className="vendor-outline-button w-full shrink-0 sm:w-auto"><Plus size={16}/> Add</button></div>
               <div className="mt-4 flex min-h-12 flex-wrap gap-2">{keywords.map(k=><span key={k} className="inline-flex items-center gap-2 rounded-full border border-[#DCEBDD] bg-[#F0F7EE] px-3 py-1.5 text-[11px] font-bold text-[#39714C]">{k}<button type="button" onClick={()=>setKeywords(prev=>prev.filter(t=>t!==k))} aria-label={'Remove '+k} className="rounded-full p-0.5 hover:bg-[#DCE9DD]"><X size={12}/></button></span>)}{keywords.length===0&&<p className="text-[11px] text-[#93A597]">No additional search keywords saved.</p>}</div>
               <div className="mt-5 flex justify-end border-t border-[#E8EFE8] pt-5"><button type="button" onClick={()=>void saveOptimization()} disabled={saving||!selectedBusinessId} className="vendor-primary-button">{saving?<Loader2 size={16} className="animate-spin"/>:<Save size={16}/>} Save local discovery</button></div>
             </div>
@@ -373,15 +373,15 @@ export default function SettingsPage() {
 
           {activeTab==='notifications'&&<section role="tabpanel" id="panel-notifications" aria-labelledby="tab-notifications" className="vendor-setting-section space-y-5">
             <div><p className="vendor-kicker">Communication preferences</p><h2 className="mt-1 text-[22px] font-extrabold">Notification preferences</h2><p className="mt-2 text-[12px] leading-6 text-[#839687]">Save the kinds of optional business updates you want. Essential security and verification notices remain available.</p></div>
-            {!prefsAvailable&&<p role="status" className="rounded-xl border border-[#EADDB9] bg-[#FFF9E9] p-4 text-[11px] text-[#947135]">Preferences storage is not yet configured. Switches cannot be saved until the reviewed database migration is applied.</p>}
-            <div className="divide-y divide-[#ECF0EB] rounded-[15px] border border-[#E4ECE3] bg-[#FBFDFB]">
+            {!prefsAvailable&&<p role="status" className="rounded-md border border-[#EADDB9] bg-[#FFF9E9] p-4 text-[11px] text-[#947135]">Preferences storage is not yet configured. Switches cannot be saved until the reviewed database migration is applied.</p>}
+            <div className="divide-y divide-[#ECF0EB] rounded-lg border border-[#E4ECE3] bg-[#FBFDFB]">
               {([
                 {key:'reviews',title:'New reviews',text:'Optional updates when customers leave reviews.',icon:User},
                 {key:'leads',title:'New enquiries',text:'Optional notifications for enquiries on owned listings.',icon:Mail},
                 {key:'weekly_digest',title:'Weekly summary',text:'Periodic business activity digest, if delivery is enabled.',icon:Globe},
                 {key:'marketing_tips',title:'Growth tips',text:'Optional educational marketing updates.',icon:Bell},
               ] as const).map(item=><label key={item.key} className="flex cursor-pointer items-center gap-3 p-4 sm:p-5">
-                <span className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EDF6ED] text-[#42845C] sm:flex"><item.icon size={18}/></span>
+                <span className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[#EDF6ED] text-[#42845C] sm:flex"><item.icon size={18}/></span>
                 <span className="min-w-0 flex-1"><span className="block text-[12px] font-bold text-[#31513B]">{item.title}</span><span className="mt-1 block text-[11px] leading-5 text-[#819686]">{item.text}</span></span>
                 <input type="checkbox" checked={prefs[item.key]} disabled={!prefsAvailable} onChange={e=>setPrefs(v=>({...v,[item.key]:e.target.checked}))} className="h-5 w-5 shrink-0 accent-[#347A4C]" aria-label={item.title}/>
               </label>)}
@@ -392,7 +392,7 @@ export default function SettingsPage() {
 
           {activeTab==='security'&&<section role="tabpanel" id="panel-security" aria-labelledby="tab-security" className="vendor-setting-section space-y-6">
             <div><p className="vendor-kicker">Owner security</p><h2 className="mt-1 text-[22px] font-extrabold">Protect your account</h2><p className="mt-2 text-[12px] leading-6 text-[#819486]">Update your password. Other signed-in devices may retain a session until revoked; review your account security if access is unexpected.</p></div>
-            <div className="rounded-xl border border-[#DDEBDF] bg-[#F5FAF3] p-4 text-[12px] text-[#597960]"><LockKeyhole className="mr-2 inline" size={18}/> Password changes are handled through Supabase Auth, not stored in vendor business tables.</div>
+            <div className="rounded-md border border-[#DDEBDF] bg-[#F5FAF3] p-4 text-[12px] text-[#597960]"><LockKeyhole className="mr-2 inline" size={18}/> Password changes are handled through Supabase Auth, not stored in vendor business tables.</div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div><label className={label} htmlFor="vendor-password">New password</label><div className="relative"><input id="vendor-password" className={field+' pr-12'} type={showPassword?'text':'password'} autoComplete="new-password" maxLength={128} value={newPassword} onChange={e=>setNewPassword(e.target.value)} placeholder="12 characters or more"/><button type="button" aria-label={showPassword?'Hide password':'Show password'} onClick={()=>setShowPassword(v=>!v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6A8974]">{showPassword?<EyeOff size={17}/>:<Eye size={17}/>}</button></div></div>
               <div><label className={label} htmlFor="vendor-confirm">Confirm new password</label><input id="vendor-confirm" className={field} type={showPassword?'text':'password'} autoComplete="new-password" maxLength={128} value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)}/></div>
