@@ -275,14 +275,14 @@ export default function VendorReviewsPage() {
 
   if (!loading && !authenticated) return (
     <div className="mx-auto max-w-xl py-16 text-center">
-      <h1 className="text-xl font-bold text-[#1c3f2f]">Sign in to manage reviews</h1>
+      <h1 className="text-xl font-bold text-[#2C2C31]">Sign in to manage reviews</h1>
       <p className="mt-2 text-sm text-slate-500">Customer reviews are available to their registered business owners.</p>
       <Link href="/login?redirect=/vendor/reviews" className="mt-5 inline-flex rounded-lg bg-[#202024] px-5 py-2.5 text-xs font-bold text-white">Sign in</Link>
     </div>
   );
 
   return (
-    <div className="vendor-page-v7 mx-auto min-h-full w-full max-w-[1600px] pb-7 text-[#28282D]">
+    <div className="vendor-page-v7 vendor-page-v9 mx-auto min-h-full w-full max-w-[1600px] pb-7 text-[#28282D]">
       <div className="space-y-5">
         <header className="vendor-owner-heading vendor-premium-card flex flex-col gap-5 border border-[#E9E9EC] px-5 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-6">
           <div className="space-y-1.5">
@@ -363,11 +363,11 @@ export default function VendorReviewsPage() {
             </div>
             <div className="flex flex-1 flex-col justify-center px-5 py-5">
               <p className="text-[11px] font-semibold text-slate-500">Reviews answered</p>
-              <p className="mt-2 text-[34px] font-bold tabular-nums tracking-[-0.05em] text-[#224835]">
+              <p className="mt-2 text-[34px] font-bold tabular-nums tracking-[-0.05em] text-[#2C2C31]">
                 {loading ? '—' : formatNumber(replied)} <span className="text-base font-medium text-slate-400">/ {formatNumber(total)}</span>
               </p>
-              <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#e8f0e9]">
-                <div className="h-full rounded-full bg-[#30845e]" style={{ width: responseRate + '%' }} />
+              <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#F8F8FA]">
+                <div className="h-full rounded-full bg-[#242428]" style={{ width: responseRate + '%' }} />
               </div>
               <p className="mt-3 text-[10px] leading-5 text-slate-400">Response rate measures existing replies, not customer satisfaction or review approval status.</p>
             </div>
@@ -389,7 +389,7 @@ export default function VendorReviewsPage() {
               <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"><IconsaxIcon name="search-normal" size={15} /></span>
               <input type="search" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
                 placeholder="Search customer, feedback or business…"
-                className="h-9 w-full rounded-lg border border-[#e1e6ec] bg-white pl-9 pr-3 text-[11px] text-slate-700 outline-none focus:border-[#9cb9aa]" />
+                className="h-9 w-full rounded-lg border border-[#e1e6ec] bg-white pl-9 pr-3 text-[11px] text-slate-700 outline-none focus:border-[#FF7900]" />
             </label>
             <select value={businessId} aria-label="Filter reviews by business"
               onChange={e => { setBusinessId(e.target.value); setPage(1); }}
@@ -420,7 +420,7 @@ export default function VendorReviewsPage() {
               <button type="button" key={stars} aria-pressed={rating === stars}
                 onClick={() => { setRating(stars); setPage(1); }}
                 className={'inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[10px] font-bold transition ' +
-                  (rating === stars ? 'bg-[#eaf3ed] text-[#1b5438]' : 'text-slate-500 hover:bg-slate-100')}>
+                  (rating === stars ? 'bg-[#F8F8FA] text-[#2C2C31]' : 'text-slate-500 hover:bg-slate-100')}>
                 {stars === 'all' ? 'All ratings' : <>{stars} <span className="text-[#d2a051]">★</span></>}
               </button>
             ))}
@@ -432,22 +432,22 @@ export default function VendorReviewsPage() {
             <div className="px-5 py-12 text-center text-[12px] text-slate-500">Review records are temporarily unavailable.</div>
           ) : !businesses.length ? (
             <div className="flex flex-col items-center gap-3 px-6 py-12 text-center">
-              <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#eff6f1] text-[#347653]"><IconsaxIcon name="shop" size={23} /></span>
-              <h3 className="text-[13px] font-bold text-[#223d2c]">Register a business to receive reviews</h3>
+              <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#F8F8FA] text-[#2C2C31]"><IconsaxIcon name="shop" size={23} /></span>
+              <h3 className="text-[13px] font-bold text-[#2C2C31]">Register a business to receive reviews</h3>
               <p className="max-w-sm text-[11px] leading-5 text-slate-500">Customer feedback will appear here when reviews are recorded for your listings.</p>
               <Link href="/vendor/my-businesses" className="mt-1 rounded-lg bg-[#202024] px-4 py-2.5 text-[11px] font-bold text-white">Manage businesses</Link>
             </div>
           ) : !reviews.length ? (
             <div className="flex flex-col items-center gap-3 px-6 py-12 text-center">
-              <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#eff6f1] text-[#347653]"><IconsaxIcon name="star" size={23} /></span>
-              <h3 className="text-[13px] font-bold text-[#223d2c]">No reviews received yet</h3>
+              <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#F8F8FA] text-[#2C2C31]"><IconsaxIcon name="star" size={23} /></span>
+              <h3 className="text-[13px] font-bold text-[#2C2C31]">No reviews received yet</h3>
               <p className="max-w-sm text-[11px] leading-5 text-slate-500">Your customer reviews and ratings will be collected in this reputation workspace.</p>
             </div>
           ) : !filtered.length ? (
             <div className="px-5 py-12 text-center">
-              <p className="text-[12px] font-bold text-[#233d2e]">No matching reviews</p>
+              <p className="text-[12px] font-bold text-[#2C2C31]">No matching reviews</p>
               <p className="mt-1 text-[11px] text-slate-400">Adjust your search or filter selections.</p>
-              <button type="button" onClick={clearFilters} className="mt-3 text-[11px] font-bold text-[#28704e] hover:underline">Clear all filters</button>
+              <button type="button" onClick={clearFilters} className="mt-3 text-[11px] font-bold text-[#2C2C31] hover:underline">Clear all filters</button>
             </div>
           ) : (
             <>
@@ -468,9 +468,9 @@ export default function VendorReviewsPage() {
                       <tr key={review.id} className="hover:bg-[#fbfcfb]">
                         <td className="max-w-[230px] px-5 py-3.5">
                           <div className="flex items-center gap-3">
-                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#edf5f0] text-[12px] font-bold text-[#4a8060]">{(review.user_name?.trim().charAt(0) || 'A').toUpperCase()}</span>
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#F8F8FA] text-[12px] font-bold text-[#2C2C31]">{(review.user_name?.trim().charAt(0) || 'A').toUpperCase()}</span>
                             <div className="min-w-0">
-                              <p className="truncate text-[12px] font-bold text-[#223b2c]">{review.user_name || 'Anonymous'}</p>
+                              <p className="truncate text-[12px] font-bold text-[#2C2C31]">{review.user_name || 'Anonymous'}</p>
                               <p className="mt-1 truncate text-[10px] text-slate-400">{businessNames.get(String(review.business_id)) || 'Your business'}</p>
                             </div>
                           </div>
@@ -502,9 +502,9 @@ export default function VendorReviewsPage() {
                 {visible.map(review => (
                   <article key={review.id} className="p-4">
                     <div className="flex items-start gap-3">
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#edf5f0] text-[13px] font-bold text-[#4a8060]">{(review.user_name?.trim().charAt(0) || 'A').toUpperCase()}</span>
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#F8F8FA] text-[13px] font-bold text-[#2C2C31]">{(review.user_name?.trim().charAt(0) || 'A').toUpperCase()}</span>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-[12px] font-bold text-[#223b2c]">{review.user_name || 'Anonymous'}</p>
+                        <p className="truncate text-[12px] font-bold text-[#2C2C31]">{review.user_name || 'Anonymous'}</p>
                         <p className="mt-1 truncate text-[10px] text-slate-400">{businessNames.get(String(review.business_id)) || 'Your business'}</p>
                         <div className="mt-2"><Stars rating={review.rating} /></div>
                       </div>
@@ -539,13 +539,13 @@ export default function VendorReviewsPage() {
       </div>
 
       {selected && (
-        <div className="fixed inset-0 z-[90] flex justify-end bg-[#162b20]/40"
+        <div className="fixed inset-0 z-[90] flex justify-end bg-[#242428]/40"
           onMouseDown={event => { if (event.target === event.currentTarget && !submittingId) setSelectedId(null); }}>
           <section role="dialog" aria-modal="true" aria-label={'Review details for ' + (selected.user_name || 'Anonymous')}
             className="flex h-full w-full max-w-[510px] flex-col overflow-hidden bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-[#edf0ee] px-5 py-4">
               <div>
-                <h2 className="text-[14px] font-bold text-[#203e2e]">Review details</h2>
+                <h2 className="text-[14px] font-bold text-[#2C2C31]">Review details</h2>
                 <p className="mt-1 text-[11px] text-slate-400">Customer feedback & public response</p>
               </div>
               <button type="button" onClick={() => setSelectedId(null)} disabled={Boolean(submittingId)}
@@ -556,9 +556,9 @@ export default function VendorReviewsPage() {
 
             <div className="flex-1 space-y-6 overflow-y-auto px-5 py-5">
               <div className="flex items-start gap-3">
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-[#eaf3ed] text-[17px] font-bold text-[#42805b]">{(selected.user_name?.trim().charAt(0) || 'A').toUpperCase()}</span>
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-[#F8F8FA] text-[17px] font-bold text-[#2C2C31]">{(selected.user_name?.trim().charAt(0) || 'A').toUpperCase()}</span>
                 <div className="min-w-0 flex-1">
-                  <h3 className="text-[16px] font-bold text-[#233f30]">{selected.user_name || 'Anonymous'}</h3>
+                  <h3 className="text-[16px] font-bold text-[#2C2C31]">{selected.user_name || 'Anonymous'}</h3>
                   <p className="mt-1 text-[11px] text-slate-500">{businessNames.get(String(selected.business_id)) || 'Your business'}</p>
                   <p className="mt-1 text-[10px] text-slate-400">Reviewed {formatDate(selected.created_at, true)}</p>
                 </div>
@@ -568,30 +568,30 @@ export default function VendorReviewsPage() {
               </div>
 
               <div className={panel + ' p-4'}>
-                <p className="text-[11px] font-bold text-[#294634]">Customer rating</p>
+                <p className="text-[11px] font-bold text-[#2C2C31]">Customer rating</p>
                 <div className="mt-2 flex items-center gap-3">
                   <Stars rating={selected.rating} size="text-xl" />
-                  <span className="text-[13px] font-bold text-[#2c4937]">{validRating(selected.rating) ?? '—'} / 5</span>
+                  <span className="text-[13px] font-bold text-[#2C2C31]">{validRating(selected.rating) ?? '—'} / 5</span>
                 </div>
               </div>
 
               <div>
-                <h4 className="text-[12px] font-bold text-[#294634]">Customer feedback</h4>
+                <h4 className="text-[12px] font-bold text-[#2C2C31]">Customer feedback</h4>
                 <p className="mt-2 whitespace-pre-wrap break-words rounded-lg border border-[#e9eeeb] bg-[#fafcfa] p-4 text-[12px] leading-6 text-slate-600">
                   {selected.comment || 'This customer left a rating without a written comment.'}
                 </p>
               </div>
 
               <div>
-                <h4 className="text-[12px] font-bold text-[#294634]">Public reply</h4>
+                <h4 className="text-[12px] font-bold text-[#2C2C31]">Public reply</h4>
                 <p className="mt-1 text-[10px] leading-5 text-slate-400">Replies may be visible to customers. Keep your response respectful and professional.</p>
                 {reviewHasReply(selected) ? (
                   <div className="mt-3 space-y-2">
                     {[...(selected.review_replies || [])]
                       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
                       .map(reply => (
-                        <div key={reply.id} className="rounded-lg border border-[#dfebe2] bg-[#f5faf6] p-4">
-                          <div className="flex items-center gap-2 text-[11px] font-bold text-[#2b714c]">
+                        <div key={reply.id} className="rounded-lg border border-[#E7E7EC] bg-[#f5faf6] p-4">
+                          <div className="flex items-center gap-2 text-[11px] font-bold text-[#2C2C31]">
                             <IconsaxIcon name="tick-circle" size={14} /> Vendor response
                           </div>
                           <p className="mt-2 whitespace-pre-wrap break-words text-[12px] leading-6 text-slate-700">{reply.reply_text}</p>
@@ -606,7 +606,7 @@ export default function VendorReviewsPage() {
                       disabled={Boolean(submittingId)}
                       onChange={event => setReplyText(event.target.value)}
                       placeholder="Thank your customer, address their feedback and offer helpful follow-up…"
-                      className="w-full resize-y rounded-lg border border-[#dfe8e2] bg-white px-3 py-2.5 text-[12px] leading-5 text-slate-700 outline-none focus:border-[#86b29c] disabled:opacity-50" />
+                      className="w-full resize-y rounded-lg border border-[#E7E7EC] bg-white px-3 py-2.5 text-[12px] leading-5 text-slate-700 outline-none focus:border-[#FF7900] disabled:opacity-50" />
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <span className="text-[10px] text-slate-400">{replyText.length} / 2000 characters</span>
                       <button type="submit" disabled={Boolean(submittingId) || !replyText.trim()}
