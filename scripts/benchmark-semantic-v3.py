@@ -17,6 +17,7 @@ from collections import defaultdict
 
 ROOT = Path(__file__).resolve().parents[1]
 DATASET = ROOT / "tests" / "fixtures" / "semantic-v3-category-proxy.json"
+PINNED_E5_REVISION = "614241f622f53c4eeff9890bdc4f31cfecc418b3"
 
 def ndcg_at_k(ids: list[str], relevant: set[str], k: int = 10) -> float:
     def gain(index: int) -> float:
@@ -32,6 +33,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", default="intfloat/multilingual-e5-small")
     parser.add_argument("--batch-size", type=int, default=16)
+    parser.add_argument("--model-revision", default=None, help="Full immutable 40-character model commit SHA")
     parser.add_argument("--max-queries", type=int, default=240)
     parser.add_argument("--query-mode", choices=["raw","canonical"], default="raw")
     parser.add_argument("--output", type=Path, default=None)
@@ -51,9 +53,16 @@ def main() -> int:
     print(f"Loading {args.model}; model downloads and CPU time depend on the environment", file=sys.stderr)
     started = time.perf_counter()
     from huggingface_hub import model_info
-    model_revision = model_info(args.model).sha
-    if not model_revision or len(model_revision) != 40:
-        raise ValueError("Cannot pin model revision")
+    # Never resolve a moving model HEAD. The benchmark is invalid if future
+    # Hugging Face updates silently replace the exact model under test.
+    if args.model_revision is None and args.model != "intfloat/multilingual-e5-small":
+        raise ValueError("Non-default models require --model-revision")
+    model_revision = args.model_revision or PINNED_E5_REVISION
+    if len(model_revision) != 40 or any(ch not in "0123456789abcdef" for ch in model_revision):
+        raise ValueError("Model revision must be an immutable lowercase 40-character commit SHA")
+    resolved_revision = model_info(args.model, revision=model_revision).sha
+    if resolved_revision != model_revision:
+        raise ValueError("Downloaded model revision differs from requested commit SHA")
     encoder = SentenceTransformer(args.model, revision=model_revision, trust_remote_code=False)
     # E5 models require query/passsage task prefixes. Other model families must
     # use their specified text preprocessing; never compare different model spaces.
@@ -114,6 +123,9 @@ def main() -> int:
         if args.query_mode != "canonical":
             raise ValueError("Export only from the canonical model-benchmark pass")
         export = {
+          "schema_version": 1,
+          "dataset_sha256": hashlib.sha256(DATASET.read_bytes()).hexdigest(),
+          "embedding_dimensions": int(d_vectors.shape[1]),
           "model_id": args.model,
           "model_revision": model_revision,
           "content_template": "passage: {name}. Category: {category}.",
@@ -125,6 +137,12 @@ def main() -> int:
             for row, text, vector in zip(docs, docs_text, d_vectors)
           ]
         }
+        if len({row["id"] for row in docs}) != len(docs):
+            raise ValueError("Duplicate business IDs in export snapshot")
+        if not np.isfinite(d_vectors).all() or not np.allclose(
+            np.linalg.norm(d_vectors, axis=1), 1.0, rtol=0, atol=0.005
+        ):
+            raise ValueError("Business vectors are nonfinite or not normalized")
         args.export_vectors.parent.mkdir(parents=True,exist_ok=True)
         args.export_vectors.write_text(json.dumps(export,ensure_ascii=False),encoding="utf-8")
     if args.output:
