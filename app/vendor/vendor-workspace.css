@@ -237,3 +237,142 @@
   .vendor-workspace .vendor-settings .vendor-setting-section {padding:18px;}
   .vendor-workspace .vendor-settings .vendor-setting-section .flex {flex-wrap:wrap;}
 }
+
+
+/* SLBI Vendor UI v5 — restrained neutral analytics shell.
+   Reference direction: light cloud/slate canvas, white cards, crisp Inter
+   typography, lime for selected navigation only. Keeps green for semantic
+   success states rather than saturating every surface. */
+.vendor-workspace {
+  --vendor-ink:#1F2D36;
+  --vendor-slate:#6D7D89;
+  --vendor-canvas:#F2F5F7;
+  --vendor-edge:#E2E8EC;
+  --vendor-lime:#D5EEA8;
+  color:var(--vendor-ink);
+  font-family:var(--font-inter),var(--font-tamil),var(--font-sinhala),ui-sans-serif,system-ui,sans-serif;
+  font-size:13px;
+  letter-spacing:-.008em;
+}
+.vendor-workspace .vendor-sidebar {
+  background:#202C34;
+  color:#DFE6EA;
+  border-right-color:#3A4650;
+}
+.vendor-workspace .vendor-sidebar .vendor-nav-current {
+  background:#D5EEA8;
+  color:#26352C;
+  box-shadow:none;
+}
+.vendor-workspace .vendor-sidebar .vendor-nav-idle {color:#BBC7CF;}
+.vendor-workspace .vendor-sidebar .vendor-nav-idle:hover {background:#34414A;color:#fff;}
+.vendor-workspace .vendor-content {
+  background:var(--vendor-canvas);
+  scroll-behavior:smooth;
+}
+.vendor-workspace .vendor-content :is(button,a,input,textarea,select):focus-visible {
+  outline:2px solid #8DAB58;
+  outline-offset:2px;
+}
+.vendor-workspace .vendor-dashboard-v5 .vendor-overview-heading,
+.vendor-workspace .vendor-settings-v5 .vendor-settings-header {
+  border-radius:10px;
+  border-color:var(--vendor-edge);
+  box-shadow:0 2px 15px rgba(25,38,47,.025);
+}
+.vendor-workspace .vendor-dashboard-v5 .vendor-premium-card,
+.vendor-workspace .vendor-dashboard-v5 .vendor-dashboard-shortcut,
+.vendor-workspace .vendor-settings-v5 .vendor-setting-section,
+.vendor-workspace .vendor-settings-v5 .vendor-settings-navigation {
+  background:#fff;
+  background-image:none;
+  color:#283944;
+  border:1px solid var(--vendor-edge);
+  border-radius:9px;
+  box-shadow:0 2px 12px rgba(25,38,47,.027);
+}
+.vendor-workspace .vendor-dashboard-v5 .vendor-premium-card:hover {border-color:#CAD5DC;}
+.vendor-workspace .vendor-dashboard-v5 .vendor-stat-value {color:#1C2F3A;}
+.vendor-workspace .vendor-settings-v5 .vendor-settings-panels {
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+  min-width:0;
+}
+.vendor-workspace .vendor-settings-v5 .vendor-settings-panels > * {
+  flex:0 0 auto;
+  min-width:0;
+  width:100%;
+  margin:0;
+}
+.vendor-workspace .vendor-settings-v5 .vendor-setting-section {
+  padding:clamp(22px,2.5vw,32px);
+}
+.vendor-workspace .vendor-settings-v5 .vendor-kicker {
+  color:#778692;
+  letter-spacing:.13em;
+}
+.vendor-workspace .vendor-settings-v5 .vendor-setting-section h2,
+.vendor-workspace .vendor-settings-v5 .vendor-setting-section h3 {
+  color:#1E2F39;
+  font-weight:650;
+}
+.vendor-workspace .vendor-settings-v5 .vendor-field,
+.vendor-workspace .vendor-settings-v5 :is(input,select,textarea).vendor-field {
+  border:1px solid #CAD4DB;
+  border-radius:6px;
+  background:#FFFFFF;
+  box-shadow:0 1px 2px rgba(20,40,55,.025);
+  color:#263A45;
+}
+.vendor-workspace .vendor-settings-v5 :is(input,select,textarea).vendor-field:focus {
+  border-color:#779A66;
+  box-shadow:0 0 0 3px rgba(170,201,130,.18);
+}
+.vendor-workspace .vendor-settings-v5 .vendor-label {
+  color:#566773;
+  font-weight:650;
+  margin-bottom:8px;
+}
+.vendor-workspace .vendor-settings-v5 .vendor-keyword-input {
+  width:auto!important;
+  min-width:0!important;
+  flex:1 1 0%;
+}
+.vendor-workspace .vendor-settings-v5 .vendor-settings-savebar {
+  position:relative;
+  align-items:center;
+  min-height:59px;
+  margin-top:20px;
+  padding-top:17px;
+  border-top:1px solid #E5EBEE;
+}
+.vendor-workspace .vendor-settings-v5 .vendor-primary-button {
+  min-height:42px;
+  border-color:#263B43;
+  background:#263B43;
+  color:#fff;
+  border-radius:6px;
+  box-shadow:none;
+}
+.vendor-workspace .vendor-settings-v5 .vendor-primary-button:hover:not(:disabled) {
+  background:#172B32;
+}
+.vendor-workspace .vendor-settings-v5 .vendor-outline-button {
+  border-color:#D5DFE4;
+  background:#fff;
+  color:#334853;
+  border-radius:6px;
+}
+.vendor-workspace .vendor-settings-v5 .vendor-outline-button:hover {background:#F5F8F9;}
+.vendor-workspace .vendor-settings-v5 .vendor-settings-navigation .vendor-nav-current {
+  background:#D5EEA8;
+}
+@media(max-width:767px) {
+  .vendor-workspace .vendor-settings-v5 .vendor-setting-section {padding:18px;}
+  .vendor-workspace .vendor-settings-v5 .vendor-settings-savebar > button {
+    max-width:100%;
+  }
+  .vendor-workspace .vendor-dashboard-v5 .vendor-overview-heading,
+  .vendor-workspace .vendor-settings-v5 .vendor-settings-header {padding:20px;}
+}
