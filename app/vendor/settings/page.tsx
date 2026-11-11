@@ -369,7 +369,7 @@ export default function SettingsPage() {
             <div className="mt-8 flex flex-wrap items-center justify-between gap-5 border-t border-[#d4d9e2] pt-6 [&_p]:text-xs [&_p]:leading-6 [&_p]:text-[#7b8190]"><p>Official registration documents are reviewed by the SLBI team.</p><button type="button" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-[#ff7900] px-6 text-xs font-extrabold text-white shadow-[5px_5px_12px_#c6cbd4,-5px_-5px_12px_#ffffff] transition hover:bg-[#e76c00] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ff7900] disabled:cursor-not-allowed disabled:opacity-45" disabled={saving||!selectedBusinessId||pending||verified||!privateDocsReady||!verificationFile} onClick={()=>void submitVerification()}>{saving?<Loader2 size={17} className="animate-spin"/>:<ShieldCheck size={17}/>} {submitLabel}</button></div>
           </section>}
 
-          {activeTab==='optimization'&&<section aria-labelledby="ss-optimization-heading" className="min-w-0 rounded-[28px] bg-[#e9edf4] p-5 shadow-[12px_12px_28px_#c9cdd5,-12px_-12px_28px_#ffffff] sm:p-8 lg:p-10 ss-optimization" id="panel-optimization">
+          {activeTab==='optimization'&&<section aria-labelledby="ss-optimization-heading" className="min-w-0 rounded-[28px] bg-[#e9edf4] p-5 shadow-[12px_12px_28px_#c9cdd5,-12px_-12px_28px_#ffffff] sm:p-8 lg:p-10" id="panel-optimization">
             <div className="mb-7 border-b border-[#d4d9e2] pb-6 [&_h2]:mt-3 [&_h2]:text-2xl [&_h2]:font-extrabold [&_h2]:tracking-[-.04em] [&_h2]:text-[#252834] sm:[&_h2]:text-[30px] [&_p]:mt-2 [&_p]:max-w-[690px] [&_p]:text-sm [&_p]:leading-7 [&_p]:text-[#767c89]">
               <span className="inline-flex items-center gap-2 text-[10px] font-extrabold tracking-[.14em] text-[#e67418]"><Globe size={15}/> BUSINESS DISCOVERABILITY</span>
               <h2 id="ss-optimization-heading">Local reach & SEO</h2>
@@ -383,7 +383,7 @@ export default function SettingsPage() {
             </div>
 
             <div className="grid gap-6 xl:grid-cols-2">
-              <article className="min-w-0 rounded-[24px] bg-[#e9edf4] p-5 shadow-[6px_6px_15px_#c6cbd5,-6px_-6px_15px_#ffffff] sm:p-6 ss-radius-card">
+              <article className="min-w-0 rounded-[24px] bg-[#e9edf4] p-5 shadow-[6px_6px_15px_#c6cbd5,-6px_-6px_15px_#ffffff] sm:p-6">
                 <div className="flex items-center gap-3 [&_div]:min-w-0 [&_div]:flex-1 [&_div_span]:text-[10px] [&_div_span]:font-bold [&_div_span]:tracking-[.11em] [&_div_span]:text-[#dc7525] [&_h3]:mt-1 [&_h3]:text-lg [&_h3]:font-extrabold"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[15px] bg-[#e9edf4] text-[#ec7519] shadow-[4px_4px_9px_#c4c9d2,-4px_-4px_9px_#ffffff]"><MapPin size={19}/></span><div><span>01 / SERVICE AREA</span><h3>Service radius</h3></div></div>
                 <p className="my-5 text-xs leading-6 text-[#78808d]">Set the distance your business can genuinely serve.</p>
                 <div className="mb-5 flex items-baseline gap-3 [&_strong]:text-5xl [&_strong]:font-extrabold [&_strong]:tracking-[-.07em] [&_span]:text-sm [&_span]:text-[#818796]"><strong>{radius}</strong><span>kilometres</span></div>
@@ -393,7 +393,7 @@ export default function SettingsPage() {
                 </div>
                 <p className="text-[11px] leading-6 text-[#868b99]">Search ranking also depends on location accuracy, relevance and user filters.</p>
               </article>
-              <article className="min-w-0 rounded-[24px] bg-[#e9edf4] p-5 shadow-[6px_6px_15px_#c6cbd5,-6px_-6px_15px_#ffffff] sm:p-6 ss-keywords-card">
+              <article className="min-w-0 rounded-[24px] bg-[#e9edf4] p-5 shadow-[6px_6px_15px_#c6cbd5,-6px_-6px_15px_#ffffff] sm:p-6">
                 <div className="flex items-center gap-3 [&_div]:min-w-0 [&_div]:flex-1 [&_div_span]:text-[10px] [&_div_span]:font-bold [&_div_span]:tracking-[.11em] [&_div_span]:text-[#dc7525] [&_h3]:mt-1 [&_h3]:text-lg [&_h3]:font-extrabold"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[15px] bg-[#e9edf4] text-[#ec7519] shadow-[4px_4px_9px_#c4c9d2,-4px_-4px_9px_#ffffff]"><Search size={19}/></span><div><span>02 / SEARCH DISCOVERY</span><h3>Search keywords</h3></div><span className="ml-auto rounded-full bg-[#fff0e1] px-2.5 py-1 text-[10px] font-extrabold text-[#c2651d]">{keywords.length}/10</span></div>
                 <p className="my-5 text-xs leading-6 text-[#78808d]">Use specific services and terms customers actually search for.</p>
                 <div className="min-w-0 mt-5"><label className={label} htmlFor="vendor-seo-keyword">Add a keyword</label>
