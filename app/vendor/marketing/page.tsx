@@ -11,8 +11,8 @@ type Campaign = {id:string;business_id:string|null;banner_text:string;banner_col
 type Objective = 'awareness'|'promotion'|'enquiries'|'announcement';
 type Language = 'English'|'தமிழ்'|'සිංහල';
 type Section = 'overview'|'social'|'email'|'calendar'|'library';
-const card='border border-[#DCE6DE] bg-white shadow-[0_2px_12px_rgba(22,56,37,.035)]';
-const input='w-full min-h-10 border border-[#D7E2D9] bg-white px-3 py-2.5 text-[12px] text-[#264736] outline-none focus:border-[#4D8F64] focus:ring-2 focus:ring-[#E0EFE4]';
+const card='rounded-[10px] border border-[#E9E9EC] bg-white shadow-[0_3px_16px_rgba(25,25,31,.028)]';
+const input='w-full min-h-10 rounded-[6px] border border-[#DBDBDF] bg-white px-3 py-2.5 text-[12px] text-[#264736] outline-none focus:border-[#4D8F64] focus:ring-2 focus:ring-[#E0EFE4]';
 const objectives: {key:Objective;title:string;description:string}[]=[
   {key:'awareness',title:'Brand awareness',description:'Introduce your business and what makes it useful'},
   {key:'promotion',title:'Offer / promotion',description:'Communicate a real offer and its conditions'},
@@ -181,16 +181,16 @@ export default function MarketingPage() {
   ];
   const launch=(target:Section)=>{setSection(target);document.getElementById('marketing-workspace')?.scrollIntoView({behavior:'smooth',block:'start'});};
   return (
-    <div className="mx-auto max-w-[1480px] space-y-5 pb-8 text-[#213D30]">
-      <header className="grid gap-5 border-b border-[#DCE7DF] bg-white px-5 py-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-end md:px-7">
+    <div className="vendor-page-v7 mx-auto w-full max-w-[1600px] space-y-5 pb-8 text-[#28282D]">
+      <header className="vendor-owner-heading grid gap-5 border border-[#E9E9EC] bg-white px-5 py-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-end md:px-7">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#538262]">SLBI Growth OS / Marketing Engine</p>
+          <p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#B3611E]">SLBI Growth OS / Marketing Engine</p>
           <h1 className="mt-2 text-[28px] font-bold tracking-[-.045em] md:text-[34px]">Marketing Studio</h1>
-          <p className="mt-2 max-w-[720px] text-[12px] leading-6 text-[#647B6B]">Build business-aware campaigns, review multilingual copy, plan distribution, and keep a clear record of every draft. No generic canvas editor.</p>
+          <p className="mt-2 max-w-[720px] text-[12px] leading-6 text-[#777780]">Build business-aware campaigns, review multilingual copy, plan distribution, and keep a clear record of every draft. No generic canvas editor.</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link href="/vendor/insights" className="flex h-10 items-center gap-2 border border-[#CFE0D3] px-4 text-[12px] font-semibold text-[#3A6348] hover:bg-[#F3F9F3]"><IconsaxIcon name="status-up" size={17}/> Growth insights</Link>
-          <button type="button" onClick={()=>launch('social')} className="flex h-10 items-center gap-2 bg-[#235B3C] px-4 text-[12px] font-semibold text-white hover:bg-[#19472E]"><IconsaxIcon name="add" size={17} color="white"/> New campaign</button>
+          <Link href="/vendor/insights" className="flex h-10 items-center gap-2 border border-[#DEDEE2] px-4 text-[12px] font-semibold text-[#54545C] hover:bg-[#FFF8F2]"><IconsaxIcon name="status-up" size={17}/> Growth insights</Link>
+          <button type="button" onClick={()=>launch('social')} className="flex h-10 items-center gap-2 bg-[#202024] px-4 text-[12px] font-semibold text-white hover:bg-[#39393E]"><IconsaxIcon name="add" size={17} color="white"/> New campaign</button>
         </div>
       </header>
       {error&&<div role="alert" className="border border-red-200 bg-red-50 p-4 text-[12px] text-red-800">{error}</div>}
@@ -201,8 +201,8 @@ export default function MarketingPage() {
           {title:'Drafts',value:draftCount,sub:'Awaiting your approval',icon:'edit'},
           {title:'Planning dates',value:scheduledCount,sub:'Not automatic social publishing',icon:'calendar'},
         ].map(k=><div key={k.title} className={card+' flex items-start justify-between p-5'}>
-          <div><p className="text-[11px] font-semibold text-[#6C8370]">{k.title}</p><p className="mt-2 text-[29px] font-bold tabular-nums tracking-tight">{loading?'—':k.value}</p><p className="mt-1 text-[10px] text-[#8B998D]">{k.sub}</p></div>
-          <span className="bg-[#E8F2EA] p-2.5 text-[#38734C]"><IconsaxIcon name={k.icon} size={20}/></span>
+          <div><p className="text-[11px] font-semibold text-[#6D6D76]">{k.title}</p><p className="mt-2 text-[29px] font-bold tabular-nums tracking-tight">{loading?'—':k.value}</p><p className="mt-1 text-[10px] text-[#9898A0]">{k.sub}</p></div>
+          <span className="bg-[#FFF1E6] p-2.5 text-[#C56210]"><IconsaxIcon name={k.icon} size={20}/></span>
         </div>)}
       </div>
       <section aria-label="Marketing services" className="grid gap-3 md:grid-cols-3">
@@ -233,7 +233,7 @@ export default function MarketingPage() {
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               {['1 · Select an owned business','2 · Define campaign objective','3 · Review multilingual copy','4 · Approve and export','5 · Record planned date','6 · Measure real results'].map(step=><div key={step} className="border border-[#E2EAE2] bg-[#FAFCFA] p-4 text-[12px] font-semibold text-[#355741]">{step}</div>)}
             </div>
-            <button type="button" onClick={()=>setSection('social')} className="mt-6 bg-[#235B3C] px-5 py-3 text-xs font-bold text-white">Create a campaign brief</button>
+            <button type="button" onClick={()=>setSection('social')} className="mt-6 bg-[#202024] px-5 py-3 text-xs font-bold text-white">Create a campaign brief</button>
           </div>}
           {section==='social'&&<div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(280px,.85fr)]">
             <div className={card+' min-w-0 p-5 md:p-6'}>
@@ -271,7 +271,7 @@ export default function MarketingPage() {
                   <input type="datetime-local" min={now} value={scheduledAt} onChange={e=>setScheduledAt(e.target.value)} className={input+' mt-1.5'}/></label>
               </div>
               <div className="mt-6 flex flex-wrap gap-2 border-t border-[#E5EBE4] pt-5">
-                <button type="button" disabled={saving||!userId} onClick={()=>void save(false)} className="bg-[#235B3C] px-4 py-2.5 text-[12px] font-bold text-white disabled:opacity-40">Save draft</button>
+                <button type="button" disabled={saving||!userId} onClick={()=>void save(false)} className="bg-[#202024] px-4 py-2.5 text-[12px] font-bold text-white disabled:opacity-40">Save draft</button>
                 <button type="button" disabled={saving||!userId||!scheduledAt} onClick={()=>void save(true)} className="border border-[#C9DCCF] px-4 py-2.5 text-[12px] font-semibold text-[#316648] disabled:opacity-40">Record planned date</button>
               </div>
             </div>
