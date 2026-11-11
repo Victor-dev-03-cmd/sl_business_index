@@ -140,18 +140,22 @@ export default function GrowthInsightsPage() {
   );
 
   return (
-    <div className="mx-auto max-w-[1460px] space-y-6 px-3 py-7 sm:px-6 lg:px-8">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="text-[10px] font-extrabold uppercase tracking-[0.17em] text-[#6B987C]">Growth intelligence / 01</p>
-          <h1 className="mt-1 text-[28px] font-bold tracking-[-0.045em] text-[#203B30]">Discovery & lead insights</h1>
-          <p className="mt-1 max-w-3xl text-[12px] leading-6 text-slate-500">Understand your recorded directory interactions and CRM enquiries — with clear separation between clicks, leads and confirmed business results.</p>
+    <div className="mx-auto max-w-[1500px] space-y-5 pb-6">
+      <header className="vendor-premium-header flex flex-col items-start justify-between gap-5 px-6 py-7 sm:px-8 sm:py-9 lg:flex-row lg:items-end">
+        <div className="relative z-10 max-w-2xl">
+          <p className="text-[10px] font-extrabold uppercase tracking-[.17em] text-[#BEDCB2]">Growth intelligence / Owner insights</p>
+          <h1 className="mt-2 text-[30px] font-extrabold tracking-[-.045em] text-white sm:text-[35px]">Know what drives your growth.</h1>
+          <p className="mt-2 text-[12px] leading-6 text-[#DCEBDD]">Understand recorded listing views, customer actions and stored enquiries. Clicks and CRM stages are never presented as verified sales.</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-bold text-[#D5E9D3]">Business-scoped metrics</span>
+            <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-bold text-[#D5E9D3]">Transparent attribution</span>
+          </div>
         </div>
         <button type="button" onClick={() => setRefreshKey(n => n + 1)} disabled={loading}
-          className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#D3DDD4] bg-white px-4 text-xs font-semibold text-[#28523C] transition hover:bg-[#F0F8F0] disabled:opacity-50">
+          className="relative z-10 inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/25 bg-[#F4FAEF] px-4 text-xs font-bold text-[#275B3B] transition hover:bg-white disabled:opacity-50">
           <IconsaxIcon name="refresh" size={15} /> Refresh
         </button>
-      </div>
+      </header>
 
       <div className={panel + ' flex flex-wrap items-center gap-3 p-4'}>
         <label className="flex min-w-[210px] flex-1 flex-col gap-1 text-[11px] font-bold text-[#577060]">
