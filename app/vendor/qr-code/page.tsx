@@ -16,8 +16,8 @@ const tones=[
   {name:'Midnight',fg:'#17283A',accent:'#2D5276'},
   {name:'Black',fg:'#111827',accent:'#222222'},
 ] as const;
-const panel='border border-[#DEE7DF] bg-white shadow-[0_3px_15px_rgba(27,64,40,.035)]';
-const input='min-h-11 w-full border border-[#D8E3DA] bg-white px-3 text-[12px] text-[#264734] outline-none focus:border-[#70A27A]';
+const panel='rounded-[10px] border border-[#E9E9EC] bg-white shadow-[0_3px_16px_rgba(25,25,31,.028)]';
+const input='min-h-11 w-full rounded-[6px] border border-[#DBDBDF] bg-white px-3 text-[12px] text-[#264734] outline-none focus:border-[#70A27A]';
 const layouts:{key:Format;title:string;sub:string}[]=[
   {key:'counter',title:'Counter display',sub:'A clear invitation for customers at checkout'},
   {key:'window',title:'Window sticker',sub:'High-contrast label for storefront entrances'},
@@ -161,19 +161,19 @@ export default function VendorQRStudioPage(){
   };
   if(loading)return <div role="status" className={panel+' p-8 text-sm text-[#4B7459]'}>Loading QR workspace…</div>;
   if(!signedIn)return <div className={panel+' p-8 text-sm'}>Sign in to access your QR Studio. <Link href="/login?redirect=/vendor/qr-code" className="font-bold text-[#286846] underline">Sign in</Link></div>;
-  return <div className="mx-auto max-w-[1470px] space-y-5 pb-8 text-[#263E2D]">
-    <header className="grid gap-3 border-b border-[#D7E5DA] bg-white p-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
-      <div><p className="text-[10px] font-bold uppercase tracking-[.18em] text-[#5F946B]">Digital storefront / QR Studio</p>
-        <h1 className="mt-2 text-[30px] font-bold tracking-[-.04em]">QR Studio</h1><p className="mt-1 max-w-[690px] text-[12px] leading-6 text-[#728578]">Create a professionally branded scan experience for your real directory listing. Configure, preview, export and print without leaving your workspace.</p></div>
-      <div className="flex flex-wrap gap-2"><Link href="/vendor/insights" className="flex h-10 items-center gap-2 border border-[#D1E1D4] px-4 text-[11px] font-bold text-[#336E4A]"><IconsaxIcon name="status-up" size={16}/> Growth insights</Link>
-        <button type="button" onClick={()=>void load()} className="flex h-10 items-center gap-2 border border-[#D1E1D4] px-4 text-[11px] font-bold text-[#336E4A]"><IconsaxIcon name="refresh" size={16}/> Refresh</button></div>
+  return <div className="vendor-page-v7 mx-auto w-full max-w-[1600px] space-y-5 pb-8 text-[#28282D]">
+    <header className="vendor-owner-heading grid gap-3 border border-[#E9E9EC] bg-white p-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+      <div><p className="text-[10px] font-bold uppercase tracking-[.18em] text-[#B3611E]">Digital storefront / QR Studio</p>
+        <h1 className="mt-2 text-[30px] font-bold tracking-[-.04em]">QR Studio</h1><p className="mt-1 max-w-[690px] text-[12px] leading-6 text-[#777780]">Create a professionally branded scan experience for your real directory listing. Configure, preview, export and print without leaving your workspace.</p></div>
+      <div className="flex flex-wrap gap-2"><Link href="/vendor/insights" className="flex h-10 items-center gap-2 border border-[#DEDEE2] px-4 text-[11px] font-bold text-[#505058]"><IconsaxIcon name="status-up" size={16}/> Growth insights</Link>
+        <button type="button" onClick={()=>void load()} className="flex h-10 items-center gap-2 border border-[#DEDEE2] px-4 text-[11px] font-bold text-[#505058]"><IconsaxIcon name="refresh" size={16}/> Refresh</button></div>
     </header>
     {error&&<div role="alert" className="border border-[#EABBB5] bg-[#FFF7F5] p-4 text-[12px] text-[#8D5245]">{error}</div>}
     <div className="grid gap-3 sm:grid-cols-3">{[
       ['Linked listings',String(businesses.length),'Your owned directory profiles','shop'],
       ['QR status',busy?'Checking…':assigned?'Assigned':'Not assigned','Assigned to selected business','scan-barcode'],
       ['Export','PNG · SVG · PDF','Print and vector export options','document-download'],
-    ].map(item=><div key={item[0]} className={panel+' flex items-start justify-between p-5'}><div><p className="text-[10px] font-bold text-[#748A7A]">{item[0]}</p><p className="mt-2 text-[22px] font-bold text-[#234934]">{item[1]}</p><p className="mt-1 text-[10px] text-[#8B9B8F]">{item[2]}</p></div><span className="bg-[#E8F2E9] p-2.5 text-[#397750]"><IconsaxIcon name={item[3]} size={19}/></span></div>)}</div>
+    ].map(item=><div key={item[0]} className={panel+' flex items-start justify-between p-5'}><div><p className="text-[10px] font-bold text-[#6D6D76]">{item[0]}</p><p className="mt-2 text-[22px] font-bold text-[#28282D]">{item[1]}</p><p className="mt-1 text-[10px] text-[#9898A0]">{item[2]}</p></div><span className="bg-[#FFF1E6] p-2.5 text-[#C56210]"><IconsaxIcon name={item[3]} size={19}/></span></div>)}</div>
     {!businesses.length?<section className={panel+' space-y-3 p-8'}><h2 className="text-lg font-bold">Start with a business listing</h2><p className="text-[12px] text-[#748978]">Register or claim an owned business before assigning a QR code.</p><Link className="inline-flex bg-[#255C3E] px-4 py-3 text-xs font-bold text-white" href="/register-business">Register business</Link></section>:
     <div className="grid items-start gap-5 xl:grid-cols-[330px_minmax(0,1fr)_250px]">
       <section className={panel+' min-w-0 p-5'}>
