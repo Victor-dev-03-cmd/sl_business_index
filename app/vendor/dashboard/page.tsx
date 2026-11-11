@@ -193,7 +193,7 @@ export default function VendorDashboard() {
   }
 
   return (
-    <div className="vendor-dashboard-v5 vendor-dashboard-v6 mx-auto min-h-full w-full max-w-[1760px] space-y-6 pb-9 text-[#232326]">
+    <div className="vendor-dashboard-v5 vendor-dashboard-v6 vendor-page-v9 mx-auto min-h-full w-full max-w-[1760px] space-y-6 pb-9 text-[#232326]">
       <div className="space-y-5">
 
         <header className="vendor-overview-heading overflow-hidden rounded-[16px] border border-[#ECEAEC] bg-white px-6 py-7 shadow-[0_12px_35px_rgba(22,22,24,.035)] sm:px-8 sm:py-8">
@@ -246,7 +246,7 @@ export default function VendorDashboard() {
                   <IconsaxIcon name={kpi.icon} variant="linear" size={18} />
                 </span>
               </div>
-              <p className="mt-1.5 text-[26px] font-bold tabular-nums tracking-[-0.04em] text-[#182b25]">
+              <p className="mt-1.5 text-[26px] font-bold tabular-nums tracking-[-0.04em] text-[#2C2C31]">
                 {loading ? <span className="inline-block h-7 w-16 animate-pulse rounded bg-slate-100" /> : number(metrics[kpi.id])}
               </p>
               <p className="mt-2 text-[10px] leading-4 text-slate-400">{kpi.explanation}</p>
@@ -255,11 +255,11 @@ export default function VendorDashboard() {
           <div className={panel + ' col-span-2 min-w-0 p-4 md:col-span-1'}>
             <div className="flex items-start justify-between gap-2">
               <span className="text-[11px] font-semibold text-slate-500">Call-click rate</span>
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#eff5f0] text-[#277650]">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#F8F8FA] text-[#2C2C31]">
                 <IconsaxIcon name="chart" size={18} />
               </span>
             </div>
-            <p className="mt-1.5 text-[26px] font-bold tabular-nums tracking-[-0.04em] text-[#182b25]">
+            <p className="mt-1.5 text-[26px] font-bold tabular-nums tracking-[-0.04em] text-[#2C2C31]">
               {loading ? '—' : callRate === null ? '—' : callRate.toFixed(1) + '%'}
             </p>
             <p className="mt-2 text-[10px] leading-4 text-slate-400">Call clicks ÷ views · not unique-user conversion</p>
@@ -382,17 +382,17 @@ export default function VendorDashboard() {
                 <IconsaxIcon name="search-normal" size={16} />
               </span>
               <input value={query} aria-label="Search businesses" onChange={e => { setQuery(e.target.value); setPage(1); }}
-                placeholder="Search businesses…" className="h-9 w-full rounded-lg border border-[#e1e6ec] bg-white pl-9 pr-3 text-[12px] text-slate-700 outline-none transition focus:border-[#9cb9aa]" />
+                placeholder="Search businesses…" className="h-9 w-full rounded-lg border border-[#e1e6ec] bg-white pl-9 pr-3 text-[12px] text-slate-700 outline-none transition focus:border-[#FF7900]" />
             </div>
             <select aria-label="Filter businesses" value={statusFilter} onChange={e => { setStatusFilter(e.target.value as StatusFilter); setPage(1); }}
-              className="h-9 rounded-lg border border-[#e1e6ec] bg-white px-3 text-xs text-slate-600 focus:border-[#9cb9aa]">
+              className="h-9 rounded-lg border border-[#e1e6ec] bg-white px-3 text-xs text-slate-600 focus:border-[#FF7900]">
               <option value="all">All listings</option>
               <option value="approved">Published</option>
               <option value="pending">Pending / review</option>
               <option value="open">Open businesses</option>
             </select>
             <select aria-label="Sort businesses" value={sort} onChange={e => { setSort(e.target.value as SortKey); setPage(1); }}
-              className="h-9 rounded-lg border border-[#e1e6ec] bg-white px-3 text-xs text-slate-600 focus:border-[#9cb9aa]">
+              className="h-9 rounded-lg border border-[#e1e6ec] bg-white px-3 text-xs text-slate-600 focus:border-[#FF7900]">
               <option value="views">Most viewed</option>
               <option value="calls">Most calls</option>
               <option value="name">Name A–Z</option>
@@ -405,7 +405,7 @@ export default function VendorDashboard() {
           ) : businesses.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-2 px-6 py-12 text-center">
               <IconsaxIcon name="shop" size={30} color="#7c9c8a" />
-              <h3 className="text-sm font-bold text-[#324b3c]">No registered businesses yet</h3>
+              <h3 className="text-sm font-bold text-[#2C2C31]">No registered businesses yet</h3>
               <p className="text-xs text-slate-500">Add your first listing to start tracking its performance.</p>
               <Link href="/register-business" className="mt-2 rounded-lg bg-[#1F1F21] px-4 py-2.5 text-xs font-semibold text-white">Register business</Link>
             </div>
@@ -444,8 +444,8 @@ export default function VendorDashboard() {
                           </div>
                         </td>
                         <td className="px-3 py-3">
-                          <span className={'inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[10px] font-semibold ' + (published ? 'bg-[#eaf6ee] text-[#2b8b54]' : 'bg-[#fff5e8] text-[#af792c]')}>
-                            <span className={'h-1.5 w-1.5 rounded-full ' + (published ? 'bg-[#2b9c61]' : 'bg-[#d19c45]')} />
+                          <span className={'inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[10px] font-semibold ' + (published ? 'bg-[#F8F8FA] text-[#2C2C31]' : 'bg-[#fff5e8] text-[#af792c]')}>
+                            <span className={'h-1.5 w-1.5 rounded-full ' + (published ? 'bg-[#242428]' : 'bg-[#d19c45]')} />
                             {published ? 'Published' : business.status === 'rejected' ? 'Needs attention' : 'Under review'}
                           </span>
                         </td>
@@ -454,13 +454,13 @@ export default function VendorDashboard() {
                         <td className="px-3 py-3 text-center">
                           <button type="button" disabled={busy} onClick={() => void toggleOpen(business)}
                             aria-label={(business.is_open ? 'Mark closed: ' : 'Mark open: ') + business.name}
-                            className={'rounded-md border px-2.5 py-1.5 text-[10px] font-semibold disabled:opacity-50 ' + (business.is_open ? 'border-[#d8efe0] bg-[#f0faf3] text-[#268459]' : 'border-[#e6e9ec] bg-[#f7f8fa] text-slate-500')}>
+                            className={'rounded-md border px-2.5 py-1.5 text-[10px] font-semibold disabled:opacity-50 ' + (business.is_open ? 'border-[#E7E7EC] bg-[#F8F8FA] text-[#2C2C31]' : 'border-[#e6e9ec] bg-[#f7f8fa] text-slate-500')}>
                             {busy ? 'Saving…' : business.is_open ? 'Open' : 'Closed'}
                           </button>
                         </td>
                         <td className="px-5 py-3 text-right">
                           <Link href={'/vendor/my-businesses/' + business.id + '/edit'} aria-label={'Edit ' + business.name}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-500 hover:bg-[#eef5f0] hover:text-[#26774e]">
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-500 hover:bg-[#FFF4EA] hover:text-[#C85D00]">
                             <IconsaxIcon name="edit-2" size={17} />
                           </Link>
                         </td>
@@ -485,7 +485,7 @@ export default function VendorDashboard() {
           <section className={panel + ' overflow-hidden'}>
             <div className="flex items-center justify-between border-b border-[#EEEAEB] px-5 py-4">
               <div><h2 className="text-[13px] font-bold text-[#27272C]">Recent customer activity</h2><p className="mt-1 text-[11px] text-slate-400">Latest reviews on your listings</p></div>
-              <Link href="/vendor/reviews" className="flex items-center gap-1 text-[11px] font-semibold text-[#287750]">All reviews <IconsaxIcon name="arrow-right-2" size={12} /></Link>
+              <Link href="/vendor/reviews" className="flex items-center gap-1 text-[11px] font-semibold text-[#2C2C31]">All reviews <IconsaxIcon name="arrow-right-2" size={12} /></Link>
             </div>
             {loading ? <p className="p-5 text-xs text-slate-400">Loading reviews…</p> : reviews.length === 0 ? (
               <p className="p-7 text-center text-xs text-slate-400">No customer reviews recorded yet.</p>
