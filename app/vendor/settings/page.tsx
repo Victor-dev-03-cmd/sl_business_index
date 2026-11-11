@@ -34,8 +34,10 @@ const tabList:{id:Tab;name:string;detail:string;icon:typeof User}[]=[
   {id:'notifications',name:'Notifications',detail:'Communication choices',icon:Bell},
   {id:'security',name:'Security',detail:'Account protection',icon:LockKeyhole},
 ];
-const field='vendor-field';
-const label='vendor-label';
+// Explicit utility classes ensure form affordances and dimensions do not depend
+// on CSS cascade order. Keep controls visually distinct on every theme/device.
+const field='vendor-field block h-11 w-full min-w-0 rounded-md border border-[#C6D5CA] bg-[#FCFDFB] px-3.5 py-2.5 text-[13px] leading-5 text-[#1E3E2C] shadow-[inset_0_1px_2px_rgba(25,54,35,.03)] outline-none focus:border-[#478B63] focus:ring-2 focus:ring-[#E0EEE3] disabled:cursor-not-allowed disabled:bg-[#F1F5F1] disabled:text-[#6D8572]';
+const label='vendor-label mb-2 block text-[11px] font-bold leading-5 text-[#3D5E49]';
 
 function statusLabel(value:string){
   if(value==='approved'||value==='verified')return 'Verified';
@@ -291,10 +293,10 @@ export default function SettingsPage() {
       {error&&<div role="alert" className="rounded-xl border border-[#E9D3BE] bg-[#FFF9ED] p-4 text-[12px] text-[#875E38]">{error}<Link href="/login?redirect=/vendor/settings" className="ml-2 underline">Sign in</Link></div>}
       {loading&&<div role="status" className="vendor-premium-panel flex items-center gap-3 p-5 text-sm text-[#50745C]"><Loader2 className="animate-spin" size={18}/> Loading your settings…</div>}
 
-      <div className="grid min-w-0 items-start gap-4 xl:grid-cols-[238px_minmax(0,1fr)] xl:gap-6">
-        <div className="vendor-premium-card min-w-0 overflow-hidden p-2 xl:sticky xl:top-5">
+      <div className="grid min-w-0 grid-cols-1 items-start gap-5 lg:grid-cols-[238px_minmax(0,1fr)] lg:gap-6">
+        <div className="vendor-premium-card min-w-0 overflow-hidden p-2 lg:sticky lg:top-5">
           <p className="px-3 pb-3 pt-4 text-[10px] font-bold uppercase tracking-[.17em] text-[#8B9F90]">Workspace settings</p>
-          <nav aria-label="Vendor settings sections" className="grid grid-cols-1 gap-1 sm:grid-cols-2 xl:grid-cols-1" role="tablist" aria-orientation="vertical">
+          <nav aria-label="Vendor settings sections" className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-1" role="tablist" aria-orientation="vertical">
             {tabList.map(item=><button type="button" role="tab" id={'tab-'+item.id} aria-selected={activeTab===item.id} aria-controls={'panel-'+item.id} key={item.id} onClick={()=>selectTab(item.id)}
               className={'flex min-h-12 w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition '+(activeTab===item.id?'bg-[#E8F4E9] text-[#215F3D]':'text-[#617C68] hover:bg-[#F6F9F4] hover:text-[#29553A]')}>
               <span className={'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl '+(activeTab===item.id?'bg-white text-[#267048]':'bg-[#F3F6F1] text-[#7D9582]')}><item.icon size={17}/></span>
@@ -306,19 +308,19 @@ export default function SettingsPage() {
           </div>
         </div>
         <div className="min-w-0 w-full space-y-5">
-          {activeTab==='profile'&&<section role="tabpanel" id="panel-profile" aria-labelledby="tab-profile" className="vendor-setting-section space-y-6">
+          {activeTab==='profile'&&<section role="tabpanel" id="panel-profile" aria-labelledby="tab-profile" className="vendor-setting-section w-full min-w-0 space-y-6 border border-[#DCE7DE] bg-white p-5 shadow-sm sm:p-7">
             <div><p className="vendor-kicker">Personal profile</p><h2 className="mt-1 text-[22px] font-extrabold text-[#213F2D]">Account identity</h2><p className="mt-1 text-[12px] text-[#829787]">This information belongs to your account, not to any single business listing.</p></div>
             <div className="flex flex-wrap items-center gap-4 rounded-[16px] border border-[#E5ECE5] bg-[#FAFCF8] p-4">
               <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[18px] bg-[#254E38] text-xl font-extrabold text-white">{initials||'V'}</div>
               <div><p className="text-[14px] font-bold text-[#274A34]">{profile.full_name||'Complete your profile'}</p><p className="mt-1 text-[11px] text-[#718675]">{profile.email||'Email is linked to your signed-in account'}</p><span className="mt-2 inline-flex items-center gap-1 rounded-full border border-[#D8E7DC] bg-white px-2 py-1 text-[10px] font-semibold text-[#587C60]"><ShieldCheck size={12}/> Account owner</span></div>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div><label className={label} htmlFor="vendor-name">Full name</label><input id="vendor-name" className={field} maxLength={100} autoComplete="name" value={profile.full_name} onChange={e=>setProfile(v=>({...v,full_name:e.target.value}))}/></div>
-              <div><label className={label} htmlFor="vendor-email">Account email</label><input id="vendor-email" className={field} type="email" disabled value={profile.email}/><p className="mt-1.5 text-[10px] text-[#8D9C8F]">Email changes require authentication verification.</p></div>
-              <div><label className={label} htmlFor="vendor-phone">Contact phone</label><input id="vendor-phone" className={field} type="tel" maxLength={30} autoComplete="tel" value={profile.phone} onChange={e=>setProfile(v=>({...v,phone:e.target.value}))}/></div>
-              <div><label className={label} htmlFor="vendor-job">Role or job title</label><input id="vendor-job" className={field} maxLength={100} value={profile.job_title} onChange={e=>setProfile(v=>({...v,job_title:e.target.value}))} placeholder="Founder, Owner, Manager…"/></div>
+            <div className="grid grid-cols-1 items-start gap-x-6 gap-y-5 md:grid-cols-2">
+              <div className="min-w-0"><label className={label} htmlFor="vendor-name">Full name</label><input id="vendor-name" className={field} maxLength={100} autoComplete="name" value={profile.full_name} onChange={e=>setProfile(v=>({...v,full_name:e.target.value}))}/></div>
+              <div className="min-w-0"><label className={label} htmlFor="vendor-email">Account email</label><input id="vendor-email" className={field} type="email" disabled value={profile.email}/><p className="mt-1.5 text-[10px] text-[#8D9C8F]">Email changes require authentication verification.</p></div>
+              <div className="min-w-0"><label className={label} htmlFor="vendor-phone">Contact phone</label><input id="vendor-phone" className={field} type="tel" maxLength={30} autoComplete="tel" value={profile.phone} onChange={e=>setProfile(v=>({...v,phone:e.target.value}))}/></div>
+              <div className="min-w-0"><label className={label} htmlFor="vendor-job">Role or job title</label><input id="vendor-job" className={field} maxLength={100} value={profile.job_title} onChange={e=>setProfile(v=>({...v,job_title:e.target.value}))} placeholder="Founder, Owner, Manager…"/></div>
             </div>
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#EAF0E8] pt-5"><p className="text-[11px] text-[#708674]">Only your profile details will be updated.</p><button type="button" onClick={()=>void saveProfile()} disabled={saving||!userId} className="vendor-primary-button">{saving?<Loader2 size={16} className="animate-spin"/>:<Save size={16}/>} Save profile</button></div>
+            <div className="flex flex-wrap items-center justify-between gap-4 border-t border-[#EAF0E8] pt-5"><p className="min-w-0 text-[11px] leading-5 text-[#708674]">Only your profile details will be updated.</p><button type="button" onClick={()=>void saveProfile()} disabled={saving||!userId} className="vendor-primary-button">{saving?<Loader2 size={16} className="animate-spin"/>:<Save size={16}/>} Save profile</button></div>
           </section>}
 
           {activeTab==='verification'&&<section role="tabpanel" id="panel-verification" aria-labelledby="tab-verification" className="vendor-setting-section space-y-5">
