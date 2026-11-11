@@ -81,3 +81,14 @@ test('private verification access is staged without claiming unreviewed RLS is d
   assert.match(profileSecurity,/business owner cannot edit submitted verification review/);
   assert.match(profileSecurity,/NOT APPLIED/);
 });
+
+test('quick-action settings deep links navigate to real settings tabs',()=>{
+  const tabs=['verification','optimization','notifications','security'];
+  for(const tab of tabs){
+    assert.ok(actions.includes('/vendor/settings?tab='+tab));
+    assert.match(settings,new RegExp("id: ?'"+tab+"'"));
+  }
+  assert.match(settings,/window\.addEventListener\('slbi:settings-tab'/);
+  assert.match(settings,/searchParams\.set\('tab',tab\)/);
+  assert.match(actions,/dispatchEvent\(new CustomEvent\('slbi:settings-tab'/);
+});
