@@ -75,3 +75,66 @@ Live collection pipeline, new tables/migrations, payment or subscription changes
 6. Review privacy/consent notice and conduct production release checklist. One final controlled deploy only after all prerequisites pass.
 
 This file records delivered development work and explicit remaining gates; it does not claim Growth Intelligence is already deployed or that event ingestion is live.
+
+
+## Vendor Portal premium redesign, security and lead workflow — 2026-11-11
+
+Draft PR #29 now covers the full owner workspace route inventory:
+`/vendor/dashboard`, `my-businesses`, `leads`, `reviews`,
+`insights`, `growth`, `marketing`, `qr-code`, `billing`,
+and `settings`. The redesign uses a single dark-forest/ivory style system,
+desktop and mobile navigation, an accessible search palette (Ctrl/⌘+K), 10
+real route actions, premium dashboard launchpad, and updated headers and
+consistent cards across primary vendor pages.
+
+- Settings is genuinely connected to Profile/Local SEO and password-update
+  mutations, with user-scoped ownership and error/disabled handling.
+- Notification preference toggles persist only **after** a reviewed
+  `vendor_notification_preferences` migration; the UI discloses when storage
+  is unavailable and never claims messages are already dispatched.
+- Private verification document upload is deliberately disabled while the
+  live `verification-docs` bucket is public. New clients and admin can
+  use short-lived signed preview URLs, but the bucket privacy migration must
+  be coordinated and tested against existing stored documents.
+- Marketing UI removes invented impression counts and unverified "published to
+  network" wording; saved campaigns and history are shown as records, not
+  independently verified external campaigns. QR Studio similarly avoids
+  unsupported scan-tracking promises.
+- Web enquiry form now supports explicit consent and Cloudflare Turnstile +
+  `/api/leads/submit` when coordinated secure-leads flags are enabled.
+  Otherwise it intentionally keeps the legacy Supabase form for the
+  still-shipping mobile compatibility window. Server-side RPC and rate
+  limits are staged in
+  `docs/growth/SECURE_LEAD_SUBMISSION_REVIEW_ONLY.sql`, not deployed.
+- Static contract regressions in `tests/growthSecureLeads.test.mjs` and
+  `tests/vendorPortalRelease.test.mjs` protect consent, disabled flags,
+  role boundaries, navigation, settings and no fabricated statistics.
+
+### High-priority confirmed release blocker: privileged column escalation
+
+Live grants allow authenticated table-wide UPDATE on `profiles.role`,
+`profiles.verification_status`, `businesses.status`, `is_verified`,
+`can_show_badge`, and `verifications.status`. Existing owner-only RLS does
+not itself prevent an account from changing privileged columns on its own
+rows. The mitigation is staged in
+`docs/growth/PRIVILEGE_ESCALATION_GUARD_REVIEW_ONLY.sql`.
+It must be tested with customer/vendor/admin/service-role sessions and
+existing registration/approval actions before production application.
+
+### Final release gate — NOT CLEARED
+
+- Apply and verify necessary SQL **on an isolated test database first**.
+  Supabase currently has no existing development branches. Creating one may
+  incur compute charges and requires cost authorization.
+- Complete RLS, signed URL and anti-abuse tests in that environment.
+- Supply protected service-side Supabase credentials and independent HMAC
+  secret; activate feature flags only after data-layer validation.
+- Audit mobile-web leads compatibility (including anonymous inserts) before
+  revoking the legacy `Anyone can insert leads` policy.
+- Conduct actual authenticated vendor/admin browser/device testing for the
+  responsive dashboard, uploads, forms, QR, preferences, invoice paths,
+  social campaigns and analytics.
+- Confirm all GitHub CI jobs green **on the final exact commit**, document a
+  rollback plan and perform the single approved production deployment.
+
+The user has explicitly requested **no early production deployment**.
