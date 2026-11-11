@@ -55,3 +55,17 @@ Explicit owner request on 2026-11-11: make V3 available in production for direct
 - One release only after GitHub CI, TypeScript, Next.js build and Vercel production checks pass; preserve the last known-good production SHA for rollback.
 
 This is an experimental field trial, not a completed SemanticSearch v3 default release.
+
+
+## Next planned release — V3 Beta permanently enabled (development only)
+
+**Not yet merged or deployed.** The owner requested that Nearby search require no `v3=1` URL and no manual toggle. See draft PR and `docs/growth/GROWTH_INTELLIGENCE_V1_FOUNDATION.md`.
+
+- In the pending Nearby implementation, E5 Beta is enabled automatically for `best-match` queries.
+- The UI shows a non-interactive `Semantic V3 Beta · ON` label and discloses whether actual E5 re-ranking or a V2/GeoRank fallback is active.
+- Exact supported model queries are still only the six pinned canonical intents. No arbitrary query embeddings or new service assertions are invented; eligible results are restricted to approved database candidates.
+- Sorting by distance/rating/name, geo-only discovery and unsupported searches retain existing non-semantic rankings.
+- The separate general SemanticSearch v3 activation contract and human-judgment gate remain disabled; only the bounded E5 beta is automatically attempted.
+- **Deployment is deliberately withheld** until the linked Growth Intelligence & Lead Attribution implementation and all applicable integration/security checks are completed.
+
+The previous section records the *currently deployed* opt-in beta, not the new unmerged default-on design.
