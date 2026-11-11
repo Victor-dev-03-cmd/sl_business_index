@@ -8,15 +8,15 @@ const style=read('app/vendor/vendor-workspace.css');
 const qr=read('app/vendor/qr-code/page.tsx');
 const marketing=read('app/vendor/marketing/page.tsx');
 
-test('settings profile has aligned controls, explicit borders and restrained corners',()=>{
-  assert.match(settings,/const field='vendor-field block h-11 w-full/);
-  assert.match(settings,/grid grid-cols-1 items-start gap-x-6 gap-y-5 md:grid-cols-2/);
-  assert.match(settings,/vendor-setting-section w-full min-w-0 space-y-6 border/);
+test('settings profile uses accessible V8 soft-neumorphic controls and aligned responsive grid',()=>{
+  assert.match(settings,/const field='vendor-field settings-v8-field block h-11 w-full/);
+  assert.match(settings,/settings-v8-form-grid grid grid-cols-1 items-start gap-x-7 gap-y-6 md:grid-cols-2/);
+  assert.match(settings,/vendor-setting-section settings-v8-section w-full min-w-0 space-y-6/);
   assert.match(settings,/className="min-w-0"><label className=\{label\} htmlFor="vendor-email"/);
   assert.match(settings,/lg:grid-cols-\[238px_minmax\(0,1fr\)\]/);
-  assert.match(style,/\.vendor-workspace \.vendor-settings input\.vendor-field/);
-  assert.match(style,/border-radius:5px/);
-  assert.match(style,/border:1px solid #c5d5c9/);
+  assert.match(style,/\.vendor-workspace-v6 \.vendor-settings-v8 :is\(input,textarea,select\)\.vendor-field/);
+  assert.match(style,/border-radius:7px/);
+  assert.match(style,/border:1px solid #D9D9E0/);
 });
 
 test('QR studio exports high-res raster, independent SVG and fitted A4 PDF',()=>{
