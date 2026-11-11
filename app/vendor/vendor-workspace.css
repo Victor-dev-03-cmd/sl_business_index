@@ -397,3 +397,89 @@
   border-color:#E1E7EB;
   color:#516674;
 }
+
+
+/* Vendor Portal V6 — orange/charcoal executive shell. Scoped to the vendor
+   workspace: the public SLBI green brand and all admin pages remain unchanged.
+   Other vendor content modules retain their current form structures until the
+   owner approves the dashboard-first design direction. */
+.vendor-workspace-v6 {
+  --vendor-orange:#FF7900;
+  --vendor-orange-dark:#D96300;
+  --vendor-ink:#1D1D20;
+  --vendor-canvas:#F7F7F8;
+  --vendor-edge:#E8E8EB;
+  --vendor-slate:#797981;
+  color:#202124;
+  font-family:var(--font-inter),var(--font-tamil),var(--font-sinhala),ui-sans-serif,system-ui,sans-serif;
+  font-size:13px;
+}
+.vendor-workspace-v6 .vendor-content {
+  background:#F7F7F8;
+  scroll-behavior:smooth;
+}
+.vendor-workspace-v6 .vendor-topbar {
+  background:#FFFFFF;
+  box-shadow:0 3px 20px rgba(27,27,31,.02);
+}
+.vendor-workspace-v6 .vendor-topbar :is(button,a,summary):focus-visible,
+.vendor-workspace-v6 .vendor-content :is(button,a,input,textarea,select):focus-visible {
+  outline:2px solid #FF7900;
+  outline-offset:2px;
+}
+.vendor-topbar-scrollbar {
+  scrollbar-width:none;
+  -ms-overflow-style:none;
+}
+.vendor-topbar-scrollbar::-webkit-scrollbar {display:none;}
+.vendor-topbar-dropdown summary {list-style:none;}
+.vendor-topbar-dropdown summary::-webkit-details-marker {display:none;}
+.vendor-topbar-dropdown[open] summary {background:#FFF1E5;color:#C85D00;}
+.vendor-workspace-v6 .vendor-dashboard-v6 {
+  --vendor-dashboard-orange:#FF7900;
+  --vendor-dashboard-ink:#1B1B1E;
+}
+.vendor-workspace-v6 .vendor-dashboard-v6 .vendor-overview-heading {
+  background:#fff;
+  border:1px solid #EBEBED;
+  border-radius:16px;
+  box-shadow:0 14px 42px rgba(30,30,35,.035);
+}
+.vendor-workspace-v6 .vendor-dashboard-v6 .vendor-executive-card,
+.vendor-workspace-v6 .vendor-dashboard-v6 .vendor-dashboard-shortcut {
+  background:#FFFFFF;
+  background-image:none;
+  border:1px solid #EBEBEE;
+  border-radius:13px;
+  box-shadow:0 8px 24px rgba(25,25,31,.032);
+  color:#27272A;
+  transition:border-color .17s ease,box-shadow .17s ease,transform .17s ease;
+}
+.vendor-workspace-v6 .vendor-dashboard-v6 .vendor-executive-card:hover,
+.vendor-workspace-v6 .vendor-dashboard-v6 .vendor-dashboard-shortcut:hover {
+  border-color:#F4C3A0;
+  box-shadow:0 12px 28px rgba(32,28,25,.05);
+}
+.vendor-workspace-v6 .vendor-dashboard-v6 .vendor-dashboard-shortcut:hover {
+  transform:translateY(-1px);
+}
+.vendor-workspace-v6 .vendor-dashboard-v6 h2,
+.vendor-workspace-v6 .vendor-dashboard-v6 h3 {color:#26262A;}
+.vendor-workspace-v6 .vendor-dashboard-v6 .vendor-stat-value {color:#222226;}
+.vendor-workspace-v6 .vendor-dashboard-v6 input:focus,
+.vendor-workspace-v6 .vendor-dashboard-v6 select:focus {
+  border-color:#F8A15A;
+  box-shadow:0 0 0 3px rgba(255,121,0,.10);
+}
+.vendor-workspace-v6 .vendor-dashboard-v6 :is(th,td){vertical-align:middle;}
+.vendor-workspace-v6 .vendor-dashboard-v6 tbody tr:hover{background:#FFFAF6;}
+@media(min-width:1440px){
+  .vendor-workspace-v6 .vendor-dashboard-v6 {max-width:1760px;}
+}
+@media(max-width:639px){
+  .vendor-workspace-v6 .vendor-dashboard-v6 .vendor-overview-heading {padding:20px;border-radius:12px;}
+  .vendor-workspace-v6 .vendor-dashboard-v6 .vendor-executive-card {border-radius:10px;}
+}
+@media(prefers-reduced-motion:reduce){
+  .vendor-workspace-v6 .vendor-dashboard-shortcut:hover {transform:none;}
+}
