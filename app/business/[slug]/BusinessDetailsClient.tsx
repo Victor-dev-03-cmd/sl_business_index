@@ -41,6 +41,7 @@ import VerifiedBadge from "@/app/components/VerifiedBadge";
 import ReportModal from "@/app/components/ReportModal";
 import { logEvent } from "@/lib/utils";
 import { toast } from "sonner";
+import { Turnstile } from "@marsidev/react-turnstile";
 
 const LeafletMap = dynamic(() => import("@/components/LeafletMap"), {
   ssr: false,
@@ -81,6 +82,11 @@ export default function BusinessDetailsClient({ business }: Props) {
   const [submittingReview, setSubmittingReview] = useState(false);
   const [submittingEnquiry, setSubmittingEnquiry] = useState(false);
   const [whatsappReadyUrl, setWhatsappReadyUrl] = useState<string | null>(null);
+  const [leadConsent, setLeadConsent] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileReset, setTurnstileReset] = useState(0);
+  const secureLeadsEnabled = process.env.NEXT_PUBLIC_SECURE_LEADS_ENABLED === "true";
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY || "";
   const [showReportModal, setShowReportModal] = useState(false);
 
   useEffect(() => {
@@ -213,19 +219,48 @@ export default function BusinessDetailsClient({ business }: Props) {
   const handleEnquirySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setWhatsappReadyUrl(null);
+    if (!leadConsent) {
+      toast.error("Please agree to share your enquiry with this business.");
+      return;
+    }
+    if (secureLeadsEnabled && (!turnstileSiteKey || !turnstileToken)) {
+      toast.error("Complete the security verification before submitting.");
+      return;
+    }
     setSubmittingEnquiry(true);
     try {
-      // 1. Save lead to Supabase for tracking
-      const { error } = await supabase.from("leads").insert({
-        business_id: business?.id,
-        name: enquiryForm?.name,
-        email: enquiryForm?.email,
-        phone: enquiryForm?.phone,
-        message: enquiryForm?.message,
-        source: "Business Detail Page",
-      });
-
-      if (error) throw error;
+      if (secureLeadsEnabled) {
+        const response = await fetch("/api/leads/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            request_id: crypto.randomUUID(),
+            business_id: business.id,
+            name: enquiryForm.name,
+            email: enquiryForm.email,
+            phone: enquiryForm.phone,
+            message: enquiryForm.message,
+            consent: true,
+            turnstile_token: turnstileToken,
+          }),
+        });
+        const result = await response.json() as { success?: boolean; error?: string };
+        if (!response.ok || !result.success) {
+          throw new Error(result.error || "Unable to save your enquiry securely.");
+        }
+      } else {
+        // Backward compatibility: old mobile/web deployments still use the
+        // existing insert policy until the coordinated RLS rollout is complete.
+        const { error } = await supabase.from("leads").insert({
+          business_id: business.id,
+          name: enquiryForm.name,
+          email: enquiryForm.email,
+          phone: enquiryForm.phone,
+          message: enquiryForm.message,
+          source: "Business Detail Page",
+        });
+        if (error) throw error;
+      }
 
       // 2. Prepare an explicit WhatsApp link; async popup opening may be blocked.
       if (business.phone) {
@@ -251,6 +286,9 @@ export default function BusinessDetailsClient({ business }: Props) {
       );
 
       setEnquiryForm({ name: "", email: "", phone: "", message: "" });
+      setLeadConsent(false);
+      setTurnstileToken("");
+      setTurnstileReset(v => v + 1);
       toast.success("Enquiry submitted", {
         description: business.phone
           ? "You can also continue the conversation on WhatsApp below."
@@ -258,8 +296,11 @@ export default function BusinessDetailsClient({ business }: Props) {
       });
     } catch (error) {
       console.error("Error sending enquiry:", error);
-      toast.error("Failed to send enquiry.");
+      toast.error(error instanceof Error ? error.message : "Failed to send enquiry.");
     } finally {
+      // Turnstile tokens expire and must not be reused after a server attempt.
+      setTurnstileToken("");
+      if (secureLeadsEnabled) setTurnstileReset(v => v + 1);
       setSubmittingEnquiry(false);
     }
   };
@@ -725,7 +766,27 @@ export default function BusinessDetailsClient({ business }: Props) {
                   <textarea id="enquiry-message" rows={4} required maxLength={3000} placeholder="How can this business help?"
                     value={enquiryForm.message} onChange={e => setEnquiryForm({...enquiryForm, message: e.target.value})} className={inputStyle}/>
                 </div>
-                <button type="submit" disabled={submittingEnquiry}
+                <label className="flex cursor-pointer items-start gap-2 rounded-xl border border-[#DCEBDD] bg-[#F5FAF5] px-3.5 py-3 text-[11px] leading-5 text-[#587B64]">
+                  <input type="checkbox" checked={leadConsent} onChange={e => setLeadConsent(e.target.checked)} required
+                    className="mt-1 h-4 w-4 shrink-0 accent-[#2E7453]" />
+                  <span>I agree to send my name, email, phone and message to this business for responding to my enquiry. Please do not send sensitive IDs or payment details.</span>
+                </label>
+                {secureLeadsEnabled && turnstileSiteKey && (
+                  <div className="overflow-hidden rounded-xl border border-[#DFEADF] bg-[#F8FBF8] p-3">
+                    <Turnstile key={turnstileReset} siteKey={turnstileSiteKey}
+                      options={{ action: "business_enquiry", size: "flexible" }}
+                      onSuccess={token => setTurnstileToken(token)}
+                      onExpire={() => setTurnstileToken("")}
+                      onError={() => setTurnstileToken("")}
+                    />
+                  </div>
+                )}
+                {secureLeadsEnabled && !turnstileSiteKey && (
+                  <p role="alert" className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+                    Secure enquiry verification is temporarily unavailable.
+                  </p>
+                )}
+                <button type="submit" disabled={submittingEnquiry || !leadConsent || (secureLeadsEnabled && !turnstileToken)}
                   className="mt-2 inline-flex min-h-[50px] w-full items-center justify-center gap-2 rounded-[13px] bg-[#276B56] px-5 text-[13px] font-bold text-white transition-colors hover:bg-[#1B5142] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6CBA94] disabled:opacity-60">
                   {submittingEnquiry ? <Loader2 size={17} className="animate-spin"/> : <Send size={17}/>} Send enquiry
                 </button>

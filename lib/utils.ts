@@ -44,6 +44,9 @@ export async function logEvent(
   city?: string,
   metadata: Record<string, any> = {}
 ) {
+  // Keep the legacy signature for callers, but do not send additional data.
+  void city;
+  void metadata;
   try {
     const response = await fetch('/api/analytics/log', {
       method: 'POST',
@@ -53,8 +56,11 @@ export async function logEvent(
       body: JSON.stringify({
         business_id: business_id.toString(),
         event_type,
-        city,
-        metadata,
+        // One opaque event ID per action enables replay-safe ingestion later.
+        // The server ignores legacy city/metadata: no raw location or free
+        // text is persisted to the growth analytics store.
+        event_id: globalThis.crypto?.randomUUID?.(),
+        channel: 'business_detail',
       }),
     });
     return await response.json();

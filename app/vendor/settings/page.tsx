@@ -1,753 +1,407 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
-import {
-  User,
-  ShieldCheck,
-  MapPin,
-  Bell,
-  Save,
-  Upload,
-  Globe,
-  Search,
-  AlertTriangle,
-  Loader2
-} from 'lucide-react';
-import { Slider } from "@/components/ui/slider";
+import { User, ShieldCheck, MapPin, Bell, Save, UploadCloud, Globe, Search,
+  AlertTriangle, Loader2, CheckCircle2, LockKeyhole, ArrowUpRight, Plus, X,
+  Building2, FileCheck2, Mail, Smartphone, Eye, EyeOff, RefreshCcw } from 'lucide-react';
 
-interface Profile {
-  full_name: string;
-  email: string;
-  phone: string;
-  job_title: string;
-  avatar_url: string;
-  verification_status: string;
-  verification_image_url: string;
+type Tab = 'profile' | 'verification' | 'optimization' | 'notifications' | 'security';
+type Profile = {
+  full_name:string; email:string; phone:string; job_title:string;
+  avatar_url:string; verification_status:string;
+};
+type Business = {
+  id:string; name:string; status:string|null; service_radius:number|null;
+  seo_keywords:string[]|null; is_verified:boolean|null; verification_status:string|null;
+};
+type Verification = {
+  id:string;status:string|null; business_type:string|null; br_number:string|null;
+  tin_number:string|null;svat_number:string|null; br_document_url:string|null;
+  created_at:string|null;
+};
+type Prefs = {
+  reviews:boolean; leads:boolean; weekly_digest:boolean; marketing_tips:boolean;
+};
+const basePrefs:Prefs={reviews:true,leads:true,weekly_digest:false,marketing_tips:false};
+const defaultProfile:Profile={full_name:'',email:'',phone:'',job_title:'',avatar_url:'',verification_status:'unverified'};
+const tabList:{id:Tab;name:string;detail:string;icon:typeof User}[]=[
+  {id:'profile',name:'Account profile',detail:'Identity and contact',icon:User},
+  {id:'verification',name:'Business verification',detail:'Documents and status',icon:ShieldCheck},
+  {id:'optimization',name:'Local reach & SEO',detail:'Discovery settings',icon:Globe},
+  {id:'notifications',name:'Notifications',detail:'Communication choices',icon:Bell},
+  {id:'security',name:'Security',detail:'Account protection',icon:LockKeyhole},
+];
+const field='vendor-field';
+const label='vendor-label';
+
+function statusLabel(value:string){
+  if(value==='approved'||value==='verified')return 'Verified';
+  if(value==='pending')return 'Under review';
+  if(value==='rejected')return 'Needs attention';
+  return 'Not verified';
 }
-
-interface Business {
-  id: string;
-  name: string;
-  service_radius: number;
-  seo_keywords: string[];
-  is_verified: boolean;
-  verification_status: string;
+function statusColor(value:string){
+  if(value==='approved'||value==='verified')return 'border-[#C9E7D1] bg-[#EDF8EF] text-[#2A7849]';
+  if(value==='pending')return 'border-[#EFE0BC] bg-[#FFF8E7] text-[#926C26]';
+  if(value==='rejected')return 'border-[#F3D1D1] bg-[#FFF1F1] text-[#A84444]';
+  return 'border-[#E1E7E2] bg-[#F4F7F4] text-[#6A8070]';
 }
-
-interface Verification {
-  id: string;
-  status: string;
-  br_document_url?: string;
-  nic_passport_url?: string;
-  business_type?: string;
-  br_number?: string;
-  tin_number?: string;
-  svat_number?: string;
+function normalizeObjectPath(raw:string|null){
+  if(!raw)return null;
+  if(raw.startsWith('storage://verification-docs/'))return raw.slice('storage://verification-docs/'.length);
+  const match=raw.match(/\/storage\/v1\/object\/(?:public|sign)\/verification-docs\/([^?#]+)/);
+  if(!match)return null;
+  try{return decodeURIComponent(match[1]);}catch{return null;}
 }
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState<'profile' | 'verification' | 'optimization' | 'notifications'>('profile');
-  const [submitting, setSubmitting] = useState(false);
-
-  // Profile State
-  const [profile, setProfile] = useState<Profile>({
-    full_name: '',
-    email: '',
-    phone: '',
-    job_title: '',
-    avatar_url: '',
-    verification_status: 'unverified',
-    verification_image_url: ''
-  });
-
-  const [verificationFile, setVerificationFile] = useState<File | null>(null);
-  const [businessType, setBusinessType] = useState<'pvt_ltd' | 'local_business'>('pvt_ltd');
-  const [brNumber, setBrNumber] = useState('');
-  const [tinNumber, setTinNumber] = useState('');
-  const [svatNumber, setSvatNumber] = useState('');
-
-  // Optimization State
-  const [businesses, setBusinesses] = useState<Business[]>([]);
-  const [selectedBusinessId, setSelectedBusinessId] = useState<string>('');
-  const [radius, setRadius] = useState([5]);
-  const [keywords, setKeywords] = useState<string[]>([]);
-  const [newKeyword, setNewKeyword] = useState('');
-
-  // Verification State
-  const [verification, setVerification] = useState<Verification | null>(null);
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Fetch Profile
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (profileData) {
-        setProfile({
-          full_name: profileData.full_name || '',
-          email: profileData.email || user.email || '',
-          phone: profileData.phone || '',
-          job_title: profileData.job_title || '',
-          avatar_url: profileData.avatar_url || '',
-          verification_status: profileData.verification_status || 'unverified',
-          verification_image_url: profileData.verification_image_url || ''
-        });
-      }
-
-      // Fetch Businesses for Optimization & Verification
-      const { data: businessData } = await supabase
-        .from('businesses')
-        .select('*')
-        .eq('owner_id', user.id);
-
-      if (businessData) {
-        setBusinesses(businessData);
-        if (businessData.length > 0) {
-          const first = businessData[0];
-          setSelectedBusinessId(first.id);
-          setRadius([first.service_radius || 5]);
-          setKeywords(first.seo_keywords || []);
-
-          // Use the verification_status from the business record
-          // but also check for detailed verification record
-          const { data: verData } = await supabase
-            .from('verifications')
-            .select('*')
-            .eq('business_id', first.id)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
-          setVerification(verData);
-          if (verData) {
-            setBusinessType(verData.business_type || 'pvt_ltd');
-            setBrNumber(verData.br_number || '');
-            setTinNumber(verData.tin_number || '');
-            setSvatNumber(verData.svat_number || '');
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching settings data:', error);
-    }
+  const [activeTab,setActiveTab]=useState<Tab>('profile');
+  // Section deep links make the command palette and bookmarks actionable.
+  // Read the query only after mount to keep SSR and client hydration identical.
+  useEffect(()=>{
+    const selectFromUrl=()=>{
+      const query=new URLSearchParams(window.location.search).get('tab');
+      if(query&&tabList.some(section=>section.id===query))setActiveTab(query as Tab);
+    };
+    selectFromUrl();
+    const selectFromCommand=(event:Event)=>{
+      const tab=(event as CustomEvent<string>).detail;
+      if(tabList.some(section=>section.id===tab))setActiveTab(tab as Tab);
+    };
+    window.addEventListener('popstate',selectFromUrl);
+    window.addEventListener('slbi:settings-tab',selectFromCommand);
+    return()=>{
+      window.removeEventListener('popstate',selectFromUrl);
+      window.removeEventListener('slbi:settings-tab',selectFromCommand);
+    };
+  },[]);
+  const selectTab=(tab:Tab)=>{
+    setActiveTab(tab);
+    const next=new URL(window.location.href);
+    next.searchParams.set('tab',tab);
+    window.history.replaceState(window.history.state,'',next.pathname+next.search+next.hash);
   };
+  const [loading,setLoading]=useState(true);
+  const [saving,setSaving]=useState(false);
+  const [userId,setUserId]=useState<string|null>(null);
+  const [error,setError]=useState('');
+  const [profile,setProfile]=useState<Profile>(defaultProfile);
+  const [businesses,setBusinesses]=useState<Business[]>([]);
+  const [selectedBusinessId,setSelectedBusinessId]=useState('');
+  const [verification,setVerification]=useState<Verification|null>(null);
+  const [documentPreview,setDocumentPreview]=useState<string|null>(null);
+  const [verificationFile,setVerificationFile]=useState<File|null>(null);
+  const [businessType,setBusinessType]=useState<'pvt_ltd'|'local_business'>('pvt_ltd');
+  const [brNumber,setBrNumber]=useState('');
+  const [tinNumber,setTinNumber]=useState('');
+  const [svatNumber,setSvatNumber]=useState('');
+  const [radius,setRadius]=useState(5);
+  const [keywords,setKeywords]=useState<string[]>([]);
+  const [newKeyword,setNewKeyword]=useState('');
+  const [prefs,setPrefs]=useState<Prefs>(basePrefs);
+  const [prefsAvailable,setPrefsAvailable]=useState(false);
+  const [newPassword,setNewPassword]=useState('');
+  const [confirmPassword,setConfirmPassword]=useState('');
+  const [showPassword,setShowPassword]=useState(false);
+  const selected=useMemo(()=>businesses.find(b=>b.id===selectedBusinessId)||null,[businesses,selectedBusinessId]);
+  const privateDocsReady=process.env.NEXT_PUBLIC_VERIFICATION_PRIVATE_READY==='true';
+  const verificationState=verification?.status||selected?.verification_status||'none';
+  const verified=verificationState==='approved'||verificationState==='verified';
+  const pending=verificationState==='pending';
 
-  const handleSaveProfile = async () => {
-    setSubmitting(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          full_name: profile.full_name,
-          phone: profile.phone,
-          job_title: profile.job_title,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id);
-
-      if (error) throw error;
-      toast.success('Profile updated successfully!');
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      toast.error('Failed to update profile');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleSaveOptimization = async () => {
-    if (!selectedBusinessId) return;
-    setSubmitting(true);
-    try {
-      const { error } = await supabase
-        .from('businesses')
-        .update({
-          service_radius: radius[0],
-          seo_keywords: keywords,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', selectedBusinessId);
-
-      if (error) throw error;
-      toast.success('Optimization settings saved!');
-    } catch (error) {
-      console.error('Error saving optimization:', error);
-      toast.error('Failed to save settings');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleSubmitVerification = async () => {
-    if (!verificationFile) {
-      toast.warning('Please select a document to upload.');
-      return;
-    }
-
-    if (!selectedBusinessId) {
-      toast.warning('Please select a business to verify from the "Radius & SEO" tab first.');
-      return;
-    }
-
-    if (!brNumber) {
-      toast.warning('Please enter your BR Number.');
-      return;
-    }
-
-    // BR Number Regex Validation
-    const pvtRegex = /^PV\d{8}$/;
-    const localRegex = /^\d+\/\d{4}\/\w+$/;
-
-    if (businessType === 'pvt_ltd' && !pvtRegex.test(brNumber)) {
-      toast.error('Invalid Private Limited BR Number. Format: PV00212345');
-      return;
-    }
-
-    if (businessType === 'local_business' && !localRegex.test(brNumber)) {
-      toast.error('Invalid Local Business BR Number. Format: [Number]/[Year]/[Code]');
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const fileExt = verificationFile.name.split('.').pop();
-      const fileName = `${selectedBusinessId}-${user.id}-${Math.random()}.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('verification-docs')
-        .upload(fileName, verificationFile);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('verification-docs')
-        .getPublicUrl(fileName);
-
-      const { error: verificationError } = await supabase
-        .from('verifications')
-        .insert({
-          business_id: selectedBusinessId,
-          status: 'pending',
-          br_document_url: publicUrl,
-          business_type: businessType,
-          br_number: brNumber,
-          tin_number: tinNumber,
-          svat_number: svatNumber
-        });
-
-      if (verificationError) {
-        throw verificationError;
+  const load=useCallback(async()=>{
+    setLoading(true);setError('');
+    try{
+      const {data:{user},error:authError}=await supabase.auth.getUser();
+      if(authError)throw authError;
+      if(!user){setUserId(null);setError('Sign in to manage vendor settings.');return;}
+      setUserId(user.id);
+      const [p,b,preference]=await Promise.all([
+        supabase.from('profiles').select('full_name,email,phone,job_title,avatar_url,verification_status').eq('id',user.id).maybeSingle(),
+        supabase.from('businesses').select('id,name,status,service_radius,seo_keywords,is_verified,verification_status').eq('owner_id',user.id).order('name'),
+        supabase.from('vendor_notification_preferences').select('reviews,leads,weekly_digest,marketing_tips').eq('user_id',user.id).maybeSingle(),
+      ]);
+      if(p.error)throw p.error;
+      if(b.error)throw b.error;
+      const pr=(p.data||{}) as Partial<Profile>;
+      setProfile({
+        full_name:pr.full_name||'',email:user.email||pr.email||'',phone:pr.phone||'',
+        job_title:pr.job_title||'',avatar_url:pr.avatar_url||'',verification_status:pr.verification_status||'unverified',
+      });
+      const owned=(b.data||[]) as Business[];
+      setBusinesses(owned);
+      setSelectedBusinessId(prev=>owned.some(v=>v.id===prev)?prev:owned[0]?.id||'');
+      if(preference.error){setPrefsAvailable(false);}
+      else {
+        setPrefsAvailable(true);
+        setPrefs(preference.data?{
+          reviews:preference.data.reviews!==false,leads:preference.data.leads!==false,
+          weekly_digest:preference.data.weekly_digest===true,
+          marketing_tips:preference.data.marketing_tips===true,
+        }:basePrefs);
       }
+    }catch(caught){
+      setError(caught instanceof Error?caught.message:'Could not load vendor settings.');
+    }finally{setLoading(false);}
+  },[]);
 
-      // To keep UI consistent without a large refactor, we still update the profile status.
-      // The main data (document URL) is now correctly in the 'verifications' table.
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          verification_status: 'pending',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id);
+  useEffect(()=>{void load()},[load]);
 
-      if (profileError) {
-        throw profileError;
+  useEffect(()=>{
+    if(!selected){setVerification(null);setDocumentPreview(null);return;}
+    setRadius(Math.max(1,Math.min(50,Number(selected.service_radius)||5)));
+    setKeywords(Array.isArray(selected.seo_keywords)?selected.seo_keywords:[]);
+    setVerification(null);setDocumentPreview(null);setVerificationFile(null);
+    let cancelled=false;
+    const loadVerification=async()=>{
+      const {data,error}=await supabase.from('verifications')
+        .select('id,status,business_type,br_number,tin_number,svat_number,br_document_url,created_at')
+        .eq('business_id',selected.id).order('created_at',{ascending:false}).limit(1).maybeSingle();
+      if(cancelled)return;
+      if(error){toast.error('Could not load business verification.');return;}
+      const current=(data||null) as Verification|null;
+      setVerification(current);
+      setBusinessType(current?.business_type==='local_business'?'local_business':'pvt_ltd');
+      setBrNumber(current?.br_number||'');setTinNumber(current?.tin_number||'');setSvatNumber(current?.svat_number||'');
+      const path=normalizeObjectPath(current?.br_document_url||null);
+      if(path){
+        const {data:signed}=await supabase.storage.from('verification-docs').createSignedUrl(path,300);
+        if(!cancelled)setDocumentPreview(signed?.signedUrl||null);
       }
+    };
+    void loadVerification();
+    return()=>{cancelled=true};
+  },[selectedBusinessId,selected?.id]);
 
-      toast.success('Your request is pending admin approval.');
+  async function saveProfile(){
+    if(!userId)return;
+    const fullName=profile.full_name.trim();
+    if(fullName.length<2||fullName.length>100){toast.error('Enter a name between 2 and 100 characters.');return;}
+    if(profile.phone.length>30||profile.job_title.length>100){toast.error('Please shorten your phone or job title.');return;}
+    setSaving(true);
+    try{
+      const {data,error}=await supabase.from('profiles')
+        .update({full_name:fullName,phone:profile.phone.trim(),job_title:profile.job_title.trim(),updated_at:new Date().toISOString()})
+        .eq('id',userId).select('id').maybeSingle();
+      if(error||!data)throw error||new Error('Profile update was not permitted.');
+      toast.success('Account profile saved');
+    }catch(e){toast.error(e instanceof Error?e.message:'Could not save your profile.');}
+    finally{setSaving(false);}
+  }
+  async function saveOptimization(){
+    if(!userId||!selectedBusinessId)return;
+    setSaving(true);
+    try{
+      const cleanKeywords=keywords.map(k=>k.trim()).filter(Boolean).slice(0,10);
+      const {data,error}=await supabase.from('businesses')
+        .update({service_radius:Math.round(radius),seo_keywords:cleanKeywords,updated_at:new Date().toISOString()})
+        .eq('id',selectedBusinessId).eq('owner_id',userId).select('id').maybeSingle();
+      if(error||!data)throw error||new Error('Business update was not permitted.');
+      setBusinesses(old=>old.map(b=>b.id===selectedBusinessId?{...b,service_radius:radius,seo_keywords:cleanKeywords}:b));
+      toast.success('Local discovery settings saved');
+    }catch(e){toast.error(e instanceof Error?e.message:'Could not update your business.');}
+    finally{setSaving(false);}
+  }
+  function addKeyword(){
+    const k=newKeyword.trim().replace(/\s+/g,' ').slice(0,50);
+    if(!k)return;
+    if(keywords.length>=10){toast.error('A maximum of 10 keywords is supported.');return;}
+    if(keywords.some(existing=>existing.toLocaleLowerCase()===k.toLocaleLowerCase())){setNewKeyword('');return;}
+    setKeywords(old=>[...old,k]);setNewKeyword('');
+  }
+
+  async function submitVerification(){
+    if(!userId||!selectedBusinessId)return;
+    if(!privateDocsReady){toast.error('Secure document uploads are being upgraded. Please contact support.');return;}
+    if(verified||pending){toast.info('This business already has an active verification status.');return;}
+    const validBr=businessType==='pvt_ltd'?/^PV\d{8}$/i.test(brNumber.trim()):/^\d+\/\d{4}\/[\p{L}\p{N}-]+$/u.test(brNumber.trim());
+    if(!validBr){toast.error(businessType==='pvt_ltd'?'BR number format: PV00212345':'BR number format: 123/2024/ABC');return;}
+    if(!verificationFile){toast.error('Choose a registration document.');return;}
+    if(!['image/jpeg','image/png','application/pdf'].includes(verificationFile.type)||verificationFile.size>10*1024*1024||verificationFile.size===0){
+      toast.error('Upload only JPG, PNG or PDF documents up to 10 MB.');return;
+    }
+    setSaving(true);let objectPath:string|null=null;
+    try{
+      const extension=verificationFile.type==='application/pdf'?'pdf':verificationFile.type==='image/png'?'png':'jpg';
+      objectPath=userId+'/'+selectedBusinessId+'/'+crypto.randomUUID()+'.'+extension;
+      const {error:uploadError}=await supabase.storage.from('verification-docs').upload(objectPath,verificationFile,{contentType:verificationFile.type,upsert:false});
+      if(uploadError)throw uploadError;
+      // Private storage identifier, NOT a public URL. Admin access is authenticated.
+      const {error:verifyError}=await supabase.from('verifications').insert({
+        business_id:selectedBusinessId,status:'pending',
+        br_document_url:'storage://verification-docs/'+objectPath,
+        business_type:businessType,br_number:brNumber.trim(),
+        tin_number:tinNumber.trim()||null,svat_number:svatNumber.trim()||null,
+      });
+      if(verifyError)throw verifyError;
+      toast.success('Verification request submitted for manual review');
       setVerificationFile(null);
-      fetchData();
-    } catch (error) {
-      console.error('Error submitting verification:', error);
-      toast.error('Failed to submit verification');
-    } finally {
-      setSubmitting(false);
-    }
-  };
+      const {data:latest}=await supabase.from('verifications').select('id,status,business_type,br_number,tin_number,svat_number,br_document_url,created_at')
+        .eq('business_id',selectedBusinessId).order('created_at',{ascending:false}).limit(1).maybeSingle();
+      setVerification((latest||null) as Verification|null);
+    }catch(e){
+      if(objectPath)void supabase.storage.from('verification-docs').remove([objectPath]);
+      toast.error(e instanceof Error?e.message:'Could not submit verification.');
+    }finally{setSaving(false);}
+  }
 
-  const addKeyword = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && newKeyword.trim()) {
-      if (!keywords.includes(newKeyword.trim())) {
-        setKeywords([...keywords, newKeyword.trim()]);
-      }
-      setNewKeyword('');
-    }
-  };
+  async function savePreferences(){
+    if(!userId)return;
+    if(!prefsAvailable){toast.error('Notification preferences database is not yet available.');return;}
+    setSaving(true);
+    try{
+      const {error}=await supabase.from('vendor_notification_preferences')
+        .upsert({user_id:userId,...prefs,updated_at:new Date().toISOString()},{onConflict:'user_id'});
+      if(error)throw error;
+      toast.success('Notification preferences saved');
+    }catch(e){toast.error(e instanceof Error?e.message:'Could not save preferences.');}
+    finally{setSaving(false);}
+  }
+  async function changePassword(){
+    if(newPassword.length<12){toast.error('Use at least 12 characters for your password.');return;}
+    if(newPassword!==confirmPassword){toast.error('Passwords do not match.');return;}
+    setSaving(true);
+    try{
+      const {error}=await supabase.auth.updateUser({password:newPassword});
+      if(error)throw error;
+      setNewPassword('');setConfirmPassword('');
+      toast.success('Password updated. Review your active sessions if needed.');
+    }catch(e){toast.error(e instanceof Error?e.message:'Password update failed.');}
+    finally{setSaving(false);}
+  }
 
-  const removeKeyword = (keyword: string) => {
-    setKeywords(keywords.filter(k => k !== keyword));
-  };
-
-  // Determine display status for the selected business
-  const selectedBusiness = businesses.find(b => b.id === selectedBusinessId);
-  const displayStatus = selectedBusiness?.verification_status || 'none';
-
-  const isVerified = displayStatus === 'approved';
-  const isPending = displayStatus === 'pending';
-  const isRejected = displayStatus === 'rejected';
-
+  const initials=(profile.full_name||profile.email||'V').trim().split(/\s+/).slice(0,2).map(n=>n[0]?.toUpperCase()||'').join('');
+  const submitLabel=verified?'Verified':pending?'Under review':'Submit for review';
   return (
-    <div className="max-w-6xl mx-auto space-y-8">
+    <div className="mx-auto max-w-[1460px] space-y-5 text-[#213B2C]">
+      <header className="vendor-premium-header flex flex-col gap-5 px-6 py-7 sm:px-8 sm:py-9 lg:flex-row lg:items-end lg:justify-between">
+        <div className="relative z-10 max-w-2xl">
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[.17em] text-[#D0EDCA]"><ShieldCheck size={14}/> Owner command center · Settings</div>
+          <h1 className="text-[28px] font-extrabold tracking-[-.05em] text-white sm:text-[34px]">Your workspace, your control.</h1>
+          <p className="mt-2 text-[12px] leading-6 text-[#D6E9D9]">Manage account identity, business verification, local discoverability and communication preferences in one secure place.</p>
+        </div>
+        <div className="relative z-10 flex flex-wrap gap-2">
+          <Link href="/vendor/my-businesses" className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 text-xs font-bold text-white hover:bg-white/20"><Building2 size={15}/> Manage businesses <ArrowUpRight size={13}/></Link>
+          <button type="button" onClick={()=>void load()} disabled={loading} className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/20 bg-[#F3FAEE] px-4 text-xs font-bold text-[#1F5636] hover:bg-white"><RefreshCcw size={15}/> Refresh</button>
+        </div>
+      </header>
+      {error&&<div role="alert" className="rounded-xl border border-[#E9D3BE] bg-[#FFF9ED] p-4 text-[12px] text-[#875E38]">{error}<Link href="/login?redirect=/vendor/settings" className="ml-2 underline">Sign in</Link></div>}
+      {loading&&<div role="status" className="vendor-premium-panel flex items-center gap-3 p-5 text-sm text-[#50745C]"><Loader2 className="animate-spin" size={18}/> Loading your settings…</div>}
 
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl text-gray-900">Settings & Optimization</h1>
-        <p className="text-gray-500 mt-1">Manage your account, verify your business, and optimize reach.</p>
-      </div>
-
-      <div className="flex flex-col lg:flex-row gap-8">
-
-        {/* Sidebar Navigation */}
-        <div className="w-full lg:w-64 flex-shrink-0">
-          <nav className="space-y-1">
-            {[
-              { id: 'profile', label: 'Profile & Branding', icon: User },
-              { id: 'verification', label: 'Verification Center', icon: ShieldCheck },
-              { id: 'optimization', label: 'Radius & SEO', icon: Globe },
-              { id: 'notifications', label: 'Notifications', icon: Bell },
-            ].map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id as 'profile' | 'verification' | 'optimization' | 'notifications')}
-                className={`w-full flex items-center gap-3 px-4 py-3 text-sm rounded transition-all ${
-                  activeTab === item.id 
-                    ? 'bg-blue-50 text-brand-blue shadow-sm ring-1 ring-blue-200' 
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                }`}
-              >
-                <item.icon size={18} />
-                {item.label}
-              </button>
-            ))}
+      <div className="grid items-start gap-5 lg:grid-cols-[260px_minmax(0,1fr)]">
+        <div className="vendor-premium-card overflow-hidden p-2 lg:sticky lg:top-5">
+          <p className="px-3 pb-3 pt-4 text-[10px] font-bold uppercase tracking-[.17em] text-[#8B9F90]">Workspace settings</p>
+          <nav aria-label="Vendor settings sections" className="space-y-1" role="tablist" aria-orientation="vertical">
+            {tabList.map(item=><button type="button" role="tab" id={'tab-'+item.id} aria-selected={activeTab===item.id} aria-controls={'panel-'+item.id} key={item.id} onClick={()=>selectTab(item.id)}
+              className={'flex min-h-12 w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition '+(activeTab===item.id?'bg-[#E8F4E9] text-[#215F3D]':'text-[#617C68] hover:bg-[#F6F9F4] hover:text-[#29553A]')}>
+              <span className={'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl '+(activeTab===item.id?'bg-white text-[#267048]':'bg-[#F3F6F1] text-[#7D9582]')}><item.icon size={17}/></span>
+              <span className="flex-1"><span className="block text-[12px] font-bold">{item.name}</span><span className="mt-0.5 block text-[10px] opacity-70">{item.detail}</span></span>
+            </button>)}
           </nav>
+          <div className="mx-2 mt-3 rounded-xl bg-[#F3F8F1] px-4 py-3 text-[11px] leading-[1.6] text-[#668274]">
+            Need help? <Link href="/vendor/leads" className="font-bold text-[#2B6945] underline underline-offset-2">Your enquiry inbox</Link> remains accessible from the main portal.
+          </div>
         </div>
-
-        {/* Content Area */}
-        <div className="flex-1 space-y-6">
-
-          {/* Profile Settings */}
-          {activeTab === 'profile' && (
-            <div className="bg-white rounded border border-gray-300 shadow-sm p-6 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <h2 className="text-lg text-brand-dark mb-6">Profile Details</h2>
-
-              <div className="flex items-center gap-6 mb-8">
-                <div className="h-24 w-24 rounded-full bg-gray-100 border-4 border-white shadow-lg flex items-center justify-center overflow-hidden relative group cursor-pointer">
-                  {profile.avatar_url ? (
-                    <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
-                  ) : (
-                    <User size={30} className="text-gray-400" />
-                  )}
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
-                    <Upload size={20} />
-                  </div>
-                </div>
-                <div>
-                  <h3 className="text-brand-dark">Profile Picture</h3>
-                  <p className="text-xs text-gray-500 mb-3 pt-1">PNG, JPG up to 5MB</p>
-                  <button className="px-4 py-2 bg-brand-dark border border-gray-300 rounded text-sm font-medium text-gray-100 hover:bg-gray-50 transition-colors">
-                    Upload New
-                  </button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                  <input
-                    type="text"
-                    value={profile.full_name}
-                    onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                  <input
-                    type="email"
-                    value={profile.email}
-                    disabled
-                    className="w-full px-4 py-2 border border-gray-300 rounded bg-gray-50 text-gray-500 outline-none text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                  <input
-                    type="tel"
-                    value={profile.phone}
-                    onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Job Title</label>
-                  <input
-                    type="text"
-                    value={profile.job_title}
-                    onChange={(e) => setProfile({ ...profile, job_title: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm"
-                  />
-                </div>
-              </div>
-
-              <div className="mt-8 pt-8 border-t border-gray-200 flex justify-end">
-                <button
-                  onClick={handleSaveProfile}
-                  disabled={submitting}
-                  className="px-6 py-2.5 bg-brand-dark text-white rounded text-sm hover:bg-brand-light transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50"
-                >
-                  {submitting ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />} Save Changes
-                </button>
-              </div>
+        <div className="min-w-0 space-y-5">
+          {activeTab==='profile'&&<section role="tabpanel" id="panel-profile" aria-labelledby="tab-profile" className="vendor-setting-section space-y-6">
+            <div><p className="vendor-kicker">Personal profile</p><h2 className="mt-1 text-[22px] font-extrabold text-[#213F2D]">Account identity</h2><p className="mt-1 text-[12px] text-[#829787]">This information belongs to your account, not to any single business listing.</p></div>
+            <div className="flex flex-wrap items-center gap-4 rounded-[16px] border border-[#E5ECE5] bg-[#FAFCF8] p-4">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[18px] bg-[#254E38] text-xl font-extrabold text-white">{initials||'V'}</div>
+              <div><p className="text-[14px] font-bold text-[#274A34]">{profile.full_name||'Complete your profile'}</p><p className="mt-1 text-[11px] text-[#718675]">{profile.email||'Email is linked to your signed-in account'}</p><span className="mt-2 inline-flex items-center gap-1 rounded-full border border-[#D8E7DC] bg-white px-2 py-1 text-[10px] font-semibold text-[#587C60]"><ShieldCheck size={12}/> Account owner</span></div>
             </div>
-          )}
-
-          {/* Verification Center */}
-          {activeTab === 'verification' && (
-            <div className="bg-white rounded border border-gray-300 shadow-sm p-6 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              
-              <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Verifying Business:</label>
-                <select
-                  value={selectedBusinessId}
-                  onChange={(e) => {
-                    const b = businesses.find(bus => bus.id === e.target.value);
-                    if (b) {
-                      setSelectedBusinessId(b.id);
-                      // Also fetch specific verification for this business
-                      supabase
-                        .from('verifications')
-                        .select('*')
-                        .eq('business_id', b.id)
-                        .order('created_at', { ascending: false })
-                        .limit(1)
-                        .maybeSingle()
-                        .then(({ data }) => {
-                          setVerification(data);
-                          if (data) {
-                            setBusinessType(data.business_type || 'pvt_ltd');
-                            setBrNumber(data.br_number || '');
-                            setTinNumber(data.tin_number || '');
-                            setSvatNumber(data.svat_number || '');
-                          } else {
-                            setBrNumber('');
-                            setTinNumber('');
-                            setSvatNumber('');
-                          }
-                        });
-                    }
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm bg-white font-medium"
-                >
-                  {businesses.map(b => (
-                    <option key={b.id} value={b.id}>{b.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex items-start justify-between mb-6">
-                <div>
-                  <h2 className="text-lg text-brand-dark flex items-center gap-2">
-                    Verification Status
-                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                      isVerified ? 'bg-green-50 text-green-700 border-green-100' :
-                      isPending ? 'bg-amber-50 text-amber-700 border-amber-100' :
-                      isRejected ? 'bg-red-50 text-red-700 border-red-100' :
-                      'bg-gray-50 text-gray-700 border-gray-100'
-                    }`}>
-                      {displayStatus === 'none' ? 'Not Verified' : displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1)}
-                    </span>
-                  </h2>
-                  <p className="text-sm text-gray-500 mt-1">Get the blue tick to build trust with customers.</p>
-                </div>
-                <ShieldCheck size={32} className={isVerified ? "text-blue-500" : "text-gray-300"} />
-              </div>
-
-              {isPending && (
-                <div className="bg-amber-50 border border-amber-100 rounded-lg p-4 mb-8 flex items-center gap-3">
-                    <AlertTriangle className="text-amber-600" size={20} />
-                    <p className="text-sm text-amber-700 font-medium">Your request is pending admin approval.</p>
-                </div>
-              )}
-
-              <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-8">
-                <h4 className="text-sm font-medium text-brand-dark mb-2">Why verify?</h4>
-                <ul className="text-sm text-brand-blue space-y-1 list-disc list-inside">
-                  <li>Higher ranking in search results</li>
-                  <li>&quot;Verified&quot; badge on your profile</li>
-                  <li>Access to premium analytics</li>
-                </ul>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Business Type</label>
-                  <select
-                    value={businessType}
-                    onChange={(e) => setBusinessType(e.target.value as 'pvt_ltd' | 'local_business')}
-                    disabled={isPending || isVerified}
-                    className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm bg-white"
-                  >
-                    <option value="pvt_ltd">Private Limited (PVT)</option>
-                    <option value="local_business">Local Business / Sole Proprietorship</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">BR Number</label>
-                  <input
-                    type="text"
-                    placeholder={businessType === 'pvt_ltd' ? "PV00212345" : "123/2024/ABC"}
-                    value={brNumber}
-                    onChange={(e) => setBrNumber(e.target.value)}
-                    disabled={isPending || isVerified}
-                    className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm"
-                  />
-                  <p className="text-[10px] text-gray-400 mt-1">
-                    {businessType === 'pvt_ltd' ? "Format: PV + 8 digits" : "Format: [Number]/[Year]/[Code]"}
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">TIN Number (Optional)</label>
-                  <input
-                    type="text"
-                    placeholder="Taxpayer Identification Number"
-                    value={tinNumber}
-                    onChange={(e) => setTinNumber(e.target.value)}
-                    disabled={isPending || isVerified}
-                    className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">SVAT Number (Optional)</label>
-                  <input
-                    type="text"
-                    placeholder="Simplified VAT Number"
-                    value={svatNumber}
-                    onChange={(e) => setSvatNumber(e.target.value)}
-                    disabled={isPending || isVerified}
-                    className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-brand-dark mb-2">ID or Business Document</label>
-                  <div
-                    className={`border-2 border-dashed rounded p-8 flex flex-col items-center justify-center text-gray-500 transition-colors cursor-pointer relative ${
-                        verificationFile ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-blue-500 hover:bg-blue-50'
-                    }`}
-                  >
-                    <input
-                      type="file"
-                      className="absolute inset-0 opacity-0 cursor-pointer"
-                      accept="image/*"
-                      onChange={(e) => {
-                        if (e.target.files && e.target.files[0]) {
-                          setVerificationFile(e.target.files[0]);
-                        }
-                      }}
-                      disabled={isPending || isVerified}
-                    />
-                    <Upload size={24} className="mb-2" />
-                    <p className="text-sm">
-                        {verificationFile ? verificationFile.name : (verification?.br_document_url || profile.verification_image_url) ? 'Document uploaded' : 'Click to upload or drag and drop'}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-1">PNG, JPG up to 10MB</p>
-                  </div>
-                  {(verification?.br_document_url || profile.verification_image_url) && !verificationFile && (
-                    <div className="mt-4">
-                        <p className="text-xs text-gray-500 mb-2">Current document:</p>
-                        <div className="h-48 w-full max-w-md rounded border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center">
-                            <img
-                              src={verification?.br_document_url || profile.verification_image_url}
-                              alt="Verification Document"
-                              className="max-h-full max-w-full object-contain"
-                            />
-                        </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="mt-8 pt-8 border-t border-gray-200 flex justify-end">
-                <button
-                  onClick={handleSubmitVerification}
-                  disabled={submitting || !verificationFile || isPending || isVerified}
-                  className="px-6 py-2.5 bg-brand-dark text-white rounded text-sm font-medium  transition-colors shadow-sm disabled:opacity-50"
-                >
-                  {submitting ? <Loader2 className="animate-spin" size={18} /> : (isPending ? 'Under Review' : isVerified ? 'Verified' : 'Submit for Review')}
-                </button>
-              </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div><label className={label} htmlFor="vendor-name">Full name</label><input id="vendor-name" className={field} maxLength={100} autoComplete="name" value={profile.full_name} onChange={e=>setProfile(v=>({...v,full_name:e.target.value}))}/></div>
+              <div><label className={label} htmlFor="vendor-email">Account email</label><input id="vendor-email" className={field} type="email" disabled value={profile.email}/><p className="mt-1.5 text-[10px] text-[#8D9C8F]">Email changes require authentication verification.</p></div>
+              <div><label className={label} htmlFor="vendor-phone">Contact phone</label><input id="vendor-phone" className={field} type="tel" maxLength={30} autoComplete="tel" value={profile.phone} onChange={e=>setProfile(v=>({...v,phone:e.target.value}))}/></div>
+              <div><label className={label} htmlFor="vendor-job">Role or job title</label><input id="vendor-job" className={field} maxLength={100} value={profile.job_title} onChange={e=>setProfile(v=>({...v,job_title:e.target.value}))} placeholder="Founder, Owner, Manager…"/></div>
             </div>
-          )}
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#EAF0E8] pt-5"><p className="text-[11px] text-[#708674]">Only your profile details will be updated.</p><button type="button" onClick={()=>void saveProfile()} disabled={saving||!userId} className="vendor-primary-button">{saving?<Loader2 size={16} className="animate-spin"/>:<Save size={16}/>} Save profile</button></div>
+          </section>}
 
-          {/* Optimization (Radius & SEO) */}
-          {activeTab === 'optimization' && (
-            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-
-              <div className="bg-white rounded border border-gray-300 shadow-sm p-6 md:p-8">
-                <label className="block text-sm font-medium text-brand-dark mb-2">Select Business to Optimize</label>
-                <select
-                  value={selectedBusinessId}
-                  onChange={(e) => {
-                    const b = businesses.find(bus => bus.id === e.target.value);
-                    if (b) {
-                      setSelectedBusinessId(b.id);
-                      setRadius([b.service_radius || 5]);
-                      setKeywords(b.seo_keywords || []);
-                    }
-                  }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm bg-white"
-                >
-                  {businesses.map(b => (
-                    <option key={b.id} value={b.id}>{b.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Radius Card */}
-              <div className="bg-white rounded border border-gray-300 shadow-sm p-6 md:p-8">
-                <h2 className="text-lg text-brand-dark mb-4 flex items-center gap-2">
-                  <MapPin size={16} className="text-brand-blue" /> Service Radius
-                </h2>
-                <p className="text-sm text-gray-500 mb-8">Define how far your business reaches. Customers within this range will see your ads more often.</p>
-
-                <div className="mb-8 px-2">
-                  <div className="flex justify-between mb-4">
-                    <span className="text-sm font-medium text-brand-dark">Range</span>
-                    <span className="text-sm font-medium text-brand-dark bg-blue-50 px-2 py-0.5 rounded">{radius[0]} km</span>
-                  </div>
-                  <Slider
-                    value={radius}
-                    max={50}
-                    step={1}
-                    onValueChange={(val) => setRadius(val)}
-                    className="py-4"
-                  />
-                  <div className="flex justify-between text-xs text-gray-400 mt-2">
-                    <span>1 km</span>
-                    <span>50 km</span>
-                  </div>
-                </div>
-
-                {/* Mock Map Preview */}
-                <div className="h-48 bg-gray-100 rounded border border-gray-300 flex items-center justify-center relative overflow-hidden">
-                  <div className="absolute inset-0 opacity-20 bg-[url('https://upload.wikimedia.org/wikipedia/commons/e/ec/Colombo_city_map.png')] bg-cover bg-center"></div>
-                  <div
-                    className="rounded-full bg-blue-500/20 border-2 border-brand-blue flex items-center justify-center relative z-10 animate-pulse transition-all duration-300"
-                    style={{ width: `${radius[0] * 6}px`, height: `${radius[0] * 6}px`, maxWidth: '100%', maxHeight: '100%' }}
-                  >
-                    <div className="w-3 h-3 bg-brand-blue rounded-full shadow-lg"></div>
-                  </div>
-                  <p className="absolute bottom-2 right-2 text-[10px] text-gray-500 bg-white/80 px-2 py-1 rounded">Map Preview</p>
-                </div>
-              </div>
-
-              {/* SEO Card */}
-              <div className="bg-white rounded border border-gray-300 shadow-sm p-6 md:p-8">
-                <h2 className="text-lg text-brand-dark mb-4 flex items-center gap-2">
-                  <Search size={16} className="text-brand-blue" /> Local SEO Keywords
-                </h2>
-                <p className="text-sm text-gray-500 mb-6">Add keywords to help customers find you. We recommend 5-10 relevant tags.</p>
-
-                <div className="relative mb-4">
-                  <input
-                    type="text"
-                    placeholder="Type a keyword and press Enter..."
-                    className="w-full pl-4 pr-12 py-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm"
-                    value={newKeyword}
-                    onChange={(e) => setNewKeyword(e.target.value)}
-                    onKeyDown={addKeyword}
-                  />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
-                    ↵ Enter
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  {keywords.map((keyword) => (
-                    <span key={keyword} className="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-100 text-brand-blue rounded text-sm font-medium border border-gray-300 group hover:bg-gray-100 transition-colors">
-                      {keyword}
-                      <button onClick={() => removeKeyword(keyword)} className="text-gray-400 hover:text-red-500 transition-colors">
-                        &times;
-                      </button>
-                    </span>
-                  ))}
-                </div>
-
-                <div className="mt-8 pt-8 border-t border-gray-200 flex justify-end">
-                  <button
-                    onClick={handleSaveOptimization}
-                    disabled={submitting || !selectedBusinessId}
-                    className="px-6 py-2.5 bg-brand-dark text-white rounded text-sm hover:bg-brand-light transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50"
-                  >
-                    {submitting ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />} Save Optimization
-                  </button>
-                </div>
-              </div>
+          {activeTab==='verification'&&<section role="tabpanel" id="panel-verification" aria-labelledby="tab-verification" className="vendor-setting-section space-y-5">
+            <div><p className="vendor-kicker">Trust & verification</p><h2 className="mt-1 text-[22px] font-extrabold">Verification center</h2><p className="mt-1 text-[12px] leading-5 text-[#819486]">Submit official registration information for administrator review. Submission alone never grants a verified badge.</p></div>
+            <div className="rounded-xl border border-[#DBE9D9] bg-[#F5FAF3] p-4">
+              <label className={label} htmlFor="verification-business">Business under review</label>
+              <select id="verification-business" className={field} value={selectedBusinessId} onChange={e=>setSelectedBusinessId(e.target.value)} disabled={!businesses.length}>
+                {businesses.length===0?<option value="">No businesses registered</option>:businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}
+              </select>
+              <span className={'mt-3 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold '+statusColor(verificationState)}><FileCheck2 size={13}/>{statusLabel(verificationState)}</span>
+              {verification?.created_at&&<p className="mt-2 text-[11px] text-[#728775]">Last request: {new Date(verification.created_at).toLocaleDateString('en-LK')}</p>}
             </div>
-          )}
-
-          {/* Notifications */}
-          {activeTab === 'notifications' && (
-            <div className="bg-white rounded border border-gray-300 shadow-sm p-6 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <h2 className="text-lg text-brand-dark mb-6">Notification Preferences</h2>
-
-              <div className="space-y-6">
-                {[
-                  { title: 'New Reviews', desc: 'Get notified when a customer writes a review.' },
-                  { title: 'New Leads', desc: 'Instant alert for new customer enquiries.' },
-                  { title: 'Weekly Report', desc: 'A summary of your business performance.' },
-                  { title: 'Marketing Tips', desc: 'Tips to improve your reach and sales.' },
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center justify-between pb-6 border-b border-gray-100 last:border-0 last:pb-0">
-                    <div>
-                      <h4 className="text-sm text-brand-blue">{item.title}</h4>
-                      <p className="text-xs text-gray-500 mt-0.5">{item.desc}</p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" className="sr-only peer" defaultChecked={i < 2} />
-                      <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-1 peer-focus:ring-[#2a7db4] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2a7db4]"></div>
-                    </label>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-8 pt-8 border-t border-gray-300">
-                <h3 className="text-sm text-red-600 mb-4 flex items-center gap-2">
-                  <AlertTriangle size={16} /> Danger Zone
-                </h3>
-                <div className="flex items-center justify-between p-4 bg-red-50 rounded border border-red-100">
-                  <div>
-                    <p className="text-sm text-red-900">Deactivate Account</p>
-                    <p className="text-xs text-red-700 mt-1">Temporarily hide your businesses.</p>
-                  </div>
-                  <button className="px-4 py-2 bg-white border border-red-200 text-red-600 rounded text-xs  hover:bg-red-600 hover:text-white transition-colors">
-                    Deactivate
-                  </button>
-                </div>
-              </div>
+            {pending&&<p className="rounded-xl border border-[#EEE0B9] bg-[#FFF9E8] p-4 text-[12px] font-medium text-[#917038]">Your verification request is under manual review. New submissions are paused until this request is resolved.</p>}
+            {verified&&<p className="rounded-xl border border-[#CAE8D2] bg-[#F0FAF1] p-4 text-[12px] font-medium text-[#32754E]"><CheckCircle2 size={17} className="mr-2 inline"/>This business has a verified status.</p>}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div><label className={label} htmlFor="business-type">Registration type</label><select id="business-type" className={field} value={businessType} onChange={e=>setBusinessType(e.target.value as typeof businessType)} disabled={pending||verified}><option value="pvt_ltd">Private limited (PVT)</option><option value="local_business">Registered sole proprietorship</option></select></div>
+              <div><label className={label} htmlFor="br-number">Business registration number</label><input id="br-number" className={field} maxLength={64} value={brNumber} onChange={e=>setBrNumber(e.target.value)} disabled={pending||verified} placeholder={businessType==='pvt_ltd'?'PV00212345':'123/2024/ABC'}/></div>
+              <div><label className={label} htmlFor="tin-number">TIN (optional)</label><input id="tin-number" className={field} maxLength={64} value={tinNumber} onChange={e=>setTinNumber(e.target.value)} disabled={pending||verified}/></div>
+              <div><label className={label} htmlFor="svat-number">SVAT (optional)</label><input id="svat-number" className={field} maxLength={64} value={svatNumber} onChange={e=>setSvatNumber(e.target.value)} disabled={pending||verified}/></div>
             </div>
-          )}
+            <div className="rounded-[15px] border border-dashed border-[#BCD8C4] bg-[#F9FCF8] p-5">
+              <div className="flex items-center gap-3"><span className="rounded-xl bg-[#EAF4EB] p-3 text-[#3C8154]"><UploadCloud size={22}/></span><div><p className="text-[12px] font-bold text-[#2E513D]">Registration document</p><p className="mt-1 text-[11px] text-[#839386]">JPG, PNG or PDF · 10 MB maximum · private access after security migration</p></div></div>
+              <input type="file" aria-label="Select registration document" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" disabled={pending||verified||!privateDocsReady||!selectedBusinessId} className="mt-4 block w-full rounded-xl border border-[#E2EAE2] bg-white p-3 text-[12px] text-[#477153] file:mr-3 file:rounded-lg file:border-0 file:bg-[#E8F3EA] file:px-3 file:py-2 file:font-bold file:text-[#3C724A]" onChange={e=>setVerificationFile(e.target.files?.[0]||null)}/>
+              {verificationFile&&<p className="mt-2 text-[11px] font-semibold text-[#42754B]">Selected: {verificationFile.name}</p>}
+              {documentPreview&&<a href={documentPreview} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-2 text-[11px] font-bold text-[#2D7853] underline">View submitted document <ArrowUpRight size={13}/></a>}
+              {!privateDocsReady&&<p role="status" className="mt-3 rounded-lg border border-[#EADDB8] bg-[#FFF9E8] p-3 text-[11px] leading-5 text-[#906F2E]">Secure document storage upgrade is pending. New uploads are disabled to protect sensitive IDs and registration documents. Your existing requests remain visible to administrators.</p>}
+            </div>
+            <div className="flex justify-end border-t border-[#E8EFE8] pt-5"><button type="button" className="vendor-primary-button" disabled={saving||!selectedBusinessId||pending||verified||!privateDocsReady||!verificationFile} onClick={()=>void submitVerification()}>{saving?<Loader2 size={16} className="animate-spin"/>:<ShieldCheck size={16}/>} {submitLabel}</button></div>
+          </section>}
 
+          {activeTab==='optimization'&&<section role="tabpanel" id="panel-optimization" aria-labelledby="tab-optimization" className="space-y-5">
+            <div className="vendor-setting-section">
+              <p className="vendor-kicker">Local discovery controls</p><h2 className="mt-1 text-[22px] font-extrabold">Reach & search keywords</h2>
+              <p className="mt-2 text-[12px] leading-6 text-[#819486]">Describe your service area and relevant keywords. These are business-provided hints, not guaranteed visibility or ranking outcomes.</p>
+              <label className={label+' mt-5'} htmlFor="seo-business">Choose business</label>
+              <select id="seo-business" className={field} value={selectedBusinessId} disabled={!businesses.length} onChange={e=>setSelectedBusinessId(e.target.value)}>{businesses.length===0?<option value="">No businesses registered</option>:businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select>
+            </div>
+            <div className="vendor-setting-section">
+              <div className="flex items-center justify-between gap-3"><div><p className="vendor-kicker">Local intelligence</p><h3 className="mt-1 text-[17px] font-bold text-[#254935]">Service radius</h3></div><span className="rounded-xl border border-[#D9E8D9] bg-[#F0F7EE] px-4 py-2 text-[14px] font-extrabold tabular-nums text-[#24613F]">{radius} km</span></div>
+              <p className="mt-2 text-[12px] text-[#7B917E]">Set the distance your business says it can serve, from 1 to 50 kilometres.</p>
+              <input type="range" min={1} max={50} step={1} value={radius} onChange={e=>setRadius(Number(e.target.value))} disabled={!selectedBusinessId} aria-label="Business service radius" className="mt-6 w-full accent-[#2F8050]"/>
+              <div className="mt-2 flex justify-between text-[10px] font-semibold text-[#8BA092]"><span>1 km</span><span>50 km</span></div>
+              <div className="mt-5 flex items-center gap-3 rounded-xl border border-[#E6EFE4] bg-[#F5FAF4] p-4"><MapPin className="shrink-0 text-[#3D8855]" size={22}/><p className="text-[11px] leading-5 text-[#62846B]">Saved radius is a business profile preference. Exact discovery ranking still depends on verified locations, query relevance and user-selected filters.</p></div>
+            </div>
+            <div className="vendor-setting-section">
+              <div className="flex items-center gap-3"><span className="rounded-xl bg-[#EAF5EC] p-3 text-[#377C4E]"><Search size={20}/></span><div><h3 className="text-[17px] font-bold">Search keywords</h3><p className="mt-1 text-[11px] text-[#809784]">Maximum 10 relevant terms · up to 50 characters each</p></div></div>
+              <div className="mt-5 flex gap-2"><input className={field} maxLength={50} value={newKeyword} onChange={e=>setNewKeyword(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addKeyword()}}} placeholder="e.g. plumbing, bike service…"/><button type="button" onClick={addKeyword} disabled={!newKeyword.trim()||keywords.length>=10} aria-label="Add keyword" className="vendor-outline-button"><Plus size={16}/> Add</button></div>
+              <div className="mt-4 flex min-h-12 flex-wrap gap-2">{keywords.map(k=><span key={k} className="inline-flex items-center gap-2 rounded-full border border-[#DCEBDD] bg-[#F0F7EE] px-3 py-1.5 text-[11px] font-bold text-[#39714C]">{k}<button type="button" onClick={()=>setKeywords(prev=>prev.filter(t=>t!==k))} aria-label={'Remove '+k} className="rounded-full p-0.5 hover:bg-[#DCE9DD]"><X size={12}/></button></span>)}{keywords.length===0&&<p className="text-[11px] text-[#93A597]">No additional search keywords saved.</p>}</div>
+              <div className="mt-5 flex justify-end border-t border-[#E8EFE8] pt-5"><button type="button" onClick={()=>void saveOptimization()} disabled={saving||!selectedBusinessId} className="vendor-primary-button">{saving?<Loader2 size={16} className="animate-spin"/>:<Save size={16}/>} Save local discovery</button></div>
+            </div>
+          </section>}
+
+          {activeTab==='notifications'&&<section role="tabpanel" id="panel-notifications" aria-labelledby="tab-notifications" className="vendor-setting-section space-y-5">
+            <div><p className="vendor-kicker">Communication preferences</p><h2 className="mt-1 text-[22px] font-extrabold">Notification preferences</h2><p className="mt-2 text-[12px] leading-6 text-[#839687]">Save the kinds of optional business updates you want. Essential security and verification notices remain available.</p></div>
+            {!prefsAvailable&&<p role="status" className="rounded-xl border border-[#EADDB9] bg-[#FFF9E9] p-4 text-[11px] text-[#947135]">Preferences storage is not yet configured. Switches cannot be saved until the reviewed database migration is applied.</p>}
+            <div className="divide-y divide-[#ECF0EB] rounded-[15px] border border-[#E4ECE3] bg-[#FBFDFB]">
+              {([
+                {key:'reviews',title:'New reviews',text:'Optional updates when customers leave reviews.',icon:User},
+                {key:'leads',title:'New enquiries',text:'Optional notifications for enquiries on owned listings.',icon:Mail},
+                {key:'weekly_digest',title:'Weekly summary',text:'Periodic business activity digest, if delivery is enabled.',icon:Globe},
+                {key:'marketing_tips',title:'Growth tips',text:'Optional educational marketing updates.',icon:Bell},
+              ] as const).map(item=><label key={item.key} className="flex cursor-pointer items-center gap-3 p-4 sm:p-5">
+                <span className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EDF6ED] text-[#42845C] sm:flex"><item.icon size={18}/></span>
+                <span className="min-w-0 flex-1"><span className="block text-[12px] font-bold text-[#31513B]">{item.title}</span><span className="mt-1 block text-[11px] leading-5 text-[#819686]">{item.text}</span></span>
+                <input type="checkbox" checked={prefs[item.key]} disabled={!prefsAvailable} onChange={e=>setPrefs(v=>({...v,[item.key]:e.target.checked}))} className="h-5 w-5 shrink-0 accent-[#347A4C]" aria-label={item.title}/>
+              </label>)}
+            </div>
+            <p className="text-[11px] leading-5 text-[#86998A]">Preferences are stored with your vendor account. Delivery of future emails/push messages is subject to the messaging service and explicit opt-in; saving a setting does not guarantee delivery.</p>
+            <div className="flex justify-end border-t border-[#E6EEE6] pt-5"><button type="button" className="vendor-primary-button" onClick={()=>void savePreferences()} disabled={saving||!prefsAvailable||!userId}><Save size={16}/> Save preferences</button></div>
+          </section>}
+
+          {activeTab==='security'&&<section role="tabpanel" id="panel-security" aria-labelledby="tab-security" className="vendor-setting-section space-y-6">
+            <div><p className="vendor-kicker">Owner security</p><h2 className="mt-1 text-[22px] font-extrabold">Protect your account</h2><p className="mt-2 text-[12px] leading-6 text-[#819486]">Update your password. Other signed-in devices may retain a session until revoked; review your account security if access is unexpected.</p></div>
+            <div className="rounded-xl border border-[#DDEBDF] bg-[#F5FAF3] p-4 text-[12px] text-[#597960]"><LockKeyhole className="mr-2 inline" size={18}/> Password changes are handled through Supabase Auth, not stored in vendor business tables.</div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div><label className={label} htmlFor="vendor-password">New password</label><div className="relative"><input id="vendor-password" className={field+' pr-12'} type={showPassword?'text':'password'} autoComplete="new-password" maxLength={128} value={newPassword} onChange={e=>setNewPassword(e.target.value)} placeholder="12 characters or more"/><button type="button" aria-label={showPassword?'Hide password':'Show password'} onClick={()=>setShowPassword(v=>!v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6A8974]">{showPassword?<EyeOff size={17}/>:<Eye size={17}/>}</button></div></div>
+              <div><label className={label} htmlFor="vendor-confirm">Confirm new password</label><input id="vendor-confirm" className={field} type={showPassword?'text':'password'} autoComplete="new-password" maxLength={128} value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)}/></div>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#E6EEE6] pt-5"><Link href="/vendor/billing" className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#477955] hover:underline">Manage billing security <ArrowUpRight size={13}/></Link><button type="button" className="vendor-primary-button" onClick={()=>void changePassword()} disabled={saving||!userId||newPassword.length<12||newPassword!==confirmPassword}><LockKeyhole size={15}/> Update password</button></div>
+          </section>}
         </div>
       </div>
+      <p className="pb-4 text-center text-[10px] text-[#8CA192]">SL Business Index · Owner Growth Portal · Changes are validated and restricted to your account and owned businesses.</p>
     </div>
   );
 }
