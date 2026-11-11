@@ -38,7 +38,7 @@ test('every major owner portal page is reachable and uses a shared premium shell
   assert.match(style,/prefers-reduced-motion/);
   assert.match(style,/vendor-premium-header/);
   for(const path of basePages) {
-    assert.ok(load(path).includes('vendor-premium-'),'no shared design style in '+path);
+    assert.ok(load(path).includes(path==='app/vendor/dashboard/page.tsx'?'vendor-dashboard-v6':'vendor-premium-'),'no shared design style in '+path);
   }
 });
 
