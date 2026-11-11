@@ -55,7 +55,7 @@ type Invoice = {
 type FeatureDefinition = { id: string; label: string };
 type InvoiceFilter = 'all' | 'paid' | 'pending' | 'failed';
 const panel = 'vendor-premium-card';
-const actionButton = 'inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-[#e1e6eb] bg-white px-3 text-xs font-semibold text-slate-600 transition hover:border-[#baccc4] hover:bg-[#f7faf8] disabled:cursor-not-allowed disabled:opacity-50';
+const actionButton = 'inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-[#e1e6eb] bg-white px-3 text-xs font-semibold text-slate-600 transition hover:border-[#E6A67D] hover:bg-[#FFF8F2] disabled:cursor-not-allowed disabled:opacity-50';
 const money = (n: number) => 'LKR ' + new Intl.NumberFormat('en-LK', { maximumFractionDigits: 2 }).format(n);
 const nfmt = (n: number) => new Intl.NumberFormat('en-LK').format(n);
 const billingEmail = 'slbusinessindex@gmail.com';
@@ -315,20 +315,20 @@ export default function VendorBillingPage() {
     <div className="mx-auto max-w-xl py-16 text-center">
       <h1 className="text-xl font-bold text-[#1c3f2f]">Sign in to view billing</h1>
       <p className="mt-2 text-sm text-slate-500">Subscription and billing records are available to account owners.</p>
-      <Link href="/login?redirect=/vendor/billing" className="mt-5 inline-flex rounded-lg bg-[#1c4d3b] px-5 py-2.5 text-xs font-bold text-white">Sign in</Link>
+      <Link href="/login?redirect=/vendor/billing" className="mt-5 inline-flex rounded-lg bg-[#202024] px-5 py-2.5 text-xs font-bold text-white">Sign in</Link>
     </div>
   );
 
   return (
-    <div className="mx-auto min-h-full max-w-[1500px] pb-6 text-[#283F30]">
+    <div className="vendor-page-v7 mx-auto min-h-full w-full max-w-[1600px] pb-7 text-[#28282D]">
       <div className="space-y-5">
-        <header className="vendor-premium-card flex flex-col gap-5 border-t-4 border-t-[#2D6749] px-5 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-6">
+        <header className="vendor-owner-heading vendor-premium-card flex flex-col gap-5 border border-[#E9E9EC] px-5 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-6">
           <div className="space-y-1.5">
             <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
               <IconsaxIcon name="category" size={15} /> Vendor workspace
               <IconsaxIcon name="arrow-right-2" size={12} /> Billing & subscription
             </div>
-            <h1 className="text-[24px] font-bold tracking-tight text-[#172d26]">Billing & subscription</h1>
+            <h1 className="text-[24px] font-bold tracking-tight text-[#1B1B1F]">Billing & subscription</h1>
             <p className="text-[12px] text-slate-500">Review your plan, listing allowance and recorded billing history.</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -341,7 +341,7 @@ export default function VendorBillingPage() {
               <IconsaxIcon name="refresh" size={15} /> Refresh
             </button>
             <a href={'mailto:' + billingEmail + '?subject=SL%20Business%20Index%20Billing%20Support'}
-              className="inline-flex h-9 items-center gap-2 rounded-lg bg-[#1c4d3b] px-3.5 text-xs font-bold text-white transition hover:bg-[#2d664f]">
+              className="inline-flex h-9 items-center gap-2 rounded-lg bg-[#202024] px-3.5 text-xs font-bold text-white transition hover:bg-[#39393E]">
               <IconsaxIcon name="sms" size={16} color="#fff" /> Billing support
             </a>
           </div>
@@ -355,7 +355,7 @@ export default function VendorBillingPage() {
         )}
 
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-[13px] font-bold text-[#1d3f31]">Account overview</h2>
+          <h2 className="text-[13px] font-bold text-[#2C2C32]">Account overview</h2>
           <span className="rounded-md border border-[#e9edf0] bg-white px-2 py-1 text-[10px] font-semibold text-slate-500">Database-backed billing</span>
         </div>
 
@@ -371,7 +371,7 @@ export default function VendorBillingPage() {
                 <span className="text-[11px] font-semibold text-slate-500">{kpi.title}</span>
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: kpi.tone + '12', color: kpi.tone }}><IconsaxIcon name={kpi.icon} size={18}/></span>
               </div>
-              <p className="mt-1.5 break-words text-[23px] font-bold tracking-[-0.04em] text-[#182b25]">{loading ? '—' : kpi.value}</p>
+              <p className="mt-1.5 break-words text-[23px] font-bold tracking-[-0.04em] text-[#1D1D20]">{loading ? '—' : kpi.value}</p>
               <p className="mt-2 text-[10px] leading-4 text-slate-400">{kpi.hint}</p>
             </div>
           ))}
@@ -407,7 +407,7 @@ export default function VendorBillingPage() {
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(275px,0.85fr)]">
           <section className={panel + ' min-w-0 overflow-hidden'}>
             <div className="flex items-center justify-between border-b border-[#eef0f2] px-5 py-4">
-              <div><h2 className="text-[13px] font-bold text-[#23392f]">Subscription details</h2><p className="mt-1 text-[11px] text-slate-400">Plan and renewal information from your account</p></div>
+              <div><h2 className="text-[13px] font-bold text-[#313137]">Subscription details</h2><p className="mt-1 text-[11px] text-slate-400">Plan and renewal information from your account</p></div>
               <span className={'rounded-md border px-2.5 py-1 text-[10px] font-bold ' + (active ? 'border-[#d5eadc] bg-[#eff8f2] text-[#287b51]' : 'border-[#e9d9c0] bg-[#fff8ee] text-[#aa792c]')}>
                 {loading ? 'Loading' : active ? 'Active record' : expiredRecord ? 'Renewal overdue' : 'No active record'}
               </span>
@@ -445,7 +445,7 @@ export default function VendorBillingPage() {
 
           <section className={panel + ' min-w-0 overflow-hidden'}>
             <div className="border-b border-[#eef0f2] px-5 py-4">
-              <div className="flex items-center gap-2"><IconsaxIcon name="shield-tick" size={18} color="#247352"/><h2 className="text-[13px] font-bold text-[#23392f]">Payment & verification</h2></div>
+              <div className="flex items-center gap-2"><IconsaxIcon name="shield-tick" size={18} color="#247352"/><h2 className="text-[13px] font-bold text-[#313137]">Payment & verification</h2></div>
               <p className="mt-1 text-[11px] text-slate-400">Transparent subscription management</p>
             </div>
             <div className="space-y-4 px-5 py-5">
@@ -462,7 +462,7 @@ export default function VendorBillingPage() {
 
         <section className={panel + ' overflow-hidden'}>
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e9edf0] px-5 py-4">
-            <div><h2 className="text-[13px] font-bold text-[#23392f]">Subscription plans</h2><p className="mt-1 text-[11px] text-slate-400">Prices are loaded directly from the active plan catalogue</p></div>
+            <div><h2 className="text-[13px] font-bold text-[#313137]">Subscription plans</h2><p className="mt-1 text-[11px] text-slate-400">Prices are loaded directly from the active plan catalogue</p></div>
             <div className="flex h-9 items-center rounded-lg border border-[#e2e8e3] bg-[#f5f8f6] p-1" role="group" aria-label="Plan billing period">
               {(['monthly', 'yearly'] as BillingCycle[]).map(opt => (
                 <button type="button" key={opt} onClick={() => setCycle(opt)} aria-pressed={cycle === opt}
@@ -508,7 +508,7 @@ export default function VendorBillingPage() {
                     </ul>
                     <button type="button" disabled={current} onClick={() => openUpgrade(plan)}
                       className={'inline-flex h-10 items-center justify-center gap-2 rounded-lg text-[11px] font-bold transition disabled:cursor-not-allowed ' +
-                        (current ? 'bg-[#e5f1e9] text-[#367451]' : 'bg-[#1c4d3b] text-white hover:bg-[#2d664f]')}>
+                        (current ? 'bg-[#e5f1e9] text-[#367451]' : 'bg-[#202024] text-white hover:bg-[#39393E]')}>
                       {current ? 'Current subscription' : isPaid ? 'Request this plan' : 'Contact for plan change'}
                       {!current && <IconsaxIcon name="arrow-right-2" size={14} color="#fff"/>}
                     </button>
@@ -523,7 +523,7 @@ export default function VendorBillingPage() {
         <section className={panel + ' overflow-hidden'}>
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e9edf0] px-5 py-4">
             <div>
-              <h2 className="text-[13px] font-bold text-[#23392f]">Billing records & history</h2>
+              <h2 className="text-[13px] font-bold text-[#313137]">Billing records & history</h2>
               <p className="mt-1 text-[11px] text-slate-400">Records from all subscriptions belonging to this account</p>
             </div>
             <button type="button" onClick={exportInvoicesCsv} disabled={!filteredInvoices.length || loading} className={actionButton}>
@@ -614,7 +614,7 @@ export default function VendorBillingPage() {
                 <h3 className="text-[14px] font-bold text-[#224d33]">Your request was recorded</h3>
                 <p className="text-[11px] leading-6 text-slate-600">Billing staff can now review this request in their dashboard. No money has been taken and your plan has not changed.</p>
                 <p className="break-all rounded-lg bg-[#f5f8f6] p-3 text-[10px] text-slate-500">Reference: {requestId}</p>
-                <button type="button" onClick={() => setRequestPlan(null)} className="h-10 w-full rounded-lg bg-[#1c4d3b] text-[11px] font-bold text-white">Done</button>
+                <button type="button" onClick={() => setRequestPlan(null)} className="h-10 w-full rounded-lg bg-[#202024] text-[11px] font-bold text-white">Done</button>
               </div>
             ) : (
               <div className="space-y-4 p-5">
@@ -627,7 +627,7 @@ export default function VendorBillingPage() {
                 <div className="flex flex-wrap gap-2">
                   <button type="button" disabled={requesting} onClick={() => setRequestPlan(null)} className={actionButton + ' flex-1'}>Cancel</button>
                   <button type="button" disabled={requesting || !positivePlans.some(p => p.id === requestPlan.id)} onClick={() => void submitUpgradeRequest()}
-                    className="inline-flex h-9 flex-[1.5] items-center justify-center gap-2 rounded-lg bg-[#1c4d3b] px-3 text-[11px] font-bold text-white hover:bg-[#2d664f] disabled:opacity-50">
+                    className="inline-flex h-9 flex-[1.5] items-center justify-center gap-2 rounded-lg bg-[#202024] px-3 text-[11px] font-bold text-white hover:bg-[#39393E] disabled:opacity-50">
                     <IconsaxIcon name="tick-circle" size={15} color="#fff"/> {requesting ? 'Submitting…' : 'Submit request'}
                   </button>
                 </div>
