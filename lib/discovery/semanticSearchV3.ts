@@ -66,11 +66,12 @@ export function evaluateSemanticGate(
 }
 
 /** Query-by-query fail-closed fusion with strict similarity and model validation. */
-export function fuseVerifiedSemantic<T extends { id?: string | number }>(
+export function fuseVerifiedSemantic<T extends { id?: string | number; match_type?: string | null }>(
   baseline: readonly T[],
   semantic: readonly SemanticRankedCandidate[],
   config: SemanticRollout,
   gate: SemanticGateReport,
+  options: { specificService?: boolean } = {},
 ): T[] {
   if (!config.enabled || !gate.ready || !baseline.length || !semantic.length) return [...baseline];
   const ids = new Set(baseline.map(item => String(item.id ?? "")));
@@ -95,6 +96,14 @@ export function fuseVerifiedSemantic<T extends { id?: string | number }>(
   ]);
   const originalRank=new Map(baselineIds.map((id,index)=>[id,index]));
   return [...baseline].sort((a,b)=> {
+    // A semantic similarity score cannot prove an unverified shop sells a
+    // named product. Keep real exact-service evidence above related categories.
+    if (options.specificService) {
+      const tier = (v: T) => v.match_type === "exact_service" ? 3 :
+        v.match_type === "category_related" ? 0 : 1;
+      const evidence = tier(b) - tier(a);
+      if (evidence) return evidence;
+    }
     const aid=String(a.id),bid=String(b.id);
     const compare=(ranks.get(bid)||0)-(ranks.get(aid)||0);
     return compare || (originalRank.get(aid)||0)-(originalRank.get(bid)||0);
