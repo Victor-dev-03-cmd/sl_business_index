@@ -28,7 +28,7 @@ type OwnedBusiness = { id: string; name: string };
 
 const stages: Stage[] = ['new', 'contacted', 'converted', 'lost'];
 const statuses: StageFilter[] = ['all', ...stages];
-const panel = 'rounded-xl border border-[#e7ebef] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.025)]';
+const panel = 'vendor-premium-card';
 const button = 'inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-[#e1e6eb] bg-white px-3 text-xs font-semibold text-slate-600 transition hover:border-[#baccc4] hover:bg-[#f7faf8] disabled:cursor-not-allowed disabled:opacity-50';
 const nfmt = (n: number) => new Intl.NumberFormat('en-LK').format(n);
 
@@ -283,9 +283,9 @@ export default function LeadsPage() {
   );
 
   return (
-    <div className="-m-4 min-h-full bg-[#f8f9fb] p-4 text-slate-800 md:-m-8 md:p-6 xl:p-7">
-      <div className="mx-auto max-w-[1600px] space-y-5">
-        <header className="flex flex-col gap-4 border-b border-[#e7ebef] pb-5 sm:flex-row sm:items-end sm:justify-between">
+    <div className="mx-auto min-h-full max-w-[1500px] pb-6 text-[#283F30]">
+      <div className="space-y-5">
+        <header className="vendor-premium-card flex flex-col gap-5 border-t-4 border-t-[#2D6749] px-5 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-6">
           <div className="space-y-1.5">
             <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
               <IconsaxIcon name="category" size={15} /> Vendor workspace
