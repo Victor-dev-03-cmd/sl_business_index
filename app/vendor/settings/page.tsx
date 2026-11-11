@@ -36,8 +36,8 @@ const tabList:{id:Tab;name:string;detail:string;icon:typeof User}[]=[
 ];
 // Explicit utility classes ensure form affordances and dimensions do not depend
 // on CSS cascade order. Keep controls visually distinct on every theme/device.
-const field='vendor-field block h-11 w-full min-w-0 rounded-md border border-[#C6D5CA] bg-[#FCFDFB] px-3.5 py-2.5 text-[13px] leading-5 text-[#1E3E2C] shadow-[inset_0_1px_2px_rgba(25,54,35,.03)] outline-none focus:border-[#478B63] focus:ring-2 focus:ring-[#E0EEE3] disabled:cursor-not-allowed disabled:bg-[#F1F5F1] disabled:text-[#6D8572]';
-const label='vendor-label mb-2 block text-[11px] font-bold leading-5 text-[#3D5E49]';
+const field='vendor-field settings-v8-field block h-11 w-full min-w-0 rounded-[7px] border border-[#DADAE0] bg-[#F8F8FA] px-3.5 py-2.5 text-[13px] leading-5 text-[#222228] outline-none focus:border-[#FF7900] focus:ring-2 focus:ring-[#FFE4CC] disabled:cursor-not-allowed disabled:bg-[#F0F0F2] disabled:text-[#7D7D85]';
+const label='vendor-label mb-2 block text-[11px] font-semibold leading-5 text-[#55555E]';
 
 function statusLabel(value:string){
   if(value==='approved'||value==='verified')return 'Verified';
@@ -278,43 +278,43 @@ export default function SettingsPage() {
   const initials=(profile.full_name||profile.email||'V').trim().split(/\s+/).slice(0,2).map(n=>n[0]?.toUpperCase()||'').join('');
   const submitLabel=verified?'Verified':pending?'Under review':'Submit for review';
   return (
-    <div className="vendor-page-v7 vendor-settings vendor-settings-v5 mx-auto w-full max-w-[1680px] min-w-0 space-y-5 pb-7 text-[#283842]">
-      <header className="vendor-owner-heading vendor-settings-header flex flex-col gap-5 rounded-[10px] border border-[#E3E9EC] bg-white px-5 py-6 shadow-[0_2px_14px_rgba(23,41,50,.025)] sm:px-7 lg:flex-row lg:items-center lg:justify-between">
+    <div className="vendor-page-v7 vendor-settings vendor-settings-v5 vendor-settings-v8 mx-auto w-full max-w-[1600px] min-w-0 space-y-6 pb-9 text-[#252529]">
+      <header className="vendor-owner-heading vendor-settings-header settings-v8-hero relative flex flex-col gap-5 overflow-hidden border border-[#29292E] bg-[#1C1C20] px-6 py-7 sm:px-9 sm:py-9 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0 max-w-[760px]">
-          <p className="text-[10px] font-bold uppercase tracking-[.15em] text-[#8B98A2]">Account & workspace / Settings</p>
-          <h1 className="mt-2 text-[27px] font-semibold tracking-[-.045em] text-[#1A2B34] sm:text-[31px]">Workspace settings</h1>
-          <p className="mt-2 text-[12px] leading-6 text-[#75838E]">Control account details, verify businesses and adjust discovery preferences in one place.</p>
+          <p className="text-[10px] font-bold uppercase tracking-[.15em] text-[#FFB978]">Account & workspace / Settings</p>
+          <h1 className="mt-2 text-[27px] font-semibold tracking-[-.045em] text-white sm:text-[34px]">Workspace settings</h1>
+          <p className="mt-2 text-[12px] leading-6 text-[#C2C2C8]">Control account details, verify businesses and adjust discovery preferences in one place.</p>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
-          <Link href="/vendor/my-businesses" className="inline-flex h-10 items-center gap-2 rounded-[6px] border border-[#DDE5E9] bg-white px-4 text-[11px] font-semibold text-[#435563] hover:bg-[#F5F8FA]"><Building2 size={15}/> Manage businesses <ArrowUpRight size={13}/></Link>
-          <button type="button" onClick={()=>void load()} disabled={loading} className="inline-flex h-10 items-center gap-2 rounded-[6px] bg-[#263A43] px-4 text-[11px] font-semibold text-white hover:bg-[#172A32] disabled:opacity-50"><RefreshCcw size={15}/> Refresh</button>
+          <Link href="/vendor/my-businesses" className="inline-flex h-10 items-center gap-2 rounded-[6px] border border-[#65656D] bg-[#36363D] px-4 text-[11px] font-semibold text-white hover:bg-[#494950]"><Building2 size={15}/> Manage businesses <ArrowUpRight size={13}/></Link>
+          <button type="button" onClick={()=>void load()} disabled={loading} className="inline-flex h-10 items-center gap-2 rounded-[6px] bg-[#FF7900] px-4 text-[11px] font-semibold text-[#18181B] hover:bg-[#FF922E] disabled:opacity-50"><RefreshCcw size={15}/> Refresh</button>
         </div>
       </header>
       {error&&<div role="alert" className="rounded-xl border border-[#E9D3BE] bg-[#FFF9ED] p-4 text-[12px] text-[#875E38]">{error}<Link href="/login?redirect=/vendor/settings" className="ml-2 underline">Sign in</Link></div>}
       {loading&&<div role="status" className="vendor-premium-panel flex items-center gap-3 p-5 text-sm text-[#50745C]"><Loader2 className="animate-spin" size={18}/> Loading your settings…</div>}
 
-      <div className="grid min-w-0 grid-cols-1 items-start gap-5 lg:grid-cols-[238px_minmax(0,1fr)] lg:gap-6">
-        <div className="vendor-settings-navigation min-w-0 overflow-hidden rounded-[10px] border border-[#E4E9ED] bg-white p-2 shadow-[0_2px_14px_rgba(23,41,50,.03)] lg:sticky lg:top-5">
-          <p className="px-3 pb-3 pt-4 text-[10px] font-bold uppercase tracking-[.17em] text-[#8B9F90]">Workspace settings</p>
+      <div className="grid min-w-0 grid-cols-1 items-start gap-5 lg:grid-cols-[238px_minmax(0,1fr)] lg:gap-7">
+        <div className="vendor-settings-navigation settings-v8-rail min-w-0 overflow-hidden rounded-[10px] border border-[#E9E9ED] bg-white p-2.5 lg:sticky lg:top-5">
+          <p className="px-3 pb-3 pt-4 text-[10px] font-bold uppercase tracking-[.17em] text-[#91919A]">Workspace settings</p>
           <nav aria-label="Vendor settings sections" className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-1" role="tablist" aria-orientation="vertical">
             {tabList.map(item=><button type="button" role="tab" id={'tab-'+item.id} aria-selected={activeTab===item.id} aria-controls={'panel-'+item.id} key={item.id} onClick={()=>selectTab(item.id)}
-              className={'flex min-h-12 w-full items-center gap-3 rounded-[7px] px-3 py-3 text-left transition '+(activeTab===item.id?'bg-[#E7F1D5] text-[#263A34]':'text-[#63737F] hover:bg-[#F2F5F7] hover:text-[#273943]')}>
-              <span className={'flex h-9 w-9 shrink-0 items-center justify-center rounded-[7px] '+(activeTab===item.id?'bg-white text-[#314D3D]':'bg-[#F2F5F7] text-[#72818C]')}><item.icon size={17}/></span>
+              className={'flex min-h-12 w-full items-center gap-3 rounded-[7px] px-3 py-3 text-left transition '+(activeTab===item.id?'bg-[#FFF1E7] text-[#222226]':'text-[#6C6C74] hover:bg-[#F5F5F7] hover:text-[#222226]')}>
+              <span className={'flex h-9 w-9 shrink-0 items-center justify-center rounded-[7px] '+(activeTab===item.id?'bg-[#FF7900] text-[#1C1C20]':'bg-[#F2F2F4] text-[#777780]')}><item.icon size={17}/></span>
               <span className="flex-1"><span className="block text-[12px] font-bold">{item.name}</span><span className="mt-0.5 block text-[10px] opacity-70">{item.detail}</span></span>
             </button>)}
           </nav>
           <div className="mx-2 mt-3 rounded-[7px] border border-[#E6EBEF] bg-[#F7F9FA] px-4 py-3 text-[11px] leading-[1.6] text-[#71808C]">
-            Need help? <Link href="/vendor/leads" className="font-bold text-[#2B6945] underline underline-offset-2">Your enquiry inbox</Link> remains accessible from the main portal.
+            Need help? <Link href="/vendor/leads" className="font-bold text-[#D95F00] underline underline-offset-2">Your enquiry inbox</Link> remains accessible from the main portal.
           </div>
         </div>
-        <div className="vendor-settings-panels min-w-0 w-full space-y-5">
-          {activeTab==='profile'&&<section role="tabpanel" id="panel-profile" aria-labelledby="tab-profile" className="vendor-setting-section w-full min-w-0 space-y-6 border border-[#DCE7DE] bg-white p-5 shadow-sm sm:p-7">
+        <div className="vendor-settings-panels settings-v8-panels min-w-0 w-full space-y-6">
+          {activeTab==='profile'&&<section role="tabpanel" id="panel-profile" aria-labelledby="tab-profile" className="vendor-setting-section settings-v8-section w-full min-w-0 space-y-6 border border-[#DCE7DE] bg-white p-5 shadow-sm sm:p-7">
             <div><p className="vendor-kicker">Personal profile</p><h2 className="mt-1 text-[22px] font-extrabold text-[#213F2D]">Account identity</h2><p className="mt-1 text-[12px] text-[#7C8994]">This information belongs to your account, not to any single business listing.</p></div>
-            <div className="flex flex-wrap items-center gap-4 rounded-[16px] border border-[#E5ECE5] bg-[#FAFCF8] p-4">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[18px] bg-[#254E38] text-xl font-extrabold text-white">{initials||'V'}</div>
-              <div><p className="text-[14px] font-bold text-[#274A34]">{profile.full_name||'Complete your profile'}</p><p className="mt-1 text-[11px] text-[#718675]">{profile.email||'Email is linked to your signed-in account'}</p><span className="mt-2 inline-flex items-center gap-1 rounded-full border border-[#D8E7DC] bg-white px-2 py-1 text-[10px] font-semibold text-[#587C60]"><ShieldCheck size={12}/> Account owner</span></div>
+            <div className="settings-v8-profile-card flex flex-wrap items-center gap-4 rounded-[10px] border border-[#ECECF0] bg-[#F8F8FA] p-5">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[9px] bg-[#242428] text-xl font-extrabold text-white">{initials||'V'}</div>
+              <div><p className="text-[14px] font-bold text-[#29292D]">{profile.full_name||'Complete your profile'}</p><p className="mt-1 text-[11px] text-[#85858E]">{profile.email||'Email is linked to your signed-in account'}</p><span className="mt-2 inline-flex items-center gap-1 rounded-full border border-[#E9D4C1] bg-[#FFF4EA] px-2 py-1 text-[10px] font-semibold text-[#B45408]"><ShieldCheck size={12}/> Account owner</span></div>
             </div>
-            <div className="grid grid-cols-1 items-start gap-x-6 gap-y-5 md:grid-cols-2">
+            <div className="settings-v8-form-grid grid grid-cols-1 items-start gap-x-7 gap-y-6 md:grid-cols-2">
               <div className="min-w-0"><label className={label} htmlFor="vendor-name">Full name</label><input id="vendor-name" className={field} maxLength={100} autoComplete="name" value={profile.full_name} onChange={e=>setProfile(v=>({...v,full_name:e.target.value}))}/></div>
               <div className="min-w-0"><label className={label} htmlFor="vendor-email">Account email</label><input id="vendor-email" className={field} type="email" disabled value={profile.email}/><p className="mt-1.5 text-[10px] text-[#8D9C8F]">Email changes require authentication verification.</p></div>
               <div className="min-w-0"><label className={label} htmlFor="vendor-phone">Contact phone</label><input id="vendor-phone" className={field} type="tel" maxLength={30} autoComplete="tel" value={profile.phone} onChange={e=>setProfile(v=>({...v,phone:e.target.value}))}/></div>
@@ -323,9 +323,9 @@ export default function SettingsPage() {
             <div className="vendor-settings-savebar flex flex-wrap items-center justify-between gap-4 border-t border-[#E7EBEF] pt-5"><p className="min-w-0 text-[11px] leading-5 text-[#708674]">Only your profile details will be updated.</p><button type="button" onClick={()=>void saveProfile()} disabled={saving||!userId} className="vendor-primary-button">{saving?<Loader2 size={16} className="animate-spin"/>:<Save size={16}/>} Save profile</button></div>
           </section>}
 
-          {activeTab==='verification'&&<section role="tabpanel" id="panel-verification" aria-labelledby="tab-verification" className="vendor-setting-section space-y-5">
+          {activeTab==='verification'&&<section role="tabpanel" id="panel-verification" aria-labelledby="tab-verification" className="vendor-setting-section settings-v8-section space-y-5">
             <div><p className="vendor-kicker">Trust & verification</p><h2 className="mt-1 text-[22px] font-extrabold">Verification center</h2><p className="mt-1 text-[12px] leading-5 text-[#7B8792]">Submit official registration information for administrator review. Submission alone never grants a verified badge.</p></div>
-            <div className="rounded-xl border border-[#DBE9D9] bg-[#F8FAFB] p-4">
+            <div className="settings-v8-context-card rounded-[9px] border border-[#E8E8ED] bg-[#F8F8FA] p-5">
               <label className={label} htmlFor="verification-business">Business under review</label>
               <select id="verification-business" className={field} value={selectedBusinessId} onChange={e=>setSelectedBusinessId(e.target.value)} disabled={!businesses.length}>
                 {businesses.length===0?<option value="">No businesses registered</option>:businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}
@@ -341,8 +341,8 @@ export default function SettingsPage() {
               <div><label className={label} htmlFor="tin-number">TIN (optional)</label><input id="tin-number" className={field} maxLength={64} value={tinNumber} onChange={e=>setTinNumber(e.target.value)} disabled={pending||verified}/></div>
               <div><label className={label} htmlFor="svat-number">SVAT (optional)</label><input id="svat-number" className={field} maxLength={64} value={svatNumber} onChange={e=>setSvatNumber(e.target.value)} disabled={pending||verified}/></div>
             </div>
-            <div className="rounded-[15px] border border-dashed border-[#BCD8C4] bg-[#F9FCF8] p-5">
-              <div className="flex items-center gap-3"><span className="rounded-xl bg-[#EAF4EB] p-3 text-[#3C8154]"><UploadCloud size={22}/></span><div><p className="text-[12px] font-bold text-[#2E513D]">Registration document</p><p className="mt-1 text-[11px] text-[#839386]">JPG, PNG or PDF · 10 MB maximum · private access after security migration</p></div></div>
+            <div className="settings-v8-upload rounded-[9px] border border-dashed border-[#F3C59F] bg-[#FFFAF6] p-5">
+              <div className="flex items-center gap-3"><span className="rounded-[8px] bg-[#FFF0E2] p-3 text-[#C45B00]"><UploadCloud size={22}/></span><div><p className="text-[12px] font-bold text-[#25252B]">Registration document</p><p className="mt-1 text-[11px] text-[#839386]">JPG, PNG or PDF · 10 MB maximum · private access after security migration</p></div></div>
               <input type="file" aria-label="Select registration document" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" disabled={pending||verified||!privateDocsReady||!selectedBusinessId} className="mt-4 block w-full rounded-xl border border-[#E2EAE2] bg-white p-3 text-[12px] text-[#477153] file:mr-3 file:rounded-lg file:border-0 file:bg-[#EFF3F6] file:px-3 file:py-2 file:font-bold file:text-[#3C724A]" onChange={e=>setVerificationFile(e.target.files?.[0]||null)}/>
               {verificationFile&&<p className="mt-2 text-[11px] font-semibold text-[#42754B]">Selected: {verificationFile.name}</p>}
               {documentPreview&&<a href={documentPreview} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-2 text-[11px] font-bold text-[#2D7853] underline">View submitted document <ArrowUpRight size={13}/></a>}
@@ -352,58 +352,58 @@ export default function SettingsPage() {
           </section>}
 
           {activeTab==='optimization'&&<section role="tabpanel" id="panel-optimization" aria-labelledby="tab-optimization" className="space-y-5">
-            <div className="vendor-setting-section">
+            <div className="vendor-setting-section settings-v8-section">
               <p className="vendor-kicker">Local discovery controls</p><h2 className="mt-1 text-[22px] font-extrabold">Reach & search keywords</h2>
               <p className="mt-2 text-[12px] leading-6 text-[#7B8792]">Describe your service area and relevant keywords. These are business-provided hints, not guaranteed visibility or ranking outcomes.</p>
               <label className={label+' mt-5'} htmlFor="seo-business">Choose business</label>
               <select id="seo-business" className={field} value={selectedBusinessId} disabled={!businesses.length} onChange={e=>setSelectedBusinessId(e.target.value)}>{businesses.length===0?<option value="">No businesses registered</option>:businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select>
             </div>
-            <div className="vendor-setting-section">
+            <div className="vendor-setting-section settings-v8-section">
               <div className="flex items-center justify-between gap-3"><div><p className="vendor-kicker">Local intelligence</p><h3 className="mt-1 text-[17px] font-bold text-[#254935]">Service radius</h3></div><span className="rounded-xl border border-[#D9E8D9] bg-[#F3F6F7] px-4 py-2 text-[14px] font-extrabold tabular-nums text-[#24613F]">{radius} km</span></div>
               <p className="mt-2 text-[12px] text-[#7B917E]">Set the distance your business says it can serve, from 1 to 50 kilometres.</p>
-              <input type="range" min={1} max={50} step={1} value={radius} onChange={e=>setRadius(Number(e.target.value))} disabled={!selectedBusinessId} aria-label="Business service radius" className="mt-6 w-full accent-[#2F8050]"/>
+              <input type="range" min={1} max={50} step={1} value={radius} onChange={e=>setRadius(Number(e.target.value))} disabled={!selectedBusinessId} aria-label="Business service radius" className="mt-6 w-full accent-[#FF7900]"/>
               <div className="mt-2 flex justify-between text-[10px] font-semibold text-[#8BA092]"><span>1 km</span><span>50 km</span></div>
-              <div className="mt-5 flex items-center gap-3 rounded-xl border border-[#E6EFE4] bg-[#F5FAF4] p-4"><MapPin className="shrink-0 text-[#3D8855]" size={22}/><p className="text-[11px] leading-5 text-[#62846B]">Saved radius is a business profile preference. Exact discovery ranking still depends on verified locations, query relevance and user-selected filters.</p></div>
+              <div className="mt-5 flex items-center gap-3 rounded-xl border border-[#E6EFE4] bg-[#F9F9FA] p-4"><MapPin className="shrink-0 text-[#C75D06]" size={22}/><p className="text-[11px] leading-5 text-[#62846B]">Saved radius is a business profile preference. Exact discovery ranking still depends on verified locations, query relevance and user-selected filters.</p></div>
             </div>
-            <div className="vendor-setting-section">
-              <div className="flex items-center gap-3"><span className="rounded-xl bg-[#F0F3F7] p-3 text-[#377C4E]"><Search size={20}/></span><div><h3 className="text-[17px] font-bold">Search keywords</h3><p className="mt-1 text-[11px] text-[#809784]">Maximum 10 relevant terms · up to 50 characters each</p></div></div>
+            <div className="vendor-setting-section settings-v8-section">
+              <div className="flex items-center gap-3"><span className="rounded-[8px] bg-[#FFF0E2] p-3 text-[#C75D06]"><Search size={20}/></span><div><h3 className="text-[17px] font-bold">Search keywords</h3><p className="mt-1 text-[11px] text-[#809784]">Maximum 10 relevant terms · up to 50 characters each</p></div></div>
               <div className="mt-5 flex min-w-0 flex-col gap-2 sm:flex-row"><input className={field+' vendor-keyword-input min-w-0 flex-1'} maxLength={50} value={newKeyword} onChange={e=>setNewKeyword(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addKeyword()}}} placeholder="e.g. plumbing, bike service…"/><button type="button" onClick={addKeyword} disabled={!newKeyword.trim()||keywords.length>=10} aria-label="Add keyword" className="vendor-outline-button shrink-0"><Plus size={16}/> Add</button></div>
               <div className="mt-4 flex min-h-12 flex-wrap gap-2">{keywords.map(k=><span key={k} className="inline-flex items-center gap-2 rounded-full border border-[#DCEBDD] bg-[#F3F6F7] px-3 py-1.5 text-[11px] font-bold text-[#39714C]">{k}<button type="button" onClick={()=>setKeywords(prev=>prev.filter(t=>t!==k))} aria-label={'Remove '+k} className="rounded-full p-0.5 hover:bg-[#DCE9DD]"><X size={12}/></button></span>)}{keywords.length===0&&<p className="text-[11px] text-[#93A597]">No additional search keywords saved.</p>}</div>
               <div className="vendor-settings-savebar mt-5 flex flex-wrap justify-end gap-3 border-t border-[#E7EBEF] pt-5"><button type="button" onClick={()=>void saveOptimization()} disabled={saving||!selectedBusinessId} className="vendor-primary-button">{saving?<Loader2 size={16} className="animate-spin"/>:<Save size={16}/>} Save local discovery</button></div>
             </div>
           </section>}
 
-          {activeTab==='notifications'&&<section role="tabpanel" id="panel-notifications" aria-labelledby="tab-notifications" className="vendor-setting-section space-y-5">
+          {activeTab==='notifications'&&<section role="tabpanel" id="panel-notifications" aria-labelledby="tab-notifications" className="vendor-setting-section settings-v8-section space-y-5">
             <div><p className="vendor-kicker">Communication preferences</p><h2 className="mt-1 text-[22px] font-extrabold">Notification preferences</h2><p className="mt-2 text-[12px] leading-6 text-[#7B8994]">Save the kinds of optional business updates you want. Essential security and verification notices remain available.</p></div>
             {!prefsAvailable&&<p role="status" className="rounded-xl border border-[#EADDB9] bg-[#FFF9E9] p-4 text-[11px] text-[#947135]">Preferences storage is not yet configured. Switches cannot be saved until the reviewed database migration is applied.</p>}
-            <div className="divide-y divide-[#ECF0EB] rounded-[15px] border border-[#E4ECE3] bg-[#FBFDFB]">
+            <div className="settings-v8-preference-list divide-y divide-[#ECECF0] rounded-[9px] border border-[#E9E9ED] bg-[#FBFBFC]">
               {([
                 {key:'reviews',title:'New reviews',text:'Optional updates when customers leave reviews.',icon:User},
                 {key:'leads',title:'New enquiries',text:'Optional notifications for enquiries on owned listings.',icon:Mail},
                 {key:'weekly_digest',title:'Weekly summary',text:'Periodic business activity digest, if delivery is enabled.',icon:Globe},
                 {key:'marketing_tips',title:'Growth tips',text:'Optional educational marketing updates.',icon:Bell},
               ] as const).map(item=><label key={item.key} className="flex cursor-pointer items-center gap-3 p-4 sm:p-5">
-                <span className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EDF6ED] text-[#42845C] sm:flex"><item.icon size={18}/></span>
-                <span className="min-w-0 flex-1"><span className="block text-[12px] font-bold text-[#31513B]">{item.title}</span><span className="mt-1 block text-[11px] leading-5 text-[#819686]">{item.text}</span></span>
-                <input type="checkbox" checked={prefs[item.key]} disabled={!prefsAvailable} onChange={e=>setPrefs(v=>({...v,[item.key]:e.target.checked}))} className="h-5 w-5 shrink-0 accent-[#347A4C]" aria-label={item.title}/>
+                <span className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-[7px] bg-[#FFF0E2] text-[#C75D06] sm:flex"><item.icon size={18}/></span>
+                <span className="min-w-0 flex-1"><span className="block text-[12px] font-bold text-[#24242A]">{item.title</span><span className="mt-1 block text-[11px] leading-5 text-[#82828B]">{item.text</span></span>
+                <input type="checkbox" checked={prefs[item.key]} disabled={!prefsAvailable} onChange={e=>setPrefs(v=>({...v,[item.key]:e.target.checked}))} className="h-5 w-5 shrink-0 accent-[#FF7900]" aria-label={item.title}/>
               </label>)}
             </div>
             <p className="text-[11px] leading-5 text-[#86998A]">Preferences are stored with your vendor account. Delivery of future emails/push messages is subject to the messaging service and explicit opt-in; saving a setting does not guarantee delivery.</p>
             <div className="flex justify-end border-t border-[#E6EEE6] pt-5"><button type="button" className="vendor-primary-button" onClick={()=>void savePreferences()} disabled={saving||!prefsAvailable||!userId}><Save size={16}/> Save preferences</button></div>
           </section>}
 
-          {activeTab==='security'&&<section role="tabpanel" id="panel-security" aria-labelledby="tab-security" className="vendor-setting-section space-y-6">
+          {activeTab==='security'&&<section role="tabpanel" id="panel-security" aria-labelledby="tab-security" className="vendor-setting-section settings-v8-section space-y-6">
             <div><p className="vendor-kicker">Owner security</p><h2 className="mt-1 text-[22px] font-extrabold">Protect your account</h2><p className="mt-2 text-[12px] leading-6 text-[#7B8792]">Update your password. Other signed-in devices may retain a session until revoked; review your account security if access is unexpected.</p></div>
-            <div className="rounded-xl border border-[#DDEBDF] bg-[#F8FAFB] p-4 text-[12px] text-[#597960]"><LockKeyhole className="mr-2 inline" size={18}/> Password changes are handled through Supabase Auth, not stored in vendor business tables.</div>
+            <div className="settings-v8-context-card rounded-[9px] border border-[#E6E6EB] bg-[#F8F8FA] p-4 text-[12px] text-[#66666F]"><LockKeyhole className="mr-2 inline" size={18}/> Password changes are handled through Supabase Auth, not stored in vendor business tables.</div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <div><label className={label} htmlFor="vendor-password">New password</label><div className="relative"><input id="vendor-password" className={field+' pr-12'} type={showPassword?'text':'password'} autoComplete="new-password" maxLength={128} value={newPassword} onChange={e=>setNewPassword(e.target.value)} placeholder="12 characters or more"/><button type="button" aria-label={showPassword?'Hide password':'Show password'} onClick={()=>setShowPassword(v=>!v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6A8974]">{showPassword?<EyeOff size={17}/>:<Eye size={17}/>}</button></div></div>
+              <div><label className={label} htmlFor="vendor-password">New password</label><div className="relative"><input id="vendor-password" className={field+' pr-12'} type={showPassword?'text':'password'} autoComplete="new-password" maxLength={128} value={newPassword} onChange={e=>setNewPassword(e.target.value)} placeholder="12 characters or more"/><button type="button" aria-label={showPassword?'Hide password':'Show password'} onClick={()=>setShowPassword(v=>!v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5C5C64] hover:text-[#C85B00]">{showPassword?<EyeOff size={17}/>:<Eye size={17}/>}</button></div></div>
               <div><label className={label} htmlFor="vendor-confirm">Confirm new password</label><input id="vendor-confirm" className={field} type={showPassword?'text':'password'} autoComplete="new-password" maxLength={128} value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)}/></div>
             </div>
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#E6EEE6] pt-5"><Link href="/vendor/billing" className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#477955] hover:underline">Manage billing security <ArrowUpRight size={13}/></Link><button type="button" className="vendor-primary-button" onClick={()=>void changePassword()} disabled={saving||!userId||newPassword.length<12||newPassword!==confirmPassword}><LockKeyhole size={15}/> Update password</button></div>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#E6EEE6] pt-5"><Link href="/vendor/billing" className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#C85B00] hover:underline">Manage billing security <ArrowUpRight size={13}/></Link><button type="button" className="vendor-primary-button" onClick={()=>void changePassword()} disabled={saving||!userId||newPassword.length<12||newPassword!==confirmPassword}><LockKeyhole size={15}/> Update password</button></div>
           </section>}
         </div>
       </div>
-      <p className="pb-4 text-center text-[10px] text-[#8CA192]">SL Business Index · Owner Growth Portal · Changes are validated and restricted to your account and owned businesses.</p>
+      <p className="pb-4 text-center text-[10px] text-[#888890]">SL Business Index · Owner Growth Portal · Changes are validated and restricted to your account and owned businesses.</p>
     </div>
   );
 }
