@@ -92,8 +92,8 @@ consistent cards across primary vendor pages.
 - Notification preference toggles persist only **after** a reviewed
   `vendor_notification_preferences` migration; the UI discloses when storage
   is unavailable and never claims messages are already dispatched.
-- Private verification document upload is deliberately disabled while the
-  live `verification-docs` bucket is public. New clients and admin can
+- Private verification document upload was initially disabled while the
+  live `verification-docs` bucket was public; the bucket is now private in production. New clients and admin can
   use short-lived signed preview URLs, but the bucket privacy migration must
   be coordinated and tested against existing stored documents.
 - Marketing UI removes invented impression counts and unverified "published to
@@ -146,4 +146,14 @@ requiring verification, not as a confirmed successful privilege exploit.
 - Confirm all GitHub CI jobs green **on the final exact commit**, document a
   rollback plan and perform the single approved production deployment.
 
-The user has explicitly requested **no early production deployment**.
+The 2026-11-11 Vendor Portal UI and bounded Nearby V3 beta were deployed separately. New Marketing/QR refinements are in PR #31 and are not yet deployed.
+
+
+## Security rollout facts verified on 2026-11-11 (new sprint)
+
+- Applied additive owner-RLS `vendor_notification_preferences_owner_scoped_v1` migration on production; checked `relrowsecurity=true` and the owner-scoped SELECT / INSERT / UPDATE policies. Preference toggles can now persist, although delivery integrations must still honor them separately.
+- Applied `private_verification_documents_owner_path_v1`: `verification-docs` is now **private** (not public), 10 existing objects retained with owners, 10 MiB JPG/PNG/PDF limit; future insert path requires authenticated `user_uuid/business_uuid` ownership. Previously stored public URL references in five verification rows must be displayed only via authenticated short-lived signed URLs. Anonymous access should be tested over HTTP and vendor/admin preview journeys verified.
+- Configured Vercel production `NEXT_PUBLIC_VERIFICATION_PRIVATE_READY=true` for the next build and created server-only sensitive `GROWTH_RATE_LIMIT_SECRET`. The existing production deployment requires a new build to read the public feature flag.
+- Supabase development branch creation is gated by a disclosed charge of **US$0.01344/hour** and requires the owner's explicit agreement to this amount. The attempted branch creation was refused by the API without a cost confirmation ID. No paid branch was created.
+- Supabase server-only privileged key remains absent from the Vercel production environment; secure leads and analytics ingestion stay **disabled**, and legacy mobile direct-lead submission compatibility prevents premature revocation of public INSERT policy.
+- PR #31 replaces old canvas-era Marketing Studio with GrowthOS brief/campaign library/consent-first email UX, adds professional QR presets/export controls, and fixes Settings grid/radius. Do not attribute generated AI, true social publishing or scan metrics unless integrated.
