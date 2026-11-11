@@ -67,8 +67,16 @@ export default function SettingsPage() {
       if(query&&tabList.some(section=>section.id===query))setActiveTab(query as Tab);
     };
     selectFromUrl();
+    const selectFromCommand=(event:Event)=>{
+      const tab=(event as CustomEvent<string>).detail;
+      if(tabList.some(section=>section.id===tab))setActiveTab(tab as Tab);
+    };
     window.addEventListener('popstate',selectFromUrl);
-    return()=>window.removeEventListener('popstate',selectFromUrl);
+    window.addEventListener('slbi:settings-tab',selectFromCommand);
+    return()=>{
+      window.removeEventListener('popstate',selectFromUrl);
+      window.removeEventListener('slbi:settings-tab',selectFromCommand);
+    };
   },[]);
   const selectTab=(tab:Tab)=>{
     setActiveTab(tab);
