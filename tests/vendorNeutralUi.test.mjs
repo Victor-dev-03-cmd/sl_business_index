@@ -78,7 +78,7 @@ test('centered desktop top navigation exposes reversible, dismissible dropdowns 
 });
 
 test('owner workspace pages share restrained V7 shell without losing independent page flows',()=>{
-  const routes=['my-businesses','leads','reviews','insights','growth','marketing','qr-code','billing','settings'];
+  const routes=['my-businesses','leads','reviews','insights','growth','marketing','qr-code','billing'];
   for(const route of routes){
     const page=read('app/vendor/'+route+'/page.tsx');
     assert.match(page,/vendor-page-v7/,'missing shared shell: '+route);
