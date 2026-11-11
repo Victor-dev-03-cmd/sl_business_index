@@ -4,6 +4,8 @@ import {readFileSync} from 'node:fs';
 
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 const marketing=read('app/vendor/marketing/page.tsx');
+const upload=read('app/vendor/marketing/components/CreativeLibraryUpload.tsx');
+const marketingRls=read('docs/growth/MARKETING_QR_OWNERSHIP_REVIEW_ONLY.sql');
 const qr=read('app/vendor/qr-code/page.tsx');
 const api=read('app/api/qr/request/route.ts');
 const settings=read('app/vendor/settings/page.tsx');
@@ -63,4 +65,19 @@ test('settings align on mobile and reduce AI-style inflated radii',()=>{
   assert.match(styles,/\.vendor-settings \.vendor-field/);
   assert.match(styles,/border-radius:6px/);
   assert.match(roadmap,/release gate/i);
+});
+
+test('creative library accepts reviewed media, does not run canvas publishing',()=>{
+  assert.match(marketing,/CreativeLibraryUpload/);
+  assert.match(upload,/supabase\.auth\.getUser\(\)/);
+  assert.match(upload,/\.eq\('owner_id',user\.id\)/);
+  assert.match(upload,/status:'pending'/);
+  assert.match(upload,/social_platforms:selected/);
+  assert.match(upload,/file\.size>8\*1024\*1024/);
+  assert.match(upload,/getPublicUrl\(path\)/);
+  assert.doesNotMatch(upload,/MarketingDesignEditor|canvas\.toDataURL/);
+  assert.match(marketingRls,/qr_one_assigned_per_business/);
+  assert.match(marketingRls,/vendor_id=\(select auth\.uid\(\)\)/);
+  assert.match(marketingRls,/business_id.*business_id/);
+  assert.match(marketingRls,/NOT applied to production/);
 });
