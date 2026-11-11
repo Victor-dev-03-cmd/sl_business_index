@@ -32,28 +32,6 @@ jobs:
         run: npm ci
       - name: Synthetic SSR multi-chunk cookie round-trip
         run: node tests/auth/ssr-cookie-roundtrip.mjs
-      - uses: actions/setup-python@v5
-        if: github.event_name == 'pull_request' && github.head_ref == 'research/semanticsearch-v3-evaluation-vector-gates-20261111'
-        with:
-          python-version: '3.11'
-          cache: pip
-          cache-dependency-path: requirements-semantic-research.txt
-      - name: Generate pinned E5 beta fixture for this research PR only
-        if: github.event_name == 'pull_request' && github.head_ref == 'research/semanticsearch-v3-evaluation-vector-gates-20261111'
-        run: |
-          set -euo pipefail
-          if [ ! -s lib/discovery/semantic-v3-beta-vectors.ts ]; then
-            python -m pip install -r requirements-semantic-research.txt
-            python scripts/benchmark-semantic-v3.py \
-              --model intfloat/multilingual-e5-small \
-              --model-revision 614241f622f53c4eeff9890bdc4f31cfecc418b3 \
-              --max-queries 240 --batch-size 16 --query-mode canonical \
-              --output semantic-v3-ci-report.json \
-              --export-beta-fixture lib/discovery/semantic-v3-beta-vectors.ts
-            printf '\\n__SLBI_E5_BETA_FIXTURE_START__\\n'
-            base64 -w0 lib/discovery/semantic-v3-beta-vectors.ts
-            printf '\\n__SLBI_E5_BETA_FIXTURE_END__\\n'
-          fi
       - name: Nearby GeoRank unit tests
         run: node --experimental-strip-types --test tests/geoRank.test.mjs tests/diagnostics.test.mjs tests/smartSearch.test.mjs tests/searchEvaluation.test.mjs tests/hybridSearch.test.mjs tests/searchDictionary.test.mjs tests/searchCorrections.test.mjs tests/semanticSearchV3.test.mjs tests/semanticV3Evaluation.test.mjs tests/semanticBetaV3.test.mjs
       - name: SLBI HybridSearch v2 multilingual relevance benchmark (168 cases)
