@@ -7,6 +7,7 @@ This does NOT fabricate vectors or claim human-labelled business relevance.
 """
 from __future__ import annotations
 import argparse
+import hashlib
 import json
 import math
 import sys
@@ -34,6 +35,7 @@ def main() -> int:
     parser.add_argument("--max-queries", type=int, default=240)
     parser.add_argument("--query-mode", choices=["raw","canonical"], default="raw")
     parser.add_argument("--output", type=Path, default=None)
+    parser.add_argument("--export-vectors", type=Path, default=None)
     args = parser.parse_args()
     try:
         import numpy as np
@@ -48,7 +50,11 @@ def main() -> int:
     queries = data["queries"][:args.max_queries]
     print(f"Loading {args.model}; model downloads and CPU time depend on the environment", file=sys.stderr)
     started = time.perf_counter()
-    encoder = SentenceTransformer(args.model, trust_remote_code=False)
+    from huggingface_hub import model_info
+    model_revision = model_info(args.model).sha
+    if not model_revision or len(model_revision) != 40:
+        raise ValueError("Cannot pin model revision")
+    encoder = SentenceTransformer(args.model, revision=model_revision, trust_remote_code=False)
     # E5 models require query/passsage task prefixes. Other model families must
     # use their specified text preprocessing; never compare different model spaces.
     e5 = "e5" in args.model.lower()
@@ -79,6 +85,7 @@ def main() -> int:
         stats["precision_at10"] += precision_at_k(ids, relevant)
     results = {
         "model":args.model,
+        "model_revision":model_revision,
         "query_mode":args.query_mode,
         "model_dimension":int(d_vectors.shape[1]),
         "query_count":len(queries),
@@ -103,6 +110,23 @@ def main() -> int:
     }
     report=json.dumps(results,ensure_ascii=False,indent=2)
     print(report)
+    if args.export_vectors:
+        if args.query_mode != "canonical":
+            raise ValueError("Export only from the canonical model-benchmark pass")
+        export = {
+          "model_id": args.model,
+          "model_revision": model_revision,
+          "content_template": "passage: {name}. Category: {category}.",
+          "source": "approved business name/category snapshot; not full service descriptions",
+          "businesses": [
+            {"business_id": row["id"],
+             "content_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+             "embedding": [float(x) for x in vector.tolist()]}
+            for row, text, vector in zip(docs, docs_text, d_vectors)
+          ]
+        }
+        args.export_vectors.parent.mkdir(parents=True,exist_ok=True)
+        args.export_vectors.write_text(json.dumps(export,ensure_ascii=False),encoding="utf-8")
     if args.output:
         args.output.parent.mkdir(parents=True,exist_ok=True)
         args.output.write_text(report,encoding="utf-8")
