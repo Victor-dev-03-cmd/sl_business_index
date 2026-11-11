@@ -7,6 +7,7 @@ This does NOT fabricate vectors or claim human-labelled business relevance.
 """
 from __future__ import annotations
 import argparse
+import base64
 import hashlib
 import json
 import math
@@ -38,6 +39,7 @@ def main() -> int:
     parser.add_argument("--query-mode", choices=["raw","canonical"], default="raw")
     parser.add_argument("--output", type=Path, default=None)
     parser.add_argument("--export-vectors", type=Path, default=None)
+    parser.add_argument("--export-beta-fixture", type=Path, default=None)
     args = parser.parse_args()
     try:
         import numpy as np
@@ -145,6 +147,45 @@ def main() -> int:
             raise ValueError("Business vectors are nonfinite or not normalized")
         args.export_vectors.parent.mkdir(parents=True,exist_ok=True)
         args.export_vectors.write_text(json.dumps(export,ensure_ascii=False),encoding="utf-8")
+    if args.export_beta_fixture:
+        if args.query_mode != "canonical" or args.model != "intfloat/multilingual-e5-small":
+            raise ValueError("Beta fixture requires pinned multilingual E5 canonical pass")
+        canonical_queries = sorted({row["canonical_query"].strip() for row in queries})
+        if not canonical_queries or len(canonical_queries) > 50:
+            raise ValueError("Unexpected canonical query coverage")
+        canonical_vectors = encoder.encode(
+            ["query: " + query for query in canonical_queries],
+            batch_size=args.batch_size, normalize_embeddings=True,
+            convert_to_numpy=True, show_progress_bar=False,
+        )
+        if not np.isfinite(canonical_vectors).all():
+            raise ValueError("Nonfinite query vectors")
+        def pack(vector):
+            # Compact int8 quantization of genuine normalized E5 model output.
+            # Runtime cosine is approximate (quantized), never fabricated.
+            return base64.b64encode(np.rint(np.clip(vector, -1, 1) * 127).astype(np.int8).tobytes()).decode("ascii")
+        beta = {
+            "schema_version": 1,
+            "model_id": args.model,
+            "model_revision": model_revision,
+            "dimensions": int(d_vectors.shape[1]),
+            "encoding": "int8-base64-normalized",
+            "dataset_sha256": hashlib.sha256(DATASET.read_bytes()).hexdigest(),
+            "dataset_label_type": "category-proxy-not-human-judged",
+            "source": "approved business name and category only; experimental opt-in",
+            "businesses": [
+                {"id": row["id"], "name": row["name"], "category": row["category"],
+                 "vector": pack(vector)}
+                for row, vector in zip(docs, d_vectors)
+            ],
+            "canonical_queries": [
+                {"query": query, "vector": pack(vector)}
+                for query, vector in zip(canonical_queries, canonical_vectors)
+            ],
+        }
+        args.export_beta_fixture.parent.mkdir(parents=True, exist_ok=True)
+        args.export_beta_fixture.write_text(json.dumps(beta, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+        print(f"Experimental E5 beta fixture: {len(docs)} approved snapshot businesses, {len(canonical_queries)} canonical intents", file=sys.stderr)
     if args.output:
         args.output.parent.mkdir(parents=True,exist_ok=True)
         args.output.write_text(report,encoding="utf-8")
