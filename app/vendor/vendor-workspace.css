@@ -828,3 +828,98 @@
   .vendor-workspace-v6 .vendor-settings-v8 :is(input,textarea,select).vendor-field,
   .vendor-workspace-v6 .vendor-settings-v8 .settings-v8-rail [role="tab"] {transition:none;}
 }
+
+
+/* Vendor Portal V9 — editorial orange & charcoal with accessible soft-neumorphic
+   depth. Applied to all owner pages and Tools/Account subpages, not the public
+   directory. Contrast, focus, verified/error states remain visually explicit. */
+.vendor-workspace-v6 .vendor-page-v9 {
+  --vendor-surface:#FFFFFF;
+  --vendor-soft:#F8F8FA;
+  --vendor-line:#E7E7EC;
+  --vendor-ink:#252529;
+  --vendor-highlight:#FF7900;
+  color:#29292E;
+  font-family:var(--font-inter),var(--font-tamil),var(--font-sinhala),ui-sans-serif,system-ui,sans-serif;
+}
+.vendor-workspace-v6 .vendor-page-v9 :is(h1,h2,h3) {
+  letter-spacing:-.03em;
+}
+.vendor-workspace-v6 .vendor-page-v9 .vendor-owner-heading {
+  border:1px solid #E6E6EB;
+  border-left:3px solid #FF7900;
+  border-radius:10px;
+  background:#FFFFFF;
+  box-shadow:9px 12px 26px rgba(29,29,36,.05),-7px -7px 18px rgba(255,255,255,.95);
+}
+.vendor-workspace-v6 .vendor-page-v9 .vendor-premium-card,
+.vendor-workspace-v6 .vendor-page-v9 .vendor-premium-panel {
+  border:1px solid #E8E8ED;
+  border-radius:10px;
+  background:#FFFFFF;
+  background-image:none;
+  box-shadow:8px 10px 26px rgba(31,31,40,.045),-6px -6px 17px rgba(255,255,255,.9);
+  transition:box-shadow .17s ease,border-color .17s ease;
+}
+.vendor-workspace-v6 .vendor-page-v9 .vendor-premium-card:hover {
+  border-color:#DADAE1;
+  box-shadow:9px 13px 30px rgba(31,31,40,.062),-6px -6px 17px rgba(255,255,255,.93);
+}
+.vendor-workspace-v6 .vendor-page-v9 .vendor-premium-header {
+  border:1px solid #38383E;
+  border-left:3px solid #FF7900;
+  border-radius:11px;
+  background:linear-gradient(118deg,#1D1D21 0%,#2B2B30 62%,#333338 100%);
+  color:#FFFFFF;
+  box-shadow:10px 12px 27px rgba(26,26,32,.095);
+}
+.vendor-workspace-v6 .vendor-page-v9 .vendor-premium-header::after {
+  border-color:rgba(255,137,40,.22);
+  box-shadow:0 0 0 45px rgba(255,137,40,.045),0 0 0 90px rgba(255,137,40,.02);
+}
+.vendor-workspace-v6 .vendor-page-v9 :is(input,textarea,select):not([type="checkbox"]):not([type="radio"]):not([type="range"]) {
+  min-width:0;
+  border-radius:7px;
+  box-shadow:inset 2px 3px 6px rgba(28,28,35,.025),inset -2px -2px 6px rgba(255,255,255,.92);
+}
+.vendor-workspace-v6 .vendor-page-v9 :is(input,textarea,select):not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus {
+  border-color:#F7A464;
+  box-shadow:inset 2px 3px 6px rgba(28,28,35,.025),0 0 0 3px rgba(255,121,0,.14);
+}
+.vendor-workspace-v6 .vendor-page-v9 :is(input,textarea,select,button,a):focus-visible {
+  outline:2px solid #FF7900;
+  outline-offset:2px;
+}
+.vendor-workspace-v6 .vendor-page-v9 button:not(:disabled),
+.vendor-workspace-v6 .vendor-page-v9 a {
+  transition:border-color .16s ease,background-color .16s ease,box-shadow .16s ease,color .16s ease;
+}
+.vendor-workspace-v6 .vendor-page-v9 table thead {
+  background:#F8F8FA;
+}
+.vendor-workspace-v6 .vendor-page-v9 table thead th {
+  color:#64646D;
+  font-size:11px;
+  letter-spacing:.01em;
+}
+.vendor-workspace-v6 .vendor-page-v9 table tbody tr:hover {background:#FFF8F1;}
+.vendor-workspace-v6 .vendor-page-v9 input[type="range"],
+.vendor-workspace-v6 .vendor-page-v9 input[type="checkbox"] {accent-color:#FF7900;}
+.vendor-workspace-v6 .vendor-page-v9 .vendor-dashboard-shortcut,
+.vendor-workspace-v6 .vendor-page-v9 .vendor-executive-card {
+  border-radius:10px;
+  box-shadow:7px 9px 24px rgba(30,30,36,.047),-5px -5px 14px rgba(255,255,255,.9);
+}
+.vendor-workspace-v6 .vendor-page-v9 .vendor-stat-value {
+  color:#232328;
+}
+@media(max-width:767px){
+  .vendor-workspace-v6 .vendor-page-v9 .vendor-owner-heading,
+  .vendor-workspace-v6 .vendor-page-v9 .vendor-premium-card,
+  .vendor-workspace-v6 .vendor-page-v9 .vendor-premium-panel {
+    border-radius:8px;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .vendor-workspace-v6 .vendor-page-v9 :is(button,a,.vendor-premium-card) {transition:none;}
+}
