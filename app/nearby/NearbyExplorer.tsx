@@ -18,6 +18,7 @@ import VerifiedBadge from "@/app/components/VerifiedBadge";
 import "./nearby-map.css";
 import { sortGeoRank } from "@/lib/discovery/geoRank";
 import { rankHybridSearch, useHybridV2 } from "@/lib/discovery/hybridSearch";
+import { rankSemanticV3Beta } from "@/lib/discovery/semanticBetaV3";
 import { resolveSmartSearch, radiusSteps } from "@/lib/discovery/smartSearch";
 import { useSearchDictionary } from "@/lib/discovery/useSearchDictionary";
 import { recordNearbySample } from "@/lib/discovery/diagnostics";
@@ -158,6 +159,7 @@ export default function NearbyExplorer() {
 
   const [searchText, setSearchText] = useState(searchParams.get("q") || "");
   const [appliedQuery, setAppliedQuery] = useState(searchParams.get("q") || "");
+  const [semanticBetaEnabled, setSemanticBetaEnabled] = useState(searchParams.get("v3") === "1");
   const [searchFocused, setSearchFocused] = useState(false);
   const [debouncedText, setDebouncedText] = useState("");
   const [suggestions, setSuggestions] = useState<any[]>([]);
@@ -300,19 +302,24 @@ export default function NearbyExplorer() {
   const businesses = searchResponse?.businesses ?? EMPTY_BUSINESSES;
   const effectiveRadius = searchResponse?.effectiveRadius ?? radius;
 
-  const visibleBusinesses = useMemo(() => {
+  const rankingResult = useMemo(() => {
     const sorted = businesses.filter(item =>
       (!verifiedOnly || (item.is_verified === true && item.can_show_badge === true)) &&
       (!withPhotosOnly || Boolean(item.image_url || item.logo_url))
     );
     if (sortBy === "best-match") {
-      // HybridSearch v2 is candidate-limited, evidence-safe, and leaves all
-      // location-only browsing on the existing GeoRank baseline.
-      return useHybridV2(normalizedSearch, sorted.length)
+      // SQL approval/geo filters and existing HybridSearch v2 always run first.
+      const baseline = useHybridV2(normalizedSearch, sorted.length)
         ? rankHybridSearch(sorted, normalizedSearch, effectiveRadius, {
             specificService: smartIntent.specificService,
           })
         : sortGeoRank(sorted, normalizedSearch, effectiveRadius);
+      // Model-backed E5 beta is explicitly opt-in, snapshot-scoped, and
+      // never broadens the approved candidate set. Unknown queries keep v2.
+      return rankSemanticV3Beta(baseline, normalizedSearch, {
+        optedIn: semanticBetaEnabled,
+        specificService: smartIntent.specificService,
+      });
     } else if (sortBy === "top-rated") {
       sorted.sort((a, b) => (Number(b.rating) || 0) - (Number(a.rating) || 0));
     } else if (sortBy === "alphabetical") {
@@ -323,8 +330,9 @@ export default function NearbyExplorer() {
         (typeof b.distance_meters === "number" ? b.distance_meters : Number.MAX_SAFE_INTEGER)
       );
     }
-    return sorted;
-  }, [businesses, sortBy, verifiedOnly, withPhotosOnly, normalizedSearch, effectiveRadius, smartIntent.specificService]);
+    return {items:sorted,active:false,reason:"other-sort",model:null};
+  }, [businesses, sortBy, verifiedOnly, withPhotosOnly, normalizedSearch, effectiveRadius, smartIntent.specificService, semanticBetaEnabled]);
+  const visibleBusinesses = rankingResult.items;
 
   useEffect(() => { setResultLimit(30); }, [location.lat, location.lng, appliedQuery, category, radius, sortBy, verifiedOnly, withPhotosOnly]);
 
@@ -1054,8 +1062,18 @@ export default function NearbyExplorer() {
                 {withPhotosOnly && <button type="button" onClick={() => applySearch({ withPhotosOnly: false })} className="inline-flex items-center gap-1.5 rounded-full border border-[#C6DACB] bg-[#E6F2E9] px-3 py-1.5 text-[11px] font-semibold text-[#39705C] hover:bg-[#D7EBDF]"><Camera size={12}/> Photos <X size={12}/></button>}
               </div>
             </div>
-            <div className="mt-2.5 flex items-center justify-between gap-2">
-              <p className="text-[11px] text-[#8A897C]">{sortBy === "best-match" ? "Best matches for this area" : sortBy === "nearest" ? "Closest first" : sortBy === "top-rated" ? "Highest rated first" : "A to Z"}</p>
+            <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-[11px] text-[#8A897C]">{sortBy === "best-match" ? "Best matches for this area" : sortBy === "nearest" ? "Closest first" : sortBy === "top-rated" ? "Highest rated first" : "A to Z"}</p>
+                <button type="button" aria-pressed={semanticBetaEnabled} onClick={() => setSemanticBetaEnabled(value => !value)}
+                  title="Experimental E5 neural ranking for a small set of known intents. Unknown queries automatically use HybridSearch v2."
+                  className={"inline-flex min-h-8 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold transition-colors " + (semanticBetaEnabled ? "border-[#1D7265] bg-[#E1F2EC] text-[#1E6A51]" : "border-[#D8DDD7] bg-white text-[#58776B]")}>
+                  <Sparkles size={12}/> Semantic V3 Beta {semanticBetaEnabled ? "ON" : "OFF"}
+                </button>
+                {semanticBetaEnabled && <span role="status" className="text-[10px] text-[#607A70]">
+                  {rankingResult.active ? "E5 re-ranking active · experimental" : "HybridSearch v2 fallback"}
+                </span>}
+              </div>
               <label className="flex items-center gap-2 text-[11px] font-semibold text-[#62786C]">
                 Sort by
                 <select
