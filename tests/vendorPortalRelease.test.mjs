@@ -38,7 +38,7 @@ test('every major owner portal page is reachable and uses a shared premium shell
   assert.match(style,/prefers-reduced-motion/);
   assert.match(style,/vendor-premium-header/);
   for(const path of basePages) {
-    assert.match(load(path),/import \\{ neo \\}/,'missing shared Tailwind tokens in '+path);
+    assert.match(load(path),/import \{ neo \}/,'missing shared Tailwind tokens in '+path);
   }
 });
 
