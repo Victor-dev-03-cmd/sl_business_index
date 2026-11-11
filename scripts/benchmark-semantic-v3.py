@@ -32,6 +32,7 @@ def main() -> int:
     parser.add_argument("--model", default="intfloat/multilingual-e5-small")
     parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--max-queries", type=int, default=240)
+    parser.add_argument("--query-mode", choices=["raw","canonical"], default="raw")
     parser.add_argument("--output", type=Path, default=None)
     args = parser.parse_args()
     try:
@@ -55,7 +56,9 @@ def main() -> int:
         ("passage: " if e5 else "") + f"{row['name']}. Category: {row['category']}."
         for row in docs
     ]
-    query_text = [("query: " if e5 else "") + row["query"] for row in queries]
+    query_text = [("query: " if e5 else "") +
+                  (row["canonical_query"] if args.query_mode == "canonical" else row["query"])
+                  for row in queries]
     d_vectors = encoder.encode(docs_text, batch_size=args.batch_size,
                                normalize_embeddings=True, convert_to_numpy=True,
                                show_progress_bar=False)
@@ -76,6 +79,7 @@ def main() -> int:
         stats["precision_at10"] += precision_at_k(ids, relevant)
     results = {
         "model":args.model,
+        "query_mode":args.query_mode,
         "model_dimension":int(d_vectors.shape[1]),
         "query_count":len(queries),
         "business_count":len(docs),
