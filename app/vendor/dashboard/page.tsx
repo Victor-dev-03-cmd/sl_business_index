@@ -34,7 +34,7 @@ type SortKey = 'views' | 'calls' | 'name';
 const DEFAULT_METRICS: Metrics = { views: 0, calls: 0, leads: 0, reviews: 0 };
 const number = (n: number) => new Intl.NumberFormat('en-LK').format(n);
 const smallLabel = 'text-[10px] font-bold uppercase tracking-[0.10em] text-slate-400';
-const panel = 'rounded-[10px] border border-[#E4EAEE] bg-white shadow-[0_2px_14px_rgba(23,41,50,.025)]';
+const panel = 'vendor-premium-card rounded-[10px] border border-[#E4EAEE] bg-white shadow-[0_2px_14px_rgba(23,41,50,.025)]';
 const button = 'inline-flex h-9 items-center justify-center gap-2 rounded-[6px] border border-[#DCE4E9] bg-white px-3 text-xs font-semibold text-[#46535E] transition hover:border-[#B8C7D0] hover:bg-[#F6F8FA] disabled:cursor-not-allowed disabled:opacity-50';
 
 const kpis = [
