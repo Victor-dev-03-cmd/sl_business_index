@@ -1,655 +1,210 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import Script from 'next/script';
-import Image from 'next/image';
-import dynamic from 'next/dynamic';
-import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
-import PromotionUploadForm from './components/PromotionUploadForm';
+import IconsaxIcon from '../components/IconsaxIcon';
 
-const MarketingDesignEditor = dynamic(
-  () => import('./components/MarketingDesignEditor'),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="text-center space-y-3">
-          <div className="w-10 h-10 border-2 border-brand-blue/30 border-t-brand-blue rounded-full animate-spin mx-auto" />
-          <p className="text-sm text-slate-500 font-medium">Loading Design Editor...</p>
-        </div>
-      </div>
-    ),
-  }
-)
-import { 
-  Megaphone,
-  Calendar, 
-  Download, 
-  Type, 
-  Palette, 
-  Facebook,
-  Instagram,
-  Linkedin,
-  Send,
-  Loader2,
-  CheckCircle2,
-  Clock,
-  Sparkles,
-  Image as ImageIcon,
-  ChevronRight,
-  History,
-  Layout,
-  ExternalLink
-} from 'lucide-react';
-
-interface Business {
-  id: string;
-  name: string;
+type Business = { id:string; name:string; category:string|null; city:string|null; status:string|null };
+type Campaign = {id:string;business_id:string;banner_text:string|null;status:string|null;platforms:string[]|null;scheduled_at:string|null;created_at:string;businesses:{name:string}|{name:string}[]|null};
+type Mode = 'social' | 'email' | 'calendar' | 'library';
+type Language = 'English' | 'Tamil' | 'Sinhala';
+type Objective = 'Awareness' | 'Enquiries' | 'Offer' | 'Repeat customers';
+type Platform = 'Facebook'|'Instagram'|'WhatsApp'|'LinkedIn';
+const platforms:Platform[]=['Facebook','Instagram','WhatsApp','LinkedIn'];
+const panel='rounded-[9px] border border-[#DEE7E0] bg-white shadow-[0_3px_16px_rgba(25,65,42,.035)]';
+const input='w-full min-w-0 rounded-[6px] border border-[#D9E5DB] bg-white px-3 py-2.5 text-[12px] text-[#274234] outline-none focus:border-[#6AAB7C] focus:ring-2 focus:ring-[#E4F1E4]';
+const label='mb-1.5 block text-[11px] font-bold text-[#526C58]';
+const formatDate=(date:string)=>new Date(date).toLocaleString('en-LK',{dateStyle:'medium',timeStyle:'short'});
+const campaignTitle=(value:string)=>value.trim().replace(/\s+/g,' ').slice(0,180);
+const exportText=(name:string,text:string)=>{
+  const objectUrl=URL.createObjectURL(new Blob([text],{type:'text/plain;charset=utf-8'}));
+  const anchor=document.createElement('a');anchor.href=objectUrl;anchor.download=name;anchor.click();
+  window.setTimeout(()=>URL.revokeObjectURL(objectUrl),1000);
+};
+function approvedFacts(b:Business|null){
+  return b?[b.name,b.category,b.city].filter(Boolean).join(' · '):'Select an approved business';
 }
+export default function MarketingStudioPage(){
+  const [mode,setMode]=useState<Mode>('social');
+  const [businesses,setBusinesses]=useState<Business[]>([]);
+  const [selectedId,setSelectedId]=useState('');
+  const [campaigns,setCampaigns]=useState<Campaign[]>([]);
+  const [loading,setLoading]=useState(true);
+  const [saving,setSaving]=useState(false);
+  const [error,setError]=useState('');
+  const [objective,setObjective]=useState<Objective>('Enquiries');
+  const [language,setLanguage]=useState<Language>('English');
+  const [channels,setChannels]=useState<Platform[]>(['Facebook','Instagram']);
+  const [audience,setAudience]=useState('Local customers');
+  const [offer,setOffer]=useState('');
+  const [tone,setTone]=useState('Professional and friendly');
+  const [callToAction,setCallToAction]=useState('Contact us for details');
+  const [scheduledAt,setScheduledAt]=useState('');
+  const [subject,setSubject]=useState('');
+  const [emailDraft,setEmailDraft]=useState('');
+  const [consentChecked,setConsentChecked]=useState(false);
+  const [approvedBrief,setApprovedBrief]=useState(false);
+  const selected=businesses.find(b=>b.id===selectedId)||null;
 
-interface Campaign {
-  id: string;
-  business_id: string;
-  banner_text?: string;
-  banner_color?: string;
-  image_url?: string;
-  caption?: string;
-  platforms?: string[];
-  social_platforms?: string[];
-  scheduled_at: string | null;
-  status: string;
-  created_at: string;
-  businesses: { name: string };
-  type: 'banner' | 'image';
-}
+  const load=useCallback(async()=>{
+    setLoading(true);setError('');
+    try{
+      const {data:{user},error:authError}=await supabase.auth.getUser();
+      if(authError)throw authError;
+      if(!user){setError('Sign in to use Marketing Studio.');setBusinesses([]);setCampaigns([]);return;}
+      const businessResult=await supabase.from('businesses').select('id,name,category,city,status')
+        .eq('owner_id',user.id).eq('status','approved').order('name');
+      if(businessResult.error)throw businessResult.error;
+      const owned=(businessResult.data||[]) as Business[];
+      setBusinesses(owned);
+      setSelectedId(old=>owned.some(b=>b.id===old)?old:owned[0]?.id||'');
+      if(owned.length===0){setCampaigns([]);return;}
+      const campaignResult=await supabase.from('marketing_campaigns')
+        .select('id,business_id,banner_text,status,platforms,scheduled_at,created_at,businesses(name)')
+        .in('business_id',owned.map(b=>b.id)).order('created_at',{ascending:false}).limit(100);
+      if(campaignResult.error)throw campaignResult.error;
+      setCampaigns((campaignResult.data||[]) as Campaign[]);
+    }catch(e){setError(e instanceof Error?e.message:'Marketing records could not be loaded.');}
+    finally{setLoading(false);}
+  },[]);
+  useEffect(()=>{void load()},[load]);
+  useEffect(()=>{setApprovedBrief(false)},[selectedId,objective,language,channels,offer,audience,tone,callToAction]);
 
-export default function MarketingPage() {
-  const [activeTab, setActiveTab] = useState<'create' | 'image' | 'schedule' | 'history'>('create');
-  const [showEditor, setShowEditor] = useState(false);
-  const [bannerText, setBannerText] = useState('Special Offer!');
-  const [bannerColor, setBannerColor] = useState('bg-emerald-600');
-  const [selectedPlatform, setSelectedPlatform] = useState<string[]>([]);
-  const [selectedBusinessId, setSelectedBusinessId] = useState<string>('');
-  const [scheduledAt, setScheduledAt] = useState<string>('');
-  const [businesses, setBusinesses] = useState<Business[]>([]);
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
+  const brief=useMemo(()=>{
+    const name=selected?.name||'Your business';
+    return [
+      'SL BUSINESS INDEX / CREATIVE BRIEF',
+      'Business: '+approvedFacts(selected),
+      'Objective: '+objective,
+      'Channels: '+(channels.length?channels.join(', '):'Not selected'),
+      'Audience: '+audience.trim(),
+      'Language: '+language,
+      'Brand voice: '+tone,
+      'Offer / approved facts: '+(offer.trim()||'No special offer specified'),
+      'Call to action: '+callToAction.trim(),
+      '',
+      'COPY GUIDANCE — FOR HUMAN REVIEW',
+      (language==='Tamil'?'தமிழ்: ':language==='Sinhala'?'සිංහල: ':'English: ')+name+' · '+(offer.trim()||objective)+' · '+callToAction,
+      '',
+      'Deliverables to prepare: campaign caption, hashtag options, 2–4 creative concepts,',
+      'square and portrait assets, stories/WhatsApp status and platform-specific versions.',
+      'Verify product claims, prices, phone numbers, offer conditions and dates before publishing.',
+      'No AI image, automatic publication or external social integration has been executed.',
+    ].join('\n');
+  },[selected,objective,channels,audience,language,tone,offer,callToAction]);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: businessData } = await supabase
-        .from('businesses')
-        .select('id, name')
-        .eq('owner_id', user.id);
-      
-      if (businessData) {
-        setBusinesses(businessData);
-        if (businessData.length > 0) {
-          setSelectedBusinessId(businessData[0].id);
-        }
-      }
-
-      const { data: campaignData } = await supabase
-        .from('marketing_campaigns')
-        .select('*, businesses(name)')
-        .order('created_at', { ascending: false });
-      
-      const { data: promotionData } = await supabase
-        .from('promotions')
-        .select('*, businesses(name)')
-        .order('created_at', { ascending: false });
-
-      const combined: Campaign[] = [
-        ...(campaignData || []).map(c => ({ ...c, type: 'banner' as const })),
-        ...(promotionData || []).map(p => ({ ...p, type: 'image' as const }))
-      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-      
-      setCampaigns(combined);
-    } catch (error) {
-      console.error('Error fetching marketing data:', error);
-    } finally {
-      setLoading(false);
-    }
+  const toggleChannel=(c:Platform)=>setChannels(old=>old.includes(c)?old.filter(x=>x!==c):[...old,c]);
+  const copyText=async(value:string)=>{
+    try{await navigator.clipboard.writeText(value);toast.success('Copied to clipboard');}
+    catch{toast.error('Clipboard access unavailable. Use Download instead.');}
   };
-
-  const togglePlatform = (platform: string) => {
-    if (selectedPlatform.includes(platform)) {
-      setSelectedPlatform(selectedPlatform.filter(p => p !== platform));
-    } else {
-      setSelectedPlatform([...selectedPlatform, platform]);
+  const saveCampaign=async(schedule:boolean)=>{
+    if(!selected||!approvedBrief){toast.error('Select a business and approve the brief before saving.');return;}
+    if(schedule&&(!scheduledAt||!Number.isFinite(Date.parse(scheduledAt))||Date.parse(scheduledAt)<=Date.now())){
+      toast.error('Choose a future date to record a schedule.');return;
     }
+    setSaving(true);
+    try{
+      const {error:writeError}=await supabase.from('marketing_campaigns').insert({
+        business_id:selected.id,banner_text:campaignTitle(offer||objective+' · '+audience),
+        banner_color:'bg-emerald-600',platforms:channels.map(x=>x.toLowerCase()),
+        scheduled_at:schedule?new Date(scheduledAt).toISOString():null,
+        status:schedule?'scheduled':'drafted',
+      });
+      if(writeError)throw writeError;
+      toast.success(schedule?'Schedule recorded in SLBI. External publishing is not connected.':'Campaign draft saved to SLBI.');
+      setMode('library');void load();
+    }catch(e){toast.error(e instanceof Error?e.message:'Unable to save campaign.');}
+    finally{setSaving(false);}
   };
-
-  const handleCampaignAction = async (isSchedule: boolean) => {
-    if (!selectedBusinessId) {
-      toast.warning('Please select a business');
-      return;
-    }
-
-    if (isSchedule && !scheduledAt) {
-      toast.warning('Please select a schedule date');
-      return;
-    }
-    if (isSchedule && (!Number.isFinite(Date.parse(scheduledAt)) || new Date(scheduledAt).getTime() <= Date.now())) {
-      toast.warning('Select a future date and time for scheduling.');
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const { error } = await supabase
-        .from('marketing_campaigns')
-        .insert({
-          business_id: selectedBusinessId,
-          banner_text: bannerText,
-          banner_color: bannerColor,
-          platforms: selectedPlatform,
-          scheduled_at: isSchedule ? scheduledAt : null,
-          status: isSchedule ? 'scheduled' : 'posted'
-        });
-
-      if (error) throw error;
-
-      toast.success(isSchedule ? 'Campaign schedule saved in SLBI. External posting is not automatic.' : 'Campaign saved in SLBI. External networks are not automatically published.');
-      setActiveTab('history');
-      fetchData();
-    } catch (error) {
-      console.error('Error saving campaign:', error);
-      toast.error('Failed to save campaign');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  if (showEditor) {
-    return (
-      <MarketingDesignEditor 
-        onBackAction={() => setShowEditor(false)} 
-        businesses={businesses}
-        onPublishSuccess={() => {
-          setShowEditor(false);
-          setActiveTab('history');
-          fetchData();
-        }}
-      />
-    );
-  }
-
-  return (
-    <div className="mx-auto max-w-[1460px] space-y-5 pb-5 text-[#243D2D]">
-      <Script src="https://js.puter.com/v2/" strategy="afterInteractive" />
-      
-      <div className="space-y-5">
-        <header className="vendor-premium-header flex flex-col gap-6 px-6 py-7 sm:px-8 sm:py-9 lg:flex-row lg:items-end lg:justify-between">
-          <div className="relative z-10 max-w-2xl">
-            <p className="text-[10px] font-extrabold uppercase tracking-[.18em] text-[#BEDFAF]">Grow your presence / Marketing Studio</p>
-            <h1 className="mt-2 text-[30px] font-extrabold tracking-[-.05em] text-white sm:text-[35px]">Make every campaign count.</h1>
-            <p className="mt-2 text-[12px] leading-6 text-[#DCEBDD]">Plan professional business promotions, manage creative assets and review saved SLBI campaign activity from one workspace.</p>
-            <div className="mt-4 flex flex-wrap gap-2 text-[10px] font-bold text-[#D4EDD6]">
-              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5">Campaign workspace</span>
-              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5">Design preview</span>
-              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5">Scheduled records</span>
-            </div>
-          </div>
-          <div className="relative z-10 flex flex-wrap items-center gap-2">
-            <Link href="/vendor/insights" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 text-[12px] font-bold text-white transition hover:bg-white/20">
-              <History size={16}/> Growth insights
-            </Link>
-            <button type="button" onClick={() => setShowEditor(true)}
-              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/20 bg-[#F6FAEE] px-4 text-[12px] font-bold text-[#245F3F] transition hover:bg-white">
-              <Sparkles size={16}/> Open design editor
-            </button>
-          </div>
-        </header>
-        <div className="grid gap-3 sm:grid-cols-3">
-          {[
-            { label:'Saved campaign records',value:campaigns.length,info:'Existing RLS-approved campaign records',icon:Megaphone },
-            { label:'Scheduled records',value:campaigns.filter(c=>c.status==='scheduled').length,info:'Dates saved; external posting not automatic',icon:Calendar },
-            { label:'Published or approved records',value:campaigns.filter(c=>c.status==='posted'||c.status==='approved').length,info:'Internal statuses, not verified social impressions',icon:CheckCircle2 },
-          ].map(item=><div key={item.label} className="vendor-premium-card flex items-start justify-between gap-2 p-5">
-            <div><p className="text-[11px] font-bold text-[#68806D]">{item.label}</p><p className="mt-2 text-[28px] font-extrabold tabular-nums tracking-[-.045em] text-[#224832]">{loading?'—':item.value}</p><p className="mt-1 text-[10px] leading-5 text-[#8C9B8D]">{item.info}</p></div>
-            <span className="rounded-xl bg-[#E9F4E9] p-2.5 text-[#39774D]"><item.icon size={19}/></span>
-          </div>)}
-        </div>
-
-        {/* Dashboard Grid */}
-        <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-12">
-          
-          {/* Navigation & Controls (XL: 4 cols) */}
-          <div className="space-y-5 xl:col-span-4">
-            
-            {/* Nav Cards */}
-            <div className="grid grid-cols-2 gap-3">
-              <TabButton 
-                active={activeTab === 'create'} 
-                onClick={() => setActiveTab('create')}
-                icon={<Palette size={20} />}
-                label="Banner"
-              />
-              <TabButton 
-                active={activeTab === 'image'} 
-                onClick={() => setActiveTab('image')}
-                icon={<ImageIcon size={20} />}
-                label="Image"
-              />
-              <TabButton 
-                active={activeTab === 'schedule'} 
-                onClick={() => setActiveTab('schedule')}
-                icon={<Calendar size={20} />}
-                label="Schedule"
-              />
-              <TabButton 
-                active={activeTab === 'history'} 
-                onClick={() => setActiveTab('history')}
-                icon={<History size={20} />}
-                label="History"
-              />
-            </div>
-
-            {/* Editor Forms */}
-            <div className="vendor-premium-panel overflow-hidden">
-              <div className="p-6">
-                <AnimatePresence mode="wait">
-                  {activeTab === 'create' && (
-                    <motion.div 
-                      key="create-form"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="space-y-6"
-                    >
-                      <FormSection label="Target Business" icon={<Layout size={14} />}>
-                        <select 
-                          value={selectedBusinessId}
-                          onChange={(e) => setSelectedBusinessId(e.target.value)}
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-900 focus:ring-2 focus:ring-brand-blue/30 outline-none transition-all appearance-none"
-                        >
-                          {businesses.map(b => (
-                            <option key={b.id} value={b.id}>{b.name}</option>
-                          ))}
-                        </select>
-                      </FormSection>
-
-                      <FormSection label="Banner Message" icon={<Type size={14} />}>
-                        <input 
-                          type="text" 
-                          value={bannerText}
-                          onChange={(e) => setBannerText(e.target.value)}
-                          placeholder="e.g. 50% Off Everything!"
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-900 focus:ring-2 focus:ring-brand-blue/30 outline-none transition-all"
-                        />
-                      </FormSection>
-
-                      <FormSection label="Visual Style" icon={<Palette size={14} />}>
-                        <div className="flex gap-3 flex-wrap p-2 bg-slate-50 rounded-xl border border-slate-200">
-                          {['bg-emerald-600', 'bg-blue-600', 'bg-purple-600', 'bg-rose-600', 'bg-amber-500', 'bg-slate-900'].map((color) => (
-                            <button
-                              key={color}
-                              onClick={() => setBannerColor(color)}
-                              className={`w-10 h-10 rounded-lg ${color} transition-all ${bannerColor === color ? 'ring-2 ring-brand-gold ring-offset-4 ring-offset-white scale-110' : 'opacity-60 hover:opacity-100'}`}
-                            />
-                          ))}
-                        </div>
-                      </FormSection>
-
-                      <SocialPlatforms 
-                        selected={selectedPlatform} 
-                        onToggle={togglePlatform} 
-                      />
-
-                      <button 
-                        onClick={() => handleCampaignAction(false)}
-                        disabled={submitting}
-                        className="w-full py-3.5 bg-brand-blue hover:bg-brand-blue/90 text-white rounded-xl font-bold text-sm shadow-lg shadow-brand-blue/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.98]"
-                      >
-                        {submitting ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
-                        Save SLBI campaign
-                      </button>
-                    </motion.div>
-                  )}
-
-                  {activeTab === 'image' && (
-                    <motion.div 
-                      key="image-form"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                    >
-                      <PromotionUploadForm 
-                        businesses={businesses} 
-                        onSuccess={() => {
-                          setActiveTab('history');
-                          fetchData();
-                        }} 
-                      />
-                    </motion.div>
-                  )}
-
-                  {activeTab === 'schedule' && (
-                    <motion.div 
-                      key="schedule-form"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="space-y-6"
-                    >
-                      <FormSection label="Select Business" icon={<Layout size={14} />}>
-                        <select 
-                          value={selectedBusinessId}
-                          onChange={(e) => setSelectedBusinessId(e.target.value)}
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-900 outline-none"
-                        >
-                          {businesses.map(b => (
-                            <option key={b.id} value={b.id}>{b.name}</option>
-                          ))}
-                        </select>
-                      </FormSection>
-
-                      <FormSection label="Posting Date & Time" icon={<Calendar size={14} />}>
-                        <input 
-                          type="datetime-local" 
-                          value={scheduledAt}
-                          onChange={(e) => setScheduledAt(e.target.value)}
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-900 outline-none" 
-                        />
-                      </FormSection>
-
-                      <SocialPlatforms 
-                        selected={selectedPlatform} 
-                        onToggle={togglePlatform} 
-                      />
-
-                      <button 
-                        onClick={() => handleCampaignAction(true)}
-                        disabled={submitting}
-                        className="w-full py-3.5 bg-brand-gold hover:bg-brand-gold/90 text-white rounded-xl font-bold text-sm shadow-lg shadow-brand-gold/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.98]"
-                      >
-                        {submitting ? <Loader2 className="animate-spin" size={18} /> : <Calendar size={18} />}
-                        Save planned schedule
-                      </button>
-                    </motion.div>
-                  )}
-
-                  {activeTab === 'history' && (
-                    <motion.div 
-                      key="history-list"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="space-y-4"
-                    >
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest px-1">Recent Activity</h3>
-                        <button onClick={fetchData} className="text-[10px] text-brand-blue font-bold hover:underline">Refresh</button>
-                      </div>
-                      
-                      <div className="space-y-3 max-h-[600px] overflow-y-auto no-scrollbar pr-1">
-                        {loading ? (
-                          <div className="py-20 text-center space-y-3">
-                            <Loader2 className="animate-spin mx-auto text-brand-blue/40" size={32} />
-                            <p className="text-xs text-slate-500 font-medium tracking-wide uppercase">Syncing history...</p>
-                          </div>
-                        ) : campaigns.length === 0 ? (
-                          <div className="py-20 text-center bg-slate-50 rounded-2xl border border-slate-200">
-                            <p className="text-xs text-slate-500 italic">No saved campaigns yet. Create your first campaign to start a history.</p>
-                          </div>
-                        ) : (
-                          campaigns.map((c) => (
-                            <CampaignCard key={c.id} campaign={c} />
-                          ))
-                        )}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
-          </div>
-
-          {/* Real-time Preview (XL: 8 cols) */}
-          <div className="space-y-5 xl:col-span-8">
-            <div className="vendor-premium-panel flex min-h-[600px] flex-col overflow-hidden">
-              <div className="p-6 border-b border-slate-200 bg-slate-50/50 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="flex gap-1.5">
-                    <div className="w-3 h-3 rounded-full bg-rose-400" />
-                    <div className="w-3 h-3 rounded-full bg-amber-400" />
-                    <div className="w-3 h-3 rounded-full bg-emerald-400" />
-                  </div>
-                  <span className="text-xs font-black text-slate-500 uppercase tracking-widest ml-2">Design preview · not published</span>
-                </div>
-                <div className="flex items-center gap-2">
-                   <div className="px-2 py-1 bg-emerald-500/5 text-emerald-600 text-[10px] font-black uppercase rounded border border-emerald-500/10 flex items-center gap-1.5">
-                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                     Visual preview
-                   </div>
-                </div>
-              </div>
-              
-              <div className="flex-1 bg-slate-100/30 relative overflow-hidden flex items-center justify-center p-6 md:p-12">
-                {/* Background Pattern */}
-                <div className="absolute inset-0 opacity-[0.05] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#94a3b8 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
-                
-                {/* The Banner */}
-                <motion.div 
-                  layout
-                  className={`relative z-10 w-full max-w-xl aspect-square ${bannerColor} rounded-3xl shadow-2xl flex flex-col items-center justify-center p-10 text-center transition-all duration-500 overflow-hidden group`}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
-                  <div className="absolute top-0 left-0 w-full h-1 bg-white/20" />
-                  
-                  <div className="relative z-10 space-y-6">
-                    <motion.h2 
-                      key={bannerText}
-                      initial={{ scale: 0.9, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      className="break-words text-[clamp(1.9rem,4.8vw,4.5rem)] font-extrabold leading-tight text-white drop-shadow-lg"
-                    >
-                      {bannerText}
-                    </motion.h2>
-                    <p className="text-white/80 text-lg md:text-xl font-medium tracking-wide">
-                      Your promotion, visually previewed.<br/>Review before publishing.
-                    </p>
-                    <div className="pt-4">
-                      <div className="inline-flex items-center gap-3 rounded-xl border border-white/30 bg-white/90 px-6 py-3 text-[11px] font-extrabold uppercase tracking-widest text-[#254B33] shadow-lg">
-                        Sample call to action
-                        <ChevronRight size={18} />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Pro Badge */}
-                  <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 text-white/40 text-[10px] font-bold uppercase tracking-widest">
-                    <Sparkles size={12} className="text-brand-gold" />
-                    SLBI Creative Preview
-                  </div>
-                </motion.div>
-
-                {/* Decorative Elements */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-brand-blue/5 blur-[120px] rounded-full pointer-events-none" />
-              </div>
-
-              <div className="p-6 bg-white border-t border-slate-200 flex items-center justify-between">
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                  Actual reach is measured in Growth Insights, not estimated here.
-                </p>
-                <button 
-                  onClick={() => setShowEditor(true)}
-                  className="text-xs text-brand-blue font-bold flex items-center gap-2 hover:bg-brand-blue/5 px-3 py-1.5 rounded-lg transition-all"
-                >
-                  <Sparkles size={14} /> Open editor
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+  const modes:{id:Mode;name:string;icon:string;description:string}[]=[
+    {id:'social',name:'Social campaigns',icon:'flash',description:'Brief, review and creative directions'},
+    {id:'email',name:'Email intelligence',icon:'sms',description:'Consent-first message planning'},
+    {id:'calendar',name:'Content calendar',icon:'calendar',description:'Track internal campaign schedules'},
+    {id:'library',name:'Campaign records',icon:'document-download',description:'Owner-scoped saved work'},
+  ];
+  return <div className="mx-auto max-w-[1500px] space-y-5 text-[#273F32]">
+    <header className="vendor-premium-header flex flex-wrap items-end justify-between gap-4 px-6 py-7 sm:px-8">
+      <div className="relative z-10 max-w-[760px]">
+        <p className="text-[10px] font-bold uppercase tracking-[.18em] text-[#BCDCC0]">SLBI Growth OS / Marketing Engine</p>
+        <h1 className="mt-2 text-[27px] font-extrabold tracking-[-.04em] text-white sm:text-[34px]">Marketing command center.</h1>
+        <p className="mt-2 max-w-[650px] text-[12px] leading-6 text-[#DAE9D8]">Plan business-aware social campaigns, multilingual messaging and consent-first email programs. Clear workflow, real records, no confusing canvas.</p>
       </div>
-      
-      <style jsx global>{`
-        .no-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        .no-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `}</style>
-    </div>
-  );
-}
-
-// Sub-components for cleaner code
-function TabButton({ active, onClick, icon, label }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex min-h-24 flex-col items-center justify-center gap-2 rounded-[14px] border p-4 transition-colors ${
-        active 
-          ? 'border-[#A8D0B1] bg-[#EAF6EC] text-[#1F6943] shadow-[0_4px_16px_rgba(38,93,50,.07)]' 
-          : 'border-[#E1EAE0] bg-white text-[#738A79] hover:bg-[#F7FAF5] hover:text-[#3D7150]'
-      }`}
-    >
-      {icon}
-      <span className="text-[10px] font-black uppercase tracking-widest">{label}</span>
-    </button>
-  );
-}
-
-function FormSection({ label, icon, children }: { label: string, icon: React.ReactNode, children: React.ReactNode }) {
-  return (
-    <div className="space-y-2">
-      <label className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">
-        {icon}
-        {label}
-      </label>
-      {children}
-    </div>
-  );
-}
-
-function SocialPlatforms({ selected, onToggle }: { selected: string[], onToggle: (p: string) => void }) {
-  return (
-    <div className="space-y-3">
-      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Network Distribution</label>
-      <div className="grid grid-cols-3 gap-2">
-        <PlatformBtn 
-          active={selected.includes('facebook')} 
-          onClick={() => onToggle('facebook')}
-          icon={<Facebook size={16} />}
-          label="FB"
-        />
-        <PlatformBtn 
-          active={selected.includes('instagram')} 
-          onClick={() => onToggle('instagram')}
-          icon={<Instagram size={16} />}
-          label="IG"
-        />
-        <PlatformBtn 
-          active={selected.includes('linkedin')} 
-          onClick={() => onToggle('linkedin')}
-          icon={<Linkedin size={16} />}
-          label="IN"
-        />
+      <div className="relative z-10 flex gap-2">
+        <Link href="/vendor/insights" className="inline-flex h-10 items-center gap-2 rounded-[6px] border border-white/25 px-4 text-xs font-bold text-white hover:bg-white/10"><IconsaxIcon name="status-up" size={16}/> Growth insights</Link>
+        <button type="button" onClick={()=>void load()} disabled={loading} className="inline-flex h-10 items-center gap-2 rounded-[6px] bg-white px-4 text-xs font-bold text-[#254E37]"><IconsaxIcon name="refresh" size={16}/> Refresh</button>
       </div>
-    </div>
-  );
-}
-
-function PlatformBtn({ active, onClick, icon, label }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string }) {
-  return (
-    <button 
-      onClick={onClick}
-      className={`py-2.5 rounded-xl border flex items-center justify-center gap-2 transition-all ${
-        active 
-          ? 'bg-brand-blue/5 border-brand-blue/30 text-brand-blue' 
-          : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-700'
-      }`}
-    >
-      {icon}
-      <span className="text-[10px] font-black">{label}</span>
-    </button>
-  );
-}
-
-function CampaignCard({ campaign }: { campaign: Campaign }) {
-  const isBanner = campaign.type === 'banner';
-  const isLive = campaign.status === 'posted' || campaign.status === 'approved';
-
-  return (
-    <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl hover:border-slate-300 transition-all group">
-      <div className="flex justify-between items-start mb-3">
-        <div className="space-y-0.5">
-          <h4 className="text-[11px] font-black text-slate-800 uppercase truncate max-w-[140px]">
-            {campaign.businesses.name}
-          </h4>
-          <p className="text-[10px] text-slate-500 font-medium">
-            {new Date(campaign.created_at).toLocaleDateString()}
-          </p>
-        </div>
-        <div className="flex flex-col items-end gap-1.5">
-          <span className={`text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-tighter ${
-            isBanner ? 'bg-blue-500/10 text-blue-600 border border-blue-500/20' : 'bg-purple-500/10 text-purple-600 border border-purple-500/20'
-          }`}>
-            {campaign.type}
-          </span>
-          <div className="flex items-center gap-1">
-             {isLive ? (
-               <span className="flex items-center gap-1 text-[8px] font-black text-emerald-600 uppercase tracking-widest">
-                 <CheckCircle2 size={8} /> Saved
-               </span>
-             ) : (
-               <span className="flex items-center gap-1 text-[8px] font-black text-amber-600 uppercase tracking-widest">
-                 <Clock size={8} /> {campaign.status}
-               </span>
-             )}
-          </div>
-        </div>
+    </header>
+    {error&&<div role="alert" className="rounded-[7px] border border-[#E7C6BB] bg-[#FFF7F3] p-4 text-xs text-[#9E5641]">{error} <Link className="underline" href="/login?redirect=/vendor/marketing">Sign in</Link></div>}
+    <section className={panel+' p-4 sm:p-5'}>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div><p className="text-[10px] font-bold uppercase tracking-[.15em] text-[#7A9780]">Step 01 / Business context</p><h2 className="mt-1 text-[16px] font-extrabold">Campaign workspace</h2></div>
+        <label className="w-full max-w-[365px] text-xs"><span className={label}>Approved business</span>
+          <select className={input} value={selectedId} onChange={e=>setSelectedId(e.target.value)} disabled={loading||!businesses.length}>
+            {!businesses.length&&<option value="">No approved business available</option>}
+            {businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}
+          </select>
+        </label>
       </div>
-
-      {campaign.image_url && (
-        <div className="mb-3 aspect-video rounded-lg overflow-hidden border border-slate-200 bg-slate-100 relative group">
-          <Image 
-            src={campaign.image_url} 
-            alt="Campaign" 
-            fill
-            className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-500" 
-          />
-          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-            <ExternalLink size={16} className="text-white" />
-          </div>
-        </div>
-      )}
-
-      <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed italic mb-3">
-        &quot;{isBanner ? campaign.banner_text : campaign.caption}&quot;
-      </p>
-
-      <div className="flex items-center justify-between pt-3 border-t border-slate-200">
-        <div className="flex gap-2">
-          {(campaign.platforms || campaign.social_platforms || []).map((p: string) => (
-            <div key={p} className="text-slate-400 group-hover:text-brand-blue transition-colors">
-              {p === 'facebook' && <Facebook size={12} />}
-              {p === 'instagram' && <Instagram size={12} />}
-              {p === 'linkedin' && <Linkedin size={12} />}
-            </div>
-          ))}
-        </div>
-        <Link href="/vendor/insights" className="text-[10px] font-extrabold uppercase tracking-widest text-[#3D7350] hover:underline">
-          Recorded insights
-        </Link>
-      </div>
+      <p className="mt-3 text-[11px] leading-5 text-[#698371]">Only your approved business facts can be used in campaign planning. An approved brief is not an automatically generated or published advertisement.</p>
+    </section>
+    <div className="grid gap-4 md:grid-cols-4">
+      {modes.map(item=><button key={item.id} type="button" onClick={()=>setMode(item.id)} aria-pressed={mode===item.id}
+        className={'flex min-w-0 flex-col items-start gap-2 rounded-[8px] border p-4 text-left transition '+(mode===item.id?'border-[#7BAB87] bg-[#EAF3EA]':'border-[#E1E9E0] bg-white hover:border-[#B7CDB9]')}>
+        <IconsaxIcon name={item.icon} size={22}/><span className="text-[13px] font-extrabold text-[#244C34]">{item.name}</span><span className="text-[11px] leading-5 text-[#7D9180]">{item.description}</span>
+      </button>)}
     </div>
-  );
+    {mode==='social'&&<div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,.9fr)]">
+      <section className={panel+' space-y-5 p-5 sm:p-6'}>
+        <div><p className="vendor-kicker">Step 02 / Creative strategy</p><h2 className="mt-1 text-[19px] font-extrabold">Build the campaign brief</h2><p className="mt-1 text-xs text-[#799080]">Guided planning — no canvas editor.</p></div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label><span className={label}>Campaign objective</span><select className={input} value={objective} onChange={e=>setObjective(e.target.value as Objective)}>{(['Awareness','Enquiries','Offer','Repeat customers'] as Objective[]).map(x=><option key={x}>{x}</option>)}</select></label>
+          <label><span className={label}>Creative language</span><select className={input} value={language} onChange={e=>setLanguage(e.target.value as Language)}>{(['English','Tamil','Sinhala'] as Language[]).map(x=><option key={x}>{x}</option>)}</select></label>
+          <label><span className={label}>Audience</span><input className={input} maxLength={100} value={audience} onChange={e=>setAudience(e.target.value)}/></label>
+          <label><span className={label}>Brand voice</span><select className={input} value={tone} onChange={e=>setTone(e.target.value)}><option>Professional and friendly</option><option>Premium and understated</option><option>Warm and local</option><option>Energetic and clear</option></select></label>
+        </div>
+        <label><span className={label}>Approved offer / product details</span><textarea className={input} rows={3} maxLength={500} value={offer} onChange={e=>setOffer(e.target.value)} placeholder="Describe an accurate offer, conditions and product details. No invented prices."/></label>
+        <label><span className={label}>Call to action</span><input className={input} maxLength={120} value={callToAction} onChange={e=>setCallToAction(e.target.value)}/></label>
+        <div><span className={label}>Destination platforms</span><div className="flex flex-wrap gap-2">{platforms.map(p=><button key={p} type="button" aria-pressed={channels.includes(p)} onClick={()=>toggleChannel(p)} className={'rounded-[6px] border px-3 py-2 text-xs font-semibold '+(channels.includes(p)?'border-[#82B18C] bg-[#EAF4EB] text-[#246343]':'border-[#DFE7E0] bg-white text-[#698070]')}>{p}</button>)}</div></div>
+        <label className="flex items-start gap-3 border-t border-[#E8EFE8] pt-4 text-xs leading-5 text-[#5E7A66]"><input type="checkbox" className="mt-1 accent-[#286844]" checked={approvedBrief} onChange={e=>setApprovedBrief(e.target.checked)}/>I reviewed these business facts and approve this brief for saving.</label>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" disabled={!selected||!approvedBrief||saving} onClick={()=>void saveCampaign(false)} className="vendor-primary-button">Save campaign draft</button>
+          <button type="button" disabled={!selected} onClick={()=>exportText('slbi-campaign-brief.txt',brief)} className="vendor-outline-button"><IconsaxIcon name="document-download" size={15}/> Export brief</button>
+        </div>
+      </section>
+      <aside className={panel+' min-w-0 overflow-hidden'}>
+        <div className="border-b border-[#E5EDE5] bg-[#F7FAF7] p-5"><p className="vendor-kicker">Step 03 / Human review</p><h2 className="mt-1 text-[19px] font-extrabold">Creative direction</h2><p className="mt-1 text-[11px] text-[#829684]">Ready for AI creative service integration; current brief is deterministic and editable.</p></div>
+        <pre className="max-h-[500px] overflow-auto whitespace-pre-wrap break-words p-5 font-sans text-[12px] leading-7 text-[#375343]">{brief}</pre>
+        <div className="flex flex-wrap gap-2 border-t border-[#E8EFE6] p-4">
+          <button type="button" onClick={()=>void copyText(brief)} className="vendor-outline-button"><IconsaxIcon name="document-download" size={14}/> Copy</button>
+          <button type="button" onClick={()=>exportText('slbi-campaign-brief.txt',brief)} className="vendor-outline-button">Download .txt</button>
+        </div>
+      </aside>
+    </div>}
+    {mode==='email'&&<div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(270px,.7fr)]">
+      <section className={panel+' space-y-4 p-5 sm:p-6'}>
+        <p className="vendor-kicker">Consent-first email marketing</p><h2 className="text-[20px] font-extrabold">Campaign intelligence</h2>
+        <p className="text-[12px] leading-6 text-[#728776]">Prepare human-reviewed copy. Sending, contact imports and audience segmentation stay locked until verified opt-in, unsubscribe handling, suppression and sender authentication are operational.</p>
+        <label><span className={label}>Subject</span><input className={input} maxLength={120} value={subject} onChange={e=>setSubject(e.target.value)} placeholder="Clear, accurate subject line"/></label>
+        <label><span className={label}>Email copy</span><textarea className={input} rows={9} maxLength={4000} value={emailDraft} onChange={e=>setEmailDraft(e.target.value)} placeholder="Draft a permission-based message using only approved business facts."/></label>
+        <label className="flex gap-2 text-xs leading-5 text-[#6E8675]"><input type="checkbox" checked={consentChecked} onChange={e=>setConsentChecked(e.target.checked)} className="mt-1 accent-[#2D714D]"/>I understand that only opted-in recipients may receive marketing messages.</label>
+        <div className="flex flex-wrap gap-2"><button type="button" disabled={!subject.trim()||!emailDraft.trim()||!consentChecked} onClick={()=>exportText('slbi-email-draft.txt', 'Subject: '+subject+'\n\n'+emailDraft+'\n\n[Add compliant unsubscribe details before sending]')} className="vendor-primary-button">Download reviewed draft</button><span className="self-center text-[11px] text-[#9B8164]">No emails will be sent by this action.</span></div>
+      </section>
+      <section className={panel+' p-5 sm:p-6'}><h3 className="text-[16px] font-bold">Delivery readiness</h3><div className="mt-5 space-y-3">{['Evidence of consent and lawful purpose','Audience segments and suppression list','Sender SPF, DKIM and DMARC checks','Unsubscribe workflow and complaint handling','Human approval and scheduled delivery'].map((x,i)=><div key={x} className="flex gap-3 border-b border-[#EFF2EE] pb-3"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[5px] border border-[#D9E6D8] bg-[#F0F5EF] text-[10px] font-bold text-[#7F9983]">{i+1}</span><span className="text-[12px] leading-5 text-[#617869]">{x}</span></div>)}</div><p className="mt-5 rounded-[6px] bg-[#FFF8EB] p-3 text-xs text-[#946A30]">Email sending is not enabled. This is a preparation workspace, not a provider integration.</p></section>
+    </div>}
+    {mode==='calendar'&&<div className={panel+' space-y-5 p-5 sm:p-6'}>
+      <div><p className="vendor-kicker">Schedule preparation</p><h2 className="mt-1 text-[19px] font-bold">Content calendar</h2><p className="mt-1 text-[11px] text-[#7F9584]">Store an internal planned date; external networks are never automatically published from these records.</p></div>
+      <label className="block max-w-[320px]"><span className={label}>Campaign date and time</span><input type="datetime-local" className={input} value={scheduledAt} onChange={e=>setScheduledAt(e.target.value)}/></label>
+      <div className="flex flex-wrap gap-3"><button type="button" className="vendor-primary-button" disabled={!selected||!approvedBrief||saving} onClick={()=>void saveCampaign(true)}>Save internal schedule</button><button type="button" className="vendor-outline-button" onClick={()=>setMode('social')}>Review campaign brief</button></div>
+      {!approvedBrief&&<p className="text-xs text-[#9D7447]">Approve the brief in Social campaigns before scheduling.</p>}
+      <div className="border-t border-[#E5EBE5] pt-5"><h3 className="text-[13px] font-bold">Scheduled records</h3><div className="mt-3 space-y-2">{campaigns.filter(c=>c.status==='scheduled').map(c=><p key={c.id} className="flex flex-wrap justify-between gap-2 border-b border-[#EDF1EC] py-3 text-[12px]"><span>{c.banner_text||'Campaign'} <span className="text-[#8EA092]">· {businesses.find(b=>b.id===c.business_id)?.name||'Business'}</span></span><span className="font-semibold text-[#456E53]">{c.scheduled_at?formatDate(c.scheduled_at):'Not set'}</span></p>)}{!campaigns.some(c=>c.status==='scheduled')&&<p className="py-5 text-xs text-[#899A8C]">No internal schedules found.</p>}</div></div>
+    </div>}
+    {mode==='library'&&<div className={panel+' overflow-hidden'}>
+      <div className="border-b border-[#E5EBE5] p-5 sm:p-6"><h2 className="text-[19px] font-extrabold">Campaign record library</h2><p className="mt-1 text-[11px] text-[#7A8C7D]">Existing owner-scoped records remain intact. “Posted” is a database status, not proof of publication to an external network.</p></div>
+      <div className="overflow-x-auto"><table className="w-full min-w-[650px] text-left text-xs"><thead className="bg-[#F7FAF7] text-[10px] uppercase tracking-wider text-[#758C7A]"><tr><th className="px-5 py-3">Campaign</th><th className="px-5 py-3">Business</th><th className="px-5 py-3">SLBI status</th><th className="px-5 py-3">Created</th></tr></thead><tbody className="divide-y divide-[#EDF2ED]">{campaigns.map(c=><tr key={c.id}><td className="px-5 py-3 font-semibold">{c.banner_text||'Untitled campaign'}</td><td className="px-5 py-3">{businesses.find(b=>b.id===c.business_id)?.name||'Your business'}</td><td className="px-5 py-3 capitalize">{c.status||'unknown'}</td><td className="px-5 py-3 text-[#748879]">{formatDate(c.created_at)}</td></tr>)}{!campaigns.length&&<tr><td colSpan={4} className="px-5 py-12 text-center text-[#829685]">{loading?'Loading saved campaigns…':'No saved campaigns. Create a brief to begin.'}</td></tr>}</tbody></table></div>
+    </div>}
+    <footer className="pb-5 text-center text-[10px] text-[#91A396]">SLBI Marketing Engine · Business-aware planning · Consent first · No automatic publishing claims</footer>
+  </div>;
 }
