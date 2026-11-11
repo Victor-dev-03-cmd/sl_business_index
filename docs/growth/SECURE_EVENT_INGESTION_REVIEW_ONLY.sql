@@ -84,7 +84,9 @@ begin
       pg_catalog.jsonb_build_object('channel', p_channel, 'ingestion', 'growth-v1'))
   on conflict (id) do nothing;
 
-  return true;
+  -- FOUND reflects whether a new row was inserted; replays do not
+  -- become false-positive accepted/recorded events.
+  return found;
 end
 $growth$;
 
