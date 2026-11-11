@@ -75,9 +75,9 @@ test('private verification access is staged without claiming unreviewed RLS is d
   assert.match(storageSecurity,/storage\.buckets set public=false/);
   assert.match(storageSecurity,/vendor_notification_preferences/);
   assert.match(storageSecurity,/enable row level security/);
-  assert.match(profileSecurity,/slbi_guard_privileged_writes/);
-  assert.match(profileSecurity,/profile role, identity and verification are protected/);
-  assert.match(profileSecurity,/listing moderation and engagement fields are protected/);
-  assert.match(profileSecurity,/business owners cannot edit verification review decisions/);
+  assert.match(profileSecurity,/slbi_guard_remaining_privileged_writes/);
+  assert.match(profileSecurity,/account identity and verification need staff review/);
+  assert.match(profileSecurity,/listing audit and engagement fields are protected/);
+  assert.match(profileSecurity,/business owner cannot edit submitted verification review/);
   assert.match(profileSecurity,/NOT APPLIED/);
 });
