@@ -57,16 +57,39 @@ test('Settings saves actual account/business data and does not expose fake contr
   assert.doesNotMatch(settings,/Higher ranking in search results/);
 });
 
-test('marketing and QR studios avoid invented reach and offer functional links',()=>{
-  assert.match(marketing,/vendor-premium-header/);
+test('GrowthOS Marketing Studio replaces the canvas editor with real business-aware workflows',()=>{
+  assert.match(marketing,/Marketing Studio/);
+  assert.match(marketing,/businesses.*owner_id|eq\('owner_id',user\.id\)/);
+  assert.match(marketing,/marketing_campaigns/);
+  assert.match(marketing,/Campaign library/);
+  assert.match(marketing,/தமிழ்/);
+  assert.match(marketing,/සිංහල/);
+  assert.match(marketing,/Consent-based Email/);
+  assert.match(marketing,/status:schedule\?'scheduled':'drafted'/);
+  assert.match(marketing,/external publishing is not automatic/);
   assert.match(marketing,/vendor\/insights/);
-  assert.doesNotMatch(marketing,/2\.5k - 5k impressions/);
-  assert.doesNotMatch(marketing,/toast\.info\('Advanced optimization in progress/);
-  assert.doesNotMatch(marketing,/View Stats/);
-  assert.match(qr,/vendor-premium-header/);
-  assert.match(qr,/checkingQR/);
+  assert.doesNotMatch(marketing,/MarketingDesignEditor|EditorCanvas|showEditor|js\.puter\.com/);
+  assert.doesNotMatch(marketing,/2\.5k - 5k impressions|View Stats/);
+});
+
+test('QR Studio provides branded presets and print/download without fake scan counts',()=>{
+  assert.match(qr,/Counter display/);
+  assert.match(qr,/Window sticker/);
+  assert.match(qr,/Business card/);
+  assert.match(qr,/QRCodeCanvas/);
+  assert.match(qr,/Download PNG/);
+  assert.match(qr,/printCard/);
+  assert.match(qr,/copyLink/);
+  assert.match(qr,/qr_inventory/);
   assert.match(qr,/vendor\/insights/);
-  assert.doesNotMatch(qr,/Trackable Scans/);
+  assert.doesNotMatch(qr,/Trackable Scans|fakeScanCount/);
+});
+
+test('Settings alignment uses restrained corners and responsive minimum widths',()=>{
+  assert.match(settings,/vendor-settings/);
+  assert.match(settings,/xl:grid-cols-\[238px_minmax\(0,1fr\)\]/);
+  assert.match(style,/\.vendor-settings :is\(input,select,textarea\)/);
+  assert.match(style,/border-radius:8px/);
 });
 
 test('private verification access is staged without claiming unreviewed RLS is deployed',()=>{
