@@ -23,7 +23,7 @@ type PeriodFilter = 'all' | '7' | '30' | '90';
 type Sort = 'newest' | 'oldest' | 'highest' | 'lowest';
 
 const panel = 'vendor-premium-card';
-const actionButton = 'inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-[#e1e6eb] bg-white px-3 text-xs font-semibold text-slate-600 transition hover:border-[#baccc4] hover:bg-[#f7faf8] disabled:cursor-not-allowed disabled:opacity-50';
+const actionButton = 'inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-[#e1e6eb] bg-white px-3 text-xs font-semibold text-slate-600 transition hover:border-[#E6A67D] hover:bg-[#FFF8F2] disabled:cursor-not-allowed disabled:opacity-50';
 const formatNumber = (value: number) => new Intl.NumberFormat('en-LK').format(value);
 
 function validRating(value: number | null): number | null {
@@ -277,20 +277,20 @@ export default function VendorReviewsPage() {
     <div className="mx-auto max-w-xl py-16 text-center">
       <h1 className="text-xl font-bold text-[#1c3f2f]">Sign in to manage reviews</h1>
       <p className="mt-2 text-sm text-slate-500">Customer reviews are available to their registered business owners.</p>
-      <Link href="/login?redirect=/vendor/reviews" className="mt-5 inline-flex rounded-lg bg-[#1c4d3b] px-5 py-2.5 text-xs font-bold text-white">Sign in</Link>
+      <Link href="/login?redirect=/vendor/reviews" className="mt-5 inline-flex rounded-lg bg-[#202024] px-5 py-2.5 text-xs font-bold text-white">Sign in</Link>
     </div>
   );
 
   return (
-    <div className="mx-auto min-h-full max-w-[1500px] pb-6 text-[#283F30]">
+    <div className="vendor-page-v7 mx-auto min-h-full w-full max-w-[1600px] pb-7 text-[#28282D]">
       <div className="space-y-5">
-        <header className="vendor-premium-card flex flex-col gap-5 border-t-4 border-t-[#2D6749] px-5 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-6">
+        <header className="vendor-owner-heading vendor-premium-card flex flex-col gap-5 border border-[#E9E9EC] px-5 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-6">
           <div className="space-y-1.5">
             <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
               <IconsaxIcon name="category" size={15} /> Vendor workspace
               <IconsaxIcon name="arrow-right-2" size={12} /> Reviews & reputation
             </div>
-            <h1 className="text-[24px] font-bold tracking-tight text-[#172d26]">Reviews & reputation</h1>
+            <h1 className="text-[24px] font-bold tracking-tight text-[#1B1B1F]">Reviews & reputation</h1>
             <p className="text-[12px] text-slate-500">Understand customer feedback, monitor ratings and manage your public replies.</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -311,7 +311,7 @@ export default function VendorReviewsPage() {
         )}
 
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-[13px] font-bold text-[#1d3f31]">Reputation overview</h2>
+          <h2 className="text-[13px] font-bold text-[#2C2C32]">Reputation overview</h2>
           <span className="rounded-md border border-[#e9edf0] bg-white px-2 py-1 text-[10px] font-semibold text-slate-500">Your businesses · All-time</span>
         </div>
         <section aria-label="Reputation statistics" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -323,7 +323,7 @@ export default function VendorReviewsPage() {
                   <IconsaxIcon name={kpi.icon} size={18} />
                 </span>
               </div>
-              <p className="mt-1.5 text-[26px] font-bold tabular-nums tracking-[-0.04em] text-[#182b25]">
+              <p className="mt-1.5 text-[26px] font-bold tabular-nums tracking-[-0.04em] text-[#1D1D20]">
                 {loading ? '—' : kpi.value}
               </p>
               <p className="mt-2 text-[10px] leading-4 text-slate-400">{kpi.description}</p>
@@ -335,7 +335,7 @@ export default function VendorReviewsPage() {
           <section className={panel + ' min-w-0 overflow-hidden'}>
             <div className="flex items-center justify-between border-b border-[#eef0f2] px-5 py-4">
               <div>
-                <h2 className="text-[13px] font-bold text-[#23372e]">Rating distribution</h2>
+                <h2 className="text-[13px] font-bold text-[#313137]">Rating distribution</h2>
                 <p className="mt-1 text-[11px] text-slate-400">Breakdown by submitted star rating</p>
               </div>
               <IconsaxIcon name="star" size={19} color="#bc9047" />
@@ -358,7 +358,7 @@ export default function VendorReviewsPage() {
 
           <section className={panel + ' flex min-w-0 flex-col overflow-hidden'}>
             <div className="border-b border-[#eef0f2] px-5 py-4">
-              <h2 className="text-[13px] font-bold text-[#23372e]">Response performance</h2>
+              <h2 className="text-[13px] font-bold text-[#313137]">Response performance</h2>
               <p className="mt-1 text-[11px] text-slate-400">Response coverage for recorded reviews</p>
             </div>
             <div className="flex flex-1 flex-col justify-center px-5 py-5">
@@ -377,7 +377,7 @@ export default function VendorReviewsPage() {
         <section className={panel + ' overflow-hidden'}>
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e9edf0] px-5 py-4">
             <div>
-              <h2 className="text-[13px] font-bold text-[#23392f]">Customer reviews</h2>
+              <h2 className="text-[13px] font-bold text-[#313137]">Customer reviews</h2>
               <p className="mt-1 text-[11px] text-slate-400">Review feedback and respond from your vendor workspace</p>
             </div>
             <span className="text-[11px] font-semibold text-slate-500">{loading ? 'Loading…' : formatNumber(filtered.length) + ' results'}</span>
@@ -435,7 +435,7 @@ export default function VendorReviewsPage() {
               <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#eff6f1] text-[#347653]"><IconsaxIcon name="shop" size={23} /></span>
               <h3 className="text-[13px] font-bold text-[#223d2c]">Register a business to receive reviews</h3>
               <p className="max-w-sm text-[11px] leading-5 text-slate-500">Customer feedback will appear here when reviews are recorded for your listings.</p>
-              <Link href="/vendor/my-businesses" className="mt-1 rounded-lg bg-[#1c4d3b] px-4 py-2.5 text-[11px] font-bold text-white">Manage businesses</Link>
+              <Link href="/vendor/my-businesses" className="mt-1 rounded-lg bg-[#202024] px-4 py-2.5 text-[11px] font-bold text-white">Manage businesses</Link>
             </div>
           ) : !reviews.length ? (
             <div className="flex flex-col items-center gap-3 px-6 py-12 text-center">
@@ -610,7 +610,7 @@ export default function VendorReviewsPage() {
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <span className="text-[10px] text-slate-400">{replyText.length} / 2000 characters</span>
                       <button type="submit" disabled={Boolean(submittingId) || !replyText.trim()}
-                        className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-[#1c4d3b] px-4 text-[11px] font-bold text-white transition hover:bg-[#2e674f] disabled:cursor-not-allowed disabled:opacity-50">
+                        className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-[#202024] px-4 text-[11px] font-bold text-white transition hover:bg-[#39393E] disabled:cursor-not-allowed disabled:opacity-50">
                         <IconsaxIcon name="message-text" size={15} color="#fff" />
                         {submittingId ? 'Publishing…' : 'Publish reply'}
                       </button>
