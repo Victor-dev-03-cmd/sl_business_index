@@ -159,7 +159,6 @@ export default function NearbyExplorer() {
 
   const [searchText, setSearchText] = useState(searchParams.get("q") || "");
   const [appliedQuery, setAppliedQuery] = useState(searchParams.get("q") || "");
-  const [semanticBetaEnabled, setSemanticBetaEnabled] = useState(searchParams.get("v3") === "1");
   const [searchFocused, setSearchFocused] = useState(false);
   const [debouncedText, setDebouncedText] = useState("");
   const [suggestions, setSuggestions] = useState<any[]>([]);
@@ -314,10 +313,11 @@ export default function NearbyExplorer() {
             specificService: smartIntent.specificService,
           })
         : sortGeoRank(sorted, normalizedSearch, effectiveRadius);
-      // Model-backed E5 beta is explicitly opt-in, snapshot-scoped, and
-      // never broadens the approved candidate set. Unknown queries keep v2.
+      // V3 beta is always enabled on Nearby. It can only re-rank approved,
+      // eligible, matching business snapshots for supported canonical intents.
+      // Unsupported and stale queries preserve the V2/GeoRank ordering.
       return rankSemanticV3Beta(baseline, normalizedSearch, {
-        optedIn: semanticBetaEnabled,
+        optedIn: true,
         specificService: smartIntent.specificService,
       });
     } else if (sortBy === "top-rated") {
@@ -331,7 +331,7 @@ export default function NearbyExplorer() {
       );
     }
     return {items:sorted,active:false,reason:"other-sort",model:null};
-  }, [businesses, sortBy, verifiedOnly, withPhotosOnly, normalizedSearch, effectiveRadius, smartIntent.specificService, semanticBetaEnabled]);
+  }, [businesses, sortBy, verifiedOnly, withPhotosOnly, normalizedSearch, effectiveRadius, smartIntent.specificService]);
   const visibleBusinesses = rankingResult.items;
 
   useEffect(() => { setResultLimit(30); }, [location.lat, location.lng, appliedQuery, category, radius, sortBy, verifiedOnly, withPhotosOnly]);
@@ -1065,14 +1065,17 @@ export default function NearbyExplorer() {
             <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2">
               <div className="flex flex-wrap items-center gap-2">
                 <p className="text-[11px] text-[#8A897C]">{sortBy === "best-match" ? "Best matches for this area" : sortBy === "nearest" ? "Closest first" : sortBy === "top-rated" ? "Highest rated first" : "A to Z"}</p>
-                <button type="button" aria-pressed={semanticBetaEnabled} onClick={() => setSemanticBetaEnabled(value => !value)}
-                  title="Experimental E5 neural ranking for a small set of known intents. Unknown queries automatically use HybridSearch v2."
-                  className={"inline-flex min-h-8 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold transition-colors " + (semanticBetaEnabled ? "border-[#1D7265] bg-[#E1F2EC] text-[#1E6A51]" : "border-[#D8DDD7] bg-white text-[#58776B]")}>
-                  <Sparkles size={12}/> Semantic V3 Beta {semanticBetaEnabled ? "ON" : "OFF"}
-                </button>
-                {semanticBetaEnabled && <span role="status" className="text-[10px] text-[#607A70]">
-                  {rankingResult.active ? "E5 re-ranking active · experimental" : "HybridSearch v2 fallback"}
-                </span>}
+                <span
+                  title="Semantic V3 Beta is always enabled. Real E5 re-ranking runs for supported canonical searches with approved matching listings; V2/GeoRank remains the safe fallback."
+                  className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-[#1D7265] bg-[#E1F2EC] px-2.5 py-1 text-[10px] font-semibold text-[#1E6A51]"
+                >
+                  <Sparkles size={12}/> Semantic V3 Beta · ON
+                </span>
+                <span role="status" className="text-[10px] text-[#607A70]">
+                  {sortBy !== "best-match" ? "V3 applies to Best match only"
+                    : rankingResult.active ? "E5 re-ranking active · experimental"
+                    : "HybridSearch v2 / GeoRank fallback"}
+                </span>
               </div>
               <label className="flex items-center gap-2 text-[11px] font-semibold text-[#62786C]">
                 Sort by
