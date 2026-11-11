@@ -110,16 +110,25 @@ consistent cards across primary vendor pages.
   `tests/vendorPortalRelease.test.mjs` protect consent, disabled flags,
   role boundaries, navigation, settings and no fabricated statistics.
 
-### High-priority confirmed release blocker: privileged column escalation
+### High-priority data-security verification and release blockers
 
-Live grants allow authenticated table-wide UPDATE on `profiles.role`,
-`profiles.verification_status`, `businesses.status`, `is_verified`,
-`can_show_badge`, and `verifications.status`. Existing owner-only RLS does
-not itself prevent an account from changing privileged columns on its own
-rows. The mitigation is staged in
-`docs/growth/PRIVILEGE_ESCALATION_GUARD_REVIEW_ONLY.sql`.
-It must be tested with customer/vendor/admin/service-role sessions and
-existing registration/approval actions before production application.
+Live grants allow broad authenticated UPDATE, so **RLS alone** is not a
+sufficient column-level authorization mechanism. Deeper read-only inspection
+confirmed important existing BEFORE triggers: `growth_prevent_profile_role_escalation`
+already protects direct `profiles.role` changes and
+`growth_protect_business_approval` already protects business approval,
+ownership, verified flags and badge status. Do **not** remove or duplicate
+these working protections.
+
+However, `profiles.verification_status`, computed business engagement/audit
+columns and vendor mutation of existing `verifications` review rows need
+separate explicit checks; the existing AFTER verification trigger may already
+reject some self-approval attempts via the business guard. Additive,
+non-overwriting safeguards are staged in
+`docs/growth/PRIVILEGE_ESCALATION_GUARD_REVIEW_ONLY.sql`. Their compatibility
+with signup, view-counter RPC, vendor forms and admin approvals is **untested**
+until staged in an isolated project. Treat the gaps as security risks
+requiring verification, not as a confirmed successful privilege exploit.
 
 ### Final release gate — NOT CLEARED
 
