@@ -92,3 +92,10 @@ test('quick-action settings deep links navigate to real settings tabs',()=>{
   assert.match(settings,/searchParams\.set\('tab',tab\)/);
   assert.match(actions,/dispatchEvent\(new CustomEvent\('slbi:settings-tab'/);
 });
+
+test('command palette traps focus and restores it after closing',()=>{
+  assert.match(actions,/dialogRef/);
+  assert.match(actions,/event\.key!=='Tab'/);
+  assert.match(actions,/previous\?\.focus\(\)/);
+  assert.match(actions,/aria-modal="true"/);
+});
