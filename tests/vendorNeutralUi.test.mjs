@@ -15,13 +15,13 @@ test('owner portal keeps Inter and uses luxury orange/charcoal top navigation',(
   assert.match(styles,/font-family:var\(--font-inter\)/);
   assert.match(styles,/--vendor-orange:#FF7900/);
   assert.match(styles,/--vendor-ink:#1D1D20/);
-  assert.match(layout,/vendor-workspace-v6/);
-  assert.match(layout,/aria-label="Vendor primary navigation"/);
-  assert.match(layout,/aria-label="Vendor compact navigation"/);
-  assert.match(layout,/aria-label="Growth and marketing tools"/);
-  assert.match(layout,/aria-label="Vendor account pages"/);
-  assert.doesNotMatch(layout,/vendor-sidebar|Collapse sidebar|Expand sidebar|Vendor mobile navigation/);
-  assert.match(layout,/bg-\[#FF7900\]/);
+  assert.match(vendorLayout,/vendor-workspace-v6/);
+  assert.match(vendorLayout,/aria-label="Vendor primary navigation"/);
+  assert.match(vendorLayout,/aria-label="Vendor compact navigation"/);
+  assert.match(vendorLayout,/aria-label="Growth and marketing tools"/);
+  assert.match(vendorLayout,/aria-label="Vendor account pages"/);
+  assert.doesNotMatch(vendorLayout,/vendor-sidebar|Collapse sidebar|Expand sidebar|Vendor mobile navigation/);
+  assert.match(vendorLayout,/bg-\[#FF7900\]/);
   assert.match(styles,/\.vendor-workspace-v6 \.vendor-content/);
 });
 
