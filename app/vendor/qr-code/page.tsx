@@ -17,7 +17,7 @@ const tones=[
   {name:'Black',fg:'#111827',accent:'#222222'},
 ] as const;
 const panel='rounded-[10px] border border-[#E9E9EC] bg-white shadow-[0_3px_16px_rgba(25,25,31,.028)]';
-const input='min-h-11 w-full rounded-[6px] border border-[#DBDBDF] bg-white px-3 text-[12px] text-[#264734] outline-none focus:border-[#70A27A]';
+const input='min-h-11 w-full rounded-[6px] border border-[#DBDBDF] bg-white px-3 text-[12px] text-[#2C2C31] outline-none focus:border-[#FF7900]';
 const layouts:{key:Format;title:string;sub:string}[]=[
   {key:'counter',title:'Counter display',sub:'A clear invitation for customers at checkout'},
   {key:'window',title:'Window sticker',sub:'High-contrast label for storefront entrances'},
@@ -159,9 +159,9 @@ export default function VendorQRStudioPage(){
     if(!assigned)return;
     requestAnimationFrame(()=>requestAnimationFrame(()=>{window.print()}));
   };
-  if(loading)return <div role="status" className={panel+' p-8 text-sm text-[#4B7459]'}>Loading QR workspace…</div>;
-  if(!signedIn)return <div className={panel+' p-8 text-sm'}>Sign in to access your QR Studio. <Link href="/login?redirect=/vendor/qr-code" className="font-bold text-[#286846] underline">Sign in</Link></div>;
-  return <div className="vendor-page-v7 mx-auto w-full max-w-[1600px] space-y-5 pb-8 text-[#28282D]">
+  if(loading)return <div role="status" className={panel+' p-8 text-sm text-[#2C2C31]'}>Loading QR workspace…</div>;
+  if(!signedIn)return <div className={panel+' p-8 text-sm'}>Sign in to access your QR Studio. <Link href="/login?redirect=/vendor/qr-code" className="font-bold text-[#2C2C31] underline">Sign in</Link></div>;
+  return <div className="vendor-page-v7 vendor-page-v9 mx-auto w-full max-w-[1600px] space-y-5 pb-8 text-[#28282D]">
     <header className="vendor-owner-heading grid gap-3 border border-[#E9E9EC] bg-white p-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
       <div><p className="text-[10px] font-bold uppercase tracking-[.18em] text-[#B3611E]">Digital storefront / QR Studio</p>
         <h1 className="mt-2 text-[30px] font-bold tracking-[-.04em]">QR Studio</h1><p className="mt-1 max-w-[690px] text-[12px] leading-6 text-[#777780]">Create a professionally branded scan experience for your real directory listing. Configure, preview, export and print without leaving your workspace.</p></div>
@@ -174,46 +174,46 @@ export default function VendorQRStudioPage(){
       ['QR status',busy?'Checking…':assigned?'Assigned':'Not assigned','Assigned to selected business','scan-barcode'],
       ['Export','PNG · SVG · PDF','Print and vector export options','document-download'],
     ].map(item=><div key={item[0]} className={panel+' flex items-start justify-between p-5'}><div><p className="text-[10px] font-bold text-[#6D6D76]">{item[0]}</p><p className="mt-2 text-[22px] font-bold text-[#28282D]">{item[1]}</p><p className="mt-1 text-[10px] text-[#9898A0]">{item[2]}</p></div><span className="bg-[#FFF1E6] p-2.5 text-[#C56210]"><IconsaxIcon name={item[3]} size={19}/></span></div>)}</div>
-    {!businesses.length?<section className={panel+' space-y-3 p-8'}><h2 className="text-lg font-bold">Start with a business listing</h2><p className="text-[12px] text-[#748978]">Register or claim an owned business before assigning a QR code.</p><Link className="inline-flex bg-[#255C3E] px-4 py-3 text-xs font-bold text-white" href="/register-business">Register business</Link></section>:
+    {!businesses.length?<section className={panel+' space-y-3 p-8'}><h2 className="text-lg font-bold">Start with a business listing</h2><p className="text-[12px] text-[#777780]">Register or claim an owned business before assigning a QR code.</p><Link className="inline-flex bg-[#242428] px-4 py-3 text-xs font-bold text-white" href="/register-business">Register business</Link></section>:
     <div className="grid items-start gap-5 xl:grid-cols-[330px_minmax(0,1fr)_250px]">
       <section className={panel+' min-w-0 p-5'}>
-        <p className="text-[10px] font-bold uppercase tracking-[.15em] text-[#6A9577]">01 · Business</p>
+        <p className="text-[10px] font-bold uppercase tracking-[.15em] text-[#777780]">01 · Business</p>
         <h2 className="mt-1 text-[17px] font-bold">Configure your QR</h2>
-        <label className="mt-5 block text-[11px] font-semibold text-[#58725F]">Linked listing
+        <label className="mt-5 block text-[11px] font-semibold text-[#2C2C31]">Linked listing
           <select value={selectedId} onChange={e=>setSelectedId(e.target.value)} className={input+' mt-1.5'}>{businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select></label>
-        <div className="mt-4 border border-[#DFE9E1] bg-[#F7FAF7] p-3 text-[11px]"><p className="font-bold text-[#365D41]">{business?.name}</p><p className="mt-1 text-[#819184]">{business?.category} · {business?.status||'Unknown status'}</p></div>
-        {!assigned&&!busy&&<button disabled={requesting||!business} type="button" onClick={()=>void requestQR()} className="mt-4 w-full bg-[#255D3F] px-4 py-3 text-[12px] font-bold text-white disabled:opacity-50">{requesting?'Requesting…':'Assign professional QR'}</button>}
-        <div className="mt-6 border-t border-[#E6ECE5] pt-5"><p className="text-[10px] font-bold uppercase tracking-[.15em] text-[#73977A]">02 · Layout presets</p>
+        <div className="mt-4 border border-[#E7E7EC] bg-[#F7FAF7] p-3 text-[11px]"><p className="font-bold text-[#2C2C31]">{business?.name}</p><p className="mt-1 text-[#777780]">{business?.category} · {business?.status||'Unknown status'}</p></div>
+        {!assigned&&!busy&&<button disabled={requesting||!business} type="button" onClick={()=>void requestQR()} className="mt-4 w-full bg-[#242428] px-4 py-3 text-[12px] font-bold text-white disabled:opacity-50">{requesting?'Requesting…':'Assign professional QR'}</button>}
+        <div className="mt-6 border-t border-[#E7E7EC] pt-5"><p className="text-[10px] font-bold uppercase tracking-[.15em] text-[#777780]">02 · Layout presets</p>
           <div className="mt-3 grid gap-2">{layouts.map(l=><button key={l.key} type="button" onClick={()=>setFormat(l.key)} aria-pressed={format===l.key}
-            className={'border-l-[3px] p-3 text-left '+(format===l.key?'border-[#2F8955] bg-[#EEF6EF]':'border-[#E3E9E3] hover:bg-[#F8FAF7]')}>
-            <strong className="text-[12px]">{l.title}</strong><span className="mt-1 block text-[10px] leading-4 text-[#819284]">{l.sub}</span>
+            className={'border-l-[3px] p-3 text-left '+(format===l.key?'border-[#E7E7EC] bg-[#F8F8FA]':'border-[#E7E7EC] hover:bg-[#F8FAF7]')}>
+            <strong className="text-[12px]">{l.title}</strong><span className="mt-1 block text-[10px] leading-4 text-[#777780]">{l.sub}</span>
           </button>)}</div>
         </div>
-        <div className="mt-6 border-t border-[#E6ECE5] pt-5"><p className="text-[10px] font-bold uppercase tracking-[.15em] text-[#73977A]">03 · Visual options</p>
-          <div className="mt-4 flex flex-wrap gap-2">{tones.map(t=><button key={t.name} type="button" aria-pressed={tone===t.name} onClick={()=>setTone(t.name)} className={'flex items-center gap-2 border px-3 py-2 text-[11px] '+(tone===t.name?'border-[#5F9D72] bg-[#EDF7F0]':'border-[#DEE6DE]')}>
+        <div className="mt-6 border-t border-[#E7E7EC] pt-5"><p className="text-[10px] font-bold uppercase tracking-[.15em] text-[#777780]">03 · Visual options</p>
+          <div className="mt-4 flex flex-wrap gap-2">{tones.map(t=><button key={t.name} type="button" aria-pressed={tone===t.name} onClick={()=>setTone(t.name)} className={'flex items-center gap-2 border px-3 py-2 text-[11px] '+(tone===t.name?'border-[#E7E7EC] bg-[#F8F8FA]':'border-[#E7E7EC]')}>
             <span className="h-3 w-3" style={{background:t.fg}}/>{t.name}</button>)}</div>
-          <label className="mt-4 block text-[11px] font-semibold text-[#58725F]">Export resolution
+          <label className="mt-4 block text-[11px] font-semibold text-[#2C2C31]">Export resolution
             <select value={size} onChange={e=>setSize(Number(e.target.value) as Size)} className={input+' mt-1.5'}>
               <option value={256}>256 px — small</option><option value={512}>512 px — standard</option><option value={1024}>1024 px — high detail</option>
             </select></label>
-          <label className="mt-4 block text-[11px] font-semibold text-[#58725F]">Call-to-scan label
+          <label className="mt-4 block text-[11px] font-semibold text-[#2C2C31]">Call-to-scan label
             <input className={input+' mt-1.5'} maxLength={64} value={caption} onChange={e=>setCaption(e.target.value)}/></label>
           <div className="mt-4 space-y-2">{[
             ['Business name',includeTitle,setIncludeTitle],
             ['Link below code',includeLink,setIncludeLink],
             ['Directory mark',includeLogo,setIncludeLogo],
-          ].map(([title,value,setter])=><label key={String(title)} className="flex items-center justify-between gap-3 text-[11px] font-medium text-[#5B7462]">
-            <span>{String(title)}</span><input type="checkbox" checked={value as boolean} onChange={e=>(setter as (v:boolean)=>void)(e.target.checked)} className="accent-[#36784F]"/></label>)}</div>
+          ].map(([title,value,setter])=><label key={String(title)} className="flex items-center justify-between gap-3 text-[11px] font-medium text-[#2C2C31]">
+            <span>{String(title)}</span><input type="checkbox" checked={value as boolean} onChange={e=>(setter as (v:boolean)=>void)(e.target.checked)} className="accent-[#FF7900]"/></label>)}</div>
         </div>
       </section>
       <section className={panel+' min-w-0 overflow-hidden'}>
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E1E9E2] bg-[#F9FBF8] p-5">
-          <div><p className="text-[10px] font-bold uppercase tracking-wider text-[#6A9577]">Live preview</p><h2 className="mt-1 text-[16px] font-bold">Production-ready scan card</h2></div>
-          <span className={'border px-2.5 py-1 text-[10px] font-bold '+(assigned?'border-[#C6DFD0] bg-[#ECF6EE] text-[#347B50]':'border-[#E3DEBF] bg-[#FAF6E9] text-[#967C3A]')}>{assigned?'Assigned':'Preview only'}</span>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E7E7EC] bg-[#F9FBF8] p-5">
+          <div><p className="text-[10px] font-bold uppercase tracking-wider text-[#777780]">Live preview</p><h2 className="mt-1 text-[16px] font-bold">Production-ready scan card</h2></div>
+          <span className={'border px-2.5 py-1 text-[10px] font-bold '+(assigned?'border-[#E7E7EC] bg-[#F8F8FA] text-[#2C2C31]':'border-[#E3DEBF] bg-[#FAF6E9] text-[#967C3A]')}>{assigned?'Assigned':'Preview only'}</span>
         </div>
         <div className="flex min-h-[650px] flex-col items-center justify-center bg-[#EFF4F0] p-5 sm:p-9">
-          <div ref={posterRef} id="slbi-qr-print-area" className={'flex w-full flex-col items-center border border-[#E2E9E0] bg-white px-5 py-10 text-center shadow-[0_15px_40px_rgba(24,54,36,.10)] '+(format==='card'?'max-w-[460px]':'max-w-[385px]')} style={{borderTop:'7px solid '+chosenTone.accent}}>
-            {includeTitle&&<div className="w-full"><h3 className="break-words text-[20px] font-extrabold leading-[1.3]" style={{color:chosenTone.fg}}>{business?.name}</h3><p className="mt-2 text-[9px] font-semibold uppercase tracking-[.17em] text-[#86988A]">SL Business Index · Business Profile</p></div>}
+          <div ref={posterRef} id="slbi-qr-print-area" className={'flex w-full flex-col items-center border border-[#E7E7EC] bg-white px-5 py-10 text-center shadow-[0_15px_40px_rgba(24,54,36,.10)] '+(format==='card'?'max-w-[460px]':'max-w-[385px]')} style={{borderTop:'7px solid '+chosenTone.accent}}>
+            {includeTitle&&<div className="w-full"><h3 className="break-words text-[20px] font-extrabold leading-[1.3]" style={{color:chosenTone.fg}}>{business?.name}</h3><p className="mt-2 text-[9px] font-semibold uppercase tracking-[.17em] text-[#777780]">SL Business Index · Business Profile</p></div>}
             <div className="mt-7 border border-[#EBEFE9] bg-white p-3">
               <QRCodeCanvas ref={canvasRef} value={qrUrl} level="H" size={size} marginSize={2} style={{display:"block",width:"min(320px, 100%)",height:"auto"}}
                 fgColor={chosenTone.fg} bgColor="#FFFFFF"
@@ -224,28 +224,28 @@ export default function VendorQRStudioPage(){
               <QRCodeSVG ref={svgRef} value={qrUrl} size={1024} level="H" marginSize={2} fgColor={chosenTone.fg} bgColor="#FFFFFF"/>
             </div>
             <p className="mt-6 break-words text-[13px] font-bold tracking-[.06em]" style={{color:chosenTone.fg}}>{caption}</p>
-            {includeLink&&<p className="mt-3 max-w-full break-all text-[10px] leading-5 text-[#7D9382]">{qrUrl}</p>}
-            <p className="mt-7 text-[9px] font-medium uppercase tracking-[.12em] text-[#94A498]">Powered by SLBusinessIndex.com</p>
+            {includeLink&&<p className="mt-3 max-w-full break-all text-[10px] leading-5 text-[#777780]">{qrUrl}</p>}
+            <p className="mt-7 text-[9px] font-medium uppercase tracking-[.12em] text-[#777780]">Powered by SLBusinessIndex.com</p>
           </div>
-          {assigned&&<p className="mt-5 text-[10px] font-medium text-[#718574]">Serial {assigned.serial_id} · Scan test required before printing in bulk</p>}
+          {assigned&&<p className="mt-5 text-[10px] font-medium text-[#777780]">Serial {assigned.serial_id} · Scan test required before printing in bulk</p>}
         </div>
-        <div className="grid gap-2 border-t border-[#E0E8E0] p-4 sm:grid-cols-2 xl:grid-cols-5">
-          <button type="button" disabled={!assigned} onClick={exportPNG} className="flex min-h-11 items-center justify-center gap-2 bg-[#245D3F] px-3 text-[12px] font-bold text-white disabled:opacity-40"><IconsaxIcon name="document-download" size={16} color="white"/> Download PNG</button>
-          <button type="button" disabled={!assigned} onClick={exportSVG} className="flex min-h-11 items-center justify-center gap-2 border border-[#D5E2D7] text-[12px] font-bold text-[#39694A] disabled:opacity-40"><IconsaxIcon name="document-download" size={16}/> Download SVG</button>
-          <button type="button" disabled={!assigned} onClick={()=>void exportPDF()} className="flex min-h-11 items-center justify-center gap-2 border border-[#D5E2D7] text-[12px] font-bold text-[#39694A] disabled:opacity-40"><IconsaxIcon name="document-download" size={16}/> Download PDF</button>
-          <button type="button" disabled={!assigned} onClick={printCard} className="flex min-h-11 items-center justify-center gap-2 border border-[#D5E2D7] text-[12px] font-bold text-[#39694A] disabled:opacity-40"><IconsaxIcon name="document-download" size={16}/> Print layout</button>
-          <button type="button" onClick={()=>void copyLink()} className="flex min-h-11 items-center justify-center gap-2 border border-[#D5E2D7] text-[12px] font-bold text-[#39694A]"><IconsaxIcon name="document-download" size={16}/> Copy link</button>
+        <div className="grid gap-2 border-t border-[#E7E7EC] p-4 sm:grid-cols-2 xl:grid-cols-5">
+          <button type="button" disabled={!assigned} onClick={exportPNG} className="flex min-h-11 items-center justify-center gap-2 bg-[#242428] px-3 text-[12px] font-bold text-white disabled:opacity-40"><IconsaxIcon name="document-download" size={16} color="white"/> Download PNG</button>
+          <button type="button" disabled={!assigned} onClick={exportSVG} className="flex min-h-11 items-center justify-center gap-2 border border-[#E7E7EC] text-[12px] font-bold text-[#2C2C31] disabled:opacity-40"><IconsaxIcon name="document-download" size={16}/> Download SVG</button>
+          <button type="button" disabled={!assigned} onClick={()=>void exportPDF()} className="flex min-h-11 items-center justify-center gap-2 border border-[#E7E7EC] text-[12px] font-bold text-[#2C2C31] disabled:opacity-40"><IconsaxIcon name="document-download" size={16}/> Download PDF</button>
+          <button type="button" disabled={!assigned} onClick={printCard} className="flex min-h-11 items-center justify-center gap-2 border border-[#E7E7EC] text-[12px] font-bold text-[#2C2C31] disabled:opacity-40"><IconsaxIcon name="document-download" size={16}/> Print layout</button>
+          <button type="button" onClick={()=>void copyLink()} className="flex min-h-11 items-center justify-center gap-2 border border-[#E7E7EC] text-[12px] font-bold text-[#2C2C31]"><IconsaxIcon name="document-download" size={16}/> Copy link</button>
         </div>
       </section>
       <aside className="space-y-4">
-        <div className={panel+' p-5'}><p className="text-[10px] font-bold uppercase tracking-wider text-[#5D9570]">Quick actions</p>
+        <div className={panel+' p-5'}><p className="text-[10px] font-bold uppercase tracking-wider text-[#2C2C31]">Quick actions</p>
           <div className="mt-4 grid gap-2">{[
             ['Open listing',()=>{if(business)window.open(directUrl,'_blank','noopener,noreferrer')},'home'],
             ['Copy destination',()=>void copyLink(),'document-download'],
             ['Share QR link',()=>void share(),'flash'],
             ['Print material',printCard,'document-download'],
           ].map(([name,fn,icon])=><button key={String(name)} type="button" disabled={!business||(name==='Print material'&&!assigned)}
-            onClick={fn as ()=>void} className="flex min-h-11 items-center justify-between border border-[#DEE7E0] px-3 text-left text-[11px] font-semibold text-[#3A6449] transition hover:bg-[#F3F8F4] disabled:opacity-40"><span>{String(name)}</span><IconsaxIcon name={String(icon)} size={16}/></button>)}</div>
+            onClick={fn as ()=>void} className="flex min-h-11 items-center justify-between border border-[#E7E7EC] px-3 text-left text-[11px] font-semibold text-[#2C2C31] transition hover:bg-[#F3F8F4] disabled:opacity-40"><span>{String(name)}</span><IconsaxIcon name={String(icon)} size={16}/></button>)}</div>
         </div>
         <div className={panel+' p-5'}><h3 className="text-[13px] font-bold">Deployment checklist</h3>
           <div className="mt-4 space-y-3">{[
@@ -254,7 +254,7 @@ export default function VendorQRStudioPage(){
             'Test readability at printed size',
             'Place at counters and entrances',
             'Use approved business details only',
-          ].map((item,i)=><div key={item} className="flex items-start gap-2 text-[11px] text-[#6E8372]"><span className="text-[#43815A]">{i+1}.</span>{item}</div>)}</div>
+          ].map((item,i)=><div key={item} className="flex items-start gap-2 text-[11px] text-[#2C2C31]"><span className="text-[#2C2C31]">{i+1}.</span>{item}</div>)}</div>
         </div>
         <div className="border-l-[3px] border-[#CBAD65] bg-[#FBF7EA] px-4 py-3 text-[11px] leading-5 text-[#907747]">Scan analytics are not recorded unless an independently verified tracking pipeline exists. This screen does not claim scan counts.</div>
       </aside>
