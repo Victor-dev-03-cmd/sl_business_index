@@ -25,9 +25,32 @@ export const VENDOR_QUICK_ACTIONS = [
 export default function VendorQuickActions({ open, onClose }:{open:boolean;onClose:()=>void}) {
   const [query,setQuery]=useState('');
   const inputRef=useRef<HTMLInputElement>(null);
+  const dialogRef=useRef<HTMLDivElement>(null);
   const pathname=usePathname();
   useEffect(()=>{if(open){setQuery('');const raf=requestAnimationFrame(()=>inputRef.current?.focus());return()=>cancelAnimationFrame(raf)}},[open]);
   useEffect(()=>{if(open)onClose()},[pathname]); // close on completed navigation
+  // The command palette is a modal: keep keyboard focus inside it, and return
+  // focus to its original trigger when the user finishes or presses Escape.
+  useEffect(()=>{
+    if(!open)return;
+    const previous=document.activeElement instanceof HTMLElement?document.activeElement:null;
+    const trap=(event:KeyboardEvent)=>{
+      if(event.key!=='Tab'||!dialogRef.current)return;
+      const targets=Array.from(dialogRef.current.querySelectorAll<HTMLElement>(
+        'a[href],button:not([disabled]),input:not([disabled]),[tabindex]:not([tabindex="-1"])'
+      )).filter(node=>node.getClientRects().length>0);
+      if(!targets.length)return;
+      const first=targets[0],last=targets[targets.length-1];
+      const active=document.activeElement;
+      if(event.shiftKey&&(active===first||!dialogRef.current.contains(active))){
+        event.preventDefault();last.focus();
+      }else if(!event.shiftKey&&(active===last||!dialogRef.current.contains(active))){
+        event.preventDefault();first.focus();
+      }
+    };
+    document.addEventListener('keydown',trap);
+    return()=>{document.removeEventListener('keydown',trap);previous?.focus()};
+  },[open]);
   const filtered=useMemo(()=>{
     const q=query.trim().toLowerCase();
     return VENDOR_QUICK_ACTIONS.filter(a=>!q||[a.title,a.description,a.group,a.keywords].join(' ').toLowerCase().includes(q));
@@ -45,7 +68,7 @@ export default function VendorQuickActions({ open, onClose }:{open:boolean;onClo
   if(!open)return null;
   return (
     <div className="fixed inset-0 z-[100] flex items-start justify-center bg-[#091A15]/75 px-3 pt-[min(12vh,110px)] backdrop-blur-[5px]" role="presentation" onMouseDown={event=>{if(event.target===event.currentTarget)onClose()}}>
-      <div role="dialog" aria-modal="true" aria-label="Vendor quick actions" className="w-full max-w-[630px] overflow-hidden rounded-[22px] border border-white/20 bg-[#FCFDF9] shadow-[0_40px_100px_rgba(1,28,17,.5)]">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Vendor quick actions" className="w-full max-w-[630px] overflow-hidden rounded-[22px] border border-white/20 bg-[#FCFDF9] shadow-[0_40px_100px_rgba(1,28,17,.5)]">
         <div className="flex items-center gap-3 border-b border-[#E4EAE3] p-4 sm:px-5">
           <IconsaxIcon name="search-normal" size={21} color="#4E8064"/>
           <input ref={inputRef} value={query} onChange={e=>setQuery(e.target.value)}
