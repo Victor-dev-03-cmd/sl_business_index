@@ -101,7 +101,7 @@ export default function SettingsPage() {
       ]);
       if(p.error)throw p.error;
       if(b.error)throw b.error;
-      const pr=p.data||{};
+      const pr=(p.data||{}) as Partial<Profile>;
       setProfile({
         full_name:pr.full_name||'',email:user.email||pr.email||'',phone:pr.phone||'',
         job_title:pr.job_title||'',avatar_url:pr.avatar_url||'',verification_status:pr.verification_status||'unverified',
