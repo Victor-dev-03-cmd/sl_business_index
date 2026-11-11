@@ -17,8 +17,8 @@ export type BetaRanking<T> = { items: T[]; active: boolean; reason: string; mode
 
 const clean = (value: string | null | undefined) => String(value ?? "").normalize("NFKC").trim().toLocaleLowerCase();
 const candidateId = (row: Candidate) => String(row.id ?? "");
-const documentIndex = new Map(E5_BETA.businesses.map((row) => [row.id, row]));
-const queryIndex = new Map(E5_BETA.canonical_queries.map((row) => [clean(row.query), row]));
+const documentIndex = new Map<string, (typeof E5_BETA.businesses)[number]>(E5_BETA.businesses.map((row) => [row.id, row]));
+const queryIndex = new Map<string, (typeof E5_BETA.canonical_queries)[number]>(E5_BETA.canonical_queries.map((row) => [clean(row.query), row]));
 const vectorCache = new Map<string, Int8Array>();
 
 function decodeVector(base64: string): Int8Array | null {
