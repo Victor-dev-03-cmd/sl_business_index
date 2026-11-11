@@ -65,7 +65,7 @@ export default function VendorQRStudioPage(){
   useEffect(()=>{
     if(!selectedId){setAssigned(null);return;}
     let mounted=true;setBusy(true);setAssigned(null);
-    void (async()=>{const r=await supabase.from('qr_inventory').select('id,serial_id,short_link,status').eq('business_id',selectedId).maybeSingle();
+    void (async()=>{const r=await supabase.from('qr_inventory').select('id,serial_id,short_link,status').eq('business_id',selectedId).eq('status','assigned').order('created_at',{ascending:false}).limit(1).maybeSingle();
       if(!mounted)return;if(r.error)setError('Could not read assigned QR code.');else setAssigned(r.data as Assigned|null);setBusy(false);
     })();
     return()=>{mounted=false};
