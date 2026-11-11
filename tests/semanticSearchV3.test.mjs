@@ -62,3 +62,18 @@ test("nonfinite benchmark measurements are rejected",()=>{
  assert.equal(evaluateSemanticGate({...readyState,benchmarkNdcgV3:NaN},config).ready,false);
  assert.equal(evaluateSemanticGate({...readyState,queryEmbeddingP95Ms:Infinity},config).ready,false);
 });
+
+test("specific service evidence outranks stronger model similarity of an unverified shop",()=>{
+ const cfg={enabled:true,modelId:"model-reviewed@1",minimumIndexedCoverage:.95,minimumNdcgImprovement:.02,maxEmbeddingLatencyMs:350};
+ const gate=evaluateSemanticGate(readyState,cfg);
+ const baseline=[
+  {id:"exact",match_type:"exact_service"},
+  {id:"related",match_type:"category_related"}
+ ];
+ const semantic=[
+  {id:"related",similarity:.99,modelId:"model-reviewed@1"},
+  {id:"exact",similarity:.12,modelId:"model-reviewed@1"}
+ ];
+ const result=fuseVerifiedSemantic(baseline,semantic,cfg,gate,{specificService:true});
+ assert.equal(result[0].id,"exact");
+});
