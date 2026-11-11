@@ -56,3 +56,18 @@ test('settings has bounded independent cards, real input borders, safe keyword r
   assert.match(styles,/border:1px solid #CAD4DB/);
   assert.match(styles,/\.vendor-settings-v5 \.vendor-settings-savebar/);
 });
+
+test('centered desktop top navigation exposes reversible, dismissible dropdowns with restrained corners',()=>{
+  assert.match(vendorLayout,/vendor-topbar-center absolute left-1\/2 hidden -translate-x-1\/2/);
+  assert.match(vendorLayout,/min-\[1400px\]:flex/);
+  assert.match(vendorLayout,/min-\[1400px\]:hidden/);
+  assert.match(vendorLayout,/aria-expanded=\{openMenu==='tools'\}/);
+  assert.match(vendorLayout,/aria-expanded=\{openMenu==='account'\}/);
+  assert.match(vendorLayout,/setOpenMenu\(open=>open==='tools'\?null:'tools'\)/);
+  assert.match(vendorLayout,/setOpenMenu\(open=>open==='account'\?null:'account'\)/);
+  assert.match(vendorLayout,/addEventListener\('pointerdown',onPointerDown\)/);
+  assert.match(vendorLayout,/event\.key==='Escape'/);
+  assert.doesNotMatch(vendorLayout,/<details|<summary/);
+  assert.match(styles,/\.vendor-topbar-dropdown-panel \{/);
+  assert.match(styles,/\.vendor-topbar-dropdown-link \{border-radius:6px;\}/);
+});
