@@ -276,7 +276,7 @@ export default function SettingsPage() {
   const initials=(profile.full_name||profile.email||'V').trim().split(/\s+/).slice(0,2).map(n=>n[0]?.toUpperCase()||'').join('');
   const submitLabel=verified?'Verified':pending?'Under review':'Submit for review';
   return (
-    <div className="mx-auto max-w-[1460px] space-y-5 text-[#213B2C]">
+    <div className="vendor-settings mx-auto space-y-5 text-[#213B2C]">
       <header className="vendor-premium-header flex flex-col gap-5 px-6 py-7 sm:px-8 sm:py-9 lg:flex-row lg:items-end lg:justify-between">
         <div className="relative z-10 max-w-2xl">
           <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[.17em] text-[#D0EDCA]"><ShieldCheck size={14}/> Owner command center · Settings</div>
@@ -291,8 +291,8 @@ export default function SettingsPage() {
       {error&&<div role="alert" className="rounded-xl border border-[#E9D3BE] bg-[#FFF9ED] p-4 text-[12px] text-[#875E38]">{error}<Link href="/login?redirect=/vendor/settings" className="ml-2 underline">Sign in</Link></div>}
       {loading&&<div role="status" className="vendor-premium-panel flex items-center gap-3 p-5 text-sm text-[#50745C]"><Loader2 className="animate-spin" size={18}/> Loading your settings…</div>}
 
-      <div className="grid items-start gap-5 lg:grid-cols-[260px_minmax(0,1fr)]">
-        <div className="vendor-premium-card overflow-hidden p-2 lg:sticky lg:top-5">
+      <div className="vendor-settings-grid">
+        <div className="vendor-settings-navigation vendor-premium-card overflow-hidden p-2">
           <p className="px-3 pb-3 pt-4 text-[10px] font-bold uppercase tracking-[.17em] text-[#8B9F90]">Workspace settings</p>
           <nav aria-label="Vendor settings sections" className="space-y-1" role="tablist" aria-orientation="vertical">
             {tabList.map(item=><button type="button" role="tab" id={'tab-'+item.id} aria-selected={activeTab===item.id} aria-controls={'panel-'+item.id} key={item.id} onClick={()=>selectTab(item.id)}
@@ -305,7 +305,7 @@ export default function SettingsPage() {
             Need help? <Link href="/vendor/leads" className="font-bold text-[#2B6945] underline underline-offset-2">Your enquiry inbox</Link> remains accessible from the main portal.
           </div>
         </div>
-        <div className="min-w-0 space-y-5">
+        <div className="vendor-settings-panels min-w-0 space-y-5">
           {activeTab==='profile'&&<section role="tabpanel" id="panel-profile" aria-labelledby="tab-profile" className="vendor-setting-section space-y-6">
             <div><p className="vendor-kicker">Personal profile</p><h2 className="mt-1 text-[22px] font-extrabold text-[#213F2D]">Account identity</h2><p className="mt-1 text-[12px] text-[#829787]">This information belongs to your account, not to any single business listing.</p></div>
             <div className="flex flex-wrap items-center gap-4 rounded-[16px] border border-[#E5ECE5] bg-[#FAFCF8] p-4">
