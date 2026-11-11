@@ -33,7 +33,7 @@ jobs:
       - name: Synthetic SSR multi-chunk cookie round-trip
         run: node tests/auth/ssr-cookie-roundtrip.mjs
       - name: Nearby GeoRank unit tests
-        run: node --experimental-strip-types --test tests/geoRank.test.mjs tests/diagnostics.test.mjs tests/smartSearch.test.mjs tests/searchEvaluation.test.mjs tests/hybridSearch.test.mjs tests/searchDictionary.test.mjs tests/searchCorrections.test.mjs tests/semanticSearchV3.test.mjs tests/semanticV3Evaluation.test.mjs tests/semanticBetaV3.test.mjs tests/nearbySemanticDefault.test.mjs tests/growthAttribution.test.mjs tests/growthIngestion.test.mjs tests/growthSecureLeads.test.mjs tests/vendorPortalRelease.test.mjs tests/qrAssignmentRelease.test.mjs tests/vendorSettingsQrMarketing2026.test.mjs
+        run: node --experimental-strip-types --test tests/geoRank.test.mjs tests/diagnostics.test.mjs tests/smartSearch.test.mjs tests/searchEvaluation.test.mjs tests/hybridSearch.test.mjs tests/searchDictionary.test.mjs tests/searchCorrections.test.mjs tests/semanticSearchV3.test.mjs tests/semanticV3Evaluation.test.mjs tests/semanticBetaV3.test.mjs tests/nearbySemanticDefault.test.mjs tests/growthAttribution.test.mjs tests/growthIngestion.test.mjs tests/growthSecureLeads.test.mjs tests/vendorPortalRelease.test.mjs tests/qrAssignmentRelease.test.mjs tests/vendorSettingsQrMarketing2026.test.mjs tests/vendorNeutralUi.test.mjs
       - name: SLBI HybridSearch v2 multilingual relevance benchmark (168 cases)
         run: node --experimental-strip-types tests/hybridBenchmark.mjs
       - name: User-reported Tamil Sinhala search intent evaluation
