@@ -278,7 +278,7 @@ export default function SettingsPage() {
   const initials=(profile.full_name||profile.email||'V').trim().split(/\s+/).slice(0,2).map(n=>n[0]?.toUpperCase()||'').join('');
   const submitLabel=verified?'Verified':pending?'Under review':'Submit for review';
   return (
-    <div className="vendor-page-v7 vendor-page-v9 vendor-settings vendor-settings-v5 vendor-settings-v8 mx-auto w-full max-w-[1600px] min-w-0 space-y-6 pb-9 text-[#252529]">
+    <div className="vendor-page-v7 vendor-page-v9 vendor-settings vendor-settings-v5 vendor-settings-v8 vendor-settings-v10 mx-auto w-full max-w-[1600px] min-w-0 space-y-6 pb-9 text-[#252529]">
       <header className="vendor-owner-heading vendor-settings-header settings-v8-hero relative flex flex-col gap-5 overflow-hidden border border-[#29292E] bg-[#1C1C20] px-6 py-7 sm:px-9 sm:py-9 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0 max-w-[760px]">
           <p className="text-[10px] font-bold uppercase tracking-[.15em] text-[#FFB978]">Account & workspace / Settings</p>
@@ -351,25 +351,98 @@ export default function SettingsPage() {
             <div className="vendor-settings-savebar flex flex-wrap justify-end gap-3 border-t border-[#E7EBEF] pt-5"><button type="button" className="vendor-primary-button" disabled={saving||!selectedBusinessId||pending||verified||!privateDocsReady||!verificationFile} onClick={()=>void submitVerification()}>{saving?<Loader2 size={16} className="animate-spin"/>:<ShieldCheck size={16}/>} {submitLabel}</button></div>
           </section>}
 
-          {activeTab==='optimization'&&<section role="tabpanel" id="panel-optimization" aria-labelledby="tab-optimization" className="space-y-5">
-            <div className="vendor-setting-section settings-v8-section">
-              <p className="vendor-kicker">Local discovery controls</p><h2 className="mt-1 text-[22px] font-extrabold">Reach & search keywords</h2>
-              <p className="mt-2 text-[12px] leading-6 text-[#7B8792]">Describe your service area and relevant keywords. These are business-provided hints, not guaranteed visibility or ranking outcomes.</p>
-              <label className={label+' mt-5'} htmlFor="seo-business">Choose business</label>
-              <select id="seo-business" className={field} value={selectedBusinessId} disabled={!businesses.length} onChange={e=>setSelectedBusinessId(e.target.value)}>{businesses.length===0?<option value="">No businesses registered</option>:businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select>
+          {activeTab==='optimization'&&<section role="tabpanel" id="panel-optimization" aria-labelledby="tab-optimization" className="settings-v10-opt">
+            <div className="settings-v10-intro">
+              <div className="settings-v10-intro-copy">
+                <div className="settings-v10-eyebrow"><Globe size={14}/> LOCAL DISCOVERY SETTINGS</div>
+                <h2>Reach & discoverability</h2>
+                <p>Fine-tune where you serve and how you describe your business. Changes are saved to your selected listing.</p>
+              </div>
+              <div className="settings-v10-business-picker">
+                <label htmlFor="seo-business">Editing business</label>
+                <select id="seo-business" className={field} value={selectedBusinessId} disabled={!businesses.length} onChange={e=>setSelectedBusinessId(e.target.value)}>
+                  {businesses.length===0?<option value="">No businesses registered</option>:businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}
+                </select>
+              </div>
             </div>
-            <div className="vendor-setting-section settings-v8-section">
-              <div className="flex items-center justify-between gap-3"><div><p className="vendor-kicker">Local intelligence</p><h3 className="mt-1 text-[17px] font-bold text-[#2C2C31]">Service radius</h3></div><span className="rounded-xl border border-[#E7E7EC] bg-[#F3F6F7] px-4 py-2 text-[14px] font-extrabold tabular-nums text-[#2C2C31]">{radius} km</span></div>
-              <p className="mt-2 text-[12px] text-[#777780]">Set the distance your business says it can serve, from 1 to 50 kilometres.</p>
-              <input type="range" min={1} max={50} step={1} value={radius} onChange={e=>setRadius(Number(e.target.value))} disabled={!selectedBusinessId} aria-label="Business service radius" className="mt-6 w-full accent-[#FF7900]"/>
-              <div className="mt-2 flex justify-between text-[10px] font-semibold text-[#777780]"><span>1 km</span><span>50 km</span></div>
-              <div className="mt-5 flex items-center gap-3 rounded-xl border border-[#E7E7EC] bg-[#F9F9FA] p-4"><MapPin className="shrink-0 text-[#C75D06]" size={22}/><p className="text-[11px] leading-5 text-[#2C2C31]">Saved radius is a business profile preference. Exact discovery ranking still depends on verified locations, query relevance and user-selected filters.</p></div>
-            </div>
-            <div className="vendor-setting-section settings-v8-section">
-              <div className="flex items-center gap-3"><span className="rounded-[8px] bg-[#FFF0E2] p-3 text-[#C75D06]"><Search size={20}/></span><div><h3 className="text-[17px] font-bold">Search keywords</h3><p className="mt-1 text-[11px] text-[#777780]">Maximum 10 relevant terms · up to 50 characters each</p></div></div>
-              <div className="mt-5 flex min-w-0 flex-col gap-2 sm:flex-row"><input className={field+' vendor-keyword-input min-w-0 flex-1'} maxLength={50} value={newKeyword} onChange={e=>setNewKeyword(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addKeyword()}}} placeholder="e.g. plumbing, bike service…"/><button type="button" onClick={addKeyword} disabled={!newKeyword.trim()||keywords.length>=10} aria-label="Add keyword" className="vendor-outline-button shrink-0"><Plus size={16}/> Add</button></div>
-              <div className="mt-4 flex min-h-12 flex-wrap gap-2">{keywords.map(k=><span key={k} className="inline-flex items-center gap-2 rounded-full border border-[#E7E7EC] bg-[#F3F6F7] px-3 py-1.5 text-[11px] font-bold text-[#2C2C31]">{k}<button type="button" onClick={()=>setKeywords(prev=>prev.filter(t=>t!==k))} aria-label={'Remove '+k} className="rounded-full p-0.5 hover:bg-[#FFF4EA]"><X size={12}/></button></span>)}{keywords.length===0&&<p className="text-[11px] text-[#777780]">No additional search keywords saved.</p>}</div>
-              <div className="vendor-settings-savebar mt-5 flex flex-wrap justify-end gap-3 border-t border-[#E7EBEF] pt-5"><button type="button" onClick={()=>void saveOptimization()} disabled={saving||!selectedBusinessId} className="vendor-primary-button">{saving?<Loader2 size={16} className="animate-spin"/>:<Save size={16}/>} Save local discovery</button></div>
+
+            <div className="settings-v10-content">
+              <div className="settings-v10-main-column">
+                <article className="settings-v10-raised settings-v10-radius-card">
+                  <div className="settings-v10-card-heading">
+                    <span className="settings-v10-icon"><MapPin size={20}/></span>
+                    <div className="settings-v10-heading-copy">
+                      <p className="settings-v10-eyebrow">01 / SERVICE AREA</p>
+                      <h3>Service radius</h3>
+                      <p>Choose how far your business can provide its services.</p>
+                    </div>
+                    <div className="settings-v10-radius-value"><strong>{radius}</strong><span>km</span></div>
+                  </div>
+                  <div className="settings-v10-slider-well">
+                    <input type="range" min={1} max={50} step={1} value={radius} onChange={e=>setRadius(Number(e.target.value))} disabled={!selectedBusinessId} aria-label="Business service radius"/>
+                    <div className="settings-v10-slider-labels"><span>1 km · Nearby</span><span>50 km · Wider area</span></div>
+                  </div>
+                  <div className="settings-v10-info">
+                    <MapPin size={17}/>
+                    <p>Your saved radius is a business preference. Search visibility still depends on verified locations, query relevance and selected filters.</p>
+                  </div>
+                </article>
+
+                <article className="settings-v10-raised settings-v10-keyword-card">
+                  <div className="settings-v10-card-heading">
+                    <span className="settings-v10-icon"><Search size={20}/></span>
+                    <div className="settings-v10-heading-copy">
+                      <p className="settings-v10-eyebrow">02 / SEARCH DISCOVERY</p>
+                      <h3>Search keywords</h3>
+                      <p>Add up to 10 relevant terms, with a maximum of 50 characters each.</p>
+                    </div>
+                    <span className="settings-v10-count">{keywords.length}/10</span>
+                  </div>
+                  <div className="settings-v10-keyword-entry">
+                    <label htmlFor="vendor-seo-keyword">Add a search term</label>
+                    <div className="settings-v10-keyword-row">
+                      <input id="vendor-seo-keyword" className={field+' settings-v10-keyword-input'} maxLength={50} value={newKeyword}
+                        onChange={e=>setNewKeyword(e.target.value)}
+                        onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addKeyword()}}}
+                        placeholder="e.g. plumbing, laptop repair, web design"/>
+                      <button type="button" onClick={addKeyword} disabled={!newKeyword.trim()||keywords.length>=10}
+                        aria-label="Add keyword" className="settings-v10-add-button"><Plus size={17}/> Add</button>
+                    </div>
+                  </div>
+                  <div className="settings-v10-keyword-well">
+                    <div className="settings-v10-keywords-head"><span>Selected keywords</span><span>{keywords.length} of 10</span></div>
+                    <div className="settings-v10-keyword-chips">
+                      {keywords.map(k=><span key={k} className="settings-v10-chip">
+                        <span>{k}</span>
+                        <button type="button" onClick={()=>setKeywords(prev=>prev.filter(t=>t!==k))} aria-label={'Remove '+k} title={'Remove '+k}><X size={13}/></button>
+                      </span>)}
+                      {keywords.length===0&&<p className="settings-v10-empty">No keywords yet. Add terms that accurately describe your services.</p>}
+                    </div>
+                  </div>
+                </article>
+              </div>
+
+              <aside className="settings-v10-side-column" aria-label="Discovery guidance and save actions">
+                <div className="settings-v10-raised settings-v10-guidance">
+                  <p className="settings-v10-eyebrow">OPTIMIZATION GUIDE</p>
+                  <h3>Keep it relevant.</h3>
+                  <p>Clear business details are more useful than a long list of generic keywords.</p>
+                  <div className="settings-v10-tip"><span>01</span><p>Choose the radius your team can genuinely cover.</p></div>
+                  <div className="settings-v10-tip"><span>02</span><p>Use specific services and local terminology.</p></div>
+                  <div className="settings-v10-tip"><span>03</span><p>A keyword does not guarantee a search ranking.</p></div>
+                </div>
+                <div className="settings-v10-save-card">
+                  <div className="settings-v10-save-icon"><Save size={20}/></div>
+                  <h3>Save discovery settings</h3>
+                  <p>Apply the service radius and keyword list to your selected business.</p>
+                  <button type="button" onClick={()=>void saveOptimization()} disabled={saving||!selectedBusinessId} className="settings-v10-save-button">
+                    {saving?<Loader2 size={17} className="animate-spin"/>:<Save size={17}/>}
+                    {saving?'Saving changes…':'Save changes'}
+                    {!saving&&<ArrowUpRight size={17}/>}
+                  </button>
+                  <span className="settings-v10-save-note">Your changes are stored only after you save.</span>
+                </div>
+              </aside>
             </div>
           </section>}
 

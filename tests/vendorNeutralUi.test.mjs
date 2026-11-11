@@ -43,18 +43,28 @@ test('overview uses real owner metrics, orange chart and truthful published-list
   assert.doesNotMatch(dashboard,/Total Revenue|Total Profit|Confirmed Sales/);
 });
 
-test('settings has bounded independent cards, real input borders, safe keyword row and responsive controls',()=>{
-  assert.match(settings,/vendor-settings-v5/);
-  assert.match(settings,/vendor-settings-panels/);
-  assert.match(settings,/vendor-settings-navigation/);
-  assert.match(settings,/vendor-settings-header/);
-  assert.doesNotMatch(settings,/<header className="vendor-premium-header/);
-  assert.match(settings,/vendor-keyword-input min-w-0 flex-1/);
-  assert.match(settings,/mt-5 flex min-w-0 flex-col gap-2 sm:flex-row/);
-  assert.match(styles,/\.vendor-workspace \.vendor-settings-v5 \.vendor-keyword-input \{/);
-  assert.match(styles,/width:auto!important/);
-  assert.match(styles,/border:1px solid #CAD4DB/);
-  assert.match(styles,/\.vendor-settings-v5 \.vendor-settings-savebar/);
+test('Settings Optimization V10 uses a bounded editor with visible Save and no clipped Add button',()=>{
+  assert.match(settings,/vendor-settings-v10/);
+  assert.match(settings,/settings-v10-opt/);
+  assert.match(settings,/settings-v10-intro/);
+  assert.match(settings,/settings-v10-content/);
+  assert.match(settings,/settings-v10-keyword-row/);
+  assert.match(settings,/settings-v10-keyword-input/);
+  assert.match(settings,/settings-v10-add-button/);
+  assert.match(settings,/settings-v10-save-card/);
+  assert.match(settings,/settings-v10-save-button/);
+  assert.match(settings,/onClick=\{addKeyword\}/);
+  assert.match(settings,/onClick=\{\(\)=>void saveOptimization\(\)\}/);
+  assert.match(settings,/disabled=\{saving\|\|!selectedBusinessId\}/);
+  assert.match(styles,/Vendor Settings V10/);
+  assert.match(styles,/\.settings-v10-keyword-row \{/);
+  assert.match(styles,/grid-template-columns:minmax\(0,1fr\) 108px/);
+  assert.match(styles,/\.settings-v10-keyword-input \{/);
+  assert.match(styles,/width:100%!important/);
+  assert.match(styles,/\.settings-v10-save-button \{/);
+  assert.match(styles,/\.settings-v10-side-column \{/);
+  assert.match(styles,/@media\(max-width:420px\)/);
+  assert.doesNotMatch(settings,/vendor-keyword-input min-w-0 flex-1/);
 });
 
 test('centered desktop top navigation exposes reversible, dismissible dropdowns with restrained corners',()=>{
