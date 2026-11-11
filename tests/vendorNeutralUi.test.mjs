@@ -82,7 +82,7 @@ test('owner workspace pages share restrained V7 shell without losing independent
   const tokens=read('app/vendor/components/neumorphic.ts');
   for(const selector of ['hero:','heroDark:','card:','tile:','inset:','input:'])
     assert.ok(tokens.includes(selector),'missing design token: '+selector);
-  assert.match(styles,/\\.vendor-topbar-dropdown-panel/);
+  assert.match(styles,/\.vendor-topbar-dropdown-panel/);
   assert.doesNotMatch(styles,/vendor-page-v7|vendor-page-v9|vendor-settings-v10/);
 });
 
@@ -103,15 +103,15 @@ test('orange-charcoal neumorphism spans owner pages without versioned CSS select
   const routes=['dashboard','my-businesses','leads','reviews','insights','growth','marketing','qr-code','billing'];
   for(const route of routes){
     const page=read('app/vendor/'+route+'/page.tsx');
-    assert.match(page,/import \\{ neo \\}/,'missing Tailwind tokens: '+route);
-    assert.doesNotMatch(page,/vendor-page-v\\d+|vendor-dashboard-v\\d+/);
+    assert.match(page,/import \{ neo \}/,'missing Tailwind tokens: '+route);
+    assert.doesNotMatch(page,/vendor-page-v\d+|vendor-dashboard-v\d+/);
   }
   const editForm=read('app/vendor/my-businesses/[id]/edit/EditBusinessForm.tsx');
   const hybrid=read('app/vendor/billing/hybrid/page.tsx');
-  assert.match(editForm,/neo\\.card/);
-  assert.match(hybrid,/neo\\.card/);
+  assert.match(editForm,/neo\.card/);
+  assert.match(hybrid,/neo\.card/);
   const tokens=read('app/vendor/components/neumorphic.ts');
   assert.match(tokens,/#ff7900/);
   assert.match(tokens,/motion-reduce:transition-none/);
-  assert.doesNotMatch(styles,/vendor-settings-v\\d+|vendor-page-v\\d+/);
+  assert.doesNotMatch(styles,/vendor-settings-v\d+|vendor-page-v\d+/);
 });
