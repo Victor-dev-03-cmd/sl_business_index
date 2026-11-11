@@ -845,7 +845,7 @@
 .vendor-workspace-v6 .vendor-page-v9 :is(h1,h2,h3) {
   letter-spacing:-.03em;
 }
-.vendor-workspace-v6 .vendor-page-v9 .vendor-owner-heading {
+.vendor-workspace-v6 .vendor-page-v9 .vendor-owner-heading:not(.settings-v8-hero) {
   border:1px solid #E6E6EB;
   border-left:3px solid #FF7900;
   border-radius:10px;
