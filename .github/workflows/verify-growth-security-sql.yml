@@ -1,0 +1,40 @@
+name: Verify Growth Security SQL
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  growth-security-integration:
+    name: Disposable PostgreSQL 17 RLS, dedupe and rate-limit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: slbi_security_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d slbi_security_test"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=8
+    steps:
+      - name: Checkout reviewed branch
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Apply reviewed SQL in a disposable database and assert privileges
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -X -v ON_ERROR_STOP=1 -h localhost -U postgres -d slbi_security_test \
+            -f tests/sql/growth_security_integration.sql
