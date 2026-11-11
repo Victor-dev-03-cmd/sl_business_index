@@ -209,6 +209,7 @@ export default function VendorDashboard() {
             <span className="flex h-9 items-center gap-2 rounded-lg border border-[#dfebe4] bg-[#f1f7f2] px-3 text-[11px] font-semibold text-[#37694c]">
               <span className="h-1.5 w-1.5 rounded-full bg-[#329368]" /> {plan} plan
             </span>
+            <Link href="/vendor/insights" className="inline-flex h-9 items-center gap-2 rounded-lg border border-[#C7DCD0] bg-[#EBF6EE] px-3 text-xs font-bold text-[#256143] transition hover:bg-[#DCF0E2]"><IconsaxIcon name="status-up" size={15} /> Growth insights</Link>
             <button type="button" onClick={() => void load()} disabled={loading} className={button}>
               <IconsaxIcon name="refresh" size={15} /> Refresh
             </button>
@@ -230,7 +231,7 @@ export default function VendorDashboard() {
             <h2 className="text-[13px] font-bold text-[#1d3f31]">Performance snapshot</h2>
             <span className="rounded-md border border-[#e9edf0] bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-500">All-time</span>
           </div>
-          <p className="text-[11px] text-slate-400">Actual recorded figures · No estimated rankings</p>
+          <p className="text-[11px] text-slate-400">Recorded counters · Not unique visitors or verified sales</p>
         </div>
 
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
