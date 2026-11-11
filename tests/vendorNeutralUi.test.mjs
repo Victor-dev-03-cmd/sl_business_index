@@ -10,21 +10,26 @@ const analytics=read('app/vendor/dashboard/VendorAnalytics.tsx');
 const settings=read('app/vendor/settings/page.tsx');
 const root=read('app/layout.tsx');
 
-test('owner portal uses Inter and a neutral slate shell without full green surfaces',()=>{
+test('owner portal keeps Inter and uses luxury orange/charcoal top navigation',()=>{
   assert.match(root,/const inter = Inter\(/);
   assert.match(styles,/font-family:var\(--font-inter\)/);
-  assert.match(styles,/\.vendor-workspace \.vendor-sidebar \{\s*background:#202C34;/);
-  assert.match(styles,/\.vendor-workspace \.vendor-content \{\s*background:var\(--vendor-canvas\)/);
-  assert.match(vendorLayout,/bg-\[#F2F5F7\]/);
-  assert.match(styles,/background:#D5EEA8/);
-  assert.match(vendorLayout,/color=\{current\?'#283A33':'#B9C6D0'\}/);
+  assert.match(styles,/--vendor-orange:#FF7900/);
+  assert.match(styles,/--vendor-ink:#1D1D20/);
+  assert.match(layout,/vendor-workspace-v6/);
+  assert.match(layout,/aria-label="Vendor primary navigation"/);
+  assert.match(layout,/aria-label="Vendor compact navigation"/);
+  assert.match(layout,/aria-label="Growth and marketing tools"/);
+  assert.match(layout,/aria-label="Vendor account pages"/);
+  assert.doesNotMatch(layout,/vendor-sidebar|Collapse sidebar|Expand sidebar|Vendor mobile navigation/);
+  assert.match(layout,/bg-\[#FF7900\]/);
+  assert.match(styles,/\.vendor-workspace-v6 \.vendor-content/);
 });
 
-test('overview follows reference hierarchy: neutral heading, actual links, five real KPIs and graph',()=>{
-  assert.match(dashboard,/vendor-dashboard-v5/);
+test('overview uses real owner metrics, orange chart and truthful published-listing ring',()=>{
+  assert.match(dashboard,/vendor-dashboard-v6/);
   assert.match(dashboard,/vendor-overview-heading/);
-  assert.doesNotMatch(dashboard,/<header className="vendor-premium-header/);
-  assert.match(dashboard,/Dashboard section shortcuts/);
+  assert.match(dashboard,/Portfolio pulse/);
+  assert.match(dashboard,/Listing readiness/);
   assert.match(dashboard,/Export report/);
   assert.match(dashboard,/onClick=\{exportCsv\}/);
   for(const route of ['/vendor/my-businesses','/vendor/leads','/vendor/insights','/vendor/reviews'])
@@ -32,8 +37,10 @@ test('overview follows reference hierarchy: neutral heading, actual links, five 
   for(const metric of ['views','calls','leads','reviews'])
     assert.match(dashboard,new RegExp("id: '"+metric+"'"));
   assert.match(dashboard,/VendorAnalytics businessIds=\{businessIds\}/);
-  assert.match(analytics,/#5682E7/);
-  assert.match(analytics,/#F09A56/);
+  assert.match(dashboard,/conic-gradient\(#FF7900/);
+  assert.match(analytics,/#FF7900/);
+  assert.match(analytics,/#28282D/);
+  assert.doesNotMatch(dashboard,/Total Revenue|Total Profit|Confirmed Sales/);
 });
 
 test('settings has bounded independent cards, real input borders, safe keyword row and responsive controls',()=>{
