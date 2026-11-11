@@ -13,7 +13,7 @@ type LeadRow = { id: string; business_id: string | null; status: string | null; 
 
 const MAX_EVENTS = 2000;
 const MAX_LEADS = 2000;
-const panel = 'rounded-2xl border border-[#E4EBE5] bg-white shadow-[0_7px_35px_rgba(32,72,50,0.045)]';
+const panel = 'rounded-[10px] border border-[#E9E9EC] bg-white shadow-[0_5px_19px_rgba(27,27,31,0.025)]';
 const periodDays = (period: Period) => Number(period);
 
 const startDate = (period: Period): string => {
@@ -140,42 +140,42 @@ export default function GrowthInsightsPage() {
   );
 
   return (
-    <div className="mx-auto max-w-[1500px] space-y-5 pb-6">
-      <header className="vendor-premium-header flex flex-col items-start justify-between gap-5 px-6 py-7 sm:px-8 sm:py-9 lg:flex-row lg:items-end">
+    <div className="vendor-page-v7 mx-auto w-full max-w-[1600px] space-y-5 pb-7">
+      <header className="vendor-insights-heading vendor-premium-header flex flex-col items-start justify-between gap-5 px-6 py-7 sm:px-8 sm:py-9 lg:flex-row lg:items-end">
         <div className="relative z-10 max-w-2xl">
-          <p className="text-[10px] font-extrabold uppercase tracking-[.17em] text-[#BEDCB2]">Growth intelligence / Owner insights</p>
+          <p className="text-[10px] font-extrabold uppercase tracking-[.17em] text-[#FFBC82]">Growth intelligence / Owner insights</p>
           <h1 className="mt-2 text-[30px] font-extrabold tracking-[-.045em] text-white sm:text-[35px]">Know what drives your growth.</h1>
-          <p className="mt-2 text-[12px] leading-6 text-[#DCEBDD]">Understand recorded listing views, customer actions and stored enquiries. Clicks and CRM stages are never presented as verified sales.</p>
+          <p className="mt-2 text-[12px] leading-6 text-[#D2D2D6]">Understand recorded listing views, customer actions and stored enquiries. Clicks and CRM stages are never presented as verified sales.</p>
           <div className="mt-4 flex flex-wrap gap-2">
-            <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-bold text-[#D5E9D3]">Business-scoped metrics</span>
-            <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-bold text-[#D5E9D3]">Transparent attribution</span>
+            <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-bold text-[#EDEDEF]">Business-scoped metrics</span>
+            <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-bold text-[#EDEDEF]">Transparent attribution</span>
           </div>
         </div>
         <button type="button" onClick={() => setRefreshKey(n => n + 1)} disabled={loading}
-          className="relative z-10 inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/25 bg-[#F4FAEF] px-4 text-xs font-bold text-[#275B3B] transition hover:bg-white disabled:opacity-50">
+          className="relative z-10 inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/25 bg-[#FFF5EC] px-4 text-xs font-bold text-[#9A4300] transition hover:bg-white disabled:opacity-50">
           <IconsaxIcon name="refresh" size={15} /> Refresh
         </button>
       </header>
 
       <div className={panel + ' flex flex-wrap items-center gap-3 p-4'}>
-        <label className="flex min-w-[210px] flex-1 flex-col gap-1 text-[11px] font-bold text-[#577060]">
+        <label className="flex min-w-[210px] flex-1 flex-col gap-1 text-[11px] font-bold text-[#62626A]">
           Business
           <select value={businessId} onChange={e => setBusinessId(e.target.value)}
-            className="h-10 rounded-lg border border-[#DDE5DC] bg-[#FBFCF9] px-3 text-[12px] font-medium text-[#274B38]">
+            className="h-10 rounded-lg border border-[#DDE5DC] bg-[#FBFCF9] px-3 text-[12px] font-medium text-[#34343A]">
             <option value="all">All my approved businesses</option>
             {businesses.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
           </select>
         </label>
-        <label className="flex min-w-[160px] flex-col gap-1 text-[11px] font-bold text-[#577060]">
+        <label className="flex min-w-[160px] flex-col gap-1 text-[11px] font-bold text-[#62626A]">
           Reporting period
           <select value={period} onChange={e => setPeriod(e.target.value as Period)}
-            className="h-10 rounded-lg border border-[#DDE5DC] bg-[#FBFCF9] px-3 text-[12px] font-medium text-[#274B38]">
+            className="h-10 rounded-lg border border-[#DDE5DC] bg-[#FBFCF9] px-3 text-[12px] font-medium text-[#34343A]">
             <option value="7">Last 7 days</option>
             <option value="30">Last 30 days</option>
             <option value="90">Last 90 days</option>
           </select>
         </label>
-        <span className="rounded-full border border-[#DBE6DB] bg-[#F1F7F0] px-3 py-2 text-[10px] font-semibold text-[#47765B]">Owner-scoped · RLS protected</span>
+        <span className="rounded-full border border-[#E7E7EB] bg-[#F7F7F9] px-3 py-2 text-[10px] font-semibold text-[#6C6C73]">Owner-scoped · RLS protected</span>
       </div>
 
       {error && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">Could not load insights: {error}</div>}
@@ -201,7 +201,7 @@ export default function GrowthInsightsPage() {
         <section className={panel + ' p-5 sm:p-6'} aria-labelledby="growth-trend-title">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
-              <h2 id="growth-trend-title" className="text-[17px] font-bold text-[#1D3B2D]">Recorded interactions</h2>
+              <h2 id="growth-trend-title" className="text-[17px] font-bold text-[#2B2B30]">Recorded interactions</h2>
               <p className="mt-1 text-[11px] text-slate-500">UTC day · listing views, call clicks and directions clicks</p>
             </div>
             <span className="text-[10px] font-medium text-[#657A69]">{period} days</span>
@@ -228,7 +228,7 @@ export default function GrowthInsightsPage() {
           </div>
         </section>
         <section className={panel + ' p-5 sm:p-6'}>
-          <h2 className="text-[17px] font-bold text-[#1D3B2D]">Lead attribution</h2>
+          <h2 className="text-[17px] font-bold text-[#2B2B30]">Lead attribution</h2>
           <p className="mt-1 text-[11px] text-slate-500">Only recorded CRM sources are counted. We do not infer where unknown enquiries originated.</p>
           <div className="mt-6 space-y-4">
             {[
@@ -252,7 +252,7 @@ export default function GrowthInsightsPage() {
 
       <section className={panel + ' overflow-hidden'} aria-labelledby="business-performance-title">
         <div className="border-b border-[#EAF0E9] p-5 sm:px-6">
-          <h2 id="business-performance-title" className="text-[17px] font-bold text-[#1D3B2D]">Performance by business</h2>
+          <h2 id="business-performance-title" className="text-[17px] font-bold text-[#2B2B30]">Performance by business</h2>
           <p className="mt-1 text-[11px] text-slate-500">This period · counts are recorded interaction events and CRM records, not customer identities.</p>
         </div>
         <div className="overflow-x-auto">
