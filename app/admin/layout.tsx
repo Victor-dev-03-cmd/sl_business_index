@@ -46,6 +46,7 @@ const adminMenuItems = [
   { name: "Moderation", href: "/admin/moderation", icon: ShieldAlert },
   { name: "Testimonials", href: "/admin/testimonials", icon: Quote },
   { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
+  { name: "Search Intelligence", href: "/admin/search-intelligence", icon: Search },
   { name: "Site Settings", href: "/admin/settings", icon: Settings },
 ];
 
