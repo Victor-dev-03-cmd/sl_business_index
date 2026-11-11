@@ -31,12 +31,19 @@ jobs:
             --model intfloat/multilingual-e5-small \
             --max-queries 240 \
             --batch-size 16 \
-            --output semantic-v3-research-report.json
+            --query-mode raw \
+            --output semantic-v3-raw-report.json
+          python scripts/benchmark-semantic-v3.py \
+            --model intfloat/multilingual-e5-small \
+            --max-queries 240 \
+            --batch-size 16 \
+            --query-mode canonical \
+            --output semantic-v3-canonical-report.json
       - name: Upload research report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: semantic-v3-research-report
-          path: semantic-v3-research-report.json
+          path: semantic-v3-*-report.json
           if-no-files-found: ignore
           retention-days: 7
