@@ -1,4 +1,5 @@
 'use client';
+import { neo } from '../components/neumorphic';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
@@ -54,8 +55,8 @@ type Invoice = {
 };
 type FeatureDefinition = { id: string; label: string };
 type InvoiceFilter = 'all' | 'paid' | 'pending' | 'failed';
-const panel = 'vendor-premium-card';
-const actionButton = 'inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-[#e1e6eb] bg-white px-3 text-xs font-semibold text-slate-600 transition hover:border-[#E6A67D] hover:bg-[#FFF8F2] disabled:cursor-not-allowed disabled:opacity-50';
+const panel = neo.card;
+const actionButton = neo.button;
 const money = (n: number) => 'LKR ' + new Intl.NumberFormat('en-LK', { maximumFractionDigits: 2 }).format(n);
 const nfmt = (n: number) => new Intl.NumberFormat('en-LK').format(n);
 const billingEmail = 'slbusinessindex@gmail.com';
@@ -320,9 +321,9 @@ export default function VendorBillingPage() {
   );
 
   return (
-    <div className="vendor-page-v7 vendor-page-v9 mx-auto min-h-full w-full max-w-[1600px] pb-7 text-[#28282D]">
+    <div className={neo.page + " mx-auto min-h-full w-full  pb-7 text-[#28282D]"}>
       <div className="space-y-5">
-        <header className="vendor-owner-heading vendor-premium-card flex flex-col gap-5 border border-[#E9E9EC] px-5 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-6">
+        <header className={neo.hero + " flex flex-col gap-5 px-5 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-6"}>
           <div className="space-y-1.5">
             <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
               <IconsaxIcon name="category" size={15} /> Vendor workspace

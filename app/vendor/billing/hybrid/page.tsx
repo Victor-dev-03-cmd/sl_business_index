@@ -1,4 +1,5 @@
 'use client'
+import { neo } from '../../components/neumorphic';
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
@@ -23,8 +24,8 @@ type Snapshot = {orders:Order[];subscriptions:Subscription[];receipts:Receipt[]}
 const empty:Snapshot={orders:[],subscriptions:[],receipts:[]}
 const money=(v:number)=>'LKR '+new Intl.NumberFormat('en-LK',{maximumFractionDigits:2}).format(v)
 const date=(v:string)=>new Date(v).toLocaleDateString('en-LK',{year:'numeric',month:'short',day:'2-digit'})
-const surface='rounded-xl border border-[#E7E7EC] bg-white shadow-[0_1px_2px_rgba(20,54,35,0.035)]'
-const button='inline-flex items-center justify-center gap-2 rounded-lg border border-[#E7E7EC] px-3.5 py-2 text-xs font-semibold text-[#2C2C31] hover:bg-[#FFF5EC] disabled:opacity-40'
+const surface = neo.card;
+const button = neo.button;
 
 export default function HybridVendorBilling() {
   const [loading,setLoading]=useState(enabled)
@@ -83,9 +84,9 @@ export default function HybridVendorBilling() {
     finally{setSubmitting(null)}
   }
 
-  return <div className="vendor-page-v9 min-h-full bg-[#F7F7F9] px-4 py-6 text-[#28282D] md:px-8">
+  return <div className={neo.page + " min-h-full bg-[#F7F7F9] px-4 py-6 text-[#28282D] md:px-8"}>
     <div className="mx-auto max-w-[1420px] space-y-5">
-      <div className="vendor-owner-heading flex flex-wrap items-end justify-between gap-3 border border-[#E7E7EC] bg-white px-6 py-6">
+      <div className={neo.hero + " flex flex-wrap items-end justify-between gap-3 px-6 py-6"}>
         <div>
           <Link href="/vendor/billing" className="mb-2 inline-block text-[11px] font-semibold text-[#2C2C31] hover:underline">Back to Billing</Link>
           <h1 className="text-[24px] font-bold tracking-tight">Billing & Growth Credits</h1>

@@ -1,11 +1,13 @@
 'use client';
+import { neo } from '../components/neumorphic';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import IconsaxIcon from '../components/IconsaxIcon';
-import VendorAnalytics from './VendorAnalytics';
+import dynamic from 'next/dynamic';
+const VendorAnalytics = dynamic(() => import('./VendorAnalytics'), { ssr: false, loading: () => <div aria-live="polite" className="flex h-64 items-center justify-center text-xs text-[#8b909b]">Preparing activity insights…</div> });
 
 interface Business {
   id: string;
@@ -34,8 +36,8 @@ type SortKey = 'views' | 'calls' | 'name';
 const DEFAULT_METRICS: Metrics = { views: 0, calls: 0, leads: 0, reviews: 0 };
 const number = (n: number) => new Intl.NumberFormat('en-LK').format(n);
 const smallLabel = 'text-[10px] font-bold uppercase tracking-[0.10em] text-slate-400';
-const panel = 'vendor-executive-card rounded-[13px] border border-[#ECECEF] bg-white shadow-[0_8px_28px_rgba(27,27,28,.035)]';
-const button = 'inline-flex h-9 items-center justify-center gap-2 rounded-[7px] border border-[#E7E7E9] bg-white px-3 text-xs font-semibold text-[#49494E] transition hover:border-[#FFBE86] hover:bg-[#FFF7F0] disabled:cursor-not-allowed disabled:opacity-50';
+const panel = neo.card;
+const button = neo.button;
 
 const kpis = [
   { id: 'views', title: 'Profile views', icon: 'eye', tone: '#FF7900', explanation: 'All-time visits to your listings' },
@@ -193,10 +195,10 @@ export default function VendorDashboard() {
   }
 
   return (
-    <div className="vendor-dashboard-v5 vendor-dashboard-v6 vendor-page-v9 mx-auto min-h-full w-full max-w-[1760px] space-y-6 pb-9 text-[#232326]">
+    <div className={neo.page + " mx-auto min-h-full w-full  space-y-6 pb-9 text-[#232326]"}>
       <div className="space-y-5">
 
-        <header className="vendor-overview-heading overflow-hidden rounded-[16px] border border-[#ECEAEC] bg-white px-6 py-7 shadow-[0_12px_35px_rgba(22,22,24,.035)] sm:px-8 sm:py-8">
+        <header className={neo.hero + " overflow-hidden px-6 py-7 sm:px-8 sm:py-8"}>
           <div className="grid items-center gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(270px,350px)]">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-3">
@@ -207,7 +209,7 @@ export default function VendorDashboard() {
               <h1 className="mt-4 text-[34px] font-extrabold leading-[1.12] tracking-[-.055em] text-[#171719] sm:text-[42px]">Your business. <span className="text-[#FF7900]">In focus.</span></h1>
               <p className="mt-3 max-w-[650px] text-[13px] leading-6 text-[#808087]">Manage listings, customer enquiries and recorded business activity from one clear workspace.</p>
               <div className="mt-6 flex flex-wrap items-center gap-2">
-                <button type="button" onClick={exportCsv} disabled={loading||!businesses.length} className="inline-flex h-10 items-center gap-2 rounded-[7px] border border-[#E6E6E8] bg-white px-4 text-[11px] font-semibold text-[#343439] hover:border-[#FFBA82] hover:bg-[#FFF8F2] disabled:opacity-50"><IconsaxIcon name="document-download" size={16}/> Export report</button>
+                <button type="button" onClick={exportCsv} disabled={loading||!businesses.length} className={neo.button + " inline-flex h-10 items-center gap-2 px-4 text-[11px] font-semibold text-[#343439] hover:border-[#FFBA82] hover:bg-[#FFF8F2] disabled:opacity-50"}><IconsaxIcon name="document-download" size={16}/> Export report</button>
                 <button type="button" onClick={()=>void load()} disabled={loading} className="inline-flex h-10 items-center gap-2 rounded-[7px] border border-[#E6E6E8] bg-white px-4 text-[11px] font-semibold text-[#343439] hover:border-[#FFBA82] hover:bg-[#FFF8F2] disabled:opacity-50"><IconsaxIcon name="refresh" size={16}/> Refresh</button>
                 <Link href="/vendor/marketing" className="inline-flex h-10 items-center gap-2 rounded-[7px] bg-[#1D1D20] px-4 text-[11px] font-semibold text-white hover:bg-[#333338]"><IconsaxIcon name="add" size={16} color="#FF7900"/> New campaign</Link>
               </div>
@@ -272,7 +274,7 @@ export default function VendorDashboard() {
             {label:'Respond to leads',detail:'Follow up with enquiries',href:'/vendor/leads',icon:'message-text'},
             {label:'Reputation center',detail:'Read and reply to reviews',href:'/vendor/reviews',icon:'star'},
             {label:'Growth performance',detail:'View customer activity signals',href:'/vendor/insights',icon:'status-up'},
-          ].map(action=><Link key={action.href} href={action.href} className="vendor-dashboard-shortcut group flex items-center gap-3 rounded-[9px] border border-[#E4E9ED] bg-white p-4 transition hover:border-[#BFC9D0] hover:bg-[#FAFCFD]">
+          ].map(action=><Link key={action.href} href={action.href} className={neo.tile + " group flex items-center gap-3 p-4 transition hover:border-[#BFC9D0] hover:bg-[#FAFCFD]"}>
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[7px] bg-[#FFF3E9] text-[#D26A13]"><IconsaxIcon name={action.icon} size={20}/></span>
             <span className="min-w-0 flex-1"><span className="block text-[12px] font-bold text-[#29292E]">{action.label}</span><span className="mt-1 block text-[10px] leading-4 text-[#85858C]">{action.detail}</span></span>
             <IconsaxIcon name="arrow-right-2" size={14}/>

@@ -68,8 +68,8 @@ export default function VendorQuickActions({ open, onClose }:{open:boolean;onClo
   if(!open)return null;
   return (
     <div className="fixed inset-0 z-[100] flex items-start justify-center bg-[#091A15]/75 px-3 pt-[min(12vh,110px)] backdrop-blur-[5px]" role="presentation" onMouseDown={event=>{if(event.target===event.currentTarget)onClose()}}>
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Vendor quick actions" className="w-full max-w-[630px] overflow-hidden rounded-[22px] border border-white/20 bg-[#FCFDF9] shadow-[0_40px_100px_rgba(1,28,17,.5)]">
-        <div className="flex items-center gap-3 border-b border-[#E4EAE3] p-4 sm:px-5">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Vendor quick actions" className="w-full max-w-[630px] overflow-hidden rounded-[22px] border border-white/20 bg-[#e9edf4] shadow-[0_35px_90px_rgba(27,31,42,.45)]">
+        <div className="flex items-center gap-3 border-b border-[#d9dfe8] p-4 sm:px-5">
           <IconsaxIcon name="search-normal" size={21} color="#4E8064"/>
           <input ref={inputRef} value={query} onChange={e=>setQuery(e.target.value)}
             aria-label="Search vendor portal actions" placeholder="Search actions, pages, tools…" maxLength={80}
@@ -81,8 +81,8 @@ export default function VendorQuickActions({ open, onClose }:{open:boolean;onClo
           <div className="grid gap-2 sm:grid-cols-2">
             {filtered.map(item=>(
               <Link key={item.href} href={item.href} onClick={()=>navigateAction(item.href)}
-                className="group flex items-start gap-3 rounded-[13px] border border-transparent px-3 py-3 transition hover:border-[#CFE2D5] hover:bg-[#EDF6EF] focus-visible:border-[#679878] focus-visible:outline-none">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#D9E9DE] bg-[#EDF5EF] text-[#2C7550] transition group-hover:bg-white"><IconsaxIcon name={item.icon} size={20}/></div>
+                className="group flex items-start gap-3 rounded-[13px] border border-transparent px-3 py-3 transition hover:border-[#ffceab] hover:bg-[#fff1e5] focus-visible:border-[#679878] focus-visible:outline-none">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#D9E9DE] bg-[#e9edf4] text-[#e67519] transition group-hover:bg-white"><IconsaxIcon name={item.icon} size={20}/></div>
                 <div className="min-w-0 flex-1">
                   <p className="text-[12px] font-bold text-[#214C34]">{item.title}</p>
                   <p className="mt-1 text-[11px] leading-4 text-[#7C9383]">{item.description}</p>

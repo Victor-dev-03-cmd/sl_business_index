@@ -1,4 +1,5 @@
 'use client';
+import { neo } from '../../../components/neumorphic';
 
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -139,10 +140,10 @@ export default function EditBusinessForm({ business }: { business: Business }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="vendor-page-v9 mx-auto w-full max-w-[1580px] space-y-6 px-4 py-6 sm:px-7">
+    <form onSubmit={handleSubmit} className={neo.page + " px-4 py-6 sm:px-7"}>
       
       {/* Basic Info */}
-      <div className="grid grid-cols-1 gap-7 rounded-[11px] border border-[#E6E6EC] bg-white p-5 shadow-[8px_11px_27px_rgba(29,29,36,.045)] sm:p-8 lg:grid-cols-3 lg:gap-10">
+      <div className={neo.card + " grid grid-cols-1 gap-7 p-5 sm:p-8 lg:grid-cols-3 lg:gap-10"}>
         <div className="lg:col-span-1">
           <h2 className="text-lg font-semibold text-gray-900">Basic Information</h2>
           <p className="text-sm text-gray-500 mt-1">Update your brand identity and core details.</p>
@@ -188,26 +189,26 @@ export default function EditBusinessForm({ business }: { business: Business }) {
         <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">Business Name</label>
-            <input type="text" value={businessName} onChange={(e) => setBusinessName(e.target.value)} required className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#FFE7D4] focus:border-[#FF7900] outline-none transition-all text-sm" />
+            <input type="text" value={businessName} onChange={(e) => setBusinessName(e.target.value)} required className={neo.input + " text-sm"} />
           </div>
           <div className="md:col-span-1">
             <CategorySelector value={category} onChange={setCategory} />
           </div>
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#FFE7D4] focus:border-[#FF7900] outline-none transition-all text-sm" />
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} className={neo.input + " text-sm"} />
           </div>
           <div className="md:col-span-1">
             <label className="block text-sm font-medium text-gray-700 mb-1">Website Name</label>
-            <input type="text" value={websiteName} onChange={(e) => setWebsiteName(e.target.value)} className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#FFE7D4] focus:border-[#FF7900] outline-none transition-all text-sm" />
+            <input type="text" value={websiteName} onChange={(e) => setWebsiteName(e.target.value)} className={neo.input + " text-sm"} />
           </div>
           <div className="md:col-span-1">
             <label className="block text-sm font-medium text-gray-700 mb-1">Website URL</label>
-            <input type="url" value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)} className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#FFE7D4] focus:border-[#FF7900] outline-none transition-all text-sm" />
+            <input type="url" value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)} className={neo.input + " text-sm"} />
           </div>
           <div className="md:col-span-1">
             <label className="block text-sm font-medium text-gray-700 mb-1">Working Hours</label>
-            <input type="text" value={workingHours} onChange={(e) => setWorkingHours(e.target.value)} className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#FFE7D4] focus:border-[#FF7900] outline-none transition-all text-sm" />
+            <input type="text" value={workingHours} onChange={(e) => setWorkingHours(e.target.value)} className={neo.input + " text-sm"} />
           </div>
         </div>
       </div>
@@ -221,15 +222,15 @@ export default function EditBusinessForm({ business }: { business: Business }) {
         <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Owner Name</label>
-            <input type="text" value={ownerName} onChange={(e) => setOwnerName(e.target.value)} required className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#FFE7D4] focus:border-[#FF7900] outline-none transition-all text-sm" />
+            <input type="text" value={ownerName} onChange={(e) => setOwnerName(e.target.value)} required className={neo.input + " text-sm"} />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-            <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#FFE7D4] focus:border-[#FF7900] outline-none transition-all text-sm" />
+            <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required className={neo.input + " text-sm"} />
           </div>
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#FFE7D4] focus:border-[#FF7900] outline-none transition-all text-sm" />
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className={neo.input + " text-sm"} />
           </div>
           <div className="md:col-span-2">
             <AddressAutocomplete 
@@ -245,7 +246,7 @@ export default function EditBusinessForm({ business }: { business: Business }) {
       </div>
 
       {/* Action Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-[9px] border border-[#E7E7EB] bg-white p-5 shadow-[7px_10px_20px_rgba(29,29,36,.035)] sm:p-6">
+      <div className={neo.card + " flex flex-wrap items-center justify-between gap-4 p-5 sm:p-6"}>
         <Link href="/vendor/my-businesses" className="text-gray-600 hover:text-gray-900 font-medium text-sm flex items-center gap-2">
           <ArrowLeft size={16} /> Cancel
         </Link>
@@ -257,7 +258,7 @@ export default function EditBusinessForm({ business }: { business: Business }) {
           <button 
             type="submit" 
             disabled={loading}
-            className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#FF7900] text-[#17171B] rounded-[7px] text-sm font-semibold hover:bg-[#F36E00] transition-colors shadow-[0_7px_18px_rgba(255,121,0,.15)] disabled:opacity-50"
+            className={neo.primary + " text-sm"}
           >
             {loading ? (
               <div className="h-4 w-4 border-2 border-black/20 border-t-black rounded-full animate-spin" />

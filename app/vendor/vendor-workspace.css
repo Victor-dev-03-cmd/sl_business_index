@@ -162,16 +162,6 @@
   }
 }
 
-/* Portal alignment pass — restrained enterprise corners, consistent baselines. */
-.vendor-workspace .vendor-premium-card,
-.vendor-workspace .vendor-premium-panel,
-.vendor-workspace .vendor-setting-section {
-  border-radius: 8px;
-}
-
-/* The Vendor Settings route is styled only through Tailwind in app/vendor/settings/page.tsx. */
-
-
 /* SLBI Vendor UI v5 — restrained neutral analytics shell.
    Reference direction: light cloud/slate canvas, white cards, crisp Inter
    typography, lime for selected navigation only. Keeps green for semantic
@@ -207,15 +197,108 @@
   outline:2px solid #8DAB58;
   outline-offset:2px;
 }
-
-.vendor-workspace .vendor-dashboard-v5 .vendor-overview-heading {border-radius:10px;border-color:var(--vendor-edge);box-shadow:0 2px 15px rgba(25,38,47,.025);}
-
-.vendor-workspace .vendor-dashboard-v5 .vendor-premium-card,.vendor-workspace .vendor-dashboard-v5 .vendor-dashboard-shortcut {background:#fff;background-image:none;color:#283944;border:1px solid var(--vendor-edge);border-radius:9px;box-shadow:0 2px 12px rgba(25,38,47,.027);}
-
+.vendor-workspace .vendor-dashboard-v5 .vendor-overview-heading,
+.vendor-workspace .vendor-settings-v5 .vendor-settings-header {
+  border-radius:10px;
+  border-color:var(--vendor-edge);
+  box-shadow:0 2px 15px rgba(25,38,47,.025);
+}
+.vendor-workspace .vendor-dashboard-v5 .vendor-premium-card,
+.vendor-workspace .vendor-dashboard-v5 .vendor-dashboard-shortcut,
+.vendor-workspace .vendor-settings-v5 .vendor-setting-section,
+.vendor-workspace .vendor-settings-v5 .vendor-settings-navigation {
+  background:#fff;
+  background-image:none;
+  color:#283944;
+  border:1px solid var(--vendor-edge);
+  border-radius:9px;
+  box-shadow:0 2px 12px rgba(25,38,47,.027);
+}
 .vendor-workspace .vendor-dashboard-v5 .vendor-premium-card:hover {border-color:#CAD5DC;}
 .vendor-workspace .vendor-dashboard-v5 .vendor-stat-value {color:#1C2F3A;}
-
-@media(max-width:767px){.vendor-workspace .vendor-dashboard-v5 .vendor-overview-heading {padding:20px;}}
+.vendor-workspace .vendor-settings-v5 .vendor-settings-panels {
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+  min-width:0;
+}
+.vendor-workspace .vendor-settings-v5 .vendor-settings-panels > * {
+  flex:0 0 auto;
+  min-width:0;
+  width:100%;
+  margin:0;
+}
+.vendor-workspace .vendor-settings-v5 .vendor-setting-section {
+  padding:clamp(22px,2.5vw,32px);
+}
+.vendor-workspace .vendor-settings-v5 .vendor-kicker {
+  color:#778692;
+  letter-spacing:.13em;
+}
+.vendor-workspace .vendor-settings-v5 .vendor-setting-section h2,
+.vendor-workspace .vendor-settings-v5 .vendor-setting-section h3 {
+  color:#1E2F39;
+  font-weight:650;
+}
+.vendor-workspace .vendor-settings-v5 .vendor-field,
+.vendor-workspace .vendor-settings-v5 :is(input,select,textarea).vendor-field {
+  border:1px solid #CAD4DB;
+  border-radius:6px;
+  background:#FFFFFF;
+  box-shadow:0 1px 2px rgba(20,40,55,.025);
+  color:#263A45;
+}
+.vendor-workspace .vendor-settings-v5 :is(input,select,textarea).vendor-field:focus {
+  border-color:#779A66;
+  box-shadow:0 0 0 3px rgba(170,201,130,.18);
+}
+.vendor-workspace .vendor-settings-v5 .vendor-label {
+  color:#566773;
+  font-weight:650;
+  margin-bottom:8px;
+}
+.vendor-workspace .vendor-settings-v5 .vendor-keyword-input {
+  width:auto!important;
+  min-width:0!important;
+  flex:1 1 0%;
+}
+.vendor-workspace .vendor-settings-v5 .vendor-settings-savebar {
+  position:relative;
+  align-items:center;
+  min-height:59px;
+  margin-top:20px;
+  padding-top:17px;
+  border-top:1px solid #E5EBEE;
+}
+.vendor-workspace .vendor-settings-v5 .vendor-primary-button {
+  min-height:42px;
+  border-color:#263B43;
+  background:#263B43;
+  color:#fff;
+  border-radius:6px;
+  box-shadow:none;
+}
+.vendor-workspace .vendor-settings-v5 .vendor-primary-button:hover:not(:disabled) {
+  background:#172B32;
+}
+.vendor-workspace .vendor-settings-v5 .vendor-outline-button {
+  border-color:#D5DFE4;
+  background:#fff;
+  color:#334853;
+  border-radius:6px;
+}
+.vendor-workspace .vendor-settings-v5 .vendor-outline-button:hover {background:#F5F8F9;}
+.vendor-workspace .vendor-settings-v5 .vendor-settings-navigation .vendor-nav-current {
+  background:#D5EEA8;
+}
+@media(max-width:767px) {
+  .vendor-workspace .vendor-settings-v5 .vendor-setting-section {padding:18px;}
+  .vendor-workspace .vendor-settings-v5 .vendor-settings-savebar > button {
+    max-width:100%;
+  }
+  .vendor-workspace .vendor-dashboard-v5 .vendor-overview-heading,
+  .vendor-workspace .vendor-settings-v5 .vendor-settings-header {padding:20px;}
+}
 
 /* Existing Growth OS, Insights, Billing and Leads pages retain their white-on-
    dark hero typography while their forest backdrop is shifted to neutral ink. */
@@ -239,10 +322,7 @@
 }
 
 
-/* Vendor Portal V6 — orange/charcoal executive shell. Scoped to the vendor
-   workspace: the public SLBI green brand and all admin pages remain unchanged.
-   Other vendor content modules retain their current form structures until the
-   owner approves the dashboard-first design direction. */
+/* Active vendor shell styles; page surfaces and controls are Tailwind-only. */
 .vendor-workspace-v6 {
   --vendor-orange:#FF7900;
   --vendor-orange-dark:#D96300;
@@ -255,12 +335,12 @@
   font-size:13px;
 }
 .vendor-workspace-v6 .vendor-content {
-  background:#F7F7F8;
-  scroll-behavior:smooth;
+  background:#e9edf4;
+  scroll-behavior:auto;
 }
 .vendor-workspace-v6 .vendor-topbar {
-  background:#FFFFFF;
-  box-shadow:0 3px 20px rgba(27,27,31,.02);
+  background:#e9edf4;
+  box-shadow:0 5px 18px rgba(80,88,110,.08);
 }
 .vendor-workspace-v6 .vendor-topbar :is(button,a,summary):focus-visible,
 .vendor-workspace-v6 .vendor-content :is(button,a,input,textarea,select):focus-visible {
@@ -299,246 +379,3 @@
   .vendor-topbar-dropdown-panel {animation:none;}
   .vendor-topbar-dropdown-trigger svg {transition:none;}
 }
-.vendor-workspace-v6 .vendor-dashboard-v6 {
-  --vendor-dashboard-orange:#FF7900;
-  --vendor-dashboard-ink:#1B1B1E;
-}
-.vendor-workspace-v6 .vendor-dashboard-v6 .vendor-overview-heading {
-  background:#fff;
-  border:1px solid #EBEBED;
-  border-radius:16px;
-  box-shadow:0 14px 42px rgba(30,30,35,.035);
-}
-.vendor-workspace-v6 .vendor-dashboard-v6 .vendor-executive-card,
-.vendor-workspace-v6 .vendor-dashboard-v6 .vendor-dashboard-shortcut {
-  background:#FFFFFF;
-  background-image:none;
-  border:1px solid #EBEBEE;
-  border-radius:13px;
-  box-shadow:0 8px 24px rgba(25,25,31,.032);
-  color:#27272A;
-  transition:border-color .17s ease,box-shadow .17s ease,transform .17s ease;
-}
-.vendor-workspace-v6 .vendor-dashboard-v6 .vendor-executive-card:hover,
-.vendor-workspace-v6 .vendor-dashboard-v6 .vendor-dashboard-shortcut:hover {
-  border-color:#F4C3A0;
-  box-shadow:0 12px 28px rgba(32,28,25,.05);
-}
-.vendor-workspace-v6 .vendor-dashboard-v6 .vendor-dashboard-shortcut:hover {
-  transform:translateY(-1px);
-}
-.vendor-workspace-v6 .vendor-dashboard-v6 h2,
-.vendor-workspace-v6 .vendor-dashboard-v6 h3 {color:#26262A;}
-.vendor-workspace-v6 .vendor-dashboard-v6 .vendor-stat-value {color:#222226;}
-.vendor-workspace-v6 .vendor-dashboard-v6 input:focus,
-.vendor-workspace-v6 .vendor-dashboard-v6 select:focus {
-  border-color:#F8A15A;
-  box-shadow:0 0 0 3px rgba(255,121,0,.10);
-}
-.vendor-workspace-v6 .vendor-dashboard-v6 :is(th,td){vertical-align:middle;}
-.vendor-workspace-v6 .vendor-dashboard-v6 tbody tr:hover{background:#FFFAF6;}
-@media(min-width:1440px){
-  .vendor-workspace-v6 .vendor-dashboard-v6 {max-width:1760px;}
-}
-@media(max-width:639px){
-  .vendor-workspace-v6 .vendor-dashboard-v6 .vendor-overview-heading {padding:20px;border-radius:12px;}
-  .vendor-workspace-v6 .vendor-dashboard-v6 .vendor-executive-card {border-radius:10px;}
-}
-@media(prefers-reduced-motion:reduce){
-  .vendor-workspace-v6 .vendor-dashboard-shortcut:hover {transform:none;}
-}
-
-
-/* Vendor Portal V7 — consistent editorial shell across owner pages.
-   Restrained corners are reserved for cards, inputs, dropdowns and actions;
-   status colors and QR artwork are deliberately left unchanged. */
-.vendor-workspace-v6 .vendor-page-v7 {
-  color:#29292E;
-  font-variant-numeric:tabular-nums;
-}
-.vendor-workspace-v6 .vendor-page-v7 .vendor-owner-heading {
-  background:#FFFFFF;
-  background-image:none;
-  border:1px solid #E7E7EA;
-  border-left:3px solid #FF7900;
-  border-radius:10px;
-  box-shadow:0 8px 24px rgba(25,25,30,.028);
-}
-.vendor-workspace-v6 .vendor-page-v7 .vendor-owner-heading h1 {
-  color:#1B1B1F;
-  font-weight:760;
-  letter-spacing:-.04em;
-}
-.vendor-workspace-v6 .vendor-page-v7 .vendor-owner-heading :is(button,a) {
-  border-radius:6px;
-}
-.vendor-workspace-v6 .vendor-page-v7 .vendor-premium-card,
-.vendor-workspace-v6 .vendor-page-v7 .vendor-premium-panel {
-  border-color:#E8E8EC;
-  border-radius:10px;
-  box-shadow:0 5px 22px rgba(27,27,32,.026);
-}
-.vendor-workspace-v6 .vendor-page-v7 .vendor-premium-card:hover {
-  border-color:#DCDCE2;
-}
-.vendor-workspace-v6 .vendor-page-v7 .vendor-premium-header {
-  border:1px solid #37373D;
-  border-radius:10px;
-  background:linear-gradient(110deg,#1D1D20 0%,#303035 100%);
-  box-shadow:0 9px 26px rgba(25,25,31,.085);
-}
-.vendor-workspace-v6 .vendor-page-v7 .vendor-premium-header::after {
-  display:none;
-}
-.vendor-workspace-v6 .vendor-page-v7 :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea) {
-  border-radius:6px;
-  max-width:100%;
-}
-.vendor-workspace-v6 .vendor-page-v7 :is(input,textarea,select):focus-visible {
-  outline:2px solid #FF7900;
-  outline-offset:1px;
-}
-.vendor-workspace-v6 .vendor-page-v7 table {
-  font-variant-numeric:tabular-nums;
-  border-collapse:separate;
-  border-spacing:0;
-}
-.vendor-workspace-v6 .vendor-page-v7 table thead {
-  background:#FAFAFB;
-}
-.vendor-workspace-v6 .vendor-page-v7 table thead th {
-  color:#66666F;
-  font-size:11px;
-  font-weight:700;
-  letter-spacing:.015em;
-}
-.vendor-workspace-v6 .vendor-page-v7 table tbody tr {
-  transition:background-color .14s ease;
-}
-.vendor-workspace-v6 .vendor-page-v7 table tbody tr:hover {
-  background:#FFF9F3;
-}
-.vendor-workspace-v6 .vendor-page-v7 table td {
-  border-bottom-color:#F0F0F2;
-}
-.vendor-workspace-v6 .vendor-dashboard-v6 .vendor-overview-heading {
-  border-radius:12px;
-}
-.vendor-workspace-v6 .vendor-dashboard-v6 .vendor-executive-card,
-.vendor-workspace-v6 .vendor-dashboard-v6 .vendor-dashboard-shortcut {
-  border-radius:10px;
-}
-
-@media(max-width:639px) {
-  .vendor-workspace-v6 .vendor-page-v7 .vendor-owner-heading {
-    border-radius:8px;
-  }
-  .vendor-workspace-v6 .vendor-page-v7 .vendor-premium-card,
-  .vendor-workspace-v6 .vendor-page-v7 .vendor-premium-panel {
-    border-radius:8px;
-  }
-}
-@media(prefers-reduced-motion:reduce) {
-  .vendor-workspace-v6 .vendor-page-v7 table tbody tr {
-    transition:none;
-  }
-}
-
-
-
-
-/* Vendor Portal V9 — editorial orange & charcoal with accessible soft-neumorphic
-   depth. Applied to all owner pages and Tools/Account subpages, not the public
-   directory. Contrast, focus, verified/error states remain visually explicit. */
-.vendor-workspace-v6 .vendor-page-v9 {
-  --vendor-surface:#FFFFFF;
-  --vendor-soft:#F8F8FA;
-  --vendor-line:#E7E7EC;
-  --vendor-ink:#252529;
-  --vendor-highlight:#FF7900;
-  color:#29292E;
-  font-family:var(--font-inter),var(--font-tamil),var(--font-sinhala),ui-sans-serif,system-ui,sans-serif;
-}
-.vendor-workspace-v6 .vendor-page-v9 :is(h1,h2,h3) {
-  letter-spacing:-.03em;
-}
-.vendor-workspace-v6 .vendor-page-v9 .vendor-owner-heading {
-  border:1px solid #E6E6EB;
-  border-left:3px solid #FF7900;
-  border-radius:10px;
-  background:#FFFFFF;
-  box-shadow:9px 12px 26px rgba(29,29,36,.05),-7px -7px 18px rgba(255,255,255,.95);
-}
-.vendor-workspace-v6 .vendor-page-v9 .vendor-premium-card,
-.vendor-workspace-v6 .vendor-page-v9 .vendor-premium-panel {
-  border:1px solid #E8E8ED;
-  border-radius:10px;
-  background:#FFFFFF;
-  background-image:none;
-  box-shadow:8px 10px 26px rgba(31,31,40,.045),-6px -6px 17px rgba(255,255,255,.9);
-  transition:box-shadow .17s ease,border-color .17s ease;
-}
-.vendor-workspace-v6 .vendor-page-v9 .vendor-premium-card:hover {
-  border-color:#DADAE1;
-  box-shadow:9px 13px 30px rgba(31,31,40,.062),-6px -6px 17px rgba(255,255,255,.93);
-}
-.vendor-workspace-v6 .vendor-page-v9 .vendor-premium-header {
-  border:1px solid #38383E;
-  border-left:3px solid #FF7900;
-  border-radius:11px;
-  background:linear-gradient(118deg,#1D1D21 0%,#2B2B30 62%,#333338 100%);
-  color:#FFFFFF;
-  box-shadow:10px 12px 27px rgba(26,26,32,.095);
-}
-.vendor-workspace-v6 .vendor-page-v9 .vendor-premium-header::after {
-  border-color:rgba(255,137,40,.22);
-  box-shadow:0 0 0 45px rgba(255,137,40,.045),0 0 0 90px rgba(255,137,40,.02);
-}
-.vendor-workspace-v6 .vendor-page-v9 :is(input,textarea,select):not([type="checkbox"]):not([type="radio"]):not([type="range"]) {
-  min-width:0;
-  border-radius:7px;
-  box-shadow:inset 2px 3px 6px rgba(28,28,35,.025),inset -2px -2px 6px rgba(255,255,255,.92);
-}
-.vendor-workspace-v6 .vendor-page-v9 :is(input,textarea,select):not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus {
-  border-color:#F7A464;
-  box-shadow:inset 2px 3px 6px rgba(28,28,35,.025),0 0 0 3px rgba(255,121,0,.14);
-}
-.vendor-workspace-v6 .vendor-page-v9 :is(input,textarea,select,button,a):focus-visible {
-  outline:2px solid #FF7900;
-  outline-offset:2px;
-}
-.vendor-workspace-v6 .vendor-page-v9 button:not(:disabled),
-.vendor-workspace-v6 .vendor-page-v9 a {
-  transition:border-color .16s ease,background-color .16s ease,box-shadow .16s ease,color .16s ease;
-}
-.vendor-workspace-v6 .vendor-page-v9 table thead {
-  background:#F8F8FA;
-}
-.vendor-workspace-v6 .vendor-page-v9 table thead th {
-  color:#64646D;
-  font-size:11px;
-  letter-spacing:.01em;
-}
-.vendor-workspace-v6 .vendor-page-v9 table tbody tr:hover {background:#FFF8F1;}
-.vendor-workspace-v6 .vendor-page-v9 input[type="range"],
-.vendor-workspace-v6 .vendor-page-v9 input[type="checkbox"] {accent-color:#FF7900;}
-.vendor-workspace-v6 .vendor-page-v9 .vendor-dashboard-shortcut,
-.vendor-workspace-v6 .vendor-page-v9 .vendor-executive-card {
-  border-radius:10px;
-  box-shadow:7px 9px 24px rgba(30,30,36,.047),-5px -5px 14px rgba(255,255,255,.9);
-}
-.vendor-workspace-v6 .vendor-page-v9 .vendor-stat-value {
-  color:#232328;
-}
-@media(max-width:767px){
-  .vendor-workspace-v6 .vendor-page-v9 .vendor-owner-heading,
-  .vendor-workspace-v6 .vendor-page-v9 .vendor-premium-card,
-  .vendor-workspace-v6 .vendor-page-v9 .vendor-premium-panel {
-    border-radius:8px;
-  }
-}
-@media(prefers-reduced-motion:reduce){
-  .vendor-workspace-v6 .vendor-page-v9 :is(button,a,.vendor-premium-card) {transition:none;}
-}
-
-

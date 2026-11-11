@@ -1,4 +1,5 @@
 'use client';
+import { neo } from '../components/neumorphic';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
@@ -13,7 +14,7 @@ type LeadRow = { id: string; business_id: string | null; status: string | null; 
 
 const MAX_EVENTS = 2000;
 const MAX_LEADS = 2000;
-const panel = 'rounded-[10px] border border-[#E9E9EC] bg-white shadow-[0_5px_19px_rgba(27,27,31,0.025)]';
+const panel = neo.card;
 const periodDays = (period: Period) => Number(period);
 
 const startDate = (period: Period): string => {
@@ -140,8 +141,8 @@ export default function GrowthInsightsPage() {
   );
 
   return (
-    <div className="vendor-page-v7 vendor-page-v9 mx-auto w-full max-w-[1600px] space-y-5 pb-7">
-      <header className="vendor-insights-heading vendor-premium-header flex flex-col items-start justify-between gap-5 px-6 py-7 sm:px-8 sm:py-9 lg:flex-row lg:items-end">
+    <div className={neo.page + " mx-auto w-full  space-y-5 pb-7"}>
+      <header className={neo.heroDark + " flex flex-col items-start justify-between gap-5 px-6 py-7 sm:px-8 sm:py-9 lg:flex-row lg:items-end"}>
         <div className="relative z-10 max-w-2xl">
           <p className="text-[10px] font-extrabold uppercase tracking-[.17em] text-[#FFBC82]">Growth intelligence / Owner insights</p>
           <h1 className="mt-2 text-[30px] font-extrabold tracking-[-.045em] text-white sm:text-[35px]">Know what drives your growth.</h1>
