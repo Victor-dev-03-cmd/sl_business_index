@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   evaluate-multilingual-e5:
@@ -22,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          persist-credentials: true
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -48,21 +48,6 @@ jobs:
             --output semantic-v3-canonical-report.json \
             --export-vectors semantic-v3-business-vectors.json \
             --export-beta-fixture semantic-v3-beta-vectors.ts
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Validate and publish revision-pinned beta vectors (research branch only)
-        run: |
-          set -euo pipefail
-          cp semantic-v3-beta-vectors.ts lib/discovery/semantic-v3-beta-vectors.ts
-          node --experimental-strip-types --test tests/semanticBetaV3.test.mjs
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add lib/discovery/semantic-v3-beta-vectors.ts
-          if ! git diff --cached --quiet; then
-            git commit -m "data(research): publish verified E5 beta embeddings for six canonical intents"
-            git push origin HEAD:refs/heads/research/semanticsearch-v3-evaluation-vector-gates-20261111
-          fi
       - name: Upload research report
         if: always()
         uses: actions/upload-artifact@v4
