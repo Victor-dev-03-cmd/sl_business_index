@@ -177,7 +177,7 @@ export default function MarketingPage() {
             <div className={card+' min-w-0 p-5 md:p-6'}>
               <p className="text-[10px] font-bold uppercase tracking-wider text-[#4E8863]">01 · Creative brief</p>
               <h2 className="mt-2 text-[19px] font-bold">Business-aware campaign</h2>
-              <p className="mt-1 text-[11px] leading-5 text-[#79907C]">Drafting is local and editable; this form does not claim generative AI or social posting.</p>
+              <p className="mt-1 text-[11px] leading-5 text-[#79907C]">Drafting is local and editable; choose a language and provide reviewed text in that language. Automatic translation and social posting are not enabled.</p>
               <div className="mt-6 space-y-4">
                 <label className="block text-[11px] font-semibold text-[#536E5D]">Your business
                   <select className={input+' mt-1.5'} value={selectedId} onChange={e=>setSelectedId(e.target.value)}>
@@ -219,7 +219,7 @@ export default function MarketingPage() {
                 <p className="whitespace-pre-wrap break-words text-[13px] leading-7 text-[#2D4B35]">{preview}</p></div>
                 <p className="mt-3 text-[10px] leading-5 text-[#819184]">Verify business facts, terms, translations and contact information before sending. This preview is editable through the brief fields.</p>
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <button type="button" onClick={()=>{void navigator.clipboard.writeText(preview).then(()=>toast.success('Copy saved to clipboard')).catch(()=>toast.error('Could not copy text'));}} className="border border-[#D1E1D3] px-3 py-2.5 text-[11px] font-semibold text-[#2B6748]">Copy copy</button>
+                  <button type="button" onClick={()=>{void navigator.clipboard.writeText(preview).then(()=>toast.success('Copy saved to clipboard')).catch(()=>toast.error('Could not copy text'));}} className="border border-[#D1E1D3] px-3 py-2.5 text-[11px] font-semibold text-[#2B6748]">Copy caption</button>
                   <button type="button" onClick={()=>downloadText('slbi-campaign-'+language+'.txt',preview)} className="border border-[#D1E1D3] px-3 py-2.5 text-[11px] font-semibold text-[#2B6748]">Export text</button>
                 </div>
                 <div className="mt-5 border-t border-[#E2ECE3] pt-5"><h4 className="text-[12px] font-bold">Next design phase</h4><p className="mt-1 text-[11px] leading-5 text-[#819184]">Model-generated creative variations, editable typography, human approval and social-platform API integrations are separate gated features—not a canvas editor or simulated publishing.</p></div>
