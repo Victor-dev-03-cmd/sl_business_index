@@ -8,7 +8,6 @@ const styles=read('app/vendor/vendor-workspace.css');
 const dashboard=read('app/vendor/dashboard/page.tsx');
 const analytics=read('app/vendor/dashboard/VendorAnalytics.tsx');
 const settings=read('app/vendor/settings/page.tsx');
-const settingsCss=read('app/vendor/settings/settings-studio.css');
 const root=read('app/layout.tsx');
 
 test('owner portal keeps Inter and uses luxury orange/charcoal top navigation',()=>{
@@ -44,24 +43,17 @@ test('overview uses real owner metrics, orange chart and truthful published-list
   assert.doesNotMatch(dashboard,/Total Revenue|Total Profit|Confirmed Sales/);
 });
 
-test('Settings Studio uses an isolated layout with bounded keyword controls and Save action',()=>{
+test('Settings Studio uses version-free Tailwind neumorphism and responsive controls',()=>{
   assert.match(settings,/data-testid="vendor-settings-studio"/);
-  assert.match(settings,/import '\.\/settings-studio\.css'/);
-  assert.match(settings,/className="ss-layout"/);
-  assert.match(settings,/ss-discovery-grid/);
-  assert.match(settings,/ss-keyword-row/);
-  assert.match(settings,/ss-add-button/);
-  assert.match(settings,/ss-action-bar ss-optimization-actions/);
-  assert.match(settings,/ss-save-button/);
+  assert.doesNotMatch(settings,/settings-studio\.css|vendor-settings-v\d+|settings-v\d+-/);
+  assert.match(settings,/lg:grid-cols-\[250px_minmax\(0,1fr\)\]/);
+  assert.match(settings,/xl:grid-cols-2/);
+  assert.match(settings,/shadow-\[inset_4px_4px_8px_/);
+  assert.match(settings,/flex flex-col gap-2 sm:flex-row/);
   assert.match(settings,/onClick=\{addKeyword\}/);
   assert.match(settings,/onClick=\{\(\)=>void saveOptimization\(\)\}/);
-  assert.doesNotMatch(settings,/vendor-settings-v[3589]|settings-v10-opt/);
-  assert.match(settingsCss,/grid-template-columns:minmax\(0,\.9fr\) minmax\(0,1\.1fr\)/);
-  assert.match(settingsCss,/@media\(max-width:1180px\)/);
-  assert.match(settingsCss,/@media\(max-width:590px\)/);
-  assert.match(settingsCss,/\.ss-keyword-row \{display:grid/);
+  assert.doesNotMatch(styles,/vendor-settings-v\d+|settings-v\d+-/);
 });
-
 test('centered desktop top navigation exposes reversible, dismissible dropdowns with restrained corners',()=>{
   assert.match(vendorLayout,/vendor-topbar-center absolute left-1\/2 hidden -translate-x-1\/2/);
   assert.match(vendorLayout,/min-\[1400px\]:flex/);
@@ -94,7 +86,7 @@ test('owner workspace pages share restrained V7 shell without losing independent
   assert.match(styles,/border-left:3px solid #FF7900/);
 });
 
-test('Settings Studio keeps five data-backed panels and accessible labels',()=>{
+test('Settings retains five real data-backed sections and accessible form controls',()=>{
   for(const tab of ['profile','verification','optimization','notifications','security'])
     assert.ok(settings.includes("activeTab==='"+tab+"'"),'missing panel '+tab);
   for(const action of ['saveProfile','submitVerification','saveOptimization','savePreferences','changePassword'])
@@ -104,11 +96,9 @@ test('Settings Studio keeps five data-backed panels and accessible labels',()=>{
   assert.match(settings,/aria-label="Vendor settings sections"/);
   assert.match(settings,/NEXT_PUBLIC_VERIFICATION_PRIVATE_READY/);
   assert.match(settings,/supabase\.auth\.updateUser/);
-  assert.match(settingsCss,/\.slbi-settings \.ss-panel/);
-  assert.match(settingsCss,/box-shadow:inset 4px 4px 9px/);
-  assert.match(settingsCss,/prefers-reduced-motion/);
+  assert.match(settings,/const field='block h-12/);
+  assert.match(settings,/md:grid-cols-2/);
 });
-
 test('orange-charcoal V9 spans dashboard, Tools and Account without generic green UI surfaces',()=>{
   const routes=['dashboard','my-businesses','leads','reviews','insights','growth','marketing','qr-code','billing'];
   for(const route of routes){
