@@ -40,3 +40,18 @@ GitHub Actions model run 42981367529 executed 240 queries and compared raw multi
 GitHub Actions pinned-model export run 42981863789 created 22 actual 384-D normalized embedding vectors for approved business name+category snapshot, with content hashes and exact model revision. Artifact held for private-lab indexing experiments, **not** a production serving index. Full service descriptions, incremental indexing, human relevance judgments, a secure same-model query inference endpoint, rate limits, canary and p95 checks remain incomplete.
 
 **Release policy:** no automatic semantic promotion. The production search continues to use approved SmartSearch + HybridSearch v2 until quality and operational checks pass.
+
+
+## Production opt-in experiment: SemanticSearch v3 E5 Beta
+
+Explicit owner request on 2026-11-11: make V3 available in production for direct observation, without replacing the safe default ranking.
+
+- Entry point: `/nearby?v3=1&q=education`; use the "Semantic V3 Beta" ON/OFF toggle to compare. Other supported canonical intents: `clothing`, `food`, `repair`, `shopping`, `travel`.
+- This is **not** general inference: the pinned multilingual E5 model generated both 22 business name/category vectors and six canonical query vectors in GitHub Actions. Compact 8-bit quantization reduces bandwidth and introduces minor numerical approximation.
+- Query normalization uses reviewed SLBI dictionary; only exact canonicalized, known intents can use beta vectors. Arbitrary queries, stale listing snapshots, fewer than two candidates, or unknown IDs automatically return the untouched HybridSearch v2 baseline. No model runs or paid calls occur on visitors' devices.
+- Re-ranking is strictly limited to already approved, geo-filtered SQL candidates. Exact service evidence takes priority over cosine ranking. All other sort modes continue unchanged.
+- This opt-in beta **does not satisfy** the independent native-language quality gate. The 240 evaluation samples collapse to six distinct canonical intents, and labels are category proxies, not business-level human judgments. nDCG gains here must not be marketed as real-world accuracy.
+- Default stays V2 until 100+ independently judged query/business examples, full description embedding refresh, arbitrary-query inference, latency, abuse/cost controls and non-regression are verified.
+- One release only after GitHub CI, TypeScript, Next.js build and Vercel production checks pass; preserve the last known-good production SHA for rollback.
+
+This is an experimental field trial, not a completed SemanticSearch v3 default release.
