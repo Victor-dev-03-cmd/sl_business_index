@@ -313,14 +313,14 @@ export default function VendorBillingPage() {
 
   if (!loading && !signedIn) return (
     <div className="mx-auto max-w-xl py-16 text-center">
-      <h1 className="text-xl font-bold text-[#1c3f2f]">Sign in to view billing</h1>
+      <h1 className="text-xl font-bold text-[#2C2C31]">Sign in to view billing</h1>
       <p className="mt-2 text-sm text-slate-500">Subscription and billing records are available to account owners.</p>
       <Link href="/login?redirect=/vendor/billing" className="mt-5 inline-flex rounded-lg bg-[#202024] px-5 py-2.5 text-xs font-bold text-white">Sign in</Link>
     </div>
   );
 
   return (
-    <div className="vendor-page-v7 mx-auto min-h-full w-full max-w-[1600px] pb-7 text-[#28282D]">
+    <div className="vendor-page-v7 vendor-page-v9 mx-auto min-h-full w-full max-w-[1600px] pb-7 text-[#28282D]">
       <div className="space-y-5">
         <header className="vendor-owner-heading vendor-premium-card flex flex-col gap-5 border border-[#E9E9EC] px-5 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-6">
           <div className="space-y-1.5">
@@ -382,7 +382,7 @@ export default function VendorBillingPage() {
             <div className="border-b border-[#edf1ee] px-5 py-4">
               <div className="flex items-center gap-2">
                 <IconsaxIcon name="document-text" size={17} color="#236546" />
-                <h2 className="text-[13px] font-bold text-[#24432f]">My plan requests</h2>
+                <h2 className="text-[13px] font-bold text-[#2C2C31]">My plan requests</h2>
               </div>
               <p className="mt-1 text-[11px] text-slate-500">
                 Requests are not paid subscriptions. Activation requires independently verified settlement.
@@ -392,10 +392,10 @@ export default function VendorBillingPage() {
               {billingRequests.map(request => (
                 <div key={request.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5">
                   <div>
-                    <p className="text-[12px] font-semibold text-[#2a4a35]">{request.plan_name} · {request.billing_cycle}</p>
+                    <p className="text-[12px] font-semibold text-[#2C2C31]">{request.plan_name} · {request.billing_cycle}</p>
                     <p className="mt-1 text-[10px] text-slate-500">{money(Number(request.quoted_lkr))} listed quote · {formatDate(request.created_at)}</p>
                   </div>
-                  <span className="rounded-md border border-[#dbe8dd] bg-[#f2f8f3] px-3 py-1.5 text-[10px] font-bold capitalize text-[#327353]">
+                  <span className="rounded-md border border-[#E7E7EC] bg-[#F8F8FA] px-3 py-1.5 text-[10px] font-bold capitalize text-[#2C2C31]">
                     {request.status.replaceAll('_', ' ')}
                   </span>
                 </div>
@@ -425,19 +425,19 @@ export default function VendorBillingPage() {
               ].map(row => (
                 <div key={row.label} className="min-w-0">
                   <p className="text-[10px] font-semibold text-slate-400">{row.label}</p>
-                  <p className="mt-1.5 break-words text-[12px] font-bold text-[#233f30]">{loading ? '—' : row.value}</p>
+                  <p className="mt-1.5 break-words text-[12px] font-bold text-[#2C2C31]">{loading ? '—' : row.value}</p>
                 </div>
               ))}
             </div>
             <div className="border-t border-[#eff1f0] bg-[#fbfcfb] px-5 py-4">
               <div className="mb-2 flex justify-between gap-2 text-[11px]">
                 <span className="font-semibold text-slate-600">Listing allowance used</span>
-                <span className="font-bold tabular-nums text-[#2c7150]">
+                <span className="font-bold tabular-nums text-[#2C2C31]">
                   {maxListings === null ? 'Not configured' : maxListings === 9999 ? 'Unlimited plan' : nfmt(businessCount) + ' / ' + nfmt(maxListings)}
                 </span>
               </div>
-              <div className="h-2 overflow-hidden rounded-full bg-[#e9f0eb]">
-                <div className="h-full rounded-full bg-[#39835e]" style={{ width: maxListings === null || maxListings === 0 || maxListings === 9999 ? '0%' : Math.min(100, businessCount / maxListings * 100) + '%' }} />
+              <div className="h-2 overflow-hidden rounded-full bg-[#F8F8FA]">
+                <div className="h-full rounded-full bg-[#242428]" style={{ width: maxListings === null || maxListings === 0 || maxListings === 9999 ? '0%' : Math.min(100, businessCount / maxListings * 100) + '%' }} />
               </div>
               {maxListings !== null && maxListings !== 9999 && businessCount >= maxListings && <p className="mt-2 text-[10px] font-semibold text-[#9d732e]">Your listing allowance is full. Compare the available subscription options below.</p>}
             </div>
@@ -449,13 +449,13 @@ export default function VendorBillingPage() {
               <p className="mt-1 text-[11px] text-slate-400">Transparent subscription management</p>
             </div>
             <div className="space-y-4 px-5 py-5">
-              <div className="rounded-lg border border-[#e2ebe4] bg-[#f5faf6] p-3">
-                <p className="text-[11px] font-bold text-[#295f45]">Manual payment verification</p>
-                <p className="mt-1 text-[11px] leading-5 text-[#607565]">Online checkout is not connected. Submitting an upgrade request does not charge your card or activate paid features.</p>
+              <div className="rounded-lg border border-[#E7E7EC] bg-[#f5faf6] p-3">
+                <p className="text-[11px] font-bold text-[#2C2C31]">Manual payment verification</p>
+                <p className="mt-1 text-[11px] leading-5 text-[#2C2C31]">Online checkout is not connected. Submitting an upgrade request does not charge your card or activate paid features.</p>
               </div>
               <div className="flex items-start gap-2 text-[11px] leading-5 text-slate-600"><IconsaxIcon name="tick-circle" size={16} color="#44846a"/><span>Your requested plan is reviewed by the billing team.</span></div>
               <div className="flex items-start gap-2 text-[11px] leading-5 text-slate-600"><IconsaxIcon name="tick-circle" size={16} color="#44846a"/><span>Payment confirmation and plan activation require trusted administrator verification.</span></div>
-              <Link href="/vendor/growth" className="inline-flex items-center gap-2 text-[11px] font-bold text-[#28704e] hover:underline">View Growth OS entitlements <IconsaxIcon name="arrow-right-2" size={13}/></Link>
+              <Link href="/vendor/growth" className="inline-flex items-center gap-2 text-[11px] font-bold text-[#2C2C31] hover:underline">View Growth OS entitlements <IconsaxIcon name="arrow-right-2" size={13}/></Link>
             </div>
           </section>
         </div>
@@ -463,10 +463,10 @@ export default function VendorBillingPage() {
         <section className={panel + ' overflow-hidden'}>
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e9edf0] px-5 py-4">
             <div><h2 className="text-[13px] font-bold text-[#313137]">Subscription plans</h2><p className="mt-1 text-[11px] text-slate-400">Prices are loaded directly from the active plan catalogue</p></div>
-            <div className="flex h-9 items-center rounded-lg border border-[#e2e8e3] bg-[#f5f8f6] p-1" role="group" aria-label="Plan billing period">
+            <div className="flex h-9 items-center rounded-lg border border-[#E7E7EC] bg-[#f5f8f6] p-1" role="group" aria-label="Plan billing period">
               {(['monthly', 'yearly'] as BillingCycle[]).map(opt => (
                 <button type="button" key={opt} onClick={() => setCycle(opt)} aria-pressed={cycle === opt}
-                  className={'h-7 rounded-md px-3 text-[11px] font-bold transition ' + (cycle === opt ? 'bg-white text-[#246041] shadow-sm' : 'text-slate-500 hover:text-[#234b37]')}>
+                  className={'h-7 rounded-md px-3 text-[11px] font-bold transition ' + (cycle === opt ? 'bg-white text-[#2C2C31] shadow-sm' : 'text-slate-500 hover:text-[#C85D00]')}>
                   {opt === 'yearly' ? 'Yearly' : 'Monthly'}
                 </button>
               ))}
@@ -484,20 +484,20 @@ export default function VendorBillingPage() {
                 const features = featuresFor(plan, definitions);
                 const isPaid = Number(plan.price_monthly) > 0 || Number(plan.price_yearly) > 0;
                 return (
-                  <article key={plan.id} className={'flex min-w-0 flex-col rounded-xl border p-5 transition ' + (current ? 'border-[#8db89f] bg-[#f7faf8] shadow-[0_0_0_1px_#d8e8dc]' : 'border-[#e5eaeb] bg-white hover:border-[#bad3c4]')}>
+                  <article key={plan.id} className={'flex min-w-0 flex-col rounded-xl border p-5 transition ' + (current ? 'border-[#E7E7EC] bg-[#f7faf8] shadow-[0_0_0_1px_#d8e8dc]' : 'border-[#e5eaeb] bg-white hover:border-[#F5BC8B]')}>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-[11px] font-semibold text-[#377354]">{isPaid ? 'Premium plan' : 'Complimentary tier'}</span>
-                      {current && <span className="rounded-md bg-[#e5f2e9] px-2 py-1 text-[10px] font-bold text-[#2e744d]">Current plan</span>}
+                      <span className="text-[11px] font-semibold text-[#2C2C31]">{isPaid ? 'Premium plan' : 'Complimentary tier'}</span>
+                      {current && <span className="rounded-md bg-[#F8F8FA] px-2 py-1 text-[10px] font-bold text-[#2C2C31]">Current plan</span>}
                     </div>
-                    <h3 className="mt-2 text-[17px] font-bold text-[#1f3d2d]">{plan.name}</h3>
+                    <h3 className="mt-2 text-[17px] font-bold text-[#2C2C31]">{plan.name}</h3>
                     <p className="mt-1 min-h-[32px] text-[11px] leading-5 text-slate-500">{plan.description || 'Subscription benefits configured by the administrator.'}</p>
                     <div className="mt-4">
-                      <p className="text-[25px] font-bold tracking-tight text-[#1a3126]">{money(listPrice)}</p>
+                      <p className="text-[25px] font-bold tracking-tight text-[#2C2C31]">{money(listPrice)}</p>
                       <p className="mt-1 text-[10px] text-slate-400">Listed price / {cycle === 'yearly' ? 'year' : 'month'}</p>
                       {!!plan.discount_percentage && plan.discount_percentage > 0 && <p className="mt-1 text-[10px] font-medium text-[#ad7c2e]">{plan.discount_percentage}% promotion configured · confirm final quote with billing</p>}
                     </div>
-                    <div className="my-4 h-px bg-[#e9efea]" />
-                    <p className="mb-3 text-[11px] font-bold text-[#2e4939]">Plan includes</p>
+                    <div className="my-4 h-px bg-[#F8F8FA]" />
+                    <p className="mb-3 text-[11px] font-bold text-[#2C2C31]">Plan includes</p>
                     <ul className="mb-5 flex-1 space-y-2.5">
                       {features.length ? features.map((feature, i) => (
                         <li key={feature + i} className="flex items-start gap-2 text-[11px] leading-5 text-slate-600">
@@ -508,7 +508,7 @@ export default function VendorBillingPage() {
                     </ul>
                     <button type="button" disabled={current} onClick={() => openUpgrade(plan)}
                       className={'inline-flex h-10 items-center justify-center gap-2 rounded-lg text-[11px] font-bold transition disabled:cursor-not-allowed ' +
-                        (current ? 'bg-[#e5f1e9] text-[#367451]' : 'bg-[#202024] text-white hover:bg-[#39393E]')}>
+                        (current ? 'bg-[#F8F8FA] text-[#2C2C31]' : 'bg-[#202024] text-white hover:bg-[#39393E]')}>
                       {current ? 'Current subscription' : isPaid ? 'Request this plan' : 'Contact for plan change'}
                       {!current && <IconsaxIcon name="arrow-right-2" size={14} color="#fff"/>}
                     </button>
@@ -535,7 +535,7 @@ export default function VendorBillingPage() {
               <span className="sr-only">Find billing record</span>
               <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"><IconsaxIcon name="search-normal" size={15}/></span>
               <input type="search" value={invoiceSearch} onChange={e => { setInvoiceSearch(e.target.value); setInvoicePage(1); }}
-                placeholder="Search record ID, plan or status…" className="h-9 w-full rounded-lg border border-[#e1e6ec] bg-white pl-9 pr-3 text-[11px] text-slate-700 outline-none focus:border-[#9cb9aa]" />
+                placeholder="Search record ID, plan or status…" className="h-9 w-full rounded-lg border border-[#e1e6ec] bg-white pl-9 pr-3 text-[11px] text-slate-700 outline-none focus:border-[#FF7900]" />
             </label>
             <select aria-label="Billing record status" value={invoiceStatus} onChange={e => { setInvoiceStatus(e.target.value as InvoiceFilter); setInvoicePage(1); }}
               className="h-9 rounded-lg border border-[#e1e6ec] bg-white px-2.5 text-[11px] font-medium text-slate-600">
@@ -550,7 +550,7 @@ export default function VendorBillingPage() {
           ) : !invoices.length ? (
             <div className="flex flex-col items-center gap-2 px-6 py-12 text-center">
               <IconsaxIcon name="document-download" size={26} color="#8da99a"/>
-              <p className="text-[12px] font-bold text-[#294938]">No billing records yet</p>
+              <p className="text-[12px] font-bold text-[#2C2C31]">No billing records yet</p>
               <p className="text-[11px] text-slate-400">Invoices and account billing records will appear here when they exist.</p>
             </div>
           ) : !filteredInvoices.length ? (
@@ -566,11 +566,11 @@ export default function VendorBillingPage() {
                     {visibleInvoices.map(i => {
                       const sub = subscriptions.find(s => s.id === i.subscription_id);
                       return <tr key={i.id} className="hover:bg-[#fbfcfb]">
-                        <td className="max-w-[175px] truncate px-5 py-3.5 text-[11px] font-semibold text-[#2c6044]" title={i.id}>{i.id}</td>
+                        <td className="max-w-[175px] truncate px-5 py-3.5 text-[11px] font-semibold text-[#2C2C31]" title={i.id}>{i.id}</td>
                         <td className="whitespace-nowrap px-3 py-3.5 text-[11px] text-slate-500">{formatDate(i.created_at)}</td>
                         <td className="px-3 py-3.5 text-[11px] font-semibold text-slate-700">{sub?.plan_name || 'Not recorded'}</td>
                         <td className="whitespace-nowrap px-3 py-3.5 text-[11px] font-semibold tabular-nums text-slate-700">{money(Number(i.amount || 0))}</td>
-                        <td className="px-3 py-3.5"><span className={'inline-flex rounded-md border px-2 py-1 text-[10px] font-bold ' + (i.status === 'paid' ? 'border-[#d6eadc] bg-[#eff8f2] text-[#397b54]' : i.status === 'pending' ? 'border-[#f0e1c5] bg-[#fff9eb] text-[#9a742a]' : 'border-[#e7e9ed] bg-[#f5f6f8] text-[#717d86]')}>{i.status || 'Unknown'}</span></td>
+                        <td className="px-3 py-3.5"><span className={'inline-flex rounded-md border px-2 py-1 text-[10px] font-bold ' + (i.status === 'paid' ? 'border-[#E7E7EC] bg-[#eff8f2] text-[#2C2C31]' : i.status === 'pending' ? 'border-[#f0e1c5] bg-[#fff9eb] text-[#9a742a]' : 'border-[#e7e9ed] bg-[#f5f6f8] text-[#717d86]')}>{i.status || 'Unknown'}</span></td>
                         <td className="px-5 py-3.5 text-right">
                           <button type="button" onClick={() => void downloadStatement(i)} disabled={Boolean(exportingId)}
                             className={actionButton} title="Download a copy of this recorded entry; not a tax invoice">
@@ -600,28 +600,28 @@ export default function VendorBillingPage() {
       </div>
 
       {requestPlan && (
-        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-[#152e22]/50 p-3"
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-[#242428]/50 p-3"
           onMouseDown={e => { if (e.target === e.currentTarget && !requesting) setRequestPlan(null); }}>
           <section role="dialog" aria-modal="true" aria-label="Subscription change request"
-            className="w-full max-w-[480px] rounded-xl border border-[#dce6df] bg-white shadow-2xl">
+            className="w-full max-w-[480px] rounded-xl border border-[#E7E7EC] bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-[#ebefed] p-5">
-              <div><h2 className="text-[14px] font-bold text-[#223e2e]">Request subscription change</h2><p className="mt-1 text-[11px] text-slate-500">Manual review · No payment collected</p></div>
+              <div><h2 className="text-[14px] font-bold text-[#2C2C31]">Request subscription change</h2><p className="mt-1 text-[11px] text-slate-500">Manual review · No payment collected</p></div>
               <button type="button" disabled={requesting} onClick={() => setRequestPlan(null)} aria-label="Close subscription request" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 disabled:opacity-50"><IconsaxIcon name="close-circle" size={19}/></button>
             </div>
             {requestId ? (
               <div className="space-y-3 p-5">
-                <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[#eaf5ee] text-[#28794f]"><IconsaxIcon name="tick-circle" size={22}/></span>
-                <h3 className="text-[14px] font-bold text-[#224d33]">Your request was recorded</h3>
+                <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[#F8F8FA] text-[#2C2C31]"><IconsaxIcon name="tick-circle" size={22}/></span>
+                <h3 className="text-[14px] font-bold text-[#2C2C31]">Your request was recorded</h3>
                 <p className="text-[11px] leading-6 text-slate-600">Billing staff can now review this request in their dashboard. No money has been taken and your plan has not changed.</p>
                 <p className="break-all rounded-lg bg-[#f5f8f6] p-3 text-[10px] text-slate-500">Reference: {requestId}</p>
                 <button type="button" onClick={() => setRequestPlan(null)} className="h-10 w-full rounded-lg bg-[#202024] text-[11px] font-bold text-white">Done</button>
               </div>
             ) : (
               <div className="space-y-4 p-5">
-                <div className="grid grid-cols-2 gap-3 rounded-lg border border-[#e6ece7] bg-[#f8faf8] p-4">
-                  <div><p className="text-[10px] text-slate-400">Requested plan</p><p className="mt-1 text-[13px] font-bold text-[#274e36]">{requestPlan.name}</p></div>
-                  <div><p className="text-[10px] text-slate-400">Billing period</p><p className="mt-1 text-[13px] font-bold text-[#274e36]">{cycle === 'yearly' ? 'Annual' : 'Monthly'}</p></div>
-                  <div className="col-span-2"><p className="text-[10px] text-slate-400">Listed price (subject to billing confirmation)</p><p className="mt-1 text-[22px] font-bold text-[#213f2f]">{money(requestedPrice)}</p></div>
+                <div className="grid grid-cols-2 gap-3 rounded-lg border border-[#E7E7EC] bg-[#f8faf8] p-4">
+                  <div><p className="text-[10px] text-slate-400">Requested plan</p><p className="mt-1 text-[13px] font-bold text-[#2C2C31]">{requestPlan.name}</p></div>
+                  <div><p className="text-[10px] text-slate-400">Billing period</p><p className="mt-1 text-[13px] font-bold text-[#2C2C31]">{cycle === 'yearly' ? 'Annual' : 'Monthly'}</p></div>
+                  <div className="col-span-2"><p className="text-[10px] text-slate-400">Listed price (subject to billing confirmation)</p><p className="mt-1 text-[22px] font-bold text-[#2C2C31]">{money(requestedPrice)}</p></div>
                 </div>
                 <p className="text-[11px] leading-6 text-slate-600">This creates a tracked support request. The billing team will confirm the final amount and provide official payment instructions. Paid entitlements remain unchanged until independently verified.</p>
                 <div className="flex flex-wrap gap-2">
