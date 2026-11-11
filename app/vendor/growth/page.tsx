@@ -80,7 +80,7 @@ export default function VendorGrowthCenterPage() {
     : '—';
 
   return (
-    <div className="vendor-page-v7 mx-auto min-h-full w-full max-w-[1600px] pb-7 text-[#28282D]">
+    <div className="vendor-page-v7 vendor-page-v9 mx-auto min-h-full w-full max-w-[1600px] pb-7 text-[#28282D]">
       <div className="space-y-5">
         <header className="vendor-owner-heading vendor-premium-card flex flex-col gap-5 border border-[#E9E9EC] px-5 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-6">
           <div className="space-y-1.5">
@@ -92,10 +92,10 @@ export default function VendorGrowthCenterPage() {
             <p className="text-[12px] text-slate-500">Manage growth credits, monitor usage and discover upcoming marketing tools.</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Link href="/vendor/insights" className="inline-flex h-9 items-center gap-2 rounded-lg border border-[#C7DCD0] bg-[#EBF6EE] px-3 text-xs font-bold text-[#256143] transition hover:bg-[#DCF0E2]">
+            <Link href="/vendor/insights" className="inline-flex h-9 items-center gap-2 rounded-lg border border-[#E7E7EC] bg-[#F8F8FA] px-3 text-xs font-bold text-[#2C2C31] transition hover:bg-[#FFF4EA]">
               <IconsaxIcon name="status-up" size={16} /> Growth insights
             </Link>
-            <span className="flex h-9 items-center gap-2 rounded-lg border border-[#dfebe4] bg-[#f1f7f2] px-3 text-[11px] font-semibold text-[#37694c]">
+            <span className="flex h-9 items-center gap-2 rounded-lg border border-[#E7E7EC] bg-[#F8F8FA] px-3 text-[11px] font-semibold text-[#2C2C31]">
               <span className="h-1.5 w-1.5 rounded-full bg-[#329368]" /> {wallet?.plan_name || 'Basic'} plan
             </span>
             <button type="button" onClick={() => void reload()} disabled={loading} className={button}>
@@ -163,21 +163,21 @@ export default function VendorGrowthCenterPage() {
               <div className="flex flex-wrap items-end justify-between gap-3">
                 <div>
                   <p className="text-[11px] font-semibold text-slate-500">Used this period</p>
-                  <p className="mt-1 text-3xl font-bold tracking-tight text-[#1d392b]">{loading || !wallet ? '—' : usedPercentage.toFixed(1) + '%'}</p>
+                  <p className="mt-1 text-3xl font-bold tracking-tight text-[#2C2C31]">{loading || !wallet ? '—' : usedPercentage.toFixed(1) + '%'}</p>
                 </div>
                 <p className="text-[11px] font-medium tabular-nums text-slate-500">{wallet ? format(used) + ' of ' + format(allowance) + ' credits' : 'No wallet data'}</p>
               </div>
               <div role="progressbar" aria-label="Credits used" aria-valuemin={0} aria-valuemax={100} aria-valuenow={usedPercentage} className="h-2.5 overflow-hidden rounded-full bg-[#eaf0ec]">
-                <div className="h-full rounded-full bg-[#287b58] transition-[width] duration-300" style={{ width: usedPercentage + '%' }} />
+                <div className="h-full rounded-full bg-[#242428] transition-[width] duration-300" style={{ width: usedPercentage + '%' }} />
               </div>
               <div className="grid grid-cols-2 gap-3 border-t border-[#edf0ee] pt-4">
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Remaining</p>
-                  <p className="mt-1 text-lg font-bold tabular-nums text-[#244634]">{wallet ? format(remaining) : '—'}</p>
+                  <p className="mt-1 text-lg font-bold tabular-nums text-[#2C2C31]">{wallet ? format(remaining) : '—'}</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Renewal date</p>
-                  <p className="mt-1 text-sm font-bold text-[#244634]">{resetDate}</p>
+                  <p className="mt-1 text-sm font-bold text-[#2C2C31]">{resetDate}</p>
                 </div>
               </div>
             </div>
@@ -188,12 +188,12 @@ export default function VendorGrowthCenterPage() {
               <p className="mt-1 text-[11px] text-slate-400">Verified credits and account entitlements</p>
             </div>
             <div className="px-5 py-5">
-              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-[#ecf5ee] text-[#317553]">
+              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-[#F8F8FA] text-[#2C2C31]">
                 <IconsaxIcon name="shield-tick" size={21} />
               </div>
-              <h3 className="text-[12px] font-bold text-[#213c2d]">Verified credit allocation</h3>
+              <h3 className="text-[12px] font-bold text-[#2C2C31]">Verified credit allocation</h3>
               <p className="mt-2 text-[11px] leading-5 text-slate-500">Paid Growth Credits require a verified entitlement. Browser-only payment confirmations do not unlock credits.</p>
-              <Link href="/vendor/billing" className="mt-5 inline-flex items-center gap-1.5 text-[11px] font-bold text-[#28704e] hover:underline">
+              <Link href="/vendor/billing" className="mt-5 inline-flex items-center gap-1.5 text-[11px] font-bold text-[#2C2C31] hover:underline">
                 Review billing <IconsaxIcon name="arrow-right-2" size={13} />
               </Link>
             </div>
@@ -212,7 +212,7 @@ export default function VendorGrowthCenterPage() {
             {plannedTools.map(tool => (
               <article key={tool.title} className={panel + ' flex min-w-0 flex-col p-4'}>
                 <div className="flex items-center justify-between gap-2">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#eff6f1] text-[#277650]">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#F8F8FA] text-[#2C2C31]">
                     <IconsaxIcon name={tool.icon} size={19} />
                   </span>
                   <span className="rounded-md border border-[#f0e5cf] bg-[#fdf8ed] px-2 py-1 text-[10px] font-semibold text-[#99784d]">Coming soon</span>
@@ -240,8 +240,8 @@ export default function VendorGrowthCenterPage() {
             <div role="status" className="p-6 text-xs text-slate-500">Loading credit activity…</div>
           ) : !history.length ? (
             <div className="flex flex-col items-center justify-center gap-2 px-5 py-10 text-center">
-              <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#eff6f1] text-[#478061]"><IconsaxIcon name="document-download" size={20} /></span>
-              <p className="text-[12px] font-bold text-[#2a4736]">No activity recorded yet</p>
+              <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#F8F8FA] text-[#2C2C31]"><IconsaxIcon name="document-download" size={20} /></span>
+              <p className="text-[12px] font-bold text-[#2C2C31]">No activity recorded yet</p>
               <p className="text-[11px] text-slate-400">Your credit transactions will appear here when available.</p>
             </div>
           ) : (
@@ -253,9 +253,9 @@ export default function VendorGrowthCenterPage() {
                 <tbody className="divide-y divide-[#edf0ee]">
                   {history.map(entry => (
                     <tr key={entry.id} className="text-[11px] text-slate-600 hover:bg-[#fbfcfb]">
-                      <td className="px-5 py-3 font-semibold capitalize text-[#2e4837]">{entry.action_key.replace(/_/g, ' ')}</td>
+                      <td className="px-5 py-3 font-semibold capitalize text-[#2C2C31]">{entry.action_key.replace(/_/g, ' ')}</td>
                       <td className="px-4 py-3 text-slate-500">{new Date(entry.created_at).toLocaleString('en-LK')}</td>
-                      <td className={'px-4 py-3 text-right font-bold tabular-nums ' + (entry.delta >= 0 ? 'text-[#2c7a55]' : 'text-[#ae6848]')}>{entry.delta > 0 ? '+' : ''}{format(entry.delta)}</td>
+                      <td className={'px-4 py-3 text-right font-bold tabular-nums ' + (entry.delta >= 0 ? 'text-[#2C2C31]' : 'text-[#ae6848]')}>{entry.delta > 0 ? '+' : ''}{format(entry.delta)}</td>
                       <td className="px-5 py-3 text-right font-semibold tabular-nums">{format(entry.balance_after)}</td>
                     </tr>
                   ))}

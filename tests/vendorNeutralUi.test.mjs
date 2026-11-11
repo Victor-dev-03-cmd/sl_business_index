@@ -88,3 +88,36 @@ test('owner workspace pages share restrained V7 shell without losing independent
   assert.match(styles,/\.vendor-workspace-v6 \.vendor-page-v7 table thead/);
   assert.match(styles,/border-left:3px solid #FF7900/);
 });
+
+test('V8 Settings rebuild keeps five working panels, labeled fields and explicit actions',()=>{
+  assert.match(settings,/vendor-settings-v8/);
+  assert.match(settings,/settings-v8-hero/);
+  assert.match(settings,/settings-v8-rail/);
+  assert.match(settings,/settings-v8-preference-list/);
+  assert.match(settings,/settings-v8-form-grid/);
+  assert.match(settings,/aria-selected=\{activeTab===item.id\}/);
+  for(const tab of ['profile','verification','optimization','notifications','security'])
+    assert.ok(settings.includes("activeTab==='"+tab+"'"),'missing settings section '+tab);
+  for(const action of ['saveProfile','submitVerification','saveOptimization','savePreferences','changePassword'])
+    assert.ok(settings.includes(action),'missing action '+action);
+  assert.doesNotMatch(settings,/bg-\[#E7F1D5\]/);
+  assert.match(styles,/Vendor Settings V8/);
+  assert.match(styles,/\.vendor-workspace-v6 \.vendor-settings-v8 \.settings-v8-hero/);
+  assert.match(styles,/\.vendor-workspace-v6 \.vendor-settings-v8 :is\(input,textarea,select\)\.vendor-field/);
+  assert.match(styles,/border-color:#F4A362/);
+});
+
+test('orange-charcoal V9 spans dashboard, Tools and Account without generic green UI surfaces',()=>{
+  const routes=['dashboard','my-businesses','leads','reviews','insights','growth','marketing','qr-code','billing','settings'];
+  for(const route of routes){
+    const page=read('app/vendor/'+route+'/page.tsx');
+    assert.match(page,/vendor-page-v9/,'missing v9 surface: '+route);
+  }
+  const editForm=read('app/vendor/my-businesses/[id]/edit/EditBusinessForm.tsx');
+  const hybrid=read('app/vendor/billing/hybrid/page.tsx');
+  assert.match(editForm,/vendor-page-v9/);
+  assert.match(hybrid,/vendor-page-v9/);
+  assert.match(styles,/Vendor Portal V9/);
+  assert.match(styles,/--vendor-highlight:#FF7900/);
+  assert.match(styles,/prefers-reduced-motion/);
+});

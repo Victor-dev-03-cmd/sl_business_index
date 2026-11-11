@@ -12,7 +12,7 @@ type Objective = 'awareness'|'promotion'|'enquiries'|'announcement';
 type Language = 'English'|'தமிழ்'|'සිංහල';
 type Section = 'overview'|'social'|'email'|'calendar'|'library';
 const card='rounded-[10px] border border-[#E9E9EC] bg-white shadow-[0_3px_16px_rgba(25,25,31,.028)]';
-const input='w-full min-h-10 rounded-[6px] border border-[#DBDBDF] bg-white px-3 py-2.5 text-[12px] text-[#264736] outline-none focus:border-[#4D8F64] focus:ring-2 focus:ring-[#E0EFE4]';
+const input='w-full min-h-10 rounded-[6px] border border-[#DBDBDF] bg-white px-3 py-2.5 text-[12px] text-[#2C2C31] outline-none focus:border-[#FF7900] focus:ring-2 focus:ring-[#FFE3CA]';
 const objectives: {key:Objective;title:string;description:string}[]=[
   {key:'awareness',title:'Brand awareness',description:'Introduce your business and what makes it useful'},
   {key:'promotion',title:'Offer / promotion',description:'Communicate a real offer and its conditions'},
@@ -181,7 +181,7 @@ export default function MarketingPage() {
   ];
   const launch=(target:Section)=>{setSection(target);document.getElementById('marketing-workspace')?.scrollIntoView({behavior:'smooth',block:'start'});};
   return (
-    <div className="vendor-page-v7 mx-auto w-full max-w-[1600px] space-y-5 pb-8 text-[#28282D]">
+    <div className="vendor-page-v7 vendor-page-v9 mx-auto w-full max-w-[1600px] space-y-5 pb-8 text-[#28282D]">
       <header className="vendor-owner-heading grid gap-5 border border-[#E9E9EC] bg-white px-5 py-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-end md:px-7">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#B3611E]">SLBI Growth OS / Marketing Engine</p>
@@ -194,7 +194,7 @@ export default function MarketingPage() {
         </div>
       </header>
       {error&&<div role="alert" className="border border-red-200 bg-red-50 p-4 text-[12px] text-red-800">{error}</div>}
-      {!loading&&!userId&&<div className={card+' p-6 text-sm'}>Sign in to manage marketing. <Link href="/login?redirect=/vendor/marketing" className="font-bold text-[#286646] underline">Sign in</Link></div>}
+      {!loading&&!userId&&<div className={card+' p-6 text-sm'}>Sign in to manage marketing. <Link href="/login?redirect=/vendor/marketing" className="font-bold text-[#2C2C31] underline">Sign in</Link></div>}
       <div className="grid gap-3 sm:grid-cols-3">
         {[
           {title:'Saved campaigns',value:campaigns.length,sub:'Actual directory records',icon:'document-download'},
@@ -210,107 +210,107 @@ export default function MarketingPage() {
           {title:'AI Social Marketing',sub:'Business brief, multilingual caption, creative review and campaign planning',icon:'flash',action:'Open social workflow',target:'social' as Section},
           {title:'Consent-based Email',sub:'Audience permissions, segmentation, review and compliance checks',icon:'sms',action:'Review email readiness',target:'email' as Section},
           {title:'Campaign Calendar',sub:'Plan your next promotions without misreporting automated publishing',icon:'calendar',action:'Open calendar',target:'calendar' as Section},
-        ].map(item=><button type="button" key={item.title} onClick={()=>launch(item.target)} className={card+' group min-h-[176px] p-5 text-left transition hover:border-[#83B99A] hover:bg-[#FCFEFC]'}>
-          <span className="flex h-10 w-10 items-center justify-center bg-[#EAF3EA] text-[#316B48]"><IconsaxIcon name={item.icon} size={20}/></span>
+        ].map(item=><button type="button" key={item.title} onClick={()=>launch(item.target)} className={card+' group min-h-[176px] p-5 text-left transition hover:border-[#F5BC8B] hover:bg-[#FCFEFC]'}>
+          <span className="flex h-10 w-10 items-center justify-center bg-[#F8F8FA] text-[#2C2C31]"><IconsaxIcon name={item.icon} size={20}/></span>
           <h2 className="mt-3 text-[15px] font-bold">{item.title}</h2>
-          <p className="mt-1 text-[11px] leading-5 text-[#6C806F]">{item.sub}</p>
-          <span className="mt-4 inline-flex items-center gap-1 text-[11px] font-bold text-[#2D7850]">{item.action}<IconsaxIcon name="arrow-right-2" size={13}/></span>
+          <p className="mt-1 text-[11px] leading-5 text-[#2C2C31]">{item.sub}</p>
+          <span className="mt-4 inline-flex items-center gap-1 text-[11px] font-bold text-[#2C2C31]">{item.action}<IconsaxIcon name="arrow-right-2" size={13}/></span>
         </button>)}
       </section>
 
       <div id="marketing-workspace" className="scroll-mt-24 grid items-start gap-5 lg:grid-cols-[210px_minmax(0,1fr)]">
         <nav aria-label="Marketing Studio sections" className={card+' flex flex-wrap gap-1 p-2 lg:sticky lg:top-3 lg:flex-col'}>
           {tabs.map(tab=><button key={tab.key} type="button" onClick={()=>setSection(tab.key)} aria-current={section===tab.key?'page':undefined}
-            className={'flex min-h-11 items-center gap-2 border-l-[3px] px-3 py-2 text-left text-[11px] font-semibold transition '+(section===tab.key?'border-[#288051] bg-[#EAF4EC] text-[#215A39]':'border-transparent text-[#718273] hover:bg-[#F5F8F5]')}>
+            className={'flex min-h-11 items-center gap-2 border-l-[3px] px-3 py-2 text-left text-[11px] font-semibold transition '+(section===tab.key?'border-[#E7E7EC] bg-[#F8F8FA] text-[#2C2C31]':'border-transparent text-[#2C2C31] hover:bg-[#F5F8F5]')}>
             <IconsaxIcon name={tab.icon} size={17}/>{tab.name}
           </button>)}
         </nav>
         <div className="min-w-0">
           {section==='overview'&&<div className={card+' p-6 md:p-8'}>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-[#4F8860]">Campaign workflow</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-[#2C2C31]">Campaign workflow</p>
             <h2 className="mt-2 text-xl font-bold">Plan with a clear objective.</h2>
-            <p className="mt-2 text-[12px] leading-6 text-[#6B816F]">Our GrowthOS roadmap requires business context, factual offers, multilingual copy, owner review and consent checks before distribution.</p>
+            <p className="mt-2 text-[12px] leading-6 text-[#2C2C31]">Our GrowthOS roadmap requires business context, factual offers, multilingual copy, owner review and consent checks before distribution.</p>
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              {['1 · Select an owned business','2 · Define campaign objective','3 · Review multilingual copy','4 · Approve and export','5 · Record planned date','6 · Measure real results'].map(step=><div key={step} className="border border-[#E2EAE2] bg-[#FAFCFA] p-4 text-[12px] font-semibold text-[#355741]">{step}</div>)}
+              {['1 · Select an owned business','2 · Define campaign objective','3 · Review multilingual copy','4 · Approve and export','5 · Record planned date','6 · Measure real results'].map(step=><div key={step} className="border border-[#E7E7EC] bg-[#FAFCFA] p-4 text-[12px] font-semibold text-[#2C2C31]">{step}</div>)}
             </div>
             <button type="button" onClick={()=>setSection('social')} className="mt-6 bg-[#202024] px-5 py-3 text-xs font-bold text-white">Create a campaign brief</button>
           </div>}
           {section==='social'&&<div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(280px,.85fr)]">
             <div className={card+' min-w-0 p-5 md:p-6'}>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-[#4E8863]">01 · Creative brief</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[#2C2C31]">01 · Creative brief</p>
               <h2 className="mt-2 text-[19px] font-bold">Business-aware campaign</h2>
-              <p className="mt-1 text-[11px] leading-5 text-[#79907C]">Drafting is local and editable; choose a language and provide reviewed text in that language. Automatic translation and social posting are not enabled.</p>
+              <p className="mt-1 text-[11px] leading-5 text-[#777780]">Drafting is local and editable; choose a language and provide reviewed text in that language. Automatic translation and social posting are not enabled.</p>
               <div className="mt-6 space-y-4">
-                <label className="block text-[11px] font-semibold text-[#536E5D]">Your business
+                <label className="block text-[11px] font-semibold text-[#2C2C31]">Your business
                   <select className={input+' mt-1.5'} value={selectedId} onChange={e=>setSelectedId(e.target.value)}>
                     <option value="">Select business</option>{businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}
                   </select></label>
-                <div><span className="text-[11px] font-semibold text-[#536E5D]">Campaign objective</span>
+                <div><span className="text-[11px] font-semibold text-[#2C2C31]">Campaign objective</span>
                   <div className="mt-2 grid gap-2 sm:grid-cols-2">
                     {objectives.map(o=><button type="button" key={o.key} onClick={()=>setObjective(o.key)}
-                      className={'border p-3 text-left '+(objective===o.key?'border-[#4A9A65] bg-[#EDF7EF]':'border-[#DEE7DF] bg-white hover:border-[#9DBDA6]')}>
-                      <strong className="block text-[11px] text-[#294C35]">{o.title}</strong><span className="mt-1 block text-[10px] leading-4 text-[#7B907D]">{o.description}</span>
+                      className={'border p-3 text-left '+(objective===o.key?'border-[#E7E7EC] bg-[#F8F8FA]':'border-[#E7E7EC] bg-white hover:border-[#F5BC8B]')}>
+                      <strong className="block text-[11px] text-[#2C2C31]">{o.title}</strong><span className="mt-1 block text-[10px] leading-4 text-[#777780]">{o.description}</span>
                     </button>)}
                   </div>
                 </div>
-                <label className="block text-[11px] font-semibold text-[#536E5D]">Language
+                <label className="block text-[11px] font-semibold text-[#2C2C31]">Language
                   <select className={input+' mt-1.5'} value={language} onChange={e=>setLanguage(e.target.value as Language)}>{languages.map(l=><option key={l} value={l}>{l}</option>)}</select>
                 </label>
-                <label className="block text-[11px] font-semibold text-[#536E5D]">Key message / factual offer
+                <label className="block text-[11px] font-semibold text-[#2C2C31]">Key message / factual offer
                   <textarea className={input+' mt-1.5 min-h-[96px] resize-y'} maxLength={240} value={offer} onChange={e=>setOffer(e.target.value)} placeholder="The verified service or offer you want customers to know…"/></label>
-                <label className="block text-[11px] font-semibold text-[#536E5D]">Call to action
+                <label className="block text-[11px] font-semibold text-[#2C2C31]">Call to action
                   <input className={input+' mt-1.5'} maxLength={130} value={cta} onChange={e=>setCta(e.target.value)} placeholder="Call us for availability"/></label>
-                <label className="block text-[11px] font-semibold text-[#536E5D]">Offer terms / conditions
+                <label className="block text-[11px] font-semibold text-[#2C2C31]">Offer terms / conditions
                   <input className={input+' mt-1.5'} maxLength={220} value={terms} onChange={e=>setTerms(e.target.value)} placeholder="Valid until… / subject to availability"/></label>
-                <div><p className="text-[11px] font-semibold text-[#536E5D]">Distribution channels (planning only)</p>
+                <div><p className="text-[11px] font-semibold text-[#2C2C31]">Distribution channels (planning only)</p>
                   <div className="mt-2 flex flex-wrap gap-2">{channels.map(channel=><button key={channel} type="button" aria-pressed={channelsSelected.includes(channel)}
                     onClick={()=>setChannelsSelected(x=>x.includes(channel)?x.filter(v=>v!==channel):[...x,channel])}
-                    className={'border px-3 py-2 text-[11px] font-semibold '+(channelsSelected.includes(channel)?'border-[#56A36F] bg-[#E9F4EB] text-[#276541]':'border-[#DBE5DD] bg-white text-[#67806D]')}>{channel}</button>)}</div>
+                    className={'border px-3 py-2 text-[11px] font-semibold '+(channelsSelected.includes(channel)?'border-[#E7E7EC] bg-[#F8F8FA] text-[#2C2C31]':'border-[#E7E7EC] bg-white text-[#2C2C31]')}>{channel}</button>)}</div>
                 </div>
-                <label className="block text-[11px] font-semibold text-[#536E5D]">Optional planned date
+                <label className="block text-[11px] font-semibold text-[#2C2C31]">Optional planned date
                   <input type="datetime-local" min={now} value={scheduledAt} onChange={e=>setScheduledAt(e.target.value)} className={input+' mt-1.5'}/></label>
               </div>
-              <div className="mt-6 flex flex-wrap gap-2 border-t border-[#E5EBE4] pt-5">
+              <div className="mt-6 flex flex-wrap gap-2 border-t border-[#E7E7EC] pt-5">
                 <button type="button" disabled={saving||!userId} onClick={()=>void save(false)} className="bg-[#202024] px-4 py-2.5 text-[12px] font-bold text-white disabled:opacity-40">Save draft</button>
-                <button type="button" disabled={saving||!userId||!scheduledAt} onClick={()=>void save(true)} className="border border-[#C9DCCF] px-4 py-2.5 text-[12px] font-semibold text-[#316648] disabled:opacity-40">Record planned date</button>
+                <button type="button" disabled={saving||!userId||!scheduledAt} onClick={()=>void save(true)} className="border border-[#E7E7EC] px-4 py-2.5 text-[12px] font-semibold text-[#2C2C31] disabled:opacity-40">Record planned date</button>
               </div>
             </div>
             <aside className={card+' min-w-0 overflow-hidden'}>
-              <div className="border-b border-[#DEE8DE] bg-[#F6FAF6] p-4"><p className="text-[10px] font-bold uppercase tracking-wider text-[#4C8A60]">02 · Review copy</p><h3 className="mt-1 text-[15px] font-bold">Live campaign draft</h3></div>
-              <div className="p-5"><div className="min-h-[255px] border border-[#DBE7DD] bg-[#FCFDFB] p-5">
-                <p className="whitespace-pre-wrap break-words text-[13px] leading-7 text-[#2D4B35]">{preview}</p></div>
-                <p className="mt-3 text-[10px] leading-5 text-[#819184]">Verify business facts, terms, translations and contact information before sending. This preview is editable through the brief fields.</p>
+              <div className="border-b border-[#E7E7EC] bg-[#F6FAF6] p-4"><p className="text-[10px] font-bold uppercase tracking-wider text-[#2C2C31]">02 · Review copy</p><h3 className="mt-1 text-[15px] font-bold">Live campaign draft</h3></div>
+              <div className="p-5"><div className="min-h-[255px] border border-[#E7E7EC] bg-[#FCFDFB] p-5">
+                <p className="whitespace-pre-wrap break-words text-[13px] leading-7 text-[#2C2C31]">{preview}</p></div>
+                <p className="mt-3 text-[10px] leading-5 text-[#777780]">Verify business facts, terms, translations and contact information before sending. This preview is editable through the brief fields.</p>
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <button type="button" onClick={()=>{void navigator.clipboard.writeText(preview).then(()=>toast.success('Copy saved to clipboard')).catch(()=>toast.error('Could not copy text'));}} className="border border-[#D1E1D3] px-3 py-2.5 text-[11px] font-semibold text-[#2B6748]">Copy caption</button>
-                  <button type="button" onClick={()=>downloadText('slbi-campaign-'+language+'.txt',preview)} className="border border-[#D1E1D3] px-3 py-2.5 text-[11px] font-semibold text-[#2B6748]">Export text</button>
+                  <button type="button" onClick={()=>{void navigator.clipboard.writeText(preview).then(()=>toast.success('Copy saved to clipboard')).catch(()=>toast.error('Could not copy text'));}} className="border border-[#E7E7EC] px-3 py-2.5 text-[11px] font-semibold text-[#2C2C31]">Copy caption</button>
+                  <button type="button" onClick={()=>downloadText('slbi-campaign-'+language+'.txt',preview)} className="border border-[#E7E7EC] px-3 py-2.5 text-[11px] font-semibold text-[#2C2C31]">Export text</button>
                 </div>
-                <div className="mt-5 border-t border-[#E2ECE3] pt-5">
+                <div className="mt-5 border-t border-[#E7E7EC] pt-5">
                   <h4 className="text-[12px] font-bold">Branded creative export</h4>
-                  <p className="mt-1 text-[11px] leading-5 text-[#819184]">Generate an editable-brief-based PNG design for social sharing. It only uses the business name and the text you supply; it is not an AI-generated image or an automatically published post.</p>
+                  <p className="mt-1 text-[11px] leading-5 text-[#777780]">Generate an editable-brief-based PNG design for social sharing. It only uses the business name and the text you supply; it is not an AI-generated image or an automatically published post.</p>
                   <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    <label className="text-[11px] font-semibold text-[#536E5D]">Canvas format
+                    <label className="text-[11px] font-semibold text-[#2C2C31]">Canvas format
                       <select value={posterSize} onChange={e=>setPosterSize(e.target.value as typeof posterSize)} className={input+' mt-1.5'}>
                         <option value="square">Square · 1080 × 1080</option><option value="portrait">Portrait · 1080 × 1350</option><option value="story">Story · 1080 × 1920</option>
                       </select>
                     </label>
-                    <label className="text-[11px] font-semibold text-[#536E5D]">Brand palette
+                    <label className="text-[11px] font-semibold text-[#2C2C31]">Brand palette
                       <select value={posterPalette} onChange={e=>setPosterPalette(e.target.value as typeof posterPalette)} className={input+' mt-1.5'}>
                         <option value="forest">Forest</option><option value="navy">Navy</option><option value="cream">Cream</option>
                       </select>
                     </label>
                   </div>
-                  <button type="button" disabled={!business||!clean(offer)} onClick={exportBrandedCreative} className="mt-3 w-full border border-[#C9DACC] bg-[#EFF6EF] px-3 py-3 text-[11px] font-bold text-[#296744] disabled:opacity-40">
+                  <button type="button" disabled={!business||!clean(offer)} onClick={exportBrandedCreative} className="mt-3 w-full border border-[#E7E7EC] bg-[#F8F8FA] px-3 py-3 text-[11px] font-bold text-[#2C2C31] disabled:opacity-40">
                     Download branded PNG draft
                   </button>
                 </div>
-                <div className="mt-5 border-t border-[#E2ECE3] pt-5"><h4 className="text-[12px] font-bold">Next design phase</h4><p className="mt-1 text-[11px] leading-5 text-[#819184]">Model-generated creative variations, editable typography, human approval and social-platform API integrations are separate gated features—not a canvas editor or simulated publishing.</p></div>
+                <div className="mt-5 border-t border-[#E7E7EC] pt-5"><h4 className="text-[12px] font-bold">Next design phase</h4><p className="mt-1 text-[11px] leading-5 text-[#777780]">Model-generated creative variations, editable typography, human approval and social-platform API integrations are separate gated features—not a canvas editor or simulated publishing.</p></div>
               </div>
             </aside>
           </div>}
           {section==='email'&&<div className={card+' space-y-5 p-6 md:p-8'}>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-[#4D8B62]">Consent-based campaigns</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-[#2C2C31]">Consent-based campaigns</p>
             <h2 className="text-xl font-bold">Email Marketing · Compliance First</h2>
-            <p className="max-w-[720px] text-[12px] leading-6 text-[#708573]">Only use subscribers who explicitly agreed to the campaign purpose. Automated email sends are not enabled until consent records, suppression, unsubscribe handling and deliverability checks are implemented.</p>
+            <p className="max-w-[720px] text-[12px] leading-6 text-[#777780]">Only use subscribers who explicitly agreed to the campaign purpose. Automated email sends are not enabled until consent records, suppression, unsubscribe handling and deliverability checks are implemented.</p>
             <div className="grid gap-3 sm:grid-cols-2">{[
               ['01','Audience consent','Verified opt-in and purpose-specific permissions'],
               ['02','Segmentation','Relevant customers, without secret profiling'],
@@ -318,28 +318,28 @@ export default function MarketingPage() {
               ['04','Compliance checks','Unsubscribe, suppression, SPF/DKIM/DMARC'],
               ['05','Schedule & send','Only after mail provider and entitlements are connected'],
               ['06','Reporting','Measured deliveries and opt-in conversions'],
-            ].map(x=><div key={x[0]} className="border border-[#E0E9E0] p-4"><span className="text-[10px] font-bold text-[#7FA98B]">{x[0]}</span><h3 className="mt-1 text-[12px] font-bold">{x[1]}</h3><p className="mt-1 text-[11px] text-[#7B907F]">{x[2]}</p></div>)}</div>
+            ].map(x=><div key={x[0]} className="border border-[#E7E7EC] p-4"><span className="text-[10px] font-bold text-[#777780]">{x[0]}</span><h3 className="mt-1 text-[12px] font-bold">{x[1]}</h3><p className="mt-1 text-[11px] text-[#777780]">{x[2]}</p></div>)}</div>
             <div className="border-l-[3px] border-[#B8984E] bg-[#FBF7E9] px-4 py-3 text-[11px] text-[#8E763E]">Email sending is not yet active. No unconsented leads or automatically imported CRM contacts are used.</div>
           </div>}
           {section==='calendar'&&<div className={card+' p-6'}>
-            <h2 className="text-xl font-bold">Campaign planning calendar</h2><p className="mt-1 text-[12px] text-[#718575]">These are planning records, not confirmed social-network publishing times.</p>
-            <div className="mt-6 space-y-2">{campaigns.filter(c=>c.scheduled_at).sort((a,b)=>String(a.scheduled_at).localeCompare(String(b.scheduled_at))).map(c=><div key={c.id} className="flex flex-wrap items-start gap-4 border border-[#E2EAE2] p-4 text-[11px]">
-              <span className="w-28 font-bold text-[#3D7251]">{day(c.scheduled_at)}</span><div className="min-w-0 flex-1"><p className="font-semibold text-[#324C3A]">{businesses.find(b=>b.id===c.business_id)?.name||'Business'}</p><p className="mt-1 line-clamp-2 text-[#7D917F]">{c.banner_text}</p></div><span className="border border-[#E0E8DF] px-2 py-1 text-[#78907D]">{c.status}</span>
-            </div>)}{!campaigns.some(c=>c.scheduled_at)&&<p className="border border-dashed border-[#D7E2D9] p-6 text-sm text-[#819384]">No dates planned yet. Create a campaign brief to begin.</p>}</div>
+            <h2 className="text-xl font-bold">Campaign planning calendar</h2><p className="mt-1 text-[12px] text-[#777780]">These are planning records, not confirmed social-network publishing times.</p>
+            <div className="mt-6 space-y-2">{campaigns.filter(c=>c.scheduled_at).sort((a,b)=>String(a.scheduled_at).localeCompare(String(b.scheduled_at))).map(c=><div key={c.id} className="flex flex-wrap items-start gap-4 border border-[#E7E7EC] p-4 text-[11px]">
+              <span className="w-28 font-bold text-[#2C2C31]">{day(c.scheduled_at)}</span><div className="min-w-0 flex-1"><p className="font-semibold text-[#2C2C31]">{businesses.find(b=>b.id===c.business_id)?.name||'Business'}</p><p className="mt-1 line-clamp-2 text-[#777780]">{c.banner_text}</p></div><span className="border border-[#E7E7EC] px-2 py-1 text-[#777780]">{c.status}</span>
+            </div>)}{!campaigns.some(c=>c.scheduled_at)&&<p className="border border-dashed border-[#E7E7EC] p-6 text-sm text-[#777780]">No dates planned yet. Create a campaign brief to begin.</p>}</div>
           </div>}
           {section==='library'&&<div className={card+' overflow-hidden'}>
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E3EAE2] p-5"><div><h2 className="text-[17px] font-bold">Campaign library</h2><p className="mt-1 text-[11px] text-[#7B8F7E]">Owner-scoped saved drafts and scheduling records.</p></div>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E7E7EC] p-5"><div><h2 className="text-[17px] font-bold">Campaign library</h2><p className="mt-1 text-[11px] text-[#777780]">Owner-scoped saved drafts and scheduling records.</p></div>
               <input aria-label="Filter saved campaigns" className={input+' max-w-[240px]'} placeholder="Search saved campaigns" value={search} onChange={e=>setSearch(e.target.value)}/></div>
             <div className="divide-y divide-[#E7EDE7]">{visible.map(c=><div key={c.id} className="grid gap-3 p-5 sm:grid-cols-[minmax(0,1fr)_auto]">
-              <div className="min-w-0"><p className="text-[10px] font-bold uppercase tracking-wide text-[#5C8D69]">{businesses.find(b=>b.id===c.business_id)?.name||'Your business'} · {c.status}</p>
-                <p className="mt-2 line-clamp-3 whitespace-pre-wrap break-words text-[12px] leading-6 text-[#395543]">{c.banner_text}</p>
-                <p className="mt-2 text-[10px] text-[#889989]">Created {day(c.created_at)} · {c.platforms?.join(', ')||'No channels'}{c.scheduled_at?' · Planned '+day(c.scheduled_at):''}</p></div>
-              <button type="button" onClick={()=>downloadText('slbi-campaign-'+c.id.slice(0,8)+'.txt',c.banner_text)} className="h-9 self-center border border-[#C9DACC] px-3 text-[11px] font-semibold text-[#326B49]">Export copy</button>
-            </div>)}{!loading&&!visible.length&&<div className="p-8 text-center text-[12px] text-[#7E9081]">No saved campaigns match. Start with a business-aware brief.</div>}</div>
+              <div className="min-w-0"><p className="text-[10px] font-bold uppercase tracking-wide text-[#2C2C31]">{businesses.find(b=>b.id===c.business_id)?.name||'Your business'} · {c.status}</p>
+                <p className="mt-2 line-clamp-3 whitespace-pre-wrap break-words text-[12px] leading-6 text-[#2C2C31]">{c.banner_text}</p>
+                <p className="mt-2 text-[10px] text-[#777780]">Created {day(c.created_at)} · {c.platforms?.join(', ')||'No channels'}{c.scheduled_at?' · Planned '+day(c.scheduled_at):''}</p></div>
+              <button type="button" onClick={()=>downloadText('slbi-campaign-'+c.id.slice(0,8)+'.txt',c.banner_text)} className="h-9 self-center border border-[#E7E7EC] px-3 text-[11px] font-semibold text-[#2C2C31]">Export copy</button>
+            </div>)}{!loading&&!visible.length&&<div className="p-8 text-center text-[12px] text-[#777780]">No saved campaigns match. Start with a business-aware brief.</div>}</div>
           </div>}
         </div>
       </div>
-      <footer className="border-t border-[#E4EAE1] pt-4 text-[10px] leading-5 text-[#7F8E81]">Marketing workflow follows the SLBI Growth & Security OS roadmap. No invented reach, consent, AI generation or automatic publishing is reported.</footer>
+      <footer className="border-t border-[#E7E7EC] pt-4 text-[10px] leading-5 text-[#777780]">Marketing workflow follows the SLBI Growth & Security OS roadmap. No invented reach, consent, AI generation or automatic publishing is reported.</footer>
     </div>
   );
 }
