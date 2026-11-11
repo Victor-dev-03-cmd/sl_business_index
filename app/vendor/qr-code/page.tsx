@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { QRCodeCanvas } from 'qrcode.react';
+import { QRCodeCanvas, QRCodeSVG } from 'qrcode.react';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import IconsaxIcon from '../components/IconsaxIcon';
@@ -42,6 +42,7 @@ export default function VendorQRStudioPage(){
   const [caption,setCaption]=useState('SCAN TO VIEW OUR BUSINESS');
   const canvasRef=useRef<HTMLCanvasElement>(null);
   const posterRef=useRef<HTMLDivElement>(null);
+  const svgRef=useRef<SVGSVGElement>(null);
   const business=businesses.find(b=>b.id===selectedId)||null;
   const chosenTone=tones.find(t=>t.name===tone)||tones[0];
   const directUrl='https://www.slbusinessindex.com/business/'+encodeURIComponent(business?.slug||business?.id||'');
@@ -89,13 +90,13 @@ export default function VendorQRStudioPage(){
       else await copyLink();
     }catch(e){if(!(e instanceof Error&&e.name==='AbortError'))toast.error('Unable to share link.');}
   };
-  const exportPNG=()=>{
+  const renderPosterCanvas=():HTMLCanvasElement|null=>{
     const source=canvasRef.current;
-    if(!source||!assigned||!business)return;
+    if(!source||!assigned||!business)return null;
     const scale=2,margin=42;
     const width=760,height=format==='card'?550:940;
     const image=document.createElement('canvas');image.width=width*scale;image.height=height*scale;
-    const ctx=image.getContext('2d');if(!ctx)return;
+    const ctx=image.getContext('2d');if(!ctx)return null;
     ctx.scale(scale,scale);ctx.fillStyle='#ffffff';ctx.fillRect(0,0,width,height);
     ctx.fillStyle=chosenTone.accent;ctx.fillRect(0,0,width,format==='window'?24:12);
     ctx.fillStyle=chosenTone.fg;ctx.textAlign='center';
@@ -114,8 +115,45 @@ export default function VendorQRStudioPage(){
     ctx.fillText(caption.slice(0,64),width/2,top+qrDimension+66,width-2*margin);
     if(includeLink){ctx.font='16px Arial, sans-serif';ctx.fillStyle='#647768';ctx.fillText(qrUrl,width/2,top+qrDimension+106,width-2*margin);}
     ctx.font='13px Arial, sans-serif';ctx.fillStyle='#8A9E90';ctx.fillText('Powered by SLBusinessIndex.com',width/2,height-30);
-    const a=document.createElement('a');a.href=image.toDataURL('image/png');a.download='slbi-'+safeFileName(business.name)+'-'+format+'-'+size+'.png';a.click();
-    toast.success('Print-quality PNG downloaded.');
+    return image;
+  };
+  const exportPNG=()=>{
+    const image=renderPosterCanvas();
+    if(!image||!business)return;
+    const a=document.createElement('a');
+    a.href=image.toDataURL('image/png');
+    a.download='slbi-'+safeFileName(business.name)+'-'+format+'-'+size+'.png';
+    a.click();
+    toast.success('Print-ready PNG downloaded.');
+  };
+  const exportSVG=()=>{
+    // Export an independent vector QR with no external image dependencies.
+    // It remains a scannable, resolution-independent QR for professional print.
+    if(!svgRef.current||!assigned||!business)return;
+    const svg=svgRef.current.cloneNode(true) as SVGSVGElement;
+    svg.setAttribute('xmlns','http://www.w3.org/2000/svg');
+    svg.setAttribute('width','1024');
+    svg.setAttribute('height','1024');
+    const xml=new XMLSerializer().serializeToString(svg);
+    const url=URL.createObjectURL(new Blob([xml],{type:'image/svg+xml;charset=utf-8'}));
+    const a=document.createElement('a');a.href=url;a.download='slbi-'+safeFileName(business.name)+'-qr.svg';a.click();
+    requestAnimationFrame(()=>URL.revokeObjectURL(url));
+    toast.success('Vector QR downloaded — scan test before bulk printing.');
+  };
+  const exportPDF=async()=>{
+    const image=renderPosterCanvas();
+    if(!image||!business)return;
+    try{
+      const {jsPDF}=await import('jspdf');
+      const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+      const margin=12,pageWidth=210,pageHeight=297;
+      const maxWidth=pageWidth-2*margin,maxHeight=pageHeight-2*margin;
+      const factor=Math.min(maxWidth/image.width,maxHeight/image.height);
+      const width=image.width*factor,height=image.height*factor;
+      doc.addImage(image.toDataURL('image/png'),'PNG',(pageWidth-width)/2,(pageHeight-height)/2,width,height,undefined,'FAST');
+      doc.save('slbi-'+safeFileName(business.name)+'-'+format+'-print.pdf');
+      toast.success('A4 print-ready PDF downloaded.');
+    }catch{toast.error('PDF export unavailable on this browser. Try PNG instead.');}
   };
   const printCard=()=>{
     if(!assigned)return;
@@ -134,7 +172,7 @@ export default function VendorQRStudioPage(){
     <div className="grid gap-3 sm:grid-cols-3">{[
       ['Linked listings',String(businesses.length),'Your owned directory profiles','shop'],
       ['QR status',busy?'Checking…':assigned?'Assigned':'Not assigned','Assigned to selected business','scan-barcode'],
-      ['Export','PNG · Print','High-resolution download options','document-download'],
+      ['Export','PNG · SVG · PDF','Print and vector export options','document-download'],
     ].map(item=><div key={item[0]} className={panel+' flex items-start justify-between p-5'}><div><p className="text-[10px] font-bold text-[#748A7A]">{item[0]}</p><p className="mt-2 text-[22px] font-bold text-[#234934]">{item[1]}</p><p className="mt-1 text-[10px] text-[#8B9B8F]">{item[2]}</p></div><span className="bg-[#E8F2E9] p-2.5 text-[#397750]"><IconsaxIcon name={item[3]} size={19}/></span></div>)}</div>
     {!businesses.length?<section className={panel+' space-y-3 p-8'}><h2 className="text-lg font-bold">Start with a business listing</h2><p className="text-[12px] text-[#748978]">Register or claim an owned business before assigning a QR code.</p><Link className="inline-flex bg-[#255C3E] px-4 py-3 text-xs font-bold text-white" href="/register-business">Register business</Link></section>:
     <div className="grid items-start gap-5 xl:grid-cols-[330px_minmax(0,1fr)_250px]">
@@ -181,14 +219,20 @@ export default function VendorQRStudioPage(){
                 fgColor={chosenTone.fg} bgColor="#FFFFFF"
                 imageSettings={includeLogo?{src:'/slbi-mark.svg',width:42,height:42,excavate:true}:undefined}/>
             </div>
+            {/* Dedicated QR-only SVG for crisp vector export, without external logo assets. */}
+            <div className="pointer-events-none absolute -left-[9999px] h-0 w-0 overflow-hidden" aria-hidden="true">
+              <QRCodeSVG ref={svgRef} value={qrUrl} size={1024} level="H" marginSize={2} fgColor={chosenTone.fg} bgColor="#FFFFFF"/>
+            </div>
             <p className="mt-6 break-words text-[13px] font-bold tracking-[.06em]" style={{color:chosenTone.fg}}>{caption}</p>
             {includeLink&&<p className="mt-3 max-w-full break-all text-[10px] leading-5 text-[#7D9382]">{qrUrl}</p>}
             <p className="mt-7 text-[9px] font-medium uppercase tracking-[.12em] text-[#94A498]">Powered by SLBusinessIndex.com</p>
           </div>
           {assigned&&<p className="mt-5 text-[10px] font-medium text-[#718574]">Serial {assigned.serial_id} · Scan test required before printing in bulk</p>}
         </div>
-        <div className="grid gap-2 border-t border-[#E0E8E0] p-4 sm:grid-cols-3">
+        <div className="grid gap-2 border-t border-[#E0E8E0] p-4 sm:grid-cols-2 xl:grid-cols-5">
           <button type="button" disabled={!assigned} onClick={exportPNG} className="flex min-h-11 items-center justify-center gap-2 bg-[#245D3F] px-3 text-[12px] font-bold text-white disabled:opacity-40"><IconsaxIcon name="document-download" size={16} color="white"/> Download PNG</button>
+          <button type="button" disabled={!assigned} onClick={exportSVG} className="flex min-h-11 items-center justify-center gap-2 border border-[#D5E2D7] text-[12px] font-bold text-[#39694A] disabled:opacity-40"><IconsaxIcon name="document-download" size={16}/> Download SVG</button>
+          <button type="button" disabled={!assigned} onClick={()=>void exportPDF()} className="flex min-h-11 items-center justify-center gap-2 border border-[#D5E2D7] text-[12px] font-bold text-[#39694A] disabled:opacity-40"><IconsaxIcon name="document-download" size={16}/> Download PDF</button>
           <button type="button" disabled={!assigned} onClick={printCard} className="flex min-h-11 items-center justify-center gap-2 border border-[#D5E2D7] text-[12px] font-bold text-[#39694A] disabled:opacity-40"><IconsaxIcon name="document-download" size={16}/> Print layout</button>
           <button type="button" onClick={()=>void copyLink()} className="flex min-h-11 items-center justify-center gap-2 border border-[#D5E2D7] text-[12px] font-bold text-[#39694A]"><IconsaxIcon name="document-download" size={16}/> Copy link</button>
         </div>
