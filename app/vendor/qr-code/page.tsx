@@ -40,7 +40,6 @@ export default function VendorQRStudioPage(){
   const [includeLink,setIncludeLink]=useState(true);
   const [includeLogo,setIncludeLogo]=useState(true);
   const [caption,setCaption]=useState('SCAN TO VIEW OUR BUSINESS');
-  const [readyToPrint,setReadyToPrint]=useState(false);
   const canvasRef=useRef<HTMLCanvasElement>(null);
   const posterRef=useRef<HTMLDivElement>(null);
   const business=businesses.find(b=>b.id===selectedId)||null;
@@ -119,8 +118,8 @@ export default function VendorQRStudioPage(){
     toast.success('Print-quality PNG downloaded.');
   };
   const printCard=()=>{
-    if(!assigned)return;setReadyToPrint(true);
-    requestAnimationFrame(()=>requestAnimationFrame(()=>{window.print();setReadyToPrint(false)}));
+    if(!assigned)return;
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{window.print()}));
   };
   if(loading)return <div role="status" className={panel+' p-8 text-sm text-[#4B7459]'}>Loading QR workspace…</div>;
   if(!signedIn)return <div className={panel+' p-8 text-sm'}>Sign in to access your QR Studio. <Link href="/login?redirect=/vendor/qr-code" className="font-bold text-[#286846] underline">Sign in</Link></div>;
@@ -178,7 +177,7 @@ export default function VendorQRStudioPage(){
           <div ref={posterRef} id="slbi-qr-print-area" className={'flex w-full flex-col items-center border border-[#E2E9E0] bg-white px-5 py-10 text-center shadow-[0_15px_40px_rgba(24,54,36,.10)] '+(format==='card'?'max-w-[460px]':'max-w-[385px]')} style={{borderTop:'7px solid '+chosenTone.accent}}>
             {includeTitle&&<div className="w-full"><h3 className="break-words text-[20px] font-extrabold leading-[1.3]" style={{color:chosenTone.fg}}>{business?.name}</h3><p className="mt-2 text-[9px] font-semibold uppercase tracking-[.17em] text-[#86988A]">SL Business Index · Business Profile</p></div>}
             <div className="mt-7 border border-[#EBEFE9] bg-white p-3">
-              <QRCodeCanvas ref={canvasRef} value={qrUrl} level="H" size={Math.min(size,350)} marginSize={2}
+              <QRCodeCanvas ref={canvasRef} value={qrUrl} level="H" size={size} marginSize={2} style={{display:"block",width:"min(320px, 100%)",height:"auto"}}
                 fgColor={chosenTone.fg} bgColor="#FFFFFF"
                 imageSettings={includeLogo?{src:'/slbi-mark.svg',width:42,height:42,excavate:true}:undefined}/>
             </div>
