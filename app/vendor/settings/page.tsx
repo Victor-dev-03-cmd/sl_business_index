@@ -384,7 +384,7 @@ export default function SettingsPage() {
                 {key:'marketing_tips',title:'Growth tips',text:'Optional educational marketing updates.',icon:Bell},
               ] as const).map(item=><label key={item.key} className="flex cursor-pointer items-center gap-3 p-4 sm:p-5">
                 <span className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-[7px] bg-[#FFF0E2] text-[#C75D06] sm:flex"><item.icon size={18}/></span>
-                <span className="min-w-0 flex-1"><span className="block text-[12px] font-bold text-[#24242A]">{item.title</span><span className="mt-1 block text-[11px] leading-5 text-[#82828B]">{item.text</span></span>
+                <span className="min-w-0 flex-1"><span className="block text-[12px] font-bold text-[#24242A]">{item.title}</span><span className="mt-1 block text-[11px] leading-5 text-[#82828B]">{item.text}</span></span>
                 <input type="checkbox" checked={prefs[item.key]} disabled={!prefsAvailable} onChange={e=>setPrefs(v=>({...v,[item.key]:e.target.checked}))} className="h-5 w-5 shrink-0 accent-[#FF7900]" aria-label={item.title}/>
               </label>)}
             </div>
