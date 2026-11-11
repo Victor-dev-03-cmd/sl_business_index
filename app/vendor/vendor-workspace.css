@@ -507,3 +507,103 @@
 @media(prefers-reduced-motion:reduce){
   .vendor-workspace-v6 .vendor-dashboard-shortcut:hover {transform:none;}
 }
+
+
+/* Vendor Portal V7 — consistent editorial shell across owner pages.
+   Restrained corners are reserved for cards, inputs, dropdowns and actions;
+   status colors and QR artwork are deliberately left unchanged. */
+.vendor-workspace-v6 .vendor-page-v7 {
+  color:#29292E;
+  font-variant-numeric:tabular-nums;
+}
+.vendor-workspace-v6 .vendor-page-v7 .vendor-owner-heading {
+  background:#FFFFFF;
+  background-image:none;
+  border:1px solid #E7E7EA;
+  border-left:3px solid #FF7900;
+  border-radius:10px;
+  box-shadow:0 8px 24px rgba(25,25,30,.028);
+}
+.vendor-workspace-v6 .vendor-page-v7 .vendor-owner-heading h1 {
+  color:#1B1B1F;
+  font-weight:760;
+  letter-spacing:-.04em;
+}
+.vendor-workspace-v6 .vendor-page-v7 .vendor-owner-heading :is(button,a) {
+  border-radius:6px;
+}
+.vendor-workspace-v6 .vendor-page-v7 .vendor-premium-card,
+.vendor-workspace-v6 .vendor-page-v7 .vendor-premium-panel {
+  border-color:#E8E8EC;
+  border-radius:10px;
+  box-shadow:0 5px 22px rgba(27,27,32,.026);
+}
+.vendor-workspace-v6 .vendor-page-v7 .vendor-premium-card:hover {
+  border-color:#DCDCE2;
+}
+.vendor-workspace-v6 .vendor-page-v7 .vendor-premium-header {
+  border:1px solid #37373D;
+  border-radius:10px;
+  background:linear-gradient(110deg,#1D1D20 0%,#303035 100%);
+  box-shadow:0 9px 26px rgba(25,25,31,.085);
+}
+.vendor-workspace-v6 .vendor-page-v7 .vendor-premium-header::after {
+  display:none;
+}
+.vendor-workspace-v6 .vendor-page-v7 :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea) {
+  border-radius:6px;
+  max-width:100%;
+}
+.vendor-workspace-v6 .vendor-page-v7 :is(input,textarea,select):focus-visible {
+  outline:2px solid #FF7900;
+  outline-offset:1px;
+}
+.vendor-workspace-v6 .vendor-page-v7 table {
+  font-variant-numeric:tabular-nums;
+  border-collapse:separate;
+  border-spacing:0;
+}
+.vendor-workspace-v6 .vendor-page-v7 table thead {
+  background:#FAFAFB;
+}
+.vendor-workspace-v6 .vendor-page-v7 table thead th {
+  color:#66666F;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.015em;
+}
+.vendor-workspace-v6 .vendor-page-v7 table tbody tr {
+  transition:background-color .14s ease;
+}
+.vendor-workspace-v6 .vendor-page-v7 table tbody tr:hover {
+  background:#FFF9F3;
+}
+.vendor-workspace-v6 .vendor-page-v7 table td {
+  border-bottom-color:#F0F0F2;
+}
+.vendor-workspace-v6 .vendor-dashboard-v6 .vendor-overview-heading {
+  border-radius:12px;
+}
+.vendor-workspace-v6 .vendor-dashboard-v6 .vendor-executive-card,
+.vendor-workspace-v6 .vendor-dashboard-v6 .vendor-dashboard-shortcut {
+  border-radius:10px;
+}
+.vendor-workspace-v6 .vendor-settings-v5 .vendor-settings-header,
+.vendor-workspace-v6 .vendor-settings-v5 .vendor-setting-section,
+.vendor-workspace-v6 .vendor-settings-v5 .vendor-settings-navigation {
+  border-radius:9px;
+}
+@media(max-width:639px) {
+  .vendor-workspace-v6 .vendor-page-v7 .vendor-owner-heading {
+    border-radius:8px;
+  }
+  .vendor-workspace-v6 .vendor-page-v7 .vendor-premium-card,
+  .vendor-workspace-v6 .vendor-page-v7 .vendor-premium-panel {
+    border-radius:8px;
+  }
+}
+@media(prefers-reduced-motion:reduce) {
+  .vendor-workspace-v6 .vendor-page-v7 table tbody tr {
+    transition:none;
+  }
+}
