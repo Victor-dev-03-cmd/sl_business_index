@@ -92,6 +92,9 @@ export default function VendorGrowthCenterPage() {
             <p className="text-[12px] text-slate-500">Manage growth credits, monitor usage and discover upcoming marketing tools.</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <Link href="/vendor/insights" className="inline-flex h-9 items-center gap-2 rounded-lg border border-[#C7DCD0] bg-[#EBF6EE] px-3 text-xs font-bold text-[#256143] transition hover:bg-[#DCF0E2]">
+              <IconsaxIcon name="status-up" size={16} /> Growth insights
+            </Link>
             <span className="flex h-9 items-center gap-2 rounded-lg border border-[#dfebe4] bg-[#f1f7f2] px-3 text-[11px] font-semibold text-[#37694c]">
               <span className="h-1.5 w-1.5 rounded-full bg-[#329368]" /> {wallet?.plan_name || 'Basic'} plan
             </span>
