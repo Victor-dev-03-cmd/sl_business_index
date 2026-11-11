@@ -47,7 +47,7 @@ jobs:
             --query-mode canonical \
             --output semantic-v3-canonical-report.json \
             --export-vectors semantic-v3-business-vectors.json \
-            --export-beta-fixture semantic-v3-beta-vectors.json
+            --export-beta-fixture semantic-v3-beta-vectors.ts
       - name: Upload research report
         if: always()
         uses: actions/upload-artifact@v4
@@ -56,6 +56,6 @@ jobs:
           path: |
             semantic-v3-*-report.json
             semantic-v3-business-vectors.json
-            semantic-v3-beta-vectors.json
+            semantic-v3-beta-vectors.ts
           if-no-files-found: ignore
           retention-days: 7
