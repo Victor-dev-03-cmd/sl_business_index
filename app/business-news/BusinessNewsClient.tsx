@@ -11,9 +11,9 @@ import { useSession } from "@/app/components/SessionContext";
 import VerifiedBadge from "@/app/components/VerifiedBadge";
 import ReportModal from "@/app/components/ReportModal";
 import {
-  ArrowDown, ArrowRight, ArrowUpRight, BookOpen, BriefcaseBusiness, Building2,
-  CalendarDays, ChevronDown, FileText, Flag, Image as ImageIcon, MapPin,
-  Megaphone, Newspaper, PenLine, Phone, Search, Share2, ShieldCheck, X,
+  ArrowDown, ArrowRight, ArrowUpRight, BookOpen, Building2,
+  CalendarDays, ChevronDown, Flag, Image as ImageIcon,
+  Megaphone, Newspaper, PenLine, Phone, Search, Share2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -64,7 +64,7 @@ function StoryImage({ post, lead = false }: { post: NewsPost; lead?: boolean }) 
   return <div className={"relative h-full w-full overflow-hidden bg-[#f2eee6] " + (post.content_format === "poster" ? "p-3" : "")}>
     <Image src={src} alt={"Illustration for " + post.title} fill
       sizes={lead ? "(max-width: 900px) 100vw, 46vw" : "(max-width: 640px) 100vw, (max-width: 1280px) 320px, 360px"}
-      quality={65} loading="lazy" className={post.content_format === "poster" ? "object-contain p-3" : "object-cover"} />
+      quality={65} loading={lead ? "eager" : "lazy"} fetchPriority={lead ? "high" : "auto"} className={post.content_format === "poster" ? "object-contain p-3" : "object-cover"} />
     {(post.images?.length || 0) > 1 && <span className="absolute bottom-3 right-3 rounded-md bg-[#132a20]/90 px-2.5 py-1.5 text-[10px] font-bold text-white">
       +{(post.images?.length || 1) - 1} photos
     </span>}
@@ -251,7 +251,7 @@ export default function BusinessNewsClient() {
       toast.error("Unable to share this story.");
     }
   };
-  const day = new Date().toLocaleDateString("en-LK", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  const day = new Date().toLocaleDateString("en-LK", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Colombo" });
 
   return <div className="min-h-screen bg-[#f8f7f2] pb-24 text-[#24372d]">
     <div className="mx-auto max-w-[1480px] px-4 sm:px-7 lg:px-10">
