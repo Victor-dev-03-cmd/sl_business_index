@@ -74,7 +74,38 @@ r=await http("/storage/v1/object/sign/verification-docs/"+docPath,{
  jwt:a,method:"POST",body:{expiresIn:60}});
 ok(r,"owner signed private document");
 assert.ok(r.data.signedURL || r.data.signedUrl,"Authorized signed URL expected");
+r=await http("/storage/v1/object/sign/verification-docs/"+docPath,{
+ jwt:b,method:"POST",body:{expiresIn:60}});
+assert.ok(r.status>=400,"Vendor B cannot sign Vendor A's private document");
+r=await http("/storage/v1/object/verification-docs/"+users.vendorB.id+"/"+businesses.approvedA+"/forged.txt",{
+ jwt:a,method:"POST",body:"Synthetic cross-owner attempt",raw:true,contentType:"text/plain"});
+assert.ok(r.status>=400,"Vendor A cannot upload using Vendor B's private storage folder");
 log("PASS: real Supabase Storage private bucket, owner upload, admin visibility, signed URL");
 r=await http("/rest/v1/profiles?select=id,role",{jwt:customer});
 ok(r,"regular customer profile");assert.equal(r.data.length,1);
+const newEmail="slbi-p0-new-signup@example.test";
+const newPassword="TemporaryP0_Signup_2026!!";
+r=await http("/auth/v1/signup",{method:"POST",body:{email:newEmail,password:newPassword}});
+const created=ok(r,"real Supabase sign-up",[200,201]);
+assert.ok(created.user?.id,"Signup must create auth identity");
+let newToken=created.access_token;
+if(!newToken){
+ const confirm=await http("/auth/v1/admin/users/"+created.user.id,{
+  role:"service",method:"PUT",body:{email_confirm:true}});
+ ok(confirm,"confirm synthetic signup account",[200]);
+ const signed=await http("/auth/v1/token?grant_type=password",{
+  method:"POST",body:{email:newEmail,password:newPassword}});
+ newToken=ok(signed,"signup login").access_token;
+}
+assert.ok(newToken,"New user must authenticate");
+r=await http("/rest/v1/profiles",{jwt:newToken,method:"POST",body:{
+ id:created.user.id,email:newEmail
+},headers:{Prefer:"return=representation"}});
+ok(r,"signup owner default profile");
+assert.equal(r.data[0]?.role,"customer","Untrusted signup cannot choose elevated account roles");
+r=await http("/rest/v1/profiles",{jwt:newToken,method:"POST",body:{
+ id:created.user.id,email:newEmail,role:"admin"
+},headers:{Prefer:"return=representation"}});
+assert.ok(r.status>=400,"Untrusted signup cannot create admin profile");
+log("PASS: real Auth signup, owner profile creation and role escalation rejection");
 log("PASS: 4 authenticated accounts and anonymous API access isolation");
