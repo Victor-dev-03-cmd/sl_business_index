@@ -36,6 +36,11 @@ test('customer enquiry UI preserves existing mobile-era fallback until migration
   assert.match(form,/<Turnstile/);
   assert.match(form,/NEXT_PUBLIC_SECURE_LEADS_ENABLED/);
   assert.match(form,/turnstile_token: turnstileToken/);
+  assert.ok(form.includes('const enquiryRequestRef = useRef<{ fingerprint: string; id: string } | null>(null);'));
+  assert.ok(form.includes('enquiryRequestRef.current = { fingerprint, id: crypto.randomUUID() };'));
+  assert.ok(form.includes('request_id: enquiryRequestRef.current.id'));
+  assert.ok(!form.includes('"lead_form_submit",'));
+
   assert.match(form,/supabase\.from\("leads"\)\.insert/);
 });
 test('secure lead endpoint fails closed and validates real Turnstile server-side',()=>{

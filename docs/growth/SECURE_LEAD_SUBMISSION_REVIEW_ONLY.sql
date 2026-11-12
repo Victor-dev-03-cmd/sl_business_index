@@ -51,6 +51,8 @@ declare
   v_business_count integer;
 begin
   if p_request_id is null or p_business_id is null
+    or p_name is null or p_email is null
+    or p_phone is null or p_message is null
     or p_rate_bucket is null or p_rate_bucket !~ '^[a-f0-9]{64}$'
     or p_business_bucket is null or p_business_bucket !~ '^[a-f0-9]{64}$'
     or p_rate_bucket = p_business_bucket

@@ -1,0 +1,72 @@
+name: P0 Supabase Full Stack — Cloud Auth Storage Smoke
+on:
+  push:
+    branches:
+      - security/p0-foundation-prepared-20261112
+    paths:
+      - '.github/workflows/p0-supabase-cloud-stack.yml'
+      - 'tests/p0/fullstack/**'
+      - 'supabase/migrations/20261112193546_p0_security_foundation.sql'
+permissions:
+  contents: read
+jobs:
+  supabase-cloud-stack:
+    name: Real Supabase Auth + Storage + PostgREST on GitHub runner
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install pinned Supabase CLI
+        uses: supabase/setup-cli@v3
+        with:
+          version: 2.120.0
+      - name: Inspect local-stack CLI options
+        run: |
+          supabase --version
+          supabase start --help | head -65
+      - name: Initialize isolated test stack (not production-linked)
+        run: |
+          mkdir -p .p0-cloud
+          cd .p0-cloud
+          supabase init --yes
+      - name: Boot minimal real Supabase services in cloud Docker
+        run: |
+          cd .p0-cloud
+          supabase start -x studio -x realtime -x imgproxy -x edge-runtime -x logflare -x vector -x supavisor -x mailpit -x postgres-meta
+      - name: Verify Auth REST and Storage REST endpoints
+        run: |
+          cd .p0-cloud
+          supabase status -o json > /tmp/p0-status.json
+          node -e '
+            const fs=require("fs");
+            const raw=JSON.parse(fs.readFileSync("/tmp/p0-status.json","utf8"));
+            console.log("Supabase services reported:", Object.keys(raw));
+          '
+          curl -fsS http://127.0.0.1:54321/auth/v1/health > /dev/null
+          code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:54321/storage/v1/bucket)
+          echo "Storage API reachable (unauthenticated HTTP $code)"
+          test "$code" -ge 200 && test "$code" -lt 500
+      - name: Bootstrap synthetic local Supabase policies and private Storage bucket
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -v ON_ERROR_STOP=1 -f tests/p0/fullstack/bootstrap.sql
+      - name: Create four synthetic accounts through actual Supabase Auth
+        run: node tests/p0/fullstack/seed.mjs
+      - name: Install existing business approval and role guards
+        env:
+          PGPASSWORD: postgres
+        run: psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/migrations/20261110011000_growth_security_guards.sql
+      - name: Apply EXACT consolidated P0 security release in one transaction
+        env:
+          PGPASSWORD: postgres
+        run: psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/migrations/20261112193546_p0_security_foundation.sql
+      - name: Verify real Supabase JWT, RLS, verification document permissions, Auth and APIs
+        run: node tests/p0/fullstack/verify.mjs
+      - name: Tear down ephemeral stack
+        if: always()
+        run: |
+          cd .p0-cloud
+          supabase stop --no-backup || true

@@ -56,6 +56,19 @@ begin
     return false;
   end if;
 
+  -- Serialize retries for a request UUID before consuming rate quota.
+  -- A duplicate with different business/type/channel must never be accepted.
+  perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended(p_event_id::text,0));
+  if exists(select 1 from public.analytics_logs where id=p_event_id) then
+    return exists (
+      select 1 from public.analytics_logs
+      where id=p_event_id and business_id=p_business_id
+        and event_type=p_event_type
+        and metadata->>'channel'=p_channel
+        and metadata->>'ingestion'='growth-v1'
+    );
+  end if;
+
   select exists (
     select 1 from public.businesses
     where id = p_business_id and status = 'approved'

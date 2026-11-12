@@ -1,0 +1,79 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+const root = "../docs/growth/p0/";
+const read = file => readFileSync(new URL(root + file, import.meta.url), "utf8");
+const staged = read("P0_SECURITY_STAGE_REVIEW_ONLY.sql");
+const assertions = read("P0_SECURITY_STAGE_ASSERTIONS.sql");
+const rollback = read("P0_GUARD_CONTINGENCY_STAGING_ONLY.sql");
+const runbook = read("README.md");
+
+test("stage changes never live in auto-applied migrations and retain required policies",()=>{
+  assert.match(staged,/REVIEW ONLY/);
+  assert.match(staged,/DROP POLICY IF EXISTS "Temporary Public View" ON public\.businesses/);
+  assert.match(staged,/Approved businesses public/);
+  assert.match(staged,/Owners view own/);
+  assert.match(staged,/Admins can manage all businesses/);
+  assert.match(staged,/Vendors manage own verifications/);
+  assert.match(staged,/FOR INSERT TO authenticated[\s\S]*status='pending'/);
+  assert.match(staged,/FOR SELECT TO authenticated/);
+});
+test("new privileged functions are not anonymous RPC endpoints",()=>{
+  assert.match(staged,/SECURITY DEFINER SET search_path=''/g);
+  assert.match(staged,/REVOKE ALL ON FUNCTION public\.slbi_p0_guard_profile_verification\(\)/);
+  assert.match(staged,/REVOKE ALL ON FUNCTION public\.slbi_p0_guard_business_review_audit\(\)/);
+  assert.match(assertions,/has_function_privilege\('anon',oid,'EXECUTE'\)/);
+});
+test("legacy leads/analytics policies and counters remain untouched until coordinated cutover",()=>{
+  assert.doesNotMatch(staged,/DROP POLICY IF EXISTS "Anyone can insert (leads|logs)"/);
+  assert.doesNotMatch(staged,/DROP TABLE|TRUNCATE TABLE|DELETE FROM public\./i);
+  assert.doesNotMatch(staged,/OLD\.views|OLD\.calls|OLD\.rating|OLD\.reviews_count/);
+  assert.match(runbook,/legacy Expo\/mobile/);
+  assert.match(runbook,/server-only key/);
+});
+test("rollback cannot restore known anonymous-public broad read",()=>{
+  assert.doesNotMatch(rollback,/CREATE POLICY "Temporary Public View"/);
+  assert.doesNotMatch(rollback,/CREATE POLICY "Vendors manage own verifications"/);
+  assert.match(rollback,/DROP TRIGGER IF EXISTS slbi_p0_profile_review_guard/);
+  assert.match(runbook,/NO-GO/);
+});
+
+test("stage-only profile privacy candidate removes anonymous PII read without breaking owner/admin workflows",()=>{
+  const privacy=read("P0_PROFILE_PRIVACY_STAGE_REVIEW_ONLY.sql");
+  const checks=read("P0_PROFILE_PRIVACY_STAGE_ASSERTIONS.sql");
+  const fallback=read("P0_PROFILE_PRIVACY_CONTINGENCY_STAGING_ONLY.sql");
+  assert.match(privacy,/DROP POLICY IF EXISTS "Profiles viewable by all" ON public\.profiles/);
+  assert.doesNotMatch(privacy,/REVOKE SELECT ON public\.profiles FROM anon/);
+  assert.match(privacy,/slbi_p0_internal\.current_actor_is_staff/);
+  assert.match(privacy,/SECURITY DEFINER SET search_path=''/);
+  assert.match(privacy,/REVOKE ALL ON FUNCTION slbi_p0_internal\.current_actor_is_staff\(\)/);
+  assert.match(privacy,/FOR SELECT TO authenticated/);
+  assert.match(privacy,/FOR UPDATE TO authenticated/);
+  assert.match(checks,/FAIL: public unrestricted profiles SELECT remains/);
+  assert.doesNotMatch(fallback,/CREATE POLICY "Profiles viewable by all"/);
+  assert.match(runbook,/Supabase branching requires/);
+});
+
+
+test("promoted atomic release migration matches staging candidate SQL", () => {
+  const candidate = read("P0_INTEGRATED_RELEASE_CANDIDATE_REVIEW_ONLY.sql");
+  const promoted = readFileSync(
+    new URL("../supabase/migrations/20261112193546_p0_security_foundation.sql",import.meta.url),"utf8"
+  );
+  const normalize = (source) => source
+    .split("\n").filter((line) => !/^\s*--/.test(line))
+    .map((line) => line.trim()).filter(Boolean).join("\n");
+  assert.equal(normalize(promoted),normalize(candidate));
+  assert.equal((promoted.match(/^BEGIN;$/gm)||[]).length,1);
+  assert.equal((promoted.match(/^COMMIT;$/gm)||[]).length,1);
+});
+
+test("production P0 health probe uses only privileged server env and read-only invalid RPC", () => {
+  const source = readFileSync(new URL("../app/api/health/p0/route.ts",import.meta.url),"utf8");
+  assert.match(source,/process\.env\.SUPABASE_SECRET_KEY/);
+  assert.match(source,/process\.env\.SUPABASE_SERVICE_ROLE_KEY/);
+  assert.doesNotMatch(source,/NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY/);
+  assert.match(source,/p_event_id: null/);
+  assert.match(source,/data === false/);
+  assert.match(source,/Response\.json\(\{ ready, component: 'p0' \}/);
+});

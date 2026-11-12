@@ -1,0 +1,22 @@
+name: P0 Release — Generate Official Migration Name
+on:
+  push:
+    branches: [security/p0-foundation-prepared-20261112]
+    paths: ['.github/workflows/p0-migration-name.yml']
+permissions:
+  contents: read
+jobs:
+  filename:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: supabase/setup-cli@v3
+        with:
+          version: 2.120.0
+      - name: Create the official migration scaffold
+        run: |
+          supabase migration new p0_security_foundation
+          find supabase/migrations -maxdepth 1 -name '*p0_security_foundation.sql' -print

@@ -1,0 +1,209 @@
+name: P0 Security Foundation — Isolated PostgreSQL Docker Checks
+on:
+  push:
+    branches:
+      - security/p0-foundation-prepared-20261112
+    paths:
+      - '.github/workflows/p0-security-sandbox.yml'
+      - 'docs/growth/p0/**'
+      - 'supabase/migrations/20261112193546_p0_security_foundation.sql'
+      - 'tests/p0/**'
+      - 'supabase/migrations/20261112193546_p0_security_foundation.sql'
+      - 'tests/p0SecurityFoundationPrepare.test.mjs'
+      - 'tests/growthSecureLeads.test.mjs'
+      - 'app/api/health/p0/route.ts'
+      - 'app/business/[slug]/BusinessDetailsClient.tsx'
+      - 'supabase/migrations/20261110010000_growth_os_credit_foundation.sql'
+      - 'supabase/migrations/20261110011000_growth_security_guards.sql'
+      - 'docs/growth/SECURE_EVENT_INGESTION_REVIEW_ONLY.sql'
+      - 'docs/growth/SECURE_LEAD_SUBMISSION_REVIEW_ONLY.sql'
+permissions:
+  contents: read
+jobs:
+  p0-rls-role-matrix:
+    name: Isolated RLS + approval + verification role matrix
+    runs-on: ubuntu-latest
+    timeout-minutes: 13
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: slbi_p0_security
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d slbi_p0_security"
+          --health-interval 5s --health-timeout 5s --health-retries 15
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: slbi_p0_security
+    steps:
+      - name: Checkout source (read-only)
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Provision synthetic Supabase Auth/RLS fixtures
+        run: psql -v ON_ERROR_STOP=1 -f tests/p0/security_bootstrap.sql
+      - name: Install existing approved privilege triggers
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261110011000_growth_security_guards.sql
+      - name: Apply candidate security patch ONLY in disposable Docker database
+        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p0/P0_SECURITY_STAGE_REVIEW_ONLY.sql
+      - name: Verify policy and trigger structure
+        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p0/P0_SECURITY_STAGE_ASSERTIONS.sql
+      - name: Exercise anonymous/vendor A/vendor B/admin/signup role matrix
+        run: psql -v ON_ERROR_STOP=1 -f tests/p0/verify_security.sql
+      - name: Apply privacy-hardened profiles RLS in isolated Docker database
+        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p0/P0_PROFILE_PRIVACY_STAGE_REVIEW_ONLY.sql
+      - name: Verify restricted profile policy and protected internal helper
+        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p0/P0_PROFILE_PRIVACY_STAGE_ASSERTIONS.sql
+      - name: Test private profiles, staff, signup and public discovery regressions
+        run: psql -v ON_ERROR_STOP=1 -f tests/p0/verify_profile_privacy.sql
+
+  p0-wallet:
+    name: Isolated GrowthOS wallet transaction tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 13
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: slbi_p0_wallet
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d slbi_p0_wallet"
+          --health-interval 5s --health-timeout 5s --health-retries 15
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: slbi_p0_wallet
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Provision synthetic users and billing prerequisites
+        run: psql -v ON_ERROR_STOP=1 -f tests/billing_v2/bootstrap.sql
+      - name: Apply existing GrowthOS credit migration in Docker only
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261110010000_growth_os_credit_foundation.sql
+      - name: Validate wallet isolation, idempotency, expenditure and downgrade
+        run: psql -v ON_ERROR_STOP=1 -f tests/p0/verify_wallet.sql
+
+  p0-ingestion:
+    name: Isolated secure Leads + Analytics RPC integration tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: slbi_p0_ingestion
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d slbi_p0_ingestion"
+          --health-interval 5s --health-timeout 5s --health-retries 15
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: slbi_p0_ingestion
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Create synthetic auth, profiles and business fixtures
+        run: psql -v ON_ERROR_STOP=1 -f tests/p0/security_bootstrap.sql
+      - name: Prepare isolated analytics and CRM tables with legacy policies
+        run: psql -v ON_ERROR_STOP=1 -f tests/p0/ingestion_bootstrap.sql
+      - name: Install reviewed analytics event ingestion SQL
+        run: psql -v ON_ERROR_STOP=1 -f docs/growth/SECURE_EVENT_INGESTION_REVIEW_ONLY.sql
+      - name: Install reviewed verified leads SQL
+        run: psql -v ON_ERROR_STOP=1 -f docs/growth/SECURE_LEAD_SUBMISSION_REVIEW_ONLY.sql
+      - name: Test RPC grants, validation, dedupe, rate-limits and cross-vendor RLS
+        run: psql -v ON_ERROR_STOP=1 -f tests/p0/verify_ingestion.sql
+      - name: Stage compatible legacy mobile/web lead INSERT restrictions
+        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p0/P0_LEGACY_LEADS_STAGE_REVIEW_ONLY.sql
+      - name: Validate legacy submissions and negative abuse cases
+        run: psql -v ON_ERROR_STOP=1 -f tests/p0/verify_legacy_leads.sql
+
+  p0-source:
+    name: Source-only safety contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: TypeScript strip support and P0 source-contract tests
+        run: node --test tests/p0SecurityFoundationPrepare.test.mjs tests/growthSecureLeads.test.mjs
+
+  p0-typescript:
+    name: TypeScript validation — no Vercel build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install reproducibly from committed lockfile
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Typecheck application and P0 route changes
+        run: ./node_modules/.bin/tsc --noEmit --pretty false
+
+  p0-integrated-release:
+    name: Single-transaction P0 production release rehearsal
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: slbi_p0_integrated
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d slbi_p0_integrated"
+          --health-interval 5s --health-timeout 5s --health-retries 15
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: slbi_p0_integrated
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Create synthetic Auth and business fixture
+        run: psql -v ON_ERROR_STOP=1 -f tests/p0/security_bootstrap.sql
+      - name: Create synthetic lead and analytics fixture
+        run: psql -v ON_ERROR_STOP=1 -f tests/p0/ingestion_bootstrap.sql
+      - name: Create legacy billing and chat fixture
+        run: psql -v ON_ERROR_STOP=1 -f tests/p0/integrated_prerequisites.sql
+      - name: Install existing production authorization triggers
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261110011000_growth_security_guards.sql
+      - name: Apply EXACT integrated P0 release candidate in ONE transaction
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261112193546_p0_security_foundation.sql
+      - name: Verify all objects, ownership and privileged RPC grants
+        run: psql -v ON_ERROR_STOP=1 -f tests/p0/integrated_assertions.sql
