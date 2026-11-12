@@ -1,0 +1,96 @@
+name: P0 Security Foundation — Isolated PostgreSQL Docker Checks
+on:
+  push:
+    branches:
+      - security/p0-foundation-prepared-20261112
+    paths:
+      - '.github/workflows/p0-security-sandbox.yml'
+      - 'docs/growth/p0/**'
+      - 'tests/p0/**'
+      - 'tests/p0SecurityFoundationPrepare.test.mjs'
+      - 'supabase/migrations/20261110010000_growth_os_credit_foundation.sql'
+      - 'supabase/migrations/20261110011000_growth_security_guards.sql'
+permissions:
+  contents: read
+jobs:
+  p0-rls-role-matrix:
+    name: Isolated RLS + approval + verification role matrix
+    runs-on: ubuntu-latest
+    timeout-minutes: 13
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: slbi_p0_security
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d slbi_p0_security"
+          --health-interval 5s --health-timeout 5s --health-retries 15
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: slbi_p0_security
+    steps:
+      - name: Checkout source (read-only)
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Provision synthetic Supabase Auth/RLS fixtures
+        run: psql -v ON_ERROR_STOP=1 -f tests/p0/security_bootstrap.sql
+      - name: Install existing approved privilege triggers
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261110011000_growth_security_guards.sql
+      - name: Apply candidate security patch ONLY in disposable Docker database
+        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p0/P0_SECURITY_STAGE_REVIEW_ONLY.sql
+      - name: Verify policy and trigger structure
+        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p0/P0_SECURITY_STAGE_ASSERTIONS.sql
+      - name: Exercise anonymous/vendor A/vendor B/admin/signup role matrix
+        run: psql -v ON_ERROR_STOP=1 -f tests/p0/verify_security.sql
+
+  p0-wallet:
+    name: Isolated GrowthOS wallet transaction tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 13
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: slbi_p0_wallet
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d slbi_p0_wallet"
+          --health-interval 5s --health-timeout 5s --health-retries 15
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: slbi_p0_wallet
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Provision synthetic users and billing prerequisites
+        run: psql -v ON_ERROR_STOP=1 -f tests/billing_v2/bootstrap.sql
+      - name: Apply existing GrowthOS credit migration in Docker only
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261110010000_growth_os_credit_foundation.sql
+      - name: Validate wallet isolation, idempotency, expenditure and downgrade
+        run: psql -v ON_ERROR_STOP=1 -f tests/p0/verify_wallet.sql
+
+  p0-source:
+    name: Source-only safety contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: No dependencies, no network services
+        run: node --test tests/p0SecurityFoundationPrepare.test.mjs
