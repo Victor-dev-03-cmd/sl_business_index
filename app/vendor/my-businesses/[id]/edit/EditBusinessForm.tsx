@@ -14,6 +14,19 @@ import Link from 'next/link';
 const AddressAutocomplete = dynamic(() => import('@/components/AddressAutocomplete'), { ssr: false });
 const CategorySelector = dynamic(() => import('@/components/CategorySelector'), { ssr: false });
 
+const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+
+function validateBusinessImage(file: File): string | null {
+  if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
+    return 'Use a JPG, PNG or WebP image for business photos.';
+  }
+  if (file.size > MAX_IMAGE_BYTES || file.size === 0) {
+    return 'Business images must be non-empty and no larger than 5 MB.';
+  }
+  return null;
+}
+
 export default function EditBusinessForm({ business }: { business: Business }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -52,6 +65,13 @@ export default function EditBusinessForm({ business }: { business: Business }) {
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      const problem = validateBusinessImage(file);
+      if (problem) {
+        setError(problem);
+        e.target.value = '';
+        return;
+      }
+      setError(null);
       setLogo(file);
       const reader = new FileReader();
       reader.onloadend = () => setLogoPreview(reader.result as string);
@@ -62,6 +82,13 @@ export default function EditBusinessForm({ business }: { business: Business }) {
   const handleHoverImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      const problem = validateBusinessImage(file);
+      if (problem) {
+        setError(problem);
+        e.target.value = '';
+        return;
+      }
+      setError(null);
       setHoverImage(file);
       const reader = new FileReader();
       reader.onloadend = () => setHoverImagePreview(reader.result as string);
@@ -75,7 +102,24 @@ export default function EditBusinessForm({ business }: { business: Business }) {
     setError(null);
     setSuccess(false);
 
+    const newUploadPaths: string[] = [];
     try {
+      // Verify the owner BEFORE uploading any media. RLS remains the final
+      // database authorization boundary, even if client state is stale.
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) throw new Error('Please sign in again to edit this business.');
+      if (user.id !== business.owner_id) throw new Error('You can only edit your own business.');
+      if (businessName.trim().length < 2 || businessName.trim().length > 120) {
+        throw new Error('Enter a business name between 2 and 120 characters.');
+      }
+      if (!category.trim()) throw new Error('Please choose a business category.');
+      if (!phone.trim() || !email.trim()) throw new Error('Phone number and email are required.');
+      for (const file of [logo, hoverImage]) {
+        if (!file) continue;
+        const problem = validateBusinessImage(file);
+        if (problem) throw new Error(problem);
+      }
+
       let logoUrl = business.logo_url;
       if (logo) {
         const sanitizedName = sanitizeFilename(logo.name);
@@ -84,6 +128,7 @@ export default function EditBusinessForm({ business }: { business: Business }) {
             .from('business-logos')
             .upload(filePath, logo);
         if (uploadError) throw uploadError;
+        newUploadPaths.push(filePath);
         const { data: urlData } = supabase.storage.from('business-logos').getPublicUrl(filePath);
         logoUrl = urlData.publicUrl;
       }
@@ -96,14 +141,15 @@ export default function EditBusinessForm({ business }: { business: Business }) {
             .from('business-logos')
             .upload(filePath, hoverImage);
         if (uploadError) throw uploadError;
+        newUploadPaths.push(filePath);
         const { data: urlData } = supabase.storage.from('business-logos').getPublicUrl(filePath);
         hoverImageUrl = urlData.publicUrl;
       }
 
-      const { error: updateError } = await supabase
+      const { data: savedBusiness, error: updateError } = await supabase
         .from('businesses')
         .update({
-          name: businessName,
+          name: businessName.trim(),
           description,
           category,
           email,
@@ -122,18 +168,28 @@ export default function EditBusinessForm({ business }: { business: Business }) {
           // We don't update status here, as edits might need re-approval depending on your policy
           // For now, let's keep the status as is
         })
-        .eq('id', business.id);
+        .eq('id', business.id)
+        .eq('owner_id', user.id)
+        .select('id')
+        .maybeSingle();
 
       if (updateError) throw updateError;
+      if (!savedBusiness) throw new Error('Business edit was not saved. Please refresh and try again.');
 
       setSuccess(true);
       router.refresh();
       // Optional: Redirect back to list after a delay
       // setTimeout(() => router.push('/vendor/my-businesses'), 2000);
 
-    } catch (err: any) {
-      setError(err.message);
-      console.error(err);
+    } catch (err: unknown) {
+      // Avoid leaving fresh orphan uploads behind when the DB edit fails.
+      // A failed cleanup is logged but must never mask the original error.
+      if (newUploadPaths.length) {
+        const { error: cleanupError } = await supabase.storage
+          .from('business-logos').remove(newUploadPaths);
+        if (cleanupError) console.warn('Could not clean up unsaved business images.');
+      }
+      setError(err instanceof Error ? err.message : 'Unable to save business changes.');
     } finally {
       setLoading(false);
     }
