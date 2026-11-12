@@ -3,6 +3,14 @@
 **State: BLOCKED — Supabase Pro staging prerequisite. No production approval.**
 Production baseline: GitHub main at 6ad1764545a627a891d0c17f8170879b586d2b88 (2026-11-12).
 
+## 2026-11-12 cloud CI update — no PC or Vercel required
+
+- **Completed:** GitHub Actions [run 43273869937](https://github.com/Victor-dev-03-cmd/sl_business_index/actions/runs/43273869937) succeeded 4/4 jobs on temporary PostgreSQL 17 Docker containers. Synthetic RLS role matrix, private profiles, lead/event RPC validation, wallet transaction tests and source contracts passed.
+- **Confirmed defect repaired only in review SQL:** lead RPC previously accepted NULL message (due SQL three-valued logic). The staged SQL now checks nullable fields explicitly; negative tests pass.
+- **Not production complete:** public direct lead INSERT is kept for legacy mobile compatibility; separate secure API needs service-role secret and flags. Real hosted Supabase Auth/Storage and protected object download tests have not been done.
+- **Alternative staging discovery:** Supabase organization has one project; connector quote for creating a separate project is **US$0/month** (base project creation quote, not a promise of unlimited free usage). A distinct project could support realistic hosted Auth/Storage tests without Pro branching, but must be explicitly approved in the intended organization before creation.
+- **Release hold:** do NOT apply any prepared review SQL or credit migrations to production. No main merge / Vercel deploy until hosted staging authorization and negative test matrix pass.
+
 ## Environment blocker
 The user explicitly authorized Supabase branch cost of **US$0.01344/hour**. Supabase
 accepted cost confirmation, but branch creation returned **PaymentRequiredException:
