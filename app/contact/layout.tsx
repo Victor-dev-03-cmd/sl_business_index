@@ -1,20 +1,25 @@
-import { Metadata } from 'next';
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: 'Contact & Public Service Directory | SL Business Index',
-  description: 'Get in touch with us or access our verified Public Service & Emergency Contact Directory for Sri Lanka, including Ambulance, Police, CEB, and Water Board contacts.',
-  keywords: ['Sri Lanka Emergency Numbers', 'Public Service Directory Sri Lanka', 'Suwa Seriya Ambulance 1990', 'CEB Breakdown Hotline', 'National Hospital Contact', 'Sri Lanka Police 119'],
+  title: "Sri Lanka Public Service Contacts by District | Contact SL Business Index",
+  description: "Find official-source Sri Lankan electricity (1987), Jaffna & Batticaloa regional offices, police, water, bank and government numbers. Contact SLBI via WhatsApp.",
+  keywords: [
+    "Sri Lanka public service phone directory", "Jaffna electricity board number",
+    "EDL Jaffna contact", "Batticaloa electricity office", "Kilinochchi EDL hotline",
+    "CEB hotline 1987", "Sri Lanka Police 119", "1990 ambulance",
+    "People's Bank hotline", "Sri Lanka district office contacts",
+    "SL Business Index contact",
+  ],
+  alternates: { canonical: "https://www.slbusinessindex.com/contact" },
   openGraph: {
-    title: 'Contact & Public Service Directory | SL Business Index',
-    description: 'Verified emergency and utility contact directory for Sri Lanka. Quick access to essential services.',
-    type: 'website',
+    title: "Official-source Sri Lankan public contacts & SLBI support",
+    description: "Find verified-source district, regional and national office numbers across Sri Lanka—plus a direct way to contact SL Business Index.",
+    type: "website",
+    url: "https://www.slbusinessindex.com/contact",
   },
+  robots: { index: true, follow: true },
 };
 
-export default function ContactLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function ContactLayout({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
