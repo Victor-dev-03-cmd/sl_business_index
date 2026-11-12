@@ -570,10 +570,10 @@ export default function BusinessDetailsClient({ business }: Props) {
                 )}
               </div>
               {hasCoordinates ? (
-                <div className="h-[290px] w-full overflow-hidden border-t border-[#E6E8DF] sm:h-[390px]">
+                <div className="relative isolate z-0 h-[290px] w-full overflow-hidden border-t border-[#E6E8DF] sm:h-[390px]">
                   <LeafletMap centerLat={lat} centerLng={lng} businesses={[business]} zoom={15}
                     height="100%" showUserLocation={false} enableClustering={false}
-                    wrapperClassName="h-full w-full overflow-hidden" />
+                    wrapperClassName="relative isolate z-0 h-full w-full overflow-hidden" />
                 </div>
               ) : (
                 <div className="flex min-h-[200px] items-center justify-center border-t border-[#E7E9E1] bg-[#F0F3EA] px-6 text-center">
