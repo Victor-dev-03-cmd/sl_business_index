@@ -58,16 +58,10 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/migrations/20261110011000_growth_security_guards.sql
-      - name: Apply stage-only business, verification, and profile privacy policies
+      - name: Apply EXACT consolidated P0 security release in one transaction
         env:
           PGPASSWORD: postgres
-        run: |
-          psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -v ON_ERROR_STOP=1 -f docs/growth/p0/P0_SECURITY_STAGE_REVIEW_ONLY.sql
-          psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -v ON_ERROR_STOP=1 -f docs/growth/p0/P0_PROFILE_PRIVACY_STAGE_REVIEW_ONLY.sql
-      - name: Apply safe legacy mobile lead RLS after security policies
-        env:
-          PGPASSWORD: postgres
-        run: psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -v ON_ERROR_STOP=1 -f docs/growth/p0/P0_LEGACY_LEADS_STAGE_REVIEW_ONLY.sql
+        run: psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -v ON_ERROR_STOP=1 -f docs/growth/p0/P0_INTEGRATED_RELEASE_CANDIDATE_REVIEW_ONLY.sql
       - name: Verify real Supabase JWT, RLS, verification document permissions, Auth and APIs
         run: node tests/p0/fullstack/verify.mjs
       - name: Tear down ephemeral stack

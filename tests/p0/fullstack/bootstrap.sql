@@ -44,6 +44,49 @@ CREATE POLICY "Vendors view own leads" ON public.leads FOR SELECT TO PUBLIC USIN
 );
 GRANT SELECT,INSERT,UPDATE ON public.leads TO anon,authenticated,service_role;
 
+-- Unified GrowthOS test prerequisites, matching existing public tables.
+CREATE TABLE public.analytics_logs (
+ id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+ business_id uuid REFERENCES public.businesses(id),
+ event_type text NOT NULL,city text,metadata jsonb DEFAULT '{}'::jsonb,
+ created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE TABLE public.leads (
+ id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+ business_id uuid REFERENCES public.businesses(id),
+ name text NOT NULL,email text,phone text,message text,
+ status text DEFAULT 'new',source text DEFAULT 'Website Enquiry',
+ created_at timestamptz DEFAULT now()
+);
+CREATE TABLE public.subscriptions (
+ id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+ user_id uuid REFERENCES auth.users(id),plan_name text NOT NULL,
+ status text DEFAULT 'active',price numeric DEFAULT 0,
+ billing_cycle text DEFAULT 'monthly'
+);
+CREATE TABLE public.invoices (
+ id text PRIMARY KEY,subscription_id uuid REFERENCES public.subscriptions(id),
+ amount numeric DEFAULT 0,status text DEFAULT 'paid'
+);
+CREATE FUNCTION public.get_or_create_direct_room(uuid,uuid)
+RETURNS uuid LANGUAGE sql SECURITY DEFINER SET search_path='' AS $
+ SELECT NULL::uuid
+$;
+CREATE FUNCTION public.is_room_member(uuid)
+RETURNS boolean LANGUAGE sql SECURITY DEFINER SET search_path='' AS $
+ SELECT false
+$;
+ALTER TABLE public.leads ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.analytics_logs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can insert leads" ON public.leads FOR INSERT TO PUBLIC WITH CHECK(true);
+CREATE POLICY "Anyone can insert logs" ON public.analytics_logs FOR INSERT TO PUBLIC WITH CHECK(true);
+CREATE POLICY "Vendors view own leads" ON public.leads FOR SELECT TO authenticated
+ USING (EXISTS (SELECT 1 FROM public.businesses b WHERE b.id=leads.business_id AND b.owner_id=auth.uid()));
+CREATE POLICY "Vendors view own logs" ON public.analytics_logs FOR SELECT TO authenticated
+ USING (EXISTS (SELECT 1 FROM public.businesses b WHERE b.id=analytics_logs.business_id AND b.owner_id=auth.uid()));
+GRANT SELECT,INSERT,UPDATE ON public.leads,public.analytics_logs TO anon,authenticated,service_role;
+GRANT SELECT,INSERT,UPDATE,DELETE ON public.subscriptions,public.invoices TO anon,authenticated,service_role;
+
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.businesses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.verifications ENABLE ROW LEVEL SECURITY;

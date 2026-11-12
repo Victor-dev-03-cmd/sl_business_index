@@ -61,6 +61,48 @@ ok(r,"vendor owner views own lead");assert.equal(r.data.length,1);
 r=await http("/rest/v1/leads?select=id,business_id,name",{jwt:b});
 ok(r,"other vendor cannot view lead");assert.equal(r.data.length,0);
 log("PASS: real API legacy mobile enquiry compatibility, validation and owner isolation");
+// Verify the integrated secured service-only RPCs via real PostgREST JWT.
+const rateToken="a".repeat(64),listingToken="b".repeat(64);
+const eventId=crypto.randomUUID();
+r=await http("/rest/v1/rpc/slbi_record_growth_event",{role:"service",method:"POST",
+ body:{p_event_id:eventId,p_business_id:businesses.approvedA,
+       p_event_type:"view",p_channel:"business_detail",p_rate_bucket:rateToken}});
+assert.equal(ok(r,"server-only analytics RPC"),true);
+r=await http("/rest/v1/rpc/slbi_record_growth_event",{role:"service",method:"POST",
+ body:{p_event_id:eventId,p_business_id:businesses.approvedA,
+       p_event_type:"view",p_channel:"business_detail",p_rate_bucket:rateToken}});
+assert.equal(ok(r,"idempotent analytics retry RPC"),true);
+r=await http("/rest/v1/rpc/slbi_record_growth_event",{method:"POST",
+ body:{p_event_id:crypto.randomUUID(),p_business_id:businesses.approvedA,
+       p_event_type:"view",p_channel:"business_detail",p_rate_bucket:rateToken}});
+assert.ok(r.status>=400,"Anon cannot invoke privileged analytics RPC");
+r=await http("/rest/v1/rpc/slbi_submit_verified_lead",{role:"service",method:"POST",
+ body:{p_request_id:crypto.randomUUID(),p_business_id:businesses.approvedA,
+  p_name:"Protected Lead",p_email:"test@example.test",p_phone:"0771234567",
+  p_message:"Private verified customer enquiry",p_rate_bucket:rateToken,
+  p_business_bucket:listingToken}});
+assert.ok(typeof ok(r,"service-only verified CRM lead") === "string");
+r=await http("/rest/v1/rpc/slbi_submit_verified_lead",{method:"POST",
+ body:{p_request_id:crypto.randomUUID(),p_business_id:businesses.approvedA,
+  p_name:"Anonymous Exploit",p_email:"test@example.test",p_phone:"0771234567",
+  p_message:"Should be rejected",p_rate_bucket:rateToken,
+  p_business_bucket:listingToken}});
+assert.ok(r.status>=400,"Anon cannot invoke privileged verified CRM RPC");
+log("PASS: server-role Analytics and verified Leads RPCs; anonymous RPC bypass denied");
+r=await http("/rest/v1/rpc/growth_wallet_status",{jwt:a,method:"POST",body:{}});
+const w=ok(r,"vendor Growth wallet RPC");
+assert.ok(Array.isArray(w) && w.length===1,"Vendor wallet snapshot must be one row");
+assert.equal(w[0].plan_name,"Basic");
+assert.equal(w[0].monthly_allowance,30);
+r=await http("/rest/v1/rpc/growth_wallet_status",{jwt:b,method:"POST",body:{}});
+const other=ok(r,"vendor B Growth wallet RPC");
+assert.equal(other[0]?.plan_name,"Basic");
+r=await http("/rest/v1/growth_credit_ledger?select=id,user_id",{jwt:b});
+const ledger=ok(r,"vendor B growth ledger");assert.equal(ledger.length,1,
+ "Vendor B must see only their own monthly grant");
+assert.equal(ledger[0].user_id,users.vendorB.id);
+log("PASS: Growth wallet auth and private ledger read via real Supabase HTTP API");
+
 
 r=await http("/rest/v1/verifications",{jwt:a,method:"POST",
  body:{business_id:businesses.approvedA,status:"pending"},headers:{Prefer:"return=representation"}});
