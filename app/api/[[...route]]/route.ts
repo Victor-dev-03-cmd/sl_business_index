@@ -474,8 +474,13 @@ app.post('/contact/send', async (c) => {
 
     const { name, email, subject, department, message, location } = rest
 
-    if (!name || !email || !message) {
+    if (typeof name !== 'string' || typeof email !== 'string' || typeof message !== 'string' ||
+        !name.trim() || !email.trim() || !message.trim()) {
       return c.json({ error: 'Name, email, and message are required' }, 400)
+    }
+    if (name.length > 120 || email.length > 254 || message.length > 5000 ||
+        String(subject || '').length > 160 || String(department || '').length > 120) {
+      return c.json({ error: 'One or more fields exceed the allowed length.' }, 400)
     }
 
     // 1. Save to Database
@@ -491,8 +496,8 @@ app.post('/contact/send', async (c) => {
       })
 
     if (dbError) {
-      console.error('Database Error:', dbError)
-      // We continue even if DB save fails, to try sending email
+      console.error('Contact submission persistence error:', dbError)
+      return c.json({ error: 'Unable to receive the inquiry right now. Please try again.' }, 500)
     }
 
     // 2. Fetch Admin Email from Settings
@@ -506,6 +511,11 @@ app.post('/contact/send', async (c) => {
     const emailEnabled = settings?.email_notifications ?? true
 
     // 3. Send Email (via Resend fetch)
+    // The email is optional notification; saved submissions are the durable success criterion.
+    // Escape user input before interpolating it into an HTML notification email.
+    const escapeHtml = (value: unknown) => String(value ?? '').replace(/[&<>"']/g, (ch) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[ch] || ch))
     const RESEND_API_KEY = process.env.RESEND_API_KEY
     
     if (emailEnabled && RESEND_API_KEY) {
@@ -520,19 +530,19 @@ app.post('/contact/send', async (c) => {
             from: 'SL Business Index <onboarding@resend.dev>',
             to: [adminEmail],
             reply_to: email,
-            subject: `Contact Form [${department}]: ${subject || 'New Message'}`,
+            subject: `Contact Form [${escapeHtml(department)}]: ${subject || 'New Message'}`,
             html: `
               <div style="font-family: sans-serif; padding: 20px; color: #333;">
                 <h2 style="color: #053765;">New Contact Form Submission</h2>
                 <p><strong>Department:</strong> ${department}</p>
-                <p><strong>Name:</strong> ${name}</p>
-                <p><strong>Email:</strong> ${email}</p>
-                <p><strong>Subject:</strong> ${subject || 'N/A'}</p>
-                <p><strong>Location:</strong> ${location || 'Not provided'}</p>
+                <p><strong>Name:</strong> ${escapeHtml(name)}</p>
+                <p><strong>Email:</strong> ${escapeHtml(email)}</p>
+                <p><strong>Subject:</strong> ${escapeHtml(subject || 'N/A')}</p>
+                <p><strong>Location:</strong> ${escapeHtml(location || 'Not provided')}</p>
                 <hr style="border: 1px solid #eee; margin: 20px 0;" />
                 <p><strong>Message:</strong></p>
                 <div style="background: #f9f9f9; padding: 15px; border-radius: 5px;">
-                  ${message.replace(/\n/g, '<br/>')}
+                  ${escapeHtml(message).replace(/\n/g, '<br/>')}
                 </div>
               </div>
             `,
