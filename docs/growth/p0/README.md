@@ -17,9 +17,11 @@ separate plan decision has not been authorized.
 ## Security inventory (read-only confirmed)
 - Businesses: 22 approved, 1 pending, 1 rejected; "Temporary Public View" SELECT
   USING (true) coexists with explicit approved, owner and staff policies.
-- Profiles: "Profiles viewable by all" SELECT USING(true), exposing sensitive
-  columns if role grants allow. Requires separate sanitized-public-profile
-  strategy and contact/profile UI regression tests; NOT fixed by this packet.
+- Profiles: "Profiles viewable by all" SELECT USING(true). Production anon
+  role has SELECT on private email, phone and push_token columns. The staged
+  P0_PROFILE_PRIVACY_STAGE_REVIEW_ONLY.sql proposes owner/staff-only SELECT,
+  revoke anonymous access and non-exposed staff authorization. Requires admin,
+  auth signup, Navbar, chat/reviews and mobile E2E before applying.
 - Verifications: vendor "ALL" policy allows update/delete before review; staff
   has separate ALL policy; existing after-status triggers must keep working.
 - Existing BEFORE guards: protect_business_approval and
@@ -36,6 +38,8 @@ separate plan decision has not been authorized.
 - P0_SECURITY_STAGE_ASSERTIONS.sql: schema/policy assertions plus role test matrix.
 - P0_GUARD_CONTINGENCY_STAGING_ONLY.sql: uninstalls new triggers without reopening
   known broad public read or vendor-update grants.
+- P0_PROFILE_PRIVACY_STAGE_REVIEW_ONLY.sql: proposed private-profile RLS and
+  staff helper in an unexposed schema, with separate assertions/contingency.
 
 These materials are deliberately NOT placed in supabase/migrations. DO NOT
 auto-apply on any environment. After verified staging tests, migrate via a
@@ -43,7 +47,10 @@ proper numbered migration with full release approval.
 
 ## Implementation order and gates
 1. Create approved isolated Supabase staging with Auth, Storage, RLS, extensions,
-   functions and realistic synthetic test users. **Pro plan currently blocks it.**
+   functions and realistic synthetic test users. **Supabase branching requires
+   Pro, even when hourly compute cost is explicitly approved.** Cost lookup
+   for a separate NEW project currently returns US$0/month; creation of that
+   alternative requires separate explicit permission and quota confirmation.
 2. Back up source schema (not just data), inspect object grants and function
    ownership. Run P0_SECURITY_STAGE_REVIEW_ONLY.sql only on staging.
 3. Verify anon/vendor A/vendor B/admin including signup, listing updates,
@@ -75,7 +82,7 @@ proper numbered migration with full release approval.
 
 ## Explicit NO-GO items
 - Missing isolated Supabase test environment (current blocker).
-- Public all-profiles read remains unmitigated.
+- Public all-profiles read remains unmitigated (stage-only candidate ready).
 - Missing server-only Supabase privileged key.
 - Unverified mobile-to-secure-leads cutover.
 - Unrehearsed wallet RPC including concurrency and month boundaries.
