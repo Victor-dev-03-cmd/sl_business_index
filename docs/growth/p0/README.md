@@ -4,6 +4,16 @@
 Conditional production approval was given by the owner, explicitly subject to ALL release gates passing. Do not deploy early.
 Production baseline: GitHub main at 6ad1764545a627a891d0c17f8170879b586d2b88 (2026-11-12).
 
+## 2026-11-13 progress: verified and production-gated
+
+- **Vercel configuration (names only):** `SUPABASE_SECRET_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `GROWTH_RATE_LIMIT_SECRET` and `CLOUDFLARE_TURNSTILE_SECRET_KEY` exist as Production variables. Secret values were not retrieved or printed. Production redeployment is READY on unchanged stable main `6ad1764`.
+- **New code and SQL in this branch:** analytics request-ID retry idempotency before rate charging; preserved customer enquiry UUID across retries while resetting it after successful submission or changed form content; CRM leads remain the source of truth (unsupported `lead_form_submit` telemetry removed).
+- **Legacy mobile evidence:** production read-only aggregate shows two historical enquiries with source `Mobile App - Business Details`. Do NOT revoke anonymous lead INSERT before a mobile client migration. A staging-only replacement now restricts public inserts to approved businesses, new lead status, nonblank names, bounded contact/payloads. It preserves mobile and web direct-insert compatibility, but is **not** bot-proof.
+- **GitHub cloud PostgreSQL:** [five jobs passed](https://github.com/Victor-dev-03-cmd/sl_business_index/actions/runs/43285020115), including Node/TypeScript compilation, secure Leads/Analytics RPCs, Growth Wallet accounting, RLS and source contracts.
+- **Real Supabase Auth/Storage/PostgREST in ephemeral GitHub runner:** [integration passed](https://github.com/Victor-dev-03-cmd/sl_business_index/actions/runs/43284703158); synthetic legacy mobile-style approved enquiry accepted, unapproved/forged-status entries rejected, Vendor B cannot read Vendor A's lead.
+- **No production release:** `main` and live Supabase policies/migrations unchanged; zero Vercel builds triggered by the P0 branch. Public profile RLS and server-only RPCs are still staged code, not live.
+- **Hard gates still open:** Live new-key RPC authentication not independently verified; Cloudflare Turnstile external verification not exercised end-to-end on production; legacy mobile direct INSERT remains available (rate limiting/captcha bypass risk), and complete production-specific migration/rollback smoke testing is pending. `GROWTH_EVENT_INGESTION_ENABLED`, `SLBI_SECURE_LEADS_ENABLED` and `NEXT_PUBLIC_SECURE_LEADS_ENABLED` remain unset. Never enable them prematurely.
+
 ## 2026-11-12 cloud CI update — no PC or Vercel required
 
 - **Completed:** GitHub Actions [run 43273869937](https://github.com/Victor-dev-03-cmd/sl_business_index/actions/runs/43273869937) succeeded 4/4 jobs on temporary PostgreSQL 17 Docker containers. Synthetic RLS role matrix, private profiles, lead/event RPC validation, wallet transaction tests and source contracts passed.
