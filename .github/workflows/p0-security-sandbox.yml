@@ -50,6 +50,10 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f docs/growth/p0/P0_SECURITY_STAGE_ASSERTIONS.sql
       - name: Exercise anonymous/vendor A/vendor B/admin/signup role matrix
         run: psql -v ON_ERROR_STOP=1 -f tests/p0/verify_security.sql
+      - name: Apply privacy-hardened profiles RLS in isolated Docker database
+        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p0/P0_PROFILE_PRIVACY_STAGE_REVIEW_ONLY.sql
+      - name: Test private profiles, staff, signup and public discovery regressions
+        run: psql -v ON_ERROR_STOP=1 -f tests/p0/verify_profile_privacy.sql
 
   p0-wallet:
     name: Isolated GrowthOS wallet transaction tests
