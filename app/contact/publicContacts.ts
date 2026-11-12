@@ -5,7 +5,7 @@
  * Keep entries sourced, review periodically, and do not imply SLBI affiliation.
  */
 export const DISTRICTS = ["Ampara","Anuradhapura","Badulla","Batticaloa","Colombo","Galle","Gampaha","Hambantota","Jaffna","Kalutara","Kandy","Kegalle","Kilinochchi","Kurunegala","Mannar","Matale","Matara","Monaragala","Mullaitivu","Nuwara Eliya","Polonnaruwa","Puttalam","Ratnapura","Trincomalee","Vavuniya"] as const;
-export const CATEGORIES = ["All services","Emergency","Electricity","Water","Banking","Government"] as const;
+export const CATEGORIES = ["All services","Emergency","Electricity","Water","Health","Education","Banking","Government"] as const;
 export type PublicContactCategory = Exclude<typeof CATEGORIES[number],"All services">;
 export type PublicContact = {
   id: string; name: string; phone: string; category: PublicContactCategory;
@@ -897,20 +897,6 @@ export const CONTACTS: PublicContact[] = [
     "sourceName": "Commercial Bank branch directory"
   },
   {
-    "id": "cmkurunegala",
-    "name": "Commercial Bank Kurunegala region – use branch finder",
-    "phone": "1316",
-    "category": "Banking",
-    "scope": "Regional",
-    "area": "Kurunegala",
-    "coverage": [
-      "Kurunegala"
-    ],
-    "description": "Listed on the official Commercial Bank branch directory — Confirm specific local branch in official locator.",
-    "sourceUrl": "https://www.combank.lk/branches",
-    "sourceName": "Commercial Bank branch directory"
-  },
-  {
     "id": "cbslkilinochchi",
     "name": "Central Bank regional office, Kilinochchi",
     "phone": "+94 21 228 5913",
@@ -1245,6 +1231,244 @@ export const CONTACTS: PublicContact[] = [
     "description": "Emergency desk listed in the Sri Lanka Police regional emergency directory. For immediate police assistance dial 119.",
     "sourceUrl": "https://www.police.lk/?page_id=1334",
     "sourceName": "Sri Lanka Police"
+  },
+  {
+    "id": "edjaffna",
+    "name": "Jaffna Zonal Education Office",
+    "phone": "021 222 1488",
+    "category": "Education",
+    "scope": "District",
+    "area": "Jaffna",
+    "coverage": [
+      "Jaffna"
+    ],
+    "description": "Northern Provincial Council's Zonal Director office education office contact.",
+    "sourceUrl": "https://np.gov.lk/education-ministry-copy/",
+    "sourceName": "Northern Provincial Education Department"
+  },
+  {
+    "id": "edvalikamam",
+    "name": "Valikamam Zonal Education Office",
+    "phone": "021 224 3270",
+    "category": "Education",
+    "scope": "District",
+    "area": "Jaffna",
+    "coverage": [
+      "Jaffna"
+    ],
+    "description": "Northern Provincial Council's Regional zonal office education office contact.",
+    "sourceUrl": "https://np.gov.lk/education-ministry-copy/",
+    "sourceName": "Northern Provincial Education Department"
+  },
+  {
+    "id": "edkilinorth",
+    "name": "Kilinochchi North Zonal Education Office",
+    "phone": "021 228 2923",
+    "category": "Education",
+    "scope": "District",
+    "area": "Kilinochchi",
+    "coverage": [
+      "Kilinochchi"
+    ],
+    "description": "Northern Provincial Council's Kilinochchi North education office contact.",
+    "sourceUrl": "https://np.gov.lk/education-ministry-copy/",
+    "sourceName": "Northern Provincial Education Department"
+  },
+  {
+    "id": "edkilisouth",
+    "name": "Kilinochchi South Zonal Education Office",
+    "phone": "021 228 5721",
+    "category": "Education",
+    "scope": "District",
+    "area": "Kilinochchi",
+    "coverage": [
+      "Kilinochchi"
+    ],
+    "description": "Northern Provincial Council's Kilinochchi South education office contact.",
+    "sourceUrl": "https://np.gov.lk/education-ministry-copy/",
+    "sourceName": "Northern Provincial Education Department"
+  },
+  {
+    "id": "edmullaitivu",
+    "name": "Mullaitivu Zonal Education Office",
+    "phone": "021 229 0316",
+    "category": "Education",
+    "scope": "District",
+    "area": "Mullaitivu",
+    "coverage": [
+      "Mullaitivu"
+    ],
+    "description": "Northern Provincial Council's Zonal Director office education office contact.",
+    "sourceUrl": "https://np.gov.lk/education-ministry-copy/",
+    "sourceName": "Northern Provincial Education Department"
+  },
+  {
+    "id": "edthunukkai",
+    "name": "Thunukkai Zonal Education Office",
+    "phone": "021 206 0029",
+    "category": "Education",
+    "scope": "District",
+    "area": "Mullaitivu",
+    "coverage": [
+      "Mullaitivu"
+    ],
+    "description": "Northern Provincial Council's Thunukkai / Mankulam education office contact.",
+    "sourceUrl": "https://np.gov.lk/education-ministry-copy/",
+    "sourceName": "Northern Provincial Education Department"
+  },
+  {
+    "id": "edmannar",
+    "name": "Mannar Zonal Education Office",
+    "phone": "023 222 2311",
+    "category": "Education",
+    "scope": "District",
+    "area": "Mannar",
+    "coverage": [
+      "Mannar"
+    ],
+    "description": "Northern Provincial Council's Mannar zone education office contact.",
+    "sourceUrl": "https://np.gov.lk/education-ministry-copy/",
+    "sourceName": "Northern Provincial Education Department"
+  },
+  {
+    "id": "edvavnorth",
+    "name": "Vavuniya North Zonal Education Office",
+    "phone": "024 205 1910",
+    "category": "Education",
+    "scope": "District",
+    "area": "Vavuniya",
+    "coverage": [
+      "Vavuniya"
+    ],
+    "description": "Northern Provincial Council's Vavuniya North zone education office contact.",
+    "sourceUrl": "https://np.gov.lk/education-ministry-copy/",
+    "sourceName": "Northern Provincial Education Department"
+  },
+  {
+    "id": "edvavsouth",
+    "name": "Vavuniya South Zonal Education Office",
+    "phone": "024 222 2165",
+    "category": "Education",
+    "scope": "District",
+    "area": "Vavuniya",
+    "coverage": [
+      "Vavuniya"
+    ],
+    "description": "Northern Provincial Council's Vavuniya South zone education office contact.",
+    "sourceUrl": "https://np.gov.lk/education-ministry-copy/",
+    "sourceName": "Northern Provincial Education Department"
+  },
+  {
+    "id": "hospitaljaffna",
+    "name": "Jaffna Teaching Hospital",
+    "phone": "021 222 2261",
+    "category": "Health",
+    "scope": "District",
+    "area": "Jaffna",
+    "coverage": [
+      "Jaffna"
+    ],
+    "description": "Hospital main contact listed on the Sri Lankan Ministry of Health's hospital network. For ambulance emergencies use 1990.",
+    "sourceUrl": "https://leprosycampaign.health.gov.lk/network-curative/",
+    "sourceName": "Ministry of Health hospital network"
+  },
+  {
+    "id": "hospitalbatticaloa",
+    "name": "Batticaloa Teaching Hospital",
+    "phone": "065 222 2261",
+    "category": "Health",
+    "scope": "District",
+    "area": "Batticaloa",
+    "coverage": [
+      "Batticaloa"
+    ],
+    "description": "Hospital main contact listed on the Sri Lankan Ministry of Health's hospital network. For ambulance emergencies use 1990.",
+    "sourceUrl": "https://leprosycampaign.health.gov.lk/network-curative/",
+    "sourceName": "Ministry of Health hospital network"
+  },
+  {
+    "id": "hospitalanuradhapura",
+    "name": "Anuradhapura Teaching Hospital",
+    "phone": "025 222 2261",
+    "category": "Health",
+    "scope": "District",
+    "area": "Anuradhapura",
+    "coverage": [
+      "Anuradhapura"
+    ],
+    "description": "Hospital main contact listed on the Sri Lankan Ministry of Health's hospital network. For ambulance emergencies use 1990.",
+    "sourceUrl": "https://leprosycampaign.health.gov.lk/network-curative/",
+    "sourceName": "Ministry of Health hospital network"
+  },
+  {
+    "id": "hospitalgalle",
+    "name": "Teaching Hospital Karapitiya, Galle",
+    "phone": "091 222 3341",
+    "category": "Health",
+    "scope": "District",
+    "area": "Galle",
+    "coverage": [
+      "Galle"
+    ],
+    "description": "Hospital general contact listed on the Sri Lankan Ministry of Health's hospital network. For ambulance emergencies use 1990.",
+    "sourceUrl": "https://leprosycampaign.health.gov.lk/network-curative/",
+    "sourceName": "Ministry of Health hospital network"
+  },
+  {
+    "id": "hospitalcolombosouth",
+    "name": "Colombo South Teaching Hospital, Kalubowila",
+    "phone": "011 276 3261",
+    "category": "Health",
+    "scope": "District",
+    "area": "Colombo",
+    "coverage": [
+      "Colombo"
+    ],
+    "description": "Hospital general contact listed on the Sri Lankan Ministry of Health's hospital network. For ambulance emergencies use 1990.",
+    "sourceUrl": "https://leprosycampaign.health.gov.lk/network-curative/",
+    "sourceName": "Ministry of Health hospital network"
+  },
+  {
+    "id": "clinicjaffna",
+    "name": "Jaffna Central Chest Clinic",
+    "phone": "021 222 7234",
+    "category": "Health",
+    "scope": "District",
+    "area": "Jaffna",
+    "coverage": [
+      "Jaffna"
+    ],
+    "description": "Chest clinic, Clock Tower Road; clinical service line, not general ambulance dispatch.",
+    "sourceUrl": "https://www.nptccd.health.gov.lk/district-chest-clinic/northern-province/",
+    "sourceName": "National TB & Chest Disease Programme"
+  },
+  {
+    "id": "clinicvavuniya",
+    "name": "Vavuniya Central Chest Clinic",
+    "phone": "024 222 1421",
+    "category": "Health",
+    "scope": "District",
+    "area": "Vavuniya",
+    "coverage": [
+      "Vavuniya"
+    ],
+    "description": "Chest clinic at Vavuniya District General Hospital; clinical service line, not general ambulance dispatch.",
+    "sourceUrl": "https://www.nptccd.health.gov.lk/district-chest-clinic/northern-province/",
+    "sourceName": "National TB & Chest Disease Programme"
+  },
+  {
+    "id": "clinicmullaitivu",
+    "name": "Mullaitivu Central Chest Clinic",
+    "phone": "024 324 8132",
+    "category": "Health",
+    "scope": "District",
+    "area": "Mullaitivu",
+    "coverage": [
+      "Mullaitivu"
+    ],
+    "description": "Chest clinic at District General Hospital; clinical service line, not general ambulance dispatch.",
+    "sourceUrl": "https://www.nptccd.health.gov.lk/district-chest-clinic/northern-province/",
+    "sourceName": "National TB & Chest Disease Programme"
   }
 ];
 export const LAST_REVIEWED = "12 November 2026";
