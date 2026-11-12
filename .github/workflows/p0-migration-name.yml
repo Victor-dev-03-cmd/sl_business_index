@@ -18,6 +18,5 @@ jobs:
           version: 2.120.0
       - name: Create the official migration scaffold
         run: |
-          supabase init --yes
           supabase migration new p0_security_foundation
           find supabase/migrations -maxdepth 1 -name '*p0_security_foundation.sql' -print
