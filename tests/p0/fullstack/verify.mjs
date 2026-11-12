@@ -42,6 +42,26 @@ r=await http("/rest/v1/businesses?id=eq."+businesses.pendingA,{
  jwt:admin,method:"PATCH",body:{status:"approved"},headers:{Prefer:"return=representation"}});
 ok(r,"admin approve business");
 log("PASS: public approved-only listings, vendor ownership, admin approval");
+// Exercise the real legacy/mobile HTTP path against its restricted RLS.
+const legacy = {
+ business_id:businesses.approvedA, name:"Mobile Test Customer",
+ phone:"0771234567", message:"A real PostgREST mobile enquiry",
+ source:"Mobile App - Business Details"
+};
+r=await http("/rest/v1/leads",{method:"POST",body:legacy});
+ok(r,"legacy mobile approved enquiry",[201,204]);
+r=await http("/rest/v1/leads",{method:"POST",body:{...legacy,business_id:businesses.pendingB}});
+assert.ok(r.status>=400,"Unapproved business cannot receive legacy anonymous lead");
+r=await http("/rest/v1/leads",{method:"POST",body:{...legacy,status:"converted"}});
+assert.ok(r.status>=400,"Anonymous client cannot forge CRM conversion");
+r=await http("/rest/v1/leads",{method:"POST",body:{...legacy,name:" "}});
+assert.ok(r.status>=400,"Blank lead name must be rejected");
+r=await http("/rest/v1/leads?select=id,business_id,name",{jwt:a});
+ok(r,"vendor owner views own lead");assert.equal(r.data.length,1);
+r=await http("/rest/v1/leads?select=id,business_id,name",{jwt:b});
+ok(r,"other vendor cannot view lead");assert.equal(r.data.length,0);
+log("PASS: real API legacy mobile enquiry compatibility, validation and owner isolation");
+
 r=await http("/rest/v1/verifications",{jwt:a,method:"POST",
  body:{business_id:businesses.approvedA,status:"pending"},headers:{Prefer:"return=representation"}});
 ok(r,"vendor submit pending verification");

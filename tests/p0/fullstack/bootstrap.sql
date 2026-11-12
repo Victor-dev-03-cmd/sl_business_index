@@ -28,6 +28,22 @@ CREATE TABLE public.verifications (
  status text NOT NULL DEFAULT 'pending',moderation_status text DEFAULT 'pending',
  br_document_url text
 );
+CREATE TABLE public.leads (
+ id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+ business_id uuid REFERENCES public.businesses(id),
+ name text NOT NULL,email text,phone text,message text,
+ status text DEFAULT 'new',
+ source text DEFAULT 'Website Enquiry',
+ created_at timestamptz DEFAULT now()
+);
+ALTER TABLE public.leads ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can insert leads" ON public.leads FOR INSERT TO PUBLIC WITH CHECK (true);
+CREATE POLICY "Vendors view own leads" ON public.leads FOR SELECT TO PUBLIC USING(
+ EXISTS (SELECT 1 FROM public.businesses b
+  WHERE b.id=leads.business_id AND b.owner_id=auth.uid())
+);
+GRANT SELECT,INSERT,UPDATE ON public.leads TO anon,authenticated,service_role;
+
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.businesses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.verifications ENABLE ROW LEVEL SECURITY;
