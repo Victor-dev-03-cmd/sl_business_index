@@ -67,3 +67,13 @@ test("promoted atomic release migration matches staging candidate SQL", () => {
   assert.equal((promoted.match(/^BEGIN;$/gm)||[]).length,1);
   assert.equal((promoted.match(/^COMMIT;$/gm)||[]).length,1);
 });
+
+test("production P0 health probe uses only privileged server env and read-only invalid RPC", () => {
+  const source = readFileSync(new URL("../app/api/health/p0/route.ts",import.meta.url),"utf8");
+  assert.match(source,/process\.env\.SUPABASE_SECRET_KEY/);
+  assert.match(source,/process\.env\.SUPABASE_SERVICE_ROLE_KEY/);
+  assert.doesNotMatch(source,/NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY/);
+  assert.match(source,/p_event_id: null/);
+  assert.match(source,/data === false/);
+  assert.match(source,/Response\.json\(\{ ready, component: 'p0' \}/);
+});

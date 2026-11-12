@@ -11,6 +11,7 @@ on:
       - 'supabase/migrations/20261112193112_p0_security_foundation.sql'
       - 'tests/p0SecurityFoundationPrepare.test.mjs'
       - 'tests/growthSecureLeads.test.mjs'
+      - 'app/api/health/p0/route.ts'
       - 'app/business/[slug]/BusinessDetailsClient.tsx'
       - 'supabase/migrations/20261110010000_growth_os_credit_foundation.sql'
       - 'supabase/migrations/20261110011000_growth_security_guards.sql'
