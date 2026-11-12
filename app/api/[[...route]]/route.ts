@@ -513,9 +513,11 @@ app.post('/contact/send', async (c) => {
     // 3. Send Email (via Resend fetch)
     // The email is optional notification; saved submissions are the durable success criterion.
     // Escape user input before interpolating it into an HTML notification email.
-    const escapeHtml = (value: unknown) => String(value ?? '').replace(/[&<>"']/g, (ch) => ({
+    const htmlEntities: Record<string, string> = {
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-    }[ch] || ch))
+    }
+    const escapeHtml = (value: unknown) =>
+      String(value ?? '').replace(/[&<>"']/g, (ch) => htmlEntities[ch] || ch)
     const RESEND_API_KEY = process.env.RESEND_API_KEY
     
     if (emailEnabled && RESEND_API_KEY) {
