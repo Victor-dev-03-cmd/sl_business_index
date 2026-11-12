@@ -1,0 +1,41 @@
+name: P0 Production HTTP — Non-Mutating Smoke Checks
+on:
+  push:
+    branches: [security/p0-foundation-prepared-20261112]
+    paths: ['.github/workflows/p0-production-http-smoke.yml']
+permissions:
+  contents: read
+jobs:
+  smoke:
+    name: Live P0 Health, flags and privacy opt-out
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify public readiness without collecting visitor data
+        run: |
+          python3 - <<'PY'
+          import json, urllib.request, urllib.error
+          base="https://www.slbusinessindex.com"
+          def request(path,body=None,headers=None):
+              h={"User-Agent":"SLBI-P0-Readiness/1.0", **(headers or {})}
+              if body is not None:
+                  h.update({"Content-Type":"application/json","Origin":base})
+              req=urllib.request.Request(base+path, data=None if body is None else json.dumps(body).encode(), headers=h)
+              try:
+                  with urllib.request.urlopen(req,timeout=18) as r:
+                      return r.status,json.load(r)
+              except urllib.error.HTTPError as e:
+                  return e.code,json.load(e)
+          status,data=request("/api/health/p0")
+          assert status==200 and data.get("ready") is True,(status,data)
+          print("PASS: privileged Supabase RPC readiness returns true")
+          status,data=request("/api/leads/submit",{})
+          assert status==400 and data.get("error")=="invalid-request-id",(status,data)
+          print("PASS: secure Leads endpoint ON; malformed payload rejected before processing")
+          status,data=request("/api/analytics/log",{})
+          assert status==400 and data.get("reason")=="invalid-business-id",(status,data)
+          print("PASS: secure Analytics endpoint ON; invalid event refused")
+          status,data=request("/api/analytics/log",{},{"Sec-GPC":"1"})
+          assert status==202 and data.get("reason")=="privacy-opt-out",(status,data)
+          print("PASS: GPC privacy opt-out honored on production endpoint")
+          PY
