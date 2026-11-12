@@ -72,7 +72,7 @@ const FeaturedListingCard = React.memo(function FeaturedListingCard({
                         alt={business.name}
                         fill
                         loading="lazy"
-                        quality={48}
+                        quality={55}
                         decoding="async"
                         sizes="(max-width: 640px) 178px, (max-width: 1024px) 207px, 237px"
                         className="object-cover"
