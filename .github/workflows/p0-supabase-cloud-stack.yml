@@ -43,8 +43,27 @@ jobs:
             const raw=JSON.parse(fs.readFileSync("/tmp/p0-status.json","utf8"));
             console.log("Supabase services reported:", Object.keys(raw));
           '
-          curl -fsSI http://127.0.0.1:54321/auth/v1/health
+          curl -fsS http://127.0.0.1:54321/auth/v1/health > /dev/null
           curl -fsS -o /dev/null -w 'Storage HTTP: %{http_code}\n' http://127.0.0.1:54321/storage/v1/bucket
+      - name: Bootstrap synthetic local Supabase policies and private Storage bucket
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -v ON_ERROR_STOP=1 -f tests/p0/fullstack/bootstrap.sql
+      - name: Create four synthetic accounts through actual Supabase Auth
+        run: node tests/p0/fullstack/seed.mjs
+      - name: Install existing business approval and role guards
+        env:
+          PGPASSWORD: postgres
+        run: psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/migrations/20261110011000_growth_security_guards.sql
+      - name: Apply stage-only business, verification, and profile privacy policies
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -v ON_ERROR_STOP=1 -f docs/growth/p0/P0_SECURITY_STAGE_REVIEW_ONLY.sql
+          psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -v ON_ERROR_STOP=1 -f docs/growth/p0/P0_PROFILE_PRIVACY_STAGE_REVIEW_ONLY.sql
+      - name: Verify real Supabase JWT, RLS, verification document permissions, Auth and APIs
+        run: node tests/p0/fullstack/verify.mjs
       - name: Tear down ephemeral stack
         if: always()
         run: |
