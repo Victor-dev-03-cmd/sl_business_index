@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 const read = name => readFileSync(new URL("../" + name, import.meta.url), "utf8");
 const home = read("app/HomePageClient.tsx");
+const nextConfig = read("next.config.ts");
 const serverHome = read("app/page.tsx");
 const nearby = read("app/nearby/NearbyExplorer.tsx");
 const map = read("components/LeafletMap.tsx");
@@ -22,6 +23,8 @@ test("featured photos do not eager-load offscreen portraits or double-animate sc
   assert.doesNotMatch(home, /snap-proximity scroll-smooth/);
   assert.match(home, /requestAnimationFrame/);
   assert.match(home, /React\.memo/);
+  assert.match(nextConfig, /qualities: \[55, 65, 75\]/);
+  assert.match(nextConfig, /imageSizes: \[16, 32, 48, 64, 96, 128, 256, 384, 512\]/);
 });
 test("the featured server and client share detailed address fields", () => {
   for (const source of [home, serverHome])
