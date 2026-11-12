@@ -32,7 +32,7 @@ test("FAQ remains SEO-friendly and includes current capabilities separately from
   assert.match(faqData, /No\. Business discovery, listings/);
   assert.match(faqData, /Does the Verified badge guarantee a higher search ranking\?/);
   assert.match(faqData, /email slbusinessindex@gmail\.com/);
-  assert.doesNotMatch(faqData, /support@slbusinessindex\.com|guarantee[s]? a higher search ranking/);
+  assert.doesNotMatch(faqData, /support@slbusinessindex\.com|improves your search ranking on our platform/);
   assert.match(faqExplorer, /<details/);
   assert.match(faqExplorer, /aria-label="Search frequently asked questions"/);
   assert.match(faqExplorer, /aria-pressed=\{active === category\}/);
