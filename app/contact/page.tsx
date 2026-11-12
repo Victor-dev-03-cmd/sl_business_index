@@ -1,510 +1,158 @@
-'use client';
+import Link from "next/link";
+import {
+  ArrowDown, ArrowRight, ArrowUpRight, CheckCircle2, ExternalLink,
+  Headphones, Landmark, Mail, MapPin, MessageCircle, PhoneCall, Search, ShieldCheck, Zap,
+} from "lucide-react";
+import ContactInquiryForm from "./ContactInquiryForm";
+import PublicContactDirectory from "./PublicContactDirectory";
+import { CONTACTS, DISTRICTS, SLBI_EMAIL, SLBI_WHATSAPP } from "./publicContacts";
 
-import React, { useState, useEffect, Suspense } from 'react';
-import { motion } from 'framer-motion';
-import Script from 'next/script';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { toast } from 'sonner';
-import { 
-  Phone, 
-  Mail, 
-  MessageSquare, 
-  AlertCircle, 
-  Shield, 
-  Zap, 
-  Droplets, 
-  Stethoscope, 
-  GraduationCap, 
-  Info, 
-  Globe, 
-  MapPin, 
-  Search,
-  ChevronRight,
-  ChevronDown,
-  Clock,
-  Navigation
-} from 'lucide-react';
-import { cn } from "@/lib/utils";
-import { Turnstile } from '@marsidev/react-turnstile';
-
-const publicServices = [
-  {
-    category: "Emergency Services",
-    icon: <AlertCircle size={20} strokeWidth={1.5} />,
-    services: [
-      { name: "Suwa Seriya Ambulance 1990 Sri Lanka", number: "1990", description: "24/7 Free Emergency Ambulance Service", lat: 6.9271, lng: 79.8612 },
-      { name: "Police Emergency 119 Sri Lanka", number: "119", description: "National Police Hotline", lat: 6.9271, lng: 79.8612 },
-      { name: "Fire & Rescue (Colombo) Hotline", number: "110", description: "General Fire Service", lat: 6.9319, lng: 79.8478 },
-      { name: "National Hospital Accident Service", number: "0112691111", description: "Accident & Emergency Care", lat: 6.9189, lng: 79.8694 }
-    ]
-  },
-  {
-    category: "Electricity & Water (Utilities)",
-    icon: <Zap size={20} strokeWidth={1.5} />,
-    services: [
-      { name: "CEB Electricity Breakdown Contact 1987", number: "1987", description: "National Electricity Complaint Center", lat: 6.9271, lng: 79.8612 },
-      { name: "CEB Vavuniya Electricity Board Office", number: "0242222244", description: "Local Breakdown Support", lat: 8.7514, lng: 80.4971 },
-      { name: "CEB Jaffna Electricity Board Office", number: "0212222271", description: "Local Breakdown Support", lat: 9.6615, lng: 80.0070 },
-      { name: "NWSDB Water Board Complaints 1939", number: "1939", description: "National Water Supply & Drainage Board", lat: 6.8912, lng: 79.9242 }
-    ]
-  },
-  {
-    category: "Education (Regional Offices)",
-    icon: <GraduationCap size={20} strokeWidth={1.5} />,
-    services: [
-      { name: "Northern Province Education Department", number: "0212222434", description: "Main Office - Jaffna", lat: 9.6615, lng: 80.0070 },
-      { name: "Zonal Education Office Vavuniya", number: "0242222340", description: "Vavuniya Education Management", lat: 8.7514, lng: 80.4971 },
-      { name: "Zonal Education Office Jaffna", number: "0212222384", description: "Jaffna City Education Inquiries", lat: 9.6615, lng: 80.0070 },
-      { name: "University of Jaffna General Hotline", number: "0212222294", description: "Main Switchboard", lat: 9.6848, lng: 80.0214 }
-    ]
-  },
-  {
-    category: "Health (Regional Hospitals)",
-    icon: <Stethoscope size={20} strokeWidth={1.5} />,
-    services: [
-      { name: "Jaffna Teaching Hospital Contact", number: "0212222261", description: "Main General Hospital Jaffna", lat: 9.6658, lng: 80.0209 },
-      { name: "Vavuniya General Hospital Contact", number: "0242222261", description: "Main General Hospital Vavuniya", lat: 8.7542, lng: 80.4982 },
-      { name: "Kilinochchi District Hospital Contact", number: "0212285327", description: "General Health Inquiries", lat: 9.3872, lng: 80.3948 },
-      { name: "Mullaitivu District Hospital Contact", number: "0212290261", description: "General Health Inquiries", lat: 9.2671, lng: 80.8144 }
-    ]
-  },
-  {
-    category: "General Public Inquiries",
-    icon: <Info size={20} strokeWidth={1.5} />,
-    services: [
-      { name: "1919 Government Information Center", number: "1919", description: "General info on Govt. services", lat: 6.9271, lng: 79.8612 },
-      { name: "Sri Lanka Railways Hotline 1971", number: "1971", description: "Train schedules and seat booking", lat: 6.9344, lng: 79.8501 },
-      { name: "Department of Immigration Sri Lanka", number: "0112101500", description: "Passport and Visa inquiries", lat: 6.8912, lng: 79.8543 }
-    ]
-  },
-  {
-    category: "Banking & Finance (Head Offices)",
-    icon: <Globe size={20} strokeWidth={1.5} />,
-    services: [
-      { name: "Bank of Ceylon (BOC) Head Office", number: "+94112446790", description: "Head Office - Colombo 01", lat: 6.9367, lng: 79.8448 },
-      { name: "People's Bank Head Office Colombo", number: "+94112481481", description: "Head Office - Colombo 02", lat: 6.9272, lng: 79.8562 },
-      { name: "Commercial Bank Head Office Colombo", number: "+94112486000", description: "Head Office - Colombo 01", lat: 6.9342, lng: 79.8431 },
-      { name: "Hatton National Bank (HNB) Head Office", number: "+94112664664", description: "Head Office - Colombo 10", lat: 6.9201, lng: 79.8702 },
-      { name: "Sampath Bank Head Office Colombo", number: "+94114730630", description: "Head Office - Colombo 02", lat: 6.9168, lng: 79.8541 },
-      { name: "Seylan Bank Head Office Colombo", number: "+94112456789", description: "Head Office - Colombo 03", lat: 6.9142, lng: 79.8512 },
-      { name: "National Development Bank (NDB) Head Office", number: "+94112448448", description: "Head Office - Colombo 02", lat: 6.9234, lng: 79.8512 },
-      { name: "Nations Trust Bank (NTB) Head Office", number: "+94114313131", description: "Head Office - Colombo 02", lat: 6.9189, lng: 79.8567 },
-      { name: "DFCC Bank Head Office Colombo", number: "+94112442442", description: "Head Office - Colombo 03", lat: 6.9172, lng: 79.8492 },
-      { name: "Pan Asia Bank (PABC) Head Office", number: "+94112565565", description: "Head Office - Colombo 03", lat: 6.9082, lng: 79.8514 },
-      { name: "Amana Bank Head Office Colombo", number: "+94117756000", description: "Head Office - Colombo 03", lat: 6.9112, lng: 79.8521 },
-      { name: "Union Bank Head Office Colombo", number: "+94112374100", description: "Head Office - Colombo 03", lat: 6.9145, lng: 79.8502 },
-      { name: "Cargills Bank Head Office Colombo", number: "+94117640640", description: "Head Office - Colombo 03", lat: 6.9156, lng: 79.8498 }
-    ]
-  }
+const phone = "+94 76 920 0572";
+const whatsappUrl = "https://wa.me/" + SLBI_WHATSAPP;
+const topActions = [
+  {number:"1990",label:"Emergency ambulance",kind:"Medical support"},
+  {number:"119",label:"Police emergency",kind:"Immediate police help"},
+  {number:"1987",label:"EDL electricity hotline",kind:"Power failures / bills"},
+  {number:"1939",label:"Water Board support",kind:"Water supply / complaints"},
 ];
 
+const contactPageSchema = {
+  "@context":"https://schema.org",
+  "@graph":[
+    {
+      "@type":"ContactPage",
+      "@id":"https://www.slbusinessindex.com/contact#webpage",
+      name:"Contact SL Business Index & Sri Lanka Public Service Directory",
+      url:"https://www.slbusinessindex.com/contact",
+      description:"Contact SL Business Index support and browse source-linked Sri Lankan electricity, emergency, banking, water and public office contacts.",
+      about:{"@id":"https://www.slbusinessindex.com/#organization"},
+      dateModified:"2026-11-12",
+    },
+    {
+      "@type":"Organization",
+      "@id":"https://www.slbusinessindex.com/#organization",
+      name:"SL Business Index",
+      url:"https://www.slbusinessindex.com",
+      logo:"https://www.slbusinessindex.com/slbi-logo.svg",
+      email:SLBI_EMAIL,
+      contactPoint:[{"@type":"ContactPoint",contactType:"customer support",telephone:"+94-76-920-0572",email:SLBI_EMAIL,availableLanguage:["English","Tamil","Sinhala"]}],
+    },
+  ],
+};
+
+const whatsappCard = "inline-flex min-h-12 items-center justify-center gap-2 rounded-[12px] bg-[#e9cb93] px-6 text-[13px] font-bold text-[#223f2d] transition-colors hover:bg-[#ffddab] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#f0d8a3]";
+
 export default function ContactPage() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [department, setDepartment] = useState('General Inquiry');
-  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [isAttachingLocation, setIsAttachingLocation] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    subject: '',
-    message: '',
-    location: ''
-  });
-
-  useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((pos) => {
-        setUserCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-      });
-    }
-  }, []);
-
-  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-    const R = 6371;
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-              Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-  };
-
-  const sortedServices = userCoords ? publicServices.map(cat => ({
-    ...cat,
-    services: [...cat.services].sort((a, b) => {
-      const distA = calculateDistance(userCoords.lat, userCoords.lng, a.lat, a.lng);
-      const distB = calculateDistance(userCoords.lat, userCoords.lng, b.lat, b.lng);
-      return distA - distB;
-    })
-  })) : publicServices;
-
-  const filteredServices = sortedServices.map(cat => ({
-    ...cat,
-    services: cat.services.filter(s => 
-      s.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      s.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      cat.category.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  })).filter(cat => cat.services.length > 0);
-
-  const attachLocation = () => {
-    if (navigator.geolocation) {
-      setIsAttachingLocation(true);
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setFormData({
-            ...formData,
-            location: `${pos.coords.latitude}, ${pos.coords.longitude}`
-          });
-          setIsAttachingLocation(false);
-        },
-        () => setIsAttachingLocation(false)
-      );
-    }
-  };
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!turnstileToken) {
-      toast.error('Please complete the security check.')
-      return
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      const response = await fetch("/api/contact/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ department, ...formData, turnstileToken }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to send message");
-      }
-
-      toast.success("Thank you! Your message has been sent.");
-      setFormData({
-        name: "",
-        email: "",
-        subject: "",
-        message: "",
-        location: "",
-      });
-    } catch (err) {
-      console.error("Submission error:", err);
-      toast.error("Failed to send message. Please try again later.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    "name": "SL Business Index",
-    "alternateName": "SLBI",
-    "url": "https://slbusinessindex.com",
-    "logo": "https://slbusinessindex.com/slbi-logo.svg",
-    "description": "Verified public service and emergency contacts for Sri Lanka including CEB, NWSDB, and Health services.",
-    "contactPoint": publicServices.flatMap(cat => cat.services).map(s => ({
-      "@type": "ContactPoint",
-      "telephone": s.number,
-      "contactType": s.name
-    }))
-  };
-
-  return (
-    <div className="min-h-[100dvh] bg-white font-normal text-gray-900">
-      <Script
-        id="contact-schema"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-      {/* Hero Section */}
-      <section className="bg-brand-dark border-b border-gray-300 py-20 px-6">
-        <div className="max-w-7xl mx-auto text-center">
-          <motion.span 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="inline-block px-4 py-1.5 mb-6 text-[10px] tracking-[0.2em] uppercase text-brand-sand border border-brand-sand rounded-[6px]"
-          >
-            Contact & Support
-          </motion.span>
-          <motion.h1 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-4xl md:text-5xl font-normal mb-6 tracking-tight text-white"
-          >
-            How can we help you?
-          </motion.h1>
-          <motion.p 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="text-brand-sand max-w-2xl mx-auto leading-relaxed"
-          >
-            Whether you're looking for public service contacts or need support with your business listing, we're here to help. Explore our directory or send us a message below.
-          </motion.p>
+  return <main className="min-h-screen bg-[#fcfbf7] font-[family-name:var(--font-inter)] text-[#1b3929]">
+    <script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(contactPageSchema)}}/>
+    <section className="relative isolate overflow-hidden border-b border-[#d9e7d8] bg-[#15392b]">
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-25 [background-image:radial-gradient(#8ebda0_1px,transparent_1px)] [background-size:28px_28px]"/>
+      <div aria-hidden="true" className="pointer-events-none absolute -right-32 -top-64 h-[650px] w-[650px] rounded-full border-[95px] border-[#36764f]/40"/>
+      <div className="relative mx-auto grid max-w-[1420px] items-center gap-12 px-5 py-16 sm:px-8 sm:py-20 lg:grid-cols-[1.03fr_.97fr] lg:px-12 lg:py-24">
+        <div>
+          <div className="inline-flex items-center gap-2 rounded-full border border-[#7bb48c]/50 bg-[#ffffff]/[.065] px-4 py-2 text-[10px] font-extrabold uppercase tracking-[.17em] text-[#d6e8d7]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#e1bd87]"/> SL Business Index · Support &amp; public contacts
+          </div>
+          <h1 className="mt-7 text-[clamp(2.9rem,5.9vw,6.3rem)] font-extrabold leading-[1.05] tracking-[-.072em] text-white">
+            Good connections<br/>start <span className="text-[#e6c996]">here.</span>
+          </h1>
+          <p className="mt-7 max-w-[600px] text-[14px] leading-[1.9] text-[#c4dac9] sm:text-[16px]">
+            Reach the SLBI team for your listing, account or partnership—or find official public service numbers by category and Sri Lankan district.
+          </p>
+          <div className="mt-9 flex flex-wrap gap-3">
+            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className={whatsappCard}>
+              <MessageCircle size={18}/> WhatsApp SLBI <ArrowUpRight size={17}/>
+            </a>
+            <a href="#public-directory" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[12px] border border-[#71957c] px-6 text-[13px] font-bold text-white transition-colors hover:bg-white/10">
+              Find public contacts <ArrowDown size={16}/>
+            </a>
+          </div>
+          <p className="mt-7 flex flex-wrap items-center gap-2 text-[11px] font-medium text-[#a1bca9]"><ShieldCheck size={16}/> Independent directory · Official-source references · No government affiliation</p>
         </div>
-      </section>
-
-      {/* Main Grid Content */}
-      <section className="py-24 px-6 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
-          
-          {/* Left Column: Public Service Directory */}
-          <div className="lg:col-span-2 space-y-12">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
-              <div>
-                <h2 className="text-2xl font-normal tracking-tight">Public Service Directory</h2>
-                <p className="text-sm text-gray-400 mt-1">Verified emergency and utility contacts in Sri Lanka</p>
-              </div>
-              <div className="relative w-full md:w-80">
-                <Search size={18} strokeWidth={1.5} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input 
-                  type="text" 
-                  placeholder="Search service, area, or dept..." 
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-300 rounded-[6px] focus:bg-white focus:ring-1 focus:ring-brand-blue outline-none transition-all text-sm font-normal"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-10">
-              {filteredServices.length > 0 ? (
-                filteredServices.map((cat, idx) => (
-                  <div key={idx} className="animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: `${idx * 100}ms` }}>
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="p-2 bg-emerald-50 text-brand-dark rounded-[6px]">
-                        {cat.icon}
-                      </div>
-                      <h2 className="text-lg font-normal text-gray-800">{cat.category} Details</h2>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {cat.services.map((service, sIdx) => (
-                        <div 
-                          key={sIdx}
-                          className="p-5 border border-gray-300 rounded-[6px] hover:border-blue-300 hover:shadow-lg hover:shadow-emerald-900/5 transition-all group bg-white"
-                        >
-                          <div className="flex justify-between items-start mb-2">
-                            <h3 className="text-[15px] font-normal text-gray-900 group-hover:text-[#2a7db4] transition-colors">
-                              {service.name}
-                            </h3>
-                          </div>
-                          <p className="text-xs text-gray-400 font-normal mb-4 line-clamp-1">{service.description}</p>
-                          <div className="flex items-center justify-between">
-                            <a 
-                              href={`tel:${service.number}`}
-                              className="inline-flex items-center gap-2 text-brand-blue hover:text-brand-blue font-normal transition-colors"
-                            >
-                              <Phone size={14} strokeWidth={1.5} />
-                              <span className="text-[13px] tracking-wide">{service.number}</span>
-                            </a>
-                            {userCoords && (
-                              <span className="text-[10px] text-gray-300 flex items-center gap-1 font-normal">
-                                <Navigation size={10} />
-                                {calculateDistance(userCoords.lat, userCoords.lng, service.lat, service.lng).toFixed(1)} km
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="py-20 text-center border-2 border-dashed border-gray-300 rounded-[6px]">
-                  <div className="inline-flex p-4 bg-gray-50 rounded-full mb-4">
-                    <Search size={32} strokeWidth={1.5} className="text-gray-200" />
-                  </div>
-                  <h3 className="text-lg font-normal text-gray-900">No services found</h3>
-                  <p className="text-gray-400 font-normal mt-1">Try searching for "EB", "Police", or "Hospital"</p>
-                </div>
-              )}
-            </div>
+        <div className="relative overflow-hidden rounded-[24px] border border-[#567f62]/70 bg-[#ffffff]/[.055] p-5 shadow-[0_23px_55px_rgba(0,0,0,.12)] backdrop-blur-[4px] sm:p-7">
+          <div className="mb-6 flex items-center justify-between gap-2 border-b border-[#789481]/35 pb-5">
+            <div><span className="text-[10px] font-bold uppercase tracking-[.17em] text-[#d3c4a5]">Frequently needed</span>
+              <h2 className="mt-1 text-[20px] font-bold tracking-[-.045em] text-white">Essential hotlines</h2></div>
+            <PhoneCall size={23} className="text-[#c2d7be]"/>
           </div>
-
-          {/* Right Column: Contact Form */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-28 bg-white border border-gray-300 rounded-[6px] shadow-xl shadow-gray-200/50 overflow-hidden">
-              <div className="p-8 bg-brand-dark text-white relative overflow-hidden">
-                <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
-                <h3 className="text-xl relative z-10 mb-2">Send us a message</h3>
-                <p className="text-emerald-100/60 text-xs relative z-10">Our team usually responds within 24 hours.</p>
-              </div>
-              
-              <form onSubmit={handleSubmit} className="p-8 space-y-6">
-                <div className="space-y-2">
-                  <label className="text-xs text-gray-400 font-normal uppercase tracking-wider">Department</label>
-                  <div className="relative">
-                    <select 
-                      value={department}
-                      onChange={(e) => setDepartment(e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-[6px] hover:bg-white hover:border-brand-blue/30 transition-all text-sm font-normal outline-none appearance-none focus:bg-white focus:ring-1 focus:ring-brand-blue pr-10"
-                    >
-                      {['General Inquiry', 'Add My Business', 'Report Location Error', 'Advertising / Pricing', 'Technical Support'].map((opt) => (
-                        <option key={opt} value={opt}>{opt}</option>
-                      ))}
-                    </select>
-                    <ChevronDown size={16} strokeWidth={1.5} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-xs text-gray-400 font-normal uppercase tracking-wider">Full Name</label>
-                  <input 
-                    type="text" 
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    placeholder="Could you tell me your name?"
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-[6px] focus:bg-white focus:ring-1 focus:ring-blue-950 outline-none transition-all text-sm font-normal"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-xs text-gray-400 font-normal uppercase tracking-wider">Email Address</label>
-                  <input 
-                    type="email" 
-                    required
-                    value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    placeholder="What is your email?"
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-[6px] focus:bg-white focus:ring-1 focus:ring-blue-950 outline-none transition-all text-sm font-normal"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs text-gray-400 font-normal uppercase tracking-wider">Location (Optional)</label>
-                    <button 
-                      type="button"
-                      onClick={attachLocation}
-                      disabled={isAttachingLocation}
-                      className="text-[10px] text-brand-dark flex items-center gap-1 font-normal transition-colors disabled:opacity-50"
-                    >
-                      <Navigation size={10} className={cn(isAttachingLocation && "animate-pulse")} />
-                      {formData.location ? 'Attached' : 'Attach My Location'}
-                    </button>
-                  </div>
-                  <input 
-                    type="text" 
-                    value={formData.location}
-                    onChange={(e) => setFormData({...formData, location: e.target.value})}
-                    placeholder="6.9271, 79.8612" 
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-[6px] focus:bg-white focus:ring-1 focus:ring-blue-950 outline-none transition-all text-sm font-normal"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-xs text-gray-400 font-normal uppercase tracking-wider">Message</label>
-                  <textarea 
-                    rows={4}
-                    required
-                    value={formData.message}
-                    onChange={(e) => setFormData({...formData, message: e.target.value})}
-                    placeholder="How can we help you today?" 
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-[6px] focus:bg-white focus:ring-1 focus:ring-blue-950 outline-none transition-all text-sm font-normal resize-none"
-                  ></textarea>
-                </div>
-
-                <Turnstile
-                  siteKey={process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY!}
-                  onSuccess={(token) => setTurnstileToken(token)}
-                  onError={() => setTurnstileToken(null)}
-                  onExpire={() => setTurnstileToken(null)}
-                  options={{ theme: 'light', size: 'flexible' }}
-                />
-
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full py-4 bg-brand-dark text-white rounded-[6px] shadow-lg shadow-emerald-900/10 transition-all font-normal flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed"
-                >
-                  {isSubmitting ? (
-                    <div className="h-5 w-5 border-2 border-white/30 border-t-white animate-spin rounded-full" />
-                  ) : (
-                    <MessageSquare size={18} strokeWidth={1.5} />
-                  )}
-                  {isSubmitting ? 'Sending...' : 'Send Message'}
-                  {!isSubmitting && <ChevronRight size={16} strokeWidth={1.5} className="group-hover:translate-x-0.5 transition-transform" />}
-                </button>
-
-                <div className="pt-6 border-t border-gray-50">
-                  <p className="text-xs text-center text-gray-400 font-normal mb-4">Or reach us instantly via</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <a 
-                      href="https://wa.me/94770337702"
-                      target="_blank"
-                      className="flex items-center justify-center gap-2 py-2.5  text-brand-dark rounded-[6px] transition-all text-xs font-normal"
-                    >
-                      WhatsApp
-                    </a>
-                    <a 
-                      href="mailto:slbusinessindex@gmail.com"
-                      className="flex items-center justify-center gap-2 py-2.5  text-brand-dark rounded-[6px] transition-all text-xs font-normal hover:text-brand-blue transition-colors"
-                    >
-                      Email Us
-                    </a>
-                  </div>
-                </div>
-              </form>
-            </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {topActions.map(a => <a key={a.number} href={"tel:" + a.number} className="group rounded-[15px] border border-[#739279]/50 bg-[#ffffff]/[.075] p-5 transition-colors hover:bg-[#ffffff]/[.15]">
+              <span className="block text-[34px] font-extrabold tracking-[-.07em] text-white">{a.number}</span>
+              <span className="mt-1 block text-[12px] font-bold text-[#d6e6d5]">{a.label}</span>
+              <span className="mt-2 flex items-center gap-1.5 text-[10px] text-[#aac8b3]">{a.kind} <ArrowUpRight size={12} className="opacity-60 group-hover:opacity-100"/></span>
+            </a>)}
           </div>
+          <p className="mt-5 text-[11px] leading-5 text-[#b9cbbb]">For emergencies call the relevant service directly. SLBI does not dispatch emergency help.</p>
         </div>
-      </section>
+      </div>
+    </section>
 
-      {/* Office Locations / More Info */}
-      <section className="py-24 bg-gray-50 border-t border-gray-300">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12">
-          <div className="flex gap-4">
-            <div className="flex-shrink-0 w-12 h-12 bg-white rounded-[6px] shadow-sm border border-gray-300 flex items-center justify-center text-brand-dark">
-              <Mail size={24} strokeWidth={1.5} />
-            </div>
-            <div>
-              <h4 className="text-sm font-normal text-gray-900 mb-1">Email Support</h4>
-              <p className="text-xs text-gray-500 font-normal mb-2">General inquiries & feedback</p>
-              <a href="slbusinessindex@gmail.com" className="text-brand-blue text-[13px] font-normal hover:underline underline-offset-4">
-                slbusinessindex@gmail.com
-              </a>
-            </div>
+    <section id="contact-slbi" aria-labelledby="contact-slbi-title" className="scroll-mt-[120px] border-b border-[#e2e9de] bg-white py-16 sm:py-24">
+      <div className="mx-auto grid max-w-[1420px] gap-10 px-5 sm:px-8 lg:grid-cols-[.85fr_1.15fr] lg:gap-16 lg:px-12">
+        <div className="max-w-[560px]">
+          <p className="text-[11px] font-extrabold uppercase tracking-[.2em] text-[#a78251]">Talk to our team</p>
+          <h2 id="contact-slbi-title" className="mt-5 text-[clamp(2.2rem,4.1vw,4rem)] font-extrabold leading-[1.12] tracking-[-.067em]">We're here to <span className="text-[#619578]">help you move forward.</span></h2>
+          <p className="mt-6 text-[14px] leading-[1.9] text-[#718275]">Need help creating a business listing, correcting information, reporting a technical issue or discussing a collaboration? Contact SL Business Index directly.</p>
+          <div className="mt-9 space-y-3">
+            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 rounded-[16px] border border-[#dce9dd] bg-[#f4f9f2] p-5 transition-colors hover:border-[#b6d6bb]">
+              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-[13px] bg-[#dcefe0] text-[#347b53]"><MessageCircle size={23}/></span>
+              <span className="min-w-0 flex-1"><span className="block text-[11px] font-semibold text-[#688772]">SLBI WhatsApp</span><span className="mt-1 block text-[18px] font-extrabold tracking-[-.035em] text-[#1b5133]">{phone}</span></span>
+              <ArrowUpRight size={19} className="text-[#4a8760]"/>
+            </a>
+            <a href={"mailto:" + SLBI_EMAIL} className="flex items-center gap-4 rounded-[16px] border border-[#e3e9e2] bg-white p-5 transition-colors hover:border-[#bdcfbe]">
+              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-[13px] bg-[#f2f4ed] text-[#557562]"><Mail size={22}/></span>
+              <span className="min-w-0 flex-1"><span className="block text-[11px] font-semibold text-[#819183]">Email support</span><span className="mt-1 block break-all text-[14px] font-bold text-[#315642]">{SLBI_EMAIL}</span></span>
+              <ArrowUpRight size={19} className="shrink-0 text-[#70967b]"/>
+            </a>
           </div>
-
-          <div className="flex gap-4">
-            <div className="flex-shrink-0 w-12 h-12 bg-white rounded-[6px] shadow-sm border border-gray-300 flex items-center justify-center text-brand-dark">
-              <Phone size={24} strokeWidth={1.5} />
-            </div>
-            <div>
-              <h4 className="text-sm font-normal text-gray-900 mb-1">Office Hours</h4>
-              <p className="text-xs text-gray-500 font-normal mb-2">Mon - Fri: 9am to 6pm</p>
-              <p className="text-brand-blue text-[13px] font-normal flex items-center gap-1">
-                <Clock size={12} strokeWidth={1.5} />
-                Response within 24h
-              </p>
-            </div>
-          </div>
-
-          <div className="flex gap-4">
-            <div className="flex-shrink-0 w-12 h-12 bg-white rounded-[6px] shadow-sm border border-gray-300 flex items-center justify-center text-brand-dark">
-              <Globe size={24} strokeWidth={1.5} />
-            </div>
-            <div>
-              <h4 className="text-sm font-normal text-gray-900 mb-1">Our Presence</h4>
-              <p className="text-xs text-gray-500 font-normal mb-2">Jaffna | Vavuniya | Colombo</p>
-              <p className="text-brand-blue text-[13px] font-normal">Sri Lanka's trusted directory</p>
-            </div>
-          </div>
+          <p className="mt-7 flex items-start gap-2 text-[11px] leading-6 text-[#819184]"><CheckCircle2 size={16} className="mt-1 shrink-0 text-[#619478]"/> Messages are handled by SLBI; government, banking and electricity enquiries must go directly to the respective organizations below.</p>
         </div>
-      </section>
-    </div>
-  );
+        <div className="rounded-[22px] border border-[#dfe9dd] bg-[#fcfdfa] p-5 shadow-[0_14px_40px_rgba(24,64,35,.045)] sm:p-8">
+          <div className="mb-7 border-b border-[#e4eae2] pb-5">
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.16em] text-[#7a9a82]"><Headphones size={15}/> Inquiry form</div>
+            <h3 className="mt-2 text-[24px] font-bold tracking-[-.045em] text-[#264634]">Send us a message</h3>
+            <p className="mt-1.5 text-[12px] leading-6 text-[#809182]">A simple way to reach our team. No location permission required.</p>
+          </div>
+          <ContactInquiryForm/>
+        </div>
+      </div>
+    </section>
+
+    <PublicContactDirectory/>
+
+    <section aria-labelledby="region-guide-heading" className="border-y border-[#e4e8de] bg-[#f1f5ed] py-16 sm:py-20">
+      <div className="mx-auto max-w-[1420px] px-5 sm:px-8 lg:px-12">
+        <p className="text-[11px] font-extrabold uppercase tracking-[.18em] text-[#a48454]">Local service discovery</p>
+        <h2 id="region-guide-heading" className="mt-4 max-w-[880px] text-[clamp(1.85rem,3.3vw,3.1rem)] font-extrabold leading-[1.19] tracking-[-.055em] text-[#1d422d]">
+          From Jaffna and Kilinochchi to Batticaloa, Colombo and beyond.
+        </h2>
+        <p className="mt-5 max-w-[840px] text-[13px] leading-7 text-[#77887a]">The directory includes all 25 Sri Lankan districts as search filters. National hotlines work island-wide; regional offices serve multiple districts; direct local-office numbers appear only when supported by an official provider listing. Select your district above to see the most relevant contacts.</p>
+        <div className="mt-7 flex flex-wrap gap-2">
+          {DISTRICTS.map(d => <span key={d} className="rounded-full border border-[#d9e4d8] bg-white px-3 py-1.5 text-[11px] font-semibold text-[#64816b]">{d}</span>)}
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="contact-answers" className="mx-auto max-w-[1120px] px-5 py-16 sm:px-8 sm:py-24">
+      <p className="text-[11px] font-extrabold uppercase tracking-[.19em] text-[#af8a5d]">Useful answers</p>
+      <h2 id="contact-answers" className="mt-4 text-[clamp(2rem,3.6vw,3.6rem)] font-extrabold tracking-[-.065em] text-[#234332]">Finding the right number.</h2>
+      <div className="mt-9 divide-y divide-[#dfe7df] border-y border-[#dfe7df]">
+        <div className="py-6"><h3 className="text-[16px] font-bold text-[#234632]">What is the Jaffna electricity board contact number?</h3>
+          <p className="mt-2 text-[13px] leading-7 text-[#708374]">For electricity outages in Jaffna, call <a href="tel:1987" className="font-bold text-[#377955] underline">1987</a>. The EDL Northern regional director's office in Jaffna lists <a href="tel:0212220496" className="font-bold text-[#377955] underline">021 222 0496</a> for administrative enquiries. This is not a separate confirmed Jaffna City breakdown number. <a target="_blank" rel="noopener noreferrer" href="https://edl.lk/contact" className="font-semibold text-[#347653] underline">Official EDL contact information</a>.</p></div>
+        <div className="py-6"><h3 className="text-[16px] font-bold text-[#234632]">Which electricity number covers Batticaloa?</h3>
+          <p className="mt-2 text-[13px] leading-7 text-[#708374]">Use the island-wide electricity hotline <a href="tel:1987" className="font-bold text-[#377955] underline">1987</a> for faults. EDL's Eastern provincial office lists <a href="tel:0262222666" className="font-bold text-[#377955] underline">026 222 2666</a> for regional enquiries; it is not labeled as a Batticaloa branch line. <a target="_blank" rel="noopener noreferrer" href="https://edl.lk/EDL-division-2" className="font-semibold text-[#347653] underline">EDL Eastern Division source</a>.</p></div>
+        <div className="py-6"><h3 className="text-[16px] font-bold text-[#234632]">What about Kilinochchi, Mullaitivu or Vavuniya?</h3>
+          <p className="mt-2 text-[13px] leading-7 text-[#708374]">Start with <a href="tel:1987" className="font-bold text-[#377955] underline">1987</a> for a power interruption. The Northern regional EDL office can be contacted at <a href="tel:0212220496" className="font-bold text-[#377955] underline">021 222 0496</a>. Local direct lines are not shown where we could not verify an up-to-date office listing.</p></div>
+        <div className="py-6"><h3 className="text-[16px] font-bold text-[#234632]">Can I find government offices and bank branch telephone numbers here?</h3>
+          <p className="mt-2 text-[13px] leading-7 text-[#708374]">Yes. Filter by district and category to find published numbers for immigration offices, police operations desks, regional banking offices and supported bank branches. Each result links to an official source, while national customer-care lines remain available.</p></div>
+        <div className="py-6"><h3 className="text-[16px] font-bold text-[#234632]">Is SL Business Index an official government helpline?</h3>
+          <p className="mt-2 text-[13px] leading-7 text-[#708374]">No. SL Business Index is an independent business information platform. To make a complaint or request a service, contact the relevant authority directly. Our own contact form is for SLBI enquiries only.</p></div>
+      </div>
+      <div className="mt-9 flex flex-wrap gap-3">
+        <a href="#public-directory" className="inline-flex min-h-11 items-center gap-2 rounded-[11px] bg-[#20543b] px-5 text-[12px] font-bold text-white hover:bg-[#326a4c]">Browse official-source contacts <Search size={15}/></a>
+        <Link href="/nearby" className="inline-flex min-h-11 items-center gap-2 rounded-[11px] border border-[#d6e2d6] bg-white px-5 text-[12px] font-bold text-[#3b7855] hover:bg-[#f4f9f3]">Discover nearby businesses <ArrowRight size={15}/></Link>
+      </div>
+      <p className="mt-7 flex items-start gap-2 text-[11px] leading-5 text-[#8a988d]"><ExternalLink size={13} className="mt-0.5 shrink-0"/> Source links and dates are provided for reference; official phone numbers and administrative office responsibilities can change. <span className="sr-only">{CONTACTS.length} source-linked directory entries.</span></p>
+    </section>
+  </main>;
 }
