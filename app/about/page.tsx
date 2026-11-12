@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ArrowRight, ArrowUpRight, BarChart3, BrainCircuit, CheckCircle2,
-  Compass, CreditCard, Eye, Globe2, LockKeyhole, MapPin, Megaphone,
-  MessageCircle, MousePointerClick, Search, ShieldCheck, Sparkles,
-  Target, TrendingUp, Users, WandSparkles,
+  Compass, CreditCard, Eye, Globe2, LockKeyhole, MapPin,
+  MessageCircle, Search, ShieldCheck, Sparkles,
+  Target, TrendingUp, WandSparkles,
 } from "lucide-react";
 import { GrowthConstellation, GrowthJourneyIllustration, PrivacyShieldIllustration } from "./AboutGraphics";
 
