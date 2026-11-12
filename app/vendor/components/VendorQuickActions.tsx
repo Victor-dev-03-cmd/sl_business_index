@@ -28,7 +28,8 @@ export default function VendorQuickActions({ open, onClose }:{open:boolean;onClo
   const dialogRef=useRef<HTMLDivElement>(null);
   const pathname=usePathname();
   useEffect(()=>{if(open){setQuery('');const raf=requestAnimationFrame(()=>inputRef.current?.focus());return()=>cancelAnimationFrame(raf)}},[open]);
-  useEffect(()=>{if(open)onClose()},[pathname]); // close on completed navigation
+  // The parent owns route-change closing. An effect here ran on the initial mount
+  // and immediately dismissed the dialog on the first Search / Quick Actions click.
   // The command palette is a modal: keep keyboard focus inside it, and return
   // focus to its original trigger when the user finishes or presses Escape.
   useEffect(()=>{
@@ -67,33 +68,33 @@ export default function VendorQuickActions({ open, onClose }:{open:boolean;onClo
   };
   if(!open)return null;
   return (
-    <div className="fixed inset-0 z-[100] flex items-start justify-center bg-[#091A15]/75 px-3 pt-[min(12vh,110px)] backdrop-blur-[5px]" role="presentation" onMouseDown={event=>{if(event.target===event.currentTarget)onClose()}}>
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Vendor quick actions" className="w-full max-w-[630px] overflow-hidden rounded-[22px] border border-white/20 bg-[#e9edf4] shadow-[0_35px_90px_rgba(27,31,42,.45)]">
+    <div className="fixed inset-0 z-[100] flex items-start justify-center bg-[#111114]/60 px-3 pt-[min(12vh,110px)] backdrop-blur-[5px]" role="presentation" onMouseDown={event=>{if(event.target===event.currentTarget)onClose()}}>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Vendor quick actions" className="w-full max-w-[630px] overflow-hidden rounded-[22px] border border-white/20 bg-white shadow-[0_35px_90px_rgba(27,31,42,.35)]">
         <div className="flex items-center gap-3 border-b border-[#d9dfe8] p-4 sm:px-5">
-          <IconsaxIcon name="search-normal" size={21} color="#4E8064"/>
+          <IconsaxIcon name="search-normal" size={21} color="#F57807"/>
           <input ref={inputRef} value={query} onChange={e=>setQuery(e.target.value)}
             aria-label="Search vendor portal actions" placeholder="Search actions, pages, tools…" maxLength={80}
-            className="min-w-0 flex-1 bg-transparent text-[14px] font-medium text-[#17392D] outline-none placeholder:text-[#8BA293]"/>
-          <button type="button" onClick={onClose} aria-label="Close quick actions" className="rounded-lg border border-[#E2EAE3] bg-white px-2 py-1 text-[10px] font-semibold text-[#63806F]">Esc</button>
+            className="min-w-0 flex-1 bg-transparent text-[14px] font-medium text-[#26262B] outline-none placeholder:text-[#94949D]"/>
+          <button type="button" onClick={onClose} aria-label="Close quick actions" className="rounded-lg border border-[#E8E8EC] bg-[#FAFAFB] px-2 py-1 text-[10px] font-semibold text-[#64646C]">Esc</button>
         </div>
         <div className="max-h-[min(63vh,530px)] overflow-y-auto p-3 sm:p-4">
-          <p className="px-2 pb-2 text-[10px] font-bold uppercase tracking-[.15em] text-[#7C9885]">Go straight to the work</p>
+          <p className="px-2 pb-2 text-[10px] font-bold uppercase tracking-[.15em] text-[#73737B]">Go straight to the work</p>
           <div className="grid gap-2 sm:grid-cols-2">
             {filtered.map(item=>(
               <Link key={item.href} href={item.href} onClick={()=>navigateAction(item.href)}
-                className="group flex items-start gap-3 rounded-[13px] border border-transparent px-3 py-3 transition hover:border-[#ffceab] hover:bg-[#fff1e5] focus-visible:border-[#679878] focus-visible:outline-none">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#D9E9DE] bg-[#e9edf4] text-[#e67519] transition group-hover:bg-white"><IconsaxIcon name={item.icon} size={20}/></div>
+                className="group flex items-start gap-3 rounded-[13px] border border-transparent px-3 py-3 transition hover:border-[#ffceab] hover:bg-[#fff1e5] focus-visible:border-[#FF7900] focus-visible:outline-none">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#F6E1D2] bg-[#FFF5ED] text-[#e67519] transition group-hover:bg-white"><IconsaxIcon name={item.icon} size={20}/></div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[12px] font-bold text-[#214C34]">{item.title}</p>
-                  <p className="mt-1 text-[11px] leading-4 text-[#7C9383]">{item.description}</p>
+                  <p className="text-[12px] font-bold text-[#29292E]">{item.title}</p>
+                  <p className="mt-1 text-[11px] leading-4 text-[#777780]">{item.description}</p>
                 </div>
-                <IconsaxIcon name="arrow-right-2" size={13} color="#80A08A"/>
+                <IconsaxIcon name="arrow-right-2" size={13} color="#C46A21"/>
               </Link>
             ))}
           </div>
-          {!filtered.length&&<p className="py-10 text-center text-sm text-[#688775]">No tools match that search. Try “leads”, “QR”, or “settings”.</p>}
+          {!filtered.length&&<p className="py-10 text-center text-sm text-[#74747C]">No tools match that search. Try “leads”, “QR”, or “settings”.</p>}
         </div>
-        <div className="flex items-center justify-between border-t border-[#E7EEE7] bg-[#F4F8F3] px-5 py-3 text-[10px] text-[#74927E]">
+        <div className="flex items-center justify-between border-t border-[#EAEAEF] bg-[#FAFAFC] px-5 py-3 text-[10px] text-[#777780]">
           <span>SLBI Vendor Command Center</span><span>⌘ / Ctrl + K to open</span>
         </div>
       </div>

@@ -9,7 +9,18 @@ import VerifiedBadge from '@/app/components/VerifiedBadge';
 import { useUser } from '@/lib/hooks/useUser';
 import IconsaxIcon from './components/IconsaxIcon';
 import dynamic from 'next/dynamic';
-const VendorQuickActions = dynamic(() => import('./components/VendorQuickActions'), { ssr: false });
+import { Toaster } from 'sonner';
+import { CircleCheck, CircleAlert, Info } from 'lucide-react';
+const VendorQuickActions = dynamic(() => import('./components/VendorQuickActions'), {
+  ssr: false,
+  loading: () => (
+    <div role="status" aria-live="polite" className="fixed inset-0 z-[100] flex items-start justify-center bg-[#111114]/55 px-4 pt-[min(12vh,110px)]">
+      <div className="rounded-2xl border border-[#e7e7eb] bg-white px-6 py-5 text-sm font-semibold text-[#303035] shadow-[0_22px_55px_rgba(0,0,0,0.18)]">
+        Opening quick actions…
+      </div>
+    </div>
+  ),
+});
 import './vendor-workspace.css';
 
 type NavItem = {name:string;href:string;icon:string};
@@ -70,7 +81,8 @@ export default function VendorLayout({children}:{children:React.ReactNode}){
     return()=>document.removeEventListener('pointerdown',onPointerDown);
   },[openMenu]);
 
-  useEffect(()=>{setOpenMenu(null);},[pathname]);
+  // A route transition closes an already-open palette; opening it must never close it.
+  useEffect(()=>{setOpenMenu(null);setQuickOpen(false);},[pathname]);
 
   if(isLoading)return <div className="flex min-h-screen items-center justify-center bg-[#F7F7F8]">
     <div role="status" className="flex items-center gap-3 rounded-lg border border-[#E7E7E9] bg-white px-5 py-4 text-sm font-semibold text-[#242529]">
@@ -157,6 +169,35 @@ export default function VendorLayout({children}:{children:React.ReactNode}){
     <main id="vendor-main" aria-label={currentPage+' workspace'} className="vendor-content min-h-0 flex-1 overflow-y-auto bg-white px-4 py-6 sm:px-6 sm:py-8 xl:px-9 xl:py-9">
       <div className="mx-auto w-full max-w-[1760px]">{children}</div>
     </main>
+    {/* Dedicated toast layer for vendor actions; public-site notifications keep their own toaster. */}
+    <Toaster
+      id="vendor-portal"
+      position="top-right"
+      offset={90}
+      duration={4500}
+      visibleToasts={3}
+      closeButton
+      icons={{
+        success: <CircleCheck size={19} className="text-[#f57807]" aria-hidden="true"/>,
+        error: <CircleAlert size={19} className="text-[#db3545]" aria-hidden="true"/>,
+        info: <Info size={19} className="text-[#f57807]" aria-hidden="true"/>,
+      }}
+      toastOptions={{
+        style: {
+          background: '#ffffff',
+          color: '#202024',
+          border: '1px solid #e8e8ec',
+          borderLeft: '3px solid #FF7900',
+          borderRadius: '16px',
+          padding: '16px',
+          boxShadow: '0 16px 38px rgba(30, 30, 34, .14)',
+        },
+        classNames: {
+          title: '!text-[13px] !font-bold !text-[#202024]',
+          description: '!text-[12px] !leading-5 !text-[#686872]',
+        },
+      }}
+    />
     {quickOpen&&<VendorQuickActions open={quickOpen} onClose={()=>setQuickOpen(false)}/>}
   </div>;
 }
