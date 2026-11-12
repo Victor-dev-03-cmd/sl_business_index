@@ -98,7 +98,8 @@ export default function EditBusinessForm({ business }: { business: Business }) {
     let savedToDatabase = false;
     try {
       const { data: authData, error: authError } = await supabase.auth.getUser();
-      if (authError || authData.user?.id !== business.owner_id)
+      const currentUser = authData.user;
+      if (authError || !currentUser || currentUser.id !== business.owner_id)
         throw new Error('Your session is no longer authorized to edit this business.');
       if (logo) {
         const fileError = validateBusinessImage(logo);
@@ -157,7 +158,7 @@ export default function EditBusinessForm({ business }: { business: Business }) {
           // For now, let's keep the status as is
         })
         .eq('id', business.id)
-        .eq('owner_id', authData.user.id)
+        .eq('owner_id', currentUser.id)
         .select('id')
         .maybeSingle();
 
