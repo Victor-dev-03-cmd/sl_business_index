@@ -41,7 +41,7 @@ const CATEGORIES = ["Manpower Services", "Care & Lifestyle", "Professional & Fin
 const DISTRICTS = ["Ampara", "Anuradhapura", "Badulla", "Batticaloa", "Colombo", "Galle", "Gampaha", "Hambantota", "Jaffna", "Kalutara", "Kandy", "Kegalle", "Kilinochchi", "Kurunegala", "Mannar", "Matale", "Matara", "Monaragala", "Mullaitivu", "Nuwara Eliya", "Polonnaruwa", "Puttalam", "Ratnapura", "Trincomalee", "Vavuniya"];
 const typeLabel: Record<NewsType, string> = { news: "Business news", hiring: "Hiring", looking: "Opportunity sought" };
 const kickerClass = "text-[10px] font-extrabold uppercase tracking-[.17em] text-[#9b754f]";
-const serif = "font-serif tracking-[-.045em] text-[#1c3026]";
+const heading = "font-[family-name:var(--font-inter)] font-bold tracking-[-.045em] text-[#1c3026]";
 
 function displayDate(date: string, options: Intl.DateTimeFormatOptions = { day: "numeric", month: "short", year: "numeric" }): string {
   return new Date(date).toLocaleDateString("en-LK", options);
@@ -118,7 +118,7 @@ function LeadStory({ post, expanded, onToggle, onReport, onShare, highlighted }:
       <div className="flex min-w-0 flex-col px-6 py-7 sm:px-9 sm:py-9 lg:px-10 lg:py-11">
         <div className="flex items-center gap-2.5"><span className="h-1.5 w-1.5 rounded-full bg-[#c87c49]"/><span className={kickerClass}>Lead story</span>
           <span className="text-[10px] text-[#898b82]">/ {typeLabel[post.post_type] || "Business news"}</span></div>
-        <h2 className={"mt-5 text-[clamp(2.15rem,3.5vw,4.5rem)] leading-[1.08] " + serif}>{post.title}</h2>
+        <h2 className={"mt-5 text-[clamp(2.15rem,3.5vw,4.5rem)] leading-[1.08] " + heading}>{post.title}</h2>
         <p className="mt-5 line-clamp-4 whitespace-pre-line text-[14px] leading-[1.8] text-[#687065] sm:text-[15px]">{post.content}</p>
         <div className="mt-auto pt-8"><StoryByline post={post}/>
           <button type="button" onClick={onToggle} aria-expanded={expanded} className="mt-7 inline-flex min-h-11 items-center gap-2 border-b-2 border-[#2b6650] pb-1 text-[12px] font-extrabold uppercase tracking-[.08em] text-[#2b6650] hover:text-[#16402d]">
@@ -147,7 +147,7 @@ function FeedStory({ post, expanded, onToggle, onReport, onShare, highlighted }:
           <span className="text-[#b36c40]">{typeLabel[post.post_type] || "News"}</span><span className="text-[#97998f]">{post.category || "Business"}</span>
           {post.content_format === "poster" && <span className="inline-flex items-center gap-1 text-[#68816c]"><ImageIcon size={13}/> Poster</span>}
         </div>
-        <h3 className={"mt-3 text-[clamp(1.55rem,2.2vw,2.3rem)] leading-[1.15] " + serif}>{post.title}</h3>
+        <h3 className={"mt-3 text-[clamp(1.55rem,2.2vw,2.3rem)] leading-[1.15] " + heading}>{post.title}</h3>
         <p className="mt-3 line-clamp-3 whitespace-pre-line text-[13px] leading-[1.85] text-[#697167]">{post.content}</p>
         <div className="mt-5"><StoryByline post={post} compact/></div>
         <button onClick={onToggle} aria-expanded={expanded} type="button" className="mt-4 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[.1em] text-[#2b7154] hover:underline">
@@ -253,7 +253,7 @@ export default function BusinessNewsClient() {
   };
   const day = new Date().toLocaleDateString("en-LK", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Colombo" });
 
-  return <div className="min-h-screen bg-[#f8f7f2] pb-24 text-[#24372d]">
+  return <div className="min-h-screen bg-[#f8f7f2] pb-24 font-[family-name:var(--font-inter)] text-[#24372d]">
     <div className="mx-auto max-w-[1480px] px-4 sm:px-7 lg:px-10">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#d9d8cf] py-3 text-[10px] font-bold uppercase tracking-[.13em] text-[#667467]">
         <span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-[#cc8556]"/> Sri Lanka&apos;s business community</span>
@@ -261,7 +261,7 @@ export default function BusinessNewsClient() {
       </div>
       <header className="border-b-[3px] border-double border-[#283e32] pb-7 pt-9 text-center sm:pb-9 sm:pt-11">
         <div className="mx-auto mb-3 flex w-fit items-center gap-2 text-[10px] font-extrabold uppercase tracking-[.29em] text-[#b18459]"><span className="h-px w-7 bg-[#b18459]"/> SL Business Index <span className="h-px w-7 bg-[#b18459]"/></div>
-        <h1 className="font-serif text-[clamp(3.1rem,7.5vw,7.5rem)] font-bold leading-[.95] tracking-[-.065em] text-[#193528]">
+        <h1 className="font-[family-name:var(--font-inter)] text-[clamp(3.1rem,7.5vw,7.5rem)] font-bold leading-[.95] tracking-[-.065em] text-[#193528]">
           The Business <span className="italic text-[#59816a]">Journal.</span>
         </h1>
         <p className="mx-auto mt-5 max-w-[660px] text-[13px] leading-6 text-[#6d766c] sm:text-[15px]">
@@ -283,7 +283,7 @@ export default function BusinessNewsClient() {
       <main id="latest-edition" className="scroll-mt-[120px] pt-8 sm:pt-10">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div><p className={kickerClass}>Community dispatches</p>
-            <h2 className={"mt-1 text-[30px] leading-tight sm:text-[38px] " + serif}>The latest edition</h2></div>
+            <h2 className={"mt-1 text-[30px] leading-tight sm:text-[38px] " + heading}>The latest edition</h2></div>
           <div className="flex items-center gap-2 text-[11px] font-semibold text-[#69766a]"><Newspaper size={15}/> {isLoading ? "Loading stories" : filteredPosts.length + " " + (filteredPosts.length === 1 ? "story" : "stories")}</div>
         </div>
         <div className="mb-7 grid gap-3 rounded-[11px] border border-[#e2e0d5] bg-white p-3 sm:grid-cols-[minmax(0,1fr)_180px_150px] sm:gap-4 sm:p-4">
@@ -307,12 +307,12 @@ export default function BusinessNewsClient() {
           <div className="h-[390px] animate-pulse rounded-[8px] bg-[#ededdf]"/>
         </div>
         : isError ? <div role="alert" className="rounded-[12px] border border-[#edc1b7] bg-white p-10 text-center">
-          <h3 className="font-serif text-2xl text-[#814b39]">Could not load the news edition</h3>
+          <h3 className="font-[family-name:var(--font-inter)] text-2xl text-[#814b39]">Could not load the news edition</h3>
           <p className="mt-2 text-sm text-[#7e776a]">Please check your connection and retry.</p>
           <button type="button" onClick={() => void refetch()} className="mt-5 rounded-md bg-[#234333] px-5 py-3 text-sm font-semibold text-white">Try again</button>
         </div>
         : !lead ? <div className="rounded-[12px] border border-dashed border-[#d8ddce] bg-white px-6 py-20 text-center">
-          <BookOpen size={42} className="mx-auto text-[#91af98]"/><h3 className="mt-5 font-serif text-[29px] text-[#224532]">No stories for these filters</h3>
+          <BookOpen size={42} className="mx-auto text-[#91af98]"/><h3 className="mt-5 font-[family-name:var(--font-inter)] text-[29px] text-[#224532]">No stories for these filters</h3>
           <p className="mt-2 text-[13px] text-[#7d847b]">Try another industry, district or search term. Verified owners can contribute a story.</p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             {filtersActive && <button type="button" onClick={clearFilters} className="rounded-md border border-[#cfd8ce] px-5 py-2.5 text-sm font-semibold text-[#315f42]">Clear filters</button>}
@@ -325,7 +325,7 @@ export default function BusinessNewsClient() {
           <div className="mt-10 grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_310px] xl:gap-14">
             <section aria-labelledby="more-stories-title" className="min-w-0">
               <div className="mb-5 flex items-center justify-between border-b-2 border-[#223b2d] pb-4">
-                <div><p className={kickerClass}>The community newsroom</p><h2 id="more-stories-title" className={"mt-1 text-[29px] " + serif}>More from the journal</h2></div>
+                <div><p className={kickerClass}>The community newsroom</p><h2 id="more-stories-title" className={"mt-1 text-[29px] " + heading}>More from the journal</h2></div>
                 <span className="text-[11px] font-semibold text-[#8b8c80]">{remainder.length} more</span>
               </div>
               {visible.length ? visible.map(post => <FeedStory key={post.id} post={post} expanded={expandedId === post.id}
@@ -338,18 +338,18 @@ export default function BusinessNewsClient() {
             <aside className="min-w-0 space-y-6 lg:sticky lg:top-[98px]" aria-label="Journal sidebar">
               <div className="overflow-hidden border border-[#dde3d7] bg-[#1c3528] p-7 text-white">
                 <span className="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[.18em] text-[#c6c7a5]"><PenLine size={15}/> The publisher&apos;s desk</span>
-                <h3 className="mt-5 font-serif text-[30px] leading-[1.13] tracking-tight">Your story belongs here.</h3>
+                <h3 className="mt-5 font-[family-name:var(--font-inter)] text-[30px] leading-[1.13] tracking-tight">Your story belongs here.</h3>
                 <p className="mt-4 text-[12px] leading-6 text-[#c1d1c5]">Business articles, announcements, posters and opportunities from verified local owners.</p>
                 <button type="button" onClick={() => setEditorOpen(true)} className="mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[7px] bg-[#f2ecdc] px-4 text-[12px] font-bold text-[#234132] hover:bg-white">Publish a story <ArrowUpRight size={15}/></button>
               </div>
               <div className="border border-[#e0dfd4] bg-white px-6 py-6">
                 <div className="flex items-center justify-between"><p className={kickerClass}>On the record</p><Newspaper size={17} className="text-[#8b9d8b]"/></div>
-                <h3 className={"mt-2 text-[27px] " + serif}>Latest dispatches</h3>
+                <h3 className={"mt-2 text-[27px] " + heading}>Latest dispatches</h3>
                 <div className="mt-5 divide-y divide-[#ecebe3]">{latest.map((post, i) => <button key={post.id} type="button"
                   onClick={() => { setExpandedId(post.id); document.getElementById("post-" + post.id)?.scrollIntoView({ behavior: "smooth", block: "center" }); }}
                   className="flex w-full items-start gap-3 py-4 text-left first:pt-0">
-                  <span className="font-serif text-[26px] text-[#c4c5b5]">{String(i + 1).padStart(2, "0")}</span>
-                  <span className="min-w-0"><span className="line-clamp-2 font-serif text-[16px] font-bold leading-5 text-[#234130]">{post.title}</span>
+                  <span className="font-[family-name:var(--font-inter)] text-[26px] text-[#c4c5b5]">{String(i + 1).padStart(2, "0")}</span>
+                  <span className="min-w-0"><span className="line-clamp-2 font-[family-name:var(--font-inter)] text-[16px] font-bold leading-5 text-[#234130]">{post.title}</span>
                     <span className="mt-1 block text-[10px] text-[#898d82]">{displayDate(post.created_at)}</span></span>
                 </button>)}</div>
               </div>
@@ -357,14 +357,14 @@ export default function BusinessNewsClient() {
                 <p className={kickerClass}>The edition in numbers</p>
                 <div className="mt-4 grid grid-cols-3 gap-3 text-center">
                   {[{value:posts.length,label:"Updates"},{value:articleCount,label:"Articles"},{value:posterCount,label:"Posters"}].map(item =>
-                    <div key={item.label} className="border-y border-[#e5e4da] py-3"><span className="block font-serif text-[27px] font-bold text-[#224632]">{item.value}</span>
+                    <div key={item.label} className="border-y border-[#e5e4da] py-3"><span className="block font-[family-name:var(--font-inter)] text-[27px] font-bold text-[#224632]">{item.value}</span>
                       <span className="text-[10px] font-semibold text-[#82887d]">{item.label}</span></div>)}
                 </div>
                 <p className="mt-4 text-[11px] leading-5 text-[#85877e]">These are business-contributed updates, not independently verified reporting. Check details with the publisher.</p>
               </div>
               <div className="border-t-[3px] border-[#284938] pt-5">
                 <p className={kickerClass}>Explore the directory</p>
-                <h3 className={"mt-2 text-[23px] " + serif}>Find the businesses behind the stories.</h3>
+                <h3 className={"mt-2 text-[23px] " + heading}>Find the businesses behind the stories.</h3>
                 <Link href="/nearby" className="mt-4 inline-flex items-center gap-2 text-[12px] font-bold text-[#2f7152] hover:underline">Explore businesses <ArrowUpRight size={15}/></Link>
               </div>
             </aside>
@@ -376,7 +376,7 @@ export default function BusinessNewsClient() {
     <section className="mt-16 border-y border-[#dde1d5] bg-white py-10">
       <div className="mx-auto grid max-w-[1480px] gap-7 px-4 sm:px-7 lg:grid-cols-[1fr_auto] lg:items-center lg:px-10">
         <div><p className={kickerClass}>Your business. Your voice.</p>
-          <h2 className={"mt-2 text-[clamp(1.8rem,3vw,2.8rem)] " + serif}>From storefronts to stories.</h2>
+          <h2 className={"mt-2 text-[clamp(1.8rem,3vw,2.8rem)] " + heading}>From storefronts to stories.</h2>
           <p className="mt-3 max-w-[660px] text-[13px] leading-6 text-[#778075]">Publish an illustrated update, a longer article or a job opportunity — credited to your approved and verified business.</p></div>
         <button type="button" onClick={() => setEditorOpen(true)} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[7px] bg-[#244533] px-6 text-[12px] font-bold text-white hover:bg-[#336a4a]"><Megaphone size={17}/> Submit a story <ArrowUpRight size={15}/></button>
       </div>
