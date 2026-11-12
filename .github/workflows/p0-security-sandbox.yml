@@ -130,6 +130,10 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f docs/growth/SECURE_LEAD_SUBMISSION_REVIEW_ONLY.sql
       - name: Test RPC grants, validation, dedupe, rate-limits and cross-vendor RLS
         run: psql -v ON_ERROR_STOP=1 -f tests/p0/verify_ingestion.sql
+      - name: Stage compatible legacy mobile/web lead INSERT restrictions
+        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p0/P0_LEGACY_LEADS_STAGE_REVIEW_ONLY.sql
+      - name: Validate legacy submissions and negative abuse cases
+        run: psql -v ON_ERROR_STOP=1 -f tests/p0/verify_legacy_leads.sql
 
   p0-source:
     name: Source-only safety contracts
