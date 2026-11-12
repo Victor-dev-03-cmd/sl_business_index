@@ -35,7 +35,7 @@ type StatusFilter = 'all' | 'approved' | 'pending' | 'open';
 type SortKey = 'views' | 'calls' | 'name';
 const DEFAULT_METRICS: Metrics = { views: 0, calls: 0, leads: 0, reviews: 0 };
 const number = (n: number) => new Intl.NumberFormat('en-LK').format(n);
-const smallLabel = 'text-[10px] font-bold uppercase tracking-[0.10em] text-slate-400';
+const smallLabel = 'text-[11px] font-bold uppercase tracking-[0.10em] text-[#62636d]';
 const panel = neo.card;
 const button = neo.button;
 
@@ -236,7 +236,7 @@ export default function VendorDashboard() {
             <h2 className="text-[13px] font-bold text-[#27272A]">Performance snapshot</h2>
             <span className="rounded-md border border-[#EEEAEB] bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-500">All-time</span>
           </div>
-          <p className="text-[11px] text-slate-400">Recorded counters · Not unique visitors or verified sales</p>
+          <p className="text-[11px] text-[#6f7078]">Recorded counters · Not unique visitors or verified sales</p>
         </div>
 
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
@@ -251,7 +251,7 @@ export default function VendorDashboard() {
               <p className="mt-1.5 text-[26px] font-bold tabular-nums tracking-[-0.04em] text-[#2C2C31]">
                 {loading ? <span className="inline-block h-7 w-16 animate-pulse rounded bg-slate-100" /> : number(metrics[kpi.id])}
               </p>
-              <p className="mt-2 text-[10px] leading-4 text-slate-400">{kpi.explanation}</p>
+              <p className="mt-2 text-[11px] leading-5 text-[#6f7078]">{kpi.explanation}</p>
             </div>
           ))}
           <div className={panel + ' col-span-2 min-w-0 p-4 md:col-span-1'}>
@@ -264,7 +264,7 @@ export default function VendorDashboard() {
             <p className="mt-1.5 text-[26px] font-bold tabular-nums tracking-[-0.04em] text-[#2C2C31]">
               {loading ? '—' : callRate === null ? '—' : callRate.toFixed(1) + '%'}
             </p>
-            <p className="mt-2 text-[10px] leading-4 text-slate-400">Call clicks ÷ views · not unique-user conversion</p>
+            <p className="mt-2 text-[11px] leading-5 text-[#6f7078]">Call clicks ÷ views · not unique-user conversion</p>
           </div>
         </div>
 
@@ -286,7 +286,7 @@ export default function VendorDashboard() {
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#eef0f2] px-5 py-4">
               <div>
                 <h2 className="text-[13px] font-bold text-[#27272C]">Engagement trends</h2>
-                <p className="mt-1 text-[11px] text-slate-400">Views, calls and lead activity recorded during the selected period</p>
+                <p className="mt-1 text-[11px] text-[#6f7078]">Views, calls and lead activity recorded during the selected period</p>
               </div>
               <Link href="/vendor/growth" className="flex items-center gap-1 text-[11px] font-semibold text-[#D76A09] hover:underline">
                 Growth tools <IconsaxIcon name="arrow-right-2" size={13} />
@@ -301,7 +301,7 @@ export default function VendorDashboard() {
             <div className="flex items-center justify-between border-b border-[#eef0f2] px-5 py-4">
               <div>
                 <h2 className="text-[13px] font-bold text-[#27272C]">Portfolio health</h2>
-                <p className="mt-1 text-[11px] text-slate-400">Current listing and enquiry overview</p>
+                <p className="mt-1 text-[11px] text-[#6f7078]">Current listing and enquiry overview</p>
               </div>
               <IconsaxIcon name="status-up" size={19} color="#F47A1B" />
             </div>
@@ -332,11 +332,11 @@ export default function VendorDashboard() {
                   <p className="mt-2 text-[11px] leading-5 text-[#8C8580]">Share of your owned listings approved for directory display. Not a sales or customer conversion metric.</p>
                 </div>
               </div>
-              <p className="text-[10px] leading-5 text-slate-400">*Open status reflects your manually selected business availability.</p>
+              <p className="text-[10px] leading-5 text-[#6f7078]">*Open status reflects your manually selected business availability.</p>
               <div className="border-t border-[#eef0f2] pt-4">
                 <h3 className="text-[11px] font-bold text-[#27272A]">Recommended actions</h3>
                 {loading ? (
-                  <p className="mt-4 text-[11px] text-slate-400">Loading recommendations…</p>
+                  <p className="mt-4 text-[11px] text-[#6f7078]">Loading recommendations…</p>
                 ) : opportunities.length ? (
                   <div className="mt-2 divide-y divide-[#eef0f2]">
                     {opportunities.map(opportunity => (
@@ -366,7 +366,7 @@ export default function VendorDashboard() {
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#EEEAEB] px-5 py-4">
             <div>
               <h2 className="text-[14px] font-bold text-[#27272C]">Business performance</h2>
-              <p className="mt-1 text-[11px] text-slate-400">Search, filter and compare your registered business listings</p>
+              <p className="mt-1 text-[11px] text-[#6f7078]">Search, filter and compare your registered business listings</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <button type="button" onClick={exportCsv} disabled={!filtered.length} className={button}>
@@ -380,7 +380,7 @@ export default function VendorDashboard() {
 
           <div className="flex flex-wrap items-center gap-2 border-b border-[#EEEAEB] px-4 py-3 sm:px-5">
             <div className="relative min-w-[180px] flex-1 sm:max-w-[340px]">
-              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#6f7078]">
                 <IconsaxIcon name="search-normal" size={16} />
               </span>
               <input value={query} aria-label="Search businesses" onChange={e => { setQuery(e.target.value); setPage(1); }}
@@ -399,7 +399,7 @@ export default function VendorDashboard() {
               <option value="calls">Most calls</option>
               <option value="name">Name A–Z</option>
             </select>
-            <span className="ml-auto whitespace-nowrap text-[11px] text-slate-400">{filtered.length} results</span>
+            <span className="ml-auto whitespace-nowrap text-[11px] text-[#6f7078]">{filtered.length} results</span>
           </div>
 
           {loading ? (
@@ -441,7 +441,7 @@ export default function VendorDashboard() {
                             </div>
                             <div className="min-w-0">
                               <p className="truncate text-xs font-semibold text-[#28282D]">{business.name}</p>
-                              <p className="mt-0.5 max-w-[220px] truncate font-mono text-[10px] text-slate-400">{business.id.slice(0, 8)}</p>
+                              <p className="mt-0.5 max-w-[220px] truncate font-mono text-[10px] text-[#6f7078]">{business.id.slice(0, 8)}</p>
                             </div>
                           </div>
                         </td>
@@ -474,7 +474,7 @@ export default function VendorDashboard() {
             </div>
           )}
           <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#EEEAEB] px-5 py-3">
-            <p className="text-[11px] text-slate-400">{filtered.length ? (safePage - 1) * PAGE_SIZE + 1 : 0}–{Math.min(safePage * PAGE_SIZE, filtered.length)} of {filtered.length} businesses</p>
+            <p className="text-[11px] text-[#6f7078]">{filtered.length ? (safePage - 1) * PAGE_SIZE + 1 : 0}–{Math.min(safePage * PAGE_SIZE, filtered.length)} of {filtered.length} businesses</p>
             <div className="flex items-center gap-2">
               <button type="button" className={button + ' h-8'} disabled={safePage <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}>Previous</button>
               <span className="text-[11px] text-slate-500">{safePage} / {totalPages}</span>
@@ -486,11 +486,11 @@ export default function VendorDashboard() {
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <section className={panel + ' overflow-hidden'}>
             <div className="flex items-center justify-between border-b border-[#EEEAEB] px-5 py-4">
-              <div><h2 className="text-[13px] font-bold text-[#27272C]">Recent customer activity</h2><p className="mt-1 text-[11px] text-slate-400">Latest reviews on your listings</p></div>
+              <div><h2 className="text-[13px] font-bold text-[#27272C]">Recent customer activity</h2><p className="mt-1 text-[11px] text-[#6f7078]">Latest reviews on your listings</p></div>
               <Link href="/vendor/reviews" className="flex items-center gap-1 text-[11px] font-semibold text-[#2C2C31]">All reviews <IconsaxIcon name="arrow-right-2" size={12} /></Link>
             </div>
-            {loading ? <p className="p-5 text-xs text-slate-400">Loading reviews…</p> : reviews.length === 0 ? (
-              <p className="p-7 text-center text-xs text-slate-400">No customer reviews recorded yet.</p>
+            {loading ? <p className="p-5 text-xs text-[#6f7078]">Loading reviews…</p> : reviews.length === 0 ? (
+              <p className="p-7 text-center text-xs text-[#6f7078]">No customer reviews recorded yet.</p>
             ) : (
               <div className="divide-y divide-[#eef1f3]">
                 {reviews.map(r => (
@@ -498,7 +498,7 @@ export default function VendorDashboard() {
                     <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f5f1e8] text-[#b28b4a]"><IconsaxIcon name="star" size={15} /></span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-xs font-semibold text-[#343439]">{r.user_name || 'Customer'} · {r.businessName}</p>
-                      <p className="mt-1 text-[10px] text-slate-400">{new Date(r.created_at).toLocaleDateString('en-LK', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                      <p className="mt-1 text-[10px] text-[#6f7078]">{new Date(r.created_at).toLocaleDateString('en-LK', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                     </div>
                     {r.rating !== null && <span className="rounded-md bg-[#fff5e3] px-2 py-1 text-xs font-bold text-[#ae7c34]">{r.rating.toFixed(1)} / 5</span>}
                   </div>
@@ -507,7 +507,7 @@ export default function VendorDashboard() {
             )}
           </section>
           <section className={panel + ' overflow-hidden'}>
-            <div className="border-b border-[#EEEAEB] px-5 py-4"><h2 className="text-[13px] font-bold text-[#27272C]">Quick actions</h2><p className="mt-1 text-[11px] text-slate-400">Common tasks for your business</p></div>
+            <div className="border-b border-[#EEEAEB] px-5 py-4"><h2 className="text-[13px] font-bold text-[#27272C]">Quick actions</h2><p className="mt-1 text-[11px] text-[#6f7078]">Common tasks for your business</p></div>
             <div className="grid grid-cols-2 gap-2 p-4">
               {[
                 { label: 'My listings', href: '/vendor/my-businesses', icon: 'shop' },
@@ -530,7 +530,7 @@ export default function VendorDashboard() {
           </section>
         </div>
 
-        <p className="pb-3 text-center text-[10px] text-slate-400">SL Business Index · Vendor Intelligence · Metrics are derived from available business and analytics records.</p>
+        <p className="pb-3 text-center text-[10px] text-[#6f7078]">SL Business Index · Vendor Intelligence · Metrics are derived from available business and analytics records.</p>
       </div>
     </div>
   );

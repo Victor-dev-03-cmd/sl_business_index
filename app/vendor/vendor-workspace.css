@@ -327,7 +327,7 @@
   --vendor-orange:#FF7900;
   --vendor-orange-dark:#D96300;
   --vendor-ink:#1D1D20;
-  --vendor-canvas:#F7F7F8;
+  --vendor-canvas:#FFFFFF;
   --vendor-edge:#E8E8EB;
   --vendor-slate:#797981;
   color:#202124;
@@ -335,17 +335,21 @@
   font-size:13px;
 }
 .vendor-workspace-v6 .vendor-content {
-  background:#e9edf4;
+  background:#FFFFFF;
   scroll-behavior:auto;
 }
 .vendor-workspace-v6 .vendor-topbar {
-  background:#e9edf4;
-  box-shadow:0 5px 18px rgba(80,88,110,.08);
+  background:#FFFFFF;
+  box-shadow:0 3px 15px rgba(20,20,26,.055);
 }
 .vendor-workspace-v6 .vendor-topbar :is(button,a,summary):focus-visible,
 .vendor-workspace-v6 .vendor-content :is(button,a,input,textarea,select):focus-visible {
   outline:2px solid #FF7900;
   outline-offset:2px;
+}
+.vendor-workspace-v6 .vendor-content :is(input,textarea,select):not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus {
+  border-color:#FF7900;
+  box-shadow:0 0 0 3px rgba(255,121,0,.13);
 }
 .vendor-topbar-scrollbar {
   scrollbar-width:none;
