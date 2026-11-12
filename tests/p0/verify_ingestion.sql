@@ -105,6 +105,22 @@ BEGIN
     'Test Customer','customer@testing.invalid','0755555555',NULL,
     repeat('e',64),repeat('f',64));
  IF c IS NOT NULL THEN RAISE EXCEPTION 'FAIL: blank lead message accepted'; END IF;
+ c:=public.slbi_submit_verified_lead(gen_random_uuid(),
+    '20000000-0000-4000-8000-000000000003',
+    NULL,'customer@testing.invalid','0755555555','Customer message',
+    repeat('e',64),repeat('f',64));
+ IF c IS NOT NULL THEN RAISE EXCEPTION 'FAIL: NULL lead name accepted'; END IF;
+ c:=public.slbi_submit_verified_lead(gen_random_uuid(),
+    '20000000-0000-4000-8000-000000000003',
+    'Test Customer',NULL,'0755555555','Customer message',
+    repeat('e',64),repeat('f',64));
+ IF c IS NOT NULL THEN RAISE EXCEPTION 'FAIL: NULL lead email accepted'; END IF;
+ c:=public.slbi_submit_verified_lead(gen_random_uuid(),
+    '20000000-0000-4000-8000-000000000003',
+    'Test Customer','customer@testing.invalid',NULL,'Customer message',
+    repeat('e',64),repeat('f',64));
+ IF c IS NOT NULL THEN RAISE EXCEPTION 'FAIL: NULL lead phone accepted'; END IF;
+
  FOR i IN 1..4 LOOP
  c:=public.slbi_submit_verified_lead(gen_random_uuid(),
     '20000000-0000-4000-8000-000000000003',

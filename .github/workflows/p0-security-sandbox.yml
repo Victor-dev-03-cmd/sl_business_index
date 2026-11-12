@@ -10,6 +10,8 @@ on:
       - 'tests/p0SecurityFoundationPrepare.test.mjs'
       - 'supabase/migrations/20261110010000_growth_os_credit_foundation.sql'
       - 'supabase/migrations/20261110011000_growth_security_guards.sql'
+      - 'docs/growth/SECURE_EVENT_INGESTION_REVIEW_ONLY.sql'
+      - 'docs/growth/SECURE_LEAD_SUBMISSION_REVIEW_ONLY.sql'
 permissions:
   contents: read
 jobs:
