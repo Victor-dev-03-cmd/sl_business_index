@@ -1,0 +1,30 @@
+name: P1 Vendor Workflows — Cloud Verification
+on:
+  push:
+    branches:
+      - feature/p1-vendor-workflows-20261113
+    paths:
+      - '.github/workflows/p1-vendor-workflows.yml'
+      - 'app/vendor/my-businesses/**'
+      - 'tests/p1VendorBusinessEdit.test.mjs'
+      - 'supabase/migrations/20261112194811_p0_business_logos_owner_isolation.sql'
+permissions:
+  contents: read
+jobs:
+  vendor-edit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install dependencies from committed lockfile
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Validate P1 vendor workflow regression contracts
+        run: node --test tests/p1VendorBusinessEdit.test.mjs
+      - name: Compile TypeScript without a Vercel deployment
+        run: ./node_modules/.bin/tsc --noEmit --pretty false
