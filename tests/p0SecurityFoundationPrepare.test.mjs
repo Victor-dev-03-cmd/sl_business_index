@@ -53,3 +53,17 @@ test("stage-only profile privacy candidate removes anonymous PII read without br
   assert.doesNotMatch(fallback,/CREATE POLICY "Profiles viewable by all"/);
   assert.match(runbook,/Supabase branching requires/);
 });
+
+
+test("promoted atomic release migration matches staging candidate SQL", () => {
+  const candidate = read("P0_INTEGRATED_RELEASE_CANDIDATE_REVIEW_ONLY.sql");
+  const promoted = readFileSync(
+    new URL("../supabase/migrations/20261112193112_p0_security_foundation.sql",import.meta.url),"utf8"
+  );
+  const normalize = (source) => source
+    .split("\n").filter((line) => !/^\s*--/.test(line))
+    .map((line) => line.trim()).filter(Boolean).join("\n");
+  assert.equal(normalize(promoted),normalize(candidate));
+  assert.equal((promoted.match(/^BEGIN;$/gm)||[]).length,1);
+  assert.equal((promoted.match(/^COMMIT;$/gm)||[]).length,1);
+});
