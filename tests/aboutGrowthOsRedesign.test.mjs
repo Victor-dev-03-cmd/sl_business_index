@@ -38,5 +38,5 @@ test("About illustrations are native accessible SVGs without image downloads or 
   assert.match(graphics, /function GrowthJourneyIllustration/);
   assert.match(graphics, /function PrivacyShieldIllustration/);
   assert.match(graphics, /aria-labelledby/);
-  assert.doesNotMatch(graphics, /<image\b|https?:\/\/|setInterval|requestAnimationFrame/);
+  assert.doesNotMatch(graphics, /<image\b|<img\b|(?:href|src)=["\x27]https?:\/\/|setInterval|requestAnimationFrame/);
 });
