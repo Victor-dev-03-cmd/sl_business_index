@@ -6,9 +6,9 @@ on:
     paths:
       - '.github/workflows/p0-security-sandbox.yml'
       - 'docs/growth/p0/**'
-      - 'supabase/migrations/20261112193112_p0_security_foundation.sql'
+      - 'supabase/migrations/20261112193546_p0_security_foundation.sql'
       - 'tests/p0/**'
-      - 'supabase/migrations/20261112193112_p0_security_foundation.sql'
+      - 'supabase/migrations/20261112193546_p0_security_foundation.sql'
       - 'tests/p0SecurityFoundationPrepare.test.mjs'
       - 'tests/growthSecureLeads.test.mjs'
       - 'app/api/health/p0/route.ts'
@@ -204,6 +204,6 @@ jobs:
       - name: Install existing production authorization triggers
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261110011000_growth_security_guards.sql
       - name: Apply EXACT integrated P0 release candidate in ONE transaction
-        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261112193112_p0_security_foundation.sql
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261112193546_p0_security_foundation.sql
       - name: Verify all objects, ownership and privileged RPC grants
         run: psql -v ON_ERROR_STOP=1 -f tests/p0/integrated_assertions.sql
