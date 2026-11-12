@@ -51,8 +51,8 @@ export default function EditBusinessForm({ business }: { business: Business }) {
   });
 
   // Image State
-  const [savedLogoUrl, setSavedLogoUrl] = useState(business.logo_url);
-  const [savedCoverUrl, setSavedCoverUrl] = useState(business.image_url);
+  const [savedLogoUrl, setSavedLogoUrl] = useState<string | null>(business.logo_url || null);
+  const [savedCoverUrl, setSavedCoverUrl] = useState<string | null>(business.image_url || null);
   const [logo, setLogo] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(business.logo_url || null);
   const [hoverImage, setHoverImage] = useState<File | null>(null);
