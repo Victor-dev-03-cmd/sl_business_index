@@ -58,7 +58,7 @@ test("stage-only profile privacy candidate removes anonymous PII read without br
 test("promoted atomic release migration matches staging candidate SQL", () => {
   const candidate = read("P0_INTEGRATED_RELEASE_CANDIDATE_REVIEW_ONLY.sql");
   const promoted = readFileSync(
-    new URL("../supabase/migrations/20261112193112_p0_security_foundation.sql",import.meta.url),"utf8"
+    new URL("../supabase/migrations/20261112193546_p0_security_foundation.sql",import.meta.url),"utf8"
   );
   const normalize = (source) => source
     .split("\n").filter((line) => !/^\s*--/.test(line))
