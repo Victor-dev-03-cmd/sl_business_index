@@ -8,6 +8,8 @@ on:
       - 'docs/growth/p0/**'
       - 'tests/p0/**'
       - 'tests/p0SecurityFoundationPrepare.test.mjs'
+      - 'tests/growthSecureLeads.test.mjs'
+      - 'app/business/[slug]/BusinessDetailsClient.tsx'
       - 'supabase/migrations/20261110010000_growth_os_credit_foundation.sql'
       - 'supabase/migrations/20261110011000_growth_security_guards.sql'
       - 'docs/growth/SECURE_EVENT_INGESTION_REVIEW_ONLY.sql'
@@ -137,5 +139,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: No dependencies, no network services
-        run: node --test tests/p0SecurityFoundationPrepare.test.mjs
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: TypeScript strip support and P0 source-contract tests
+        run: node --test tests/p0SecurityFoundationPrepare.test.mjs tests/growthSecureLeads.test.mjs
