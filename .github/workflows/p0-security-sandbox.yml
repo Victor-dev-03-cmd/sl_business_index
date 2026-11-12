@@ -7,6 +7,7 @@ on:
       - '.github/workflows/p0-security-sandbox.yml'
       - 'docs/growth/p0/**'
       - 'tests/p0/**'
+      - 'docs/growth/p0/P0_INTEGRATED_RELEASE_CANDIDATE_REVIEW_ONLY.sql'
       - 'tests/p0SecurityFoundationPrepare.test.mjs'
       - 'tests/growthSecureLeads.test.mjs'
       - 'app/business/[slug]/BusinessDetailsClient.tsx'
@@ -165,3 +166,42 @@ jobs:
         run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Typecheck application and P0 route changes
         run: ./node_modules/.bin/tsc --noEmit --pretty false
+
+  p0-integrated-release:
+    name: Single-transaction P0 production release rehearsal
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: slbi_p0_integrated
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d slbi_p0_integrated"
+          --health-interval 5s --health-timeout 5s --health-retries 15
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: slbi_p0_integrated
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Create synthetic Auth and business fixture
+        run: psql -v ON_ERROR_STOP=1 -f tests/p0/security_bootstrap.sql
+      - name: Create synthetic lead and analytics fixture
+        run: psql -v ON_ERROR_STOP=1 -f tests/p0/ingestion_bootstrap.sql
+      - name: Create legacy billing and chat fixture
+        run: psql -v ON_ERROR_STOP=1 -f tests/p0/integrated_prerequisites.sql
+      - name: Install existing production authorization triggers
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261110011000_growth_security_guards.sql
+      - name: Apply EXACT integrated P0 release candidate in ONE transaction
+        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p0/P0_INTEGRATED_RELEASE_CANDIDATE_REVIEW_ONLY.sql
+      - name: Verify all objects, ownership and privileged RPC grants
+        run: psql -v ON_ERROR_STOP=1 -f tests/p0/integrated_assertions.sql
