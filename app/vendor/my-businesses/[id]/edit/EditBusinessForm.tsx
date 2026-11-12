@@ -14,6 +14,17 @@ import Link from 'next/link';
 const AddressAutocomplete = dynamic(() => import('@/components/AddressAutocomplete'), { ssr: false });
 const CategorySelector = dynamic(() => import('@/components/CategorySelector'), { ssr: false });
 
+const ACCEPTED_BUSINESS_IMAGES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const MAX_BUSINESS_IMAGE_BYTES = 5 * 1024 * 1024;
+
+function validateBusinessImage(file: File): string | null {
+  if (!ACCEPTED_BUSINESS_IMAGES.has(file.type))
+    return 'Please select a JPG, PNG or WebP image.';
+  if (file.size <= 0 || file.size > MAX_BUSINESS_IMAGE_BYTES)
+    return 'Each image must be smaller than 5 MB.';
+  return null;
+}
+
 export default function EditBusinessForm({ business }: { business: Business }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -40,6 +51,8 @@ export default function EditBusinessForm({ business }: { business: Business }) {
   });
 
   // Image State
+  const [savedLogoUrl, setSavedLogoUrl] = useState(business.logo_url);
+  const [savedCoverUrl, setSavedCoverUrl] = useState(business.image_url);
   const [logo, setLogo] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(business.logo_url || null);
   const [hoverImage, setHoverImage] = useState<File | null>(null);
@@ -52,6 +65,9 @@ export default function EditBusinessForm({ business }: { business: Business }) {
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      const fileError = validateBusinessImage(file);
+      if (fileError) { setError(fileError); e.target.value = ''; return; }
+      setError(null);
       setLogo(file);
       const reader = new FileReader();
       reader.onloadend = () => setLogoPreview(reader.result as string);
@@ -62,6 +78,9 @@ export default function EditBusinessForm({ business }: { business: Business }) {
   const handleHoverImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      const fileError = validateBusinessImage(file);
+      if (fileError) { setError(fileError); e.target.value = ''; return; }
+      setError(null);
       setHoverImage(file);
       const reader = new FileReader();
       reader.onloadend = () => setHoverImagePreview(reader.result as string);
@@ -75,32 +94,47 @@ export default function EditBusinessForm({ business }: { business: Business }) {
     setError(null);
     setSuccess(false);
 
+    const uploadedPaths: string[] = [];
+    let savedToDatabase = false;
     try {
-      let logoUrl = business.logo_url;
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      if (authError || authData.user?.id !== business.owner_id)
+        throw new Error('Your session is no longer authorized to edit this business.');
+      if (logo) {
+        const fileError = validateBusinessImage(logo);
+        if (fileError) throw new Error(fileError);
+      }
+      if (hoverImage) {
+        const fileError = validateBusinessImage(hoverImage);
+        if (fileError) throw new Error(fileError);
+      }
+      let logoUrl = savedLogoUrl;
       if (logo) {
         const sanitizedName = sanitizeFilename(logo.name);
-        const filePath = `${business.owner_id}/${Date.now()}_logo_${sanitizedName}`;
+        const filePath = `${business.owner_id}/${crypto.randomUUID()}_logo_${sanitizedName}`;
         const { error: uploadError } = await supabase.storage
             .from('business-logos')
-            .upload(filePath, logo);
+            .upload(filePath, logo, { contentType: logo.type });
         if (uploadError) throw uploadError;
+        uploadedPaths.push(filePath);
         const { data: urlData } = supabase.storage.from('business-logos').getPublicUrl(filePath);
         logoUrl = urlData.publicUrl;
       }
 
-      let hoverImageUrl = business.image_url;
+      let hoverImageUrl = savedCoverUrl;
       if (hoverImage) {
         const sanitizedName = sanitizeFilename(hoverImage.name);
-        const filePath = `${business.owner_id}/${Date.now()}_hover_${sanitizedName}`;
+        const filePath = `${business.owner_id}/${crypto.randomUUID()}_cover_${sanitizedName}`;
         const { error: uploadError } = await supabase.storage
             .from('business-logos')
-            .upload(filePath, hoverImage);
+            .upload(filePath, hoverImage, { contentType: hoverImage.type });
         if (uploadError) throw uploadError;
+        uploadedPaths.push(filePath);
         const { data: urlData } = supabase.storage.from('business-logos').getPublicUrl(filePath);
         hoverImageUrl = urlData.publicUrl;
       }
 
-      const { error: updateError } = await supabase
+      const { data: updatedBusiness, error: updateError } = await supabase
         .from('businesses')
         .update({
           name: businessName,
@@ -122,18 +156,32 @@ export default function EditBusinessForm({ business }: { business: Business }) {
           // We don't update status here, as edits might need re-approval depending on your policy
           // For now, let's keep the status as is
         })
-        .eq('id', business.id);
+        .eq('id', business.id)
+        .eq('owner_id', authData.user.id)
+        .select('id')
+        .maybeSingle();
 
       if (updateError) throw updateError;
+      if (!updatedBusiness) throw new Error('This business was not updated. Confirm your access and try again.');
 
+      savedToDatabase = true;
+      setSavedLogoUrl(logoUrl);
+      setSavedCoverUrl(hoverImageUrl);
+      setLogo(null);
+      setHoverImage(null);
+      setLogoPreview(logoUrl);
+      setHoverImagePreview(hoverImageUrl);
       setSuccess(true);
       router.refresh();
-      // Optional: Redirect back to list after a delay
-      // setTimeout(() => router.push('/vendor/my-businesses'), 2000);
-
-    } catch (err: any) {
-      setError(err.message);
-      console.error(err);
+    } catch (err: unknown) {
+      // Storage uploads are not part of the Postgres transaction. Delete new
+      // objects only when their referencing business update did not complete.
+      if (!savedToDatabase && uploadedPaths.length) {
+        const { error: cleanupError } = await supabase.storage
+          .from('business-logos').remove(uploadedPaths);
+        if (cleanupError) console.warn('Could not clean up unsuccessful business image upload.');
+      }
+      setError(err instanceof Error ? err.message : 'Unable to save business changes.');
     } finally {
       setLoading(false);
     }
@@ -163,7 +211,7 @@ export default function EditBusinessForm({ business }: { business: Business }) {
                     <Camera size={24} />
                     <span className="text-[10px] mt-1 font-medium">Change</span>
                   </div>
-                  <input type="file" accept="image/*" onChange={handleLogoChange} className="absolute inset-0 opacity-0 cursor-pointer" />
+                  <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleLogoChange} className="absolute inset-0 opacity-0 cursor-pointer" />
                </div>
              </div>
 
@@ -180,7 +228,7 @@ export default function EditBusinessForm({ business }: { business: Business }) {
                     <Camera size={24} />
                     <span className="text-[10px] mt-1 font-medium">Change</span>
                   </div>
-                  <input type="file" accept="image/*" onChange={handleHoverImageChange} className="absolute inset-0 opacity-0 cursor-pointer" />
+                  <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleHoverImageChange} className="absolute inset-0 opacity-0 cursor-pointer" />
                </div>
              </div>
           </div>
