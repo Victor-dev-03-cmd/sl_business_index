@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Business } from "@/lib/types";
 import {
   MapPin,
@@ -85,6 +85,9 @@ export default function BusinessDetailsClient({ business }: Props) {
   const [leadConsent, setLeadConsent] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
   const [turnstileReset, setTurnstileReset] = useState(0);
+  // Retry the same submitted payload with the same UUID. A changed form gets a
+  // fresh UUID so an earlier successful request cannot mask new enquiry data.
+  const enquiryRequestRef = useRef<{ fingerprint: string; id: string } | null>(null);
   const secureLeadsEnabled = process.env.NEXT_PUBLIC_SECURE_LEADS_ENABLED === "true";
   const turnstileSiteKey = process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY || "";
   const [showReportModal, setShowReportModal] = useState(false);
@@ -230,11 +233,15 @@ export default function BusinessDetailsClient({ business }: Props) {
     setSubmittingEnquiry(true);
     try {
       if (secureLeadsEnabled) {
+        const fingerprint = JSON.stringify({ businessId: business.id, ...enquiryForm });
+        if (!enquiryRequestRef.current || enquiryRequestRef.current.fingerprint !== fingerprint) {
+          enquiryRequestRef.current = { fingerprint, id: crypto.randomUUID() };
+        }
         const response = await fetch("/api/leads/submit", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            request_id: crypto.randomUUID(),
+            request_id: enquiryRequestRef.current.id,
             business_id: business.id,
             name: enquiryForm.name,
             email: enquiryForm.email,
@@ -278,12 +285,9 @@ export default function BusinessDetailsClient({ business }: Props) {
         setWhatsappReadyUrl(whatsappUrl);
       }
 
-      // Log analytics event
-      await logEvent(
-        business.id,
-        "lead_form_submit",
-        business.address?.split(",").pop()?.trim() || "Unknown",
-      );
+      // CRM lead creation above is the source of truth for actual enquiries.
+      // Do not send unsupported lead_form_submit telemetry through the view/call API.
+      enquiryRequestRef.current = null;
 
       setEnquiryForm({ name: "", email: "", phone: "", message: "" });
       setLeadConsent(false);
