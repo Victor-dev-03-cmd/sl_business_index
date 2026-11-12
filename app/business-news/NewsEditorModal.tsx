@@ -119,21 +119,21 @@ export default function NewsEditorModal({ onClose, onPublished }: { onClose: () 
   return <div className="fixed inset-0 z-[1500] flex items-end justify-center bg-[#101912]/75 p-0 backdrop-blur-[3px] sm:items-center sm:p-5"
     role="presentation" onMouseDown={e => { if (e.target === e.currentTarget && !saving) onClose(); }}>
     <div ref={dialog} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="editor-title"
-      className="flex max-h-[95dvh] w-full max-w-[760px] flex-col overflow-hidden rounded-t-[18px] border border-[#e2dfd6] bg-[#faf9f5] shadow-[0_25px_100px_rgba(0,0,0,.3)] outline-none sm:max-h-[90dvh] sm:rounded-[18px]">
+      className="flex max-h-[95dvh] w-full max-w-[760px] flex-col overflow-hidden font-[family-name:var(--font-inter)] rounded-t-[18px] border border-[#e2dfd6] bg-[#faf9f5] shadow-[0_25px_100px_rgba(0,0,0,.3)] outline-none sm:max-h-[90dvh] sm:rounded-[18px]">
       <header className="flex shrink-0 items-start justify-between gap-4 border-b-2 border-[#1e392d] bg-white px-5 py-5 sm:px-8">
         <div><p className="text-[10px] font-bold uppercase tracking-[.22em] text-[#a48054]">The publisher&apos;s desk</p>
-          <h2 id="editor-title" className="mt-1 font-serif text-[28px] font-bold leading-tight text-[#1e392d] sm:text-[34px]">Share a business story</h2>
+          <h2 id="editor-title" className="mt-1 font-[family-name:var(--font-inter)] text-[28px] font-bold leading-tight text-[#1e392d] sm:text-[34px]">Share a business story</h2>
           <p className="mt-1 text-[12px] text-[#74766f]">Articles, photo posters and brief updates by verified business owners.</p></div>
         <button aria-label="Close editor" type="button" disabled={saving} onClick={onClose}
           className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-[#e5e2d9] text-[#77766d] hover:bg-[#f5f4f0]"><X size={19}/></button>
       </header>
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-6 sm:px-8">
         {!sessionLoading && !user ? <div className="py-10 text-center"><ShieldCheck size={38} className="mx-auto text-[#46866a]"/>
-          <h3 className="mt-4 font-serif text-2xl text-[#1e392d]">Sign in to contribute</h3><p className="mt-2 text-sm text-[#70776e]">News stories are published by verified business owners.</p>
+          <h3 className="mt-4 font-[family-name:var(--font-inter)] text-2xl text-[#1e392d]">Sign in to contribute</h3><p className="mt-2 text-sm text-[#70776e]">News stories are published by verified business owners.</p>
           <Link href="/login?redirect=%2Fbusiness-news%3Fpost%3Dtrue" className="mt-5 inline-flex rounded-lg bg-[#1e392d] px-6 py-3 text-sm font-bold text-white">Sign in <ArrowUpRight size={15} className="ml-2"/></Link></div>
           : checking || sessionLoading ? <div role="status" className="flex min-h-[200px] items-center justify-center gap-2 text-sm text-[#687469]"><LoaderCircle className="animate-spin" size={19}/>Checking verification…</div>
           : !businesses.length ? <div className="py-10 text-center"><ShieldCheck size={38} className="mx-auto text-[#a98957]"/>
-            <h3 className="mt-4 font-serif text-2xl text-[#1e392d]">Verified business required</h3><p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#70776e]">Your business must be approved and verified before publishing news.</p>
+            <h3 className="mt-4 font-[family-name:var(--font-inter)] text-2xl text-[#1e392d]">Verified business required</h3><p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#70776e]">Your business must be approved and verified before publishing news.</p>
             <Link href="/vendor/settings?tab=verification" className="mt-5 inline-flex items-center rounded-lg bg-[#1e392d] px-6 py-3 text-sm font-bold text-white">Review verification <ArrowUpRight size={15} className="ml-2"/></Link></div>
           : <form id="business-news-editor" onSubmit={publish} className="space-y-6">
             <div className="flex items-center gap-2 rounded-[9px] border border-[#d7e6da] bg-[#eff6f0] px-4 py-3 text-[12px] font-semibold text-[#397553]"><ShieldCheck size={16}/>Verified business publication</div>
