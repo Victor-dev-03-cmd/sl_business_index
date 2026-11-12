@@ -18,6 +18,7 @@ import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import { Star, ExternalLink, MapPin, Building2 } from "lucide-react";
 import VerifiedBadge from "@/app/components/VerifiedBadge";
+import { getBusinessDisplayAddress } from "@/lib/businessAddress";
 
 // Fix for Leaflet default icon issues in Next.js
 const fixLeafletIcon = () => {
@@ -506,7 +507,7 @@ function MapContent({
                           className="shrink-0 mt-0.5 text-[#2a7db4]"
                         />
                         <span>
-                          {props.address || props.location || "Sri Lanka"}
+                          {getBusinessDisplayAddress(props)}
                         </span>
                       </p>
                       <a
@@ -583,7 +584,7 @@ function MapContent({
                         className="shrink-0 mt-0.5 text-[#2a7db4]"
                       />
                       <span>
-                        {props.address || props.location || "Sri Lanka"}
+                        {getBusinessDisplayAddress(props)}
                       </span>
                     </p>
                     <a

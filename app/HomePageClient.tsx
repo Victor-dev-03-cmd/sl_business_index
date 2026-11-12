@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import { getBusinessDisplayAddress } from "@/lib/businessAddress";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -41,6 +42,8 @@ type FeaturedBusiness = {
   slug?: string | null;
   category?: string | null;
   address?: string | null;
+  detailed_address?: string | null;
+  city?: string | null;
   image_url?: string | null;
   logo_url?: string | null;
   rating?: number | null;
@@ -52,14 +55,14 @@ type FeaturedBusiness = {
 // Use lightweight SVGs rather than dozens of asynchronous icon web components
 // inside the carousel. Navbar/category Iconsax styling is unchanged.
 const FeaturedListingCard = React.memo(function FeaturedListingCard({
-  business, index,
-}: { business: FeaturedBusiness; index: number }) {
+  business,
+}: { business: FeaturedBusiness }) {
   return (
                 <Link
                   href={`/business/${business.slug || business.id}`}
                   prefetch={false}
                   aria-label={`View ${business.name} business profile`}
-                  className="group relative isolate block aspect-[9/16] w-[178px] shrink-0 snap-start overflow-hidden rounded-[22px] border border-[#E0EADB] bg-[#1B3430] shadow-[0_3px_12px_rgba(15,40,67,0.07)] transition-colors duration-150 hover:border-[#75AB8D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 sm:w-[207px] lg:w-[229px] xl:w-[237px]"
+                  className="group relative block aspect-[9/16] [content-visibility:auto] [contain-intrinsic-size:237px_422px] w-[178px] shrink-0 snap-start overflow-hidden rounded-[22px] border border-[#E0EADB] bg-[#1B3430] shadow-[0_3px_12px_rgba(15,40,67,0.07)] transition-colors duration-150 hover:border-[#75AB8D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 sm:w-[207px] lg:w-[229px] xl:w-[237px]"
                 >
                   {/* 9:16 visual works with landscape photos as well as portrait images. */}
                   <div className="absolute inset-0 overflow-hidden">
@@ -68,8 +71,8 @@ const FeaturedListingCard = React.memo(function FeaturedListingCard({
                         src={business.image_url}
                         alt={business.name}
                         fill
-                        loading={index < 3 ? "eager" : "lazy"}
-                        quality={55}
+                        loading="lazy"
+                        quality={48}
                         decoding="async"
                         sizes="(max-width: 640px) 178px, (max-width: 1024px) 207px, 237px"
                         className="object-cover"
@@ -78,7 +81,7 @@ const FeaturedListingCard = React.memo(function FeaturedListingCard({
                       <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#26483B] via-[#1B3430] to-[#152C25]">
                         {business.logo_url ? (
                           <div className="relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-[24px] border border-white/15 bg-white/95 p-4 shadow-xl">
-                            <Image src={business.logo_url} alt={business.name} fill loading={index < 3 ? "eager" : "lazy"} quality={65} sizes="112px" className="object-contain p-4" />
+                            <Image src={business.logo_url} alt={business.name} fill loading="lazy" quality={55} sizes="112px" className="object-contain p-4" />
                           </div>
                         ) : (
                           <Building2 size={55} strokeWidth={1.6} className="text-[#F0D9AC]" />
@@ -89,7 +92,6 @@ const FeaturedListingCard = React.memo(function FeaturedListingCard({
 
                   {/* Contrast stays legible without requiring hover or animation. */}
                   <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0D211B] via-[#0D211B]/65 via-[39%] to-transparent" />
-                  <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/45 to-transparent" />
 
                   <div className="absolute inset-x-0 top-0 z-10 flex flex-wrap items-start justify-between gap-1.5 p-3 sm:p-4">
                     {business.is_verified && business.can_show_badge ? (
@@ -116,12 +118,10 @@ const FeaturedListingCard = React.memo(function FeaturedListingCard({
                     <h3 className="line-clamp-2 text-[17px] font-semibold leading-[1.25] tracking-[-0.035em] drop-shadow-sm sm:text-[20px]">
                       {business.name}
                     </h3>
-                    {business.address && (
-                      <p className="mt-2 flex min-w-0 items-center gap-1.5 text-[11px] font-medium text-[#E0EADB]">
-                        <MapPin size={13} className="shrink-0" />
-                        <span className="truncate">{business.address}</span>
-                      </p>
-                    )}
+                    <p className="mt-2 flex min-w-0 items-center gap-1.5 text-[11px] font-medium text-[#E0EADB]">
+                      <MapPin size={13} className="shrink-0" />
+                      <span className="line-clamp-2 break-words">{getBusinessDisplayAddress(business)}</span>
+                    </p>
                     <div className="mt-4 flex items-center justify-between border-t border-white/20 pt-3 text-[11px] font-semibold text-white/90">
                       <span>View business</span>
                       <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/25 bg-white/15 transition-colors group-hover:bg-white group-hover:text-[#1B3430]">
@@ -173,7 +173,7 @@ export default function HomePageClient() {
           `
           business_id,
           businesses (
-            id, slug, name, category, address, image_url, logo_url, rating, is_verified, status, can_show_badge
+            id, slug, name, category, address, detailed_address, city, image_url, logo_url, rating, is_verified, status, can_show_badge
           )
         `,
         )
@@ -672,7 +672,7 @@ export default function HomePageClient() {
             ref={featuredScrollRef}
             onScroll={updateFeaturedScrollControls}
             aria-label="Featured Sri Lankan business listings"
-            className="flex gap-3 overflow-x-auto overscroll-x-contain pb-6 pr-2 snap-x snap-proximity scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4 lg:gap-5"
+            className="flex gap-3 overflow-x-auto overscroll-x-contain pb-6 pr-2 snap-x snap-proximity [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4 lg:gap-5"
           >
             {featuredLoading ? (
               Array.from({ length: 6 }, (_, i) => (
@@ -694,8 +694,8 @@ export default function HomePageClient() {
                 <p className="mt-2 text-xs text-stone-500">Please refresh the page or try again shortly.</p>
               </div>
             ) : featuredBusinesses.length > 0 ? (
-              featuredBusinesses.map((business, index) => (
-                <FeaturedListingCard key={business.id} business={business} index={index} />
+              featuredBusinesses.map((business) => (
+                <FeaturedListingCard key={business.id} business={business} />
               ))
             ) : (
               <div className="flex min-h-[270px] w-full flex-col items-center justify-center rounded-[22px] border border-dashed border-[#E0EADB] bg-[#F8F7F2] px-6 text-center">
@@ -773,7 +773,7 @@ export default function HomePageClient() {
                     <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-[#E0EADB] bg-[#F8F7F2] text-[#2B6552]">
                       <Icon size={25} strokeWidth={1.65} />
                     </span>
-                    <span className="text-[12px] font-semibold tracking-[0.12em] text-[#94BAA0]">{step.index}</span>
+                    <span className="text-[36px] font-extrabold leading-none tracking-[-0.075em] text-[#4A8C70] sm:text-[44px]">{step.index}</span>
                   </div>
                   <div className="relative mt-auto pt-12">
                     <h3 className="text-[22px] font-semibold leading-[1.25] tracking-[-0.04em] text-[#1B3430]">{step.title}</h3>
