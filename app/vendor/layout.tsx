@@ -78,8 +78,8 @@ export default function VendorLayout({children}:{children:React.ReactNode}){
     </div>
   </div>;
 
-  return <div className="vendor-workspace vendor-workspace-v6 flex h-[100dvh] min-w-0 flex-col overflow-hidden bg-[#e9edf4] text-[#242934]">
-    <header className="vendor-topbar relative z-50 shrink-0 border-b border-white/60 bg-[#e9edf4] shadow-[0_7px_18px_#cdd2db]">
+  return <div className="vendor-workspace vendor-workspace-v6 flex h-[100dvh] min-w-0 flex-col overflow-hidden bg-white text-[#202024]">
+    <header className="vendor-topbar relative z-50 shrink-0 border-b border-[#efeff2] bg-white shadow-[0_3px_13px_rgba(28,28,34,0.055)]">
       <div className="mx-auto flex h-[76px] w-full max-w-[1840px] items-center gap-4 px-4 sm:px-6 xl:gap-6 xl:px-9">
         <Link href="/vendor/dashboard" aria-label="SL Business Index owner portal overview" className="flex min-w-0 shrink-0 items-center gap-3">
           <span className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-[#1B1B1D]">
@@ -93,9 +93,9 @@ export default function VendorLayout({children}:{children:React.ReactNode}){
 
         {/* Center the complete navigation group independently of the brand and right-side utilities. */}
         <div className="vendor-topbar-center absolute left-1/2 hidden -translate-x-1/2 items-center gap-2 min-[1400px]:flex">
-          <nav aria-label="Vendor primary navigation" className="vendor-topbar-primary flex min-w-0 items-center gap-1 rounded-[16px] border border-white/60 bg-[#e9edf4] p-1 shadow-[inset_4px_4px_8px_#cbd0d9,inset_-4px_-4px_8px_#ffffff]">
+          <nav aria-label="Vendor primary navigation" className="vendor-topbar-primary flex min-w-0 items-center gap-1 rounded-[16px] border border-[#e8e8eb] bg-[#fafafb] p-1 shadow-[inset_2px_2px_5px_#ededf0,inset_-2px_-2px_5px_#ffffff]">
             {primaryNav.map(item=><Link key={item.href} href={item.href} aria-current={active(item.href)?'page':undefined}
-              className={'vendor-topnav-link flex h-9 shrink-0 items-center gap-1.5 rounded-[12px] px-3 text-[11px] font-semibold transition-colors '+(active(item.href)?'bg-[#FF7900] text-white shadow-[3px_3px_8px_#c8cdd6,-3px_-3px_8px_#ffffff]':'text-[#68686E] hover:bg-white hover:text-[#141416]')}>
+              className={'vendor-topnav-link flex h-9 shrink-0 items-center gap-1.5 rounded-[12px] px-3 text-[11px] font-semibold transition-colors '+(active(item.href)?'bg-[#FF7900] text-white shadow-[0_4px_12px_rgba(255,121,0,0.19)]':'text-[#68686E] hover:bg-white hover:text-[#141416]')}>
               <IconsaxIcon name={item.icon} size={15} color={active(item.href)?'#18181A':'#86868B'}/>{item.name}
             </Link>)}
           </nav>
@@ -154,7 +154,7 @@ export default function VendorLayout({children}:{children:React.ReactNode}){
         <Link href="/" className="ml-1 shrink-0 border-l border-[#E9E9EB] px-3 py-2 text-[11px] font-medium text-[#73737A]">Visit directory</Link>
       </nav>
     </header>
-    <main id="vendor-main" aria-label={currentPage+' workspace'} className="vendor-content min-h-0 flex-1 overflow-y-auto bg-[#e9edf4] px-4 py-6 sm:px-6 sm:py-8 xl:px-9 xl:py-9">
+    <main id="vendor-main" aria-label={currentPage+' workspace'} className="vendor-content min-h-0 flex-1 overflow-y-auto bg-white px-4 py-6 sm:px-6 sm:py-8 xl:px-9 xl:py-9">
       <div className="mx-auto w-full max-w-[1760px]">{children}</div>
     </main>
     {quickOpen&&<VendorQuickActions open={quickOpen} onClose={()=>setQuickOpen(false)}/>}

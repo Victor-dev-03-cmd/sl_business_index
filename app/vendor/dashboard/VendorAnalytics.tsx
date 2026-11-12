@@ -115,7 +115,7 @@ export default function VendorAnalytics({ businessIds, embedded = false }: {
         </div>
       </div>
 
-      <div className="mb-4 grid grid-cols-3 gap-2 rounded-lg border border-[#eef1f2] bg-[#fafbfc] px-3 py-3 sm:gap-4 sm:px-4">
+      <div className="mb-4 grid grid-cols-3 gap-2 rounded-lg border border-[#eef1f2] bg-white px-3 py-3 sm:gap-4 sm:px-4">
         <div className="min-w-0">
           <div className="flex items-center gap-1.5 text-[10px] font-semibold text-[#83919C]"><IconsaxIcon name="eye" size={13} color="#FF7900" /> Views</div>
           <p className="mt-1 text-xl font-bold tracking-tight text-[#242427]">{loading ? '—' : totals.views.toLocaleString()}</p>
@@ -142,7 +142,7 @@ export default function VendorAnalytics({ businessIds, embedded = false }: {
           </button>
         </div>
       ) : !idsKey ? (
-        <div className="flex h-[255px] flex-col items-center justify-center rounded-2xl bg-[#FCF8F5] px-5 text-center">
+        <div className="flex h-[255px] flex-col items-center justify-center rounded-2xl bg-[#fff9f4] px-5 text-center">
           <IconsaxIcon name="chart" size={26} color="#B6B1AD" />
           <p className="mt-3 text-sm font-semibold text-[#333235]">Your insights start with a listing</p>
           <p className="mt-1 text-xs text-[#8C8988]">Register a business to start tracking activity.</p>
