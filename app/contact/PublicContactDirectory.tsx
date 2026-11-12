@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from "react";
 import {
-  ArrowUpRight, Building2, CheckCircle2, ChevronDown, Droplets, ExternalLink,
-  Landmark, MapPin, Phone, Search, ShieldAlert, Zap,
+  Building2, CheckCircle2, ChevronDown, Droplets, ExternalLink,
+  GraduationCap, HeartPulse, Landmark, MapPin, Phone, Search, ShieldAlert, Zap,
 } from "lucide-react";
 import { CATEGORIES, CONTACTS, DISTRICTS, LAST_REVIEWED, type PublicContact, type PublicContactCategory } from "./publicContacts";
 
@@ -11,6 +11,8 @@ const categoryIcons = {
   Emergency: ShieldAlert,
   Electricity: Zap,
   Water: Droplets,
+  Health: HeartPulse,
+  Education: GraduationCap,
   Banking: Landmark,
   Government: Building2,
 } as const;
@@ -30,6 +32,8 @@ export default function PublicContactDirectory() {
       if (!needle) return true;
       const aliases = entry.category === "Electricity" ? " ceb electricity board power eb current breakdown electric board " :
         entry.category === "Banking" ? " bank bank branch cash " :
+        entry.category === "Health" ? " hospital clinic medical doctor " :
+        entry.category === "Education" ? " school education zonal schools university " :
         entry.category === "Emergency" ? " police emergency hospital ambulance " : "";
       return [entry.name, entry.area, entry.category, entry.scope, entry.description, entry.phone,
         ...entry.coverage, aliases].join(" ").toLocaleLowerCase("en").includes(needle);
@@ -51,7 +55,7 @@ export default function PublicContactDirectory() {
               Find the right<br/><span className="text-[#5a9375]">public service contact.</span>
             </h2>
             <p className="mt-5 max-w-[660px] text-[13px] leading-7 text-[#728477]">
-              Electricity offices, banks, police desks, immigration, water and government services in Sri Lanka. Every published phone has an official source; regional numbers are labeled honestly.
+              Electricity offices, banks, hospitals, education offices, police desks, immigration, water and government services in Sri Lanka. Every published phone has an official source; regional numbers are labeled honestly.
             </p>
           </div>
           <div className="inline-flex w-fit shrink-0 items-center gap-2 rounded-xl border border-[#dfe9dd] bg-[#f5f9f3] px-4 py-3 text-[11px] font-semibold text-[#547862]">
