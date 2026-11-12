@@ -1,0 +1,52 @@
+name: P0 Supabase Full Stack — Cloud Auth Storage Smoke
+on:
+  push:
+    branches:
+      - security/p0-foundation-prepared-20261112
+    paths:
+      - '.github/workflows/p0-supabase-cloud-stack.yml'
+      - 'tests/p0/fullstack/**'
+permissions:
+  contents: read
+jobs:
+  supabase-cloud-stack:
+    name: Real Supabase Auth + Storage + PostgREST on GitHub runner
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install pinned Supabase CLI
+        uses: supabase/setup-cli@v3
+        with:
+          version: 2.120.0
+      - name: Inspect local-stack CLI options
+        run: |
+          supabase --version
+          supabase start --help | head -65
+      - name: Initialize isolated test stack (not production-linked)
+        run: |
+          mkdir -p .p0-cloud
+          cd .p0-cloud
+          supabase init --yes
+      - name: Boot minimal real Supabase services in cloud Docker
+        run: |
+          cd .p0-cloud
+          supabase start -x studio -x realtime -x imgproxy -x edge-runtime -x logflare -x vector -x supavisor -x mailpit -x postgres-meta
+      - name: Verify Auth REST and Storage REST endpoints
+        run: |
+          cd .p0-cloud
+          supabase status -o json > /tmp/p0-status.json
+          node -e '
+            const fs=require("fs");
+            const raw=JSON.parse(fs.readFileSync("/tmp/p0-status.json","utf8"));
+            console.log("Supabase services reported:", Object.keys(raw));
+          '
+          curl -fsSI http://127.0.0.1:54321/auth/v1/health
+          curl -fsS -o /dev/null -w 'Storage HTTP: %{http_code}\n' http://127.0.0.1:54321/storage/v1/bucket
+      - name: Tear down ephemeral stack
+        if: always()
+        run: |
+          cd .p0-cloud
+          supabase stop --no-backup || true
