@@ -66,7 +66,7 @@ export default function VendorDashboard() {
   const [page, setPage] = useState(1);
   const [updatingIds, setUpdatingIds] = useState<string[]>([]);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (notify = false) => {
     setLoading(true);
     setError('');
     try {
@@ -90,7 +90,13 @@ export default function VendorDashboard() {
         leads: 0,
         reviews: 0,
       });
-      if (!owned.length) return;
+      if (!owned.length) {
+        if (notify) toast.success('Dashboard refreshed', {
+          toasterId: 'vendor-portal',
+          description: 'No listings yet. Your dashboard is up to date.',
+        });
+        return;
+      }
 
       const ids = owned.map(b => b.id);
       const [leadResult, reviewResult, recentResult] = await Promise.all([
@@ -119,9 +125,18 @@ export default function VendorDashboard() {
           businessName: Array.isArray(joined) ? joined[0]?.name || 'Your business' : joined?.name || 'Your business',
         };
       }));
+      if (notify) toast.success('Dashboard refreshed', {
+        toasterId: 'vendor-portal',
+        description: 'Your latest business statistics are up to date.',
+      });
     } catch (e) {
       console.error('Vendor dashboard load error', e);
       setError(e instanceof Error ? e.message : 'Unable to load your business statistics.');
+      if (notify) toast.error('Unable to refresh dashboard', {
+        toasterId: 'vendor-portal',
+        description: 'Please check your connection and try again.',
+        duration: 5500,
+      });
     } finally {
       setLoading(false);
     }
@@ -140,10 +155,18 @@ export default function VendorDashboard() {
         .eq('owner_id', user.id).eq('id', business.id).select('id').single();
       if (updateError) throw updateError;
       setBusinesses(prev => prev.map(row => row.id === business.id ? { ...row, is_open: !business.is_open } : row));
-      toast.success('Opening status saved.');
+      toast.success(business.is_open ? 'Business marked as closed' : 'Business marked as open', {
+        toasterId: 'vendor-portal',
+        description: business.name + ' — opening status updated successfully.',
+        duration: 4500,
+      });
     } catch (e) {
       console.error('Business update failed', e);
-      toast.error('Could not update your business. Try again.');
+      toast.error('Update failed', {
+        toasterId: 'vendor-portal',
+        description: 'Could not save the business opening status. Please try again.',
+        duration: 5500,
+      });
     } finally {
       setUpdatingIds(prev => prev.filter(id => id !== business.id));
     }
@@ -192,6 +215,10 @@ export default function VendorDashboard() {
     anchor.click();
     anchor.remove();
     URL.revokeObjectURL(url);
+    toast.success('Report download started', {
+      toasterId: 'vendor-portal',
+      description: 'Your business performance CSV has been prepared.',
+    });
   }
 
   return (
@@ -210,7 +237,7 @@ export default function VendorDashboard() {
               <p className="mt-3 max-w-[650px] text-[13px] leading-6 text-[#808087]">Manage listings, customer enquiries and recorded business activity from one clear workspace.</p>
               <div className="mt-6 flex flex-wrap items-center gap-2">
                 <button type="button" onClick={exportCsv} disabled={loading||!businesses.length} className={neo.button + " inline-flex h-10 items-center gap-2 px-4 text-[11px] font-semibold text-[#343439] hover:border-[#FFBA82] hover:bg-[#FFF8F2] disabled:opacity-50"}><IconsaxIcon name="document-download" size={16}/> Export report</button>
-                <button type="button" onClick={()=>void load()} disabled={loading} className="inline-flex h-10 items-center gap-2 rounded-[7px] border border-[#E6E6E8] bg-white px-4 text-[11px] font-semibold text-[#343439] hover:border-[#FFBA82] hover:bg-[#FFF8F2] disabled:opacity-50"><IconsaxIcon name="refresh" size={16}/> Refresh</button>
+                <button type="button" onClick={()=>void load(true)} disabled={loading} className="inline-flex h-10 items-center gap-2 rounded-[7px] border border-[#E6E6E8] bg-white px-4 text-[11px] font-semibold text-[#343439] hover:border-[#FFBA82] hover:bg-[#FFF8F2] disabled:opacity-50"><IconsaxIcon name="refresh" size={16}/> Refresh</button>
                 <Link href="/vendor/marketing" className="inline-flex h-10 items-center gap-2 rounded-[7px] bg-[#1D1D20] px-4 text-[11px] font-semibold text-white hover:bg-[#333338]"><IconsaxIcon name="add" size={16} color="#FF7900"/> New campaign</Link>
               </div>
             </div>
@@ -227,7 +254,7 @@ export default function VendorDashboard() {
         {error && (
           <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-800">
             <span>{error}</span>
-            <button type="button" onClick={() => void load()} className="font-bold underline">Retry loading</button>
+            <button type="button" onClick={() => void load(true)} className="font-bold underline">Retry loading</button>
           </div>
         )}
 
