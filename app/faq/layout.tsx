@@ -1,18 +1,17 @@
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Frequently Asked Questions (FAQ)",
-  description: "Find answers to common questions about SL Business Index (SLBI). Learn how to search, register, and verify your business on Sri Lanka's leading business directory.",
+  title: "Help & FAQ | SLBI 2.0 GrowthOS | SL Business Index",
+  description: "Get answers about Sri Lankan business discovery, listing registration, verification, vendor tools, subscriptions, privacy and the phased SLBI 2.0 Growth & Security OS roadmap.",
+  alternates: { canonical: "https://www.slbusinessindex.com/faq" },
   openGraph: {
-    title: "FAQ | SL Business Index",
-    description: "Got questions? We've got answers. Explore our FAQ to learn more about SLBI features and services.",
-  }
+    title: "Help & FAQ — SLBI 2.0",
+    description: "Helpful answers for businesses, customers and the next generation of SL Business Index.",
+    url: "https://www.slbusinessindex.com/faq",
+    type: "website",
+  },
 };
 
-export default function FAQLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function FAQLayout({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
