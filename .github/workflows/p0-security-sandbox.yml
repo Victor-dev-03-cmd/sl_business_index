@@ -52,6 +52,8 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f tests/p0/verify_security.sql
       - name: Apply privacy-hardened profiles RLS in isolated Docker database
         run: psql -v ON_ERROR_STOP=1 -f docs/growth/p0/P0_PROFILE_PRIVACY_STAGE_REVIEW_ONLY.sql
+      - name: Verify restricted profile policy and protected internal helper
+        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p0/P0_PROFILE_PRIVACY_STAGE_ASSERTIONS.sql
       - name: Test private profiles, staff, signup and public discovery regressions
         run: psql -v ON_ERROR_STOP=1 -f tests/p0/verify_profile_privacy.sql
 

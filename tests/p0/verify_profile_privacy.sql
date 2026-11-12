@@ -52,7 +52,7 @@ DO $$
 BEGIN
  IF (SELECT count(*) FROM public.profiles)<>5 THEN
    RAISE EXCEPTION 'FAIL: staff did not retain administrative profile access'; END IF;
- IF (SELECT public.slbi_p0_is_staff()) IS DISTINCT FROM true THEN
+ IF (SELECT slbi_p0_internal.current_actor_is_staff()) IS DISTINCT FROM true THEN
    RAISE EXCEPTION 'FAIL: staff function returned false'; END IF;
 END $$;
 \echo 'PASS: real admin role retains staff visibility without RLS recursion'
@@ -64,7 +64,7 @@ DO $$
 BEGIN
  IF (SELECT count(*) FROM public.profiles)<>1 THEN
    RAISE EXCEPTION 'FAIL: new customer own-profile visibility'; END IF;
- IF (SELECT public.slbi_p0_is_staff()) IS DISTINCT FROM false THEN
+ IF (SELECT slbi_p0_internal.current_actor_is_staff()) IS DISTINCT FROM false THEN
    RAISE EXCEPTION 'FAIL: customer falsely recognized as staff'; END IF;
 END $$;
 \echo 'PASS: recent signup can view only own profile'
@@ -74,7 +74,7 @@ BEGIN
  IF EXISTS(SELECT 1 FROM pg_policies WHERE schemaname='public'
   AND tablename='profiles' AND policyname='Profiles viewable by all') THEN
    RAISE EXCEPTION 'FAIL: broad public profiles policy remains'; END IF;
- IF has_function_privilege('anon','public.slbi_p0_is_staff()','EXECUTE') THEN
+ IF has_function_privilege('anon','slbi_p0_internal.current_actor_is_staff()','EXECUTE') THEN
    RAISE EXCEPTION 'FAIL: anon allowed to execute staff helper'; END IF;
 END $$;
 \echo 'PASS: profile privacy policy structural tests'

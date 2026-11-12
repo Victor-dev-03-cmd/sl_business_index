@@ -43,13 +43,13 @@ test("stage-only profile privacy candidate removes anonymous PII read without br
   const checks=read("P0_PROFILE_PRIVACY_STAGE_ASSERTIONS.sql");
   const fallback=read("P0_PROFILE_PRIVACY_CONTINGENCY_STAGING_ONLY.sql");
   assert.match(privacy,/DROP POLICY IF EXISTS "Profiles viewable by all" ON public\.profiles/);
-  assert.match(privacy,/REVOKE SELECT ON public\.profiles FROM anon/);
+  assert.doesNotMatch(privacy,/REVOKE SELECT ON public\.profiles FROM anon/);
   assert.match(privacy,/slbi_p0_internal\.current_actor_is_staff/);
   assert.match(privacy,/SECURITY DEFINER SET search_path=''/);
   assert.match(privacy,/REVOKE ALL ON FUNCTION slbi_p0_internal\.current_actor_is_staff\(\)/);
   assert.match(privacy,/FOR SELECT TO authenticated/);
   assert.match(privacy,/FOR UPDATE TO authenticated/);
-  assert.match(checks,/FAIL: anonymous profile read grant exists/);
+  assert.match(checks,/FAIL: public unrestricted profiles SELECT remains/);
   assert.doesNotMatch(fallback,/CREATE POLICY "Profiles viewable by all"/);
   assert.match(runbook,/Supabase branching requires/);
 });
