@@ -8,7 +8,7 @@ Production baseline: GitHub main at 6ad1764545a627a891d0c17f8170879b586d2b88 (20
 
 - **Completed:** GitHub Actions [run 43273869937](https://github.com/Victor-dev-03-cmd/sl_business_index/actions/runs/43273869937) succeeded 4/4 jobs on temporary PostgreSQL 17 Docker containers. Synthetic RLS role matrix, private profiles, lead/event RPC validation, wallet transaction tests and source contracts passed.
 - **Confirmed defect repaired only in review SQL:** lead RPC previously accepted NULL message (due SQL three-valued logic). The staged SQL now checks nullable fields explicitly; negative tests pass.
-- **Not production complete:** public direct lead INSERT is kept for legacy mobile compatibility; separate secure API needs service-role secret and flags. Real hosted Supabase Auth/Storage and protected object download tests have not been done.
+- **Not production complete:** public direct lead INSERT remains for legacy mobile compatibility; secure Leads/Analytics activation flags remain OFF. Real hosted production Auth/Storage and protected object download tests have not been done.
 - **Alternative staging discovery:** Supabase organization has one project; connector quote for creating a separate project is **US$0/month** (base project creation quote, not a promise of unlimited free usage). A distinct project could support realistic hosted Auth/Storage tests without Pro branching, but must be explicitly approved in the intended organization before creation.
 - **Release hold:** do NOT apply any prepared review SQL or credit migrations to production. No main merge / Vercel deploy until hosted staging authorization and negative test matrix pass.
 
@@ -20,7 +20,7 @@ Production baseline: GitHub main at 6ad1764545a627a891d0c17f8170879b586d2b88 (20
 - **No production SQL, GitHub main merge or Vercel deployment performed by this work.**
 
 ### Remaining hard NO-GO release gates
-1. Production Vercel project has NO `SUPABASE_SECRET_KEY` nor `SUPABASE_SERVICE_ROLE_KEY`; secure event/lead ingestion functions cannot be activated. Configure securely in Vercel without placing the credential into GitHub, client bundles, or chat.
+1. **RESOLVED (configuration only, 13 Nov 2026):** Production Vercel includes `SUPABASE_SECRET_KEY` and `SUPABASE_SERVICE_ROLE_KEY`, both server-side Sensitive variables; redeployment READY at `6ad1764`. The values themselves were NOT retrieved or validated with a privileged RPC. Keep both private; verify actual API authentication during cutover.
 2. Production Vercel has neither `GROWTH_EVENT_INGESTION_ENABLED`, `SLBI_SECURE_LEADS_ENABLED`, nor `NEXT_PUBLIC_SECURE_LEADS_ENABLED`; changing flags requires a coordinated release, not an ad-hoc update.
 3. Legacy anonymous direct `leads` INSERT must stay functional for old clients until mobile compatibility is verified and cut over. Removing it now can lose enquiries; leaving it indefinitely undermines abuse protection.
 4. Cloud synthetic tests do not certify all production-specific Auth triggers, private storage policies, live signup, consumer UI, or third-party Cloudflare Turnstile Siteverify. A controlled real-environment smoke and rollback rehearsal remain required.
@@ -52,8 +52,8 @@ separate plan decision has not been authorized.
   prevent_profile_role_escalation must remain installed.
 - Leads and analytics_logs: legacy anonymous INSERT must not be revoked until
   web and legacy mobile call paths are cut over to tested server-only RPCs.
-- Existing Secure Leads/Event ingestion Next.js endpoints are disabled by
-  absent server-only privileged credentials and environment flags.
+- Existing Secure Leads/Event ingestion Next.js endpoints remain disabled by
+  unset environment activation flags; private keys now exist on Vercel Production.
 - Wallet: growth_wallet_status(), ledger, and related credit tables missing
   from production; existing GitHub SQL is pending staging validation.
 
@@ -107,7 +107,7 @@ proper numbered migration with full release approval.
 ## Explicit NO-GO items
 - Missing isolated Supabase test environment (current blocker).
 - Public all-profiles read remains unmitigated (stage-only candidate ready).
-- Missing server-only Supabase privileged key.
+- Server-only Supabase key names configured, but privileged RPC authentication not yet exercised in production.
 - Unverified mobile-to-secure-leads cutover.
 - Unrehearsed wallet RPC including concurrency and month boundaries.
 - No authenticated Vendor A/B/admin and negative tests.
@@ -116,3 +116,9 @@ proper numbered migration with full release approval.
 
 **Important:** Static assertions cannot certify 100% security or workflow
 correctness. This packet does not claim release readiness.
+
+## 13 November 2026 engineering pass
+
+- Official Supabase API-key documentation confirms `sb_secret_` works server-side with `supabase-js`, and is preferred to legacy `service_role` (see https://supabase.com/docs/guides/getting-started/api-keys).
+- Event ingestion fixed to take an advisory transaction lock keyed by event UUID, short-circuit exact retries without consuming rate quota, and reject UUID reuse with a different listing/event type/channel. Dedicated SQL negative assertions added to GitHub cloud CI. No new PII persisted.
+- Release state remains **BLOCKED** by older mobile direct-write enquiry path and absent secure API flags, not by a missing named server credential.

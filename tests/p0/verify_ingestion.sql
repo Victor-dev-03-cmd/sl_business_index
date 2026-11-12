@@ -58,6 +58,20 @@ BEGIN
  IF ok IS DISTINCT FROM true THEN RAISE EXCEPTION 'FAIL: event retry should return success'; END IF;
  IF (SELECT count(*) FROM public.analytics_logs WHERE id=e)<>1 THEN
    RAISE EXCEPTION 'FAIL: duplicate event created multiple rows'; END IF;
+ IF (SELECT event_count FROM public.growth_event_rate_limits
+     WHERE bucket=repeat('a',64))<>1 THEN
+   RAISE EXCEPTION 'FAIL: duplicate event charged the rate bucket twice'; END IF;
+ ok:=public.slbi_record_growth_event(e,
+   '20000000-0000-4000-8000-000000000003','call_click','business_detail',repeat('a',64));
+ IF ok IS DISTINCT FROM false THEN
+   RAISE EXCEPTION 'FAIL: reused event ID with different type accepted'; END IF;
+ ok:=public.slbi_record_growth_event(e,
+   '20000000-0000-4000-8000-000000000001','view','business_detail',repeat('a',64));
+ IF ok IS DISTINCT FROM false THEN
+   RAISE EXCEPTION 'FAIL: reused event ID with different listing accepted'; END IF;
+ IF (SELECT event_count FROM public.growth_event_rate_limits
+     WHERE bucket=repeat('a',64))<>1 THEN
+   RAISE EXCEPTION 'FAIL: invalid ID reuse changed rate bucket'; END IF;
  ok:=public.slbi_record_growth_event(gen_random_uuid(),
    '20000000-0000-4000-8000-000000000001','view','business_detail',repeat('b',64));
  IF ok IS DISTINCT FROM false THEN
