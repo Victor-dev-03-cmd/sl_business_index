@@ -4,6 +4,10 @@ const nextConfig: NextConfig = {
   transpilePackages: ['framer-motion', 'lucide-react'],
   images: {
     formats: ['image/avif', 'image/webp'],
+    // Next.js 16 otherwise coerces custom qualities to 75, negating thumbnail savings.
+    qualities: [55, 65, 75],
+    // The 512px thumbnail avoids fetching 640px images on many DPR=2 cards.
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384, 512],
     remotePatterns: [
       {
         protocol: 'https',

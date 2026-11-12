@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { Star, MapPin, Building2, ShieldCheck, ChevronRight } from 'lucide-react';
 import VerifiedBadge from './VerifiedBadge';
 import { Business } from '@/lib/types';
+import { getBusinessDisplayAddress } from '@/lib/businessAddress';
 
 interface BusinessCardProps {
   business: Business;
@@ -72,7 +73,7 @@ export default function BusinessCard({ business }: BusinessCardProps) {
         <div className="pt-4 border-t border-gray-50 flex items-center justify-between mt-auto">
           <div className="flex items-center gap-1.5 text-gray-500">
             <MapPin size={14} className="text-brand-blue/70" />
-            <span className="text-xs font-medium truncate max-w-[120px]">{business.city || 'Sri Lanka'}</span>
+            <span className="text-xs font-medium truncate max-w-[220px]">{getBusinessDisplayAddress(business)}</span>
           </div>
           <div className="text-brand-blue text-xs font-bold flex items-center gap-0.5 group-hover:translate-x-1 transition-transform">
             Details <ChevronRight size={14} />

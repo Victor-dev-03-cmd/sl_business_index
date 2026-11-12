@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/lib/supabaseClient";
+import { getBusinessDisplayAddress } from "@/lib/businessAddress";
 import { SL_TOWNS, type Town } from "@/lib/towns";
 import type { Business } from "@/lib/types";
 import VerifiedBadge from "@/app/components/VerifiedBadge";
@@ -252,7 +253,7 @@ export default function NearbyExplorer() {
       try {
         for (const targetRadius of steps) {
           if (signal.aborted) throw new DOMException("Search cancelled", "AbortError");
-          const request = await supabase.rpc("get_nearby_businesses_v2", {
+          let request = await supabase.rpc("get_nearby_businesses_v3", {
             user_lat: location.lat,
             user_lng: location.lng,
             search_query: normalizedSearch,
@@ -261,6 +262,18 @@ export default function NearbyExplorer() {
             related_categories: suggestedCategories,
             specific_service: smartIntent.specificService,
           }).abortSignal(signal);
+          // Keep the existing SmartSearch v2 operational during staggered rollouts.
+          if (request.error?.code === "PGRST202") {
+            request = await supabase.rpc("get_nearby_businesses_v2", {
+              user_lat: location.lat,
+              user_lng: location.lng,
+              search_query: normalizedSearch,
+              dist_limit: targetRadius,
+              filter_categories: selectedCategoryNames,
+              related_categories: suggestedCategories,
+              specific_service: smartIntent.specificService,
+            }).abortSignal(signal);
+          }
           let rows = request.data;
           if (request.error) {
             // Backward compatibility when a migration is being rolled back.
@@ -1246,7 +1259,7 @@ export default function NearbyExplorer() {
                           {business.is_verified && business.can_show_badge && <VerifiedBadge size={15}/>}
                         </div>
                         <p className="mt-1.5 truncate text-[11px] font-semibold text-[#4381A9]">{business.category || "Local business"}</p>
-                        <p className="mt-2 line-clamp-2 text-[11px] leading-4 text-[#8198A9]">{business.detailed_address || business.address || business.city || "Sri Lanka"}</p>
+                        <p className="mt-2 line-clamp-2 text-[11px] leading-4 text-[#8198A9]">{getBusinessDisplayAddress(business)}</p>
                         <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] font-semibold">
                           {business.distanceText && <span className="inline-flex items-center gap-1 rounded-full bg-[#EDF5FB] px-2.5 py-1 text-[#326A90]"><MapPin size={11}/>{business.distanceText}</span>}
                           {business.match_type === "category_related" && (
@@ -1398,7 +1411,7 @@ export default function NearbyExplorer() {
                     ) : <Building2 size={23} strokeWidth={1.5} />}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[12px] font-semibold text-[#244E69]">{selectedBusiness.city || selectedBusiness.address || "Sri Lanka"}</p>
+                    <p className="truncate text-[12px] font-semibold text-[#244E69]">{getBusinessDisplayAddress(selectedBusiness)}</p>
                     <div className="mt-1 flex items-center gap-2 text-[11px] text-[#6489A3]">
                       {typeof selectedBusiness.distance_meters === "number" && <span>{formatDistance(selectedBusiness.distance_meters)} away</span>}
                       {Number(selectedBusiness.rating) > 0 && <span className="inline-flex items-center gap-1"><Star size={12} className="fill-amber-400 text-amber-400"/>{Number(selectedBusiness.rating).toFixed(1)}</span>}

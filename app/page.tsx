@@ -27,7 +27,7 @@ export default async function HomePage() {
       const { data } = await supabase
         .from('featured_listings')
         .select(
-          'business_id, businesses(id, slug, name, category, address, image_url, logo_url, rating, is_verified, status, can_show_badge)'
+          'business_id, businesses(id, slug, name, category, address, detailed_address, city, image_url, logo_url, rating, is_verified, status, can_show_badge)'
         )
         .order('order_index', { ascending: true })
         .limit(18)
