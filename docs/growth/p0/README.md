@@ -1,6 +1,7 @@
 # SLBI P0 Security & Database Foundation — staging release packet
 
-**State: BLOCKED — Supabase Pro staging prerequisite. No production approval.**
+**State: CLOUD TESTS PASSED; PRODUCTION RELEASE STILL BLOCKED BY CONFIGURATION/CUTOVER.**
+Conditional production approval was given by the owner, explicitly subject to ALL release gates passing. Do not deploy early.
 Production baseline: GitHub main at 6ad1764545a627a891d0c17f8170879b586d2b88 (2026-11-12).
 
 ## 2026-11-12 cloud CI update — no PC or Vercel required
@@ -10,6 +11,21 @@ Production baseline: GitHub main at 6ad1764545a627a891d0c17f8170879b586d2b88 (20
 - **Not production complete:** public direct lead INSERT is kept for legacy mobile compatibility; separate secure API needs service-role secret and flags. Real hosted Supabase Auth/Storage and protected object download tests have not been done.
 - **Alternative staging discovery:** Supabase organization has one project; connector quote for creating a separate project is **US$0/month** (base project creation quote, not a promise of unlimited free usage). A distinct project could support realistic hosted Auth/Storage tests without Pro branching, but must be explicitly approved in the intended organization before creation.
 - **Release hold:** do NOT apply any prepared review SQL or credit migrations to production. No main merge / Vercel deploy until hosted staging authorization and negative test matrix pass.
+
+## Verified Cloud Acceptance Evidence — 12 November 2026
+
+- **PostgreSQL 17 / Docker:** [4/4 jobs passed in run 43278879798](https://github.com/Victor-dev-03-cmd/sl_business_index/actions/runs/43278879798): owner/staff/anon RLS, staged profiles privacy, business/verification guards, secure Leads + Analytics RPC permissions, rate/duplicate tests, and Growth Wallet accounting with synthetic fixtures.
+- **Actual Supabase API stack:** [Auth / Storage / PostgREST passed in run 43278880130](https://github.com/Victor-dev-03-cmd/sl_business_index/actions/runs/43278880130). Real JWT sign-ins for Admin, Vendor A/B, Customer; account signup; no anonymous profile PII; owner profile update; no privilege escalation; approved-only business listing; cross-vendor isolation; verified-owner submission/staff decision; owner-only private file upload/signed URL; cross-owner upload/signing denied. This ran in a temporary Github Actions container, **not the production Supabase project**.
+- Full-stack CI also verifies local CLI reachability without Pro branching or local PC installation.
+- **No production SQL, GitHub main merge or Vercel deployment performed by this work.**
+
+### Remaining hard NO-GO release gates
+1. Production Vercel project has NO `SUPABASE_SECRET_KEY` nor `SUPABASE_SERVICE_ROLE_KEY`; secure event/lead ingestion functions cannot be activated. Configure securely in Vercel without placing the credential into GitHub, client bundles, or chat.
+2. Production Vercel has neither `GROWTH_EVENT_INGESTION_ENABLED`, `SLBI_SECURE_LEADS_ENABLED`, nor `NEXT_PUBLIC_SECURE_LEADS_ENABLED`; changing flags requires a coordinated release, not an ad-hoc update.
+3. Legacy anonymous direct `leads` INSERT must stay functional for old clients until mobile compatibility is verified and cut over. Removing it now can lose enquiries; leaving it indefinitely undermines abuse protection.
+4. Cloud synthetic tests do not certify all production-specific Auth triggers, private storage policies, live signup, consumer UI, or third-party Cloudflare Turnstile Siteverify. A controlled real-environment smoke and rollback rehearsal remain required.
+5. Production Supabase advisor lists multiple public-executable `SECURITY DEFINER` functions. Categorize intentional public read RPCs, trigger-only functions, chat creation privileges, and potentially abuse-prone counters before declaring all security gates green.
+6. Release migration still resides in REVIEW-ONLY files; no numbered migration has been applied to production. A predeployment backup and ordered idempotent migration bundle are still needed.
 
 ## Environment blocker
 The user explicitly authorized Supabase branch cost of **US$0.01344/hour**. Supabase
