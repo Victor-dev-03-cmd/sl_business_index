@@ -73,3 +73,32 @@ Marketing and Discovery may exchange **only** approved business facts and author
 - [ ] P2-01 marked production only after migration and actual save/read browser testing
 
 **Governance:** Versioning the roadmap or changing subscription costs, collecting marketing contacts, buying provider credits, activating sending or scheduling requires a separate approved decision. No Supabase paid staging branch is needed for disposable Docker testing.
+
+## Follow-on development checkpoint — P2-02, P2-04, P2-10 (November 13, 2026)
+
+**P2-02 — AI Caption Lab (feature-gated):** `/vendor/marketing/captions`, `/api/marketing/caption`, and `lib/marketing/caption-contract.ts` were added. Authenticated owner business + saved Brand Profile data form a constrained creative brief. English/Tamil/Sinhala selection is explicit. The server rejects untrusted owner/model/credit fields, uses a current Groq Chat Completions model rather than a deprecated model, caps provider response tokens/time, and creates **private, pending-human-review** drafts. Vendors can edit and approve/reject their own draft, without claiming social publishing. **Live provider calls remain OFF** until both `SLBI_MARKETING_AI_ENABLED=true` and `growth_credit_actions.ai_social_draft.is_enabled=true` are deliberately approved with provider costs and real-JWT acceptance.
+
+**P2-04 — Editable Poster Studio (local exports):** `/vendor/marketing/design`, original editorial/spotlight/offset/minimal layouts, independent draggable typography layers for business name/headline/price/date/CTA/phone, real PNG export at square (1080×1080), portrait (1080×1350), story (1080×1920), optional local PNG/JPEG/WebP background artwork and versioned JSON project import/export. The working editor is **not** yet server-persisted and its templates are **not** AI generated. The upload stays local to the browser; JSON preserves typography/layout, not uploaded artwork bytes.
+
+**P2-10 — AI credit risk controls (disposable Docker):** `docs/growth/p2/P2_02_P2_10_AI_CREDIT_RESERVATIONS_STAGING_ONLY.sql` introduces immutable server-assigned job ownership, per-owner/1-day max 6 reservations, platform max 50 per UTC day, existing plan-defined credit pricing, row-locked debit, idempotency key handling, atomic draft-completion, compensation refund and append-only credit ledger. Real actions remain disabled pending release gates. Docker tests intentionally enable one action in **throwaway Postgres only**; this does not change production billing or plan prices. Before actual provider rollout, add durable stale-reservation reconciliation and capture provider billing metrics; document a small approved provider-cost budget.
+
+**Existing Marketing campaign continuity:** The old `marketing_campaigns` record and `posted` status remain unchanged; it is not verified evidence of provider-published content. P2-05 revision/audit migration and P2-06 durable schedule worker are still **NOT IMPLEMENTED**. The old calendar remains planning-only. Meta token presence in an environment does **not** establish official per-vendor OAuth authorization.
+
+### Updated acceptance / release status
+
+- [x] New P2-01 Brand Profile editor, owner API, independent Docker RLS and contract tests
+- [x] P2-02 AI caption route and manual approval UI, disabled-by-default provider budget and private draft schema/tests
+- [x] P2-04 local editable typography, original templates and full-res PNG/JSON export
+- [x] P2-10 transactional backend credit reservations, compensation and daily limits tested in Docker
+- [ ] Real Supabase migration for social_brand_profiles and marketing AI private tables (currently **not applied**)
+- [ ] Live owner JWT save/reload/edit tests; provider model output tests with an approved cost ceiling
+- [ ] P2-03 AI-generated original artwork and editable overlays
+- [ ] P2-04 persistent designs and revision history, approved asset storage
+- [ ] P2-05 publishing history, verified receipts and moderation audit
+- [ ] P2-06 durable scheduled queue and retry/recovery worker
+- [ ] P2-07 official provider OAuth and page-scoped Facebook/Instagram publishing
+- [ ] P2-08 verified-domain SEO audits
+- [ ] P2-09 opt-in email audiences, unsubscribe/suppression and authorized sending
+- [ ] P2-10 production idempotency / provider-cost monitoring and approval
+
+**Production remains unchanged until these checks pass for their respective release units.** No AI credits have been activated or spent, and no new paid Supabase staging project is required for disposable Docker testing.
