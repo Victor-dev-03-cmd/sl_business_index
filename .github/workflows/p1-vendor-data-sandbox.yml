@@ -1,0 +1,52 @@
+name: P1 Vendor CRM & Reviews Disposable RLS Sandbox
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tests/p1-release/**'
+      - 'docs/growth/p1/P1_VENDOR_DATA_GUARDS_STAGING_ONLY.sql'
+      - '.github/workflows/p1-vendor-data-sandbox.yml'
+  push:
+    branches: ['release/p1-vendor-integration-20261113']
+    paths:
+      - 'tests/p1-release/**'
+      - 'docs/growth/p1/P1_VENDOR_DATA_GUARDS_STAGING_ONLY.sql'
+
+permissions:
+  contents: read
+
+jobs:
+  p1-data-sandbox:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: slbi_p1_sandbox
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d slbi_p1_sandbox"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: slbi_p1_sandbox
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Simulate legacy schema and two vendor identities
+        run: psql -v ON_ERROR_STOP=1 -f tests/p1-release/bootstrap.sql
+      - name: Apply candidate RLS guards to disposable database ONLY
+        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p1/P1_VENDOR_DATA_GUARDS_STAGING_ONLY.sql
+      - name: Verify tenant isolation, review uniqueness and mobile lead compatibility
+        run: psql -v ON_ERROR_STOP=1 -f tests/p1-release/verify.sql
