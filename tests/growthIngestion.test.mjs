@@ -58,8 +58,13 @@ test('ingestion route fails closed until both server credentials and schema exis
 test('vendor insights remains vendor-owned, RLS-protected and not a sales calculator',()=>{
   assert.match(dashboard,/\.eq\('owner_id', user\.id\)/);
   assert.match(dashboard,/\.eq\('status', 'approved'\)/);
-  assert.match(dashboard,/\.from\('analytics_logs'\)/);
-  assert.match(dashboard,/\.from\('leads'\)/);
+  // Insights routes both allowlisted tables through one bounded, owner-scoped
+  // pagination helper instead of duplicating unbounded read paths.
+  assert.match(dashboard,/table: 'analytics_logs' \| 'leads'/);
+  assert.match(dashboard,/readGrowthWindow<EventRow>\('analytics_logs'/);
+  assert.match(dashboard,/readGrowthWindow<LeadRow>\('leads'/);
+  assert.match(dashboard,/supabase\.from\(table\)/);
+  assert.match(dashboard,/\.in\('business_id', businessIds\)/);
   assert.match(dashboard,/not verified payments, completed sales or revenue/);
   assert.doesNotMatch(dashboard,/service_role|SUPABASE_SECRET_KEY/);
 });
