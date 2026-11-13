@@ -23,9 +23,11 @@ BEGIN
     OR NOT has_table_privilege('authenticated','public.lead_followups','SELECT') THEN
    RAISE EXCEPTION 'Follow-up SQL role grants wrong';
  END IF;
- IF has_column_privilege('authenticated','public.reviews','is_approved','UPDATE')
-   OR NOT has_column_privilege('authenticated','public.reviews','rating','UPDATE') THEN
-   RAISE EXCEPTION 'Review moderation column privileges broken';
+ -- Permission alone does not authorize a user: UPDATE is scoped by
+ -- admin-only USING/WITH CHECK RLS. Customer rating updates are disabled.
+ IF NOT has_column_privilege('authenticated','public.reviews','is_approved','UPDATE')
+   OR has_column_privilege('authenticated','public.reviews','rating','UPDATE') THEN
+   RAISE EXCEPTION 'Admin-only review field grants are inconsistent';
  END IF;
 END
 $assert$;
