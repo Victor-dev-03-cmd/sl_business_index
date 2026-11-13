@@ -1,0 +1,96 @@
+name: P2 Marketing Engine — Brand Profile Contract and Docker RLS
+
+on:
+  push:
+    branches: ['phase2/marketing-engine-foundation-p2-01-20261113']
+    paths:
+      - 'app/api/marketing/**'
+      - 'app/vendor/marketing/**'
+      - 'lib/marketing/**'
+      - 'tests/p2BrandProfile.test.mjs'
+      - 'tests/p2-brand/**'
+      - 'docs/growth/p2/**'
+      - '.github/workflows/p2-marketing-brand-foundation.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'app/api/marketing/**'
+      - 'app/vendor/marketing/**'
+      - 'lib/marketing/**'
+      - 'tests/p2BrandProfile.test.mjs'
+      - 'tests/p2-brand/**'
+      - 'docs/growth/p2/**'
+      - '.github/workflows/p2-marketing-brand-foundation.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Brand validation, page/API contract and existing Marketing Studio tests
+        run: |
+          node --test tests/p2BrandProfile.test.mjs
+          node --test tests/vendorSettingsQrMarketing2026.test.mjs tests/vendorPortalRelease.test.mjs
+
+  docker-tenant-rls:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: slbi_p2_brand
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres -d slbi_p2_brand"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: slbi_p2_brand
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Seed two synthetic business owners (disposable DB)
+        run: psql -v ON_ERROR_STOP=1 -f tests/p2-brand/bootstrap.sql
+      - name: Apply owner-only marketing brand profile RLS (disposable DB)
+        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p2/P2_01_SOCIAL_BRAND_PROFILES_STAGING_ONLY.sql
+      - name: Test vendor A/B cross-tenant access, anonymous denial and SQL validation
+        run: psql -v ON_ERROR_STOP=1 -f tests/p2-brand/verify.sql
+
+  nextjs-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-key
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: TypeScript validation
+        run: npx tsc --noEmit
+      - name: Next.js optimized production build
+        run: npm run build
