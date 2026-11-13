@@ -204,6 +204,10 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f tests/p2-oauth/verify.sql
       - name: Verify OAuth intent atomic claim, replay and PKCE denial
         run: psql -v ON_ERROR_STOP=1 -f tests/p2-oauth/claim-verify.sql
+      - name: Apply atomic Google account plus encrypted credential store (disposable)
+        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p2/P2_07_OAUTH_CONNECTION_STORE_STAGING_ONLY.sql
+      - name: Verify paid owner, Basic, cross-owner and expired Pro connection store
+        run: psql -v ON_ERROR_STOP=1 -f tests/p2-oauth/store-verify.sql
 
   nextjs-build:
     runs-on: ubuntu-latest

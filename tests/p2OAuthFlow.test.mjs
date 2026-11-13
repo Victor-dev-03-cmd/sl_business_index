@@ -90,3 +90,29 @@ test('OAuth rejects unverified identity and provider error',async()=>{
   const invalid=async()=>response({error:'invalid_grant'},400);
   await assert.rejects(exchangeVerifiedGoogleMailbox(config,'synthetic-code-12345','B'.repeat(86),invalid));
 });
+
+import {readFileSync} from 'node:fs';
+const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
+test('start and callback do not trust browser identity or enable live sends',()=>{
+  const start=read('app/api/marketing/oauth/google_mail/start/route.ts');
+  const callback=read('app/api/marketing/oauth/google_mail/callback/route.ts');
+  assert.match(start,/auth\.getUser\(\)/);
+  assert.match(start,/getMarketingAccessForUser/);
+  assert.match(start,/exactOAuthRequestOrigin/);
+  assert.match(start,/marketing_oauth_intents/);
+  assert.match(callback,/auth\.getUser\(\)/);
+  assert.match(callback,/slbi_claim_marketing_oauth_intent/);
+  assert.match(callback,/slbi_store_verified_marketing_connection/);
+  assert.match(callback,/decryptPreviewValue/);
+  assert.match(callback,/getMarketingAccessForUser/);
+  assert.doesNotMatch(callback,/messages\/send|publishApproved|console\.log/);
+});
+test('connection metadata and encrypted credential are saved atomically',()=>{
+  const sql=read('docs/growth/p2/P2_07_OAUTH_CONNECTION_STORE_STAGING_ONLY.sql');
+  assert.match(sql,/SECURITY DEFINER/);
+  assert.match(sql,/marketing_connections/);
+  assert.match(sql,/marketing_connection_secrets/);
+  assert.match(sql,/REVOKE ALL ON FUNCTION/);
+  assert.match(sql,/g\.plan_name IN \('Professional','Enterprise'\)/);
+  assert.match(sql,/b\.owner_id=p_owner_id/);
+});
