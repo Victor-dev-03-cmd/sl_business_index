@@ -1,6 +1,7 @@
 # SLBI Marketing Engine | LIVE IMPLEMENTATION STATUS
 Last status review: 2026-11-13 | Timezone Asia/Colombo
 This is the canonical, update-in-place state record across ChatGPT chats.
+Canonical cross-chat handoff: docs/growth/SLBI_MASTER_IMPLEMENTATION_HANDOFF.md on GitHub main
 Companion architecture: docs/growth/SLBI_GROWTHOS_MASTER_IMPLEMENTATION_CONTEXT.md
 Code branch: phase2/marketing-engine-foundation-p2-01-20261113
 Pull request: https://github.com/Victor-dev-03-cmd/sl_business_index/pull/68
@@ -28,7 +29,7 @@ Product refinement: Marketing Studio must become an overview-only page, and Mark
 |---|---|---|---|
 | Discovery Engine | pre-P2 | EXISTING PRODUCTION | Multilingual/nearby discovery; no duplicate work |
 | Marketing Studio Overview | P2 UX | CODED + 7/7 CI + VERCEL PREVIEW | Server-rendered overview-only KPIs and navigation; full manual campaign work preserved in /campaigns |
-| Marketing Engine main page | P2 UX | CODED + 7/7 CI + VERCEL PREVIEW | Separate /vendor/marketing/engine landing, five Pro module routes, topbar navigation |
+| Marketing Engine main page | P2 UX | CODED + 7/7 CI + VERCEL PREVIEW | Separate /vendor/marketing-engine landing, five Pro module routes, topbar navigation |
 | Business Brand Profile | P2-01 | CODED + CI + PREVIEW | UI/API/RLS draft; Supabase P2 schema not live, save e2e pending |
 | AI Caption Generator | P2-02 | CODED + CI + PREVIEW / DISABLED | Provider/gating drafted; no AI credits enabled or real provider e2e |
 | AI Poster (generated background) | P2-03 | NOT IMPLEMENTED | Official/authorized provider and budget first |
@@ -45,7 +46,7 @@ Product refinement: Marketing Studio must become an overview-only page, and Mark
 
 ## Where to pick up in next chat
 1. Check latest SHA of branch and PR #68. Read both this status and the master context document.
-2. COMPLETED IN DEV BRANCH (verify CI): Split /vendor/marketing overview-only, preserve existing drafting at /vendor/marketing/campaigns, add /vendor/marketing/engine and five separate module routes.
+2. COMPLETED IN DEV BRANCH (verify CI): Split /vendor/marketing overview-only, preserve existing drafting at /vendor/marketing/campaigns, add /vendor/marketing-engine and five separate module routes.
 3. PARTIAL: registry/disconnected-state UI, SSR/API Pro checks and legacy campaign Pro RLS staging migration coded; Docker tenant isolation, Basic/expired Pro write denial pass. NEXT: reviewed versioned live migration with rollback + provider OAuth adapters, exact redirect/state, signed webhooks, encrypted token storage/revocation.
 4. Add Pro-only business Calls & Messages AI Agent admin UI and human-in-the-loop rule engine on existing Leads CRM.
 5. Complete P2-05/06 durable campaign, approvals and provider receipts.
@@ -66,7 +67,7 @@ Product refinement: Marketing Studio must become an overview-only page, and Mark
 **Code changes (P2 branch, no production change):**
 - Replaced /vendor/marketing with SSR overview-only, genuine business/campaign/draft/planning counts and explicit plan status; no campaign composer embedded.
 - Preserved the full old manual composer, branded PNG export and planning UI at /vendor/marketing/campaigns; legacy regression test reads the new route.
-- Created /vendor/marketing/engine with five separate Pro module pages: social, email, agent, connections and automation. Product docs describe the limits honestly; no fake OAuth connection buttons or fake publishing.
+- Created /vendor/marketing-engine with five separate Pro module pages: social, email, agent, connections and automation. Product docs describe the limits honestly; no fake OAuth connection buttons or fake publishing.
 - Registered twelve potential official social, mail, messaging and voice provider adapters in lib/marketing/engine-registry.ts, all planned/research, not connected.
 - Added verified Pro/Enterprise check via server Supabase getUser + trusted growth_entitlements (expires_at + verified_at + payment_reference). Pro-only RSC layouts protect brand, captions, design, campaigns and engine module pages; Brand Profile and Caption APIs have additional server-side entitlement guards.
 - Added English/Tamil/Sinhala local deterministic customer enquiry classification and human escalation; no outbound replies, call forwarding, NN model, user data persistence or API charges.
@@ -83,3 +84,10 @@ Product refinement: Marketing Studio must become an overview-only page, and Mark
 - Current P2 branch has a later **SQL/docs-only** change: `d74e8015174bc0e0a99f881e1de981ad905d0f86`. This stages Pro entitlement in the P2-05 campaign RLS policy, synthetic verified Pro A / Basic B / expired Pro tests. Docker campaign + credit + RLS + contract jobs green; full optimized build may still be running at time of writing.
 - No real social/media/mail account was connected, no provider token exchanged, no AI credits deducted, no live P2 schema applied, no production deployment and no modification to existing Discovery engine.
 - Next implementation step: first-party provider adapter contract, OAuth state/PKCE and encrypted credential design. Start with Meta Facebook Pages + eligible Instagram Professional as provider-approved scope permits; after that WhatsApp Business and Google/Microsoft mail. Expose explicit consent and account-type requirements.
+
+## 2026-11-13 — Standalone URL alignment (AGENTS.md/main architecture)
+
+- Main AGENTS.md and the canonical master handoff prefer `/vendor/marketing-engine`, separate from `/vendor/marketing`. Standalone URL and child routes are now implemented on P2 branch: social/email/agent/connections/automation/leads/calendar/campaigns. Existing `/vendor/marketing/engine` implementation routes remain backward compatible but navigation now points to the standalone URL.
+- All new standalone premium child routes use a verified server-side Pro layout; existing /vendor/marketing/brand|captions|design|campaigns remain protected.
+- Route alias + documentation changes are pending exact branch SHA CI/Preview re-verification. No P2 production promotion.
+- Required next-chat reads: `AGENTS.md` and `docs/growth/SLBI_MASTER_IMPLEMENTATION_HANDOFF.md` on main; then this P2 branch ledger and `docs/growth/p2/P2_MARKETING_ENGINE_ROADMAP_AND_STATUS.md`.
