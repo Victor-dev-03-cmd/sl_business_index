@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import MarketingModuleFrame from '@/app/vendor/marketing/engine/components/MarketingModuleFrame';
+import MarketingModuleFrame from '@/app/vendor/marketing-engine/components/MarketingModuleFrame';
 import IconsaxIcon from '@/app/vendor/components/IconsaxIcon';
 import {MARKETING_CONNECTORS} from '@/lib/marketing/engine-registry';
 
@@ -19,7 +19,7 @@ export default function SocialMarketingPage(){
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div><h2 className="text-[16px] font-extrabold">Available social channels</h2>
             <p className="mt-1 text-[11px] leading-5 text-[#82828A]">Provider adapters are in the roadmap. None are silently connected or capable of publishing yet.</p></div>
-          <Link href="/vendor/marketing/engine/connections" className="rounded-lg bg-[#1F1F22] px-4 py-2.5 text-xs font-bold text-white">
+          <Link href="/vendor/marketing-engine/connections" className="rounded-lg bg-[#1F1F22] px-4 py-2.5 text-xs font-bold text-white">
             Explore plugin catalogue
           </Link>
         </div>
