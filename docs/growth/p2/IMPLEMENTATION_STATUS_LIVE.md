@@ -27,8 +27,8 @@ Product refinement: Marketing Studio must become an overview-only page, and Mark
 | Module | Phase | State | Evidence / remaining |
 |---|---|---|---|
 | Discovery Engine | pre-P2 | EXISTING PRODUCTION | Multilingual/nearby discovery; no duplicate work |
-| Marketing Studio Overview | P2 UX | CODED / CI IN PROGRESS | Server-rendered overview-only KPIs and navigation; previous campaign tools preserved in /campaigns |
-| Marketing Engine main page | P2 UX | CODED / CI IN PROGRESS | Separate /vendor/marketing/engine landing, 5 module routes, topbar navigation |
+| Marketing Studio Overview | P2 UX | CODED + 7/7 CI + VERCEL PREVIEW | Server-rendered overview-only KPIs and navigation; full manual campaign work preserved in /campaigns |
+| Marketing Engine main page | P2 UX | CODED + 7/7 CI + VERCEL PREVIEW | Separate /vendor/marketing/engine landing, five Pro module routes, topbar navigation |
 | Business Brand Profile | P2-01 | CODED + CI + PREVIEW | UI/API/RLS draft; Supabase P2 schema not live, save e2e pending |
 | AI Caption Generator | P2-02 | CODED + CI + PREVIEW / DISABLED | Provider/gating drafted; no AI credits enabled or real provider e2e |
 | AI Poster (generated background) | P2-03 | NOT IMPLEMENTED | Official/authorized provider and budget first |
@@ -41,12 +41,12 @@ Product refinement: Marketing Studio must become an overview-only page, and Mark
 | Usage Credits | P2-10 | SQL CODED + DOCKER TESTED / DISABLED | Atomic reservation/refund, limits; live gates pending |
 | Calls & Messages AI Agent | P2 OWNER ADDITION | RULE-BASED DEMO CODED | Local trilingual classifier, review/escalation; no inbound webhooks or telephony yet |
 | Leads & workflow integration | P2 OWNER ADDITION | REUSE EXISTING CRM | Connect approved agent events to leads |
-| Server-side Pro entitlement gate | CROSS-CUTTING | PARTLY CODED / CI IN PROGRESS | Verified SSR Pro layout on new pages and Brand/Caption API; legacy direct Supabase campaign writes need DB-level entitlement guard |
+| Server-side Pro entitlement gate | CROSS-CUTTING | CODED + SECURITY TESTED; LIVE MIGRATION PENDING | Server page and API Pro checks; direct campaign write RLS upgraded in staging-only P2-05 migration, Docker Basic/expired Pro negative tests pass |
 
 ## Where to pick up in next chat
 1. Check latest SHA of branch and PR #68. Read both this status and the master context document.
 2. COMPLETED IN DEV BRANCH (verify CI): Split /vendor/marketing overview-only, preserve existing drafting at /vendor/marketing/campaigns, add /vendor/marketing/engine and five separate module routes.
-3. PARTIAL: registry/disconnected-state UI and SSR/API Pro checks coded. NEXT: versioned migration enforcing Pro on legacy direct campaign writes; implement provider OAuth adapters, exact redirect/state, signed webhooks, token encryption/revocation.
+3. PARTIAL: registry/disconnected-state UI, SSR/API Pro checks and legacy campaign Pro RLS staging migration coded; Docker tenant isolation, Basic/expired Pro write denial pass. NEXT: reviewed versioned live migration with rollback + provider OAuth adapters, exact redirect/state, signed webhooks, encrypted token storage/revocation.
 4. Add Pro-only business Calls & Messages AI Agent admin UI and human-in-the-loop rule engine on existing Leads CRM.
 5. Complete P2-05/06 durable campaign, approvals and provider receipts.
 6. Implement official Meta onboarding, Google/Microsoft OAuth; send only with user/provider approval.
@@ -73,6 +73,13 @@ Product refinement: Marketing Studio must become an overview-only page, and Mark
 - Vendor top navigation has separate Studio and Engine links; correct active-route matching.
 - New tests/p2MarketingEngineShell.test.mjs covering plan expiry, tenant access integration contract, no fake sends, route split and multilingual rules. Included in P2 release gate workflow.
 
-**Not complete:** live OAuth, actual API account connection, production Supabase P2 schema, Pro-entitlement checks at *legacy direct browser Supabase marketing_campaigns writes*, paid AI calls, phone/WhatsApp messaging, email sending, scheduling worker, provider receipts. Until legacy campaign RLS is changed, direct API writes do not inherit the page-only Pro boundary; this needs a versioned audited migration before any production release. No live business owner browser E2E has been performed for P2.
+**Not complete:** live OAuth, actual API account connection, production Supabase P2 schema, Pro-entitlement checks at *legacy direct browser Supabase marketing_campaigns writes*, paid AI calls, phone/WhatsApp messaging, email sending, scheduling worker, provider receipts. An updated P2-05 staging-only campaign RLS now checks verified Pro on direct INSERT/UPDATE, and the synthetic Basic/expired Pro negative tests pass. The LIVE production DB has NOT received this migration, so production direct writes remain under old behavior until versioned rollout. No live business owner browser E2E has been performed for P2.
 
-**Latest verification:** Awaiting exact HEAD CI and latest Preview build status. Do not promote to Production until CI green, security regression reviewed, verified entitlement and user-browser flows completed.
+**Latest verified Step 1 application checkpoint:** Source SHA `ac1f1e565245976517531f4cba99cf9ba236d576`, seven relevant GitHub workflows PASS (P1 + P2 + billing checks), Vercel Preview READY (deployment `dpl_4gLbEqmaywHtnJFxABfYqYNcUdL9`): https://sl-business-index-l5wrpi17z-victor-dev-03-cmds-projects.vercel.app . Latest staged security branch commit `d74e8015174bc0e0a99f881e1de981ad905d0f86`: Docker Basic/expired Pro campaign RLS tests PASS; final full build must be checked at its own HEAD. Preview is not production, and authenticated browser acceptance on real paid account is not yet complete.
+
+## 2026-11-13 — Step 1 acceptance and staged legacy campaign RLS
+
+- Marketing Studio and Engine UI commit: `ac1f1e565245976517531f4cba99cf9ba236d576`, GitHub 7/7 workflows green. Same code Vercel Preview `dpl_4gLbEqmaywHtnJFxABfYqYNcUdL9` READY.
+- Current P2 branch has a later **SQL/docs-only** change: `d74e8015174bc0e0a99f881e1de981ad905d0f86`. This stages Pro entitlement in the P2-05 campaign RLS policy, synthetic verified Pro A / Basic B / expired Pro tests. Docker campaign + credit + RLS + contract jobs green; full optimized build may still be running at time of writing.
+- No real social/media/mail account was connected, no provider token exchanged, no AI credits deducted, no live P2 schema applied, no production deployment and no modification to existing Discovery engine.
+- Next implementation step: first-party provider adapter contract, OAuth state/PKCE and encrypted credential design. Start with Meta Facebook Pages + eligible Instagram Professional as provider-approved scope permits; after that WhatsApp Business and Google/Microsoft mail. Expose explicit consent and account-type requirements.
