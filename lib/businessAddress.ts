@@ -36,7 +36,12 @@ export function getBusinessDisplayAddress(
     const lowerArea = area.toLocaleLowerCase();
     if (lowerPhysical.includes(lowerArea)) return physical;
     if (lowerArea.includes(lowerPhysical)) return area;
-    return physical + ", " + area;
+    // Avoid "No 12, Main Street, Jaffna, Jaffna, Northern Province" repeats.
+    const areaParts = area.split(/\s*,\s*/).filter(Boolean);
+    while (areaParts.length && lowerPhysical.endsWith(areaParts[0].toLocaleLowerCase())) {
+      areaParts.shift();
+    }
+    return [physical, ...areaParts].join(", ");
   }
   return physical || area || city || fallback;
 }
