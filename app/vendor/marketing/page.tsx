@@ -6,7 +6,7 @@ import IconsaxIcon from '../components/IconsaxIcon';
 export const dynamic='force-dynamic';
 const panel='rounded-xl border border-[#ECECF0] bg-white shadow-[0_10px_30px_rgba(17,17,20,.035)]';
 const tools=[
-  {title:'Marketing Engine',href:'/vendor/marketing/engine',icon:'flash',desc:'One workspace for social, email, calls & messages, connected channels and automations.',tag:'Main workspace'},
+  {title:'Marketing Engine',href:'/vendor/marketing-engine',icon:'flash',desc:'One workspace for social, email, calls & messages, connected channels and automations.',tag:'Main workspace'},
   {title:'Business Brand Profile',href:'/vendor/marketing/brand',icon:'shop',desc:'Reusable brand colors, audiences, languages, factual offers and guidelines.',tag:'P2-01 · Pro'},
   {title:'AI Caption Lab',href:'/vendor/marketing/captions',icon:'message-text',desc:'Multilingual drafts with editable text and explicit human review.',tag:'P2-02 · Gated'},
   {title:'Editable Poster Studio',href:'/vendor/marketing/design',icon:'document',desc:'Original layouts, editable text layers and high-resolution PNG export.',tag:'P2-04 · Pro'},
@@ -70,7 +70,7 @@ export default async function MarketingOverview(){
             Editing, publishing and customer automation live in the separate Marketing Engine.
           </p>
         </div>
-        <Link href="/vendor/marketing/engine" className="inline-flex h-11 items-center gap-2 rounded-lg bg-[#202024] px-5 text-[12px] font-extrabold text-white transition hover:bg-[#38383E]">
+        <Link href="/vendor/marketing-engine" className="inline-flex h-11 items-center gap-2 rounded-lg bg-[#202024] px-5 text-[12px] font-extrabold text-white transition hover:bg-[#38383E]">
           Open Marketing Engine <IconsaxIcon name="arrow-right-2" color="white" size={17}/>
         </Link>
       </div>
@@ -104,7 +104,7 @@ export default async function MarketingOverview(){
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div><h2 className="text-[19px] font-extrabold">Your marketing tools</h2>
           <p className="mt-1 text-xs text-[#85858C]">Dedicated workflows, not embedded editors inside your overview.</p></div>
-        <Link href="/vendor/marketing/engine/connections" className="text-xs font-bold text-[#B75D15] hover:underline">Explore official connectors</Link>
+        <Link href="/vendor/marketing-engine/connections" className="text-xs font-bold text-[#B75D15] hover:underline">Explore official connectors</Link>
       </div>
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {tools.map(tool=><Link key={tool.href} href={tool.href}
