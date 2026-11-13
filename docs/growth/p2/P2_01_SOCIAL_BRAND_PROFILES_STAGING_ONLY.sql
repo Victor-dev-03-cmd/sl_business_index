@@ -17,7 +17,10 @@ CREATE TABLE IF NOT EXISTS public.social_brand_profiles (
   languages text[] NOT NULL DEFAULT ARRAY['en','ta','si']::text[]
     CHECK (cardinality(languages) BETWEEN 1 AND 3
       AND languages <@ ARRAY['en','ta','si']::text[]
-      AND cardinality(ARRAY(SELECT DISTINCT unnest(languages))) = cardinality(languages)),
+      AND cardinality(languages) =
+        ((CASE WHEN 'en' = ANY(languages) THEN 1 ELSE 0 END)
+        +(CASE WHEN 'ta' = ANY(languages) THEN 1 ELSE 0 END)
+        +(CASE WHEN 'si' = ANY(languages) THEN 1 ELSE 0 END))),
   guidelines text NOT NULL DEFAULT '' CHECK (char_length(guidelines) <= 2000),
   offers jsonb NOT NULL DEFAULT '[]'::jsonb
     CHECK (jsonb_typeof(offers) = 'array' AND jsonb_array_length(offers) <= 5
