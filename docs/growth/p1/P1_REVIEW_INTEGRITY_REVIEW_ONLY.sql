@@ -1,0 +1,64 @@
+-- SLBI P1-04 / REVIEW ONLY — Review integrity and reputation RLS.
+-- DO NOT APPLY TO LIVE PRODUCTION WITHOUT STAGING USER/JWT REGRESSION TESTS.
+-- Existing SQL includes broad PUBLIC privileges and overly permissive review
+-- read visibility. This example intentionally remains non-executable.
+--
+-- Read-only 2026-11-13 audit: 2 reviews, 0 replies, none pending moderation.
+-- reviews + review_replies both grant TRUNCATE/DELETE/UPDATE to anon and
+-- authenticated. RLS does NOT protect TRUNCATE. Fix privileges deliberately.
+--
+-- Required phase-1 controls after staging verification:
+-- 1. One vendor reply per review; enforce atomic uniqueness at DB level,
+--    not with a client precheck alone.
+-- 2. Vendor must match review's business owner AND the vendor_id on insert.
+-- 3. Unapproved reviews should not be visible to anon/public or exposed in
+--    private-but-unrelated vendor dashboards.
+-- 4. Reviews may be inserted only by authenticated users, user_id=auth.uid(),
+--    valid 1..5 rating, owned-business self-review prevented if policy approved.
+-- 5. Do not permit customer to self-approve reviews via UPDATE.
+-- 6. REVOKE TRUNCATE / unnecessary TRIGGER, REFERENCES, UPDATE, DELETE grants
+--    from anon and authenticated only after mobile/web/admin smoke tests.
+--
+-- Candidate migration after verifying duplicate absence:
+-- CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS
+--   review_replies_one_per_review_idx ON public.review_replies (review_id);
+-- (CONCURRENTLY must run outside a transaction.)
+--
+-- Replace vendor INSERT policy via SECURITY INVOKER and robust owner check:
+-- DROP POLICY IF EXISTS "Vendors can reply to their reviews" ON public.review_replies;
+-- CREATE POLICY "Vendor replies only to own published reviews"
+--   ON public.review_replies FOR INSERT TO authenticated
+--   WITH CHECK (
+--     vendor_id=(select auth.uid())
+--     AND EXISTS (
+--       SELECT 1 FROM public.reviews r
+--       JOIN public.businesses b ON b.id=r.business_id
+--       WHERE r.id=review_replies.review_id
+--         AND r.is_approved IS TRUE
+--         AND b.owner_id=(select auth.uid())
+--     )
+--   );
+--
+-- Replace public reviews SELECT policy by approved-only visibility:
+-- DROP POLICY IF EXISTS "Reviews viewable by everyone" ON public.reviews;
+-- CREATE POLICY "Only approved reviews public"
+--   ON public.reviews FOR SELECT TO anon,authenticated
+--   USING (is_approved IS TRUE);
+--
+-- Review replies SELECT policy must ensure its parent review is approved.
+-- Never accidentally expose unapproved reviews through child joins.
+--
+-- IMPORTANT: user-editable owner review metadata and is_approved must be
+-- restricted using column grants or a backend moderation-only API. Replacing
+-- a policy alone does not stop spoofed user_id/is_approved INSERT/UPDATE.
+--
+-- Required Staging Matrix
+-- [ ] Vendor A cannot reply to Vendor B's review
+-- [ ] Vendor A cannot impersonate vendor_id=Vendor B
+-- [ ] Concurrent double-reply => 1 row + unique conflict
+-- [ ] Anon cannot insert or modify review replies
+-- [ ] Unapproved review never appears in public query
+-- [ ] Auth customer can submit a legitimate review, cannot self-approve
+-- [ ] Existing admin review moderation continues to work
+-- [ ] Anon cannot TRUNCATE either table
+-- [ ] Existing direct-API mobile and public detail pages keep functioning
