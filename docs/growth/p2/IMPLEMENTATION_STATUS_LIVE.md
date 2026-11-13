@@ -1,5 +1,5 @@
 # SLBI Marketing Engine | LIVE IMPLEMENTATION STATUS
-Last status review: 2026-11-13 | Timezone Asia/Colombo
+Last status review: 2026-11-14 | Timezone Asia/Colombo
 This is the canonical, update-in-place state record across ChatGPT chats.
 Canonical cross-chat handoff: docs/growth/SLBI_MASTER_IMPLEMENTATION_HANDOFF.md on GitHub main
 Companion architecture: docs/growth/SLBI_GROWTHOS_MASTER_IMPLEMENTATION_CONTEXT.md
@@ -36,7 +36,7 @@ Product refinement: Marketing Studio must become an overview-only page, and Mark
 | Editable Poster Studio | P2-04 | CODED + CI + PREVIEW | Four original templates, layers, PNG/JSON; no cloud project persistence |
 | Campaign Library revision | P2-05 | SQL CODED + DOCKER TESTED | No production migration or revised UI/receipts |
 | Durable Content Calendar | P2-06 | NOT IMPLEMENTED | Existing calendar = planning only |
-| Official Social Connectors | P2-07 | CATALOGUE CODED / NOT AUTHORIZED | 12 providers shown as planned/research; real Meta OAuth and scopes still pending |
+| Official Social Connectors | P2-07 | CATALOGUE + OAUTH PRIMITIVES + DOCKER-TESTED STATE CLAIM / NOT AUTHORIZED | 5 typed official-account contracts; one-time DB state claim passes synthetic A/B tests; real OAuth and scopes still pending |
 | SEO Intelligence | P2-08 | DEFERRED | Full SEO phase after Growth; shared schema only for now |
 | Email Marketing | P2-09 | ARCHITECTURE APPROVED | Gmail/Graph OAuth, consent/suppression pending |
 | Usage Credits | P2-10 | SQL CODED + DOCKER TESTED / DISABLED | Atomic reservation/refund, limits; live gates pending |
@@ -109,3 +109,14 @@ Release gates still open: GitHub contract + Docker + production build at exact S
 - GitHub Actions: **7/7 workflow runs passed** at that exact SHA, including new Node OAuth/PKCE tests, disposable PostgreSQL OAuth token-vault RLS tests, existing P1/P2 checks, billing tests and optimized Next.js build.
 - Vercel Preview: `dpl_DAkD9z9UzMz23WdBLcNXn96T1TmD`, **READY**, non-production: https://sl-business-index-63s5hfc6e-victor-dev-03-cmds-projects.vercel.app . The preview has no live OAuth Connect operation and no new live database migration.
 - Do not promote production or enable Connect. Next: verified provider app settings and encrypted credential KMS, transactional callback state consumption, scoped token exchange and disconnect with positive/negative browser acceptance tests.
+
+## 2026-11-14 — P2-07 atomic OAuth intent consumption (code candidate, no live migration)
+
+- **Verified implementation commit:** `0920367b55a6f53963bd3b9191d8de44e3186182` on `phase2/marketing-engine-foundation-p2-01-20261113`; draft PR #68 remains unmerged to `main`.
+- **Changed files:** `docs/growth/p2/P2_07_OAUTH_INTENT_CLAIM_STAGING_ONLY.sql`; `tests/p2-oauth/claim-verify.sql`; `.github/workflows/p2-marketing-brand-foundation.yml`.
+- **What now exists (staging only):** privileged one-time `slbi_claim_marketing_oauth_intent` database function atomically marks an unexpired state consumed; checks exact HMAC digest, trusted owner/business/provider/redirect, verified current Professional/Enterprise entitlement, and required PKCE ciphertext for Google/Microsoft. PostgreSQL function EXECUTE explicitly denied to anon/authenticated, granted only to service_role. No provider tokens are stored or exchanged by this function.
+- **Negative evidence:** PostgreSQL 17 GitHub Docker `docker-oauth-connector-security` job in workflow run [43528095587](https://github.com/Victor-dev-03-cmd/sl_business_index/actions/runs/43528095587) passed SQL privilege denial, Basic owner B, expired Pro, wrong owner/redirect, expired intent, missing required PKCE and replay scenarios. Existing P2 brand, AI credits, campaign approvals and Node contracts also passed in that workflow's completed jobs. **Entire 7-workflow-family acceptance and optimized builds were still running at the time of this ledger checkpoint; do not infer they passed until verified at exact SHA.**
+- **Live Supabase (read-only verified 2026-11-14):** project `oofxhragafekazwjikae` ACTIVE_HEALTHY; `public` exposes only legacy `marketing_campaigns` and `growth_entitlements` from the relevant table search, not P2 OAuth intent/connection/vault tables. P2 migration **NOT APPLIED**. `ai_social_draft`, `ai_email_draft`, `seo_basic_audit` remain disabled.
+- **Vercel:** production `main` deployment `dpl_G1jRvpJh72GGyDDNTd1H4D9k5te2` READY at `e6221ff`; last verified P2 preview `dpl_DAkD9z9UzMz23WdBLcNXn96T1TmD` READY at `000c75f`. No new preview for code commit `0920367` was confirmed at the checkpoint. Do not call this a production release or real vendor acceptance.
+- **Next unfinished implementation:** trusted same-origin OAuth start handler with SSR `auth.getUser()`, owned business + verified Pro guard; secure state and encrypted PKCE persistence; server callback with exact provider/redirect and CSRF checks, one-time claim via service role, token exchange ONLY after official app setup, KMS, provider account verification and human authorization. Then tested disconnect/revoke, event signature/replay handling, and cross-vendor browser E2E. No paid provider actions or external sends authorized.
+- **Release boundary:** No GitHub PR merge, live Supabase DDL, Vercel production promotion, provider OAuth account connection, AI costs, outbound messages, posting or Discovery changes in this step.

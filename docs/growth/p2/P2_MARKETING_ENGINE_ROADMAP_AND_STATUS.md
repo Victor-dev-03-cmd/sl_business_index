@@ -103,3 +103,7 @@ Marketing and Discovery may exchange **only** approved business facts and author
 - [ ] P2-10 production idempotency / provider-cost monitoring and approval
 
 **Production remains unchanged until these checks pass for their respective release units.** No AI credits have been activated or spent, and no new paid Supabase staging project is required for disposable Docker testing.
+
+## 2026-11-14 — P2-07 one-time state claim security increment
+
+Staging-only SQL function `slbi_claim_marketing_oauth_intent` is added in P2 development commit `0920367`, with disposable PostgreSQL 17 owner A/B, replay, expired-Pro, exact callback, PKCE and unauthorized-role negative tests wired into CI. This is **not** real provider authorization: Supabase production schema is unchanged, and provider app registration, KMS-backed PKCE/token encryption, trusted API handlers, provider-specific account choice, revocation and authenticated live browser tests remain open. Marketing first → Growth next → SEO last; Discovery unchanged.
