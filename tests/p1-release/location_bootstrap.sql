@@ -1,4 +1,6 @@
 \set ON_ERROR_STOP on
+CREATE ROLE anon NOLOGIN;
+CREATE ROLE authenticated NOLOGIN;
 CREATE EXTENSION IF NOT EXISTS postgis;
 CREATE TABLE public.businesses (
   id uuid PRIMARY KEY, status text NOT NULL DEFAULT 'pending',
