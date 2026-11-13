@@ -77,7 +77,7 @@ test('Anonymous AI-only moderation is retired and public review approval cannot 
   assert.match(sql, /moderation_status = 'pending'/);
   assert.match(sql, /reviews_one_per_signed_in_user_and_business/);
   assert.match(sql, /REVOKE ALL ON public\.reviews FROM PUBLIC, anon, authenticated/);
-  assert.match(sql, /GRANT INSERT \\(id, business_id, user_id, user_name, rating, comment, is_approved, moderation_status\\)/);
+  assert.ok(sql.includes('GRANT INSERT (id, business_id, user_id, user_name, rating, comment, is_approved, moderation_status)'));
   assert.match(sql, /DROP POLICY IF EXISTS "Users can update own reviews"/);
   assert.match(sql, /slbi_review_moderation_audit/);
   assert.match(sql, /review_staff_decide_pending/);
