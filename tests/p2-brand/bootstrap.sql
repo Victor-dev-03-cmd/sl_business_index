@@ -5,6 +5,10 @@ CREATE ROLE authenticated NOLOGIN;
 CREATE ROLE service_role NOLOGIN;
 CREATE SCHEMA IF NOT EXISTS auth;
 GRANT USAGE ON SCHEMA auth TO authenticated;
+CREATE FUNCTION auth.role() RETURNS text LANGUAGE sql STABLE
+AS $role$ SELECT NULLIF(current_setting('request.jwt.claim.role',true),'') $role$;
+CREATE TABLE public.subscriptions(id uuid PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE public.invoices(id uuid PRIMARY KEY DEFAULT gen_random_uuid());
 CREATE TABLE auth.users(id uuid PRIMARY KEY);
 CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE
 AS $f$ SELECT NULLIF(current_setting('request.jwt.claim.sub',true),'')::uuid $f$;
