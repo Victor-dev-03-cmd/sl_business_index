@@ -60,7 +60,6 @@ export async function POST(request: Request) {
       comment: review.comment,
       is_approved: false,
       moderation_status: 'pending',
-      sentiment: null,
     }).select('id').single();
 
     if (error) {
