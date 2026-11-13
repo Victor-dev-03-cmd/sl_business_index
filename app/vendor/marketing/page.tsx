@@ -192,6 +192,7 @@ export default function MarketingPage() {
         <div className="flex flex-wrap gap-2">
           <Link href="/vendor/marketing/brand" className="flex h-10 items-center gap-2 rounded-lg border border-[#F1C5A0] bg-[#FFF6EF] px-4 text-[12px] font-semibold text-[#B0520E] hover:bg-[#FFEAD9]"><IconsaxIcon name="shop" size={17}/> Brand Profile · P2-01</Link>
           <Link href="/vendor/marketing/captions" className="flex h-10 items-center gap-2 rounded-lg border border-[#E7E7EC] bg-white px-4 text-[12px] font-semibold text-[#24242A] hover:bg-[#FFF8F2]"><IconsaxIcon name="flash" size={17}/> AI Caption Lab · P2-02</Link>
+          <Link href="/vendor/marketing/design" className="flex h-10 items-center gap-2 rounded-lg border border-[#E7E7EC] bg-white px-4 text-[12px] font-semibold text-[#24242A] hover:bg-[#FFF8F2]"><IconsaxIcon name="document" size={17}/> Design Studio · P2-04</Link>
           <Link href="/vendor/insights" className="flex h-10 items-center gap-2 border border-[#DEDEE2] px-4 text-[12px] font-semibold text-[#54545C] hover:bg-[#FFF8F2]"><IconsaxIcon name="status-up" size={17}/> Growth insights</Link>
           <button type="button" onClick={()=>launch('social')} className="flex h-10 items-center gap-2 bg-[#202024] px-4 text-[12px] font-semibold text-white hover:bg-[#39393E]"><IconsaxIcon name="add" size={17} color="white"/> New campaign</button>
         </div>
@@ -208,7 +209,7 @@ export default function MarketingPage() {
           <span className="bg-[#FFF1E6] p-2.5 text-[#C56210]"><IconsaxIcon name={k.icon} size={20}/></span>
         </div>)}
       </div>
-      <section aria-label="Marketing services" className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+      <section aria-label="Marketing services" className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
         <Link href="/vendor/marketing/brand" className={card+' group min-h-[176px] p-5 text-left transition hover:border-[#F5BC8B] hover:bg-[#FFF8F1]'}>
           <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#FFF1E5] text-[#C56210]"><IconsaxIcon name="shop" size={20}/></span>
           <h2 className="mt-3 text-[15px] font-bold">Business Brand Profile</h2>
@@ -220,6 +221,12 @@ export default function MarketingPage() {
           <h2 className="mt-3 text-[15px] font-bold">AI Caption Lab</h2>
           <p className="mt-1 text-[11px] leading-5 text-[#2C2C31]">Review draft captions in English, Tamil or Sinhala. AI provider calls are locked until credits and spending controls are approved.</p>
           <span className="mt-4 inline-flex items-center gap-1 text-[11px] font-bold text-[#B4530B]">Open Caption Lab <IconsaxIcon name="arrow-right-2" size={13}/></span>
+        </Link>
+        <Link href="/vendor/marketing/design" className={card+' group min-h-[176px] p-5 text-left transition hover:border-[#F5BC8B] hover:bg-[#FFF8F1]'}>
+          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#FFF1E5] text-[#C56210]"><IconsaxIcon name="document" size={20}/></span>
+          <h2 className="mt-3 text-[15px] font-bold">Editable Poster Studio</h2>
+          <p className="mt-1 text-[11px] leading-5 text-[#2C2C31]">Four original layouts, square/portrait/story formats, editable typography and high-resolution PNG export.</p>
+          <span className="mt-4 inline-flex items-center gap-1 text-[11px] font-bold text-[#B4530B]">Open Design Editor <IconsaxIcon name="arrow-right-2" size={13}/></span>
         </Link>
         {[
           {title:'AI Social Marketing',sub:'Business brief, multilingual caption, creative review and campaign planning',icon:'flash',action:'Open social workflow',target:'social' as Section},
