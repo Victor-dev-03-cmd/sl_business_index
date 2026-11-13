@@ -1,34 +1,64 @@
 'use client';
 import { neo } from '../components/neumorphic';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
 import IconsaxIcon from '../components/IconsaxIcon';
 import { summarizeGrowthMetrics } from '@/lib/growth/attribution';
+import { compareGrowthSnapshots, createGrowthWindows, INSIGHT_BATCH_SIZE, INSIGHT_MAX_ROWS, type InsightPeriodDays } from '@/lib/growth/insight-comparison';
 
 type Period = '7' | '30' | '90';
 type OwnedBusiness = { id: string; name: string };
 type EventRow = { id: string; business_id: string | null; event_type: string; created_at: string };
 type LeadRow = { id: string; business_id: string | null; status: string | null; source: string | null; created_at: string | null };
 
-const MAX_EVENTS = 2000;
-const MAX_LEADS = 2000;
 const panel = neo.card;
 const periodDays = (period: Period) => Number(period);
-
-const startDate = (period: Period): string => {
-  const now = new Date();
-  now.setUTCDate(now.getUTCDate() - periodDays(period));
-  return now.toISOString();
-};
 const formatNumber = (n: number) => new Intl.NumberFormat('en-LK').format(n);
-const describeCount = (value: number, partial: boolean) => (partial ? '≥ ' : '') + formatNumber(value);
 
-function lastDays(period: Period, events: EventRow[]) {
+/**
+ * Stable, authenticated, owner-scoped, exact-count pagination. Prevent a
+ * default PostgREST 1,000-row cap (or concurrency drift) from silently
+ * presenting sampled totals as a complete period.
+ */
+async function readGrowthWindow<T extends EventRow | LeadRow>(
+  table: 'analytics_logs' | 'leads', selectFields: string,
+  businessIds: string[], since: string, before: string,
+): Promise<T[]> {
+  const rows: T[] = [];
+  let expectedCount: number | null = null;
+  for (let offset = 0; offset < INSIGHT_MAX_ROWS; offset += INSIGHT_BATCH_SIZE) {
+    const { data, error, count } = await supabase.from(table)
+      .select(selectFields, { count: offset === 0 ? 'exact' : undefined })
+      .in('business_id', businessIds).gte('created_at', since).lt('created_at', before)
+      .order('created_at', { ascending: false }).order('id', { ascending: false })
+      .range(offset, offset + INSIGHT_BATCH_SIZE - 1);
+    if (error) throw error;
+    if (offset === 0) {
+      if (typeof count !== 'number' || !Number.isInteger(count) || count < 0) {
+        throw new Error('Analytics row count was unavailable; incomplete metrics are hidden.');
+      }
+      expectedCount = count;
+      if (count > INSIGHT_MAX_ROWS) {
+        throw new Error('Too many activity records for exact browser reporting. Narrow the date range.');
+      }
+    }
+    rows.push(...((data || []) as T[]));
+    if (rows.length >= expectedCount!) break;
+    if ((data?.length || 0) < INSIGHT_BATCH_SIZE) break;
+  }
+  if (rows.length !== expectedCount) {
+    throw new Error('Analytics changed during pagination. Refresh to rebuild an accurate report.');
+  }
+  return rows;
+}
+
+function lastDays(period: Period, events: EventRow[], referenceTime: string) {
   const dates: { key: string; label: string; views: number; calls: number; directions: number }[] = [];
-  const today = new Date();
-  for (let offset = periodDays(period) - 1; offset >= 0; offset--) {
+  const today = new Date(referenceTime);
+  // Rolling N-day periods touch N+1 UTC dates; boundary dates are partial.
+  for (let offset = periodDays(period); offset >= 0; offset--) {
     const dt = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - offset));
     dates.push({
       key: dt.toISOString().slice(0, 10),
@@ -53,69 +83,87 @@ export default function GrowthInsightsPage() {
   const [businesses, setBusinesses] = useState<OwnedBusiness[]>([]);
   const [events, setEvents] = useState<EventRow[]>([]);
   const [leads, setLeads] = useState<LeadRow[]>([]);
-  const [eventPartial, setEventPartial] = useState(false);
-  const [leadPartial, setLeadPartial] = useState(false);
+  const [previousEvents, setPreviousEvents] = useState<EventRow[]>([]);
+  const [previousLeads, setPreviousLeads] = useState<LeadRow[]>([]);
+  const [snapshotEnd, setSnapshotEnd] = useState(() => new Date().toISOString());
   const [loading, setLoading] = useState(true);
   const [unauthenticated, setUnauthenticated] = useState(false);
   const [error, setError] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError('');
-    setUnauthenticated(false);
-    setEvents([]);
-    setLeads([]);
-    setEventPartial(false);
-    setLeadPartial(false);
-    try {
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError) throw authError;
-      if (!user) {
-        setUnauthenticated(true);
-        setBusinesses([]);
-        return;
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      setLoading(true);
+      setError('');
+      setUnauthenticated(false);
+      setEvents([]);
+      setLeads([]);
+      setPreviousEvents([]);
+      setPreviousLeads([]);
+      try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError) throw authError;
+        if (!active) return;
+        if (!user) {
+          setUnauthenticated(true);
+          setBusinesses([]);
+          return;
+        }
+        // RLS remains the security boundary; no service-role keys in client.
+        const ownedResult = await supabase.from('businesses')
+          .select('id,name').eq('owner_id', user.id).eq('status', 'approved')
+          .order('name', { ascending: true }).limit(251);
+        if (ownedResult.error) throw ownedResult.error;
+        if (!active) return;
+        const owned = (ownedResult.data || []) as OwnedBusiness[];
+        if (owned.length > 250) {
+          throw new Error('Too many businesses for a complete client-side report.');
+        }
+        setBusinesses(owned);
+        const ownedIds = owned.map(item => item.id);
+        if (!ownedIds.length) return;
+        const ids = businessId === 'all' ? ownedIds : ownedIds.filter(id => id === businessId);
+        if (!ids.length) return;
+
+        const window = createGrowthWindows(Number(period) as InsightPeriodDays, new Date());
+        const [recentEvents, recentLeads, baselineEvents, baselineLeads] = await Promise.all([
+          readGrowthWindow<EventRow>('analytics_logs', 'id,business_id,event_type,created_at',
+            ids, window.currentStart, window.snapshotEnd),
+          readGrowthWindow<LeadRow>('leads', 'id,business_id,status,source,created_at',
+            ids, window.currentStart, window.snapshotEnd),
+          readGrowthWindow<EventRow>('analytics_logs', 'id,business_id,event_type,created_at',
+            ids, window.previousStart, window.currentStart),
+          readGrowthWindow<LeadRow>('leads', 'id,business_id,status,source,created_at',
+            ids, window.previousStart, window.currentStart),
+        ]);
+        if (!active) return;
+        setEvents(recentEvents);
+        setLeads(recentLeads);
+        setPreviousEvents(baselineEvents);
+        setPreviousLeads(baselineLeads);
+        setSnapshotEnd(window.snapshotEnd);
+      } catch (caught) {
+        if (!active) return;
+        setEvents([]);
+        setLeads([]);
+        setPreviousEvents([]);
+        setPreviousLeads([]);
+        setError(caught instanceof Error ? caught.message : 'Unable to load growth insights.');
+      } finally {
+        if (active) setLoading(false);
       }
-      // RLS is the actual security boundary. The UI performs an additional
-      // owner-scoped lookup; no service-role client is ever used in the browser.
-      const ownedResult = await supabase.from('businesses')
-        .select('id,name').eq('owner_id', user.id).eq('status', 'approved')
-        .order('name', { ascending: true }).limit(250);
-      if (ownedResult.error) throw ownedResult.error;
-      const owned = (ownedResult.data || []) as OwnedBusiness[];
-      setBusinesses(owned);
-      const ownedIds = owned.map(item => item.id);
-      if (!ownedIds.length) return;
-      const ids = businessId === 'all' ? ownedIds : ownedIds.filter(id => id === businessId);
-      if (!ids.length) return;
-      const since = startDate(period);
-      const [eventResult, leadResult] = await Promise.all([
-        supabase.from('analytics_logs').select('id,business_id,event_type,created_at', { count: 'exact' })
-          .in('business_id', ids).gte('created_at', since)
-          .order('created_at', { ascending: false }).limit(MAX_EVENTS),
-        supabase.from('leads').select('id,business_id,status,source,created_at', { count: 'exact' })
-          .in('business_id', ids).gte('created_at', since)
-          .order('created_at', { ascending: false }).limit(MAX_LEADS),
-      ]);
-      if (eventResult.error) throw eventResult.error;
-      if (leadResult.error) throw leadResult.error;
-      const eventRows = (eventResult.data || []) as EventRow[];
-      const leadRows = (leadResult.data || []) as LeadRow[];
-      setEvents(eventRows);
-      setLeads(leadRows);
-      setEventPartial((eventResult.count || 0) > eventRows.length);
-      setLeadPartial((leadResult.count || 0) > leadRows.length);
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Unable to load growth insights.');
-    } finally {
-      setLoading(false);
-    }
+    };
+    void load();
+    return () => { active = false; };
   }, [businessId, period, refreshKey]);
 
-  useEffect(() => { void load(); }, [load]);
-
   const metrics = useMemo(() => summarizeGrowthMetrics(events, leads), [events, leads]);
-  const daily = useMemo(() => lastDays(period, events), [period, events]);
+  const comparison = useMemo(
+    () => compareGrowthSnapshots(events, leads, previousEvents, previousLeads),
+    [events, leads, previousEvents, previousLeads],
+  );
+  const daily = useMemo(() => lastDays(period, events, snapshotEnd), [period, events, snapshotEnd]);
   const maxVolume = Math.max(1, ...daily.map(item => item.views + item.calls + item.directions));
   const byBusiness = useMemo(() => businesses.map(item => {
     const ownedEvents = events.filter(row => row.business_id === item.id);
@@ -124,10 +172,10 @@ export default function GrowthInsightsPage() {
   }).filter(item => businessId === 'all' || item.id === businessId), [businesses, events, leads, businessId]);
 
   const cards = [
-    { title: 'Listing view events', value: metrics.listingViewEvents, icon: 'eye', note: 'Page views recorded, not unique visitors' },
-    { title: 'Call click events', value: metrics.callClickEvents, icon: 'call', note: 'Click intent; calls not verified' },
-    { title: 'Directions clicks', value: metrics.locationClickEvents, icon: 'location', note: 'Directions link interactions' },
-    { title: 'CRM enquiries', value: metrics.crmLeadRecords, icon: 'message-text', note: 'Stored lead records, not closed sales' },
+    { title: 'Listing view events', value: metrics.listingViewEvents, comparison: comparison.listingViewEvents, icon: 'eye', note: 'Page views recorded, not unique visitors' },
+    { title: 'Call click events', value: metrics.callClickEvents, comparison: comparison.callClickEvents, icon: 'call', note: 'Click intent; calls not verified' },
+    { title: 'Directions clicks', value: metrics.locationClickEvents, comparison: comparison.locationClickEvents, icon: 'location', note: 'Directions link interactions' },
+    { title: 'CRM enquiries', value: metrics.crmLeadRecords, comparison: comparison.crmLeadRecords, icon: 'message-text', note: 'Stored lead records, not closed sales' },
   ];
 
   if (unauthenticated) return (
