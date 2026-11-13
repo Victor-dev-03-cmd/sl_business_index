@@ -34,7 +34,7 @@ const primaryNav:NavItem[]=[
 const growthNav:NavItem[]=[
   {name:'Growth OS',href:'/vendor/growth',icon:'chart'},
   {name:'Marketing Studio',href:'/vendor/marketing',icon:'flash'},
-  {name:'Marketing Engine',href:'/vendor/marketing/engine',icon:'global'},
+  {name:'Marketing Engine',href:'/vendor/marketing-engine',icon:'global'},
   {name:'QR Studio',href:'/vendor/qr-code',icon:'scan-barcode'},
 ];
 const accountNav:NavItem[]=[
