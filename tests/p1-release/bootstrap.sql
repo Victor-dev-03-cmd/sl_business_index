@@ -30,7 +30,7 @@ CREATE TABLE public.reviews(
   id uuid PRIMARY KEY, business_id uuid REFERENCES public.businesses(id),
   user_id uuid, user_name text NOT NULL DEFAULT 'Legacy reviewer',
   rating int NOT NULL CHECK (rating BETWEEN 1 AND 5),
-  comment text, is_approved boolean DEFAULT true
+  comment text, sentiment text, is_approved boolean DEFAULT true
 );
 CREATE TABLE public.review_replies(
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
