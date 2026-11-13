@@ -10,6 +10,14 @@ GRANT EXECUTE ON FUNCTION auth.uid() TO anon, authenticated;
 CREATE TABLE public.businesses(
   id uuid PRIMARY KEY, owner_id uuid, name text, status text NOT NULL
 );
+CREATE TABLE public.profiles(id uuid PRIMARY KEY, role text NOT NULL);
+INSERT INTO public.profiles VALUES
+ ('55555555-5555-4555-8555-555555555555','admin'),
+ ('11111111-1111-4111-8111-111111111111','vendor');
+GRANT SELECT ON public.profiles TO authenticated;
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "profiles self-read" ON public.profiles
+ FOR SELECT TO authenticated USING (id=auth.uid());
 CREATE TABLE public.leads(
   id uuid PRIMARY KEY, business_id uuid REFERENCES public.businesses(id),
   name text, status text NOT NULL DEFAULT 'new'
@@ -20,7 +28,8 @@ CREATE TABLE public.analytics_logs(
 );
 CREATE TABLE public.reviews(
   id uuid PRIMARY KEY, business_id uuid REFERENCES public.businesses(id),
-  user_id uuid, rating int NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  user_id uuid, user_name text NOT NULL DEFAULT 'Legacy reviewer',
+  rating int NOT NULL CHECK (rating BETWEEN 1 AND 5),
   comment text, is_approved boolean DEFAULT true
 );
 CREATE TABLE public.review_replies(
