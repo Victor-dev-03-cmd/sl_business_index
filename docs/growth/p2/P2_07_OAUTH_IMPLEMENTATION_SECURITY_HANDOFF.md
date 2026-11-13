@@ -72,7 +72,7 @@ Preview-only configuration flags (currently **not claimed enabled**):
 
 - Prior accepted OAuth state-claim source: \`0920367\` — 7/7 workflow families green; Docker Pro/Basic/expired/replay tested.
 - This chat's first preview Google implementation: \`6bc9ce9\` — contract test initially failed because direct Node 24 TypeScript import resolution required explicit \`.ts\`; this was fixed in \`81bd906\` and **7/7 CI families passed** at that exact SHA.
-- Following code: \`1a7d905\` (callback/store); \`07f3481\` (rate-limit); \`f271294\` (updated contract assertion for new begin RPC). **Check exact CI HEAD** before acceptance; early failed runs are superseded, not erased.
+- Following code: \`1a7d905\` (callback/store); \`07f3481\` (rate-limit); \`f271294\` (updated contract assertion for the trusted begin RPC). **Exact code+test SHA \`f271294931644dea5ae46d9b1f241897df0f6531\` passed 7/7 GitHub workflow families**, including optimized Next.js build and Docker PostgreSQL 17 OAuth start, replay, token-vault and owner/Pro denial checks. [P2 Docker/contract CI](https://github.com/Victor-dev-03-cmd/sl_business_index/actions/runs/43530529585) · [Next build](https://github.com/Victor-dev-03-cmd/sl_business_index/actions/runs/43530529848). Early failed runs are superseded, not erased.
 - Vercel production has never been authorized to run P2-07: P2 PR #68 remains draft/unmerged, Supabase P2 migration not applied. Last verified earlier P2 preview at \`000c75f\` is **not proof** that new start/callback routes were preview tested.
 - Docker tests use disposable PostgreSQL 17 with synthetic vendor A (paid), B (Basic), and expired entitlements. They do not replace actual Supabase Auth user-browser QA.
 
