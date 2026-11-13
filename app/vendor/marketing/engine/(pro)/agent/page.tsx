@@ -1,7 +1,7 @@
 'use client';
 import {useMemo,useState} from 'react';
 import Link from 'next/link';
-import MarketingModuleFrame from '@/app/vendor/marketing-engine/components/MarketingModuleFrame';
+import MarketingModuleFrame from '@/app/vendor/marketing/engine/components/MarketingModuleFrame';
 import IconsaxIcon from '@/app/vendor/components/IconsaxIcon';
 import {triageMarketingEnquiry} from '@/lib/marketing/agent-rules';
 
