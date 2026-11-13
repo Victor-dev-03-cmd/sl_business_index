@@ -86,7 +86,13 @@ CREATE POLICY social_brand_profiles_owner_update ON public.social_brand_profiles
     )
   );
 
-GRANT SELECT, INSERT ON public.social_brand_profiles TO authenticated;
+GRANT SELECT ON public.social_brand_profiles TO authenticated;
+-- Only the necessary input columns can be supplied by an authenticated owner.
+-- The audit timestamps are exclusively server-generated and cannot be forged.
+GRANT INSERT (
+  business_id,owner_id,brand_name,slogan,primary_color,secondary_color,
+  accent_color,audience,tone,languages,guidelines,offers
+) ON public.social_brand_profiles TO authenticated;
 -- Immutable through browser JWT: business_id, owner_id, created_at.
 GRANT UPDATE (
   brand_name,slogan,primary_color,secondary_color,accent_color,
