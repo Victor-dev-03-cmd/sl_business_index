@@ -36,7 +36,7 @@ Product refinement: Marketing Studio must become an overview-only page, and Mark
 | Editable Poster Studio | P2-04 | CODED + CI + PREVIEW | Four original templates, layers, PNG/JSON; no cloud project persistence |
 | Campaign Library revision | P2-05 | SQL CODED + DOCKER TESTED | No production migration or revised UI/receipts |
 | Durable Content Calendar | P2-06 | NOT IMPLEMENTED | Existing calendar = planning only |
-| Official Social Connectors | P2-07 | CATALOGUE + OAUTH PRIMITIVES + DOCKER-TESTED STATE CLAIM / NOT AUTHORIZED | 5 typed official-account contracts; one-time DB state claim passes synthetic A/B tests; real OAuth and scopes still pending |
+| Official Social Connectors | P2-07 | GOOGLE START/CALLBACK CODED + DOCKER/CI VERIFICATION PENDING, PREVIEW-ONLY | Preview-only Google OAuth Start/Callback, verified OIDC UserInfo, encrypted token store, 5/hour start rate limit; no actual provider consent/live schema/KMS/real OAuth verified |
 | SEO Intelligence | P2-08 | DEFERRED | Full SEO phase after Growth; shared schema only for now |
 | Email Marketing | P2-09 | ARCHITECTURE APPROVED | Gmail/Graph OAuth, consent/suppression pending |
 | Usage Credits | P2-10 | SQL CODED + DOCKER TESTED / DISABLED | Atomic reservation/refund, limits; live gates pending |
@@ -120,3 +120,17 @@ Release gates still open: GitHub contract + Docker + production build at exact S
 - **Vercel:** production `main` deployment `dpl_G1jRvpJh72GGyDDNTd1H4D9k5te2` READY at `e6221ff`; last verified P2 preview `dpl_DAkD9z9UzMz23WdBLcNXn96T1TmD` READY at `000c75f`. No new preview for code commit `0920367` was confirmed at the checkpoint. Do not call this a production release or real vendor acceptance.
 - **Next unfinished implementation:** trusted same-origin OAuth start handler with SSR `auth.getUser()`, owned business + verified Pro guard; secure state and encrypted PKCE persistence; server callback with exact provider/redirect and CSRF checks, one-time claim via service role, token exchange ONLY after official app setup, KMS, provider account verification and human authorization. Then tested disconnect/revoke, event signature/replay handling, and cross-vendor browser E2E. No paid provider actions or external sends authorized.
 - **Release boundary:** No GitHub PR merge, live Supabase DDL, Vercel production promotion, provider OAuth account connection, AI costs, outbound messages, posting or Discovery changes in this step.
+
+## 2026-11-14 — P2-07 secure Google OAuth Start & Callback (implementation, no live integration)
+
+**Full roadmap study:** Read the 19-page Library `SLBI_Growth_and_Security_OS_Master_Roadmap_v1.0.pdf` plus editable `SLBI_Growth_OS_Master_Roadmap_v1.0.md`, Library `WORKSPACE_README.md`, `DECISION_LOG.md`, `IMPLEMENTATION_TRACKER.md`; compared with main `SLBI_MASTER_IMPLEMENTATION_HANDOFF.md`, P2 context, actual source and staged SQL. All 11 pillars and six architectural engines preserved; original PDF not overwritten. Detailed permanent handoff: [P2-07 architecture and PDF study](P2_07_OAUTH_IMPLEMENTATION_SECURITY_HANDOFF.md).
+
+**New code commits:** `6bc9ce9` preview-only Google OAuth start and encryption; `1a7d905` callback + atomic verified account store; `81bd906` Node 24 import fix; `07f3481` trusted 5/hour atomic start limit; `f271294` new RPC contract assertion. Development branch and draft PR #68 only; production main untouched.
+
+**Routes:** `POST /api/marketing/oauth/google_mail/start`, `GET /api/marketing/oauth/google_mail/callback`. Authenticated SSR owner, verified Professional/Enterprise, exact origin/redirect, HMAC state, PKCE S256 and AES-256-GCM preview envelope; revalidated paid entitlement/ownership, Google UserInfo and Google send scope, encrypted access+refresh token one-transaction store. No external emails or posts implemented. Production fails closed; no KMS claim.
+
+**Staged-only database:** `P2_07_OAUTH_START_RATE_LIMIT_STAGING_ONLY.sql`, `P2_07_OAUTH_CONNECTION_STORE_STAGING_ONLY.sql` with existing `P2_07_CONNECTOR_OAUTH_VAULT_STAGING_ONLY.sql` and `P2_07_OAUTH_INTENT_CLAIM_STAGING_ONLY.sql`. None of these have been applied to live Supabase. New Docker tests cover permission-denial, Basic/expired Pro/cross-owner, replay, hourly initiation quota and atomic encrypted vault.
+
+**CI:** Exact SHA `81bd906` earlier 7/7 workflow families PASS (before rate-limit). Exact code+test SHA `f271294`: CI results must be re-queried before declaring accepted; prior failures on `6bc9ce9` and `07f3481` were diagnosed as Node test import and obsolete test assertion respectively. No new Vercel preview or actual provider account consent E2E confirmed here yet.
+
+**External blockers / next:** Google OAuth app registration and allowed callback; managed KMS and key rotation; preview schema release in approved testing environment; actual vendor-authenticated E2E; consent UI; refresh/revoke/disconnect; provider verification; production security sign-off. No provider account was connected, no paid credits or automated mail sent, no live DB writes or production deployments performed. Marketing first → Growth → SEO; Discovery unchanged.

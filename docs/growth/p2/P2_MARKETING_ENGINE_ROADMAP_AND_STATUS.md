@@ -107,3 +107,7 @@ Marketing and Discovery may exchange **only** approved business facts and author
 ## 2026-11-14 — P2-07 one-time state claim security increment
 
 Staging-only SQL function `slbi_claim_marketing_oauth_intent` is added in P2 development commit `0920367`, with disposable PostgreSQL 17 owner A/B, replay, expired-Pro, exact callback, PKCE and unauthorized-role negative tests wired into CI. This is **not** real provider authorization: Supabase production schema is unchanged, and provider app registration, KMS-backed PKCE/token encryption, trusted API handlers, provider-specific account choice, revocation and authenticated live browser tests remain open. Marketing first → Growth next → SEO last; Discovery unchanged.
+
+## 2026-11-14 — Owner-requested P2-07 continuation: secure OAuth Start/Callback
+
+Source-of-truth Library PDF v1.0 (19 pages) reviewed in full alongside editable Markdown, tracker, decision log, GitHub handoff and current P2 source. Preserve 11 pillars, six engines and untouched Discovery. New preview-only Google `openid email gmail.send` provider flow now has same-origin SSR owner/verified-Pro Start API, exact redirect callback, atomic one-time state, PKCE, encrypted tokens and 5/hour per-vendor initiation limits; fake provider/tenant A-B tests added. See `P2_07_OAUTH_IMPLEMENTATION_SECURITY_HANDOFF.md` and `IMPLEMENTATION_STATUS_LIVE.md` for **exact CI SHA, preview/migration/prod gates and blockers**. No Google account actually connected; SQL only disposable PostgreSQL, no production feature changes or paid external actions.
