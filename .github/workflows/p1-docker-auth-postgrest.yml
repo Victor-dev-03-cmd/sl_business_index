@@ -1,0 +1,83 @@
+name: P1 Docker — Real Supabase Auth and PostgREST Acceptance
+
+on:
+  push:
+    branches: ['release/p1-vendor-integration-20261113']
+    paths:
+      - '.github/workflows/p1-docker-auth-postgrest.yml'
+      - 'tests/p1-cloud/**'
+      - 'tests/p0/fullstack/seed.mjs'
+      - 'tests/p0/fullstack/helpers.mjs'
+      - 'docs/growth/p1/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/p1-docker-auth-postgrest.yml'
+      - 'tests/p1-cloud/**'
+      - 'docs/growth/p1/**'
+
+permissions:
+  contents: read
+
+jobs:
+  supabase-docker-http:
+    name: Real isolated Auth JWT + PostgREST + PostGIS (no paid Supabase project)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install pinned Supabase CLI to boot GitHub Docker
+        uses: supabase/setup-cli@v3
+        with:
+          version: 2.120.0
+      - name: Inspect CLI version and local Supabase service options
+        run: |
+          supabase --version
+          supabase start --help | head -50
+      - name: Initialize local disposable Supabase project
+        run: |
+          mkdir -p .p0-cloud
+          cd .p0-cloud
+          supabase init --yes
+      - name: Boot real local Auth + REST + Postgres + Storage
+        run: |
+          cd .p0-cloud
+          supabase start -x studio -x realtime -x imgproxy -x edge-runtime -x logflare -x vector -x supavisor -x mailpit -x postgres-meta
+      - name: Check local stack only (no live backend)
+        run: |
+          curl -fsS http://127.0.0.1:54321/auth/v1/health >/dev/null
+          cd .p0-cloud
+          supabase status -o json > /tmp/slbi-p1-docker-status.json
+          node -e 'const x=require("/tmp/slbi-p1-docker-status.json"); if (!x.API_URL || !x.ANON_KEY || !x.SERVICE_ROLE_KEY) process.exit(1); console.log("Ephemeral Supabase Auth and REST ready");'
+      - name: Create synthetic P1 schema and real PostGIS extension
+        env:
+          PGPASSWORD: postgres
+        run: psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -v ON_ERROR_STOP=1 -f tests/p1-cloud/bootstrap.sql
+      - name: Create synthetic users with REAL local Supabase Auth JWT
+        run: node tests/p0/fullstack/seed.mjs
+      - name: Seed second customer, shop maps and two grandfathered reviews
+        run: node tests/p1-cloud/seed.mjs
+      - name: Install tested P1 owner/private review CRM migration in disposable Docker
+        env:
+          PGPASSWORD: postgres
+        run: psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -v ON_ERROR_STOP=1 -f docs/growth/p1/P1_VENDOR_DATA_GUARDS_STAGING_ONLY.sql
+      - name: Install P1 pending-only moderation policies and staff audit in Docker
+        env:
+          PGPASSWORD: postgres
+        run: psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -v ON_ERROR_STOP=1 -f docs/growth/p1/P1_REVIEW_MODERATION_LOCKDOWN_STAGING_ONLY.sql
+      - name: Install P1 physical address and PostGIS coordinate trigger in Docker
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -v ON_ERROR_STOP=1 -f docs/growth/p1/P1_BUSINESS_LOCATION_GUARD_REVIEW_ONLY.sql
+          psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -v ON_ERROR_STOP=1 -c "NOTIFY pgrst, 'reload schema';"
+          sleep 3
+      - name: Exercise actual JWTs, PostgREST RLS, vendor A/B, reviews, leads and map location HTTP
+        run: node tests/p1-cloud/verify.mjs
+      - name: Tear down all disposable Docker services
+        if: always()
+        run: |
+          cd .p0-cloud
+          supabase stop --no-backup || true
