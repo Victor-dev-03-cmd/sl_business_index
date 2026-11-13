@@ -63,7 +63,7 @@ END $owner_a$;
 
 SET "request.jwt.claim.sub"='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
 DO $owner_b$
-DECLARE updated_count integer;revisions_count integer;
+DECLARE updated_count integer;revisions_count integer;rejected boolean:=false;
 BEGIN
   IF (SELECT COUNT(*) FROM public.marketing_campaigns)<>0
   THEN RAISE EXCEPTION 'Vendor B can see Vendor A campaigns'; END IF;
@@ -72,7 +72,34 @@ BEGIN
   UPDATE public.marketing_campaigns SET banner_text='Cross tenant update';
   GET DIAGNOSTICS updated_count=ROW_COUNT;
   IF updated_count<>0 THEN RAISE EXCEPTION 'Vendor B edited Vendor A campaign'; END IF;
+  -- Vendor B owns a real listing but has no verified Pro entitlement.
+  BEGIN
+    INSERT INTO public.marketing_campaigns(business_id,banner_text,banner_color,status)
+      VALUES('22222222-2222-4222-8222-222222222222',
+      'Basic plan attempted campaign','#FF7900','drafted');
+  EXCEPTION WHEN insufficient_privilege THEN rejected:=true; END;
+  IF NOT rejected THEN RAISE EXCEPTION 'Basic user bypassed server Pro plan restriction via direct Supabase write'; END IF;
 END $owner_b$;
 RESET ROLE;
 RESET "request.jwt.claim.sub";
-SELECT 'P2-05 campaign history, approval audit and forged publishing defense PASS' result;
+-- After a verified Pro entitlement expires, direct edits become impossible.
+UPDATE public.growth_entitlements SET expires_at=now()-interval '5 minutes'
+  WHERE user_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+SET ROLE authenticated;
+SET "request.jwt.claim.sub"='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+DO $expired$
+DECLARE rows_changed integer;rejected boolean:=false;
+BEGIN
+  UPDATE public.marketing_campaigns SET banner_text='Expired plan changed a draft'
+    WHERE status='approved';
+  GET DIAGNOSTICS rows_changed=ROW_COUNT;
+  IF rows_changed<>0 THEN RAISE EXCEPTION 'Expired Pro entitlement still allowed campaign UPDATE'; END IF;
+  BEGIN
+    INSERT INTO public.marketing_campaigns(business_id,banner_text,banner_color,status)
+      VALUES('11111111-1111-4111-8111-111111111111','Expired Pro attempted new draft','#FF7900','drafted');
+  EXCEPTION WHEN insufficient_privilege THEN rejected:=true; END;
+  IF NOT rejected THEN RAISE EXCEPTION 'Expired Pro could create a campaign'; END IF;
+END $expired$;
+RESET ROLE;
+RESET "request.jwt.claim.sub";
+SELECT 'P2-05 campaign Pro gating, history, approval audit and fake publishing defense PASS' result;
