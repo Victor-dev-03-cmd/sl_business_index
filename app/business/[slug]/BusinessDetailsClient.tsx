@@ -150,6 +150,12 @@ export default function BusinessDetailsClient({ business }: Props) {
 
     setSubmittingReview(true);
     try {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError) throw authError;
+      if (!user) {
+        toast.error("Sign in to submit a business review.");
+        return;
+      }
       let sentiment = null;
       let is_approved = true;
 
@@ -183,15 +189,11 @@ export default function BusinessDetailsClient({ business }: Props) {
         is_approved = false; // Flag for manual review if AI fails
       }
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
       const { data, error } = await supabase
         .from("reviews")
         .insert({
           business_id: business?.id,
-          user_id: user?.id || null,
+          user_id: user.id,
           user_name: reviewForm?.user_name,
           rating: reviewForm?.rating,
           comment: reviewForm?.comment,
@@ -644,7 +646,11 @@ export default function BusinessDetailsClient({ business }: Props) {
 
               <div id="write-review" className="scroll-mt-28 mt-7 rounded-[22px] border border-[#DFE7DC] bg-[#F8FAF5] p-5 sm:p-7">
                 <h3 className="text-[20px] font-semibold tracking-[-0.035em] text-[#244438]">Share your experience</h3>
-                <p className="mt-1.5 text-[12px] leading-6 text-[#809588]">Your review may be moderated before it appears publicly.</p>
+                <p className="mt-1.5 text-[12px] leading-6 text-[#809588]">
+                  Sign-in is required to submit a review. Feedback may be moderated before appearing publicly.
+                  {' '}<Link href={"/login?redirect=" + encodeURIComponent("/business/" + (business.slug || business.id) + "#write-review")}
+                    className="font-semibold text-[#276B56] underline underline-offset-2">Sign in</Link>
+                </p>
                 <form onSubmit={handleReviewSubmit} className="mt-6 space-y-5">
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
