@@ -85,7 +85,7 @@ CREATE POLICY marketing_ai_owner_review ON public.marketing_ai_drafts
 CREATE OR REPLACE FUNCTION public.marketing_reserve_ai_draft(
   p_user_id uuid,p_business_id uuid,p_request_key text
 )
-RETURNS TABLE(job_id uuid,job_state text,remaining_credits integer,charged_credits integer)
+RETURNS TABLE(job_id uuid,job_state text,remaining_credits integer,charged_credits integer,newly_created boolean)
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=''
 AS $f$
 DECLARE
@@ -119,7 +119,7 @@ BEGIN
     IF v_job.business_id<>p_business_id THEN
       RAISE EXCEPTION 'Request key belongs to another business' USING ERRCODE='23505';
     END IF;
-    RETURN QUERY SELECT v_job.id,v_job.state,v_balance,v_job.cost_credits;
+    RETURN QUERY SELECT v_job.id,v_job.state,v_balance,v_job.cost_credits,false;
     RETURN;
   END IF;
 
@@ -156,7 +156,7 @@ BEGIN
     user_id,period_start,action_key,delta,balance_after,request_key)
     VALUES(p_user_id,v_period,'ai_social_draft',-v_cost,v_balance-v_cost,
       'p2-ai:'||p_request_key);
-  RETURN QUERY SELECT v_job.id,'reserved'::text,v_balance-v_cost,v_cost;
+  RETURN QUERY SELECT v_job.id,'reserved'::text,v_balance-v_cost,v_cost,true;
 END;$f$;
 
 CREATE OR REPLACE FUNCTION public.marketing_complete_ai_draft(
