@@ -12,6 +12,7 @@ on:
       - 'tests/p2AiCaption.test.mjs'
       - 'tests/p2-brand/**'
       - 'tests/p2-ai/**'
+      - 'tests/p2-campaign/**'
       - 'docs/growth/p2/**'
       - '.github/workflows/p2-marketing-brand-foundation.yml'
   pull_request:
@@ -113,6 +114,41 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f docs/growth/p2/P2_02_P2_10_AI_CREDIT_RESERVATIONS_STAGING_ONLY.sql
       - name: Verify user and global limits, refund and private human-review drafts
         run: psql -v ON_ERROR_STOP=1 -f tests/p2-ai/credit-reservations-verify.sql
+
+  docker-campaign-approvals:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: slbi_p2_campaign
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres -d slbi_p2_campaign"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: slbi_p2_campaign
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Create disposable vendors and legacy campaign
+        run: |
+          psql -v ON_ERROR_STOP=1 -f tests/p2-brand/bootstrap.sql
+          psql -v ON_ERROR_STOP=1 -f tests/p2-campaign/bootstrap.sql
+      - name: Add revision history and block fake published status
+        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p2/P2_05_CAMPAIGN_REVISIONS_STAGING_ONLY.sql
+      - name: Verify owner approval, revisions, cross-tenant isolation
+        run: psql -v ON_ERROR_STOP=1 -f tests/p2-campaign/verify.sql
 
   nextjs-build:
     runs-on: ubuntu-latest
