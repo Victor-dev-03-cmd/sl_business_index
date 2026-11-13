@@ -31,7 +31,7 @@ DECLARE
 BEGIN
   IF char_length(area_text) < 5
      OR lower(area_text) IN ('unknown', 'n/a', 'sri lanka')
-     OR area_text ~ '^[[:space:]]*[+-]?[0-9]{1,2}(\\.[0-9]+)?[[:space:]]*[,;][[:space:]]*[+-]?[0-9]{1,3}(\\.[0-9]+)?[[:space:]]*$'
+     OR area_text ~ '^[[:space:]]*[+-]?[0-9]{1,2}([.][0-9]+)?[[:space:]]*[,;][[:space:]]*[+-]?[0-9]{1,3}([.][0-9]+)?[[:space:]]*$'
   THEN
     RAISE EXCEPTION 'A readable Sri Lankan mapped area is required'
       USING ERRCODE='22023';
