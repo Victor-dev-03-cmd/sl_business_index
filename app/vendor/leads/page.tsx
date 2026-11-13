@@ -428,6 +428,13 @@ export default function LeadsPage() {
             <span className="flex h-9 items-center gap-2 rounded-lg border border-[#E7E7EC] bg-[#F8F8FA] px-3 text-[11px] font-semibold text-[#2C2C31]">
               <span className="h-1.5 w-1.5 rounded-full bg-[#329368]" /> Vendor CRM
             </span>
+            {followUpReadiness === 'available' && (
+              <button type="button" aria-pressed={dueOnly} onClick={() => { setDueOnly(active => !active); setPage(1); }}
+                className={'inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-[11px] font-semibold ' +
+                  (dueOnly ? 'border-amber-500 bg-amber-100 text-amber-900' : 'border-amber-200 bg-amber-50 text-amber-800')}>
+                <IconsaxIcon name="calendar" size={15} /> Due follow-ups: {nfmt(dueCount)}
+              </button>
+            )}
             <button type="button" onClick={() => void load()} disabled={loading} className={button}>
               <IconsaxIcon name="refresh" size={15} /> Refresh
             </button>
@@ -441,6 +448,18 @@ export default function LeadsPage() {
           <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-800">
             <span>{error}</span>
             <button type="button" onClick={() => void load()} className="font-bold underline">Retry loading</button>
+          </div>
+        )}
+        {leadLimitReached && (
+          <div role="alert" className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-900">
+            Your CRM contains more than {nfmt(MAX_VISIBLE_LEADS)} leads. This overview will not show incomplete pipeline metrics or export a partial customer directory.
+            Narrow server-side reporting will be required for this volume.
+          </div>
+        )}
+        {!loading && businesses.length > 0 && followUpReadiness === 'unavailable' && !leadLimitReached && (
+          <div role="status" className="rounded-lg border border-[#F2E5D3] bg-[#FFFBF5] px-4 py-3 text-[11px] leading-5 text-[#775C40]">
+            Follow-up reminders are not enabled in the database yet. Your existing lead statuses, contact actions and private notes still work.
+            Scheduling will activate after the reviewed tenant-isolated CRM migration.
           </div>
         )}
 
@@ -558,8 +577,10 @@ export default function LeadsPage() {
 
           {loading ? (
             <div role="status" className="space-y-3 p-5">{[0, 1, 2, 3].map(i => <div key={i} className="h-14 animate-pulse rounded-lg bg-slate-100" />)}</div>
-          ) : error ? (
-            <div className="px-5 py-12 text-center text-[12px] text-slate-500">Lead records are temporarily unavailable.</div>
+          ) : error || leadLimitReached ? (
+            <div className="px-5 py-12 text-center text-[12px] text-slate-500">
+              {leadLimitReached ? 'CRM reporting is unavailable for this volume; incomplete totals are never presented as complete.' : 'Lead records are temporarily unavailable.'}
+            </div>
           ) : !businesses.length ? (
             <div className="flex flex-col items-center gap-3 px-6 py-12 text-center">
               <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#F8F8FA] text-[#2C2C31]"><IconsaxIcon name="shop" size={23} /></span>
@@ -578,7 +599,7 @@ export default function LeadsPage() {
             <div className="px-5 py-12 text-center">
               <p className="text-[12px] font-bold text-[#2C2C31]">No matching leads</p>
               <p className="mt-1 text-[11px] text-slate-400">Try a different search or clear the filters.</p>
-              <button type="button" onClick={() => { setSearch(''); setStageFilter('all'); setBusinessFilter('all'); setPeriod('all'); setPage(1); }}
+              <button type="button" onClick={() => { setSearch(''); setStageFilter('all'); setBusinessFilter('all'); setPeriod('all'); setDueOnly(false); setPage(1); }}
                 className="mt-3 text-[11px] font-bold text-[#2C2C31] hover:underline">Clear filters</button>
             </div>
           ) : (
@@ -611,7 +632,14 @@ export default function LeadsPage() {
                           <td className="max-w-[330px] px-3 py-3.5">
                             <p className="truncate text-[11px] font-semibold text-[#2C2C31]">{businessNames.get(String(lead.business_id)) || 'Your business'}</p>
                             <p className="mt-1 truncate text-[10px] text-slate-400">{lead.message || 'No message provided'}</p>
-                            {!!lead.source && <p className="mt-1 truncate text-[10px] text-slate-400">Source: {lead.source}</p>}
+                            {!!lead.source && <p className="mt-1 truncate text-[10px] text-slate-400">Recorded source: {lead.source}</p>}
+                            {followUps[lead.id] && (
+                              <p className={'mt-1 text-[10px] font-semibold ' +
+                                (followUpState(followUps[lead.id], now) === 'overdue' ? 'text-amber-700' : 'text-slate-500')}>
+                                Follow-up: {formatDate(followUps[lead.id].due_at, true)}
+                                {followUps[lead.id].done_at ? ' · Completed' : followUpState(followUps[lead.id], now) === 'overdue' ? ' · Due' : ''}
+                              </p>
+                            )}
                           </td>
                           <td className="whitespace-nowrap px-3 py-3.5 text-[11px] text-slate-500">{formatDate(lead.created_at)}</td>
                           <td className="px-3 py-3.5">
@@ -642,6 +670,13 @@ export default function LeadsPage() {
                           <p className="truncate text-[12px] font-bold text-[#2C2C31]">{lead.name || 'Unnamed customer'}</p>
                           <p className="mt-1 truncate text-[10px] text-slate-400">{businessNames.get(String(lead.business_id)) || 'Your business'}</p>
                           <p className="mt-2 line-clamp-2 text-[11px] leading-5 text-slate-500">{lead.message || 'No message provided'}</p>
+                          {followUps[lead.id] && (
+                            <p className={'mt-2 text-[10px] font-semibold ' +
+                              (followUpState(followUps[lead.id], now) === 'overdue' ? 'text-amber-700' : 'text-slate-500')}>
+                              Follow-up: {formatDate(followUps[lead.id].due_at, true)}
+                              {followUps[lead.id].done_at ? ' · Completed' : followUpState(followUps[lead.id], now) === 'overdue' ? ' · Due' : ''}
+                            </p>
+                          )}
                         </div>
                         <span className="shrink-0 text-[10px] text-slate-400">{formatDate(lead.created_at)}</span>
                       </div>
@@ -668,7 +703,7 @@ export default function LeadsPage() {
             </>
           )}
         </section>
-        <p className="text-[10px] leading-5 text-slate-400">Only your businesses' recorded enquiries are shown. CRM status and conversion metrics are vendor-managed, not verified transactions.</p>
+        <p className="text-[10px] leading-5 text-slate-400">Only your businesses' recorded enquiries are shown. Lead sources are stored labels (some may be legacy/unverified). CRM conversion status is vendor-managed, not evidence of a sale or revenue. Follow-up dates are in-app reminders, not scheduled external messages.</p>
       </div>
 
       {selected && (
@@ -712,6 +747,51 @@ export default function LeadsPage() {
                 <p className="mt-3 text-[10px] text-slate-400">Changes are saved to the existing lead record. No automatic messages are sent.</p>
               </div>
 
+              <div className={panel + ' p-4'}>
+                <h4 className="text-[12px] font-bold text-[#2C2C31]">Next follow-up reminder</h4>
+                <p className="mt-1 text-[10px] leading-5 text-slate-500">
+                  Private in-app reminder, shown when you visit this CRM. Not an automatic customer notification, SMS or email.
+                </p>
+                {followUpReadiness === 'available' ? (
+                  <form className="mt-3 space-y-3" onSubmit={event => { event.preventDefault(); void saveFollowUp(); }}>
+                    <label htmlFor="lead-next-follow-up" className="block text-[11px] font-semibold text-[#2C2C31]">
+                      Due date and time (your local time)
+                    </label>
+                    <input id="lead-next-follow-up" type="datetime-local" required
+                      value={followUpDraft}
+                      onChange={event => setFollowUpDraft(event.target.value)}
+                      min={localFollowUpInput(new Date(now + 60_000).toISOString())}
+                      max={localFollowUpInput(new Date(now + 365 * 86_400_000).toISOString())}
+                      className="h-10 w-full rounded-lg border border-[#E7E7EC] bg-white px-3 text-[11px] text-[#2C2C31] focus:border-[#FF7900]" />
+                    {followUps[selected.id] && (
+                      <p role="status" className="text-[11px] leading-5 text-amber-800">
+                        {followUps[selected.id].done_at ? 'Completed' :
+                          followUpState(followUps[selected.id], now) === 'overdue' ? 'Due now / overdue' :
+                            followUpState(followUps[selected.id], now) === 'due-soon' ? 'Due in the next 24 hours' : 'Scheduled'}
+                        {' · '}{formatDate(followUps[selected.id].due_at, true)}
+                      </p>
+                    )}
+                    <div className="flex flex-wrap gap-2">
+                      <button type="submit" disabled={savingFollowUp || !followUpDraft}
+                        className="rounded-lg bg-[#202024] px-4 py-2.5 text-[11px] font-bold text-white disabled:opacity-50">
+                        {savingFollowUp ? 'Saving…' : followUps[selected.id] ? 'Reschedule reminder' : 'Schedule follow-up'}
+                      </button>
+                      {followUps[selected.id] && !followUps[selected.id].done_at && (
+                        <button type="button" disabled={savingFollowUp} onClick={() => void completeFollowUp()}
+                          className="rounded-lg border border-[#DDE9DD] bg-white px-4 py-2.5 text-[11px] font-bold text-[#3F7856] disabled:opacity-50">
+                          Mark completed
+                        </button>
+                      )}
+                    </div>
+                  </form>
+                ) : (
+                  <p role="status" className="mt-3 rounded-lg bg-[#FFF9ED] p-3 text-[11px] text-[#80613B]">
+                    Follow-up scheduling is not available until the reviewed database migration is applied.
+                    You can still save an internal note below.
+                  </p>
+                )}
+              </div>
+
               <div>
                 <h4 className="text-[12px] font-bold text-[#2C2C31]">Quick contact</h4>
                 <div className="mt-3 grid grid-cols-3 gap-2">
@@ -739,7 +819,7 @@ export default function LeadsPage() {
                 {[
                   { label: 'Phone', value: selected.phone },
                   { label: 'Email', value: selected.email },
-                  { label: 'Source', value: selected.source },
+                  { label: 'Recorded source', value: selected.source },
                   { label: 'Business', value: businessNames.get(String(selected.business_id)) },
                   { label: 'Received', value: formatDate(selected.created_at, true) },
                 ].map(row => (
