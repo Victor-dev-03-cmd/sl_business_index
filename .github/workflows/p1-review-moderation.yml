@@ -1,0 +1,67 @@
+name: P1 Review Moderation Security — Tests and Next.js Build
+
+on:
+  push:
+    branches: ['security/p1-review-moderation-20261113']
+    paths:
+      - 'app/api/reviews/**'
+      - 'app/api/admin/reviews/**'
+      - 'app/api/[[...route]]/route.ts'
+      - 'app/business/[slug]/BusinessDetailsClient.tsx'
+      - 'app/admin/review-queue/**'
+      - 'app/admin/layout.tsx'
+      - 'lib/reviews/**'
+      - 'tests/reviewModerationSecurity.test.mjs'
+      - 'docs/growth/p1/P1_REVIEW_MODERATION_LOCKDOWN_STAGING_ONLY.sql'
+      - '.github/workflows/p1-review-moderation.yml'
+  pull_request:
+    branches: ['release/p1-vendor-integration-20261113', main]
+    paths:
+      - 'app/api/reviews/**'
+      - 'app/api/admin/reviews/**'
+      - 'app/api/[[...route]]/route.ts'
+      - 'app/business/[slug]/BusinessDetailsClient.tsx'
+      - 'app/admin/review-queue/**'
+      - 'lib/reviews/**'
+      - 'tests/reviewModerationSecurity.test.mjs'
+      - 'docs/growth/p1/P1_REVIEW_MODERATION_LOCKDOWN_STAGING_ONLY.sql'
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Security contract, review regression and owner isolation checks
+        run: |
+          node --test tests/reviewModerationSecurity.test.mjs
+          node --test tests/vendorReviewReliability.test.mjs tests/growthAttribution.test.mjs
+
+  nextjs-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-key
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: TypeScript typecheck
+        run: npx tsc --noEmit
+      - name: Production Next.js build
+        run: npm run build
