@@ -50,11 +50,11 @@ export default async function MarketingEngineHome(){
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div><h2 className="text-xl font-extrabold">Marketing modules</h2>
           <p className="mt-1 text-xs text-[#83838A]">Separate spaces for every workflow, with provider capabilities shown truthfully.</p></div>
-        <Link href="/vendor/marketing/engine/connections" className="text-xs font-bold text-[#B45A12] hover:underline">Browse connectors</Link>
+        <Link href="/vendor/marketing-engine/connections" className="text-xs font-bold text-[#B45A12] hover:underline">Browse connectors</Link>
       </div>
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {ENGINE_MODULES.map((module,index)=><Link key={module.slug}
-          href={'/vendor/marketing/engine/'+module.slug}
+          href={'/vendor/marketing-engine/'+module.slug}
           className={panel+' group flex min-h-[225px] flex-col p-5 transition hover:border-[#F3BB8B] hover:shadow-[0_18px_38px_rgba(216,112,34,.06)]'}>
           <div className="flex items-start justify-between">
             <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#FFF1E5] text-[#BD6015]">
