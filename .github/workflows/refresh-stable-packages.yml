@@ -67,8 +67,8 @@ jobs:
         run: npm run build
       - name: Generate matching Bun text lockfile (retire obsolete bun.lockb)
         run: |
+          test -f package-lock.json
           rm -f bun.lockb
-          npm exec --yes --package=semver@7 -- node --version
       - name: Prepare Bun 1.3 (lockfile only)
         uses: oven-sh/setup-bun@v2
         with:
