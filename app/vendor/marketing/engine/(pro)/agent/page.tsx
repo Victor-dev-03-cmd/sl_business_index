@@ -1,7 +1,7 @@
 'use client';
 import {useMemo,useState} from 'react';
 import Link from 'next/link';
-import MarketingModuleFrame from '@/app/vendor/marketing/engine/components/MarketingModuleFrame';
+import MarketingModuleFrame from '@/app/vendor/marketing-engine/components/MarketingModuleFrame';
 import IconsaxIcon from '@/app/vendor/components/IconsaxIcon';
 import {triageMarketingEnquiry} from '@/lib/marketing/agent-rules';
 
@@ -74,7 +74,7 @@ export default function CallsAndMessagesAgent(){
             <span aria-label="Automatic replies disabled" className="flex h-6 w-11 items-center rounded-full bg-[#D7D7DE] p-1"><span className="h-4 w-4 rounded-full bg-white shadow"/></span>
           </div>
           <p className="mt-3 text-[11px] leading-6 text-[#85858E]">No direct inbound call number, provider webhook, official messaging account or audited reply permissions are configured yet. This switch cannot enable live replies until those release gates exist.</p>
-          <Link href="/vendor/marketing/engine/connections" className="mt-4 flex h-10 items-center justify-center gap-2 rounded-lg bg-[#202024] px-4 text-[11px] font-bold text-white">
+          <Link href="/vendor/marketing-engine/connections" className="mt-4 flex h-10 items-center justify-center gap-2 rounded-lg bg-[#202024] px-4 text-[11px] font-bold text-white">
             See provider requirements <IconsaxIcon name="arrow-right-2" size={15} color="white"/>
           </Link>
         </div>
