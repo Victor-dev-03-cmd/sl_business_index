@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import IconsaxIcon from '@/app/vendor/components/IconsaxIcon';
-import MarketingModuleFrame from '@/app/vendor/marketing/engine/components/MarketingModuleFrame';
+import MarketingModuleFrame from '@/app/vendor/marketing-engine/components/MarketingModuleFrame';
 import {MARKETING_CONNECTORS} from '@/lib/marketing/engine-registry';
 
 const groups=[
@@ -29,7 +29,7 @@ export default function MarketingConnections(){
         <div><h2 className="flex items-center gap-2 text-[16px] font-extrabold">
           <span className="rounded-lg bg-[#FFF1E5] p-2 text-[#B86117]"><IconsaxIcon name={group.icon} size={17}/></span>
           {group.name}</h2><p className="mt-1 text-xs text-[#8E8E95]">{group.desc}</p></div>
-        <Link href={group.id==='email'?'/vendor/marketing/engine/email':group.id==='social'?'/vendor/marketing/engine/social':'/vendor/marketing/engine/agent'}
+        <Link href={group.id==='email'?'/vendor/marketing-engine/email':group.id==='social'?'/vendor/marketing-engine/social':'/vendor/marketing-engine/agent'}
           className="text-[11px] font-bold text-[#B75C14] hover:underline">View related workflow</Link>
       </div>
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
