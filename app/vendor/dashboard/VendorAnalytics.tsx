@@ -68,7 +68,19 @@ export default function VendorAnalytics({ businessIds, refreshKey = 0, embedded 
             .order('id', { ascending: true })
             .range(offset, offset + ACTIVITY_PAGE_SIZE - 1);
           if (queryError) throw queryError;
-          if (offset === 0) exactCount = count;
+          if (offset === 0) {
+            exactCount = count;
+            // Do not issue 20 page requests when the count already proves
+            // this tenant needs a server-side aggregate for this time range.
+            if (typeof count === 'number' && count > ACTIVITY_MAX_EVENTS) {
+              if (!cancelled) {
+                setEventLimitReached(true);
+                setRecordedEventCount(count);
+                setData([]);
+              }
+              return;
+            }
+          }
           logs.push(...((page || []) as ActivityLog[]));
           if ((page?.length || 0) < ACTIVITY_PAGE_SIZE) break;
         }
