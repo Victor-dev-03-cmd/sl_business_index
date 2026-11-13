@@ -1,34 +1,64 @@
 'use client';
 import { neo } from '../components/neumorphic';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
 import IconsaxIcon from '../components/IconsaxIcon';
 import { summarizeGrowthMetrics } from '@/lib/growth/attribution';
+import { compareGrowthSnapshots, createGrowthWindows, INSIGHT_BATCH_SIZE, INSIGHT_MAX_ROWS, type InsightPeriodDays } from '@/lib/growth/insight-comparison';
 
 type Period = '7' | '30' | '90';
 type OwnedBusiness = { id: string; name: string };
 type EventRow = { id: string; business_id: string | null; event_type: string; created_at: string };
 type LeadRow = { id: string; business_id: string | null; status: string | null; source: string | null; created_at: string | null };
 
-const MAX_EVENTS = 2000;
-const MAX_LEADS = 2000;
 const panel = neo.card;
 const periodDays = (period: Period) => Number(period);
-
-const startDate = (period: Period): string => {
-  const now = new Date();
-  now.setUTCDate(now.getUTCDate() - periodDays(period));
-  return now.toISOString();
-};
 const formatNumber = (n: number) => new Intl.NumberFormat('en-LK').format(n);
-const describeCount = (value: number, partial: boolean) => (partial ? '≥ ' : '') + formatNumber(value);
 
-function lastDays(period: Period, events: EventRow[]) {
+/**
+ * Stable, authenticated, owner-scoped, exact-count pagination. Prevent a
+ * default PostgREST 1,000-row cap (or concurrency drift) from silently
+ * presenting sampled totals as a complete period.
+ */
+async function readGrowthWindow<T extends EventRow | LeadRow>(
+  table: 'analytics_logs' | 'leads', selectFields: string,
+  businessIds: string[], since: string, before: string,
+): Promise<T[]> {
+  const rows: T[] = [];
+  let expectedCount: number | null = null;
+  for (let offset = 0; offset < INSIGHT_MAX_ROWS; offset += INSIGHT_BATCH_SIZE) {
+    const { data, error, count } = await supabase.from(table)
+      .select(selectFields, { count: offset === 0 ? 'exact' : undefined })
+      .in('business_id', businessIds).gte('created_at', since).lt('created_at', before)
+      .order('created_at', { ascending: false }).order('id', { ascending: false })
+      .range(offset, offset + INSIGHT_BATCH_SIZE - 1);
+    if (error) throw error;
+    if (offset === 0) {
+      if (typeof count !== 'number' || !Number.isInteger(count) || count < 0) {
+        throw new Error('Analytics row count was unavailable; incomplete metrics are hidden.');
+      }
+      expectedCount = count;
+      if (count > INSIGHT_MAX_ROWS) {
+        throw new Error('Too many activity records for exact browser reporting. Narrow the date range.');
+      }
+    }
+    rows.push(...((data || []) as unknown as T[]));
+    if (rows.length >= expectedCount!) break;
+    if ((data?.length || 0) < INSIGHT_BATCH_SIZE) break;
+  }
+  if (rows.length !== expectedCount) {
+    throw new Error('Analytics changed during pagination. Refresh to rebuild an accurate report.');
+  }
+  return rows;
+}
+
+function lastDays(period: Period, events: EventRow[], referenceTime: string) {
   const dates: { key: string; label: string; views: number; calls: number; directions: number }[] = [];
-  const today = new Date();
-  for (let offset = periodDays(period) - 1; offset >= 0; offset--) {
+  const today = new Date(referenceTime);
+  // Rolling N-day periods touch N+1 UTC dates; boundary dates are partial.
+  for (let offset = periodDays(period); offset >= 0; offset--) {
     const dt = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - offset));
     dates.push({
       key: dt.toISOString().slice(0, 10),
@@ -53,69 +83,87 @@ export default function GrowthInsightsPage() {
   const [businesses, setBusinesses] = useState<OwnedBusiness[]>([]);
   const [events, setEvents] = useState<EventRow[]>([]);
   const [leads, setLeads] = useState<LeadRow[]>([]);
-  const [eventPartial, setEventPartial] = useState(false);
-  const [leadPartial, setLeadPartial] = useState(false);
+  const [previousEvents, setPreviousEvents] = useState<EventRow[]>([]);
+  const [previousLeads, setPreviousLeads] = useState<LeadRow[]>([]);
+  const [snapshotEnd, setSnapshotEnd] = useState(() => new Date().toISOString());
   const [loading, setLoading] = useState(true);
   const [unauthenticated, setUnauthenticated] = useState(false);
   const [error, setError] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError('');
-    setUnauthenticated(false);
-    setEvents([]);
-    setLeads([]);
-    setEventPartial(false);
-    setLeadPartial(false);
-    try {
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError) throw authError;
-      if (!user) {
-        setUnauthenticated(true);
-        setBusinesses([]);
-        return;
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      setLoading(true);
+      setError('');
+      setUnauthenticated(false);
+      setEvents([]);
+      setLeads([]);
+      setPreviousEvents([]);
+      setPreviousLeads([]);
+      try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError) throw authError;
+        if (!active) return;
+        if (!user) {
+          setUnauthenticated(true);
+          setBusinesses([]);
+          return;
+        }
+        // RLS remains the security boundary; no service-role keys in client.
+        const ownedResult = await supabase.from('businesses')
+          .select('id,name').eq('owner_id', user.id).eq('status', 'approved')
+          .order('name', { ascending: true }).limit(251);
+        if (ownedResult.error) throw ownedResult.error;
+        if (!active) return;
+        const owned = (ownedResult.data || []) as OwnedBusiness[];
+        if (owned.length > 250) {
+          throw new Error('Too many businesses for a complete client-side report.');
+        }
+        setBusinesses(owned);
+        const ownedIds = owned.map(item => item.id);
+        if (!ownedIds.length) return;
+        const ids = businessId === 'all' ? ownedIds : ownedIds.filter(id => id === businessId);
+        if (!ids.length) return;
+
+        const window = createGrowthWindows(Number(period) as InsightPeriodDays, new Date());
+        const [recentEvents, recentLeads, baselineEvents, baselineLeads] = await Promise.all([
+          readGrowthWindow<EventRow>('analytics_logs', 'id,business_id,event_type,created_at',
+            ids, window.currentStart, window.snapshotEnd),
+          readGrowthWindow<LeadRow>('leads', 'id,business_id,status,source,created_at',
+            ids, window.currentStart, window.snapshotEnd),
+          readGrowthWindow<EventRow>('analytics_logs', 'id,business_id,event_type,created_at',
+            ids, window.previousStart, window.currentStart),
+          readGrowthWindow<LeadRow>('leads', 'id,business_id,status,source,created_at',
+            ids, window.previousStart, window.currentStart),
+        ]);
+        if (!active) return;
+        setEvents(recentEvents);
+        setLeads(recentLeads);
+        setPreviousEvents(baselineEvents);
+        setPreviousLeads(baselineLeads);
+        setSnapshotEnd(window.snapshotEnd);
+      } catch (caught) {
+        if (!active) return;
+        setEvents([]);
+        setLeads([]);
+        setPreviousEvents([]);
+        setPreviousLeads([]);
+        setError(caught instanceof Error ? caught.message : 'Unable to load growth insights.');
+      } finally {
+        if (active) setLoading(false);
       }
-      // RLS is the actual security boundary. The UI performs an additional
-      // owner-scoped lookup; no service-role client is ever used in the browser.
-      const ownedResult = await supabase.from('businesses')
-        .select('id,name').eq('owner_id', user.id).eq('status', 'approved')
-        .order('name', { ascending: true }).limit(250);
-      if (ownedResult.error) throw ownedResult.error;
-      const owned = (ownedResult.data || []) as OwnedBusiness[];
-      setBusinesses(owned);
-      const ownedIds = owned.map(item => item.id);
-      if (!ownedIds.length) return;
-      const ids = businessId === 'all' ? ownedIds : ownedIds.filter(id => id === businessId);
-      if (!ids.length) return;
-      const since = startDate(period);
-      const [eventResult, leadResult] = await Promise.all([
-        supabase.from('analytics_logs').select('id,business_id,event_type,created_at', { count: 'exact' })
-          .in('business_id', ids).gte('created_at', since)
-          .order('created_at', { ascending: false }).limit(MAX_EVENTS),
-        supabase.from('leads').select('id,business_id,status,source,created_at', { count: 'exact' })
-          .in('business_id', ids).gte('created_at', since)
-          .order('created_at', { ascending: false }).limit(MAX_LEADS),
-      ]);
-      if (eventResult.error) throw eventResult.error;
-      if (leadResult.error) throw leadResult.error;
-      const eventRows = (eventResult.data || []) as EventRow[];
-      const leadRows = (leadResult.data || []) as LeadRow[];
-      setEvents(eventRows);
-      setLeads(leadRows);
-      setEventPartial((eventResult.count || 0) > eventRows.length);
-      setLeadPartial((leadResult.count || 0) > leadRows.length);
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Unable to load growth insights.');
-    } finally {
-      setLoading(false);
-    }
+    };
+    void load();
+    return () => { active = false; };
   }, [businessId, period, refreshKey]);
 
-  useEffect(() => { void load(); }, [load]);
-
   const metrics = useMemo(() => summarizeGrowthMetrics(events, leads), [events, leads]);
-  const daily = useMemo(() => lastDays(period, events), [period, events]);
+  const comparison = useMemo(
+    () => compareGrowthSnapshots(events, leads, previousEvents, previousLeads),
+    [events, leads, previousEvents, previousLeads],
+  );
+  const daily = useMemo(() => lastDays(period, events, snapshotEnd), [period, events, snapshotEnd]);
   const maxVolume = Math.max(1, ...daily.map(item => item.views + item.calls + item.directions));
   const byBusiness = useMemo(() => businesses.map(item => {
     const ownedEvents = events.filter(row => row.business_id === item.id);
@@ -124,10 +172,10 @@ export default function GrowthInsightsPage() {
   }).filter(item => businessId === 'all' || item.id === businessId), [businesses, events, leads, businessId]);
 
   const cards = [
-    { title: 'Listing view events', value: metrics.listingViewEvents, icon: 'eye', note: 'Page views recorded, not unique visitors' },
-    { title: 'Call click events', value: metrics.callClickEvents, icon: 'call', note: 'Click intent; calls not verified' },
-    { title: 'Directions clicks', value: metrics.locationClickEvents, icon: 'location', note: 'Directions link interactions' },
-    { title: 'CRM enquiries', value: metrics.crmLeadRecords, icon: 'message-text', note: 'Stored lead records, not closed sales' },
+    { title: 'Listing view events', value: metrics.listingViewEvents, comparison: comparison.listingViewEvents, icon: 'eye', note: 'Page views recorded, not unique visitors' },
+    { title: 'Call click events', value: metrics.callClickEvents, comparison: comparison.callClickEvents, icon: 'call', note: 'Click intent; calls not verified' },
+    { title: 'Directions clicks', value: metrics.locationClickEvents, comparison: comparison.locationClickEvents, icon: 'location', note: 'Directions link interactions' },
+    { title: 'CRM enquiries', value: metrics.crmLeadRecords, comparison: comparison.crmLeadRecords, icon: 'message-text', note: 'Stored lead records, not closed sales' },
   ];
 
   if (unauthenticated) return (
@@ -177,12 +225,15 @@ export default function GrowthInsightsPage() {
           </select>
         </label>
         <span className="rounded-full border border-[#E7E7EB] bg-[#F7F7F9] px-3 py-2 text-[10px] font-semibold text-[#6C6C73]">Owner-scoped · RLS protected</span>
+        <span className="text-[10px] text-slate-500">Equal rolling windows · as of {new Date(snapshotEnd).toLocaleString('en-LK')}</span>
       </div>
 
       {error && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">Could not load insights: {error}</div>}
-      {(eventPartial || leadPartial) && !loading && <div role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-[12px] text-amber-900">
-        Large dataset: event or lead rows were capped for this overview. Totals with ≥ are lower bounds and the chart is a sample. Narrow the reporting period for accurate totals.
-      </div>}
+      {error && !loading && (
+        <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[11px] text-amber-900" role="status">
+          Metrics are hidden until all four current/previous-period queries succeed. Do not use an incomplete report for decisions.
+        </p>
+      )}
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map(card => (
           <div key={card.title} className={panel + ' p-5'}>
@@ -191,9 +242,15 @@ export default function GrowthInsightsPage() {
               <span className="rounded-lg bg-[#F8F8FA] p-2 text-[#2C2C31]"><IconsaxIcon name={card.icon} size={18}/></span>
             </div>
             <p className="mt-3 text-[31px] font-extrabold tabular-nums tracking-[-0.05em] text-[#2C2C31]">
-              {loading ? '—' : describeCount(card.value, card.title === 'CRM enquiries' ? leadPartial : eventPartial)}
+              {loading || error ? '—' : formatNumber(card.value)}
             </p>
             <p className="mt-1 text-[10px] leading-5 text-slate-500">{card.note}</p>
+            <p className="mt-2 text-[10px] font-semibold text-[#A35210]" aria-label={'Comparison: ' + card.title}>
+              {loading || error ? 'Comparison unavailable' : card.comparison.label}
+            </p>
+            <p className="mt-1 text-[10px] text-slate-500">
+              Previous {period} days: {loading || error ? '—' : formatNumber(card.comparison.previous)}
+            </p>
           </div>
         ))}
       </div>
@@ -203,17 +260,17 @@ export default function GrowthInsightsPage() {
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
               <h2 id="growth-trend-title" className="text-[17px] font-bold text-[#2B2B30]">Recorded interactions</h2>
-              <p className="mt-1 text-[11px] text-slate-500">UTC day · listing views, call clicks and directions clicks</p>
+              <p className="mt-1 text-[11px] text-slate-500">UTC day · rolling period, boundary days are partial · listing views, calls and directions</p>
             </div>
             <span className="text-[10px] font-medium text-[#2C2C31]">{period} days</span>
           </div>
-          <div className="mt-8 flex h-44 items-end gap-[3px] rounded-lg border-b border-[#E7E7EC] pb-1" role="img" aria-label="Daily recorded interactions bar chart">
+          <div className="mt-8 flex h-44 items-end gap-[3px] rounded-lg border-b border-[#E7E7EC] pb-1" role="img" aria-label={error ? 'Interaction chart unavailable' : 'Daily recorded interactions bar chart'}>
             {daily.map((day, i) => {
               const views = day.views, contacts = day.calls + day.directions;
               const size = views + contacts;
               return (
                 <div key={day.key} className="group flex h-full min-w-0 flex-1 flex-col justify-end" title={day.label + ': ' + size + ' interactions'}>
-                  <div className="flex w-full flex-col justify-end overflow-hidden rounded-t-sm" style={{height: Math.max(size > 0 ? 3 : 0, (size/maxVolume)*100) + '%'}}>
+                  <div className="flex w-full flex-col justify-end overflow-hidden rounded-t-sm" style={{height: error ? '0%' : Math.max(size > 0 ? 3 : 0, (size/maxVolume)*100) + '%'}}>
                     <div className="bg-[#FFF2E7]" style={{flex: views || 0}} />
                     <div className="bg-[#242428]" style={{flex: contacts || 0}} />
                   </div>
@@ -238,13 +295,13 @@ export default function GrowthInsightsPage() {
               {name:'Other / unknown source',value:metrics.leadsFromOtherSources},
             ].map(item => <div key={item.name}>
               <div className="flex items-center justify-between gap-2 text-[12px]">
-                <span className="font-medium text-[#2C2C31]">{item.name}</span><strong className="tabular-nums text-[#2C2C31]">{formatNumber(item.value)}</strong>
+                <span className="font-medium text-[#2C2C31]">{item.name}</span><strong className="tabular-nums text-[#2C2C31]">{loading || error ? '—' : formatNumber(item.value)}</strong>
               </div>
               <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#F8F8FA]"><div className="h-full rounded-full bg-[#FFF2E7]" style={{width: (metrics.crmLeadRecords ? item.value / metrics.crmLeadRecords * 100 : 0) + '%'}} /></div>
             </div>)}
           </div>
           <div className="mt-6 rounded-xl bg-[#F4F8F1] p-4">
-            <div className="flex items-center justify-between gap-2"><span className="text-[12px] font-semibold text-[#2C2C31]">CRM marked converted</span><strong className="text-xl font-extrabold tabular-nums text-[#2C2C31]">{loading ? '—' : formatNumber(metrics.crmMarkedConverted)}</strong></div>
+            <div className="flex items-center justify-between gap-2"><span className="text-[12px] font-semibold text-[#2C2C31]">CRM marked converted</span><strong className="text-xl font-extrabold tabular-nums text-[#2C2C31]">{loading || error ? '—' : formatNumber(metrics.crmMarkedConverted)}</strong></div>
             <p className="mt-2 text-[10px] leading-5 text-[#777780]">Vendor-updated CRM status; not verified payments, completed sales or revenue.</p>
           </div>
           <Link href="/vendor/leads" className="mt-5 inline-flex items-center gap-2 text-xs font-bold text-[#2C2C31] hover:underline">Manage CRM enquiries <IconsaxIcon name="arrow-right-2" size={14}/></Link>
@@ -262,14 +319,14 @@ export default function GrowthInsightsPage() {
               <tr><th className="px-5 py-3">Business</th><th className="px-4 py-3 text-right">Views</th><th className="px-4 py-3 text-right">Calls</th><th className="px-4 py-3 text-right">Directions</th><th className="px-5 py-3 text-right">CRM enquiries</th></tr>
             </thead>
             <tbody className="divide-y divide-[#EEF2EF]">
-              {byBusiness.map(item => <tr key={item.id} className="text-[12px] text-[#2C2C31] hover:bg-[#FBFDFB]">
+              {!error && byBusiness.map(item => <tr key={item.id} className="text-[12px] text-[#2C2C31] hover:bg-[#FBFDFB]">
                 <td className="px-5 py-4 font-semibold text-[#2C2C31]">{item.name}</td>
                 <td className="px-4 py-4 text-right tabular-nums">{formatNumber(item.listingViewEvents)}</td>
                 <td className="px-4 py-4 text-right tabular-nums">{formatNumber(item.callClickEvents)}</td>
                 <td className="px-4 py-4 text-right tabular-nums">{formatNumber(item.locationClickEvents)}</td>
                 <td className="px-5 py-4 text-right tabular-nums">{formatNumber(item.crmLeadRecords)}</td>
               </tr>)}
-              {!loading && !byBusiness.length && <tr><td colSpan={5} className="p-8 text-center text-[12px] text-slate-500">No approved owned businesses found for this view.</td></tr>}
+              {!loading && (error || !byBusiness.length) && <tr><td colSpan={5} className="p-8 text-center text-[12px] text-slate-500">{error ? 'Performance data unavailable until all queries complete.' : 'No approved owned businesses found for this view.'}</td></tr>}
             </tbody>
           </table>
         </div>
