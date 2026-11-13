@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import MarketingModuleFrame from '@/app/vendor/marketing/engine/components/MarketingModuleFrame';
+import MarketingModuleFrame from '@/app/vendor/marketing-engine/components/MarketingModuleFrame';
 import IconsaxIcon from '@/app/vendor/components/IconsaxIcon';
 import {MARKETING_CONNECTORS} from '@/lib/marketing/engine-registry';
 
@@ -29,7 +29,7 @@ export default function MarketingEmail(){
             <p className="mt-3 text-[10px] font-bold text-[#9B5925]">{provider.api}</p>
           </div>)}
         </div>
-        <Link href="/vendor/marketing/engine/connections" className="mt-5 inline-flex h-11 items-center gap-2 rounded-lg bg-[#202024] px-5 text-xs font-bold text-white">
+        <Link href="/vendor/marketing-engine/connections" className="mt-5 inline-flex h-11 items-center gap-2 rounded-lg bg-[#202024] px-5 text-xs font-bold text-white">
           View connector requirements <IconsaxIcon name="arrow-right-2" color="white" size={15}/>
         </Link>
       </div>
