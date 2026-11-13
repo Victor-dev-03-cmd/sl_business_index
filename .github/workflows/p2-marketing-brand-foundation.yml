@@ -13,6 +13,7 @@ on:
       - 'tests/p2AiCaption.test.mjs'
       - 'tests/p2MarketingEngineShell.test.mjs'
       - 'tests/p2OAuthConnectors.test.mjs'
+      - 'tests/p2OAuthFlow.test.mjs'
       - 'tests/p2-oauth/**'
       - 'tests/p2-brand/**'
       - 'tests/p2-ai/**'
@@ -35,6 +36,7 @@ on:
       - 'tests/p2AiCaption.test.mjs'
       - 'tests/p2MarketingEngineShell.test.mjs'
       - 'tests/p2OAuthConnectors.test.mjs'
+      - 'tests/p2OAuthFlow.test.mjs'
       - 'tests/p2-oauth/**'
       - 'docs/growth/p2/**'
       - '.github/workflows/p2-marketing-brand-foundation.yml'
@@ -55,7 +57,7 @@ jobs:
           node-version: '24'
       - name: Brand validation, page/API contract and existing Marketing Studio tests
         run: |
-          node --test tests/p2BrandProfile.test.mjs tests/p2AiCaption.test.mjs tests/p2PosterDesign.test.mjs tests/p2MarketingEngineShell.test.mjs tests/p2OAuthConnectors.test.mjs
+          node --test tests/p2BrandProfile.test.mjs tests/p2AiCaption.test.mjs tests/p2PosterDesign.test.mjs tests/p2MarketingEngineShell.test.mjs tests/p2OAuthConnectors.test.mjs tests/p2OAuthFlow.test.mjs
           node --test tests/vendorSettingsQrMarketing2026.test.mjs tests/vendorPortalRelease.test.mjs
 
   docker-tenant-rls:
