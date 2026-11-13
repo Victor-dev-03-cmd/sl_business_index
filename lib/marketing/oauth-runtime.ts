@@ -4,7 +4,7 @@
  * No sending, messaging, credential exposure or KMS claims.
  */
 import {createCipheriv,createDecipheriv,randomBytes} from 'node:crypto';
-import {makeAuthorizationUrl,pkceS256Challenge} from './oauth-provider-contract';
+import {makeAuthorizationUrl,pkceS256Challenge} from './oauth-provider-contract.ts';
 
 export const GOOGLE_SEND_SCOPE='https://www.googleapis.com/auth/gmail.send';
 export const GOOGLE_IDENTITY_SCOPES=['openid','email'] as const;

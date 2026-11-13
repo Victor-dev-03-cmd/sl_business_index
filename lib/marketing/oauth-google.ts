@@ -2,7 +2,7 @@
  * Official Google OAuth code exchange + OIDC UserInfo verification (preview only).
  * Do not import into browser components; no email-send endpoint is implemented.
  */
-import {GOOGLE_SEND_SCOPE,type GooglePreviewOAuthConfig} from './oauth-runtime';
+import {GOOGLE_SEND_SCOPE,type GooglePreviewOAuthConfig} from './oauth-runtime.ts';
 export type VerifiedGoogleMailbox={
   sub:string;email:string;scopes:string[];accessToken:string;refreshToken:string|null;expiresAt:string;
 };
