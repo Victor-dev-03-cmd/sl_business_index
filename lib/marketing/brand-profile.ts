@@ -43,7 +43,7 @@ export const BRAND_DEFAULTS = {
   offers: [] as BrandOffer[],
 };
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const HEX = /^#[0-9A-Fa-f]{6}$/;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const allowedKeys = [
