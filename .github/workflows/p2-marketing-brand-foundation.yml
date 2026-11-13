@@ -6,6 +6,7 @@ on:
     paths:
       - 'app/api/marketing/**'
       - 'app/vendor/marketing/**'
+      - 'app/vendor/marketing-engine/**'
       - 'lib/marketing/**'
       - 'tests/p2BrandProfile.test.mjs'
       - 'tests/p2PosterDesign.test.mjs'
@@ -22,6 +23,7 @@ on:
     paths:
       - 'app/api/marketing/**'
       - 'app/vendor/marketing/**'
+      - 'app/vendor/marketing-engine/**'
       - 'lib/marketing/**'
       - 'tests/p2BrandProfile.test.mjs'
       - 'tests/p2-brand/**'
