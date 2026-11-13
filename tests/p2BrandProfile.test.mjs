@@ -82,7 +82,8 @@ test('SQL guards tenant isolation, immutable owner identity and no anonymous wri
   assert.match(sql,/REVOKE ALL ON public\.social_brand_profiles FROM PUBLIC, anon, authenticated/);
   assert.match(sql,/owner_id = \(SELECT auth\.uid\(\)\)/);
   assert.match(sql,/b\.owner_id = \(SELECT auth\.uid\(\)\)/);
-  assert.match(sql,/GRANT SELECT, INSERT ON public\.social_brand_profiles TO authenticated/);
+  assert.match(sql,/GRANT INSERT \(/);
+  assert.match(sql,/GRANT SELECT ON public\.social_brand_profiles TO authenticated/);
   assert.match(sql,/GRANT UPDATE \(/);
   assert.match(sql,/business_id uuid PRIMARY KEY/);
   assert.match(sql,/REVIEW \/ DISPOSABLE DOCKER DATABASE ONLY/);
