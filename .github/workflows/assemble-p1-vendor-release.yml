@@ -1,0 +1,57 @@
+name: Assemble P1 Vendor Release Candidate (staging, never production)
+
+on:
+  push:
+    branches: ['release/p1-vendor-integration-20261113']
+    paths: ['.github/workflows/assemble-p1-vendor-release.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  assemble:
+    if: github.repository == 'Victor-dev-03-cmd/sl_business_index' && github.ref == 'refs/heads/release/p1-vendor-integration-20261113'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: release/p1-vendor-integration-20261113
+          persist-credentials: true
+          fetch-depth: 0
+      - name: Merge individually tested P1 branches into ONE reviewable release branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          refs=(
+            'maintenance/stable-packages-20261113'
+            'phase1/vendor-overview-activity-reliability'
+            'phase1/business-physical-address-required-20261113'
+            'phase1/vendor-leads-followups-20261113'
+            'phase1/vendor-reviews-reliability-20261113'
+            'phase1/vendor-growth-insights-comparison-20261113'
+          )
+          shas=(
+            '184fafe422a9dbd3c1ace88949fa4ce7206b24bf'
+            '23b77076f809f846cff19f27204e2c63f32409a3'
+            '46bc3bda838eeae347c1d2aad2c5395689f8f617'
+            '4d945ed3ed7b3c157b2e906032256c844b2c6932'
+            '4271655f149a116c0516725f0c111b59c2e12bc1'
+            '4c25f67ff2428fc9f25a46003f65f58deb7134bf'
+          )
+          for i in "${!refs[@]}"; do
+            ref="${refs[$i]}"
+            expected="${shas[$i]}"
+            git fetch --no-tags origin "+refs/heads/$ref:refs/remotes/origin/$ref"
+            actual="$(git rev-parse "refs/remotes/origin/$ref")"
+            if [[ "$actual" != "$expected" ]]; then
+              echo "Release source changed unexpectedly: $ref" >&2
+              exit 1
+            fi
+            git merge --no-ff --no-edit "refs/remotes/origin/$ref"
+          done
+          git diff --check
+          git status --short
+          git push origin HEAD:refs/heads/release/p1-vendor-integration-20261113
