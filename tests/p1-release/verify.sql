@@ -105,7 +105,7 @@ $ownerB$;
 
 -- Review author can see their own unapproved review; other people cannot
 -- impersonate that user_id on INSERT.
-SET "request.jwt.claim.sub"='33333333-3333-4333-8333-333333333333';
+SET "request.jwt.claim.sub"='77777777-7777-4777-8777-777777777777';
 DO $customer$
 DECLARE blocked boolean:=false;
 BEGIN
