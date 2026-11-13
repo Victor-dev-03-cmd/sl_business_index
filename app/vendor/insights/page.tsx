@@ -225,12 +225,15 @@ export default function GrowthInsightsPage() {
           </select>
         </label>
         <span className="rounded-full border border-[#E7E7EB] bg-[#F7F7F9] px-3 py-2 text-[10px] font-semibold text-[#6C6C73]">Owner-scoped · RLS protected</span>
+        <span className="text-[10px] text-slate-500">Equal rolling windows · as of {new Date(snapshotEnd).toLocaleString('en-LK')}</span>
       </div>
 
       {error && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">Could not load insights: {error}</div>}
-      {(eventPartial || leadPartial) && !loading && <div role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-[12px] text-amber-900">
-        Large dataset: event or lead rows were capped for this overview. Totals with ≥ are lower bounds and the chart is a sample. Narrow the reporting period for accurate totals.
-      </div>}
+      {error && !loading && (
+        <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[11px] text-amber-900" role="status">
+          Metrics are hidden until all four current/previous-period queries succeed. Do not use an incomplete report for decisions.
+        </p>
+      )}
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map(card => (
           <div key={card.title} className={panel + ' p-5'}>
@@ -239,9 +242,15 @@ export default function GrowthInsightsPage() {
               <span className="rounded-lg bg-[#F8F8FA] p-2 text-[#2C2C31]"><IconsaxIcon name={card.icon} size={18}/></span>
             </div>
             <p className="mt-3 text-[31px] font-extrabold tabular-nums tracking-[-0.05em] text-[#2C2C31]">
-              {loading ? '—' : describeCount(card.value, card.title === 'CRM enquiries' ? leadPartial : eventPartial)}
+              {loading || error ? '—' : formatNumber(card.value)}
             </p>
             <p className="mt-1 text-[10px] leading-5 text-slate-500">{card.note}</p>
+            <p className="mt-2 text-[10px] font-semibold text-[#A35210]" aria-label={'Comparison: ' + card.title}>
+              {loading || error ? 'Comparison unavailable' : card.comparison.label}
+            </p>
+            <p className="mt-1 text-[10px] text-slate-500">
+              Previous {period} days: {loading || error ? '—' : formatNumber(card.comparison.previous)}
+            </p>
           </div>
         ))}
       </div>
@@ -251,17 +260,17 @@ export default function GrowthInsightsPage() {
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
               <h2 id="growth-trend-title" className="text-[17px] font-bold text-[#2B2B30]">Recorded interactions</h2>
-              <p className="mt-1 text-[11px] text-slate-500">UTC day · listing views, call clicks and directions clicks</p>
+              <p className="mt-1 text-[11px] text-slate-500">UTC day · rolling period, boundary days are partial · listing views, calls and directions</p>
             </div>
             <span className="text-[10px] font-medium text-[#2C2C31]">{period} days</span>
           </div>
-          <div className="mt-8 flex h-44 items-end gap-[3px] rounded-lg border-b border-[#E7E7EC] pb-1" role="img" aria-label="Daily recorded interactions bar chart">
+          <div className="mt-8 flex h-44 items-end gap-[3px] rounded-lg border-b border-[#E7E7EC] pb-1" role="img" aria-label={error ? 'Interaction chart unavailable' : 'Daily recorded interactions bar chart'}>
             {daily.map((day, i) => {
               const views = day.views, contacts = day.calls + day.directions;
               const size = views + contacts;
               return (
                 <div key={day.key} className="group flex h-full min-w-0 flex-1 flex-col justify-end" title={day.label + ': ' + size + ' interactions'}>
-                  <div className="flex w-full flex-col justify-end overflow-hidden rounded-t-sm" style={{height: Math.max(size > 0 ? 3 : 0, (size/maxVolume)*100) + '%'}}>
+                  <div className="flex w-full flex-col justify-end overflow-hidden rounded-t-sm" style={{height: error ? '0%' : Math.max(size > 0 ? 3 : 0, (size/maxVolume)*100) + '%'}}>
                     <div className="bg-[#FFF2E7]" style={{flex: views || 0}} />
                     <div className="bg-[#242428]" style={{flex: contacts || 0}} />
                   </div>
@@ -286,13 +295,13 @@ export default function GrowthInsightsPage() {
               {name:'Other / unknown source',value:metrics.leadsFromOtherSources},
             ].map(item => <div key={item.name}>
               <div className="flex items-center justify-between gap-2 text-[12px]">
-                <span className="font-medium text-[#2C2C31]">{item.name}</span><strong className="tabular-nums text-[#2C2C31]">{formatNumber(item.value)}</strong>
+                <span className="font-medium text-[#2C2C31]">{item.name}</span><strong className="tabular-nums text-[#2C2C31]">{loading || error ? '—' : formatNumber(item.value)}</strong>
               </div>
               <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#F8F8FA]"><div className="h-full rounded-full bg-[#FFF2E7]" style={{width: (metrics.crmLeadRecords ? item.value / metrics.crmLeadRecords * 100 : 0) + '%'}} /></div>
             </div>)}
           </div>
           <div className="mt-6 rounded-xl bg-[#F4F8F1] p-4">
-            <div className="flex items-center justify-between gap-2"><span className="text-[12px] font-semibold text-[#2C2C31]">CRM marked converted</span><strong className="text-xl font-extrabold tabular-nums text-[#2C2C31]">{loading ? '—' : formatNumber(metrics.crmMarkedConverted)}</strong></div>
+            <div className="flex items-center justify-between gap-2"><span className="text-[12px] font-semibold text-[#2C2C31]">CRM marked converted</span><strong className="text-xl font-extrabold tabular-nums text-[#2C2C31]">{loading || error ? '—' : formatNumber(metrics.crmMarkedConverted)}</strong></div>
             <p className="mt-2 text-[10px] leading-5 text-[#777780]">Vendor-updated CRM status; not verified payments, completed sales or revenue.</p>
           </div>
           <Link href="/vendor/leads" className="mt-5 inline-flex items-center gap-2 text-xs font-bold text-[#2C2C31] hover:underline">Manage CRM enquiries <IconsaxIcon name="arrow-right-2" size={14}/></Link>
@@ -310,14 +319,14 @@ export default function GrowthInsightsPage() {
               <tr><th className="px-5 py-3">Business</th><th className="px-4 py-3 text-right">Views</th><th className="px-4 py-3 text-right">Calls</th><th className="px-4 py-3 text-right">Directions</th><th className="px-5 py-3 text-right">CRM enquiries</th></tr>
             </thead>
             <tbody className="divide-y divide-[#EEF2EF]">
-              {byBusiness.map(item => <tr key={item.id} className="text-[12px] text-[#2C2C31] hover:bg-[#FBFDFB]">
+              {!error && byBusiness.map(item => <tr key={item.id} className="text-[12px] text-[#2C2C31] hover:bg-[#FBFDFB]">
                 <td className="px-5 py-4 font-semibold text-[#2C2C31]">{item.name}</td>
                 <td className="px-4 py-4 text-right tabular-nums">{formatNumber(item.listingViewEvents)}</td>
                 <td className="px-4 py-4 text-right tabular-nums">{formatNumber(item.callClickEvents)}</td>
                 <td className="px-4 py-4 text-right tabular-nums">{formatNumber(item.locationClickEvents)}</td>
                 <td className="px-5 py-4 text-right tabular-nums">{formatNumber(item.crmLeadRecords)}</td>
               </tr>)}
-              {!loading && !byBusiness.length && <tr><td colSpan={5} className="p-8 text-center text-[12px] text-slate-500">No approved owned businesses found for this view.</td></tr>}
+              {!loading && (error || !byBusiness.length) && <tr><td colSpan={5} className="p-8 text-center text-[12px] text-slate-500">{error ? 'Performance data unavailable until all queries complete.' : 'No approved owned businesses found for this view.'}</td></tr>}
             </tbody>
           </table>
         </div>
