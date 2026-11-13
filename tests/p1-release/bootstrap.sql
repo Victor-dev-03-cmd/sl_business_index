@@ -46,7 +46,7 @@ INSERT INTO public.leads(id,business_id,name) VALUES
 INSERT INTO public.reviews(id,business_id,user_id,rating,comment,is_approved) VALUES
 ('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','33333333-3333-4333-8333-333333333333',5,'Published A',true),
 ('ffffffff-ffff-4fff-8fff-ffffffffffff','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','44444444-4444-4444-8444-444444444444',4,'Published B',true),
-('aaaaeeee-aaaa-4aaa-8aaa-aaaaaaaeeeee','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','33333333-3333-4333-8333-333333333333',3,'Pending A',false);
+('aaaaeeee-aaaa-4aaa-8aaa-aaaaaaaeeeee','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','77777777-7777-4777-8777-777777777777',3,'Pending A',false);
 GRANT USAGE ON SCHEMA public TO anon, authenticated;
 GRANT ALL ON public.businesses, public.leads, public.lead_notes, public.analytics_logs,
   public.reviews, public.review_replies TO anon, authenticated;
