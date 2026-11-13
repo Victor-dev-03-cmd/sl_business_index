@@ -2,17 +2,19 @@ name: P1 Vendor CRM & Reviews Disposable RLS Sandbox
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, 'release/p1-vendor-integration-20261113']
     paths:
       - 'tests/p1-release/**'
       - 'docs/growth/p1/P1_VENDOR_DATA_GUARDS_STAGING_ONLY.sql'
+      - 'docs/growth/p1/P1_REVIEW_MODERATION_LOCKDOWN_STAGING_ONLY.sql'
       - 'docs/growth/p1/P1_BUSINESS_LOCATION_GUARD_REVIEW_ONLY.sql'
       - '.github/workflows/p1-vendor-data-sandbox.yml'
   push:
-    branches: ['release/p1-vendor-integration-20261113']
+    branches: ['release/p1-vendor-integration-20261113', 'security/p1-review-moderation-20261113']
     paths:
       - 'tests/p1-release/**'
       - 'docs/growth/p1/P1_VENDOR_DATA_GUARDS_STAGING_ONLY.sql'
+      - 'docs/growth/p1/P1_REVIEW_MODERATION_LOCKDOWN_STAGING_ONLY.sql'
 
 permissions:
   contents: read
