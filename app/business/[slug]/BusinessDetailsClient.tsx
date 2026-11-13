@@ -146,76 +146,37 @@ export default function BusinessDetailsClient({ business }: Props) {
 
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!reviewForm.user_name || !reviewForm.comment) return;
-
+    if (submittingReview) return;
     setSubmittingReview(true);
     try {
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError) throw authError;
-      if (!user) {
-        toast.error("Sign in to submit a business review.");
+      // No direct reviews INSERT from the browser. The server validates the
+      // authenticated user; only staff can later approve a pending review.
+      const response = await fetch('/api/reviews/submit', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          businessId: business.id,
+          userName: reviewForm.user_name,
+          rating: reviewForm.rating,
+          comment: reviewForm.comment,
+        }),
+      });
+      const data: { success?: boolean; error?: string; status?: string } =
+        await response.json();
+      if (!response.ok || !data.success || data.status !== 'pending') {
+        if (response.status === 401) {
+          toast.error('Please sign in before writing a business review.');
+        } else {
+          toast.error(data.error || 'Review submission is unavailable. Please retry.');
+        }
         return;
       }
-      let sentiment = null;
-      let is_approved = true;
-
-      // AI Moderation Call
-      try {
-        const modRes = await fetch("/api/reviews/moderate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ comment: reviewForm.comment }),
-        });
-
-        if (modRes.ok) {
-          const moderation = await modRes.json();
-          if (moderation.status === "blocked") {
-            toast.error(
-              "Your review contains inappropriate content and cannot be posted.",
-              {
-                description: moderation.reason,
-              },
-            );
-            setSubmittingReview(false);
-            return;
-          }
-          sentiment = moderation.sentiment;
-        }
-      } catch (modError) {
-        console.error(
-          "Moderation service error, proceeding with manual flag:",
-          modError,
-        );
-        is_approved = false; // Flag for manual review if AI fails
-      }
-
-      const { data, error } = await supabase
-        .from("reviews")
-        .insert({
-          business_id: business?.id,
-          user_id: user.id,
-          user_name: reviewForm?.user_name,
-          rating: reviewForm?.rating,
-          comment: reviewForm?.comment,
-          sentiment: sentiment,
-          is_approved: is_approved,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      if (is_approved) {
-        setReviews([{ ...data, review_replies: [] }, ...reviews]);
-        toast.success("Review posted successfully!");
-      } else {
-        toast.info("Review submitted and pending manual moderation.");
-      }
-
-      setReviewForm({ rating: 5, comment: "", user_name: "" });
-    } catch (error) {
-      console.error("Error posting review:", error);
-      toast.error("Failed to post review.");
+      toast.success('Review submitted for approval. It is not public yet.');
+      setReviewForm({ rating: 5, comment: '', user_name: '' });
+      // Do not prepend a pending review to the public list or claim it is live.
+    } catch {
+      toast.error('Review service is temporarily unavailable.');
     } finally {
       setSubmittingReview(false);
     }
