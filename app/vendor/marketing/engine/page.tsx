@@ -9,7 +9,9 @@ const links=[
  {label:'Brand Profile',href:'/vendor/marketing/brand',icon:'shop'},
  {label:'AI Captions',href:'/vendor/marketing/captions',icon:'message-text'},
  {label:'Poster Editor',href:'/vendor/marketing/design',icon:'document'},
- {label:'Manual Campaigns',href:'/vendor/marketing/campaigns',icon:'calendar'},
+ {label:'Campaign Library',href:'/vendor/marketing-engine/campaigns',icon:'document-download'},
+ {label:'Content Calendar',href:'/vendor/marketing-engine/calendar',icon:'calendar'},
+ {label:'Leads Workspace',href:'/vendor/marketing-engine/leads',icon:'people'},
 ] as const;
 
 export default async function MarketingEngineHome(){
