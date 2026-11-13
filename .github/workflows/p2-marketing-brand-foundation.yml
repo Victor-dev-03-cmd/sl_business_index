@@ -1,4 +1,4 @@
-name: P2 Marketing Engine — Brand Profile Contract and Docker RLS
+name: P2 Marketing Engine — Pro Shell, Contracts and Docker RLS
 
 on:
   push:
@@ -10,10 +10,12 @@ on:
       - 'tests/p2BrandProfile.test.mjs'
       - 'tests/p2PosterDesign.test.mjs'
       - 'tests/p2AiCaption.test.mjs'
+      - 'tests/p2MarketingEngineShell.test.mjs'
       - 'tests/p2-brand/**'
       - 'tests/p2-ai/**'
       - 'tests/p2-campaign/**'
       - 'docs/growth/p2/**'
+      - 'app/vendor/layout.tsx'
       - '.github/workflows/p2-marketing-brand-foundation.yml'
   pull_request:
     branches: [main]
@@ -23,6 +25,11 @@ on:
       - 'lib/marketing/**'
       - 'tests/p2BrandProfile.test.mjs'
       - 'tests/p2-brand/**'
+      - 'tests/p2-ai/**'
+      - 'tests/p2-campaign/**'
+      - 'tests/p2PosterDesign.test.mjs'
+      - 'tests/p2AiCaption.test.mjs'
+      - 'tests/p2MarketingEngineShell.test.mjs'
       - 'docs/growth/p2/**'
       - '.github/workflows/p2-marketing-brand-foundation.yml'
 
@@ -42,7 +49,7 @@ jobs:
           node-version: '24'
       - name: Brand validation, page/API contract and existing Marketing Studio tests
         run: |
-          node --test tests/p2BrandProfile.test.mjs tests/p2AiCaption.test.mjs tests/p2PosterDesign.test.mjs
+          node --test tests/p2BrandProfile.test.mjs tests/p2AiCaption.test.mjs tests/p2PosterDesign.test.mjs tests/p2MarketingEngineShell.test.mjs
           node --test tests/vendorSettingsQrMarketing2026.test.mjs tests/vendorPortalRelease.test.mjs
 
   docker-tenant-rls:
