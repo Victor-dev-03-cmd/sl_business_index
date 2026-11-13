@@ -1,4 +1,4 @@
-import { summarizeGrowthMetrics, type CrmLead, type DiscoveryLog } from './attribution';
+import { summarizeGrowthMetrics, type CrmLead, type DiscoveryLog } from './attribution.ts';
 
 /**
  * Exactly equal rolling windows measured at one fixed snapshot time.
