@@ -1,0 +1,91 @@
+name: Refresh current stable app dependencies (maintenance only)
+
+# Runs exactly once when this controlled workflow is introduced/edited on
+# the dedicated same-repository branch. Never runs on arbitrary PR code.
+on:
+  push:
+    branches: ['maintenance/stable-packages-20261113']
+    paths: ['.github/workflows/refresh-stable-packages.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    if: github.repository == 'Victor-dev-03-cmd/sl_business_index' && github.ref == 'refs/heads/maintenance/stable-packages-20261113'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-key
+      CI: 'true'
+    steps:
+      - name: Checkout dedicated branch with write access
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          ref: maintenance/stable-packages-20261113
+      - name: Node.js 24 stable (npm registry)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Upgrade stable minor/patch dependencies across package.json
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Avoid breaking P0 SSR auth without a dedicated migration.
+          # Auth helpers are deprecated, and SSR cookies are security-critical.
+          npx --yes npm-check-updates@23.1.1 --upgrade --target minor \
+            --reject '@supabase/ssr,@supabase/auth-helpers-nextjs'
+          node - <<'JS'
+          const fs = require('node:fs');
+          const filename = 'package.json';
+          const pkg = JSON.parse(fs.readFileSync(filename,'utf8'));
+          // Explicitly anchor core framework / UI packages to currently
+          // verified stable releases, no canary/pre-release tags.
+          pkg.dependencies.next = '16.4.6';
+          pkg.devDependencies['eslint-config-next'] = '16.4.6';
+          pkg.dependencies.react = '^19.3.1';
+          pkg.dependencies['react-dom'] = '^19.3.1';
+          pkg.devDependencies.tailwindcss = '^4.3.5';
+          pkg.devDependencies['@tailwindcss/postcss'] = '^4.3.5';
+          pkg.packageManager = 'npm@10.9.2';
+          fs.writeFileSync(filename,JSON.stringify(pkg,null,2)+'\n');
+          JS
+      - name: Resolve and regenerate npm lockfile
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - name: Install exact dependency tree
+        run: npm ci --no-audit --no-fund
+      - name: Validate authentication and vendor regressions
+        run: |
+          node tests/auth/ssr-cookie-roundtrip.mjs
+          node --experimental-strip-types --test tests/vendorNeutralUi.test.mjs tests/vendorPortalRelease.test.mjs tests/growthSecureLeads.test.mjs tests/hybridSearch.test.mjs
+      - name: TypeScript check
+        run: npx tsc --noEmit
+      - name: Production build
+        run: npm run build
+      - name: Generate matching Bun text lockfile (retire obsolete bun.lockb)
+        run: |
+          test -f package-lock.json
+          rm -f bun.lockb
+      - name: Prepare Bun 1.3 (lockfile only)
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.3.11'
+      - name: Create Bun text lock from canonical updated npm lock
+        run: bun install --lockfile-only --ignore-scripts
+      - name: Commit tested manifest and BOTH lockfiles to maintenance branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add package.json package-lock.json bun.lock
+          git add -u bun.lockb
+          if git diff --cached --quiet; then
+            echo 'Already fully up to date; nothing to commit.'
+          else
+            git commit -m 'chore(deps): refresh stable minor/patch packages and synchronize npm/Bun locks'
+            git push origin HEAD:refs/heads/maintenance/stable-packages-20261113
+          fi
