@@ -9,6 +9,7 @@ on:
       - 'lib/marketing/**'
       - 'tests/p2BrandProfile.test.mjs'
       - 'tests/p2-brand/**'
+      - 'tests/p2-ai/**'
       - 'docs/growth/p2/**'
       - '.github/workflows/p2-marketing-brand-foundation.yml'
   pull_request:
@@ -38,7 +39,7 @@ jobs:
           node-version: '24'
       - name: Brand validation, page/API contract and existing Marketing Studio tests
         run: |
-          node --test tests/p2BrandProfile.test.mjs
+          node --test tests/p2BrandProfile.test.mjs tests/p2AiCaption.test.mjs
           node --test tests/vendorSettingsQrMarketing2026.test.mjs tests/vendorPortalRelease.test.mjs
 
   docker-tenant-rls:
@@ -73,6 +74,43 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f docs/growth/p2/P2_01_SOCIAL_BRAND_PROFILES_STAGING_ONLY.sql
       - name: Test vendor A/B cross-tenant access, anonymous denial and SQL validation
         run: psql -v ON_ERROR_STOP=1 -f tests/p2-brand/verify.sql
+
+  docker-ai-credit-ledger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: slbi_p2_ai
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres -d slbi_p2_ai"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: slbi_p2_ai
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Seed isolated synthetic vendors
+        run: psql -v ON_ERROR_STOP=1 -f tests/p2-brand/bootstrap.sql
+      - name: Reuse existing trusted GrowthOS wallet and ledger SQL
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261110010000_growth_os_credit_foundation.sql
+      - name: Run owner-scoped profile migration in disposable database
+        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p2/P2_01_SOCIAL_BRAND_PROFILES_STAGING_ONLY.sql
+      - name: Apply transactional AI usage safeguards
+        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p2/P2_02_P2_10_AI_CREDIT_RESERVATIONS_STAGING_ONLY.sql
+      - name: Verify user and global limits, refund and private human-review drafts
+        run: psql -v ON_ERROR_STOP=1 -f tests/p2-ai/credit-reservations-verify.sql
 
   nextjs-build:
     runs-on: ubuntu-latest
