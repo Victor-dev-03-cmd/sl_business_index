@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import IconsaxIcon from '@/app/vendor/components/IconsaxIcon';
-import MarketingModuleFrame from '@/app/vendor/marketing-engine/components/MarketingModuleFrame';
+import MarketingModuleFrame from '@/app/vendor/marketing/engine/components/MarketingModuleFrame';
 import {MARKETING_CONNECTORS} from '@/lib/marketing/engine-registry';
 
 const groups=[
