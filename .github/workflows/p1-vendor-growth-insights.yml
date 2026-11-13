@@ -1,0 +1,27 @@
+name: P1 Vendor Growth Insights Comparison
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'app/vendor/insights/**'
+      - 'lib/growth/insight-comparison.ts'
+      - 'tests/vendorGrowthComparison.test.mjs'
+      - '.github/workflows/p1-vendor-growth-insights.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  growth-insights:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Growth comparison and attribution regression checks
+        run: node --test tests/vendorGrowthComparison.test.mjs tests/growthAttribution.test.mjs
