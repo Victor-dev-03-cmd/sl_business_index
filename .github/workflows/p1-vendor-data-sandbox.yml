@@ -7,6 +7,7 @@ on:
       - 'tests/p1-release/**'
       - 'docs/growth/p1/P1_VENDOR_DATA_GUARDS_STAGING_ONLY.sql'
       - 'docs/growth/p1/P1_REVIEW_MODERATION_LOCKDOWN_STAGING_ONLY.sql'
+      - 'docs/growth/p1/P1_API_TRUNCATE_LOCKDOWN_REVIEW_ONLY.sql'
       - 'docs/growth/p1/P1_BUSINESS_LOCATION_GUARD_REVIEW_ONLY.sql'
       - '.github/workflows/p1-vendor-data-sandbox.yml'
   push:
@@ -15,6 +16,7 @@ on:
       - 'tests/p1-release/**'
       - 'docs/growth/p1/P1_VENDOR_DATA_GUARDS_STAGING_ONLY.sql'
       - 'docs/growth/p1/P1_REVIEW_MODERATION_LOCKDOWN_STAGING_ONLY.sql'
+      - 'docs/growth/p1/P1_API_TRUNCATE_LOCKDOWN_REVIEW_ONLY.sql'
 
 permissions:
   contents: read
@@ -53,6 +55,8 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f docs/growth/p1/P1_VENDOR_DATA_GUARDS_STAGING_ONLY.sql
       - name: Install review moderation lockdown ONLY in disposable database
         run: psql -v ON_ERROR_STOP=1 -f docs/growth/p1/P1_REVIEW_MODERATION_LOCKDOWN_STAGING_ONLY.sql
+      - name: Reject RLS-bypassing TRUNCATE privileges in disposable database
+        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p1/P1_API_TRUNCATE_LOCKDOWN_REVIEW_ONLY.sql
       - name: Verify tenant isolation, review uniqueness and mobile lead compatibility
         run: psql -v ON_ERROR_STOP=1 -f tests/p1-release/verify.sql
       - name: Reject direct API approval bypass and verify staff audit/decisions

@@ -108,6 +108,8 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f docs/growth/p1/P1_VENDOR_DATA_GUARDS_STAGING_ONLY.sql
       - name: Apply review moderation and column grants in throwaway Postgres only
         run: psql -v ON_ERROR_STOP=1 -f docs/growth/p1/P1_REVIEW_MODERATION_LOCKDOWN_STAGING_ONLY.sql
+      - name: Revoke dangerous API-role TRUNCATE on all disposable public tables
+        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p1/P1_API_TRUNCATE_LOCKDOWN_REVIEW_ONLY.sql
       - name: Verify vendor A/B and anonymous legacy flows
         run: psql -v ON_ERROR_STOP=1 -f tests/p1-release/verify.sql
       - name: Verify reviewer identity, pending privacy and staff approval audits

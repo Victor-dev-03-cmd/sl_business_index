@@ -18,6 +18,10 @@ BEGIN
     OR has_table_privilege('anon','public.analytics_logs','TRUNCATE') THEN
    RAISE EXCEPTION 'Public TRUNCATE privilege still exposed';
  END IF;
+ IF has_table_privilege('anon','public.profiles','TRUNCATE')
+    OR has_table_privilege('authenticated','public.businesses','TRUNCATE') THEN
+    RAISE EXCEPTION 'Broad public-table TRUNCATE bypass remains';
+ END IF;
  IF has_table_privilege('anon','public.lead_followups','SELECT')
     OR has_table_privilege('anon','public.lead_followups','INSERT')
     OR NOT has_table_privilege('authenticated','public.lead_followups','SELECT') THEN

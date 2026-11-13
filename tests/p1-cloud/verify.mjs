@@ -120,15 +120,17 @@ const leadBody={
   business_id:businesses.approvedA,name:'P1 Synthetic Visitor',
   phone:'0771234567',message:'Compatibility lead submission',status:'new'
 };
-r=await http(leadUrl,{method:'POST',body:leadBody,
-  headers:{Prefer:'return=representation'}});
-const newLead=ok(r,'legacy anonymous mobile enquiry',[201,200]);
-const leadId=newLead[0]?.id;
-assert.ok(leadId);
+// Legacy anonymous clients insert without asking for an inaccessible
+// private-row representation. The real owner confirms it afterward.
+r=await http(leadUrl,{method:'POST',body:leadBody});
+ok(r,'legacy anonymous mobile enquiry',[201,204]);
 r=await http(leadUrl+'?select=id,business_id',{jwt:vendorB});
 assert.equal(ok(r,'cross-vendor lead read').length,0);
 r=await http(leadUrl+'?select=id,business_id',{jwt:vendorA});
-assert.equal(ok(r,'owner lead read').length,1);
+const ownLeads=ok(r,'owner lead read');
+assert.equal(ownLeads.length,1);
+const leadId=ownLeads[0].id;
+assert.ok(leadId);
 log('PASS real PostgREST: legacy anonymous enquiry and owner-only lead read');
 
 // Follow-up rows are created and mutated only by owner, never public or B.
