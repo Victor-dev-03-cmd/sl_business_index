@@ -70,7 +70,7 @@ test('centered desktop top navigation exposes reversible, dismissible dropdowns 
 });
 
 test('owner workspace pages share restrained V7 shell without losing independent page flows',()=>{
-  const routes=['my-businesses','leads','reviews','insights','growth','marketing','qr-code','billing'];
+  const routes=['my-businesses','leads','reviews','insights','growth','qr-code','billing'];
   for(const route of routes){
     const page=read('app/vendor/'+route+'/page.tsx');
     assert.match(page,/neo\.page/,'missing shared Tailwind shell: '+route);
@@ -82,6 +82,12 @@ test('owner workspace pages share restrained V7 shell without losing independent
   const tokens=read('app/vendor/components/neumorphic.ts');
   for(const selector of ['hero:','heroDark:','card:','tile:','inset:','input:'])
     assert.ok(tokens.includes(selector),'missing design token: '+selector);
+  // New Marketing Studio is a server-rendered overview with equivalent Tailwind
+  // styling rather than a legacy interactive client shell.
+  const marketing=read('app/vendor/marketing/page.tsx');
+  assert.match(marketing,/rounded-xl border border-\[#ECECF0\]/);
+  assert.match(marketing,/bg-\[#FF7900\]/);
+  assert.match(marketing,/href="\/vendor\/marketing\/engine"/);
   assert.match(styles,/\.vendor-topbar-dropdown-panel/);
   assert.doesNotMatch(styles,/vendor-page-v7|vendor-page-v9|vendor-settings-v10/);
 });
@@ -100,7 +106,7 @@ test('Settings retains five real data-backed sections and accessible form contro
   assert.match(settings,/md:grid-cols-2/);
 });
 test('orange-charcoal neumorphism spans owner pages without versioned CSS selectors',()=>{
-  const routes=['dashboard','my-businesses','leads','reviews','insights','growth','marketing','qr-code','billing'];
+  const routes=['dashboard','my-businesses','leads','reviews','insights','growth','qr-code','billing'];
   for(const route of routes){
     const page=read('app/vendor/'+route+'/page.tsx');
     assert.match(page,/import \{ neo \}/,'missing Tailwind tokens: '+route);
