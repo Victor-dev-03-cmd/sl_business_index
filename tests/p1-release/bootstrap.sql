@@ -10,6 +10,14 @@ GRANT EXECUTE ON FUNCTION auth.uid() TO anon, authenticated;
 CREATE TABLE public.businesses(
   id uuid PRIMARY KEY, owner_id uuid, name text, status text NOT NULL
 );
+CREATE TABLE public.profiles(id uuid PRIMARY KEY, role text NOT NULL);
+INSERT INTO public.profiles VALUES
+ ('55555555-5555-4555-8555-555555555555','admin'),
+ ('11111111-1111-4111-8111-111111111111','vendor');
+GRANT SELECT ON public.profiles TO authenticated;
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "profiles self-read" ON public.profiles
+ FOR SELECT TO authenticated USING (id=auth.uid());
 CREATE TABLE public.leads(
   id uuid PRIMARY KEY, business_id uuid REFERENCES public.businesses(id),
   name text, status text NOT NULL DEFAULT 'new'
@@ -20,8 +28,9 @@ CREATE TABLE public.analytics_logs(
 );
 CREATE TABLE public.reviews(
   id uuid PRIMARY KEY, business_id uuid REFERENCES public.businesses(id),
-  user_id uuid, rating int NOT NULL CHECK (rating BETWEEN 1 AND 5),
-  comment text, is_approved boolean DEFAULT true
+  user_id uuid, user_name text NOT NULL DEFAULT 'Legacy reviewer',
+  rating int NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  comment text, sentiment text, is_approved boolean DEFAULT true
 );
 CREATE TABLE public.review_replies(
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -37,7 +46,7 @@ INSERT INTO public.leads(id,business_id,name) VALUES
 INSERT INTO public.reviews(id,business_id,user_id,rating,comment,is_approved) VALUES
 ('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','33333333-3333-4333-8333-333333333333',5,'Published A',true),
 ('ffffffff-ffff-4fff-8fff-ffffffffffff','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','44444444-4444-4444-8444-444444444444',4,'Published B',true),
-('aaaaeeee-aaaa-4aaa-8aaa-aaaaaaaeeeee','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','33333333-3333-4333-8333-333333333333',3,'Pending A',false);
+('aaaaeeee-aaaa-4aaa-8aaa-aaaaaaaeeeee','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','77777777-7777-4777-8777-777777777777',3,'Pending A',false);
 GRANT USAGE ON SCHEMA public TO anon, authenticated;
 GRANT ALL ON public.businesses, public.leads, public.lead_notes, public.analytics_logs,
   public.reviews, public.review_replies TO anon, authenticated;
