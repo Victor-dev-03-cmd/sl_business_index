@@ -99,7 +99,7 @@ test('start and callback do not trust browser identity or enable live sends',()=
   assert.match(start,/auth\.getUser\(\)/);
   assert.match(start,/getMarketingAccessForUser/);
   assert.match(start,/exactOAuthRequestOrigin/);
-  assert.match(start,/marketing_oauth_intents/);
+  assert.match(start,/slbi_begin_marketing_oauth_intent/);
   assert.match(callback,/auth\.getUser\(\)/);
   assert.match(callback,/slbi_claim_marketing_oauth_intent/);
   assert.match(callback,/slbi_store_verified_marketing_connection/);
