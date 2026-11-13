@@ -44,7 +44,7 @@ async function readGrowthWindow<T extends EventRow | LeadRow>(
         throw new Error('Too many activity records for exact browser reporting. Narrow the date range.');
       }
     }
-    rows.push(...((data || []) as T[]));
+    rows.push(...((data || []) as unknown as T[]));
     if (rows.length >= expectedCount!) break;
     if ((data?.length || 0) < INSIGHT_BATCH_SIZE) break;
   }
