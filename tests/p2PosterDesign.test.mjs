@@ -27,7 +27,7 @@ test('text layers can be edited, JSON-exported, safely restored and scaled',()=>
   assert.equal(restored?.layers[1].value,'விலை LKR 1,250');
   const story=scalePosterBlueprint(original,'story');
   assert.equal(story.format,'story');
-  assert.equal(story.layers[1].y,860);
+  assert.equal(story.layers[1].y,Math.round(original.layers[1].y*1920/1080));
   assert.equal(story.layers[1].x,original.layers[1].x);
   assert.equal(original.format,'square');
 });
