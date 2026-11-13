@@ -8,6 +8,8 @@ on:
       - 'app/vendor/marketing/**'
       - 'lib/marketing/**'
       - 'tests/p2BrandProfile.test.mjs'
+      - 'tests/p2PosterDesign.test.mjs'
+      - 'tests/p2AiCaption.test.mjs'
       - 'tests/p2-brand/**'
       - 'tests/p2-ai/**'
       - 'docs/growth/p2/**'
@@ -39,7 +41,7 @@ jobs:
           node-version: '24'
       - name: Brand validation, page/API contract and existing Marketing Studio tests
         run: |
-          node --test tests/p2BrandProfile.test.mjs tests/p2AiCaption.test.mjs
+          node --test tests/p2BrandProfile.test.mjs tests/p2AiCaption.test.mjs tests/p2PosterDesign.test.mjs
           node --test tests/vendorSettingsQrMarketing2026.test.mjs tests/vendorPortalRelease.test.mjs
 
   docker-tenant-rls:
