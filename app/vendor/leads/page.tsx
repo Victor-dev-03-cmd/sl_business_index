@@ -6,6 +6,12 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import IconsaxIcon from '../components/IconsaxIcon';
+import {
+  followUpState,
+  localFollowUpInput,
+  parseFollowUpInput,
+  type LeadFollowUp,
+} from '@/lib/growth/lead-followups';
 
 type Stage = 'new' | 'contacted' | 'converted' | 'lost';
 type StageFilter = 'all' | Stage;
@@ -32,6 +38,10 @@ const statuses: StageFilter[] = ['all', ...stages];
 const panel = neo.card;
 const button = neo.button;
 const nfmt = (n: number) => new Intl.NumberFormat('en-LK').format(n);
+const LEAD_PAGE_SIZE = 250;
+const MAX_VISIBLE_LEADS = 5000;
+const FOLLOW_UP_SELECT = 'lead_id,due_at,done_at,created_at,updated_at';
+type FollowUpReadiness = 'loading' | 'available' | 'unavailable';
 
 const statusStyle: Record<Stage, { label: string; css: string; dot: string }> = {
   new: { label: 'New', css: 'border-[#dbe8fc] bg-[#f1f6ff] text-[#376ab2]', dot: 'bg-[#3778cb]' },
@@ -87,10 +97,19 @@ export default function LeadsPage() {
   const [savingStatusId, setSavingStatusId] = useState<string | null>(null);
   const [savingNote, setSavingNote] = useState(false);
   const [userSignedIn, setUserSignedIn] = useState(true);
+  const [followUps, setFollowUps] = useState<Record<string, LeadFollowUp>>({});
+  const [followUpReadiness, setFollowUpReadiness] = useState<FollowUpReadiness>('loading');
+  const [followUpDraft, setFollowUpDraft] = useState('');
+  const [savingFollowUp, setSavingFollowUp] = useState(false);
+  const [dueOnly, setDueOnly] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
+  const [leadLimitReached, setLeadLimitReached] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
+    setFollowUpReadiness('loading');
+    setLeadLimitReached(false);
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError) throw authError;
@@ -98,6 +117,8 @@ export default function LeadsPage() {
         setUserSignedIn(false);
         setBusinesses([]);
         setLeads([]);
+        setFollowUps({});
+        setFollowUpReadiness('unavailable');
         return;
       }
       setUserSignedIn(true);
@@ -112,29 +133,74 @@ export default function LeadsPage() {
 
       if (!ownedRows.length) {
         setLeads([]);
+        setFollowUps({});
+        setFollowUpReadiness('unavailable');
         setSelectedId(null);
         return;
       }
 
-      const { data: rows, error: leadError } = await supabase
-        .from('leads')
-        .select('*, lead_notes(id,note,created_at)')
-        .in('business_id', ownedRows.map(b => b.id))
-        .order('created_at', { ascending: false });
-      if (leadError) throw leadError;
-      const current = (rows || []) as Lead[];
+      // PostgREST responses can be capped at 1,000 rows. A capped slice
+      // cannot be presented as complete "all-time" pipeline totals.
+      const current: Lead[] = [];
+      for (let offset = 0; offset < MAX_VISIBLE_LEADS; offset += LEAD_PAGE_SIZE) {
+        const { data: rows, error: leadError, count } = await supabase
+          .from('leads')
+          .select('*, lead_notes(id,note,created_at)', { count: offset === 0 ? 'exact' : undefined })
+          .in('business_id', ownedRows.map(b => b.id))
+          .order('created_at', { ascending: false })
+          .order('id', { ascending: false })
+          .range(offset, offset + LEAD_PAGE_SIZE - 1);
+        if (leadError) throw leadError;
+        if (offset === 0 && typeof count === 'number' && count > MAX_VISIBLE_LEADS) {
+          setLeadLimitReached(true);
+          setLeads([]);
+          setFollowUps({});
+          setFollowUpReadiness('unavailable');
+          setSelectedId(null);
+          return;
+        }
+        current.push(...((rows || []) as Lead[]));
+        if ((rows?.length || 0) < LEAD_PAGE_SIZE) break;
+      }
       setLeads(current);
       setSelectedId(prev => current.some(l => l.id === prev) ? prev : null);
+
+      // New follow-up table is introduced through a separately reviewed
+      // migration. Until it is applied, the normal leads/notes CRM remains
+      // fully usable and scheduling is visibly marked unavailable.
+      const { data: reminderRows, error: reminderError, count: reminderCount } = await supabase
+        .from('lead_followups')
+        .select(FOLLOW_UP_SELECT, { count: 'exact' })
+        .limit(MAX_VISIBLE_LEADS);
+      if (reminderError || (reminderCount !== null && reminderCount > MAX_VISIBLE_LEADS)) {
+        setFollowUps({});
+        setFollowUpReadiness('unavailable');
+      } else {
+        setFollowUps(Object.fromEntries(((reminderRows || []) as LeadFollowUp[])
+          .filter(row => current.some(lead => lead.id === row.lead_id))
+          .map(row => [row.lead_id, row])));
+        setFollowUpReadiness('available');
+      }
     } catch (caught) {
       console.error('Vendor Leads fetch failed', caught);
       setError('Unable to load your customer enquiries. Check the connection and retry.');
       setLeads([]);
+      setFollowUps({});
+      setFollowUpReadiness('unavailable');
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(interval);
+  }, []);
+  useEffect(() => {
+    const active = selectedId ? followUps[selectedId] : undefined;
+    setFollowUpDraft(active && !active.done_at ? localFollowUpInput(active.due_at) : '');
+  }, [selectedId, followUps]);
 
   useEffect(() => {
     if (!selectedId) return;
@@ -156,6 +222,10 @@ export default function LeadsPage() {
   const convertedCount = leads.filter(l => l.status === 'converted').length;
   const lostCount = leads.filter(l => l.status === 'lost').length;
   const conversionRate = total ? (convertedCount / total * 100) : 0;
+  const dueCount = leads.filter(lead => {
+    const reminder = followUps[lead.id];
+    return reminder && followUpState(reminder, now) === 'overdue';
+  }).length;
 
   const filtered = useMemo(() => {
     const needle = search.trim().toLowerCase();
@@ -166,7 +236,9 @@ export default function LeadsPage() {
       const matchesStage = stageFilter === 'all' || l.status === stageFilter;
       const matchesBusiness = businessFilter === 'all' || String(l.business_id) === businessFilter;
       const matchesPeriod = earliest === null || new Date(l.created_at).getTime() >= earliest;
-      return matchesSearch && matchesStage && matchesBusiness && matchesPeriod;
+      const matchesDue = !dueOnly || Boolean(followUps[l.id]
+        && followUpState(followUps[l.id], now) === 'overdue');
+      return matchesSearch && matchesStage && matchesBusiness && matchesPeriod && matchesDue;
     });
     list.sort((a, b) => {
       if (sort === 'name') return String(a.name || '').localeCompare(String(b.name || ''));
@@ -176,7 +248,7 @@ export default function LeadsPage() {
       return sort === 'oldest' ? left - right : right - left;
     });
     return list;
-  }, [leads, search, stageFilter, businessFilter, period, sort, businessNames]);
+  }, [leads, search, stageFilter, businessFilter, period, sort, businessNames, dueOnly, followUps, now]);
 
   const pageSize = 10;
   const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
@@ -188,6 +260,59 @@ export default function LeadsPage() {
     setNoteDraft('');
   }
 
+  async function saveFollowUp() {
+    const current = selected;
+    if (!current || savingFollowUp || followUpReadiness !== 'available') return;
+    if (!businesses.some(b => b.id === current.business_id)) {
+      toast.error('This enquiry is not associated with your business.');
+      return;
+    }
+    const parsed = parseFollowUpInput(followUpDraft);
+    if (!parsed.ok) { toast.error(parsed.reason); return; }
+    setSavingFollowUp(true);
+    try {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) throw authError || new Error('Sign in required.');
+      const { data, error: reminderError } = await supabase.from('lead_followups')
+        .upsert({
+          lead_id: current.id, due_at: parsed.utc,
+          done_at: null, updated_at: new Date().toISOString(),
+        }, { onConflict: 'lead_id' })
+        .select(FOLLOW_UP_SELECT)
+        .single();
+      if (reminderError || !data) throw reminderError || new Error('Not saved.');
+      const reminder = data as LeadFollowUp;
+      setFollowUps(prev => ({ ...prev, [current.id]: reminder }));
+      toast.success('Follow-up scheduled in your CRM');
+    } catch (caught) {
+      console.error('Vendor follow-up save failed', caught);
+      toast.error('Could not schedule follow-up. Please retry.');
+    } finally { setSavingFollowUp(false); }
+  }
+
+  async function completeFollowUp() {
+    const current = selected;
+    const reminder = current ? followUps[current.id] : undefined;
+    if (!current || !reminder || reminder.done_at || savingFollowUp
+        || followUpReadiness !== 'available') return;
+    setSavingFollowUp(true);
+    try {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) throw authError || new Error('Sign in required.');
+      const { data, error: updateError } = await supabase.from('lead_followups')
+        .update({ done_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+        .eq('lead_id', current.id)
+        .select(FOLLOW_UP_SELECT)
+        .single();
+      if (updateError || !data) throw updateError || new Error('Not updated.');
+      setFollowUps(prev => ({ ...prev, [current.id]: data as LeadFollowUp }));
+      toast.success('Follow-up marked completed');
+    } catch (caught) {
+      console.error('Vendor follow-up completion failed', caught);
+      toast.error('Could not complete follow-up. Please retry.');
+    } finally { setSavingFollowUp(false); }
+  }
+
   async function updateStatus(lead: Lead, next: Stage) {
     if (savingStatusId || lead.status === next) return;
     // The UI only operates on leads fetched through businesses owned by this vendor.
@@ -197,6 +322,8 @@ export default function LeadsPage() {
     }
     setSavingStatusId(lead.id);
     try {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) throw authError || new Error('Sign in required.');
       const { data, error: mutationError } = await supabase.from('leads')
         .update({ status: next })
         .eq('id', lead.id)
@@ -228,6 +355,8 @@ export default function LeadsPage() {
     }
     setSavingNote(true);
     try {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) throw authError || new Error('Sign in required.');
       const { data, error: noteError } = await supabase.from('lead_notes')
         .insert({ lead_id: current.id, note })
         .select('id,note,created_at')
