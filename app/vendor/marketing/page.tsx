@@ -190,6 +190,7 @@ export default function MarketingPage() {
           <p className="mt-2 max-w-[720px] text-[12px] leading-6 text-[#777780]">Build business-aware campaigns, review multilingual copy, plan distribution, and keep a clear record of every draft. No generic canvas editor.</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Link href="/vendor/marketing/brand" className="flex h-10 items-center gap-2 rounded-lg border border-[#F1C5A0] bg-[#FFF6EF] px-4 text-[12px] font-semibold text-[#B0520E] hover:bg-[#FFEAD9]"><IconsaxIcon name="shop" size={17}/> Brand Profile · P2-01</Link>
           <Link href="/vendor/insights" className="flex h-10 items-center gap-2 border border-[#DEDEE2] px-4 text-[12px] font-semibold text-[#54545C] hover:bg-[#FFF8F2]"><IconsaxIcon name="status-up" size={17}/> Growth insights</Link>
           <button type="button" onClick={()=>launch('social')} className="flex h-10 items-center gap-2 bg-[#202024] px-4 text-[12px] font-semibold text-white hover:bg-[#39393E]"><IconsaxIcon name="add" size={17} color="white"/> New campaign</button>
         </div>
@@ -206,7 +207,13 @@ export default function MarketingPage() {
           <span className="bg-[#FFF1E6] p-2.5 text-[#C56210]"><IconsaxIcon name={k.icon} size={20}/></span>
         </div>)}
       </div>
-      <section aria-label="Marketing services" className="grid gap-3 md:grid-cols-3">
+      <section aria-label="Marketing services" className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <Link href="/vendor/marketing/brand" className={card+' group min-h-[176px] p-5 text-left transition hover:border-[#F5BC8B] hover:bg-[#FFF8F1]'}>
+          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#FFF1E5] text-[#C56210]"><IconsaxIcon name="shop" size={20}/></span>
+          <h2 className="mt-3 text-[15px] font-bold">Business Brand Profile</h2>
+          <p className="mt-1 text-[11px] leading-5 text-[#2C2C31]">Define the logo, voice, audience, colors, offers and English / Tamil / Sinhala guidelines once per business.</p>
+          <span className="mt-4 inline-flex items-center gap-1 text-[11px] font-bold text-[#B4530B]">Open Brand Profile <IconsaxIcon name="arrow-right-2" size={13}/></span>
+        </Link>
         {[
           {title:'AI Social Marketing',sub:'Business brief, multilingual caption, creative review and campaign planning',icon:'flash',action:'Open social workflow',target:'social' as Section},
           {title:'Consent-based Email',sub:'Audience permissions, segmentation, review and compliance checks',icon:'sms',action:'Review email readiness',target:'email' as Section},
