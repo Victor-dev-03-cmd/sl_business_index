@@ -6,7 +6,6 @@
  *
  * Based on RFC 9700: exact redirect_uri, transaction-bound state, PKCE S256.
  */
-import 'server-only';
 import {createHash,createHmac,randomBytes,timingSafeEqual} from 'node:crypto';
 
 export type ProviderFamily='meta_pages'|'instagram_professional'|'whatsapp_business'|'google_mail'|'microsoft_mail';
