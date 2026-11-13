@@ -6,6 +6,7 @@ on:
     paths:
       - 'tests/p1-release/**'
       - 'docs/growth/p1/P1_VENDOR_DATA_GUARDS_STAGING_ONLY.sql'
+      - 'docs/growth/p1/P1_BUSINESS_LOCATION_GUARD_REVIEW_ONLY.sql'
       - '.github/workflows/p1-vendor-data-sandbox.yml'
   push:
     branches: ['release/p1-vendor-integration-20261113']
@@ -50,3 +51,37 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f docs/growth/p1/P1_VENDOR_DATA_GUARDS_STAGING_ONLY.sql
       - name: Verify tenant isolation, review uniqueness and mobile lead compatibility
         run: psql -v ON_ERROR_STOP=1 -f tests/p1-release/verify.sql
+
+  p1-location-sandbox:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgis/postgis:17-3.5
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: slbi_location_sandbox
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d slbi_location_sandbox"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: slbi_location_sandbox
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Prepare disposable PostGIS address and legacy data
+        run: psql -v ON_ERROR_STOP=1 -f tests/p1-release/location_bootstrap.sql
+      - name: Install candidate business location trigger ONLY in disposable DB
+        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p1/P1_BUSINESS_LOCATION_GUARD_REVIEW_ONLY.sql
+      - name: Test bad coordinates, missing address, geography drift and legacy updates
+        run: psql -v ON_ERROR_STOP=1 -f tests/p1-release/location_verify.sql
