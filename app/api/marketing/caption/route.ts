@@ -1,6 +1,7 @@
 import {createClient as createAdminClient} from '@supabase/supabase-js';
 import {createClient} from '@/lib/supabase/server';
 import {isSameOrigin} from '@/lib/growth/ingestion-contract';
+import {getMarketingAccessForUser,rejectMarketingAccess} from '@/lib/marketing/pro-access-server';
 import {
   buildCaptionMessages,CAPTION_MODEL,MAX_OUTPUT_TOKENS,
   sanitizeModelCaption,validateCaptionInput,
@@ -27,6 +28,8 @@ export async function GET(request:Request){
   const client=await createClient();
   const {data:{user},error:authError}=await client.auth.getUser();
   if(authError||!user)return response(401,{error:'Sign in to view your marketing drafts.'});
+  const proDenied=rejectMarketingAccess(await getMarketingAccessForUser(user.id,client));
+  if(proDenied)return proDenied;
   const {data:business,error:businessError}=await client.from('businesses')
     .select('id').eq('id',businessId).eq('owner_id',user.id).maybeSingle();
   if(businessError)return response(503,{error:'Cannot validate business ownership.'});
@@ -46,6 +49,8 @@ export async function PATCH(request:Request){
   const client=await createClient();
   const {data:{user},error:authError}=await client.auth.getUser();
   if(authError||!user)return response(401,{error:'Sign in to review your caption.'});
+  const proDenied=rejectMarketingAccess(await getMarketingAccessForUser(user.id,client));
+  if(proDenied)return proDenied;
   let v:unknown;
   try{
     const raw=await request.text();
@@ -84,6 +89,8 @@ export async function POST(request:Request){
   const client=await createClient();
   const {data:{user},error:authError}=await client.auth.getUser();
   if(authError||!user)return response(401,{error:'Sign in to create an AI caption.'});
+  const proDenied=rejectMarketingAccess(await getMarketingAccessForUser(user.id,client));
+  if(proDenied)return proDenied;
   let parsed:unknown;
   try{
     const raw=await request.text();
