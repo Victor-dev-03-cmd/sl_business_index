@@ -37,6 +37,8 @@ test('Invalid colors, repeated languages, unexpected fields and forged owner ref
     {...good,brandName:'x'},
     {...good,offers:Array.from({length:6},()=>({title:'Offer',details:'Details',validUntil:null}))},
     {...good,offers:[{title:'Offer',details:'Terms',validUntil:'2026-02-30'}]},
+    {...good,offers:[{title:'Offer',details:'Terms',validUntil:'2027-12-31-sneaky'}]},
+    {...good,offers:[{title:'Offer',details:'Terms'}]},
     {...good,offers:[{title:'Offer',details:'Terms',validUntil:null,discount:'100%'}]},
   ]) assert.equal(validateBrandProfile(value).ok,false,JSON.stringify(value).slice(0,110));
 });
