@@ -48,13 +48,14 @@ export async function POST(request:Request){
     const ciphertext=encryptPreviewValue(verifier,config.encryptionKey,{
       ownerId:user.id,businessId,provider:'google_mail',purpose:'pkce',subject:digest,
     });
-    const {error}=await service.from('marketing_oauth_intents').insert({
-      user_id:user.id,business_id:businessId,provider:'google_mail',
-      state_digest:digest,redirect_uri:config.redirectUri,
-      pkce_verifier_ciphertext:ciphertext,
-      expires_at:new Date(Date.now()+10*60*1000).toISOString(),
+    const {data:stored,error}=await service.rpc('slbi_begin_marketing_oauth_intent',{
+      p_owner_id:user.id,p_business_id:businessId,p_provider:'google_mail',
+      p_state_digest:digest,p_pkce_ciphertext:ciphertext,
+      p_redirect_uri:config.redirectUri,
+      p_expires_at:new Date(Date.now()+10*60*1000).toISOString(),
     });
-    if(error)return reply(503,'Connector authorization storage is not ready.');
+    if(error?.code==='P0001')return reply(429,'Too many connection attempts. Try later.');
+    if(error||!stored)return reply(503,'Connector authorization storage is not ready.');
     return Response.json({authorizationUrl:makeGooglePreviewAuthUrl(config,state,verifier)},{
       status:200,headers:{'cache-control':'private, no-store','referrer-policy':'no-referrer',
         'x-content-type-options':'nosniff'},

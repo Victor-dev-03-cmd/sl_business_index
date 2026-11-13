@@ -208,6 +208,10 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f docs/growth/p2/P2_07_OAUTH_CONNECTION_STORE_STAGING_ONLY.sql
       - name: Verify paid owner, Basic, cross-owner and expired Pro connection store
         run: psql -v ON_ERROR_STOP=1 -f tests/p2-oauth/store-verify.sql
+      - name: Apply Pro-only OAuth begin with transactional hourly rate limit
+        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p2/P2_07_OAUTH_START_RATE_LIMIT_STAGING_ONLY.sql
+      - name: Verify OAuth start owner isolation and 5 per hour limit
+        run: psql -v ON_ERROR_STOP=1 -f tests/p2-oauth/start-verify.sql
 
   nextjs-build:
     runs-on: ubuntu-latest

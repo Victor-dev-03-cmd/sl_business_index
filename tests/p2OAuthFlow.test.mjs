@@ -116,3 +116,13 @@ test('connection metadata and encrypted credential are saved atomically',()=>{
   assert.match(sql,/g\.plan_name IN \('Professional','Enterprise'\)/);
   assert.match(sql,/b\.owner_id=p_owner_id/);
 });
+
+test('OAuth start enforces server-side atomic rate limiting',()=>{
+  const api=read('app/api/marketing/oauth/google_mail/start/route.ts');
+  const sql=read('docs/growth/p2/P2_07_OAUTH_START_RATE_LIMIT_STAGING_ONLY.sql');
+  assert.match(api,/slbi_begin_marketing_oauth_intent/);
+  assert.match(api,/429/);
+  assert.match(sql,/pg_advisory_xact_lock/);
+  assert.match(sql,/interval '1 hour'/);
+  assert.match(sql,/REVOKE ALL ON FUNCTION/);
+});
