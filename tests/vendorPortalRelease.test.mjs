@@ -8,6 +8,7 @@ const actions=load('app/vendor/components/VendorQuickActions.tsx');
 const style=load('app/vendor/vendor-workspace.css');
 const settings=load('app/vendor/settings/page.tsx');
 const marketing=load('app/vendor/marketing/page.tsx');
+const campaignWorkspace=load('app/vendor/marketing/campaigns/page.tsx');
 const qr=load('app/vendor/qr-code/page.tsx');
 const admin=load('app/admin/verifications/page.tsx');
 const profileSecurity=load('docs/growth/PRIVILEGE_ESCALATION_GUARD_REVIEW_ONLY.sql');
@@ -58,18 +59,22 @@ test('Settings saves actual account/business data and does not expose fake contr
   assert.doesNotMatch(settings,/Higher ranking in search results/);
 });
 
-test('GrowthOS Marketing Studio replaces the canvas editor with real business-aware workflows',()=>{
+test('GrowthOS Marketing Studio is overview-only and preserves real manual campaigns separately',()=>{
   assert.match(marketing,/Marketing Studio/);
-  assert.match(marketing,/businesses.*owner_id|eq\('owner_id',user\.id\)/);
+  assert.match(marketing,/from\('businesses'\)/);
+  assert.match(marketing,/eq\('owner_id',user\.id\)/);
   assert.match(marketing,/marketing_campaigns/);
-  assert.match(marketing,/Campaign library/);
-  assert.match(marketing,/தமிழ்/);
-  assert.match(marketing,/සිංහල/);
-  assert.match(marketing,/Consent-based Email/);
-  assert.match(marketing,/status:schedule\?'scheduled':'drafted'/);
-  assert.match(marketing,/external publishing is not automatic/);
-  assert.match(marketing,/vendor\/insights/);
-  assert.doesNotMatch(marketing,/MarketingDesignEditor|EditorCanvas|showEditor|js\.puter\.com/);
+  assert.match(marketing,/count:'exact',head:true/);
+  assert.match(marketing,/\/vendor\/marketing\/engine/);
+  assert.match(marketing,/\/vendor\/marketing\/campaigns/);
+  assert.doesNotMatch(marketing,/const exportBrandedCreative=|status:schedule\?'scheduled':'drafted'/);
+  assert.match(campaignWorkspace,/Campaign Workspace/);
+  assert.match(campaignWorkspace,/தமிழ்/);
+  assert.match(campaignWorkspace,/සිංහල/);
+  assert.match(campaignWorkspace,/Consent-based Email/);
+  assert.match(campaignWorkspace,/status:schedule\?'scheduled':'drafted'/);
+  assert.match(campaignWorkspace,/external publishing is not automatic/);
+  assert.doesNotMatch(campaignWorkspace,/MarketingDesignEditor|EditorCanvas|showEditor|js\.puter\.com/);
   assert.doesNotMatch(marketing,/2\.5k - 5k impressions|View Stats/);
 });
 
