@@ -40,7 +40,7 @@ test('invalid and stale coordinates or fake textual addresses cannot be submitte
 
 test('public map cards show the shop/building and its actual mapped locality', () => {
   assert.equal(getBusinessDisplayAddress({ detailed_address: physical, address: selectedPin.address }),
-    physical + ', ' + selectedPin.address);
+    'No 12, Main Street, Jaffna, Northern Province, Sri Lanka');
   assert.equal(getBusinessDisplayAddress({ detailed_address: '12 Main Street, Jaffna', address: 'Jaffna' }),
     '12 Main Street, Jaffna');
   assert.equal(getBusinessDisplayAddress({ detailed_address: null, address: '9.6615, 80.0255', city: 'Jaffna' }),
