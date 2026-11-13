@@ -9,6 +9,7 @@ on:
       - 'lib/**'
       - 'tests/**'
       - 'docs/growth/p1/**'
+      - 'supabase/migrations/*_p1_*.sql'
       - 'package*.json'
       - 'bun.lock'
   pull_request:
@@ -18,6 +19,7 @@ on:
       - 'lib/**'
       - 'tests/**'
       - 'docs/growth/p1/**'
+      - 'supabase/migrations/*_p1_*.sql'
       - 'package*.json'
       - 'bun.lock'
       - '.github/workflows/p1-integrated-release-gate.yml'
@@ -105,11 +107,11 @@ jobs:
       - name: Seed disposable ownership, old customer reviews and legacy enquiries
         run: psql -v ON_ERROR_STOP=1 -f tests/p1-release/bootstrap.sql
       - name: Apply CRM and least-privilege guards in throwaway Postgres only
-        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p1/P1_VENDOR_DATA_GUARDS_STAGING_ONLY.sql
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113091124_p1_vendor_lead_followups_and_review_owner_rls.sql
       - name: Apply review moderation and column grants in throwaway Postgres only
-        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p1/P1_REVIEW_MODERATION_LOCKDOWN_STAGING_ONLY.sql
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113091146_p1_review_moderation_pending_staff_audit.sql
       - name: Revoke dangerous API-role TRUNCATE on all disposable public tables
-        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p1/P1_API_TRUNCATE_LOCKDOWN_REVIEW_ONLY.sql
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113091046_p1_public_api_truncate_lockdown.sql
       - name: Verify vendor A/B and anonymous legacy flows
         run: psql -v ON_ERROR_STOP=1 -f tests/p1-release/verify.sql
       - name: Verify reviewer identity, pending privacy and staff approval audits
@@ -144,6 +146,6 @@ jobs:
       - name: Seed throwaway business listing coordinates
         run: psql -v ON_ERROR_STOP=1 -f tests/p1-release/location_bootstrap.sql
       - name: Apply physical address and location guards to throwaway DB only
-        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p1/P1_BUSINESS_LOCATION_GUARD_REVIEW_ONLY.sql
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113091207_p1_business_physical_address_postgis_guard.sql
       - name: Validate invalid/old address and GPS edge cases
         run: psql -v ON_ERROR_STOP=1 -f tests/p1-release/location_verify.sql

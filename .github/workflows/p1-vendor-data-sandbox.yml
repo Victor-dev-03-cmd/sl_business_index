@@ -5,18 +5,18 @@ on:
     branches: [main, 'release/p1-vendor-integration-20261113']
     paths:
       - 'tests/p1-release/**'
-      - 'docs/growth/p1/P1_VENDOR_DATA_GUARDS_STAGING_ONLY.sql'
-      - 'docs/growth/p1/P1_REVIEW_MODERATION_LOCKDOWN_STAGING_ONLY.sql'
-      - 'docs/growth/p1/P1_API_TRUNCATE_LOCKDOWN_REVIEW_ONLY.sql'
-      - 'docs/growth/p1/P1_BUSINESS_LOCATION_GUARD_REVIEW_ONLY.sql'
+      - 'supabase/migrations/20261113091124_p1_vendor_lead_followups_and_review_owner_rls.sql'
+      - 'supabase/migrations/20261113091146_p1_review_moderation_pending_staff_audit.sql'
+      - 'supabase/migrations/20261113091046_p1_public_api_truncate_lockdown.sql'
+      - 'supabase/migrations/20261113091207_p1_business_physical_address_postgis_guard.sql'
       - '.github/workflows/p1-vendor-data-sandbox.yml'
   push:
     branches: ['release/p1-vendor-integration-20261113', 'security/p1-review-moderation-20261113']
     paths:
       - 'tests/p1-release/**'
-      - 'docs/growth/p1/P1_VENDOR_DATA_GUARDS_STAGING_ONLY.sql'
-      - 'docs/growth/p1/P1_REVIEW_MODERATION_LOCKDOWN_STAGING_ONLY.sql'
-      - 'docs/growth/p1/P1_API_TRUNCATE_LOCKDOWN_REVIEW_ONLY.sql'
+      - 'supabase/migrations/20261113091124_p1_vendor_lead_followups_and_review_owner_rls.sql'
+      - 'supabase/migrations/20261113091146_p1_review_moderation_pending_staff_audit.sql'
+      - 'supabase/migrations/20261113091046_p1_public_api_truncate_lockdown.sql'
 
 permissions:
   contents: read
@@ -52,11 +52,11 @@ jobs:
       - name: Simulate legacy schema and two vendor identities
         run: psql -v ON_ERROR_STOP=1 -f tests/p1-release/bootstrap.sql
       - name: Apply candidate RLS guards to disposable database ONLY
-        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p1/P1_VENDOR_DATA_GUARDS_STAGING_ONLY.sql
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113091124_p1_vendor_lead_followups_and_review_owner_rls.sql
       - name: Install review moderation lockdown ONLY in disposable database
-        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p1/P1_REVIEW_MODERATION_LOCKDOWN_STAGING_ONLY.sql
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113091146_p1_review_moderation_pending_staff_audit.sql
       - name: Reject RLS-bypassing TRUNCATE privileges in disposable database
-        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p1/P1_API_TRUNCATE_LOCKDOWN_REVIEW_ONLY.sql
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113091046_p1_public_api_truncate_lockdown.sql
       - name: Verify tenant isolation, review uniqueness and mobile lead compatibility
         run: psql -v ON_ERROR_STOP=1 -f tests/p1-release/verify.sql
       - name: Reject direct API approval bypass and verify staff audit/decisions
@@ -92,6 +92,6 @@ jobs:
       - name: Prepare disposable PostGIS address and legacy data
         run: psql -v ON_ERROR_STOP=1 -f tests/p1-release/location_bootstrap.sql
       - name: Install candidate business location trigger ONLY in disposable DB
-        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p1/P1_BUSINESS_LOCATION_GUARD_REVIEW_ONLY.sql
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113091207_p1_business_physical_address_postgis_guard.sql
       - name: Test bad coordinates, missing address, geography drift and legacy updates
         run: psql -v ON_ERROR_STOP=1 -f tests/p1-release/location_verify.sql
