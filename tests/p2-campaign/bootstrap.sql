@@ -24,3 +24,12 @@ INSERT INTO public.marketing_campaigns(
  'Existing historic record with unverified publishing state',
  '#FF7900',ARRAY['facebook'],'posted'
 );
+
+-- Synthetic paid entitlement only in disposable Docker; never production.
+INSERT INTO public.growth_entitlements(
+  user_id,plan_name,payment_reference,verified_at,expires_at
+) VALUES (
+  'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+  'Professional','synthetic-verified-payment',
+  now()-interval '1 day',now()+interval '30 days'
+);
