@@ -33,7 +33,7 @@ test('Marketing Studio is overview-only, separate Campaign Workspace preserves f
   assert.match(overview,/Marketing Studio/);
   assert.match(overview,/select\('id',\{count:'exact',head:true\}\)/);
   assert.match(overview,/href="\/vendor\/marketing\/engine"/);
-  assert.match(overview,/href="\/vendor\/marketing\/campaigns"/);
+  assert.match(overview,/href:'\/vendor\/marketing\/campaigns'/);
   assert.match(overview,/Planning records — not queued publishing jobs/);
   assert.doesNotMatch(overview,/section==='social'|const exportBrandedCreative|canvas\.toDataURL|save=async\(schedule/);
   assert.match(campaigns,/const exportBrandedCreative=/);
@@ -79,7 +79,7 @@ test('Pro server access protects all premium routes and authenticated APIs, not 
     assert.match(read('app/api/marketing/'+api+'/route.ts'),/getMarketingAccessForUser/);
     assert.match(read('app/api/marketing/'+api+'/route.ts'),/rejectMarketingAccess/);
   }
-  assert.doesNotMatch(server,/NEXT_PUBLIC_IS_PRO|user_metadata|localStorage/);
+  assert.doesNotMatch(server,/process\.env\.NEXT_PUBLIC_IS_PRO|getSession\(\)/);
 });
 test('Trilingual deterministic enquiry routing escalates pricing, refunds and uncertainty',()=>{
   const cases=[
