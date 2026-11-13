@@ -1,5 +1,14 @@
 \set ON_ERROR_STOP on
 -- Run only in disposable Postgres. Each DO block impersonates an API role.
+DO $columns$
+BEGIN
+  IF has_column_privilege('authenticated','public.reviews','sentiment','INSERT')
+      OR has_column_privilege('authenticated','public.reviews','moderated_by','INSERT')
+      OR NOT has_column_privilege('authenticated','public.reviews','comment','INSERT') THEN
+    RAISE EXCEPTION 'Author INSERT can forge sentiment/moderator audit fields';
+  END IF;
+END
+$columns$;
 
 SET ROLE authenticated;
 SET "request.jwt.claim.sub"='66666666-6666-4666-8666-666666666666';
