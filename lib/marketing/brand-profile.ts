@@ -101,13 +101,14 @@ export function validateBrandProfile(payload: unknown): BrandValidation {
       return { ok:false, error:'An offer has invalid fields.' };
     }
     const title = limit(offer.title,100), details = limit(offer.details,500);
-    const date = offer.validUntil === null ? null : limit(offer.validUntil,10);
-    if (!title || !details || date === undefined || (date !== null &&
-      (!DATE.test(date) || !Number.isFinite(Date.parse(date + 'T00:00:00Z')) ||
-       new Date(date + 'T00:00:00Z').toISOString().slice(0,10) !== date))) {
+    const date = offer.validUntil;
+    const validDate = date === null || (typeof date === 'string' && DATE.test(date)
+      && Number.isFinite(Date.parse(date + 'T00:00:00Z'))
+      && new Date(date + 'T00:00:00Z').toISOString().slice(0,10) === date);
+    if (!title || !details || !validDate) {
       return { ok:false, error:'Offer title, conditions or expiry date is invalid.' };
     }
-    offers.push({ title, details, validUntil:date });
+    offers.push({ title, details, validUntil:date as string | null });
   }
   return { ok:true, value:{
     businessId:payload.businessId,
