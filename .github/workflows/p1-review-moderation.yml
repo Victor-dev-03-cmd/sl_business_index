@@ -6,8 +6,8 @@ on:
     paths:
       - 'app/api/reviews/**'
       - 'app/api/admin/reviews/**'
-      - 'app/api/[[...route]]/route.ts'
-      - 'app/business/[slug]/BusinessDetailsClient.tsx'
+      - 'app/api/**'
+      - 'app/business/**'
       - 'app/admin/review-queue/**'
       - 'app/admin/layout.tsx'
       - 'lib/reviews/**'
@@ -19,8 +19,8 @@ on:
     paths:
       - 'app/api/reviews/**'
       - 'app/api/admin/reviews/**'
-      - 'app/api/[[...route]]/route.ts'
-      - 'app/business/[slug]/BusinessDetailsClient.tsx'
+      - 'app/api/**'
+      - 'app/business/**'
       - 'app/admin/review-queue/**'
       - 'lib/reviews/**'
       - 'tests/reviewModerationSecurity.test.mjs'
