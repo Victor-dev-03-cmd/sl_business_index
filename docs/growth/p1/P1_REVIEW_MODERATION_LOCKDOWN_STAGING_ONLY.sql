@@ -119,7 +119,10 @@ REVOKE ALL ON FUNCTION public.slbi_review_moderation_audit()
 -- not protect it). Anonymous users only read approved public reviews.
 REVOKE ALL ON public.reviews FROM PUBLIC, anon, authenticated;
 GRANT SELECT ON public.reviews TO anon, authenticated;
-GRANT INSERT ON public.reviews TO authenticated;
+-- Reviewer clients may only INSERT their own public content and explicitly
+-- pending state, never synthetic sentiment, staff decision, or audit columns.
+GRANT INSERT (business_id, user_id, user_name, rating, comment, is_approved, moderation_status)
+  ON public.reviews TO authenticated;
 GRANT UPDATE (is_approved, moderation_status, moderated_at, moderated_by, moderation_note)
   ON public.reviews TO authenticated;
 
