@@ -1,7 +1,7 @@
-# SLBusinessIndex | GrowthOS Master Context — NEW CHAT HANDOFF
+# SLBusinessIndex | GrowthOS P2 Detailed Context — NEW CHAT HANDOFF
 Version 1.0 | 2026-11-13 | Owner-approved architecture | Tamil collaboration
 
-READ THIS FIRST in EVERY new development chat, together with docs/growth/p2/IMPLEMENTATION_STATUS_LIVE.md.
+READ the canonical docs/growth/SLBI_MASTER_IMPLEMENTATION_HANDOFF.md on GitHub main FIRST, then this detailed P2 document and docs/growth/p2/IMPLEMENTATION_STATUS_LIVE.md on the P2 branch. The canonical main handoff takes precedence for current routing/architecture if details differ.
 GitHub: https://github.com/Victor-dev-03-cmd/sl_business_index
 Open P2 PR: https://github.com/Victor-dev-03-cmd/sl_business_index/pull/68
 This is a living implementation specification, not proof that an untested module is complete. Always check actual GitHub SHAs, CI, Supabase migrations and Vercel deployment before claiming current status.
@@ -13,7 +13,7 @@ Original GrowthOS v1 PDF describes six conceptual engines: Discovery, Growth, Ma
 
 ## 2. Approved user-facing architecture
 Marketing Studio (/vendor/marketing): an OVERVIEW page only, accurate overview KPIs, status, usage and links. No giant embedded form/editor. Do not label call clicks and credit usage as a customer-service agent.
-Marketing Engine (/vendor/marketing/engine): SEPARATE primary workflow and connector workspace.
+Marketing Engine (/vendor/marketing-engine): SEPARATE primary workflow and connector workspace.
 Future modules:
 - /vendor/marketing/social - channel connectors, content, posts, blog/media workflow, review, schedule and receipts.
 - /vendor/marketing/email - mailbox plugins, consented campaign audience, drafts, scheduled mail, bounce/unsubscribe.
@@ -87,7 +87,7 @@ No paid Supabase staging; disposable GitHub Actions Docker Postgres/real Auth wh
 5. Distinguish DESIGN, CODED, TESTED, PREVIEW, DATABASE LIVE, VERIFIED AUTHENTICATED E2E, and PRODUCTION (do not equate these).
 6. Update this master only when architecture/owner decisions change; update LIVE STATUS after every completed implementation milestone.
 7. After production merge, record production commit SHA, Vercel deployment ID and migration versions. No fabricated claims.
-8. PDFs/DOCX snapshots are human handoffs; GitHub Markdown remains canonical and updated in future chats.
+8. PDFs/DOCX snapshots are human handoffs; The main-branch SLBI_MASTER_IMPLEMENTATION_HANDOFF.md is canonical; this P2 detail and the P2 implementation ledger supplement it.
 
 ## 10. Exact message to paste in a new ChatGPT chat
 "Continue my SLBusinessIndex Marketing Engine. Use GitHub repo Victor-dev-03-cmd/sl_business_index. FIRST READ docs/growth/SLBI_GROWTHOS_MASTER_IMPLEMENTATION_CONTEXT.md and docs/growth/p2/IMPLEMENTATION_STATUS_LIVE.md; verify branch SHAs/CI/deployments and continue the next safe unfinished P2 task. Current order is Marketing -> Growth -> SEO. Keep the GitHub status ledger updated. Explain in Tamil. Do not reimplement Discovery or deploy unverified/potentially paid services."
