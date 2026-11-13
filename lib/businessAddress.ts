@@ -26,10 +26,22 @@ export function getBusinessDisplayAddress(
   business: BusinessAddressFields,
   fallback = "Sri Lanka",
 ): string {
-  for (const candidate of [business.detailed_address, business.address, business.city]) {
-    if (typeof candidate !== "string") continue;
-    const readable = candidate.replace(/\s+/g, " ").trim();
-    if (readable && !isCoordinateAddress(readable)) return readable;
+  // Keep the shop/building details AND the geocoded town/area where possible.
+  // Never substitute raw coordinates for a public address.
+  const [physical, area, city] = [business.detailed_address, business.address, business.city]
+    .map(candidate => typeof candidate === "string" ? candidate.replace(/\s+/g, " ").trim() : "")
+    .map(candidate => candidate && !isCoordinateAddress(candidate) ? candidate : "");
+  if (physical && area) {
+    const lowerPhysical = physical.toLocaleLowerCase();
+    const lowerArea = area.toLocaleLowerCase();
+    if (lowerPhysical.includes(lowerArea)) return physical;
+    if (lowerArea.includes(lowerPhysical)) return area;
+    // Avoid "No 12, Main Street, Jaffna, Jaffna, Northern Province" repeats.
+    const areaParts = area.split(/\s*,\s*/).filter(Boolean);
+    while (areaParts.length && lowerPhysical.endsWith(areaParts[0].toLocaleLowerCase())) {
+      areaParts.shift();
+    }
+    return [physical, ...areaParts].join(", ");
   }
-  return fallback;
+  return physical || area || city || fallback;
 }

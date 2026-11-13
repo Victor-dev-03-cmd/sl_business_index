@@ -7,6 +7,7 @@ import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabaseClient';
 import { useQuery } from '@tanstack/react-query';
 import { sanitizeFilename } from '@/lib/utils';
+import { isPlausibleSriLankaPin, validateBusinessLocation } from '@/lib/businessLocation';
 
 const AddressAutocomplete = dynamic(() => import('@/components/AddressAutocomplete'), { ssr: false });
 const CategorySelector = dynamic(() => import('@/components/CategorySelector'), { ssr: false });
@@ -36,6 +37,7 @@ export default function RegisterBusinessPage() {
   const [nicNumber, setNicNumber] = useState('');
   const [location, setLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
   const [detailedAddress, setDetailedAddress] = useState('');
+  const [locationConfirmed, setLocationConfirmed] = useState(false);
 
   useEffect(() => {
     const lat = searchParams.get('lat');
@@ -43,11 +45,12 @@ export default function RegisterBusinessPage() {
     const address = searchParams.get('address');
 
     if (lat && lng && address) {
-      setLocation({
-        lat: parseFloat(lat),
-        lng: parseFloat(lng),
-        address: address
-      });
+      const latitude = Number(lat);
+      const longitude = Number(lng);
+      if (isPlausibleSriLankaPin(latitude, longitude)) {
+        setLocation({ lat: latitude, lng: longitude, address });
+        setLocationConfirmed(false); // URL parameters cannot confirm the business entrance.
+      }
     }
   }, [searchParams]);
 
@@ -102,6 +105,11 @@ export default function RegisterBusinessPage() {
 
   const handleLocationSelect = useCallback((lat: number, lng: number, address: string) => {
     setLocation({ lat, lng, address });
+    setLocationConfirmed(false);
+  }, []);
+  const handleLocationClear = useCallback(() => {
+    setLocation(null);
+    setLocationConfirmed(false);
   }, []);
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -141,9 +149,11 @@ export default function RegisterBusinessPage() {
       return;
     }
 
-    if (!location) {
-      setError('Please select a valid business address.');
+    const locationError = validateBusinessLocation(location, detailedAddress, locationConfirmed);
+    if (locationError || !location) {
+      setError(locationError || 'Please select a valid business address.');
       setLoading(false);
+      document.getElementById('business-physical-address')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
 
@@ -248,11 +258,11 @@ export default function RegisterBusinessPage() {
           is_registered: registrationType === 'registered',
           registration_number: registrationType === 'registered' ? brNumber : nicNumber,
           owner_id: user.id,
-          location: `POINT(${location?.lng} ${location?.lat})`,
-          address: location?.address,
-          detailed_address: detailedAddress,
-          latitude: location?.lat,
-          longitude: location?.lng,
+          location: `POINT(${location.lng} ${location.lat})`,
+          address: location.address.trim(),
+          detailed_address: detailedAddress.trim(),
+          latitude: location.lat,
+          longitude: location.lng,
           status: 'pending'
         },
       ]);
@@ -545,7 +555,10 @@ export default function RegisterBusinessPage() {
 
                 <div className="md:col-span-2">
                   <AddressAutocomplete 
-                    onLocationSelectAction={handleLocationSelect} 
+                    onLocationSelectAction={handleLocationSelect}
+                    onLocationClearAction={handleLocationClear}
+                    locationConfirmed={locationConfirmed}
+                    onLocationConfirmedChange={setLocationConfirmed}
                     detailedAddress={detailedAddress}
                     onDetailedAddressChange={setDetailedAddress}
                     initialAddress={location?.address}

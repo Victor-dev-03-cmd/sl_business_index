@@ -1,0 +1,31 @@
+name: P1 Business Address — Validation Checks
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'lib/businessAddress.ts'
+      - 'lib/businessLocation.ts'
+      - 'components/AddressAutocomplete.tsx'
+      - 'app/register-business/**'
+      - 'app/vendor/my-businesses/**'
+      - 'tests/businessLocationValidation.test.mjs'
+      - 'tests/homeFeaturedNearbyAddress.test.mjs'
+      - '.github/workflows/p1-business-address.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  address-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Address, coordinate, owner edit and map display regression tests
+        run: node --test tests/businessLocationValidation.test.mjs tests/homeFeaturedNearbyAddress.test.mjs
