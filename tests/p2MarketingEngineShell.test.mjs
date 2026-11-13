@@ -32,7 +32,7 @@ test('Marketing Studio is overview-only, separate Campaign Workspace preserves f
   const campaigns=read('app/vendor/marketing/campaigns/page.tsx');
   assert.match(overview,/Marketing Studio/);
   assert.match(overview,/select\('id',\{count:'exact',head:true\}\)/);
-  assert.match(overview,/href="\/vendor\/marketing\/engine"/);
+  assert.match(overview,/href="\/vendor\/marketing-engine"/);
   assert.match(overview,/href:'\/vendor\/marketing\/campaigns'/);
   assert.match(overview,/Planning records — not queued publishing jobs/);
   assert.doesNotMatch(overview,/section==='social'|const exportBrandedCreative|canvas\.toDataURL|save=async\(schedule/);
@@ -41,14 +41,14 @@ test('Marketing Studio is overview-only, separate Campaign Workspace preserves f
   assert.match(campaigns,/status:schedule\?'scheduled':'drafted'/);
 });
 test('Marketing Engine is its own page with all requested Pro modules and truthful provider catalogue',()=>{
-  const landing=read('app/vendor/marketing/engine/page.tsx');
+  const landing=read('app/vendor/marketing-engine/page.tsx');
   assert.match(landing,/Marketing Engine/);
   assert.match(landing,/ENGINE_MODULES\.map/);
   assert.match(landing,/getMarketingAccess\(\)/);
   assert.equal(ENGINE_MODULES.length,5);
   for(const module of ['social','email','agent','connections','automation']){
     assert.ok(ENGINE_MODULES.some(x=>x.slug===module));
-    const content=read('app/vendor/marketing/engine/(pro)/'+module+'/page.tsx');
+    const content=read('app/vendor/marketing-engine/(pro)/'+module+'/page.tsx');
     assert.match(content,/MarketingModuleFrame/);
   }
   assert.equal(MARKETING_CONNECTORS.length,12);
@@ -59,7 +59,7 @@ test('Marketing Engine is its own page with all requested Pro modules and truthf
   assert.ok(MARKETING_CONNECTORS.some(x=>x.id==='gmail'));
   assert.ok(MARKETING_CONNECTORS.some(x=>x.id==='outlook'));
   assert.ok(MARKETING_CONNECTORS.some(x=>x.id==='voice'));
-  assert.match(read('app/vendor/marketing/engine/(pro)/connections/page.tsx'),
+  assert.match(read('app/vendor/marketing-engine/(pro)/connections/page.tsx'),
     /disabled aria-disabled="true"/);
 });
 test('Pro server access protects all premium routes and authenticated APIs, not just UI buttons',()=>{
@@ -70,7 +70,7 @@ test('Pro server access protects all premium routes and authenticated APIs, not 
   assert.match(server,/evaluateMarketingEntitlement\(data\)/);
   assert.match(server,/reason:'upgrade_required'/);
   assert.match(server,/rejectMarketingAccess/);
-  const layout=read('app/vendor/marketing/engine/(pro)/layout.tsx');
+  const layout=read('app/vendor/marketing-engine/(pro)/layout.tsx');
   assert.match(layout,/MarketingProOnly/);
   for(const mod of ['brand','captions','design','campaigns']){
     assert.match(read('app/vendor/marketing/'+mod+'/layout.tsx'),/MarketingProOnly/);
@@ -97,13 +97,13 @@ test('Trilingual deterministic enquiry routing escalates pricing, refunds and un
     assert.equal(r.intent,intent,text);
     assert.equal(r.action,action,text);
   }
-  assert.match(read('app/vendor/marketing/engine/(pro)/agent/page.tsx'),/Classify locally/);
-  assert.match(read('app/vendor/marketing/engine/(pro)/agent/page.tsx'),/No direct inbound call number/);
-  assert.match(read('app/vendor/marketing/engine/(pro)/agent/page.tsx'),/Automatic replies disabled/);
+  assert.match(read('app/vendor/marketing-engine/(pro)/agent/page.tsx'),/Classify locally/);
+  assert.match(read('app/vendor/marketing-engine/(pro)/agent/page.tsx'),/No direct inbound call number/);
+  assert.match(read('app/vendor/marketing-engine/(pro)/agent/page.tsx'),/Automatic replies disabled/);
 });
 test('Vendor top navigation contains two distinct Marketing links without false active parent',()=>{
   const s=read('app/vendor/layout.tsx');
   assert.match(s,/name:'Marketing Studio',href:'\/vendor\/marketing'/);
-  assert.match(s,/name:'Marketing Engine',href:'\/vendor\/marketing\/engine'/);
+  assert.match(s,/name:'Marketing Engine',href:'\/vendor\/marketing-engine'/);
   assert.match(s,/href==='\/vendor\/marketing'\?pathname===href/);
 });
