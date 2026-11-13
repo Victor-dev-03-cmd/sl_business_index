@@ -148,9 +148,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Create disposable vendors and legacy campaign
+      - name: Create disposable vendors, GrowthOS entitlements and legacy campaign
         run: |
           psql -v ON_ERROR_STOP=1 -f tests/p2-brand/bootstrap.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261110010000_growth_os_credit_foundation.sql
           psql -v ON_ERROR_STOP=1 -f tests/p2-campaign/bootstrap.sql
       - name: Add revision history and block fake published status
         run: psql -v ON_ERROR_STOP=1 -f docs/growth/p2/P2_05_CAMPAIGN_REVISIONS_STAGING_ONLY.sql
