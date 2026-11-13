@@ -16,7 +16,7 @@ export function MarketingProNotice({authenticated,unavailable}:{
         :'Verified Professional (Pro) or Enterprise is required for connectors, AI customer agents, campaigns and automation. A plan request alone does not unlock access.'}
     </p>
     <div className="flex flex-wrap gap-3">
-      <Link href={authenticated?'/vendor/billing':'/login?redirect=/vendor/marketing/engine'}
+      <Link href={authenticated?'/vendor/billing':'/login?redirect=/vendor/marketing-engine'}
         className="inline-flex h-11 items-center rounded-lg bg-[#222225] px-5 text-xs font-bold text-white hover:bg-[#39393D]">
         {authenticated?'View billing & plans':'Sign in'}
       </Link>
