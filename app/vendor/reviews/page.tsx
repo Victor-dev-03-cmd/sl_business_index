@@ -25,6 +25,8 @@ type Sort = 'newest' | 'oldest' | 'highest' | 'lowest';
 
 const panel = neo.card;
 const actionButton = neo.button;
+const REVIEW_PAGE_SIZE = 250;
+const MAX_REVIEW_ROWS = 5000;
 const formatNumber = (value: number) => new Intl.NumberFormat('en-LK').format(value);
 
 function validRating(value: number | null): number | null {
@@ -78,10 +80,12 @@ export default function VendorReviewsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [authenticated, setAuthenticated] = useState(true);
+  const [reviewLimitReached, setReviewLimitReached] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
+    setReviewLimitReached(false);
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError) throw authError;
@@ -106,13 +110,38 @@ export default function VendorReviewsPage() {
         setSelectedId(null);
         return;
       }
-      const { data: reviewData, error: reviewsError } = await supabase
-        .from('reviews')
-        .select('id,business_id,rating,comment,user_name,created_at,review_replies(id,reply_text,created_at)')
-        .in('business_id', rows.map(b => b.id))
-        .order('created_at', { ascending: false });
-      if (reviewsError) throw reviewsError;
-      const next = (reviewData || []) as Review[];
+      // The default PostgREST row cap can silently truncate metrics.
+      // Fetch stable pages; fail closed if more than 5,000 rows exist.
+      const next: Review[] = [];
+      for (let offset = 0; offset < MAX_REVIEW_ROWS; offset += REVIEW_PAGE_SIZE) {
+        const { data: reviewData, error: reviewsError, count } = await supabase
+          .from('reviews')
+          .select('id,business_id,rating,comment,user_name,created_at,review_replies(id,reply_text,created_at)', {
+            count: offset === 0 ? 'exact' : undefined,
+          })
+          .in('business_id', rows.map(b => b.id))
+          .eq('is_approved', true)
+          .order('created_at', { ascending: false })
+          .order('id', { ascending: false })
+          .range(offset, offset + REVIEW_PAGE_SIZE - 1);
+        if (reviewsError) throw reviewsError;
+        if (offset === 0 && typeof count === 'number' && count > MAX_REVIEW_ROWS) {
+          setReviewLimitReached(true);
+          setReviews([]);
+          setSelectedId(null);
+          return;
+        }
+        next.push(...((reviewData || []) as Review[]));
+        if ((reviewData?.length || 0) < REVIEW_PAGE_SIZE) break;
+      }
+      if (next.length >= MAX_REVIEW_ROWS) {
+        // The exact count cannot be trusted if it was unavailable: do not
+        // accidentally show a capped sample as the complete review universe.
+        setReviewLimitReached(true);
+        setReviews([]);
+        setSelectedId(null);
+        return;
+      }
       setReviews(next);
       setSelectedId(previous => next.some(r => r.id === previous) ? previous : null);
     } catch (caught) {
@@ -146,6 +175,17 @@ export default function VendorReviewsPage() {
   const replied = reviews.filter(reviewHasReply).length;
   const awaiting = total - replied;
   const responseRate = total ? replied / total * 100 : 0;
+  const replyDurationsHours = reviews.flatMap(review => {
+    const earliest = (review.review_replies || [])
+      .map(reply => new Date(reply.created_at).getTime())
+      .filter(time => Number.isFinite(time))
+      .sort((a, b) => a - b)[0];
+    const received = new Date(review.created_at).getTime();
+    return earliest !== undefined && Number.isFinite(received) && earliest >= received
+      ? [(earliest - received) / 3_600_000] : [];
+  });
+  const avgReplyHours = replyDurationsHours.length
+    ? replyDurationsHours.reduce((sum, h) => sum + h, 0) / replyDurationsHours.length : null;
   const ratingCounts = [5, 4, 3, 2, 1].map(stars => ({ stars, count: rated.filter(v => Math.round(v) === stars).length }));
 
   const filtered = useMemo(() => {
@@ -189,7 +229,7 @@ export default function VendorReviewsPage() {
   }
 
   function exportCsv() {
-    if (loading || !filtered.length) return;
+    if (loading || error || reviewLimitReached || !filtered.length) return;
     const rows: (string | number)[][] = [
       ['Customer', 'Business', 'Rating', 'Comment', 'Received', 'Reply status', 'Replies'],
       ...filtered.map(r => [
@@ -261,7 +301,14 @@ export default function VendorReviewsPage() {
       toast.success('Reply published successfully');
     } catch (caught) {
       console.error('Unable to post vendor review reply:', caught);
-      toast.error('Reply could not be published. Please try again.');
+      // A database UNIQUE(review_id) constraint is the definitive
+      // cross-tab duplication guard. Refresh when it detects a race.
+      if (caught && typeof caught === 'object' && 'code' in caught && caught.code === '23505') {
+        toast.info('Another session already replied to this review. Refreshing.');
+        await load();
+      } else {
+        toast.error('Reply could not be published. Please try again.');
+      }
     } finally {
       setSubmittingId(null);
     }
@@ -298,7 +345,7 @@ export default function VendorReviewsPage() {
             <button type="button" onClick={() => void load()} disabled={loading} className={actionButton}>
               <IconsaxIcon name="refresh" size={15} /> Refresh
             </button>
-            <button type="button" onClick={exportCsv} disabled={loading || !filtered.length} className={actionButton}>
+            <button type="button" onClick={exportCsv} disabled={loading || !!error || reviewLimitReached || !filtered.length} className={actionButton}>
               <IconsaxIcon name="document-download" size={15} /> Export CSV
             </button>
           </div>
@@ -310,10 +357,16 @@ export default function VendorReviewsPage() {
             <button type="button" onClick={() => void load()} className="font-bold underline">Retry loading</button>
           </div>
         )}
+        {reviewLimitReached && (
+          <div role="alert" className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-xs text-amber-900">
+            More than {formatNumber(MAX_REVIEW_ROWS)} published reviews exist. To avoid incorrect totals and partial exports,
+            this overview requires a server-side aggregated reporting endpoint for this volume.
+          </div>
+        )}
 
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-[13px] font-bold text-[#2C2C32]">Reputation overview</h2>
-          <span className="rounded-md border border-[#e9edf0] bg-white px-2 py-1 text-[10px] font-semibold text-slate-500">Your businesses · All-time</span>
+          <span className="rounded-md border border-[#e9edf0] bg-white px-2 py-1 text-[10px] font-semibold text-slate-500">Published reviews · All-time</span>
         </div>
         <section aria-label="Reputation statistics" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {kpis.map(kpi => (
@@ -325,7 +378,7 @@ export default function VendorReviewsPage() {
                 </span>
               </div>
               <p className="mt-1.5 text-[26px] font-bold tabular-nums tracking-[-0.04em] text-[#1D1D20]">
-                {loading ? '—' : kpi.value}
+                {loading || error || reviewLimitReached ? '—' : kpi.value}
               </p>
               <p className="mt-2 text-[10px] leading-4 text-slate-400">{kpi.description}</p>
             </div>
@@ -365,12 +418,18 @@ export default function VendorReviewsPage() {
             <div className="flex flex-1 flex-col justify-center px-5 py-5">
               <p className="text-[11px] font-semibold text-slate-500">Reviews answered</p>
               <p className="mt-2 text-[34px] font-bold tabular-nums tracking-[-0.05em] text-[#2C2C31]">
-                {loading ? '—' : formatNumber(replied)} <span className="text-base font-medium text-slate-400">/ {formatNumber(total)}</span>
+                {loading || error || reviewLimitReached ? '—' : formatNumber(replied)} <span className="text-base font-medium text-slate-400">/ {loading || error || reviewLimitReached ? '—' : formatNumber(total)}</span>
               </p>
               <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#F8F8FA]">
                 <div className="h-full rounded-full bg-[#242428]" style={{ width: responseRate + '%' }} />
               </div>
-              <p className="mt-3 text-[10px] leading-5 text-slate-400">Response rate measures existing replies, not customer satisfaction or review approval status.</p>
+              <p className="mt-3 text-[10px] leading-5 text-slate-400">
+                Response rate counts published reviews with a reply, not customer satisfaction.
+                {avgReplyHours !== null && !error && !reviewLimitReached
+                  ? ' · Average first reply: ' + (avgReplyHours < 24
+                    ? avgReplyHours.toFixed(1) + ' hours' : (avgReplyHours / 24).toFixed(1) + ' days')
+                  : ''}
+              </p>
             </div>
           </section>
         </div>
@@ -429,8 +488,10 @@ export default function VendorReviewsPage() {
 
           {loading ? (
             <div role="status" className="space-y-3 p-5">{[0, 1, 2, 3].map(i => <div key={i} className="h-14 animate-pulse rounded-lg bg-slate-100" />)}</div>
-          ) : error ? (
-            <div className="px-5 py-12 text-center text-[12px] text-slate-500">Review records are temporarily unavailable.</div>
+          ) : error || reviewLimitReached ? (
+            <div className="px-5 py-12 text-center text-[12px] text-slate-500">
+              {reviewLimitReached ? 'Review reporting is unavailable at this volume. Partial reviews will not be exported.' : 'Review records are temporarily unavailable.'}
+            </div>
           ) : !businesses.length ? (
             <div className="flex flex-col items-center gap-3 px-6 py-12 text-center">
               <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#F8F8FA] text-[#2C2C31]"><IconsaxIcon name="shop" size={23} /></span>
