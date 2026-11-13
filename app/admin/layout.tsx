@@ -44,6 +44,7 @@ const adminMenuItems = [
   { name: "Categories", href: "/admin/categories", icon: Tags },
   { name: "Users", href: "/admin/users", icon: Users },
   { name: "Moderation", href: "/admin/moderation", icon: ShieldAlert },
+  { name: "Review Approvals", href: "/admin/review-queue", icon: Star },
   { name: "Testimonials", href: "/admin/testimonials", icon: Quote },
   { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
   { name: "Site Settings", href: "/admin/settings", icon: Settings },

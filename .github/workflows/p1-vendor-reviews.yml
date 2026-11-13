@@ -1,0 +1,25 @@
+name: P1 Vendor Reviews Reliability
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'app/vendor/reviews/**'
+      - 'docs/growth/p1/P1_REVIEW_INTEGRITY_REVIEW_ONLY.sql'
+      - 'tests/vendorReviewReliability.test.mjs'
+      - '.github/workflows/p1-vendor-reviews.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  review-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-node@v4
+        with: {node-version: '24'}
+      - name: Reviews duplicate/tenant/pagination regression
+        run: node --test tests/vendorReviewReliability.test.mjs tests/vendorPortalRelease.test.mjs

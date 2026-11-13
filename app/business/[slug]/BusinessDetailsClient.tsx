@@ -146,74 +146,37 @@ export default function BusinessDetailsClient({ business }: Props) {
 
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!reviewForm.user_name || !reviewForm.comment) return;
-
+    if (submittingReview) return;
     setSubmittingReview(true);
     try {
-      let sentiment = null;
-      let is_approved = true;
-
-      // AI Moderation Call
-      try {
-        const modRes = await fetch("/api/reviews/moderate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ comment: reviewForm.comment }),
-        });
-
-        if (modRes.ok) {
-          const moderation = await modRes.json();
-          if (moderation.status === "blocked") {
-            toast.error(
-              "Your review contains inappropriate content and cannot be posted.",
-              {
-                description: moderation.reason,
-              },
-            );
-            setSubmittingReview(false);
-            return;
-          }
-          sentiment = moderation.sentiment;
+      // No direct reviews INSERT from the browser. The server validates the
+      // authenticated user; only staff can later approve a pending review.
+      const response = await fetch('/api/reviews/submit', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          businessId: business.id,
+          userName: reviewForm.user_name,
+          rating: reviewForm.rating,
+          comment: reviewForm.comment,
+        }),
+      });
+      const data: { success?: boolean; error?: string; status?: string } =
+        await response.json();
+      if (!response.ok || !data.success || data.status !== 'pending') {
+        if (response.status === 401) {
+          toast.error('Please sign in before writing a business review.');
+        } else {
+          toast.error(data.error || 'Review submission is unavailable. Please retry.');
         }
-      } catch (modError) {
-        console.error(
-          "Moderation service error, proceeding with manual flag:",
-          modError,
-        );
-        is_approved = false; // Flag for manual review if AI fails
+        return;
       }
-
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      const { data, error } = await supabase
-        .from("reviews")
-        .insert({
-          business_id: business?.id,
-          user_id: user?.id || null,
-          user_name: reviewForm?.user_name,
-          rating: reviewForm?.rating,
-          comment: reviewForm?.comment,
-          sentiment: sentiment,
-          is_approved: is_approved,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      if (is_approved) {
-        setReviews([{ ...data, review_replies: [] }, ...reviews]);
-        toast.success("Review posted successfully!");
-      } else {
-        toast.info("Review submitted and pending manual moderation.");
-      }
-
-      setReviewForm({ rating: 5, comment: "", user_name: "" });
-    } catch (error) {
-      console.error("Error posting review:", error);
-      toast.error("Failed to post review.");
+      toast.success('Review submitted for approval. It is not public yet.');
+      setReviewForm({ rating: 5, comment: '', user_name: '' });
+      // Do not prepend a pending review to the public list or claim it is live.
+    } catch {
+      toast.error('Review service is temporarily unavailable.');
     } finally {
       setSubmittingReview(false);
     }
@@ -644,7 +607,11 @@ export default function BusinessDetailsClient({ business }: Props) {
 
               <div id="write-review" className="scroll-mt-28 mt-7 rounded-[22px] border border-[#DFE7DC] bg-[#F8FAF5] p-5 sm:p-7">
                 <h3 className="text-[20px] font-semibold tracking-[-0.035em] text-[#244438]">Share your experience</h3>
-                <p className="mt-1.5 text-[12px] leading-6 text-[#809588]">Your review may be moderated before it appears publicly.</p>
+                <p className="mt-1.5 text-[12px] leading-6 text-[#809588]">
+                  Sign-in is required to submit a review. Feedback may be moderated before appearing publicly.
+                  {' '}<Link href={"/login?redirect=" + encodeURIComponent("/business/" + (business.slug || business.id) + "#write-review")}
+                    className="font-semibold text-[#276B56] underline underline-offset-2">Sign in</Link>
+                </p>
                 <form onSubmit={handleReviewSubmit} className="mt-6 space-y-5">
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>

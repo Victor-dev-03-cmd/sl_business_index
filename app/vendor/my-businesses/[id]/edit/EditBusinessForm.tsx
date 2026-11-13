@@ -7,12 +7,21 @@ import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabaseClient';
 import { Business } from '@/lib/types';
 import { sanitizeFilename } from '@/lib/utils';
+import { validateBusinessLocation } from '@/lib/businessLocation';
 import { Camera, Upload, Globe, Timer, Building2, Save, ArrowLeft } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
 const AddressAutocomplete = dynamic(() => import('@/components/AddressAutocomplete'), { ssr: false });
 const CategorySelector = dynamic(() => import('@/components/CategorySelector'), { ssr: false });
+
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+function validateImage(file: File): string | null {
+  if (!ALLOWED_IMAGE_TYPES.has(file.type)) return 'Upload a JPG, PNG or WebP image (SVG and other types are not supported).';
+  if (file.size < 1 || file.size > MAX_IMAGE_BYTES) return 'Image must be smaller than 5 MB.';
+  return null;
+}
 
 export default function EditBusinessForm({ business }: { business: Business }) {
   const router = useRouter();
@@ -31,6 +40,7 @@ export default function EditBusinessForm({ business }: { business: Business }) {
   const [workingHours, setWorkingHours] = useState(business.working_hours || '');
   const [ownerName, setOwnerName] = useState(business.owner_name || '');
   const [detailedAddress, setDetailedAddress] = useState(business.detailed_address || '');
+  const [locationConfirmed, setLocationConfirmed] = useState(false);
   
   // Location State
   const [location, setLocation] = useState<{ lat: number; lng: number; address: string } | null>({
@@ -47,11 +57,18 @@ export default function EditBusinessForm({ business }: { business: Business }) {
 
   const handleLocationSelect = useCallback((lat: number, lng: number, address: string) => {
     setLocation({ lat, lng, address });
+    setLocationConfirmed(false);
+  }, []);
+  const handleLocationClear = useCallback(() => {
+    setLocation(null);
+    setLocationConfirmed(false);
   }, []);
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      const issue = validateImage(file);
+      if (issue) { setError(issue); e.currentTarget.value = ''; return; }
       setLogo(file);
       const reader = new FileReader();
       reader.onloadend = () => setLogoPreview(reader.result as string);
@@ -62,6 +79,8 @@ export default function EditBusinessForm({ business }: { business: Business }) {
   const handleHoverImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      const issue = validateImage(file);
+      if (issue) { setError(issue); e.currentTarget.value = ''; return; }
       setHoverImage(file);
       const reader = new FileReader();
       reader.onloadend = () => setHoverImagePreview(reader.result as string);
@@ -75,15 +94,39 @@ export default function EditBusinessForm({ business }: { business: Business }) {
     setError(null);
     setSuccess(false);
 
+    // Do not upload any files or update a row until the form is valid.
+    const placeIssue = validateBusinessLocation(location, detailedAddress, locationConfirmed);
+    if (placeIssue || !location) {
+      setError(placeIssue || 'Please select a valid physical address.');
+      setLoading(false);
+      document.getElementById('business-physical-address')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    if (!businessName.trim() || !category.trim() || !ownerName.trim() || !phone.trim() || !email.trim()) {
+      setError('Complete all fields marked with a red *: business name, category, owner, phone and email.');
+      setLoading(false);
+      return;
+    }
+    if ((logo && validateImage(logo)) || (hoverImage && validateImage(hoverImage))) {
+      setError('The selected image is invalid. Choose JPG, PNG or WebP up to 5 MB.');
+      setLoading(false);
+      return;
+    }
+
+    const newlyUploadedPaths: string[] = [];
     try {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError) throw authError;
+      if (!user || business.owner_id !== user.id) throw new Error('You are not authorized to update this business.');
       let logoUrl = business.logo_url;
       if (logo) {
         const sanitizedName = sanitizeFilename(logo.name);
-        const filePath = `${business.owner_id}/${Date.now()}_logo_${sanitizedName}`;
+        const filePath = `${user.id}/${Date.now()}_logo_${sanitizedName}`;
         const { error: uploadError } = await supabase.storage
             .from('business-logos')
             .upload(filePath, logo);
         if (uploadError) throw uploadError;
+        newlyUploadedPaths.push(filePath);
         const { data: urlData } = supabase.storage.from('business-logos').getPublicUrl(filePath);
         logoUrl = urlData.publicUrl;
       }
@@ -91,11 +134,12 @@ export default function EditBusinessForm({ business }: { business: Business }) {
       let hoverImageUrl = business.image_url;
       if (hoverImage) {
         const sanitizedName = sanitizeFilename(hoverImage.name);
-        const filePath = `${business.owner_id}/${Date.now()}_hover_${sanitizedName}`;
+        const filePath = `${user.id}/${Date.now()}_hover_${sanitizedName}`;
         const { error: uploadError } = await supabase.storage
             .from('business-logos')
             .upload(filePath, hoverImage);
         if (uploadError) throw uploadError;
+        newlyUploadedPaths.push(filePath);
         const { data: urlData } = supabase.storage.from('business-logos').getPublicUrl(filePath);
         hoverImageUrl = urlData.publicUrl;
       }
@@ -103,26 +147,29 @@ export default function EditBusinessForm({ business }: { business: Business }) {
       const { error: updateError } = await supabase
         .from('businesses')
         .update({
-          name: businessName,
+          name: businessName.trim(),
           description,
-          category,
-          email,
-          phone,
+          category: category.trim(),
+          email: email.trim(),
+          phone: phone.trim(),
           website_name: websiteName,
           website_url: websiteUrl,
           working_hours: workingHours,
-          owner_name: ownerName,
-          address: location?.address,
-          detailed_address: detailedAddress,
-          latitude: location?.lat,
-          longitude: location?.lng,
-          location: location ? `POINT(${location.lng} ${location.lat})` : business.location,
+          owner_name: ownerName.trim(),
+          address: location.address.trim(),
+          detailed_address: detailedAddress.trim(),
+          latitude: location.lat,
+          longitude: location.lng,
+          location: `POINT(${location.lng} ${location.lat})`,
           logo_url: logoUrl,
           image_url: hoverImageUrl,
           // We don't update status here, as edits might need re-approval depending on your policy
           // For now, let's keep the status as is
         })
-        .eq('id', business.id);
+        .eq('id', business.id)
+        .eq('owner_id', user.id)
+        .select('id')
+        .single();
 
       if (updateError) throw updateError;
 
@@ -131,9 +178,13 @@ export default function EditBusinessForm({ business }: { business: Business }) {
       // Optional: Redirect back to list after a delay
       // setTimeout(() => router.push('/vendor/my-businesses'), 2000);
 
-    } catch (err: any) {
-      setError(err.message);
-      console.error(err);
+    } catch (err: unknown) {
+      if (newlyUploadedPaths.length) {
+        const { error: cleanupError } = await supabase.storage.from('business-logos').remove(newlyUploadedPaths);
+        if (cleanupError) console.error('Could not clean unused business images:', cleanupError);
+      }
+      setError(err instanceof Error ? err.message : 'Unable to save the business. Please retry.');
+      console.error('Business edit failed:', err);
     } finally {
       setLoading(false);
     }
@@ -188,7 +239,7 @@ export default function EditBusinessForm({ business }: { business: Business }) {
 
         <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Business Name</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Business Name <span className="text-red-600" aria-hidden="true">*</span></label>
             <input type="text" value={businessName} onChange={(e) => setBusinessName(e.target.value)} required className={neo.input + " text-sm"} />
           </div>
           <div className="md:col-span-1">
@@ -221,20 +272,23 @@ export default function EditBusinessForm({ business }: { business: Business }) {
 
         <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Owner Name</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Owner Name <span className="text-red-600" aria-hidden="true">*</span></label>
             <input type="text" value={ownerName} onChange={(e) => setOwnerName(e.target.value)} required className={neo.input + " text-sm"} />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number <span className="text-red-600" aria-hidden="true">*</span></label>
             <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required className={neo.input + " text-sm"} />
           </div>
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email Address <span className="text-red-600" aria-hidden="true">*</span></label>
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className={neo.input + " text-sm"} />
           </div>
           <div className="md:col-span-2">
             <AddressAutocomplete 
-              onLocationSelectAction={handleLocationSelect} 
+              onLocationSelectAction={handleLocationSelect}
+              onLocationClearAction={handleLocationClear}
+              locationConfirmed={locationConfirmed}
+              onLocationConfirmedChange={setLocationConfirmed}
               initialAddress={location?.address || ''} 
               initialLat={location?.lat}
               initialLng={location?.lng}

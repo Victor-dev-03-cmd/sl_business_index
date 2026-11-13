@@ -6,18 +6,16 @@ import {
 } from 'recharts';
 import IconsaxIcon from '../components/IconsaxIcon';
 import { supabase } from '@/lib/supabaseClient';
-
-interface DailyActivity {
-  date: string;
-  views: number;
-  calls: number;
-  leads: number;
-}
+import {
+  ACTIVITY_MAX_EVENTS, ACTIVITY_PAGE_SIZE, groupActivityByUtcDay,
+  type ActivityLog, type DailyActivity,
+} from '@/lib/growth/activity-trend';
 
 type Range = '7d' | '30d';
 
-export default function VendorAnalytics({ businessIds, embedded = false }: {
+export default function VendorAnalytics({ businessIds, refreshKey = 0, embedded = false }: {
   businessIds: string[];
+  refreshKey?: number;
   embedded?: boolean;
 }) {
   const [data, setData] = useState<DailyActivity[]>([]);
@@ -25,6 +23,8 @@ export default function VendorAnalytics({ businessIds, embedded = false }: {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [reload, setReload] = useState(0);
+  const [eventLimitReached, setEventLimitReached] = useState(false);
+  const [recordedEventCount, setRecordedEventCount] = useState<number | null>(null);
 
   // Stable key avoids refetching when a parent renders with the same IDs.
   const idsKey = businessIds.join(',');
@@ -37,6 +37,8 @@ export default function VendorAnalytics({ businessIds, embedded = false }: {
         setData([]);
         setLoading(false);
         setError('');
+        setEventLimitReached(false);
+        setRecordedEventCount(null);
         return;
       }
 
@@ -44,38 +46,59 @@ export default function VendorAnalytics({ businessIds, embedded = false }: {
       setError('');
       try {
         const days = timeRange === '7d' ? 7 : 30;
-        const now = new Date();
-        const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
-        const start = new Date(today - (days - 1) * 86400000);
+        // Capture an upper bound so incoming events do not shift page offsets.
+        const snapshot = new Date();
+        const utcToday = Date.UTC(snapshot.getUTCFullYear(), snapshot.getUTCMonth(), snapshot.getUTCDate());
+        const start = new Date(utcToday - (days - 1) * 86400000);
+        const logs: ActivityLog[] = [];
+        let exactCount: number | null = null;
 
-        const { data: logs, error: queryError } = await supabase
-          .from('analytics_logs')
-          .select('created_at,event_type')
-          .in('business_id', idsKey.split(','))
-          .gte('created_at', start.toISOString())
-          .order('created_at', { ascending: true });
-        if (queryError) throw queryError;
-
-        const buckets: Record<string, DailyActivity> = {};
-        for (let i = 0; i < days; i++) {
-          const day = new Date(today - i * 86400000).toISOString().slice(0, 10);
-          buckets[day] = { date: day, views: 0, calls: 0, leads: 0 };
+        // PostgREST commonly caps a single SELECT response at 1,000 rows.
+        // Page deterministically by timestamp + immutable ID. A large tenant
+        // must use a reviewed server-side aggregate rather than a partial chart.
+        for (let offset = 0; offset < ACTIVITY_MAX_EVENTS; offset += ACTIVITY_PAGE_SIZE) {
+          if (cancelled) return;
+          const { data: page, error: queryError, count } = await supabase
+            .from('analytics_logs')
+            .select('id,created_at,event_type', { count: offset === 0 ? 'exact' : undefined })
+            .in('business_id', idsKey.split(','))
+            .gte('created_at', start.toISOString())
+            .lte('created_at', snapshot.toISOString())
+            .order('created_at', { ascending: true })
+            .order('id', { ascending: true })
+            .range(offset, offset + ACTIVITY_PAGE_SIZE - 1);
+          if (queryError) throw queryError;
+          if (offset === 0) {
+            exactCount = count;
+            // Do not issue 20 page requests when the count already proves
+            // this tenant needs a server-side aggregate for this time range.
+            if (typeof count === 'number' && count > ACTIVITY_MAX_EVENTS) {
+              if (!cancelled) {
+                setEventLimitReached(true);
+                setRecordedEventCount(count);
+                setData([]);
+              }
+              return;
+            }
+          }
+          logs.push(...((page || []) as ActivityLog[]));
+          if ((page?.length || 0) < ACTIVITY_PAGE_SIZE) break;
         }
 
-        for (const log of logs || []) {
-          const key = log.created_at?.slice(0, 10);
-          const bucket = buckets[key];
-          if (!bucket) continue;
-          if (log.event_type === 'view') bucket.views++;
-          else if (log.event_type === 'call_click') bucket.calls++;
-          else if (log.event_type === 'lead_form_submit') bucket.leads++;
+        const limited = exactCount !== null
+          ? exactCount > logs.length
+          : logs.length >= ACTIVITY_MAX_EVENTS;
+        if (!cancelled) {
+          setEventLimitReached(limited);
+          setRecordedEventCount(exactCount);
+          setData(limited ? [] : groupActivityByUtcDay(logs, days, snapshot));
         }
-
-        if (!cancelled) setData(Object.values(buckets).sort((a, b) => a.date.localeCompare(b.date)));
       } catch (e) {
         if (!cancelled) {
           setError(e instanceof Error ? e.message : 'Analytics could not be loaded.');
           setData([]);
+          setEventLimitReached(false);
+          setRecordedEventCount(null);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -84,7 +107,7 @@ export default function VendorAnalytics({ businessIds, embedded = false }: {
 
     void fetchActivity();
     return () => { cancelled = true; };
-  }, [idsKey, timeRange, reload]);
+  }, [idsKey, timeRange, reload, refreshKey]);
 
   const totals = useMemo(() => data.reduce(
     (acc, point) => ({
@@ -118,15 +141,15 @@ export default function VendorAnalytics({ businessIds, embedded = false }: {
       <div className="mb-4 grid grid-cols-3 gap-2 rounded-lg border border-[#eef1f2] bg-white px-3 py-3 sm:gap-4 sm:px-4">
         <div className="min-w-0">
           <div className="flex items-center gap-1.5 text-[10px] font-semibold text-[#83919C]"><IconsaxIcon name="eye" size={13} color="#FF7900" /> Views</div>
-          <p className="mt-1 text-xl font-bold tracking-tight text-[#242427]">{loading ? '—' : totals.views.toLocaleString()}</p>
+          <p className="mt-1 text-xl font-bold tracking-tight text-[#242427]">{loading || error || eventLimitReached ? '—' : totals.views.toLocaleString()}</p>
         </div>
         <div className="min-w-0 border-l border-[#F0EBE8] pl-3 sm:pl-5">
           <div className="flex items-center gap-1.5 text-[10px] font-semibold text-[#83919C]"><IconsaxIcon name="call" size={13} color="#28282D" /> Calls</div>
-          <p className="mt-1 text-xl font-bold tracking-tight text-[#242427]">{loading ? '—' : totals.calls.toLocaleString()}</p>
+          <p className="mt-1 text-xl font-bold tracking-tight text-[#242427]">{loading || error || eventLimitReached ? '—' : totals.calls.toLocaleString()}</p>
         </div>
         <div className="min-w-0 border-l border-[#F0EBE8] pl-3 sm:pl-5">
           <div className="flex items-center gap-1.5 text-[10px] font-semibold text-[#83919C]"><IconsaxIcon name="message-text" size={13} color="#C18A5B" /> Leads</div>
-          <p className="mt-1 text-xl font-bold tracking-tight text-[#242427]">{loading ? '—' : totals.leads.toLocaleString()}</p>
+          <p className="mt-1 text-xl font-bold tracking-tight text-[#242427]">{loading || error || eventLimitReached ? '—' : totals.leads.toLocaleString()}</p>
         </div>
       </div>
 
@@ -146,6 +169,20 @@ export default function VendorAnalytics({ businessIds, embedded = false }: {
           <IconsaxIcon name="chart" size={26} color="#B6B1AD" />
           <p className="mt-3 text-sm font-semibold text-[#333235]">Your insights start with a listing</p>
           <p className="mt-1 text-xs text-[#8C8988]">Register a business to start tracking activity.</p>
+        </div>
+      ) : eventLimitReached ? (
+        <div role="status" className="flex h-[255px] flex-col items-center justify-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-5 text-center">
+          <IconsaxIcon name="chart" size={25} color="#9A6700" />
+          <p className="text-sm font-bold text-[#4A3821]">Activity trend unavailable for this volume</p>
+          <p className="max-w-md text-xs leading-5 text-[#755B35]">
+            {recordedEventCount === null ? 'At least ' : ''}{(recordedEventCount ?? ACTIVITY_MAX_EVENTS).toLocaleString()} recorded events in this period.
+            A partial chart could be misleading, so no incomplete totals are shown.
+          </p>
+          {timeRange === '30d' && (
+            <button type="button" onClick={() => setTimeRange('7d')} className="rounded-lg border border-amber-300 bg-white px-4 py-2 text-xs font-bold text-[#4A3821]">
+              Try 7 days
+            </button>
+          )}
         </div>
       ) : (
         <div className="relative h-[230px] w-full min-w-0 sm:h-[255px]">
@@ -193,7 +230,7 @@ export default function VendorAnalytics({ businessIds, embedded = false }: {
         <span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-[#C18A5B]" /> Enquiries</span>
       </div>
       <p className="mt-3 text-[10px] leading-relaxed text-[#9A9698]">
-        Shows tracked events for the selected period; historical profile totals may include activity not recorded here.
+        Shows recorded events by UTC day, not unique visitors or verified sales. All-time profile counters may include earlier activity. Dashboard Refresh also reloads this chart.
       </p>
     </div>
   );

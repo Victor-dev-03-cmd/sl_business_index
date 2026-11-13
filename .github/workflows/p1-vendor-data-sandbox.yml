@@ -1,0 +1,97 @@
+name: P1 Vendor CRM & Reviews Disposable RLS Sandbox
+
+on:
+  pull_request:
+    branches: [main, 'release/p1-vendor-integration-20261113']
+    paths:
+      - 'tests/p1-release/**'
+      - 'supabase/migrations/20261113091124_p1_vendor_lead_followups_and_review_owner_rls.sql'
+      - 'supabase/migrations/20261113091146_p1_review_moderation_pending_staff_audit.sql'
+      - 'supabase/migrations/20261113091046_p1_public_api_truncate_lockdown.sql'
+      - 'supabase/migrations/20261113091207_p1_business_physical_address_postgis_guard.sql'
+      - '.github/workflows/p1-vendor-data-sandbox.yml'
+  push:
+    branches: ['release/p1-vendor-integration-20261113', 'security/p1-review-moderation-20261113']
+    paths:
+      - 'tests/p1-release/**'
+      - 'supabase/migrations/20261113091124_p1_vendor_lead_followups_and_review_owner_rls.sql'
+      - 'supabase/migrations/20261113091146_p1_review_moderation_pending_staff_audit.sql'
+      - 'supabase/migrations/20261113091046_p1_public_api_truncate_lockdown.sql'
+
+permissions:
+  contents: read
+
+jobs:
+  p1-data-sandbox:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: slbi_p1_sandbox
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d slbi_p1_sandbox"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: slbi_p1_sandbox
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Simulate legacy schema and two vendor identities
+        run: psql -v ON_ERROR_STOP=1 -f tests/p1-release/bootstrap.sql
+      - name: Apply candidate RLS guards to disposable database ONLY
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113091124_p1_vendor_lead_followups_and_review_owner_rls.sql
+      - name: Install review moderation lockdown ONLY in disposable database
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113091146_p1_review_moderation_pending_staff_audit.sql
+      - name: Reject RLS-bypassing TRUNCATE privileges in disposable database
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113091046_p1_public_api_truncate_lockdown.sql
+      - name: Verify tenant isolation, review uniqueness and mobile lead compatibility
+        run: psql -v ON_ERROR_STOP=1 -f tests/p1-release/verify.sql
+      - name: Reject direct API approval bypass and verify staff audit/decisions
+        run: psql -v ON_ERROR_STOP=1 -f tests/p1-release/review_moderation_verify.sql
+
+  p1-location-sandbox:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgis/postgis:17-3.5
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: slbi_location_sandbox
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d slbi_location_sandbox"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: slbi_location_sandbox
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Prepare disposable PostGIS address and legacy data
+        run: psql -v ON_ERROR_STOP=1 -f tests/p1-release/location_bootstrap.sql
+      - name: Install candidate business location trigger ONLY in disposable DB
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113091207_p1_business_physical_address_postgis_guard.sql
+      - name: Test bad coordinates, missing address, geography drift and legacy updates
+        run: psql -v ON_ERROR_STOP=1 -f tests/p1-release/location_verify.sql

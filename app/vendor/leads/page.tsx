@@ -6,6 +6,12 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import IconsaxIcon from '../components/IconsaxIcon';
+import {
+  followUpState,
+  localFollowUpInput,
+  parseFollowUpInput,
+  type LeadFollowUp,
+} from '@/lib/growth/lead-followups';
 
 type Stage = 'new' | 'contacted' | 'converted' | 'lost';
 type StageFilter = 'all' | Stage;
@@ -32,6 +38,10 @@ const statuses: StageFilter[] = ['all', ...stages];
 const panel = neo.card;
 const button = neo.button;
 const nfmt = (n: number) => new Intl.NumberFormat('en-LK').format(n);
+const LEAD_PAGE_SIZE = 250;
+const MAX_VISIBLE_LEADS = 5000;
+const FOLLOW_UP_SELECT = 'lead_id,due_at,done_at,created_at,updated_at';
+type FollowUpReadiness = 'loading' | 'available' | 'unavailable';
 
 const statusStyle: Record<Stage, { label: string; css: string; dot: string }> = {
   new: { label: 'New', css: 'border-[#dbe8fc] bg-[#f1f6ff] text-[#376ab2]', dot: 'bg-[#3778cb]' },
@@ -87,10 +97,19 @@ export default function LeadsPage() {
   const [savingStatusId, setSavingStatusId] = useState<string | null>(null);
   const [savingNote, setSavingNote] = useState(false);
   const [userSignedIn, setUserSignedIn] = useState(true);
+  const [followUps, setFollowUps] = useState<Record<string, LeadFollowUp>>({});
+  const [followUpReadiness, setFollowUpReadiness] = useState<FollowUpReadiness>('loading');
+  const [followUpDraft, setFollowUpDraft] = useState('');
+  const [savingFollowUp, setSavingFollowUp] = useState(false);
+  const [dueOnly, setDueOnly] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
+  const [leadLimitReached, setLeadLimitReached] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
+    setFollowUpReadiness('loading');
+    setLeadLimitReached(false);
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError) throw authError;
@@ -98,6 +117,8 @@ export default function LeadsPage() {
         setUserSignedIn(false);
         setBusinesses([]);
         setLeads([]);
+        setFollowUps({});
+        setFollowUpReadiness('unavailable');
         return;
       }
       setUserSignedIn(true);
@@ -112,29 +133,99 @@ export default function LeadsPage() {
 
       if (!ownedRows.length) {
         setLeads([]);
+        setFollowUps({});
+        setFollowUpReadiness('unavailable');
         setSelectedId(null);
         return;
       }
 
-      const { data: rows, error: leadError } = await supabase
-        .from('leads')
-        .select('*, lead_notes(id,note,created_at)')
-        .in('business_id', ownedRows.map(b => b.id))
-        .order('created_at', { ascending: false });
-      if (leadError) throw leadError;
-      const current = (rows || []) as Lead[];
+      // PostgREST responses can be capped at 1,000 rows. A capped slice
+      // cannot be presented as complete "all-time" pipeline totals.
+      const current: Lead[] = [];
+      let totalLeadRows: number | null = null;
+      for (let offset = 0; offset < MAX_VISIBLE_LEADS; offset += LEAD_PAGE_SIZE) {
+        const { data: rows, error: leadError, count } = await supabase
+          .from('leads')
+          .select('*, lead_notes(id,note,created_at)', { count: offset === 0 ? 'exact' : undefined })
+          .in('business_id', ownedRows.map(b => b.id))
+          .order('created_at', { ascending: false })
+          .order('id', { ascending: false })
+          .range(offset, offset + LEAD_PAGE_SIZE - 1);
+        if (leadError) throw leadError;
+        if (offset === 0) totalLeadRows = count;
+        if (offset === 0 && typeof count === 'number' && count > MAX_VISIBLE_LEADS) {
+          setLeadLimitReached(true);
+          setLeads([]);
+          setFollowUps({});
+          setFollowUpReadiness('unavailable');
+          setSelectedId(null);
+          return;
+        }
+        current.push(...((rows || []) as Lead[]));
+        if ((rows?.length || 0) < LEAD_PAGE_SIZE) break;
+      }
+      if (current.length >= MAX_VISIBLE_LEADS && totalLeadRows === null) {
+        setLeadLimitReached(true);
+        setLeads([]);
+        setFollowUps({});
+        setFollowUpReadiness('unavailable');
+        setSelectedId(null);
+        return;
+      }
       setLeads(current);
       setSelectedId(prev => current.some(l => l.id === prev) ? prev : null);
+
+      // New follow-up table is introduced through a separately reviewed
+      // migration. Until it is applied, the normal leads/notes CRM remains
+      // fully usable and scheduling is visibly marked unavailable.
+      const reminderRows: LeadFollowUp[] = [];
+      let reminderFailure = false;
+      let totalReminderRows: number | null = null;
+      for (let offset = 0; offset < MAX_VISIBLE_LEADS; offset += LEAD_PAGE_SIZE) {
+        const { data: slice, error: reminderError, count } = await supabase
+          .from('lead_followups')
+          .select(FOLLOW_UP_SELECT, { count: offset === 0 ? 'exact' : undefined })
+          .order('lead_id', { ascending: true })
+          .range(offset, offset + LEAD_PAGE_SIZE - 1);
+        if (reminderError) { reminderFailure = true; break; }
+        if (offset === 0) totalReminderRows = count;
+        if (offset === 0 && typeof count === 'number' && count > MAX_VISIBLE_LEADS) {
+          reminderFailure = true;
+          break;
+        }
+        reminderRows.push(...((slice || []) as LeadFollowUp[]));
+        if ((slice?.length || 0) < LEAD_PAGE_SIZE) break;
+      }
+      if (reminderFailure || (totalReminderRows === null && reminderRows.length >= MAX_VISIBLE_LEADS)) {
+        setFollowUps({});
+        setFollowUpReadiness('unavailable');
+      } else {
+        const eligibleIds = new Set(current.map(lead => lead.id));
+        setFollowUps(Object.fromEntries(reminderRows
+          .filter(row => eligibleIds.has(row.lead_id))
+          .map(row => [row.lead_id, row])));
+        setFollowUpReadiness('available');
+      }
     } catch (caught) {
       console.error('Vendor Leads fetch failed', caught);
       setError('Unable to load your customer enquiries. Check the connection and retry.');
       setLeads([]);
+      setFollowUps({});
+      setFollowUpReadiness('unavailable');
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(interval);
+  }, []);
+  useEffect(() => {
+    const active = selectedId ? followUps[selectedId] : undefined;
+    setFollowUpDraft(active && !active.done_at ? localFollowUpInput(active.due_at) : '');
+  }, [selectedId, followUps]);
 
   useEffect(() => {
     if (!selectedId) return;
@@ -156,6 +247,10 @@ export default function LeadsPage() {
   const convertedCount = leads.filter(l => l.status === 'converted').length;
   const lostCount = leads.filter(l => l.status === 'lost').length;
   const conversionRate = total ? (convertedCount / total * 100) : 0;
+  const dueCount = leads.filter(lead => {
+    const reminder = followUps[lead.id];
+    return reminder && followUpState(reminder, now) === 'overdue';
+  }).length;
 
   const filtered = useMemo(() => {
     const needle = search.trim().toLowerCase();
@@ -166,7 +261,9 @@ export default function LeadsPage() {
       const matchesStage = stageFilter === 'all' || l.status === stageFilter;
       const matchesBusiness = businessFilter === 'all' || String(l.business_id) === businessFilter;
       const matchesPeriod = earliest === null || new Date(l.created_at).getTime() >= earliest;
-      return matchesSearch && matchesStage && matchesBusiness && matchesPeriod;
+      const matchesDue = !dueOnly || Boolean(followUps[l.id]
+        && followUpState(followUps[l.id], now) === 'overdue');
+      return matchesSearch && matchesStage && matchesBusiness && matchesPeriod && matchesDue;
     });
     list.sort((a, b) => {
       if (sort === 'name') return String(a.name || '').localeCompare(String(b.name || ''));
@@ -176,7 +273,7 @@ export default function LeadsPage() {
       return sort === 'oldest' ? left - right : right - left;
     });
     return list;
-  }, [leads, search, stageFilter, businessFilter, period, sort, businessNames]);
+  }, [leads, search, stageFilter, businessFilter, period, sort, businessNames, dueOnly, followUps, now]);
 
   const pageSize = 10;
   const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
@@ -188,6 +285,59 @@ export default function LeadsPage() {
     setNoteDraft('');
   }
 
+  async function saveFollowUp() {
+    const current = selected;
+    if (!current || savingFollowUp || followUpReadiness !== 'available') return;
+    if (!businesses.some(b => b.id === current.business_id)) {
+      toast.error('This enquiry is not associated with your business.');
+      return;
+    }
+    const parsed = parseFollowUpInput(followUpDraft);
+    if (!parsed.ok) { toast.error(parsed.reason); return; }
+    setSavingFollowUp(true);
+    try {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) throw authError || new Error('Sign in required.');
+      const { data, error: reminderError } = await supabase.from('lead_followups')
+        .upsert({
+          lead_id: current.id, due_at: parsed.utc,
+          done_at: null, updated_at: new Date().toISOString(),
+        }, { onConflict: 'lead_id' })
+        .select(FOLLOW_UP_SELECT)
+        .single();
+      if (reminderError || !data) throw reminderError || new Error('Not saved.');
+      const reminder = data as LeadFollowUp;
+      setFollowUps(prev => ({ ...prev, [current.id]: reminder }));
+      toast.success('Follow-up scheduled in your CRM');
+    } catch (caught) {
+      console.error('Vendor follow-up save failed', caught);
+      toast.error('Could not schedule follow-up. Please retry.');
+    } finally { setSavingFollowUp(false); }
+  }
+
+  async function completeFollowUp() {
+    const current = selected;
+    const reminder = current ? followUps[current.id] : undefined;
+    if (!current || !reminder || reminder.done_at || savingFollowUp
+        || followUpReadiness !== 'available') return;
+    setSavingFollowUp(true);
+    try {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) throw authError || new Error('Sign in required.');
+      const { data, error: updateError } = await supabase.from('lead_followups')
+        .update({ done_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+        .eq('lead_id', current.id)
+        .select(FOLLOW_UP_SELECT)
+        .single();
+      if (updateError || !data) throw updateError || new Error('Not updated.');
+      setFollowUps(prev => ({ ...prev, [current.id]: data as LeadFollowUp }));
+      toast.success('Follow-up marked completed');
+    } catch (caught) {
+      console.error('Vendor follow-up completion failed', caught);
+      toast.error('Could not complete follow-up. Please retry.');
+    } finally { setSavingFollowUp(false); }
+  }
+
   async function updateStatus(lead: Lead, next: Stage) {
     if (savingStatusId || lead.status === next) return;
     // The UI only operates on leads fetched through businesses owned by this vendor.
@@ -197,6 +347,8 @@ export default function LeadsPage() {
     }
     setSavingStatusId(lead.id);
     try {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) throw authError || new Error('Sign in required.');
       const { data, error: mutationError } = await supabase.from('leads')
         .update({ status: next })
         .eq('id', lead.id)
@@ -228,6 +380,8 @@ export default function LeadsPage() {
     }
     setSavingNote(true);
     try {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) throw authError || new Error('Sign in required.');
       const { data, error: noteError } = await supabase.from('lead_notes')
         .insert({ lead_id: current.id, note })
         .select('id,note,created_at')
@@ -299,6 +453,13 @@ export default function LeadsPage() {
             <span className="flex h-9 items-center gap-2 rounded-lg border border-[#E7E7EC] bg-[#F8F8FA] px-3 text-[11px] font-semibold text-[#2C2C31]">
               <span className="h-1.5 w-1.5 rounded-full bg-[#329368]" /> Vendor CRM
             </span>
+            {followUpReadiness === 'available' && (
+              <button type="button" aria-pressed={dueOnly} onClick={() => { setDueOnly(active => !active); setPage(1); }}
+                className={'inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-[11px] font-semibold ' +
+                  (dueOnly ? 'border-amber-500 bg-amber-100 text-amber-900' : 'border-amber-200 bg-amber-50 text-amber-800')}>
+                <IconsaxIcon name="calendar" size={15} /> Due follow-ups: {nfmt(dueCount)}
+              </button>
+            )}
             <button type="button" onClick={() => void load()} disabled={loading} className={button}>
               <IconsaxIcon name="refresh" size={15} /> Refresh
             </button>
@@ -312,6 +473,18 @@ export default function LeadsPage() {
           <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-800">
             <span>{error}</span>
             <button type="button" onClick={() => void load()} className="font-bold underline">Retry loading</button>
+          </div>
+        )}
+        {leadLimitReached && (
+          <div role="alert" className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-900">
+            Your CRM contains more than {nfmt(MAX_VISIBLE_LEADS)} leads. This overview will not show incomplete pipeline metrics or export a partial customer directory.
+            Narrow server-side reporting will be required for this volume.
+          </div>
+        )}
+        {!loading && businesses.length > 0 && followUpReadiness === 'unavailable' && !leadLimitReached && (
+          <div role="status" className="rounded-lg border border-[#F2E5D3] bg-[#FFFBF5] px-4 py-3 text-[11px] leading-5 text-[#775C40]">
+            Follow-up reminders are not enabled in the database yet. Your existing lead statuses, contact actions and private notes still work.
+            Scheduling will activate after the reviewed tenant-isolated CRM migration.
           </div>
         )}
 
@@ -329,7 +502,7 @@ export default function LeadsPage() {
                 </span>
               </div>
               <p className="mt-1.5 text-[26px] font-bold tabular-nums tracking-[-0.04em] text-[#1D1D20]">
-                {loading ? '—' : nfmt(kpi.count)}
+                {loading || error || leadLimitReached ? '—' : nfmt(kpi.count)}
               </p>
               <p className="mt-2 text-[10px] leading-4 text-slate-400">{kpi.note}</p>
             </div>
@@ -356,7 +529,7 @@ export default function LeadsPage() {
                   aria-label={'Filter ' + statusStyle[item.stage].label + ' leads'}
                   className="rounded-lg border border-[#eef1f0] bg-[#fbfcfb] p-3 text-left transition hover:border-[#F5BC8B] hover:bg-[#f6faf7]">
                   <p className="text-[10px] font-semibold text-slate-500">{statusStyle[item.stage].label}</p>
-                  <p className="mt-1 text-xl font-bold tabular-nums text-[#2C2C31]">{loading ? '—' : nfmt(item.count)}</p>
+                  <p className="mt-1 text-xl font-bold tabular-nums text-[#2C2C31]">{loading || error || leadLimitReached ? '—' : nfmt(item.count)}</p>
                   <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#eaf0ed]">
                     <div className="h-full rounded-full" style={{ width: (total ? item.count / total * 100 : 0) + '%', backgroundColor: item.bar }} />
                   </div>
@@ -373,7 +546,7 @@ export default function LeadsPage() {
             <div className="flex flex-1 flex-col justify-center px-5 py-5">
               <p className="text-[11px] font-semibold text-slate-500">Lead conversion rate</p>
               <p className="mt-2 text-[34px] font-bold tabular-nums tracking-[-0.05em] text-[#2C2C31]">
-                {loading ? '—' : conversionRate.toFixed(1) + '%'}
+                {loading || error || leadLimitReached ? '—' : conversionRate.toFixed(1) + '%'}
               </p>
               <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#F8F8FA]">
                 <div className="h-full rounded-full bg-[#242428]" style={{ width: conversionRate + '%' }} />
@@ -429,8 +602,10 @@ export default function LeadsPage() {
 
           {loading ? (
             <div role="status" className="space-y-3 p-5">{[0, 1, 2, 3].map(i => <div key={i} className="h-14 animate-pulse rounded-lg bg-slate-100" />)}</div>
-          ) : error ? (
-            <div className="px-5 py-12 text-center text-[12px] text-slate-500">Lead records are temporarily unavailable.</div>
+          ) : error || leadLimitReached ? (
+            <div className="px-5 py-12 text-center text-[12px] text-slate-500">
+              {leadLimitReached ? 'CRM reporting is unavailable for this volume; incomplete totals are never presented as complete.' : 'Lead records are temporarily unavailable.'}
+            </div>
           ) : !businesses.length ? (
             <div className="flex flex-col items-center gap-3 px-6 py-12 text-center">
               <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#F8F8FA] text-[#2C2C31]"><IconsaxIcon name="shop" size={23} /></span>
@@ -449,7 +624,7 @@ export default function LeadsPage() {
             <div className="px-5 py-12 text-center">
               <p className="text-[12px] font-bold text-[#2C2C31]">No matching leads</p>
               <p className="mt-1 text-[11px] text-slate-400">Try a different search or clear the filters.</p>
-              <button type="button" onClick={() => { setSearch(''); setStageFilter('all'); setBusinessFilter('all'); setPeriod('all'); setPage(1); }}
+              <button type="button" onClick={() => { setSearch(''); setStageFilter('all'); setBusinessFilter('all'); setPeriod('all'); setDueOnly(false); setPage(1); }}
                 className="mt-3 text-[11px] font-bold text-[#2C2C31] hover:underline">Clear filters</button>
             </div>
           ) : (
@@ -482,7 +657,14 @@ export default function LeadsPage() {
                           <td className="max-w-[330px] px-3 py-3.5">
                             <p className="truncate text-[11px] font-semibold text-[#2C2C31]">{businessNames.get(String(lead.business_id)) || 'Your business'}</p>
                             <p className="mt-1 truncate text-[10px] text-slate-400">{lead.message || 'No message provided'}</p>
-                            {!!lead.source && <p className="mt-1 truncate text-[10px] text-slate-400">Source: {lead.source}</p>}
+                            {!!lead.source && <p className="mt-1 truncate text-[10px] text-slate-400">Recorded source: {lead.source}</p>}
+                            {followUps[lead.id] && (
+                              <p className={'mt-1 text-[10px] font-semibold ' +
+                                (followUpState(followUps[lead.id], now) === 'overdue' ? 'text-amber-700' : 'text-slate-500')}>
+                                Follow-up: {formatDate(followUps[lead.id].due_at, true)}
+                                {followUps[lead.id].done_at ? ' · Completed' : followUpState(followUps[lead.id], now) === 'overdue' ? ' · Due' : ''}
+                              </p>
+                            )}
                           </td>
                           <td className="whitespace-nowrap px-3 py-3.5 text-[11px] text-slate-500">{formatDate(lead.created_at)}</td>
                           <td className="px-3 py-3.5">
@@ -513,6 +695,13 @@ export default function LeadsPage() {
                           <p className="truncate text-[12px] font-bold text-[#2C2C31]">{lead.name || 'Unnamed customer'}</p>
                           <p className="mt-1 truncate text-[10px] text-slate-400">{businessNames.get(String(lead.business_id)) || 'Your business'}</p>
                           <p className="mt-2 line-clamp-2 text-[11px] leading-5 text-slate-500">{lead.message || 'No message provided'}</p>
+                          {followUps[lead.id] && (
+                            <p className={'mt-2 text-[10px] font-semibold ' +
+                              (followUpState(followUps[lead.id], now) === 'overdue' ? 'text-amber-700' : 'text-slate-500')}>
+                              Follow-up: {formatDate(followUps[lead.id].due_at, true)}
+                              {followUps[lead.id].done_at ? ' · Completed' : followUpState(followUps[lead.id], now) === 'overdue' ? ' · Due' : ''}
+                            </p>
+                          )}
                         </div>
                         <span className="shrink-0 text-[10px] text-slate-400">{formatDate(lead.created_at)}</span>
                       </div>
@@ -539,7 +728,7 @@ export default function LeadsPage() {
             </>
           )}
         </section>
-        <p className="text-[10px] leading-5 text-slate-400">Only your businesses' recorded enquiries are shown. CRM status and conversion metrics are vendor-managed, not verified transactions.</p>
+        <p className="text-[10px] leading-5 text-slate-400">Only your businesses' recorded enquiries are shown. Lead sources are stored labels (some may be legacy/unverified). CRM conversion status is vendor-managed, not evidence of a sale or revenue. Follow-up dates are in-app reminders, not scheduled external messages.</p>
       </div>
 
       {selected && (
@@ -583,6 +772,51 @@ export default function LeadsPage() {
                 <p className="mt-3 text-[10px] text-slate-400">Changes are saved to the existing lead record. No automatic messages are sent.</p>
               </div>
 
+              <div className={panel + ' p-4'}>
+                <h4 className="text-[12px] font-bold text-[#2C2C31]">Next follow-up reminder</h4>
+                <p className="mt-1 text-[10px] leading-5 text-slate-500">
+                  Private in-app reminder, shown when you visit this CRM. Not an automatic customer notification, SMS or email.
+                </p>
+                {followUpReadiness === 'available' ? (
+                  <form className="mt-3 space-y-3" onSubmit={event => { event.preventDefault(); void saveFollowUp(); }}>
+                    <label htmlFor="lead-next-follow-up" className="block text-[11px] font-semibold text-[#2C2C31]">
+                      Due date and time (your local time)
+                    </label>
+                    <input id="lead-next-follow-up" type="datetime-local" required
+                      value={followUpDraft}
+                      onChange={event => setFollowUpDraft(event.target.value)}
+                      min={localFollowUpInput(new Date(now + 60_000).toISOString())}
+                      max={localFollowUpInput(new Date(now + 365 * 86_400_000).toISOString())}
+                      className="h-10 w-full rounded-lg border border-[#E7E7EC] bg-white px-3 text-[11px] text-[#2C2C31] focus:border-[#FF7900]" />
+                    {followUps[selected.id] && (
+                      <p role="status" className="text-[11px] leading-5 text-amber-800">
+                        {followUps[selected.id].done_at ? 'Completed' :
+                          followUpState(followUps[selected.id], now) === 'overdue' ? 'Due now / overdue' :
+                            followUpState(followUps[selected.id], now) === 'due-soon' ? 'Due in the next 24 hours' : 'Scheduled'}
+                        {' · '}{formatDate(followUps[selected.id].due_at, true)}
+                      </p>
+                    )}
+                    <div className="flex flex-wrap gap-2">
+                      <button type="submit" disabled={savingFollowUp || !followUpDraft}
+                        className="rounded-lg bg-[#202024] px-4 py-2.5 text-[11px] font-bold text-white disabled:opacity-50">
+                        {savingFollowUp ? 'Saving…' : followUps[selected.id] ? 'Reschedule reminder' : 'Schedule follow-up'}
+                      </button>
+                      {followUps[selected.id] && !followUps[selected.id].done_at && (
+                        <button type="button" disabled={savingFollowUp} onClick={() => void completeFollowUp()}
+                          className="rounded-lg border border-[#DDE9DD] bg-white px-4 py-2.5 text-[11px] font-bold text-[#3F7856] disabled:opacity-50">
+                          Mark completed
+                        </button>
+                      )}
+                    </div>
+                  </form>
+                ) : (
+                  <p role="status" className="mt-3 rounded-lg bg-[#FFF9ED] p-3 text-[11px] text-[#80613B]">
+                    Follow-up scheduling is not available until the reviewed database migration is applied.
+                    You can still save an internal note below.
+                  </p>
+                )}
+              </div>
+
               <div>
                 <h4 className="text-[12px] font-bold text-[#2C2C31]">Quick contact</h4>
                 <div className="mt-3 grid grid-cols-3 gap-2">
@@ -610,7 +844,7 @@ export default function LeadsPage() {
                 {[
                   { label: 'Phone', value: selected.phone },
                   { label: 'Email', value: selected.email },
-                  { label: 'Source', value: selected.source },
+                  { label: 'Recorded source', value: selected.source },
                   { label: 'Business', value: businessNames.get(String(selected.business_id)) },
                   { label: 'Received', value: formatDate(selected.created_at, true) },
                 ].map(row => (

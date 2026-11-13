@@ -1,0 +1,151 @@
+name: P1 Integrated Release Gate — Exact Branch CI
+
+on:
+  push:
+    branches: ['release/p1-vendor-integration-20261113']
+    paths:
+      - '.github/workflows/p1-integrated-release-gate.yml'
+      - 'app/**'
+      - 'lib/**'
+      - 'tests/**'
+      - 'docs/growth/p1/**'
+      - 'supabase/migrations/*_p1_*.sql'
+      - 'package*.json'
+      - 'bun.lock'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - 'lib/**'
+      - 'tests/**'
+      - 'docs/growth/p1/**'
+      - 'supabase/migrations/*_p1_*.sql'
+      - 'package*.json'
+      - 'bun.lock'
+      - '.github/workflows/p1-integrated-release-gate.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Run integrated P1, review security, multilingual and growth regression tests
+        run: |
+          node --test \
+            tests/reviewModerationSecurity.test.mjs \
+            tests/vendorReviewReliability.test.mjs \
+            tests/businessLocationValidation.test.mjs \
+            tests/vendorLeadFollowups.test.mjs \
+            tests/vendorActivityTrend.test.mjs \
+            tests/vendorGrowthComparison.test.mjs \
+            tests/growthAttribution.test.mjs \
+            tests/growthIngestion.test.mjs \
+            tests/vendorPortalRelease.test.mjs \
+            tests/vendorNeutralUi.test.mjs \
+            tests/growthSecureLeads.test.mjs \
+            tests/hybridSearch.test.mjs
+
+  nextjs-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-key
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Resolve exact lockfile
+        run: npm ci --no-audit --no-fund
+      - name: Verify SSR auth cookie roundtrip
+        run: node tests/auth/ssr-cookie-roundtrip.mjs
+      - name: TypeScript validation
+        run: npx tsc --noEmit
+      - name: Next.js optimized production build
+        run: npm run build
+
+  postgres-rls:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: slbi_p1_release
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres -d slbi_p1_release"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: slbi_p1_release
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Seed disposable ownership, old customer reviews and legacy enquiries
+        run: psql -v ON_ERROR_STOP=1 -f tests/p1-release/bootstrap.sql
+      - name: Apply CRM and least-privilege guards in throwaway Postgres only
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113091124_p1_vendor_lead_followups_and_review_owner_rls.sql
+      - name: Apply review moderation and column grants in throwaway Postgres only
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113091146_p1_review_moderation_pending_staff_audit.sql
+      - name: Revoke dangerous API-role TRUNCATE on all disposable public tables
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113091046_p1_public_api_truncate_lockdown.sql
+      - name: Verify vendor A/B and anonymous legacy flows
+        run: psql -v ON_ERROR_STOP=1 -f tests/p1-release/verify.sql
+      - name: Verify reviewer identity, pending privacy and staff approval audits
+        run: psql -v ON_ERROR_STOP=1 -f tests/p1-release/review_moderation_verify.sql
+
+  postgis-location:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgis/postgis:17-3.5
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: slbi_p1_location
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres -d slbi_p1_location"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: slbi_p1_location
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Seed throwaway business listing coordinates
+        run: psql -v ON_ERROR_STOP=1 -f tests/p1-release/location_bootstrap.sql
+      - name: Apply physical address and location guards to throwaway DB only
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113091207_p1_business_physical_address_postgis_guard.sql
+      - name: Validate invalid/old address and GPS edge cases
+        run: psql -v ON_ERROR_STOP=1 -f tests/p1-release/location_verify.sql

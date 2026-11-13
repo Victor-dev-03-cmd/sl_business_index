@@ -1,0 +1,38 @@
+name: Integrate Verified Review Security into P1 Release Candidate
+
+on:
+  push:
+    branches: ['release/p1-vendor-integration-20261113']
+    paths: ['.github/workflows/integrate-p1-review-security.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    if: github.repository == 'Victor-dev-03-cmd/sl_business_index' && github.ref == 'refs/heads/release/p1-vendor-integration-20261113'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout release candidate without changing production
+        uses: actions/checkout@v4
+        with:
+          ref: release/p1-vendor-integration-20261113
+          persist-credentials: true
+          fetch-depth: 0
+      - name: Merge exact security PR head, reject any conflicts
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch --no-tags origin +refs/heads/security/p1-review-moderation-20261113:refs/remotes/origin/security/p1-review-moderation-20261113
+          expected='36af2498e324bcae6d1e7607d5ba95a69ff23c09'
+          actual="$(git rev-parse refs/remotes/origin/security/p1-review-moderation-20261113)"
+          if [[ "$actual" != "$expected" ]]; then
+            echo "SECURITY HOLD: source branch changed unexpectedly; do not integrate." >&2
+            exit 1
+          fi
+          git merge --no-ff --no-edit "$actual"
+          git diff --check HEAD^ HEAD
+          git push origin HEAD:refs/heads/release/p1-vendor-integration-20261113

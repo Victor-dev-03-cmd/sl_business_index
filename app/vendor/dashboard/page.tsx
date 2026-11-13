@@ -65,6 +65,7 @@ export default function VendorDashboard() {
   const [sort, setSort] = useState<SortKey>('views');
   const [page, setPage] = useState(1);
   const [updatingIds, setUpdatingIds] = useState<string[]>([]);
+  const [activityRefreshKey, setActivityRefreshKey] = useState(0);
 
   const load = useCallback(async (notify = false) => {
     setLoading(true);
@@ -91,6 +92,7 @@ export default function VendorDashboard() {
         reviews: 0,
       });
       if (!owned.length) {
+        if (notify) setActivityRefreshKey(value => value + 1);
         if (notify) toast.success('Dashboard refreshed', {
           toasterId: 'vendor-portal',
           description: 'No listings yet. Your dashboard is up to date.',
@@ -125,6 +127,7 @@ export default function VendorDashboard() {
           businessName: Array.isArray(joined) ? joined[0]?.name || 'Your business' : joined?.name || 'Your business',
         };
       }));
+      if (notify) setActivityRefreshKey(value => value + 1);
       if (notify) toast.success('Dashboard refreshed', {
         toasterId: 'vendor-portal',
         description: 'Your latest business statistics are up to date.',
@@ -320,7 +323,7 @@ export default function VendorDashboard() {
               </Link>
             </div>
             <div className="p-4 sm:p-5">
-              <VendorAnalytics businessIds={businessIds} embedded />
+              <VendorAnalytics businessIds={businessIds} refreshKey={activityRefreshKey} embedded />
             </div>
           </section>
 
