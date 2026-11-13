@@ -37,6 +37,22 @@ CREATE POLICY marketing_campaign_revisions_owner_read
     WHERE c.id=campaign_id AND b.owner_id=(SELECT auth.uid())
   ));
 
+-- Browser writes must also carry a verified unexpired Pro entitlement;
+-- a subscription request or client-supplied plan name is NOT evidence.
+CREATE OR REPLACE FUNCTION public.slbi_has_marketing_pro()
+RETURNS boolean LANGUAGE sql STABLE SECURITY INVOKER SET search_path=''
+AS $pro$
+  SELECT EXISTS (
+    SELECT 1 FROM public.growth_entitlements e
+    WHERE e.user_id=(SELECT auth.uid())
+      AND e.plan_name IN ('Professional','Enterprise')
+      AND e.verified_at<=now() AND e.expires_at>now()
+      AND char_length(btrim(e.payment_reference))>=3
+  );
+$pro$;
+REVOKE ALL ON FUNCTION public.slbi_has_marketing_pro() FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.slbi_has_marketing_pro() TO authenticated;
+
 -- Legacy "Vendors manage own campaigns" FOR ALL allowed browser-invented
 -- status='posted'. New writes permit only draft/review/planning states.
 ALTER TABLE public.marketing_campaigns ENABLE ROW LEVEL SECURITY;
@@ -56,16 +72,19 @@ CREATE POLICY marketing_campaign_owner_insert ON public.marketing_campaigns
     AND business_id IS NOT NULL
     AND EXISTS (SELECT 1 FROM public.businesses b WHERE b.id=business_id
       AND b.owner_id=(SELECT auth.uid()))
+    AND (SELECT public.slbi_has_marketing_pro())
   );
 CREATE POLICY marketing_campaign_owner_update ON public.marketing_campaigns
   FOR UPDATE TO authenticated USING (
     status IN ('drafted','scheduled','approved','rejected')
     AND EXISTS (SELECT 1 FROM public.businesses b WHERE b.id=business_id
       AND b.owner_id=(SELECT auth.uid()))
+    AND (SELECT public.slbi_has_marketing_pro())
   ) WITH CHECK (
     status IN ('drafted','scheduled','approved','rejected')
     AND EXISTS (SELECT 1 FROM public.businesses b WHERE b.id=business_id
       AND b.owner_id=(SELECT auth.uid()))
+    AND (SELECT public.slbi_has_marketing_pro())
   );
 
 REVOKE ALL ON public.marketing_campaigns FROM PUBLIC,anon,authenticated;
