@@ -91,3 +91,15 @@ Product refinement: Marketing Studio must become an overview-only page, and Mark
 - All new standalone premium child routes use a verified server-side Pro layout; existing /vendor/marketing/brand|captions|design|campaigns remain protected.
 - **Verified standalone route checkpoint:** exact application SHA `be841597d1d773e643fbac6cbe65d41e5943c092` — all 7 GitHub workflow families passed; Vercel Preview `dpl_C9MDRpHiWo3T6GBrUCRTpu81TJie` READY at https://sl-business-index-5iilmobeo-victor-dev-03-cmds-projects.vercel.app (target Preview, NOT production). Real paid-vendor browser acceptance and live P2 migrations remain pending. UI modules display planned/disconnected providers truthfully.
 - Required next-chat reads: `AGENTS.md` and `docs/growth/SLBI_MASTER_IMPLEMENTATION_HANDOFF.md` on main; then this P2 branch ledger and `docs/growth/p2/P2_MARKETING_ENGINE_ROADMAP_AND_STATUS.md`.
+
+## 2026-11-13 — Step 2 first-party OAuth connector infrastructure (development candidate)
+
+New files:
+- `lib/marketing/oauth-provider-contract.ts`: five official account-type adapter contracts (managed Facebook Page, eligible Instagram Professional, WhatsApp Business, Google/Microsoft mail); CSPRNG state, HMAC digest, PKCE S256, exact HTTPS callback URL requirement, typed action/capability gate. **Pure primitives, not real OAuth API calls.**
+- `docs/growth/p2/P2_07_CONNECTOR_OAUTH_VAULT_STAGING_ONLY.sql`: OAuth intents, one-time consumption field, owner-scoped connection metadata, isolated service-role-only encrypted-token vault, Pro-only read policy. This is a **staging-only draft**; no production migration.
+- `tests/p2OAuthConnectors.test.mjs`, `tests/p2-oauth/verify.sql` and the P2 GitHub workflow: state randomness/replay/expiry/redirect/PKCE and PostgreSQL 17 Basic/expired Pro/token-secret denial.
+- Official OAuth provider login, provider consent screen, callback, token exchange, refresh and revoke **NOT IMPLEMENTED**. Connect buttons intentionally disabled; no real provider account attached.
+
+Safety design decisions: user and business Pro eligibility must be verified again when starting OAuth AND consuming one-time state, and immediately before using any token; verified Page/Professional/mail account rather than Facebook personal profile; encrypt credentials via managed KMS/vault, no plaintext in browser/PostgREST. Follow RFC 9700, including exact redirect URI and PKCE S256 where provider supports it. Provider-specific endpoints/scopes must be reviewed against the selected official API before enabling.
+
+Release gates still open: GitHub contract + Docker + production build at exact SHA, protected provider app registrations, transactional one-time state consumption, KMS wiring, same-origin Pro start endpoint, audited callback and revoke, browser authenticated negative tests, preview and production approvals. **No real OAuth, external sends, payment charges, P2 production migration or P2 main merge.**
