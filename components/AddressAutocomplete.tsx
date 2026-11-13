@@ -18,6 +18,7 @@ import dynamic from 'next/dynamic';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabaseClient';
 import { isPlausibleSriLankaPin } from '@/lib/businessLocation';
+import { buildVendorEnteredArea, describeGeolocationFailure, isReadableBusinessArea, SRI_LANKAN_DISTRICTS } from '@/lib/businessPinFallback';
 
 const LeafletMap = dynamic(() => import('@/components/LeafletMap'), {
   ssr: false,
@@ -74,6 +75,13 @@ export default function AddressAutocomplete({
   });
 
   const [isLocating, setIsLocating] = useState(false);
+  const [manualAreaMode, setManualAreaMode] = useState(false);
+  const [manualLocality, setManualLocality] = useState('');
+  const [manualDistrict, setManualDistrict] = useState('');
+  const [pendingPin, setPendingPin] = useState<{ lat: number; lng: number } | null>(null);
+  const [areaSource, setAreaSource] = useState<'existing' | 'google' | 'vendor' | null>(initialAddress ? 'existing' : null);
+  // Latest click wins: reverse geocoding must never overwrite a newer pin.
+  const locationRequestId = useRef(0);
   const [markerPosition, setMarkerPosition] = useState<{ lat: number; lng: number } | null>(
     initialLat != null && initialLng != null && isPlausibleSriLankaPin(initialLat, initialLng)
       ? { lat: initialLat, lng: initialLng } : null
@@ -85,6 +93,7 @@ export default function AddressAutocomplete({
   const [zoom, setZoom] = useState(initialLat != null && initialLng != null && isPlausibleSriLankaPin(initialLat, initialLng) ? 16 : 10);
   const [nearbyBusinesses, setNearbyBusinesses] = useState<any[]>([]);
   const appliedInitialLocation = useRef('');
+  useEffect(() => () => { locationRequestId.current += 1; }, []);
 
   // The registration page can receive a preselected map location via URL
   // after this dynamic component has mounted.
@@ -101,7 +110,12 @@ export default function AddressAutocomplete({
   }, [initialAddress, initialLat, initialLng, setValue]);
 
   const clearSelection = useCallback(() => {
+    locationRequestId.current += 1;
     setMarkerPosition(null);
+    setPendingPin(null);
+    setManualAreaMode(false);
+    setAreaSource(null);
+    setIsLocating(false);
     onLocationClearAction?.();
     onLocationConfirmedChange?.(false);
   }, [onLocationClearAction, onLocationConfirmedChange]);
@@ -137,6 +151,7 @@ export default function AddressAutocomplete({
   }, [markerPosition, fetchNearbyBusinesses]);
 
   const handleSelect = useCallback(async (description: string) => {
+    const requestId = ++locationRequestId.current;
     clearSuggestions();
     try {
       const results = await getGeocode({ address: description });
@@ -150,7 +165,15 @@ export default function AddressAutocomplete({
         toast.error('This address is outside the Sri Lankan business area.');
         return;
       }
+      if (requestId !== locationRequestId.current) return;
       const address = result.formatted_address || description;
+      if (!isReadableBusinessArea(address)) {
+        toast.error('Choose a named Sri Lankan locality rather than coordinates only.');
+        return;
+      }
+      setPendingPin(null);
+      setManualAreaMode(false);
+      setAreaSource('google');
       setValue(address, false);
       setMapCenter({ lat, lng });
       setMarkerPosition({ lat, lng });
@@ -158,84 +181,131 @@ export default function AddressAutocomplete({
       onLocationConfirmedChange?.(false);
       onLocationSelectAction(lat, lng, address);
     } catch (error) {
+      if (requestId !== locationRequestId.current) return;
       console.error('Error selecting place:', error);
-      toast.error('Unable to verify this location. Select another result or map point.');
+      toast.error('Could not look up this address. Pin the shop on the map and enter its locality instead.');
     }
   }, [setValue, clearSuggestions, onLocationSelectAction, onLocationConfirmedChange]);
 
   const handleMarkerDragEnd = useCallback(async (lat: number, lng: number) => {
+    const requestId = ++locationRequestId.current;
+    setIsLocating(false);
     if (!isPlausibleSriLankaPin(lat, lng)) {
-      toast.error('Move the business pin to a location within Sri Lanka.');
+      toast.error('Move the business pin inside Sri Lanka.');
       return;
     }
-    setMarkerPosition({ lat, lng });
-    setMapCenter({ lat, lng });
+    // Keep the precise pin even if Google has no street/area result.
+    // This clears the previous address and requires explicit reconfirmation.
+    const pin = { lat, lng };
+    setMarkerPosition(pin);
+    setPendingPin(pin);
+    setMapCenter(pin);
     setZoom(17);
+    setValue('', false);
+    setManualAreaMode(false);
+    setAreaSource(null);
     onLocationConfirmedChange?.(false);
     onLocationClearAction?.();
     try {
-      const results = await getGeocode({ location: { lat, lng } });
+      const results = await getGeocode({ location: pin });
+      if (locationRequestId.current !== requestId) return;
       const result = results[0];
-      if (!result || !isSriLankaResult(result) || !result.formatted_address) {
-        throw new Error('Readable Sri Lankan address unavailable');
+      if (!result || !isSriLankaResult(result) || !isReadableBusinessArea(result.formatted_address)) {
+        throw new Error('No readable Sri Lankan locality returned');
       }
-      setValue(result.formatted_address, false);
-      onLocationSelectAction(lat, lng, result.formatted_address);
+      const area = result.formatted_address;
+      setValue(area, false);
+      setPendingPin(null);
+      setAreaSource('google');
+      onLocationSelectAction(lat, lng, area);
     } catch (error) {
-      console.error('Error during reverse geocoding:', error);
-      setValue('', false);
-      toast.error('The map pin has no verified area address. Try a nearby point or address search.');
+      if (locationRequestId.current !== requestId) return;
+      console.warn('Map pin reverse-geocoding unavailable; vendor locality required', error);
+      setManualAreaMode(true);
+      // Do NOT throw away the valid map pin. A user-confirmed locality remains
+      // available even when the Places API is absent/blocked/out of quota.
+      toast.info('Map pin placed. Enter the village or town and district below to continue.');
     }
   }, [setValue, onLocationSelectAction, onLocationClearAction, onLocationConfirmedChange]);
 
-  const findMyLocation = () => {
-    if (!navigator.geolocation) {
-      toast.error("Geolocation is not supported by your browser.");
+  const openManualArea = () => {
+    if (!markerPosition) {
+      toast.info('First click or drag the map pin to your real business entrance.');
       return;
     }
+    locationRequestId.current += 1;
+    setPendingPin(markerPosition);
+    setManualAreaMode(true);
+    setAreaSource(null);
+    setValue('', false);
+    onLocationClearAction?.();
+    onLocationConfirmedChange?.(false);
+  };
 
+  const applyManualArea = () => {
+    const pin = pendingPin ?? markerPosition;
+    const address = buildVendorEnteredArea(manualLocality, manualDistrict);
+    if (!pin || !isPlausibleSriLankaPin(pin.lat, pin.lng) || !address) {
+      toast.error('Enter your real village/town and select the correct Sri Lankan district.');
+      return;
+    }
+    locationRequestId.current += 1;
+    setValue(address, false);
+    setManualAreaMode(false);
+    setPendingPin(null);
+    setAreaSource('vendor');
+    onLocationSelectAction(pin.lat, pin.lng, address);
+    onLocationConfirmedChange?.(false);
+    toast.success('Map pin and vendor-entered area saved. Confirm the shop entrance and physical address below.');
+  };
+
+  const findMyLocation = () => {
+    if (!window.isSecureContext) {
+      toast.error('Browser location needs HTTPS. Open the secure website or use the manual map pin.');
+      return;
+    }
+    if (!navigator.geolocation) {
+      toast.error('This browser cannot retrieve GPS. Click your shop entrance on the map instead.');
+      return;
+    }
+    const requestId = ++locationRequestId.current;
     setIsLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude, accuracy } = position.coords;
-        if (!isPlausibleSriLankaPin(latitude, longitude)) {
-          toast.error('Find Me returned a position outside Sri Lanka.');
-          setIsLocating(false);
-          return;
-        }
-        setMapCenter({ lat: latitude, lng: longitude });
-        setMarkerPosition({ lat: latitude, lng: longitude });
-        setZoom(17);
-        onLocationConfirmedChange?.(false);
-        onLocationClearAction?.();
-        if (accuracy > 150) {
-          toast.warning('GPS is approximate (' + Math.round(accuracy) + ' m). Drag the map pin to your business entrance.');
-        }
-
-        try {
-          const results = await getGeocode({ location: { lat: latitude, lng: longitude } });
-          const result = results[0];
-          if (!result || !isSriLankaResult(result) || !result.formatted_address) {
-            throw new Error('Readable Sri Lankan address unavailable');
+    const locate = (highAccuracy: boolean) => {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          if (locationRequestId.current !== requestId) return;
+          const { latitude, longitude, accuracy } = position.coords;
+          if (!isPlausibleSriLankaPin(latitude, longitude)) {
+            setIsLocating(false);
+            toast.error('The detected location is outside Sri Lanka. Use the map to mark your shop instead.');
+            return;
           }
-          setValue(result.formatted_address, false);
-          onLocationSelectAction(latitude, longitude, result.formatted_address);
-          toast.info('GPS located. Confirm your exact shop entrance on the map and type your physical address.');
-        } catch (error) {
-          console.error('Error during reverse geocoding:', error);
-          setValue('', false);
-          toast.error('GPS found coordinates, but no readable address. Search for your business area and refine the pin.');
-        } finally {
+          if (Number.isFinite(accuracy) && accuracy > 150) {
+            toast.warning('Approximate location (' + Math.round(accuracy) + ' m). Drag the map marker to the actual shop entrance.');
+          }
+          // GPS locates the DEVICE, not the business. The same map-pin,
+          // editable-area, and shop-entrance validation must still apply.
+          void handleMarkerDragEnd(latitude, longitude);
+        },
+        (error) => {
+          if (locationRequestId.current !== requestId) return;
+          // Desktop hardware and many phones can time out acquiring precise
+          // GPS; attempt coarse/network positioning once before failing.
+          if (highAccuracy && (error.code === 2 || error.code === 3)) {
+            locate(false);
+            return;
+          }
           setIsLocating(false);
-        }
-      },
-      (error) => {
-        console.error("Error getting location:", error);
-        toast.error("Unable to retrieve your location. Please ensure location services are enabled.");
-        setIsLocating(false);
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    );
+          toast.error(describeGeolocationFailure(error));
+        },
+        {
+          enableHighAccuracy: highAccuracy,
+          timeout: highAccuracy ? 12000 : 16000,
+          maximumAge: highAccuracy ? 120000 : 600000,
+        },
+      );
+    };
+    locate(true);
   };
 
   return (
@@ -304,6 +374,79 @@ export default function AddressAutocomplete({
               </Command>
             </div>
           </div>
+
+          <div className="space-y-2 rounded-lg border border-[#DEDDE3] bg-[#F8F8FA] px-3 py-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-xs font-semibold text-[#33343B]">
+                Pin the shop directly on the map
+              </p>
+              <button type="button" onClick={openManualArea}
+                disabled={!markerPosition}
+                className="rounded-md border border-[#D6D9DE] bg-white px-3 py-2 text-xs font-semibold text-[#9B4C0D] hover:border-[#F6AA6A] disabled:cursor-not-allowed disabled:opacity-50">
+                Enter area manually
+              </button>
+            </div>
+            <p className="text-[11px] leading-5 text-[#626571]">
+              {ready
+                ? 'Google address search is optional. Click or drag a pin to your real shop entrance.'
+                : 'Google address suggestions are unavailable. Map pin and manual village/district entry still work.'}
+            </p>
+            {markerPosition && (
+              <p className="text-[11px] font-medium text-slate-700">
+                Selected coordinates: {markerPosition.lat.toFixed(6)}, {markerPosition.lng.toFixed(6)}
+              </p>
+            )}
+            {areaSource === 'vendor' && (
+              <p role="status" className="text-[11px] leading-5 text-[#78420C]">
+                Locality entered by the vendor (not independently geocoded).
+                Check that your district and actual shop entrance match the map.
+              </p>
+            )}
+          </div>
+
+          {manualAreaMode && pendingPin && (
+            <div className="space-y-3 rounded-lg border border-[#F3CA8F] bg-[#FFFBF5] p-4" role="group" aria-label="Enter mapped business area manually">
+              <div>
+                <p className="text-sm font-semibold text-[#4E3420]">Confirm your map pin's locality</p>
+                <p className="mt-1 text-xs leading-5 text-[#75604C]">
+                  Automatic lookup could not provide a readable area. Your exact pin is retained.
+                  Enter the real town or village, then choose its district; this is vendor-supplied information.
+                </p>
+              </div>
+              <div>
+                <label htmlFor="business-manual-locality" className="mb-1 block text-xs font-semibold text-[#594331]">
+                  Village / town / locality <span className="text-red-600" aria-hidden="true">*</span>
+                </label>
+                <input id="business-manual-locality" type="text" value={manualLocality}
+                  onChange={event => setManualLocality(event.target.value)}
+                  minLength={2} maxLength={100} autoComplete="address-level2"
+                  placeholder="e.g. Maharagama, Kanagarayankulam, Jaffna Town"
+                  className="w-full rounded-md border border-[#CEBCA9] bg-white px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-[#FF7900]" />
+              </div>
+              <div>
+                <label htmlFor="business-manual-district" className="mb-1 block text-xs font-semibold text-[#594331]">
+                  District <span className="text-red-600" aria-hidden="true">*</span>
+                </label>
+                <select id="business-manual-district" value={manualDistrict}
+                  onChange={event => setManualDistrict(event.target.value)}
+                  className="w-full rounded-md border border-[#CEBCA9] bg-white px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-[#FF7900]">
+                  <option value="">Choose your district</option>
+                  {SRI_LANKAN_DISTRICTS.map(district => (
+                    <option key={district} value={district}>{district}</option>
+                  ))}
+                </select>
+              </div>
+              <button type="button" onClick={applyManualArea}
+                disabled={!buildVendorEnteredArea(manualLocality, manualDistrict)}
+                className="rounded-md bg-[#27272C] px-4 py-2.5 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50">
+                Use this locality with my selected map pin
+              </button>
+              <p className="text-[11px] leading-5 text-[#75604C]">
+                You must still type the real shop/building/street address and explicitly confirm the entrance below.
+                We do not automatically claim your manually entered area is GPS-verified.
+              </p>
+            </div>
+          )}
 
           {onDetailedAddressChange && (
             <div>

@@ -6,6 +6,8 @@ on:
     paths:
       - 'lib/businessAddress.ts'
       - 'lib/businessLocation.ts'
+      - 'lib/businessPinFallback.ts'
+      - 'tests/businessPinFallback.test.mjs'
       - 'components/AddressAutocomplete.tsx'
       - 'app/register-business/**'
       - 'app/vendor/my-businesses/**'
@@ -28,4 +30,4 @@ jobs:
         with:
           node-version: '24'
       - name: Address, coordinate, owner edit and map display regression tests
-        run: node --test tests/businessLocationValidation.test.mjs tests/homeFeaturedNearbyAddress.test.mjs
+        run: node --test tests/businessLocationValidation.test.mjs tests/homeFeaturedNearbyAddress.test.mjs tests/businessPinFallback.test.mjs
