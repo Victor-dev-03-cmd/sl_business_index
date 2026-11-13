@@ -15,7 +15,7 @@ const good={
 test('P2-01 legitimate Tamil/Sinhala/English brand profiles are valid',()=>{
   assert.deepEqual(BRAND_LANGUAGES,['en','ta','si']);
   assert.equal(BRAND_TONES.length,5);
-  assert.equal(validateBrandProfile(good).ok,true);
+  assert.equal(validateBrandProfile(good).ok,true,JSON.stringify(validateBrandProfile(good)));
   assert.equal(validateBrandProfile({...good,brandName:'யாழ்ப்பாணம் கடை'}).ok,true);
   assert.equal(validateBrandProfile({...good,brandName:'යාපනය වෙළඳසැල'}).ok,true);
   assert.equal(validateBrandProfile({...good,offers:[{
@@ -42,7 +42,7 @@ test('Invalid colors, repeated languages, unexpected fields and forged owner ref
 });
 test('Exact offer conditions and allowed brand guidelines, not AI or provider connections',()=>{
   const v=validateBrandProfile({...good,offers:[{title:'Trial',details:'Valid for local pickup only',validUntil:null}]});
-  assert.equal(v.ok,true);
+  assert.equal(v.ok,true,JSON.stringify(v));
   if(v.ok)assert.deepEqual(v.value.offers,[{title:'Trial',details:'Valid for local pickup only',validUntil:null}]);
   assert.deepEqual(BRAND_DEFAULTS.languages,['en','ta','si']);
 });
@@ -83,6 +83,6 @@ test('SQL guards tenant isolation, immutable owner identity and no anonymous wri
   assert.match(sql,/GRANT SELECT, INSERT ON public\.social_brand_profiles TO authenticated/);
   assert.match(sql,/GRANT UPDATE \(/);
   assert.match(sql,/business_id uuid PRIMARY KEY/);
-  assert.match(sql,/STAGING/);
+  assert.match(sql,/REVIEW \/ DISPOSABLE DOCKER DATABASE ONLY/);
   assert.doesNotMatch(sql,/GRANT ALL ON public\.social_brand_profiles TO authenticated/);
 });
