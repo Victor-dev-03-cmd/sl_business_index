@@ -41,15 +41,22 @@ test('Marketing Studio is overview-only, separate Campaign Workspace preserves f
   assert.match(campaigns,/status:schedule\?'scheduled':'drafted'/);
 });
 test('Marketing Engine is its own page with all requested Pro modules and truthful provider catalogue',()=>{
-  const landing=read('app/vendor/marketing-engine/page.tsx');
+  const landing=read('app/vendor/marketing/engine/page.tsx');
+  const standalone=read('app/vendor/marketing-engine/page.tsx');
+  assert.match(standalone,/MarketingEngineHome/);
   assert.match(landing,/Marketing Engine/);
   assert.match(landing,/ENGINE_MODULES\.map/);
   assert.match(landing,/getMarketingAccess\(\)/);
   assert.equal(ENGINE_MODULES.length,5);
   for(const module of ['social','email','agent','connections','automation']){
     assert.ok(ENGINE_MODULES.some(x=>x.slug===module));
-    const content=read('app/vendor/marketing-engine/(pro)/'+module+'/page.tsx');
+    const content=read('app/vendor/marketing/engine/(pro)/'+module+'/page.tsx');
+    const alias=read('app/vendor/marketing-engine/(pro)/'+module+'/page.tsx');
     assert.match(content,/MarketingModuleFrame/);
+    assert.match(alias,/export \{default\}/);
+  }
+  for(const sub of ['campaigns','calendar','leads']){
+    assert.match(read('app/vendor/marketing-engine/(pro)/'+sub+'/page.tsx'),/export \{default\}|export default function/);
   }
   assert.equal(MARKETING_CONNECTORS.length,12);
   assert.ok(MARKETING_CONNECTORS.every(x=>x.status==='planned'||x.status==='research'));
@@ -59,7 +66,7 @@ test('Marketing Engine is its own page with all requested Pro modules and truthf
   assert.ok(MARKETING_CONNECTORS.some(x=>x.id==='gmail'));
   assert.ok(MARKETING_CONNECTORS.some(x=>x.id==='outlook'));
   assert.ok(MARKETING_CONNECTORS.some(x=>x.id==='voice'));
-  assert.match(read('app/vendor/marketing-engine/(pro)/connections/page.tsx'),
+  assert.match(read('app/vendor/marketing/engine/(pro)/connections/page.tsx'),
     /disabled aria-disabled="true"/);
 });
 test('Pro server access protects all premium routes and authenticated APIs, not just UI buttons',()=>{
@@ -97,9 +104,9 @@ test('Trilingual deterministic enquiry routing escalates pricing, refunds and un
     assert.equal(r.intent,intent,text);
     assert.equal(r.action,action,text);
   }
-  assert.match(read('app/vendor/marketing-engine/(pro)/agent/page.tsx'),/Classify locally/);
-  assert.match(read('app/vendor/marketing-engine/(pro)/agent/page.tsx'),/No direct inbound call number/);
-  assert.match(read('app/vendor/marketing-engine/(pro)/agent/page.tsx'),/Automatic replies disabled/);
+  assert.match(read('app/vendor/marketing/engine/(pro)/agent/page.tsx'),/Classify locally/);
+  assert.match(read('app/vendor/marketing/engine/(pro)/agent/page.tsx'),/No direct inbound call number/);
+  assert.match(read('app/vendor/marketing/engine/(pro)/agent/page.tsx'),/Automatic replies disabled/);
 });
 test('Vendor top navigation contains two distinct Marketing links without false active parent',()=>{
   const s=read('app/vendor/layout.tsx');
