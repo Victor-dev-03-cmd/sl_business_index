@@ -39,7 +39,7 @@ jobs:
             '46bc3bda838eeae347c1d2aad2c5395689f8f617'
             '4d945ed3ed7b3c157b2e906032256c844b2c6932'
             '4271655f149a116c0516725f0c111b59c2e12bc1'
-            '4c25f67ff2428fc9f25a46003f65f58deb7134bf'
+            'ba9cfb1c9c0766e4217b4caf3c662424692449e1'
           )
           for i in "${!refs[@]}"; do
             ref="${refs[$i]}"
@@ -50,7 +50,19 @@ jobs:
               echo "Release source changed unexpectedly: $ref" >&2
               exit 1
             fi
-            git merge --no-ff --no-edit "refs/remotes/origin/$ref"
+            if ! git merge --no-ff --no-edit "refs/remotes/origin/$ref"; then
+              conflicts="$(git diff --name-only --diff-filter=U)"
+              # Six feature PRs all remove identical obsolete CSS. Preserve
+              # the already-reviewed Tailwind/portal CSS from package PR #61.
+              # Fail the integration for ANY other merge conflict.
+              if [[ "$conflicts" != "app/vendor/vendor-workspace.css" ]]; then
+                echo "Unresolved or unexpected merge conflicts: $conflicts" >&2
+                exit 1
+              fi
+              git checkout --ours app/vendor/vendor-workspace.css
+              git add app/vendor/vendor-workspace.css
+              git commit -m "merge(release): preserve reviewed vendor CSS cleanup"
+            fi
           done
           git diff --check
           git status --short
