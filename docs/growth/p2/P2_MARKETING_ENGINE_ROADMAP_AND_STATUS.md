@@ -82,7 +82,7 @@ Marketing and Discovery may exchange **only** approved business facts and author
 
 **P2-10 — AI credit risk controls (disposable Docker):** `docs/growth/p2/P2_02_P2_10_AI_CREDIT_RESERVATIONS_STAGING_ONLY.sql` introduces immutable server-assigned job ownership, per-owner/1-day max 6 reservations, platform max 50 per UTC day, existing plan-defined credit pricing, row-locked debit, idempotency key handling, atomic draft-completion, compensation refund and append-only credit ledger. Real actions remain disabled pending release gates. Docker tests intentionally enable one action in **throwaway Postgres only**; this does not change production billing or plan prices. Before actual provider rollout, add durable stale-reservation reconciliation and capture provider billing metrics; document a small approved provider-cost budget.
 
-**Existing Marketing campaign continuity:** The old `marketing_campaigns` record and `posted` status remain unchanged; it is not verified evidence of provider-published content. P2-05 revision/audit migration and P2-06 durable schedule worker are still **NOT IMPLEMENTED**. The old calendar remains planning-only. Meta token presence in an environment does **not** establish official per-vendor OAuth authorization.
+**Existing Marketing campaign continuity:** The old `marketing_campaigns` record and `posted` status remain unchanged; it is not verified evidence of provider-published content. P2-05 **owner-scoped SQL revision/audit migration has now been staged and tested in Docker**, but its UI/API and immutable provider-receipt verification are **not yet released**. P2-06 durable schedule worker is still **NOT IMPLEMENTED**. The old calendar remains planning-only. Meta token presence in an environment does **not** establish official per-vendor OAuth authorization.
 
 ### Updated acceptance / release status
 
@@ -94,6 +94,7 @@ Marketing and Discovery may exchange **only** approved business facts and author
 - [ ] Live owner JWT save/reload/edit tests; provider model output tests with an approved cost ceiling
 - [ ] P2-03 AI-generated original artwork and editable overlays
 - [ ] P2-04 persistent designs and revision history, approved asset storage
+- [x] P2-05 revision-history SQL and security regression in Docker; existing historical `posted` state preserved
 - [ ] P2-05 publishing history, verified receipts and moderation audit
 - [ ] P2-06 durable scheduled queue and retry/recovery worker
 - [ ] P2-07 official provider OAuth and page-scoped Facebook/Instagram publishing
