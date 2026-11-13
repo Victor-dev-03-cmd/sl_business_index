@@ -103,3 +103,9 @@ New files:
 Safety design decisions: user and business Pro eligibility must be verified again when starting OAuth AND consuming one-time state, and immediately before using any token; verified Page/Professional/mail account rather than Facebook personal profile; encrypt credentials via managed KMS/vault, no plaintext in browser/PostgREST. Follow RFC 9700, including exact redirect URI and PKCE S256 where provider supports it. Provider-specific endpoints/scopes must be reviewed against the selected official API before enabling.
 
 Release gates still open: GitHub contract + Docker + production build at exact SHA, protected provider app registrations, transactional one-time state consumption, KMS wiring, same-origin Pro start endpoint, audited callback and revoke, browser authenticated negative tests, preview and production approvals. **No real OAuth, external sends, payment charges, P2 production migration or P2 main merge.**
+
+### Step 2 exact-SHA acceptance — 2026-11-13
+- Verified code SHA: `000c75fc04ad1c2bd81e753961a1b677b763e164`.
+- GitHub Actions: **7/7 workflow runs passed** at that exact SHA, including new Node OAuth/PKCE tests, disposable PostgreSQL OAuth token-vault RLS tests, existing P1/P2 checks, billing tests and optimized Next.js build.
+- Vercel Preview: `dpl_DAkD9z9UzMz23WdBLcNXn96T1TmD`, **READY**, non-production: https://sl-business-index-63s5hfc6e-victor-dev-03-cmds-projects.vercel.app . The preview has no live OAuth Connect operation and no new live database migration.
+- Do not promote production or enable Connect. Next: verified provider app settings and encrypted credential KMS, transactional callback state consumption, scoped token exchange and disconnect with positive/negative browser acceptance tests.
