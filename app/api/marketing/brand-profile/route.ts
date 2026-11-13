@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { isSameOrigin } from '@/lib/growth/ingestion-contract';
 import { validateBrandProfile } from '@/lib/marketing/brand-profile';
+import {getMarketingAccessForUser,rejectMarketingAccess} from '@/lib/marketing/pro-access-server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -20,6 +21,8 @@ export async function GET(request: Request) {
     const client = await createClient();
     const { data: { user }, error: authError } = await client.auth.getUser();
     if (authError || !user) return response(401,{error:'Sign in to access Brand Profiles.'});
+    const proDenied=rejectMarketingAccess(await getMarketingAccessForUser(user.id,client));
+    if(proDenied)return proDenied;
     const { data: business, error: businessError } = await client.from('businesses')
       .select('id,name,logo_url,category,city,status')
       .eq('id', businessId).eq('owner_id',user.id).maybeSingle();
@@ -65,6 +68,8 @@ export async function PUT(request: Request) {
     const client = await createClient();
     const { data:{ user },error:authError } = await client.auth.getUser();
     if (authError || !user) return response(401,{error:'Sign in to save a Brand Profile.'});
+    const proDenied=rejectMarketingAccess(await getMarketingAccessForUser(user.id,client));
+    if(proDenied)return proDenied;
     const v = validated.value;
     const { data: business,error:ownershipError } = await client.from('businesses')
       .select('id').eq('id',v.businessId).eq('owner_id',user.id).maybeSingle();
