@@ -375,6 +375,79 @@ export default function AddressAutocomplete({
             </div>
           </div>
 
+          <div className="space-y-2 rounded-lg border border-[#DEDDE3] bg-[#F8F8FA] px-3 py-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-xs font-semibold text-[#33343B]">
+                Pin the shop directly on the map
+              </p>
+              <button type="button" onClick={openManualArea}
+                disabled={!markerPosition}
+                className="rounded-md border border-[#D6D9DE] bg-white px-3 py-2 text-xs font-semibold text-[#9B4C0D] hover:border-[#F6AA6A] disabled:cursor-not-allowed disabled:opacity-50">
+                Enter area manually
+              </button>
+            </div>
+            <p className="text-[11px] leading-5 text-[#626571]">
+              {ready
+                ? 'Google address search is optional. Click or drag a pin to your real shop entrance.'
+                : 'Google address suggestions are unavailable. Map pin and manual village/district entry still work.'}
+            </p>
+            {markerPosition && (
+              <p className="text-[11px] font-medium text-slate-700">
+                Selected coordinates: {markerPosition.lat.toFixed(6)}, {markerPosition.lng.toFixed(6)}
+              </p>
+            )}
+            {areaSource === 'vendor' && (
+              <p role="status" className="text-[11px] leading-5 text-[#78420C]">
+                Locality entered by the vendor (not independently geocoded).
+                Check that your district and actual shop entrance match the map.
+              </p>
+            )}
+          </div>
+
+          {manualAreaMode && pendingPin && (
+            <div className="space-y-3 rounded-lg border border-[#F3CA8F] bg-[#FFFBF5] p-4" role="group" aria-label="Enter mapped business area manually">
+              <div>
+                <p className="text-sm font-semibold text-[#4E3420]">Confirm your map pin's locality</p>
+                <p className="mt-1 text-xs leading-5 text-[#75604C]">
+                  Automatic lookup could not provide a readable area. Your exact pin is retained.
+                  Enter the real town or village, then choose its district; this is vendor-supplied information.
+                </p>
+              </div>
+              <div>
+                <label htmlFor="business-manual-locality" className="mb-1 block text-xs font-semibold text-[#594331]">
+                  Village / town / locality <span className="text-red-600" aria-hidden="true">*</span>
+                </label>
+                <input id="business-manual-locality" type="text" value={manualLocality}
+                  onChange={event => setManualLocality(event.target.value)}
+                  minLength={2} maxLength={100} autoComplete="address-level2"
+                  placeholder="e.g. Maharagama, Kanagarayankulam, Jaffna Town"
+                  className="w-full rounded-md border border-[#CEBCA9] bg-white px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-[#FF7900]" />
+              </div>
+              <div>
+                <label htmlFor="business-manual-district" className="mb-1 block text-xs font-semibold text-[#594331]">
+                  District <span className="text-red-600" aria-hidden="true">*</span>
+                </label>
+                <select id="business-manual-district" value={manualDistrict}
+                  onChange={event => setManualDistrict(event.target.value)}
+                  className="w-full rounded-md border border-[#CEBCA9] bg-white px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-[#FF7900]">
+                  <option value="">Choose your district</option>
+                  {SRI_LANKAN_DISTRICTS.map(district => (
+                    <option key={district} value={district}>{district}</option>
+                  ))}
+                </select>
+              </div>
+              <button type="button" onClick={applyManualArea}
+                disabled={!buildVendorEnteredArea(manualLocality, manualDistrict)}
+                className="rounded-md bg-[#27272C] px-4 py-2.5 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50">
+                Use this locality with my selected map pin
+              </button>
+              <p className="text-[11px] leading-5 text-[#75604C]">
+                You must still type the real shop/building/street address and explicitly confirm the entrance below.
+                We do not automatically claim your manually entered area is GPS-verified.
+              </p>
+            </div>
+          )}
+
           {onDetailedAddressChange && (
             <div>
               <label htmlFor="business-physical-address" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-600">
