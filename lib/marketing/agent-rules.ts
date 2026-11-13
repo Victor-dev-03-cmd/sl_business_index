@@ -16,7 +16,7 @@ export type EnquiryTriage={
 };
 const patterns:ReadonlyArray<{intent:EnquiryIntent;words:readonly string[]}>= [
   {intent:'opening_hours',words:['open now','opening time','opening hours','when open','what time','hours','நேரம்','திறப்பு','திறந்திரு','எத்தனை மணிக்கு','வேලාව','විවෘත','කීයට','පැය']},
-  {intent:'location',words:['location','address','where are','directions','find you','முகவரி','எங்கே','இடம்','போக','ලිපිනය','කොහෙද','ස්ථානය','තැන']},
+  {intent:'location',words:['location','address','where is','located','where are','directions','find you','முகவரி','எங்கே','இடம்','போக','ලිපිනය','කොහෙද','ස්ථානය','තැන']},
   {intent:'contact',words:['phone','call you','contact','number','தொலைபேசி','தொடர்பு','போன் நம்பர்','இலக்கம்','අංකය','දුරකථන','ඇමතුම්']},
   {intent:'pricing',words:['price','cost','discount','how much','rate','விலை','எவ்வளவு','தள்ளுபடி','මිල','ගාණ','වට්ටම්','කීයද']},
   {intent:'booking',words:['booking','book now','appointment','reserve','reservation','முன்பதிவு','புக்','அப்பாயின்மெண்ட்','වෙන්කර','පොත්','හමුවීමක්']},
