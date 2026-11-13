@@ -1,0 +1,31 @@
+name: P1 Vendor Overview — Reliability Checks
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'app/vendor/dashboard/**'
+      - 'lib/growth/activity-trend.ts'
+      - 'tests/vendorActivityTrend.test.mjs'
+      - 'tests/vendorPortalRelease.test.mjs'
+      - 'tests/growthAttribution.test.mjs'
+      - '.github/workflows/p1-vendor-overview.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  overview-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout pull request
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Use Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Test activity counters, refresh, owner portal regressions
+        run: node --test tests/vendorActivityTrend.test.mjs tests/vendorPortalRelease.test.mjs tests/growthAttribution.test.mjs
