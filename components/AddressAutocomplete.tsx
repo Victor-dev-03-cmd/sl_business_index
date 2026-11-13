@@ -377,7 +377,7 @@ export default function AddressAutocomplete({
                 centerLng={mapCenter.lng}
                 zoom={zoom}
                 height="100%"
-                draggableMarker={true}
+                draggableMarker={markerPosition !== null}
                 onMarkerDragEnd={handleMarkerDragEnd}
                 onMapClick={handleMarkerDragEnd}
                 showUserLocation={false}
