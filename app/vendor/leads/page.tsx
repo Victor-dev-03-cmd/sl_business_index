@@ -142,6 +142,7 @@ export default function LeadsPage() {
       // PostgREST responses can be capped at 1,000 rows. A capped slice
       // cannot be presented as complete "all-time" pipeline totals.
       const current: Lead[] = [];
+      let totalLeadRows: number | null = null;
       for (let offset = 0; offset < MAX_VISIBLE_LEADS; offset += LEAD_PAGE_SIZE) {
         const { data: rows, error: leadError, count } = await supabase
           .from('leads')
@@ -151,6 +152,7 @@ export default function LeadsPage() {
           .order('id', { ascending: false })
           .range(offset, offset + LEAD_PAGE_SIZE - 1);
         if (leadError) throw leadError;
+        if (offset === 0) totalLeadRows = count;
         if (offset === 0 && typeof count === 'number' && count > MAX_VISIBLE_LEADS) {
           setLeadLimitReached(true);
           setLeads([]);
@@ -162,22 +164,45 @@ export default function LeadsPage() {
         current.push(...((rows || []) as Lead[]));
         if ((rows?.length || 0) < LEAD_PAGE_SIZE) break;
       }
+      if (current.length >= MAX_VISIBLE_LEADS && totalLeadRows === null) {
+        setLeadLimitReached(true);
+        setLeads([]);
+        setFollowUps({});
+        setFollowUpReadiness('unavailable');
+        setSelectedId(null);
+        return;
+      }
       setLeads(current);
       setSelectedId(prev => current.some(l => l.id === prev) ? prev : null);
 
       // New follow-up table is introduced through a separately reviewed
       // migration. Until it is applied, the normal leads/notes CRM remains
       // fully usable and scheduling is visibly marked unavailable.
-      const { data: reminderRows, error: reminderError, count: reminderCount } = await supabase
-        .from('lead_followups')
-        .select(FOLLOW_UP_SELECT, { count: 'exact' })
-        .limit(MAX_VISIBLE_LEADS);
-      if (reminderError || (reminderCount !== null && reminderCount > MAX_VISIBLE_LEADS)) {
+      const reminderRows: LeadFollowUp[] = [];
+      let reminderFailure = false;
+      let totalReminderRows: number | null = null;
+      for (let offset = 0; offset < MAX_VISIBLE_LEADS; offset += LEAD_PAGE_SIZE) {
+        const { data: slice, error: reminderError, count } = await supabase
+          .from('lead_followups')
+          .select(FOLLOW_UP_SELECT, { count: offset === 0 ? 'exact' : undefined })
+          .order('lead_id', { ascending: true })
+          .range(offset, offset + LEAD_PAGE_SIZE - 1);
+        if (reminderError) { reminderFailure = true; break; }
+        if (offset === 0) totalReminderRows = count;
+        if (offset === 0 && typeof count === 'number' && count > MAX_VISIBLE_LEADS) {
+          reminderFailure = true;
+          break;
+        }
+        reminderRows.push(...((slice || []) as LeadFollowUp[]));
+        if ((slice?.length || 0) < LEAD_PAGE_SIZE) break;
+      }
+      if (reminderFailure || (totalReminderRows === null && reminderRows.length >= MAX_VISIBLE_LEADS)) {
         setFollowUps({});
         setFollowUpReadiness('unavailable');
       } else {
-        setFollowUps(Object.fromEntries(((reminderRows || []) as LeadFollowUp[])
-          .filter(row => current.some(lead => lead.id === row.lead_id))
+        const eligibleIds = new Set(current.map(lead => lead.id));
+        setFollowUps(Object.fromEntries(reminderRows
+          .filter(row => eligibleIds.has(row.lead_id))
           .map(row => [row.lead_id, row])));
         setFollowUpReadiness('available');
       }
@@ -477,7 +502,7 @@ export default function LeadsPage() {
                 </span>
               </div>
               <p className="mt-1.5 text-[26px] font-bold tabular-nums tracking-[-0.04em] text-[#1D1D20]">
-                {loading ? '—' : nfmt(kpi.count)}
+                {loading || error || leadLimitReached ? '—' : nfmt(kpi.count)}
               </p>
               <p className="mt-2 text-[10px] leading-4 text-slate-400">{kpi.note}</p>
             </div>
@@ -504,7 +529,7 @@ export default function LeadsPage() {
                   aria-label={'Filter ' + statusStyle[item.stage].label + ' leads'}
                   className="rounded-lg border border-[#eef1f0] bg-[#fbfcfb] p-3 text-left transition hover:border-[#F5BC8B] hover:bg-[#f6faf7]">
                   <p className="text-[10px] font-semibold text-slate-500">{statusStyle[item.stage].label}</p>
-                  <p className="mt-1 text-xl font-bold tabular-nums text-[#2C2C31]">{loading ? '—' : nfmt(item.count)}</p>
+                  <p className="mt-1 text-xl font-bold tabular-nums text-[#2C2C31]">{loading || error || leadLimitReached ? '—' : nfmt(item.count)}</p>
                   <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#eaf0ed]">
                     <div className="h-full rounded-full" style={{ width: (total ? item.count / total * 100 : 0) + '%', backgroundColor: item.bar }} />
                   </div>
@@ -521,7 +546,7 @@ export default function LeadsPage() {
             <div className="flex flex-1 flex-col justify-center px-5 py-5">
               <p className="text-[11px] font-semibold text-slate-500">Lead conversion rate</p>
               <p className="mt-2 text-[34px] font-bold tabular-nums tracking-[-0.05em] text-[#2C2C31]">
-                {loading ? '—' : conversionRate.toFixed(1) + '%'}
+                {loading || error || leadLimitReached ? '—' : conversionRate.toFixed(1) + '%'}
               </p>
               <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#F8F8FA]">
                 <div className="h-full rounded-full bg-[#242428]" style={{ width: conversionRate + '%' }} />
