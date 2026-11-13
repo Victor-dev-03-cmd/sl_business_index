@@ -2,7 +2,7 @@
 -- Disposable PostgreSQL 17 fixture only, no live customer records or secrets.
 CREATE ROLE anon NOLOGIN;
 CREATE ROLE authenticated NOLOGIN;
-CREATE ROLE service_role NOLOGIN;
+CREATE ROLE service_role NOLOGIN BYPASSRLS; -- Real Supabase service_role bypasses RLS; Docker must match.
 CREATE SCHEMA IF NOT EXISTS auth;
 GRANT USAGE ON SCHEMA auth TO authenticated;
 CREATE FUNCTION auth.role() RETURNS text LANGUAGE sql STABLE
