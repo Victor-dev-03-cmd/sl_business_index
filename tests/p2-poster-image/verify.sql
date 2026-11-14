@@ -23,7 +23,7 @@ BEGIN
       'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
       '11111111-1111-4111-8111-111111111111',
       '11111111-aaaa-4444-aaaa-111111111111',
-      repeat('a',64));
+      repeat('a',64),8);
   EXCEPTION WHEN insufficient_privilege THEN refused:=true; END;
   IF NOT refused THEN RAISE EXCEPTION 'Authenticated browser bypassed service-only reserve'; END IF;
 END $browser$;
@@ -44,7 +44,7 @@ BEGIN
     PERFORM public.marketing_poster_reserve(
       'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
       '22222222-2222-4222-8222-222222222222',
-      '22222222-bbbb-4444-bbbb-222222222222',repeat('b',64));
+      '22222222-bbbb-4444-bbbb-222222222222',repeat('b',64),8);
   EXCEPTION WHEN insufficient_privilege THEN refused:=true; END;
   IF NOT refused THEN RAISE EXCEPTION 'Basic account spent Pro image credits'; END IF;
 
@@ -53,7 +53,7 @@ BEGIN
     PERFORM public.marketing_poster_reserve(
       'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
       '22222222-2222-4222-8222-222222222222',
-      '33333333-bbbb-4444-bbbb-333333333333',repeat('c',64));
+      '33333333-bbbb-4444-bbbb-333333333333',repeat('c',64),8);
   EXCEPTION WHEN insufficient_privilege THEN refused:=true; END;
   IF NOT refused THEN RAISE EXCEPTION 'Cross-business owner access succeeded'; END IF;
 
@@ -62,7 +62,7 @@ BEGIN
     PERFORM public.marketing_poster_reserve(
       'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
       '11111111-1111-4111-8111-111111111111',
-      '44444444-aaaa-4444-aaaa-444444444444',repeat('d',64));
+      '44444444-aaaa-4444-aaaa-444444444444',repeat('d',64),8);
   EXCEPTION WHEN raise_exception THEN refused:=true; END;
   IF NOT refused THEN RAISE EXCEPTION 'Default-disabled AI action accepted'; END IF;
 END $guards$;
@@ -75,7 +75,7 @@ BEGIN
     PERFORM public.marketing_poster_reserve(
       'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
       '11111111-1111-4111-8111-111111111111',
-      '55555555-aaaa-4444-aaaa-555555555555',repeat('a',64));
+      '55555555-aaaa-4444-aaaa-555555555555',repeat('a',64),8);
   EXCEPTION WHEN raise_exception THEN refused:=true; END;
   IF NOT refused THEN RAISE EXCEPTION 'Global AI budget cap zero bypassed'; END IF;
 END $zero_cap$;
@@ -94,7 +94,7 @@ BEGIN
   FROM public.marketing_poster_reserve(
     'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
     '11111111-1111-4111-8111-111111111111',
-    '66666666-aaaa-4444-aaaa-666666666666',repeat('f',64));
+    '66666666-aaaa-4444-aaaa-666666666666',repeat('f',64),8);
   IF first_id IS NULL OR state_<>'reserved' OR cost<>8 OR NOT new_
     THEN RAISE EXCEPTION 'First image charge failed'; END IF;
   SELECT credits_remaining INTO balance FROM public.growth_credit_wallets
@@ -105,14 +105,14 @@ BEGIN
   FROM public.marketing_poster_reserve(
     'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
     '11111111-1111-4111-8111-111111111111',
-    '66666666-aaaa-4444-aaaa-666666666666',repeat('f',64));
+    '66666666-aaaa-4444-aaaa-666666666666',repeat('f',64),8);
   IF again_id<>first_id OR new_ THEN RAISE EXCEPTION 'Image retry charged twice'; END IF;
   refused:=false;
   BEGIN
     PERFORM public.marketing_poster_reserve(
       'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
       '11111111-1111-4111-8111-111111111111',
-      '66666666-aaaa-4444-aaaa-666666666666',repeat('e',64));
+      '66666666-aaaa-4444-aaaa-666666666666',repeat('e',64),8);
   EXCEPTION WHEN unique_violation THEN refused:=true; END;
   IF NOT refused THEN RAISE EXCEPTION 'Changed brief reused existing paid key'; END IF;
 
@@ -134,7 +134,7 @@ BEGIN
   SELECT job_id INTO second_id FROM public.marketing_poster_reserve(
     'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
     '11111111-1111-4111-8111-111111111111',
-    '77777777-aaaa-4444-aaaa-777777777777',repeat('d',64));
+    '77777777-aaaa-4444-aaaa-777777777777',repeat('d',64),8);
   IF NOT public.marketing_poster_claim(second_id) THEN RAISE EXCEPTION 'Second job claim failed'; END IF;
   IF NOT public.marketing_poster_refund(second_id)
     OR public.marketing_poster_refund(second_id)
@@ -147,7 +147,7 @@ BEGIN
     PERFORM public.marketing_poster_reserve(
       'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
       '11111111-1111-4111-8111-111111111111',
-      '88888888-aaaa-4444-aaaa-888888888888',repeat('c',64));
+      '88888888-aaaa-4444-aaaa-888888888888',repeat('c',64),8);
   EXCEPTION WHEN raise_exception THEN refused:=true; END;
   IF NOT refused THEN RAISE EXCEPTION 'Global daily ceiling bypassed'; END IF;
 END $owner$;
