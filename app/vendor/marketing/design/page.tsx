@@ -10,7 +10,7 @@ import {
 } from '@/lib/marketing/poster-design';
 import {type CaptionLanguage,type CaptionObjective} from '@/lib/marketing/caption-contract';
 type Business={id:string;name:string;logo_url:string|null};
-const panel='rounded-xl border border-[#E7E7EC] bg-white p-5';
+const panel='rounded-[20px] border border-[#E7E7EC] bg-white p-5 shadow-[0_6px_24px_rgba(23,23,30,.045)] sm:p-6';
 const input='mt-1.5 w-full rounded-lg border border-[#E4E4E8] bg-white px-3.5 py-2.5 text-xs text-[#27272C] outline-none focus:border-[#FF7900]';
 const selectInput=input+' appearance-none pr-12';
 const selectStyle={backgroundImage:'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 20 20\' fill=\'none\'%3E%3Cpath d=\'m5 7.5 5 5 5-5\' stroke=\'%23615A60\' stroke-width=\'1.8\' stroke-linecap=\'round\' stroke-linejoin=\'round\'/%3E%3C/svg%3E")',backgroundRepeat:'no-repeat',backgroundPosition:'right 16px center',backgroundSize:'16px 16px'} as const;
@@ -287,16 +287,17 @@ export default function MarketingDesignEditor(){
   const setFormat=(format:PosterFormat)=>setPoster(p=>scalePosterBlueprint(p,format));
   const dimensions=POSTER_FORMATS[poster.format];
   return <div className="mx-auto max-w-[1490px] space-y-5 pb-12 text-[#27272D]">
-    <header className={panel+' flex flex-wrap items-end justify-between gap-4'}>
-      <div><p className="text-[10px] font-bold uppercase tracking-[.15em] text-[#BD5F14]">Marketing Studio · P2-04</p>
-        <h1 className="mt-2 text-[27px] font-extrabold tracking-tight">Poster Design Studio <span className="text-[#BA611B]">· Pro</span></h1>
-        <p className="mt-2 max-w-[680px] text-xs leading-6 text-[#7D7D85]">
+    <header className="relative flex flex-wrap items-end justify-between gap-5 overflow-hidden rounded-[24px] bg-[#1E1D22] px-6 py-8 text-white sm:px-9 sm:py-10">
+      <div aria-hidden="true" className="pointer-events-none absolute -right-12 -top-24 h-72 w-72 rounded-full bg-[#FF7900]/25 blur-3xl"/>
+      <div className="relative"><p className="text-[10px] font-bold uppercase tracking-[.15em] text-[#F4AE7B]">Marketing Studio · P2-04</p>
+        <h1 className="mt-2 text-[29px] font-extrabold tracking-[-.045em] sm:text-[39px]">Poster Design Studio <span className="text-[#FF9747]">· Pro</span></h1>
+        <p className="mt-2 max-w-[680px] text-xs leading-6 text-white/70">
           Create original social posters with movable text, localized AI copy assistance, adjustable layouts and full-size image exports.
           AI image backgrounds and direct social publishing are not connected.
         </p></div>
-      <div className="flex gap-2">
-        <Link href="/vendor/marketing" className="rounded-lg border border-[#E7E7EB] px-4 py-3 text-xs font-semibold">Marketing Studio</Link>
-        <Link href="/vendor/marketing/brand" className="rounded-lg border border-[#FFB980] bg-[#FFF5EC] px-4 py-3 text-xs font-semibold text-[#9A4E11]">Brand Profile</Link>
+      <div className="relative flex flex-wrap gap-2">
+        <Link href="/vendor/marketing" className="rounded-xl border border-white/25 px-4 py-3 text-xs font-semibold text-white transition hover:bg-white/10">Marketing Studio</Link>
+        <Link href="/vendor/marketing/brand" className="rounded-xl border border-[#FF7900] bg-[#FF7900] px-4 py-3 text-xs font-semibold text-[#211A17] transition hover:bg-[#FFA252]">Brand Profile</Link>
       </div>
     </header>
     {message&&<div role="status" className="rounded-lg border border-[#F1D7BC] bg-[#FFF9F3] p-3 text-xs text-[#79532D]">{message}</div>}
