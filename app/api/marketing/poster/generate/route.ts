@@ -21,8 +21,12 @@ const trustedAdmin=()=>{
   if(!url||!key)return null;
   return createAdminClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
 };
-const model=()=>process.env.SLBI_POSTER_IMAGE_MODEL==='gpt-image-2.5-sunburst'
-  ?'gpt-image-2.5-sunburst' as const:'gpt-image-2.5-flare' as const;
+const IMAGE_MODELS=['gpt-image-2.5-flare','gpt-image-2.5-sunburst',
+  'gpt-image-2.6-flare','gpt-image-2.6-sunburst'] as const;
+const model=()=>{
+  const configured=process.env.SLBI_POSTER_IMAGE_MODEL;
+  return IMAGE_MODELS.find(value=>value===configured)||'gpt-image-2.5-flare';
+};
 
 /**
  * Paid image creation is OFF unless all three owner-controlled release gates exist:
