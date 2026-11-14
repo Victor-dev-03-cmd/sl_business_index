@@ -418,6 +418,27 @@ export default function MarketingDesignEditor(){
     }catch(error){setMessage(error instanceof Error?error.message:'Could not export PNG. Try another supported browser.');}
     finally{setBusy(false);}
   };
+  const sharePng=async()=>{
+    const c=canvas.current;if(!c)return;
+    setBusy(true);setMessage('');
+    try{
+      await document.fonts.ready;
+      if(!drawPoster(c,poster,backdrop))throw Error('Some text does not fit. Edit the poster before sharing.');
+      const blob=await new Promise<Blob|null>(resolve=>c.toBlob(resolve,'image/png'));
+      if(!blob)throw Error('Could not create a shareable PNG.');
+      const file=new File([blob],'slbi-poster-'+poster.format+'.png',{type:'image/png'});
+      if(navigator.share&&navigator.canShare?.({files:[file]})){
+        await navigator.share({files:[file],title:'My business poster'});
+        setMessage('Poster sent to your device share menu. Review and publish it in the app you choose.');
+      }else{
+        fileDownload(file.name,blob);
+        setMessage('Poster downloaded. Upload it to Facebook, Instagram or WhatsApp to publish manually.');
+      }
+    }catch(error){
+      if(error instanceof Error&&error.name==='AbortError')setMessage('Share cancelled. The design is unchanged.');
+      else setMessage(error instanceof Error?error.message:'Could not share this poster.');
+    }finally{setBusy(false);}
+  };
   const exportJson=()=>{
     fileDownload('slbi-editable-poster.json',new Blob([JSON.stringify(poster,null,2)],{type:'application/json'}));
     setMessage('Editable layout JSON exported. Local image upload is not embedded; keep the source artwork separately.');
@@ -517,7 +538,7 @@ export default function MarketingDesignEditor(){
       </div>
       <div className="mt-4 flex flex-wrap justify-center gap-2" aria-label="Try an idea">
         {[
-          ['Offer poster','என் கடையில் 20% discount offer poster உருவாக்கு'],
+          ['Offer poster','என் கடைக்கான உண்மையான சிறப்பு சலுகை poster உருவாக்கு'],
           ['Food promotion','Fresh Sri Lankan food promotion poster உருவாக்கு'],
           ['New arrival','New arrivals பற்றிய modern shop poster உருவாக்கு'],
           ['Festival','Festival greeting poster உருவாக்கு'],
@@ -761,14 +782,20 @@ export default function MarketingDesignEditor(){
             className="h-11 rounded-lg bg-[#222226] px-4 text-xs font-extrabold text-white disabled:opacity-40">
             Export full-size PNG
           </button>
-          <button type="button" onClick={exportJson}
-            className="h-11 rounded-lg border border-[#E7E7EC] px-4 text-xs font-bold text-[#34343C]">
-            Export editable JSON
+          <button type="button" onClick={()=>void sharePng()} disabled={busy}
+            className="h-11 rounded-lg border border-[#E7E7EC] px-4 text-xs font-bold text-[#34343C] disabled:opacity-40">
+            Share / post manually
           </button>
         </div>
-        <label className="mt-4 block text-xs font-bold">Import saved typography design JSON
+        <details className="mt-4 rounded-lg border border-[#ECE9EE] p-3">
+          <summary className="cursor-pointer text-xs font-bold text-[#64616A]">Save or restore editable design</summary>
+          <button type="button" onClick={exportJson}
+            className="mt-3 rounded-lg border border-[#E7E7EC] px-4 py-2 text-xs font-semibold">Export editable JSON</button>
+          <label className="mt-3 block text-xs font-bold">Import saved typography design JSON
           <input type="file" accept=".json,application/json" className="mt-2 block w-full text-xs" onChange={e=>void importJson(e)}/>
         </label>
+        </details>
+        <p className="mt-3 text-center text-[11px] text-[#88828A]">Automatic posting is not active. Social account connection and publishing approval will be introduced separately.</p>
         <div className="mt-5 rounded-lg border border-[#F1D7B8] bg-[#FFFAF4] p-4 text-[11px] leading-6 text-[#6E5130]">
           Names, prices, dates and phone numbers remain editable layers. AI-written copy requires human review and never initiates publishing.
           AI image generation, billing flags and cloud project persistence need separate owner-approved production release.
