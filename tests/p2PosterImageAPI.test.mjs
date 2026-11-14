@@ -61,3 +61,17 @@ test('client confirms exact paid credit price before generate and retains editab
   assert.match(editor,/artCredits/);
   assert.match(read('app/vendor/marketing/design/layout.tsx'),/MarketingProOnly/);
 });
+
+test('real artwork capability is verified server-side, not inferred from a visible browser button',()=>{
+  const status=read('app/api/marketing/poster/capabilities/route.ts');
+  assert.match(status,/getMarketingAccessForUser/);
+  assert.match(status,/SLBI_POSTER_IMAGE_AI_ENABLED/);
+  assert.match(status,/process\.env\.OPENAI_API_KEY/);
+  assert.match(status,/marketing_poster_daily_limits/);
+  assert.match(status,/ai_poster_design/);
+  assert.match(status,/slbi-poster-ai-private/);
+  assert.match(status,/available:false/);
+  assert.doesNotMatch(status,/NEXT_PUBLIC_OPENAI_API_KEY/);
+  assert.match(generate,/gpt-image-2\.6-sunburst/);
+  assert.match(generate,/gpt-image-2\.6-flare/);
+});
