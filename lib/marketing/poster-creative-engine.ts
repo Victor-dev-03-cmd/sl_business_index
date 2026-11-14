@@ -4,7 +4,7 @@
  * Strict deterministic art direction: no paid model is invoked by this module.
  * Vendor-provided copy is DATA, never system instructions or provider settings.
  */
-import {POSTER_FORMATS,type PosterFormat} from './poster-design';
+import {POSTER_FORMATS,type PosterFormat} from './poster-design.ts';
 
 export const POSTER_STYLES={
   'cinematic-product':{
