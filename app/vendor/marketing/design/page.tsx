@@ -506,6 +506,7 @@ export default function MarketingDesignEditor(){
   const startNewPoster=()=>{
     speech.current?.stop();setVoiceListening(false);setDraftReady(false);
     setArtPrompt('');setArtChecklist([]);setArtJobId('');setArtCredits(null);
+    setArtSubject('');setArtOffer('');setArtAudience('');setArtNotes('');
     setImageData(null);setMessage('');
   };
   const setFormat=(format:PosterFormat)=>setPoster(p=>scalePosterBlueprint(p,format));
@@ -561,9 +562,10 @@ export default function MarketingDesignEditor(){
               <IconsaxIcon name="microphone-2" size={17}/> {voiceListening?'Listening…':'Speak'}
             </button>
             <label htmlFor="simple-poster-photo" className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-full border border-[#E9E7EB] px-3 text-xs font-bold text-[#66616C] hover:bg-[#F7F6F8]">
-              <IconsaxIcon name="image" size={17}/> {imageData?'Photo added':'Add photo'}
+              <IconsaxIcon name="image" size={17}/> {imageData?'My photo (manual)':'Use my photo manually'}
             </label>
-            <input id="simple-poster-photo" type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={onImage}/>
+            <input id="simple-poster-photo" type="file" accept="image/png,image/jpeg,image/webp" className="sr-only"
+              onChange={e=>{onImage(e);if(e.target.files?.[0]&&['image/png','image/jpeg','image/webp'].includes(e.target.files[0].type)&&e.target.files[0].size<=3*1024*1024)openManualEditor()}}/>
           </div>
           <button type="button" onClick={()=>void generateAiArtwork(idea.trim())}
             disabled={!artServiceEnabled||artGenerating||!businessId||idea.trim().length<5}
