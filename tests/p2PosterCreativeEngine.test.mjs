@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {
   POSTER_STYLES,POSTER_PROMPT_VERSION,POSTER_PROVIDER_SIZES,
-  buildPosterCreativePrompt,validatePosterCreativeInput,
+  buildPosterCreativePrompt,validatePosterCreativeInput,inferPosterArtStyle,
 } from '../lib/marketing/poster-creative-engine.ts';
 
 const businessId='11111111-1111-4111-8111-111111111111';
@@ -90,4 +90,17 @@ test('poster editor exposes premium prompt panel but preserves editable text and
   assert.match(ui,/Text overflow/);
   const layout=read('app/vendor/marketing/design/layout.tsx');
   assert.match(layout,/MarketingProOnly/);
+});
+
+test('industry-aware campaign style mapping favors visual concepts over black text panels',()=>{
+  assert.equal(inferPosterArtStyle('என் உணவகத்திற்கு பிரியாணி special poster'),'cinematic-product');
+  assert.equal(inferPosterArtStyle('50% discount SALE this weekend'),'bold-retail');
+  assert.equal(inferPosterArtStyle('தீபாவளி festival greetings'),'illustrated');
+  assert.equal(inferPosterArtStyle('New boutique jewellery collection'),'luxury-editorial');
+  assert.equal(inferPosterArtStyle('Sri Lankan hotel holiday promotion'),'fresh-lifestyle');
+  const checked=validatePosterCreativeInput(input);
+  assert.equal(checked.ok,true);
+  const result=buildPosterCreativePrompt(checked.value,brand);
+  assert.match(result.prompt,/high-impact campaign visual/);
+  assert.match(result.prompt,/empty black rectangle/);
 });
