@@ -116,7 +116,7 @@ export default function CampaignPlanner(){
     setObjective(b&&goals.includes(b.objective)?b.objective:'awareness');
     // Older drafts pre-date structured campaign briefs. Reverse the original
     // generated paragraphs without deleting words or translating vendor text.
-    const legacyParts=item.banner_text.split(/\\n\\s*\\n/).map(s=>s.trim()).filter(Boolean);
+    const legacyParts=item.banner_text.split(/\n\s*\n/).map(s=>s.trim()).filter(Boolean);
     const inferredLanguage:CampaignLanguage=/[\u0B80-\u0BFF]/u.test(item.banner_text)?'தமிழ்':
       /[\u0D80-\u0DFF]/u.test(item.banner_text)?'සිංහල':'English';
     const legacyStructured=legacyParts.length>=2 && Boolean(
@@ -125,7 +125,7 @@ export default function CampaignPlanner(){
     const legacyMessage=legacyStructured?legacyParts[1]:item.banner_text;
     const legacyCta=legacyStructured?(legacyParts[2]||''):'';
     const legacyTerms=legacyStructured?(legacyParts[3]||'')
-      .replace(/^(விதிமுறைகள்|කොන්දේසි|Offer conditions|Terms):\\s*/iu,''):'';
+      .replace(/^(விதிமுறைகள்|කොන්දේසි|Offer conditions|Terms):\s*/iu,''):'';
     setLanguage(b&&languages.includes(b.language)?b.language:inferredLanguage);
     setOffer(b?b.offer:legacyMessage);
     setCta(b?b.cta:legacyCta);setTerms(b?b.terms:legacyTerms);
