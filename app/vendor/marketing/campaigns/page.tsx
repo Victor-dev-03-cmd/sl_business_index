@@ -203,6 +203,9 @@ export default function CampaignPlanner(){
   const button='rounded-xl px-4 py-2.5 text-[12px] font-bold transition disabled:cursor-not-allowed disabled:opacity-50';
   const field='mt-2 w-full rounded-xl border border-[#E6E3E0] bg-white p-3 text-[13px] text-[#29262B] outline-none focus:border-[#FA890C] focus:ring-2 focus:ring-[#FF7900]/15';
   const label='block text-[12px] font-bold text-[#393238]';
+  // Native select arrows have inconsistent browser spacing; keep a 16px visual inset.
+  const dropdownArrow={backgroundImage:'url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22m5%207.5%205%205%205-5%22%20stroke%3D%22%23615A60%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E")',backgroundRepeat:'no-repeat',backgroundPosition:'right 16px center',backgroundSize:'16px 16px'} as const;
+  const dropdownArrowOnDark={...dropdownArrow,backgroundImage:'url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22m5%207.5%205%205%205-5%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E")'} as const;
   const card='rounded-[19px] border border-[#E8E6E6] bg-white shadow-[0_4px_22px_rgba(20,20,28,.035)]';
   const tabs:ReadonlyArray<[Section,string,string]>=[
     ['overview',copy.overview,'element-4'],['social',copy.editor,'edit'],
@@ -223,7 +226,7 @@ export default function CampaignPlanner(){
         <div className="relative flex flex-wrap items-center gap-2">
           <label htmlFor="campaign-language" className="sr-only">{copy.language}</label>
           <select id="campaign-language" value={language} onChange={e=>setLanguage(e.target.value as CampaignLanguage)}
-            className="h-11 rounded-xl border border-white/20 bg-[#333138] px-3 text-[12px] font-semibold text-white outline-none">
+            className="h-11 appearance-none rounded-xl border border-white/20 bg-[#333138] py-2 pl-4 pr-12 text-[12px] font-semibold text-white outline-none" style={dropdownArrowOnDark}>
             {languages.map(item=><option key={item} value={item}>{item}</option>)}
           </select>
           <button type="button" onClick={reset} className={button+' inline-flex h-11 items-center gap-2 bg-[#FF7900] text-[#211C1B] hover:bg-[#FFA253]'}>
@@ -278,7 +281,7 @@ export default function CampaignPlanner(){
             <p className="mt-3 text-[11px] leading-6 text-[#8B7D75]">{copy.captionHelp}</p>
             <div className="mt-5 space-y-5">
               <label className={label}>{copy.business}
-                <select className={field} value={selectedId} disabled={Boolean(editingId)} onChange={e=>setSelectedId(e.target.value)}>
+                <select className={field+' appearance-none pr-12'} style={dropdownArrow} value={selectedId} disabled={Boolean(editingId)} onChange={e=>setSelectedId(e.target.value)}>
                   <option value="">{copy.selectBusiness}</option>
                   {businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}
                 </select>
@@ -293,7 +296,7 @@ export default function CampaignPlanner(){
                 </div>
               </div>
               <label className={label}>{copy.language}
-                <select value={language} onChange={e=>setLanguage(e.target.value as CampaignLanguage)} className={field}>
+                <select value={language} onChange={e=>setLanguage(e.target.value as CampaignLanguage)} className={field+' appearance-none pr-12'} style={dropdownArrow}>
                   {languages.map(l=><option key={l} value={l}>{l}</option>)}
                 </select>
               </label>
@@ -343,7 +346,7 @@ export default function CampaignPlanner(){
                 <p className="mt-5 mb-2 text-[12px] font-bold">{copy.formats}</p>
                 <CampaignFormatSelector selected={posterSize} onChange={setPosterSize} language={language}/>
                 <label className={label+' mt-5'}>{copy.palette}
-                  <select className={field} value={posterPalette} onChange={e=>setPosterPalette(e.target.value as CampaignPalette)}>
+                  <select className={field+' appearance-none pr-12'} style={dropdownArrow} value={posterPalette} onChange={e=>setPosterPalette(e.target.value as CampaignPalette)}>
                     <option value="forest">Forest Green</option><option value="navy">Midnight Navy</option><option value="cream">Warm Cream</option>
                   </select>
                 </label>
