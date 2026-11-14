@@ -31,3 +31,9 @@
 5. Verify latest **merge SHA** GitHub CI, Vercel Production READY and exact `www.slbusinessindex.com` alias (no assumption about bare/root domain).
 6. Append accurate outcome in master implementation handoff and P2 live ledger with explicit live/staging/provider states. If docs-only main commit is created, verify its own production deployment.
 7. Require separate scoped approval/rollback for production schema migrations, provider scopes, real customer sends, spending and secret/managed KMS changes. No all-branch blind merge.
+
+## 2026-11-14 — Follow-up branch audit at PR #72
+
+- PR #72 new OAuth claimed-callback-vs-disconnect safeguard **squash merged** to main `4b9cf4d06d275367200c9108848563a96800ad2a` after 6/6 source-SHA CI and exact-SHA Preview READY; Production `dpl_41aYCX8pqaeifiwsE8ZgnVht6Sgr` READY alias `www.slbusinessindex.com`.
+- Still open: draft #34 (two old CI/SQL test commits), #30 (old overlapping Marketing/QR/settings), #27 (Discovery research), #9/#7 (old auth/billing). No change in disposition: **do not blindly merge old experimental or conflicting branches**. Their high ahead/behind counts include historical changes already superseded or implemented; prepare new targeted PRs from main for valid additions.
+- OAuth staged SQL `P2_07_OAUTH_CALLBACK_DISCONNECT_RACE_STAGING_ONLY.sql` closes credential resurrection after already-claimed state; not live migration. Remaining work: isolated schema release and rollback, verified Pro, managed KMS, provider-side revoke and refresh, real OAuth/browser consent. Live campaign-status spoofing policy still pending review.
