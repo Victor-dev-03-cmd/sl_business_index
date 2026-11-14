@@ -12,6 +12,7 @@ on:
       - 'tests/p2PosterDesign.test.mjs'
       - 'tests/p2AiCaption.test.mjs'
       - 'tests/p2MarketingEngineShell.test.mjs'
+      - 'tests/p2ContentCalendar.test.mjs'
       - 'tests/marketingStudioAppStore.test.mjs'
       - 'tests/p2GlobalMarketingLaunch.test.mjs'
       - 'tests/p2-global-marketing/**'
@@ -45,6 +46,7 @@ on:
       - 'tests/p2PosterDesign.test.mjs'
       - 'tests/p2AiCaption.test.mjs'
       - 'tests/p2MarketingEngineShell.test.mjs'
+      - 'tests/p2ContentCalendar.test.mjs'
       - 'tests/marketingStudioAppStore.test.mjs'
       - 'tests/p2GlobalMarketingLaunch.test.mjs'
       - 'tests/p2-global-marketing/**'
@@ -74,6 +76,7 @@ jobs:
         run: |
           node --test tests/p2BrandProfile.test.mjs tests/p2AiCaption.test.mjs tests/p2PosterDesign.test.mjs tests/p2MarketingEngineShell.test.mjs tests/marketingStudioAppStore.test.mjs tests/p2GlobalMarketingLaunch.test.mjs tests/p2MarketingLoadingAndConnect.test.mjs tests/p2OAuthConnectors.test.mjs tests/p2OAuthFlow.test.mjs tests/p2OAuthDisconnect.test.mjs tests/p2OAuthCallbackRace.test.mjs tests/vendorNeutralUi.test.mjs
           node --test tests/vendorSettingsQrMarketing2026.test.mjs tests/vendorPortalRelease.test.mjs
+          node --experimental-strip-types --test tests/p2ContentCalendar.test.mjs
 
   docker-tenant-rls:
     runs-on: ubuntu-latest

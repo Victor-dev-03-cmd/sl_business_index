@@ -1,3 +1,5 @@
+> **2026-11-14 NEW PRIORITY / CONTINUITY:** [Active GitHub Handoff #74](https://github.com/Victor-dev-03-cmd/sl_business_index/issues/74). Owner requested ongoing GitHub docs and implementation of Marketing Studio **app #10 Content Calendar** while BOC Merchant LankaQR is pending branch application (Monday 2026-11-16). Implement read-only real campaign planning first, no external publishes; avoid repeated Vercel Preview deployments. Candidate code is NOT live yet. [P2-06 handoff](p2/P2_06_CONTENT_CALENDAR_STAGE_20261114.md).
+
 # SLBusinessIndex — MASTER IMPLEMENTATION & CHAT HANDOFF
 
 > **Source of truth for future ChatGPT sessions.** Read this file before making design, billing, AI, GitHub, database, or deployment changes. Update it at each completed milestone, with evidence. **Do not claim any feature is production-ready merely because its code compiles or a preview deploys.**
