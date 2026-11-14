@@ -4,7 +4,7 @@ import { createElement, useEffect, useRef, useState } from 'react';
 import {
   ChevronDown, ChevronUp, Building2, CalendarClock, Phone, ChartNoAxesCombined,
   CheckCircle2, ChevronLeft, ChevronRight, CirclePlus, Coins, Download,
-  Eye, Zap, Globe, House, Mail, Menu, MessageSquareText, Users, RefreshCw,
+  Eye, Zap, Globe, House, Mail, Menu, MessageSquareText, Users, RefreshCw, FileText,
   Search, Settings2, ShieldCheck, Store, PanelLeft, Star,
   TrendingUp, CircleX, type LucideIcon
 } from 'lucide-react';
@@ -35,6 +35,7 @@ const fallbacks: Record<string, LucideIcon> = {
   'setting-2': Settings2,
   'search-normal': Search,
   'document-download': Download,
+  'document': FileText,
   'shield-tick': ShieldCheck,
   'status-up': TrendingUp,
   'home': House,
