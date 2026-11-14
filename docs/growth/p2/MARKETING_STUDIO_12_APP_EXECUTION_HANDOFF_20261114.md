@@ -1,5 +1,14 @@
 # Marketing Studio — twelve first-party app execution plan
 
+## 2026-11-14 — LATEST: Campaign Planner Studio tile LIVE, Basic access retained
+- **Owner approval received to unlock the Campaign Planner marketplace card for testing.** Production Supabase migration `20261114134136 p2_campaign_planner_basic_marketplace_live_v1` was successfully applied in project `oofxhragafekazwjikae`. Database release inventory: `campaign-planner=live` with non-null `approved_at`; **11 other first-party app rows remain `coming_soon`** (total 12, exactly 1 live). This is the first Studio marketplace launch, not live social publishing.
+- Front-end **already deployed and dynamic**: `app/vendor/marketing/page.tsx` reads trusted owner-visible `marketing_studio_app_rollouts` at request time and `MarketingAppStore.tsx` makes tiles clickable only at `live`; Campaign Planner is `pro:false`, link `/vendor/marketing/campaigns`; its `layout.tsx` deliberately preserves Basic access. **No special email-based Pro unlock, tier changes, or client-side gate bypass** was used. Verified authenticated role SELECT on rollout; no authenticated UPDATE. Payments/Growth Pro entitlements unchanged.
+- Deployment at rollout: production code source `23f880d28ecc2cf6a506848e85f99f1cfa9d190a` had READY Vercel source, followed by docs-only READY `6f9ce66b3a7eaf54c169b767438b8e9c9c709b61` at `www.slbusinessindex.com`; dynamic DB update does **not** require a new Vercel preview or frontend build.
+- **Verified after migration:** 1 live, 11 Coming Soon, 0 other apps promoted, historical campaign record 1 retained. Database migration in history; authenticated role can read Campaign Planner `live` row. Earlier P2-05 owner-only campaign RLS and revision trigger retained.
+- **Browser acceptance STILL OPEN:** Real signed-in Basic vendor E2E not independently exercised in assistant tools. Owner should log in → `/vendor/marketing` → Campaign Planner **Open** → select an owned business → save a manual draft → verify the draft in Library → record a future planning date → optionally export original PNG. If no owned business, correct empty state is expected. No auto-post, paid AI or social distribution. App must not require Pro subscription.
+- **Next app** Content Calendar #10 remains `coming_soon` and Pro-only pending staged read-only calendar CI and owner-tenant tests. Do not promote it or the remaining premium apps until verified.
+
+
 ## 2026-11-14 — VERIFIED P2-05 CAMPAIGN PLANNER BACKEND SECURITY PRODUCTION RELEASE (LATEST)
 - **App #1 Campaign Planner manual backend security:** [PR #77](https://github.com/Victor-dev-03-cmd/sl_business_index/pull/77) merged (squash) to GitHub main **`23f880d28ecc2cf6a506848e85f99f1cfa9d190a`** from tested PR SHA `81fa5effd30273db709f0566fac3b4c165584c9b`.
 - **Exact candidate was tested:** 5/5 CI workflow families SUCCESS at PR SHA, including exact P2-05 production candidate SQL on disposable Postgres 17, synthetic Basic and Pro owner A/B, forged status denial, revision audits, P1/billing regressions, TS and Next production build. Main merge SHA Verify Next.js Build **SUCCESS** (`43600015574`).
@@ -28,7 +37,7 @@ Updated 2026-11-14 | Asia/Colombo | **Canonical source: GitHub main**
 ## Exact 12-app production journey
 | # | app_id | Tier | Current functionality | Next mandatory release work |
 |---|---|---|---|---|
-| 1 | `campaign-planner` | Basic | Manual copy/drafts/PNG planning + P2-05 owner RLS/revision production migration verified | Authenticated Basic browser E2E, accessibility/UX and marketplace release decision; external publishing remains OFF |
+| 1 | `campaign-planner` | Basic | **LIVE marketplace** (1/12), production Basic manual campaigns + owner-only RLS and revision audit | Signed-in Basic browser acceptance: draft, planning date, PNG export; no external publishing |
 | 2 | `poster-editor` | Pro | Existing local editor/export | Owner/session E2E, PNG/export integrity, accessibility; cloud save later |
 | 3 | `caption-lab` | Pro | Caption generation shell/gated APIs | Verified billing & capped credit reservation, Sinhala/Tamil evaluation, model budget |
 | 4 | `brand-kit` | Pro | Working UI/API; live `social_brand_profiles` schema | Real authorized Pro test user, owner A/B persisted save/read, logo/storage audit |
