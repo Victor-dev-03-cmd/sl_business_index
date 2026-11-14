@@ -62,7 +62,9 @@ export async function GET(request:Request){
     if(claimError)return error(503,'OAuth callback storage not ready.');
     if(!Array.isArray(claimed)||claimed.length!==1)return error(400,'Authorization state was already used.');
     const ciphertext=claimed[0].encrypted_pkce_verifier;
-    if(typeof ciphertext!=='string')return error(400,'Authorization state is incomplete.');
+    const claimedIntentId=claimed[0].intent_id;
+    if(typeof ciphertext!=='string'||typeof claimedIntentId!=='string')
+      return error(400,'Authorization state is incomplete.');
     if(providerError){
       return Response.redirect(safeGoogleSuccessRedirect(config,'cancelled'),303);
     }
@@ -89,11 +91,12 @@ export async function GET(request:Request){
     const refreshCipher=encryptPreviewValue(mailbox.refreshToken,config.encryptionKey,{
       ...ctx,purpose:'refresh_token',subject:mailbox.sub,
     });
-    // One SQL transaction upserts both metadata and encrypted secrets or
-    // neither. The function independently rechecks verified Pro + ownership.
+    // Store MUST bind to the exact claimed one-time intent. This ensures a
+    // concurrent owner disconnect cannot be undone by a delayed callback.
+    // The SQL transaction rechecks Pro/ownership under the disconnect lock.
     const {data:connectionId,error:saveError}=await service.rpc(
-      'slbi_store_verified_marketing_connection',{
-        p_owner_id:user.id,p_business_id:intent.business_id,p_provider:'google_mail',
+      'slbi_store_claimed_google_mail_connection',{
+        p_intent_id:claimedIntentId,p_owner_id:user.id,p_business_id:intent.business_id,p_provider:'google_mail',
         p_external_account_id:mailbox.sub,p_account_display_name:mailbox.email,
         p_account_type:'mailbox',p_granted_scopes:mailbox.scopes,
         p_expires_at:mailbox.expiresAt,
