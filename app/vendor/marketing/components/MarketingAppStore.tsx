@@ -17,15 +17,16 @@ const tones:Record<StudioTone,{background:string;ink:string;outline:string;glow:
   amber:{background:'bg-[#FFF4DD]',ink:'text-[#A6711E]',outline:'border-[#F3DDB4]',glow:'from-[#FFE9BC] to-[#FFFCF5]'},
 };
 
-const AppTile=memo(function AppTile({app,proEnabled,launchStatus,posterReviewAllowed}:{
-  app:MarketingStudioApp;proEnabled:boolean;launchStatus:MarketingAppLaunchStatus;posterReviewAllowed:boolean;
+const AppTile=memo(function AppTile({app,proEnabled,launchStatus,posterReviewAllowed,posterQaAllowed}:{
+  app:MarketingStudioApp;proEnabled:boolean;launchStatus:MarketingAppLaunchStatus;posterReviewAllowed:boolean;posterQaAllowed:boolean;
 }){
   const style=tones[app.tone];
   const review=posterReviewAllowed&&app.id==='poster-editor'&&launchStatus==='coming_soon';
-  const launched=launchStatus==='live'||review;
+  const qa=posterQaAllowed&&app.id==='poster-editor'&&launchStatus==='coming_soon';
+  const launched=launchStatus==='live'||review||qa;
   return <article
     id={'marketing-app-'+app.id}
-    aria-label={app.title+(review?' — private staff review':launched?' — available app':' — coming soon')}
+    aria-label={app.title+(qa?' — owner QA preview':review?' — private staff review':launched?' — available app':' — coming soon')}
     className="group relative flex min-h-[273px] min-w-0 flex-col overflow-hidden rounded-[18px] border border-[#E9E8EA] bg-white p-5 shadow-[0_5px_18px_rgba(30,30,35,.035)] outline-none transition duration-200 hover:-translate-y-1 hover:border-[#F0BC8D] hover:shadow-[0_18px_32px_rgba(31,31,38,.10)] focus-visible:ring-2 focus-visible:ring-[#FF7900] motion-reduce:transform-none motion-reduce:transition-none"
   >
     <span className={'pointer-events-none absolute -right-10 -top-14 h-36 w-36 rounded-full bg-gradient-to-br opacity-65 blur-xl '+style.glow} aria-hidden="true"/>
@@ -47,26 +48,26 @@ const AppTile=memo(function AppTile({app,proEnabled,launchStatus,posterReviewAll
     <div className="relative mt-auto flex items-end justify-between gap-2 pt-5">
       <div className="space-y-1">
         <p className="text-[10px] font-extrabold uppercase tracking-[.08em] text-[#B75F19]">
-          {review?'Staff review':launched?'Available now':'Coming soon'}
+          {qa?'Private QA':review?'Staff review':launched?'Available now':'Coming soon'}
         </p>
-        <p className="text-[10px] text-[#95959C]">{review?'Temporary evaluation · Pro not unlocked':launched?app.note:'Release pending verification'}</p>
+        <p className="text-[10px] text-[#95959C]">{qa?'Pro test grant · release pending':review?'Temporary evaluation · Pro not unlocked':launched?app.note:'Release pending verification'}</p>
       </div>
       {launched
         ?<Link href={app.href} prefetch={false}
           aria-label={'Open '+app.title}
           className="inline-flex h-9 items-center gap-1 rounded-lg bg-[#242326] px-3 text-[11px] font-bold text-white hover:bg-[#FF7900]">
-          {review?'Preview':'Open'} <IconsaxIcon name="arrow-right-2" size={13} color="white"/>
+          {qa?'Test':review?'Preview':'Open'} <IconsaxIcon name="arrow-right-2" size={13} color="white"/>
         </Link>
         :<span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#E8E7E9] bg-[#FAFAFB] text-[#A18B80]">
           <IconsaxIcon name="clock" size={16}/>
         </span>}
     </div>
-    {app.pro&&!proEnabled&&!review&&<span className="sr-only">Will require verified Professional or Enterprise access when launched.</span>}
+    {app.pro&&!proEnabled&&!review&&!qa&&<span className="sr-only">Will require verified Professional or Enterprise access when launched.</span>}
   </article>;
 });
 
-export default function MarketingAppStore({proEnabled,launchStatuses,posterReviewAllowed=false}:{
-  proEnabled:boolean;launchStatuses:MarketingStudioLaunchStatuses;posterReviewAllowed?:boolean;
+export default function MarketingAppStore({proEnabled,launchStatuses,posterReviewAllowed=false,posterQaAllowed=false}:{
+  proEnabled:boolean;launchStatuses:MarketingStudioLaunchStatuses;posterReviewAllowed?:boolean;posterQaAllowed?:boolean;
 }){
   const [category,setCategory]=useState<StudioFilter>('All apps');
   const [search,setSearch]=useState('');
@@ -108,7 +109,7 @@ export default function MarketingAppStore({proEnabled,launchStatuses,posterRevie
     </div>
     {filtered.length?<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
       {filtered.map(app=><AppTile key={app.id} app={app} proEnabled={proEnabled}
-        launchStatus={launchStatuses[app.id]??'coming_soon'} posterReviewAllowed={posterReviewAllowed}/>)}
+        launchStatus={launchStatuses[app.id]??'coming_soon'} posterReviewAllowed={posterReviewAllowed} posterQaAllowed={posterQaAllowed}/>)}
     </div>:<div className="rounded-[18px] border border-dashed border-[#E6E1E4] bg-[#FAFAFB] px-5 py-14 text-center">
       <IconsaxIcon name="search-normal" size={30} color="#A19AA0"/>
       <h3 className="mt-3 text-[16px] font-bold text-[#2D2B31]">No apps match your search</h3>
