@@ -145,6 +145,21 @@ export default function MarketingDesignEditor(){
   const [artGenerating,setArtGenerating]=useState(false);
   const [artJobId,setArtJobId]=useState('');
   const [artCredits,setArtCredits]=useState<number|null>(null);
+  const [artPrice,setArtPrice]=useState<number|null>(null);
+  const [artServiceEnabled,setArtServiceEnabled]=useState(false);
+  useEffect(()=>{
+    let active=true;
+    void supabase.from('growth_credit_actions')
+      .select('credit_cost,is_enabled').eq('action_key','ai_poster_design')
+      .maybeSingle().then(({data,error})=>{
+        if(!active)return;
+        const cost=data?.credit_cost;
+        const allowed=!error&&data?.is_enabled===true&&Number.isInteger(cost)&&cost>0&&cost<=100;
+        setArtServiceEnabled(Boolean(allowed));
+        setArtPrice(allowed?cost:null);
+      });
+    return()=>{active=false};
+  },[]);
   useEffect(()=>{
     let active=true;
     supabase.auth.getUser().then(async({data:{user}})=>{
@@ -287,14 +302,16 @@ export default function MarketingDesignEditor(){
     setImageData(dataUrl);
   };
   const generateAiArtwork=async()=>{
-    if(artGenerating||!artPrompt||!businessId)return;
-    if(!window.confirm('Generate ONE premium AI image? This may consume Growth Credits after the Pro AI service is enabled. The result will remain a private draft, not a social post.'))return;
+    if(artGenerating||!artPrompt||!businessId||!artServiceEnabled||artPrice===null){
+      setMessage('Paid AI images are not enabled for this Pro studio yet. Creative prompt preview remains free.');return;
+    }
+    if(!window.confirm('Generate ONE premium AI image for exactly '+artPrice+' Growth Credits? This is a private draft and will NOT be posted automatically.'))return;
     setArtGenerating(true);setMessage('');setArtCredits(null);
     try{
       const response=await fetch('/api/marketing/poster/generate',{
         method:'POST',credentials:'same-origin',cache:'no-store',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({...creativeBrief(),requestKey:crypto.randomUUID()}),
+        body:JSON.stringify({...creativeBrief(),requestKey:crypto.randomUUID(),acceptedCredits:artPrice}),
       });
       const result=await response.json() as {
         jobId?:string;artworkUrl?:string;chargedCredits?:number;error?:string;
@@ -485,10 +502,10 @@ export default function MarketingDesignEditor(){
             <button type="button" onClick={()=>void navigator.clipboard.writeText(artPrompt).then(()=>setMessage('Creative prompt copied. No model call or charge.')).catch(()=>setMessage('Copy unavailable in this browser.'))}
               className="rounded-lg bg-[#252326] px-4 py-2.5 text-[11px] font-bold text-white">Copy approved creative prompt</button>
             <div className="rounded-lg border border-[#E8CBB4] bg-[#FFF6ED] p-3">
-              <p className="text-[11px] leading-5 text-[#865B3B]">AI image generation requires verified Pro, owner credits, an approved platform daily budget and a private storage configuration. This is currently a staged integration; the button fails closed while generation is disabled.</p>
-              <button type="button" onClick={()=>void generateAiArtwork()} disabled={artGenerating}
+              <p className="text-[11px] leading-5 text-[#865B3B]">AI image generation requires verified Pro, private storage and a capped platform budget. {artServiceEnabled&&artPrice!==null?'Current price: '+artPrice+' Growth Credits per generated image.':'Image generation is currently unavailable; no credits can be spent. The prompt preview remains available at no charge.'}</p>
+              <button type="button" onClick={()=>void generateAiArtwork()} disabled={artGenerating||!artServiceEnabled||artPrice===null}
                 className="mt-3 w-full rounded-lg bg-[#FF7900] px-4 py-3 text-[12px] font-extrabold text-[#261B15] disabled:opacity-50">
-                {artGenerating?'Generating private AI artwork…':'Generate ONE premium artwork · Growth Credits apply'}
+                {artGenerating?'Generating private AI artwork…':artServiceEnabled&&artPrice!==null?'Generate one artwork · '+artPrice+' credits':'AI image generation · Coming soon'}
               </button>
               {artJobId&&<div className="mt-2 space-y-2">
                 <p className="text-[10px] text-[#6A625D]">{artCredits===null?'Artwork created.':artCredits+' Growth Credits charged for this image.'}</p>
