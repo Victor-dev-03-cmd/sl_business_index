@@ -20,6 +20,7 @@ on:
       - 'tests/p2OAuthConnectors.test.mjs'
       - 'tests/p2OAuthFlow.test.mjs'
       - 'tests/p2OAuthDisconnect.test.mjs'
+      - 'tests/p2OAuthCallbackRace.test.mjs'
       - 'tests/p2-oauth/**'
       - 'tests/p2-brand/**'
       - 'tests/p2-ai/**'
@@ -65,7 +66,7 @@ jobs:
           node-version: '24'
       - name: Brand validation, page/API contract and existing Marketing Studio tests
         run: |
-          node --test tests/p2BrandProfile.test.mjs tests/p2AiCaption.test.mjs tests/p2PosterDesign.test.mjs tests/p2MarketingEngineShell.test.mjs tests/marketingStudioAppStore.test.mjs tests/p2MarketingLoadingAndConnect.test.mjs tests/p2OAuthConnectors.test.mjs tests/p2OAuthFlow.test.mjs tests/p2OAuthDisconnect.test.mjs tests/vendorNeutralUi.test.mjs
+          node --test tests/p2BrandProfile.test.mjs tests/p2AiCaption.test.mjs tests/p2PosterDesign.test.mjs tests/p2MarketingEngineShell.test.mjs tests/marketingStudioAppStore.test.mjs tests/p2MarketingLoadingAndConnect.test.mjs tests/p2OAuthConnectors.test.mjs tests/p2OAuthFlow.test.mjs tests/p2OAuthDisconnect.test.mjs tests/p2OAuthCallbackRace.test.mjs tests/vendorNeutralUi.test.mjs
           node --test tests/vendorSettingsQrMarketing2026.test.mjs tests/vendorPortalRelease.test.mjs
 
   docker-tenant-rls:
@@ -224,6 +225,10 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f docs/growth/p2/P2_07_OAUTH_LOCAL_DISCONNECT_STAGING_ONLY.sql
       - name: Verify ownership, expired plan cleanup, state invalidation and no client access
         run: psql -v ON_ERROR_STOP=1 -f tests/p2-oauth/disconnect-verify.sql
+      - name: Apply claimed-intent store and disconnect callback race guard (disposable only)
+        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p2/P2_07_OAUTH_CALLBACK_DISCONNECT_RACE_STAGING_ONLY.sql
+      - name: Verify no old store bypass, callback replay or post-disconnect token resurrection
+        run: psql -v ON_ERROR_STOP=1 -f tests/p2-oauth/callback-disconnect-race-verify.sql
 
   nextjs-build:
     runs-on: ubuntu-latest
