@@ -32,7 +32,7 @@ export default async function MarketingConnections(){
           client.from('businesses').select('id,name')
             .eq('owner_id',user.id).order('name').limit(50),
           client.from('marketing_connections')
-            .select('business_id,account_display_name,status,connected_at')
+            .select('id,business_id,account_display_name,status,connected_at')
             .eq('user_id',user.id).eq('provider','google_mail').limit(25),
         ]);
         if(!businesses.error&&!connections.error){
@@ -41,7 +41,7 @@ export default async function MarketingConnections(){
           connectionSummaries=(connections.data||[])
             .filter(c=>ownedIds.has(c.business_id))
             .map(c=>({
-              business_id:c.business_id,
+              id:c.id,business_id:c.business_id,
               account_display_name:c.account_display_name,
               status:c.status,connected_at:c.connected_at,
             }));

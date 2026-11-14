@@ -1,10 +1,11 @@
 'use client';
 import {useState} from 'react';
+import {useRouter} from 'next/navigation';
 import IconsaxIcon from '@/app/vendor/components/IconsaxIcon';
 
 export type GoogleMailOwnedBusiness={id:string;name:string};
 export type GoogleMailConnectionSummary={
-  business_id:string;account_display_name:string|null;
+  id:string;business_id:string;account_display_name:string|null;
   status:string;connected_at:string|null;
 };
 
@@ -18,11 +19,35 @@ export default function GoogleMailPreviewConnect({
   ready:boolean;businesses:readonly GoogleMailOwnedBusiness[];
   connections:readonly GoogleMailConnectionSummary[];
 }){
+  const router=useRouter();
   const [businessId,setBusinessId]=useState(businesses[0]?.id||'');
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState('');
+  const [disconnectedNotice,setDisconnectedNotice]=useState('');
+  const [disconnectingId,setDisconnectingId]=useState<string|null>(null);
   const connected=connections.filter(c=>c.status==='connected');
   const enabled=ready&&Boolean(businessId);
+  const disconnect=async(connectionId:string,ownedBusinessId:string)=>{
+    if(!ready||disconnectingId||busy)return;
+    if(!window.confirm('Disconnect this mailbox from SLBI and permanently delete its stored credentials? Google account permissions must be revoked separately.'))return;
+    setError('');setDisconnectedNotice('');setDisconnectingId(connectionId);
+    try{
+      const response=await fetch('/api/marketing/oauth/google_mail/disconnect',{
+        method:'POST',credentials:'same-origin',cache:'no-store',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({businessId:ownedBusinessId,connectionId}),
+      });
+      const body:unknown=await response.json();
+      const reply=body&&typeof body==='object'&&!Array.isArray(body)
+        ?body as Record<string,unknown>:{};
+      if(!response.ok||reply.disconnected!==true)
+        throw new Error(typeof reply.error==='string'?reply.error:'Could not disconnect the mailbox.');
+      setDisconnectedNotice('SLBI stored credentials removed. Revoke SLBI access separately in your Google Account security settings.');
+      router.refresh(); // Reload only owner-scoped connection metadata.
+    }catch(reason){
+      setError(reason instanceof Error?reason.message:'Connection removal failed.');
+    }finally{setDisconnectingId(null);}
+  };
   const connect=async()=>{
     if(!enabled||busy)return;
     setError('');setBusy(true);
@@ -56,10 +81,17 @@ export default function GoogleMailPreviewConnect({
       <p className="text-[11px] font-bold text-[#27734A]">
         {connected.length} verified preview {connected.length===1?'mailbox':'mailboxes'} connected
       </p>
-      {connected.map((c,i)=><p key={c.business_id+'-'+i}
-        className="truncate text-[11px] text-[#426B50]" title="Preview connection metadata only">
-        {c.account_display_name||'Verified mailbox'} · {businesses.find(b=>b.id===c.business_id)?.name||'Owned business'}
-      </p>)}
+      {connected.map(c=><div key={c.id} className="flex flex-wrap items-center justify-between gap-2">
+        <p className="min-w-0 flex-1 truncate text-[11px] text-[#426B50]"
+          title="Preview connection metadata only">
+          {c.account_display_name||'Verified mailbox'} · {businesses.find(b=>b.id===c.business_id)?.name||'Owned business'}
+        </p>
+        <button type="button" onClick={()=>void disconnect(c.id,c.business_id)}
+          disabled={!ready||busy||disconnectingId!==null} aria-busy={disconnectingId===c.id}
+          className="shrink-0 rounded-lg border border-[#9ECDB0] bg-white px-3 py-2 text-[11px] font-bold text-[#276B45] hover:bg-[#E5F6EB] disabled:cursor-not-allowed disabled:opacity-50">
+          {disconnectingId===c.id?'Removing stored credentials…':'Disconnect from SLBI'}
+        </button>
+      </div>)}
     </div>}
     {enabled&&businesses.length>1&&<div>
       <label htmlFor="marketing-google-preview-business" className="mb-1.5 block text-[11px] font-bold text-[#686872]">
@@ -82,6 +114,7 @@ export default function GoogleMailPreviewConnect({
     {!ready&&<p className="text-[10px] leading-5 text-[#92919A]">
       Requires a verified Pro test vendor, an approved Google OAuth app and the isolated preview database. Production connection stays disabled.
     </p>}
+    {disconnectedNotice&&<p role="status" className="rounded-lg border border-[#CAE7D5] bg-[#F5FBF7] p-3 text-[11px] leading-5 text-[#2F7652]">{disconnectedNotice}</p>}
     {error&&<p role="alert" className="rounded-lg border border-[#E8C8C8] bg-[#FFF4F4] p-3 text-[11px] leading-5 text-[#9C3B3B]">{error}</p>}
   </div>;
 }
