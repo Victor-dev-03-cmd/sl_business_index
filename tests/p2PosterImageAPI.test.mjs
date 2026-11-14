@@ -100,3 +100,13 @@ test('Hugging Face provider adapter cannot spend merely because HF_TOKEN is conf
   assert.match(sql,/max_attempts integer NOT NULL DEFAULT 0/);
   assert.doesNotMatch(providers,/NEXT_PUBLIC_HF_TOKEN/);
 });
+
+test('first-time vendor without optional Brand Kit is not blocked from premium creative brief',()=>{
+  const generation=read('app/api/marketing/poster/generate/route.ts');
+  const prompt=read('app/api/marketing/poster/prompt/route.ts');
+  assert.match(generation,/brand\?\.brand_name\|\|business\.name/);
+  assert.match(generation,/owned business/);
+  assert.doesNotMatch(generation,/Set up your business Brand Kit before creating AI artwork/);
+  assert.doesNotMatch(prompt,/Complete the business Brand Kit before using AI art direction/);
+  assert.match(prompt,/brand\?\.brand_name\|\|business\.name/);
+});
