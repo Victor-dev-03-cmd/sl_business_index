@@ -33,7 +33,7 @@ export async function isPosterReviewAccount(userId:string,client:Client):Promise
  * stays coming_soon for every other Basic/Pro account.
  *
  * The grant lifetime comes from the database entitlement, not the staff expiry.
- * No user email, cookie, localStorage flag or client-provided plan is trusted.
+ * Only the verified Auth UUID and RLS-backed entitlement control this grant.
  */
 const OWNER_QA_GRANT='SLBI_INTERNAL_QA_NO_PAYMENT_20261114';
 export async function isPosterInternalQAAccount(userId:string,client:Client):Promise<boolean>{
