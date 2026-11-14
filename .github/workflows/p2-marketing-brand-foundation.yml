@@ -1,0 +1,235 @@
+name: P2 Marketing Engine — Pro Shell, Contracts and Docker RLS
+
+on:
+  push:
+    branches: ['phase2/marketing-engine-foundation-p2-01-20261113']
+    paths:
+      - 'app/api/marketing/**'
+      - 'app/vendor/marketing/**'
+      - 'app/vendor/marketing-engine/**'
+      - 'lib/marketing/**'
+      - 'tests/p2BrandProfile.test.mjs'
+      - 'tests/p2PosterDesign.test.mjs'
+      - 'tests/p2AiCaption.test.mjs'
+      - 'tests/p2MarketingEngineShell.test.mjs'
+      - 'tests/p2OAuthConnectors.test.mjs'
+      - 'tests/p2OAuthFlow.test.mjs'
+      - 'tests/p2-oauth/**'
+      - 'tests/p2-brand/**'
+      - 'tests/p2-ai/**'
+      - 'tests/p2-campaign/**'
+      - 'docs/growth/p2/**'
+      - 'app/vendor/layout.tsx'
+      - '.github/workflows/p2-marketing-brand-foundation.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'app/api/marketing/**'
+      - 'app/vendor/marketing/**'
+      - 'app/vendor/marketing-engine/**'
+      - 'lib/marketing/**'
+      - 'tests/p2BrandProfile.test.mjs'
+      - 'tests/p2-brand/**'
+      - 'tests/p2-ai/**'
+      - 'tests/p2-campaign/**'
+      - 'tests/p2PosterDesign.test.mjs'
+      - 'tests/p2AiCaption.test.mjs'
+      - 'tests/p2MarketingEngineShell.test.mjs'
+      - 'tests/p2OAuthConnectors.test.mjs'
+      - 'tests/p2OAuthFlow.test.mjs'
+      - 'tests/p2-oauth/**'
+      - 'docs/growth/p2/**'
+      - '.github/workflows/p2-marketing-brand-foundation.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Brand validation, page/API contract and existing Marketing Studio tests
+        run: |
+          node --test tests/p2BrandProfile.test.mjs tests/p2AiCaption.test.mjs tests/p2PosterDesign.test.mjs tests/p2MarketingEngineShell.test.mjs tests/p2OAuthConnectors.test.mjs tests/p2OAuthFlow.test.mjs
+          node --test tests/vendorSettingsQrMarketing2026.test.mjs tests/vendorPortalRelease.test.mjs
+
+  docker-tenant-rls:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: slbi_p2_brand
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres -d slbi_p2_brand"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: slbi_p2_brand
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Seed two synthetic business owners (disposable DB)
+        run: psql -v ON_ERROR_STOP=1 -f tests/p2-brand/bootstrap.sql
+      - name: Apply owner-only marketing brand profile RLS (disposable DB)
+        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p2/P2_01_SOCIAL_BRAND_PROFILES_STAGING_ONLY.sql
+      - name: Test vendor A/B cross-tenant access, anonymous denial and SQL validation
+        run: psql -v ON_ERROR_STOP=1 -f tests/p2-brand/verify.sql
+
+  docker-ai-credit-ledger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: slbi_p2_ai
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres -d slbi_p2_ai"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: slbi_p2_ai
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Seed isolated synthetic vendors
+        run: psql -v ON_ERROR_STOP=1 -f tests/p2-brand/bootstrap.sql
+      - name: Reuse existing trusted GrowthOS wallet and ledger SQL
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261110010000_growth_os_credit_foundation.sql
+      - name: Run owner-scoped profile migration in disposable database
+        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p2/P2_01_SOCIAL_BRAND_PROFILES_STAGING_ONLY.sql
+      - name: Apply transactional AI usage safeguards
+        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p2/P2_02_P2_10_AI_CREDIT_RESERVATIONS_STAGING_ONLY.sql
+      - name: Verify user and global limits, refund and private human-review drafts
+        run: psql -v ON_ERROR_STOP=1 -f tests/p2-ai/credit-reservations-verify.sql
+
+  docker-campaign-approvals:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: slbi_p2_campaign
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres -d slbi_p2_campaign"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: slbi_p2_campaign
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Create disposable vendors, GrowthOS entitlements and legacy campaign
+        run: |
+          psql -v ON_ERROR_STOP=1 -f tests/p2-brand/bootstrap.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261110010000_growth_os_credit_foundation.sql
+          psql -v ON_ERROR_STOP=1 -f tests/p2-campaign/bootstrap.sql
+      - name: Add revision history and block fake published status
+        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p2/P2_05_CAMPAIGN_REVISIONS_STAGING_ONLY.sql
+      - name: Verify owner approval, revisions, cross-tenant isolation
+        run: psql -v ON_ERROR_STOP=1 -f tests/p2-campaign/verify.sql
+
+  docker-oauth-connector-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: slbi_p2_oauth
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres -d slbi_p2_oauth"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: slbi_p2_oauth
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Seed synthetic owners and verified Pro wallet framework
+        run: |
+          psql -v ON_ERROR_STOP=1 -f tests/p2-brand/bootstrap.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261110010000_growth_os_credit_foundation.sql
+      - name: Apply staging-only provider OAuth schema to disposable database
+        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p2/P2_07_CONNECTOR_OAUTH_VAULT_STAGING_ONLY.sql
+      - name: Apply one-time OAuth state claim (staging/disposable only)
+        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p2/P2_07_OAUTH_INTENT_CLAIM_STAGING_ONLY.sql
+      - name: Verify Basic/expired Pro, token isolation and account ownership
+        run: psql -v ON_ERROR_STOP=1 -f tests/p2-oauth/verify.sql
+      - name: Verify OAuth intent atomic claim, replay and PKCE denial
+        run: psql -v ON_ERROR_STOP=1 -f tests/p2-oauth/claim-verify.sql
+      - name: Apply atomic Google account plus encrypted credential store (disposable)
+        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p2/P2_07_OAUTH_CONNECTION_STORE_STAGING_ONLY.sql
+      - name: Verify paid owner, Basic, cross-owner and expired Pro connection store
+        run: psql -v ON_ERROR_STOP=1 -f tests/p2-oauth/store-verify.sql
+      - name: Apply Pro-only OAuth begin with transactional hourly rate limit
+        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p2/P2_07_OAUTH_START_RATE_LIMIT_STAGING_ONLY.sql
+      - name: Verify OAuth start owner isolation and 5 per hour limit
+        run: psql -v ON_ERROR_STOP=1 -f tests/p2-oauth/start-verify.sql
+
+  nextjs-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-key
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: TypeScript validation
+        run: npx tsc --noEmit
+      - name: Next.js optimized production build
+        run: npm run build

@@ -5,7 +5,7 @@ import {readFileSync} from 'node:fs';
 const read=(name)=>readFileSync(new URL('../'+name,import.meta.url),'utf8');
 const settings=read('app/vendor/settings/page.tsx');
 const qr=read('app/vendor/qr-code/page.tsx');
-const marketing=read('app/vendor/marketing/page.tsx');
+const marketing=read('app/vendor/marketing/campaigns/page.tsx');
 
 test('settings profile form uses Tailwind, responsive grid and named fields',()=>{
   assert.match(settings,/data-testid="vendor-settings-studio"/);
