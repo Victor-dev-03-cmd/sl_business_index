@@ -114,11 +114,21 @@ export default function CampaignPlanner(){
     const b=item.brief;
     setEditingId(duplicate?null:item.id);
     setObjective(b&&goals.includes(b.objective)?b.objective:'awareness');
-    setLanguage(b&&languages.includes(b.language)?b.language:language);
-    // Legacy rows were saved before structured briefs existed. Keep the entire
-    // original text visible to the user, never silently discard old words.
-    setOffer(b?b.offer:item.banner_text);
-    setCta(b?.cta||'');setTerms(b?.terms||'');
+    // Older drafts pre-date structured campaign briefs. Reverse the original
+    // generated paragraphs without deleting words or translating vendor text.
+    const legacyParts=item.banner_text.split(/\\n\\s*\\n/).map(s=>s.trim()).filter(Boolean);
+    const inferredLanguage:CampaignLanguage=/[\u0B80-\u0BFF]/u.test(item.banner_text)?'தமிழ்':
+      /[\u0D80-\u0DFF]/u.test(item.banner_text)?'සිංහල':'English';
+    const legacyStructured=legacyParts.length>=2 && Boolean(
+      businesses.find(o=>o.id===item.business_id) &&
+      legacyParts[0].includes(businesses.find(o=>o.id===item.business_id)!.name));
+    const legacyMessage=legacyStructured?legacyParts[1]:item.banner_text;
+    const legacyCta=legacyStructured?(legacyParts[2]||''):'';
+    const legacyTerms=legacyStructured?(legacyParts[3]||'')
+      .replace(/^(விதிமுறைகள்|කොන්දේසි|Offer conditions|Terms):\\s*/iu,''):'';
+    setLanguage(b&&languages.includes(b.language)?b.language:inferredLanguage);
+    setOffer(b?b.offer:legacyMessage);
+    setCta(b?b.cta:legacyCta);setTerms(b?b.terms:legacyTerms);
     setPosterSize(b&&validFormats.includes(b.format)?b.format:'portrait');
     setPosterPalette(b&&['forest','navy','cream'].includes(b.palette)?b.palette:'forest');
     setChannelsSelected((item.platforms||[]).map(p=>p.charAt(0).toUpperCase()+p.slice(1)).filter(p=>(channels as readonly string[]).includes(p)));
@@ -308,7 +318,7 @@ export default function CampaignPlanner(){
               </label>
             </div>
             <div className="mt-6 flex flex-wrap gap-2 border-t border-[#F1ECE8] pt-5">
-              <button type="button" onClick={()=>void save(false)} disabled={saving||!userId}
+              <button type="button" onClick={()=>void save(Boolean(editingId&&scheduledAt&&campaigns.find(c=>c.id===editingId)?.status==='scheduled'))} disabled={saving||!userId}
                 className={button+' bg-[#252329] text-white hover:bg-[#3F393C]'}>{saving?'…':editingId?copy.update:copy.save}</button>
               <button type="button" onClick={()=>void save(true)} disabled={saving||!userId||!scheduledAt}
                 className={button+' border border-[#E9AD7C] bg-[#FFF2E7] text-[#A65A23]'}>{copy.schedule}</button>
