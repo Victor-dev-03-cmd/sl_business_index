@@ -37,8 +37,13 @@ CREATE POLICY marketing_campaign_revisions_owner_read
     WHERE c.id=campaign_id AND b.owner_id=(SELECT auth.uid())
   ));
 
--- Browser writes must also carry a verified unexpired Pro entitlement;
--- a subscription request or client-supplied plan name is NOT evidence.
+-- Preserve existing manual draft/planning for every authenticated owner.
+-- Only NEW premium automation, connectors, agents and provider actions require
+-- verified Professional/Enterprise; no free vendor loses their legacy composer.
+-- Advanced campaign approvals and publishing must be handled by a separate,
+-- trusted server API with verified Pro and immutable provider receipts.
+-- Keep helper available for future trusted features, but do not use it to
+-- restrict the legacy drafted/scheduled browser writes.
 CREATE OR REPLACE FUNCTION public.slbi_has_marketing_pro()
 RETURNS boolean LANGUAGE sql STABLE SECURITY INVOKER SET search_path=''
 AS $pro$
@@ -54,7 +59,8 @@ REVOKE ALL ON FUNCTION public.slbi_has_marketing_pro() FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.slbi_has_marketing_pro() TO authenticated;
 
 -- Legacy "Vendors manage own campaigns" FOR ALL allowed browser-invented
--- status='posted'. New writes permit only draft/review/planning states.
+-- status='posted'. New browser writes permit ONLY existing draft/planning states.
+-- Approval/rejection/publishing are reserved for future trusted server actions.
 ALTER TABLE public.marketing_campaigns ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Vendors manage own campaigns" ON public.marketing_campaigns;
 DROP POLICY IF EXISTS marketing_campaign_owner_read ON public.marketing_campaigns;
@@ -72,19 +78,16 @@ CREATE POLICY marketing_campaign_owner_insert ON public.marketing_campaigns
     AND business_id IS NOT NULL
     AND EXISTS (SELECT 1 FROM public.businesses b WHERE b.id=business_id
       AND b.owner_id=(SELECT auth.uid()))
-    AND (SELECT public.slbi_has_marketing_pro())
   );
 CREATE POLICY marketing_campaign_owner_update ON public.marketing_campaigns
   FOR UPDATE TO authenticated USING (
-    status IN ('drafted','scheduled','approved','rejected')
+    status IN ('drafted','scheduled')
     AND EXISTS (SELECT 1 FROM public.businesses b WHERE b.id=business_id
       AND b.owner_id=(SELECT auth.uid()))
-    AND (SELECT public.slbi_has_marketing_pro())
   ) WITH CHECK (
-    status IN ('drafted','scheduled','approved','rejected')
+    status IN ('drafted','scheduled')
     AND EXISTS (SELECT 1 FROM public.businesses b WHERE b.id=business_id
       AND b.owner_id=(SELECT auth.uid()))
-    AND (SELECT public.slbi_has_marketing_pro())
   );
 
 REVOKE ALL ON public.marketing_campaigns FROM PUBLIC,anon,authenticated;

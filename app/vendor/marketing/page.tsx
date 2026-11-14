@@ -10,7 +10,7 @@ const tools=[
   {title:'Business Brand Profile',href:'/vendor/marketing/brand',icon:'shop',desc:'Reusable brand colors, audiences, languages, factual offers and guidelines.',tag:'P2-01 · Pro'},
   {title:'AI Caption Lab',href:'/vendor/marketing/captions',icon:'message-text',desc:'Multilingual drafts with editable text and explicit human review.',tag:'P2-02 · Gated'},
   {title:'Editable Poster Studio',href:'/vendor/marketing/design',icon:'document',desc:'Original layouts, editable text layers and high-resolution PNG export.',tag:'P2-04 · Pro'},
-  {title:'Campaign Workspace',href:'/vendor/marketing/campaigns',icon:'calendar',desc:'Existing owner draft composer, artwork export and planning calendar.',tag:'P2-05 · Pro'},
+  {title:'Campaign Workspace',href:'/vendor/marketing/campaigns',icon:'calendar',desc:'Existing owner draft composer, artwork export and planning calendar.',tag:'Manual · Included'},
   {title:'Business Leads',href:'/vendor/leads',icon:'people',desc:'Track customer enquiries and follow-ups. AI agent connection is a separate workflow.',tag:'Existing CRM'},
 ] as const;
 

@@ -79,9 +79,15 @@ test('Pro server access protects all premium routes and authenticated APIs, not 
   assert.match(server,/rejectMarketingAccess/);
   const layout=read('app/vendor/marketing-engine/(pro)/layout.tsx');
   assert.match(layout,/MarketingProOnly/);
-  for(const mod of ['brand','captions','design','campaigns']){
+  for(const mod of ['brand','captions','design']){
     assert.match(read('app/vendor/marketing/'+mod+'/layout.tsx'),/MarketingProOnly/);
   }
+  const manual=read('app/vendor/marketing/campaigns/layout.tsx');
+  assert.doesNotMatch(manual,/MarketingProOnly/);
+  assert.match(read('app/vendor/marketing/campaigns/page.tsx'),/from\('marketing_campaigns'\)/);
+  const campaignSql=read('docs/growth/p2/P2_05_CAMPAIGN_REVISIONS_STAGING_ONLY.sql');
+  assert.match(campaignSql,/status IN \('drafted','scheduled'\)/);
+  assert.doesNotMatch(campaignSql,/AND \(SELECT public\.slbi_has_marketing_pro\(\)\)/);
   for(const api of ['brand-profile','caption']){
     assert.match(read('app/api/marketing/'+api+'/route.ts'),/getMarketingAccessForUser/);
     assert.match(read('app/api/marketing/'+api+'/route.ts'),/rejectMarketingAccess/);
