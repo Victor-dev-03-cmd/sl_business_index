@@ -1,5 +1,6 @@
 import {createHash} from 'node:crypto';
 import sharp from 'sharp';
+import {getPosterImageProvider,generatePosterProviderImage} from '@/lib/marketing/poster-image-provider';
 import {createClient as createAdminClient} from '@supabase/supabase-js';
 import {createClient} from '@/lib/supabase/server';
 import {isSameOrigin} from '@/lib/growth/ingestion-contract';
@@ -21,9 +22,6 @@ const trustedAdmin=()=>{
   if(!url||!key)return null;
   return createAdminClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
 };
-const model=()=>process.env.SLBI_POSTER_IMAGE_MODEL==='gpt-image-2.5-sunburst'
-  ?'gpt-image-2.5-sunburst' as const:'gpt-image-2.5-flare' as const;
-
 /**
  * Paid image creation is OFF unless all three owner-controlled release gates exist:
  * environment flag, separate DB credit action + global budget, and provider key.
@@ -36,8 +34,8 @@ export async function POST(request:Request){
     return reply(415,{error:'JSON is required.'});
   if(process.env.SLBI_POSTER_IMAGE_AI_ENABLED!=='true')
     return reply(503,{error:'AI Image Generation is not enabled yet. Premium creative prompt preview is available.'});
-  const key=process.env.OPENAI_API_KEY,admin=trustedAdmin();
-  if(!key||!admin)return reply(503,{error:'AI image provider and private storage are not configured.'});
+  const provider=getPosterImageProvider(),admin=trustedAdmin();
+  if(!provider||!admin)return reply(503,{error:'AI image provider and private storage are not configured.'});
   if(Number(request.headers.get('content-length')||0)>7000)
     return reply(413,{error:'Creative request is too large.'});
   let raw:unknown;
@@ -75,7 +73,8 @@ export async function POST(request:Request){
     .select('brand_name,primary_color,accent_color,tone,guidelines')
     .eq('business_id',business.id).eq('owner_id',user.id).maybeSingle();
   if(brandError)return reply(503,{error:'Brand Kit validation unavailable.'});
-  if(!brand)return reply(409,{error:'Set up your business Brand Kit before creating AI artwork.'});
+  // Brand Kit is optional for first-time vendors: the authenticated owned business
+  // name and verified listing details are enough to create an honest creative brief.
 
   const {data:bucket,error:bucketError}=await admin.storage.getBucket(BUCKET);
   if(bucketError||!bucket||bucket.public)
@@ -83,14 +82,14 @@ export async function POST(request:Request){
 
   const art=buildPosterCreativePrompt(checked.value,{
     businessName:business.name,category:business.category||'',city:business.city||'',
-    brandName:brand.brand_name||business.name,
-    primaryColor:brand.primary_color||'',accentColor:brand.accent_color||'',
-    tone:brand.tone||'',guidelines:brand.guidelines||'',
+    brandName:brand?.brand_name||business.name,
+    primaryColor:brand?.primary_color||'#FF7900',accentColor:brand?.accent_color||'#282828',
+    tone:brand?.tone||'professional',guidelines:brand?.guidelines||'',
   });
   // Hash server-derived brand facts as well as user input. Identical idempotency
   // keys cannot be reused with changed creative instructions or another brand.
   const briefHash=createHash('sha256').update(
-    JSON.stringify({prompt:art.prompt,model:model(),providerSize:art.providerSize})
+    JSON.stringify({prompt:art.prompt,provider:provider.provider,model:provider.model,providerSize:art.providerSize})
   ).digest('hex');
   const {data:reservation,error:reserveError}=await admin.rpc('marketing_poster_reserve',{
     p_user_id:user.id,p_business_id:business.id,p_request_key:requestKey,
@@ -119,25 +118,9 @@ export async function POST(request:Request){
   const path=user.id+'/'+business.id+'/'+job.job_id+'.png';
   let uploaded=false;
   try{
-    const result=await fetch('https://api.openai.com/v1/images/generations',{
-      method:'POST',signal:AbortSignal.timeout(90000),cache:'no-store',
-      headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:model(),prompt:art.prompt,quality:'high',
-        size:art.providerSize,n:1,output_format:'png',background:'opaque',
-        moderation:'auto',
-        safety_identifier:createHash('sha256').update(user.id).digest('hex').slice(0,32),
-      }),
+    const binary=await generatePosterProviderImage({
+      config:provider,prompt:art.prompt,size:art.providerSize,userId:user.id,
     });
-    if(!result.ok)throw Error('Image provider returned '+result.status);
-    const payload=await result.json() as {data?:Array<{b64_json?:string}>};
-    const encoded=payload.data?.[0]?.b64_json;
-    if(typeof encoded!=='string'||!encoded.length||encoded.length>24000000)
-      throw Error('Image provider response is invalid or oversized.');
-    const binary=Buffer.from(encoded,'base64');
-    if(binary.length<64||binary.length>15000000||
-       !binary.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])))
-      throw Error('Expected a safe PNG image from provider.');
     const normalized=await sharp(binary,{limitInputPixels:20000000})
       .resize(art.targetSize.width,art.targetSize.height,{fit:'cover',position:'centre'})
       .png({compressionLevel:8}).toBuffer();
@@ -147,7 +130,7 @@ export async function POST(request:Request){
     if(uploadError)throw Error('Private artwork upload failed.');
     uploaded=true;
     const {data:settled,error:settleError}=await admin.rpc('marketing_poster_complete',{
-      p_job_id:job.job_id,p_storage_path:path,p_model:model(),p_prompt_version:art.version,
+      p_job_id:job.job_id,p_storage_path:path,p_model:provider.provider==='huggingface'?provider.model:provider.model,p_prompt_version:art.version,
     });
     if(settleError||settled!==true)throw Error('Image credit settlement failed.');
     return reply(201,{

@@ -172,7 +172,11 @@ BEGIN
   IF NOT FOUND OR v_job.state<>'processing' OR
     p_storage_path IS NULL OR
     p_storage_path <> (v_job.user_id::text||'/'||v_job.business_id::text||'/'||v_job.id::text||'.png')
-    OR p_model NOT IN ('gpt-image-2.5-flare','gpt-image-2.5-sunburst')
+    OR p_model NOT IN (
+       'gpt-image-2.5-flare','gpt-image-2.5-sunburst',
+       'gpt-image-2.6-flare','gpt-image-2.6-sunburst',
+       'black-forest-labs/FLUX.1-schnell'
+     )
     OR p_prompt_version IS NULL OR char_length(p_prompt_version)>80
   THEN RAISE EXCEPTION 'Invalid image settlement' USING ERRCODE='22023'; END IF;
   UPDATE public.marketing_poster_jobs SET state='completed',storage_path=p_storage_path,

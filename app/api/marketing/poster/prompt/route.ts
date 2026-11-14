@@ -44,7 +44,8 @@ export async function POST(request:Request){
       .select('brand_name,primary_color,accent_color,tone,guidelines')
       .eq('business_id',business.id).eq('owner_id',user.id).maybeSingle();
     if(pError)return reply(503,{error:'Brand Kit could not be verified.'});
-    if(!brand&&!reviewer)return reply(409,{error:'Complete the business Brand Kit before using AI art direction.'});
+    // Owner-verified business listing supports a secure, usable first poster even
+    // when the optional Brand Kit has not been completed yet.
     const draft=buildPosterCreativePrompt(check.value,{
       businessName:business.name,category:business.category||'',city:business.city||'',
       brandName:brand?.brand_name||business.name,

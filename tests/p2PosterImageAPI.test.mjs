@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const sql=read('docs/growth/p2/P2_04_POSTER_IMAGE_AI_STAGING_ONLY.sql');
 const generate=read('app/api/marketing/poster/generate/route.ts');
+const providers=read('lib/marketing/poster-image-provider.ts');
 const artwork=read('app/api/marketing/poster/artwork/route.ts');
 const editor=read('app/vendor/marketing/design/page.tsx');
 
@@ -22,7 +23,9 @@ test('image spending cannot turn on without explicit action and zero-default cap
 });
 test('image endpoint is server-only, Pro owner/RLS-gated, fully cost-reserved and idempotent',()=>{
   assert.match(generate,/SLBI_POSTER_IMAGE_AI_ENABLED/);
-  assert.match(generate,/process\.env\.OPENAI_API_KEY/);
+  assert.match(generate,/getPosterImageProvider/);
+  assert.match(providers,/process\.env\.OPENAI_API_KEY/);
+  assert.match(providers,/process\.env\.HF_TOKEN/);
   assert.match(generate,/getMarketingAccessForUser/);
   assert.match(generate,/isSameOrigin/);
   assert.match(generate,/\.eq\('owner_id',user\.id\)/);
@@ -32,10 +35,11 @@ test('image endpoint is server-only, Pro owner/RLS-gated, fully cost-reserved an
   assert.match(generate,/marketing_poster_complete/);
   assert.match(generate,/marketing_poster_refund/);
   assert.match(generate,/newly_created/);
-  assert.match(generate,/SLBI_POSTER_IMAGE_MODEL/);
-  assert.match(generate,/\bn:1\b/);
-  assert.match(generate,/https:\/\/api\.openai\.com\/v1\/images\/generations/);
-  assert.match(generate,/quality:'high'/);
+  assert.match(providers,/SLBI_POSTER_IMAGE_MODEL/);
+  assert.match(providers,/SLBI_POSTER_IMAGE_PROVIDER/);
+  assert.match(providers,/\bn:1\b/);
+  assert.match(providers,/https:\/\/api\.openai\.com\/v1\/images\/generations/);
+  assert.match(providers,/quality:'high'/);
   assert.match(generate,/private/);
   assert.doesNotMatch(generate,/NEXT_PUBLIC_OPENAI_API_KEY/);
   assert.doesNotMatch(generate,/process\.env\.OPENAI_API_KEY\s*\|\|\s*['"]/);
@@ -60,4 +64,49 @@ test('client confirms exact paid credit price before generate and retains editab
   assert.match(editor,/artJobId/);
   assert.match(editor,/artCredits/);
   assert.match(read('app/vendor/marketing/design/layout.tsx'),/MarketingProOnly/);
+});
+
+test('real artwork capability is verified server-side, not inferred from a visible browser button',()=>{
+  const status=read('app/api/marketing/poster/capabilities/route.ts');
+  assert.match(status,/getMarketingAccessForUser/);
+  assert.match(status,/SLBI_POSTER_IMAGE_AI_ENABLED/);
+  assert.match(status,/getPosterImageProvider/);
+  assert.match(status,/marketing_poster_daily_limits/);
+  assert.match(status,/ai_poster_design/);
+  assert.match(status,/slbi-poster-ai-private/);
+  assert.match(status,/available:false/);
+  assert.doesNotMatch(status,/NEXT_PUBLIC_OPENAI_API_KEY/);
+  assert.match(providers,/gpt-image-2\.6-sunburst/);
+  assert.match(providers,/gpt-image-2\.6-flare/);
+});
+
+test('Hugging Face provider adapter cannot spend merely because HF_TOKEN is configured',()=>{
+  assert.match(providers,/SLBI_POSTER_IMAGE_PROVIDER/);
+  assert.match(providers,/provider==='huggingface'/);
+  assert.match(providers,/process\.env\.HF_TOKEN/);
+  assert.match(providers,/black-forest-labs\/FLUX\.1-schnell/);
+  assert.doesNotMatch(providers,/FLUX\.1-dev/);
+  assert.match(providers,/router\.huggingface\.co\/fal-ai/);
+  assert.match(providers,/num_inference_steps:4/);
+  assert.match(providers,/enable_safety_checker:true/);
+  assert.match(providers,/status\?_subdomain=queue/);
+  assert.match(providers,/redirect:'error'/);
+  assert.match(providers,/\.endsWith\('\.fal\.media'\)/);
+  assert.match(generate,/marketing_poster_reserve/);
+  assert.match(generate,/marketing_poster_claim/);
+  assert.match(generate,/generatePosterProviderImage/);
+  assert.match(generate,/marketing_poster_refund/);
+  assert.match(sql,/black-forest-labs\/FLUX\.1-schnell/);
+  assert.match(sql,/max_attempts integer NOT NULL DEFAULT 0/);
+  assert.doesNotMatch(providers,/NEXT_PUBLIC_HF_TOKEN/);
+});
+
+test('first-time vendor without optional Brand Kit is not blocked from premium creative brief',()=>{
+  const generation=read('app/api/marketing/poster/generate/route.ts');
+  const prompt=read('app/api/marketing/poster/prompt/route.ts');
+  assert.match(generation,/brand\?\.brand_name\|\|business\.name/);
+  assert.match(generation,/owned business/);
+  assert.doesNotMatch(generation,/Set up your business Brand Kit before creating AI artwork/);
+  assert.doesNotMatch(prompt,/Complete the business Brand Kit before using AI art direction/);
+  assert.match(prompt,/brand\?\.brand_name\|\|business\.name/);
 });
