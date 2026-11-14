@@ -49,13 +49,15 @@ export async function POST(request:Request){
   if(!raw||typeof raw!=='object'||Array.isArray(raw))
     return reply(400,{error:'Invalid creative request.'});
   const object=raw as Record<string,unknown>;
-  if(Object.keys(object).some(k=>k!=='requestKey'&&
+  if(Object.keys(object).some(k=>!['requestKey','acceptedCredits'].includes(k)&&
      !['businessId','format','style','mood','layout','objective','language','subject','offer','audience','notes'].includes(k)))
     return reply(400,{error:'Unexpected generation fields.'});
   if(typeof object.requestKey!=='string'||!requestUuid.test(object.requestKey))
     return reply(400,{error:'A fresh request key is required.'});
   const requestKey=object.requestKey;
-  const {requestKey:_unused,...brief}=object;
+  if(!Number.isInteger(object.acceptedCredits)||Number(object.acceptedCredits)<1||Number(object.acceptedCredits)>100)
+    return reply(400,{error:'Confirm the current per-image Growth Credit price first.'});
+  const {requestKey:_unused,acceptedCredits:_credits,...brief}=object;
   const checked=validatePosterCreativeInput(brief);
   if(!checked.ok)return reply(400,{error:checked.error});
 
@@ -92,7 +94,7 @@ export async function POST(request:Request){
   ).digest('hex');
   const {data:reservation,error:reserveError}=await admin.rpc('marketing_poster_reserve',{
     p_user_id:user.id,p_business_id:business.id,p_request_key:requestKey,
-    p_brief_hash:briefHash,
+    p_brief_hash:briefHash,p_expected_credits:object.acceptedCredits,
   });
   if(reserveError){
     console.warn('Poster budget reservation denied',reserveError.code);
@@ -141,7 +143,7 @@ export async function POST(request:Request){
       .png({compressionLevel:8}).toBuffer();
     if(normalized.length>12000000)throw Error('Generated PNG exceeds private bucket limits.');
     const {error:uploadError}=await admin.storage.from(BUCKET)
-      .upload(path,normalized,{contentType:'image/png',upsert:false,cacheControl:'private, max-age=0'});
+      .upload(path,normalized,{contentType:'image/png',upsert:false,cacheControl:'0'});
     if(uploadError)throw Error('Private artwork upload failed.');
     uploaded=true;
     const {data:settled,error:settleError}=await admin.rpc('marketing_poster_complete',{
