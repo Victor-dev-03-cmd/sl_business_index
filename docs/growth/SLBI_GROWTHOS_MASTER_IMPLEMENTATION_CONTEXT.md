@@ -1,6 +1,8 @@
 # SLBusinessIndex | GrowthOS P2 Detailed Context — NEW CHAT HANDOFF
 Version 1.0 | 2026-11-13 | Owner-approved architecture | Tamil collaboration
 
+**Current 2026-11-14 source note:** PR #68 is MERGED into main at `852da22` (tested application code `c2326c5`, 7/7 CI, Preview READY). P2 schemas, provider OAuth activation, KMS and verified Pro entitlements remain NOT LIVE; old branch-status passages below are historical. Existing Basic manual campaigns are preserved. See the main living ledger for latest evidence.
+
 READ the canonical docs/growth/SLBI_MASTER_IMPLEMENTATION_HANDOFF.md on GitHub main FIRST, then this detailed P2 document and docs/growth/p2/IMPLEMENTATION_STATUS_LIVE.md on the P2 branch. The canonical main handoff takes precedence for current routing/architecture if details differ.
 GitHub: https://github.com/Victor-dev-03-cmd/sl_business_index
 Open P2 PR: https://github.com/Victor-dev-03-cmd/sl_business_index/pull/68

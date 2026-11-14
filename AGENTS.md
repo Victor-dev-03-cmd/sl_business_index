@@ -3,7 +3,7 @@
 ## First read (required before any implementation)
 
 1. **Canonical living handoff:** [docs/growth/SLBI_MASTER_IMPLEMENTATION_HANDOFF.md](docs/growth/SLBI_MASTER_IMPLEMENTATION_HANDOFF.md).
-2. **P2 detailed roadmap:** [docs/growth/p2/P2_MARKETING_ENGINE_ROADMAP_AND_STATUS.md](docs/growth/p2/P2_MARKETING_ENGINE_ROADMAP_AND_STATUS.md) on P2 development branch while PR #68 is not merged.
+2. **P2 detailed roadmap:** [docs/growth/p2/P2_MARKETING_ENGINE_ROADMAP_AND_STATUS.md](docs/growth/p2/P2_MARKETING_ENGINE_ROADMAP_AND_STATUS.md) on GitHub `main` (merged source from PR #68 on 2026-11-14).
 3. **Original product vision:** \`SLBI_Growth_and_Security_OS_Master_Roadmap_v1.0.pdf\` in project owner's Library when available.
 4. **Live truth:** verify GitHub branch/commit, migration history, Vercel Preview/Production target and exact GitHub Actions statuses. Do not confuse a successful preview build with a live feature.
 
@@ -27,4 +27,11 @@
 5. Keep P1 production stable. Use development branches and PRs for product code; documentation-only handoffs may be merged independently.
 6. PDF/DOCX are exported snapshots, **not** the source of truth. Regenerate them when requested or at approved milestones.
 
-**New chat hint:** The user expects a future ChatGPT session to read this file, the master handoff and the P2 PR before requesting a recap from the owner. Continue development instead of restarting requirements discovery.
+**New chat hint:** The user expects a future ChatGPT session to read this file, the master handoff and P2 implementation ledger on main before requesting a recap from the owner. Continue development instead of restarting requirements discovery.
+
+## 2026-11-14 — CURRENT merged P2 source checkpoint
+
+- PR [#68](https://github.com/Victor-dev-03-cmd/sl_business_index/pull/68) was **squash-merged** into main at `852da229728ec4141b8f3ac3df3015c9dbbd99d2` after P2 code SHA `c2326c5c09ee7e99e5fdda5149c09f6d73e857ee` passed 7/7 distinct GitHub workflow families and exact-SHA Vercel Preview `dpl_H7GVfPcp5xsDsnXhXLuVDK6RRJdR` became READY. The P2 source, docs and staged-only SQL now reside on main.
+- **Repository/source merge is NOT external provider enablement:** no live P2 Supabase migrations, no real OAuth connection, outbound messages, paid AI, token KMS, durable queue, real vendor browser E2E or confirmed provider publishing. OAuth start/callback fail closed in production by `VERCEL_ENV==='preview'` hard gate; new P2 database-backed features are unavailable until separate migrations + acceptance.
+- Audit correction: existing manual multilingual campaign drafts/PNG/planning at `/vendor/marketing/campaigns` remain accessible to authenticated Basic owners; new Marketing Engine agent/connectors, Brand/Caption/design premium features require verified Pro. Staging P2-05 SQL retains owner-only manual drafts and blocks forged published/approved status. Docker Basic tenant A/B tests pass.
+- Read **main** `docs/growth/p2/IMPLEMENTATION_STATUS_LIVE.md`, `docs/growth/p2/P2_MARKETING_ENGINE_ROADMAP_AND_STATUS.md`, and `docs/growth/p2/P2_07_OAUTH_IMPLEMENTATION_SECURITY_HANDOFF.md` on future chats; all previous PR/branch-only advice is historical. Marketing → Growth → SEO; Discovery unchanged.

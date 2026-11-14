@@ -3,7 +3,7 @@
 **Baseline:** `SLBI_Growth_and_Security_OS_Master_Roadmap_v1.0.pdf` (10 November 2026). Preserve its 11 architecture pillars and six independent engines: Discovery, Growth, Marketing, Security, Revenue, Learning. This file is a **separate implementation-status ledger**, not a rewrite of the owner's approved roadmap.
 
 **Phase:** Marketing Studio & GrowthOS Tools / P2-01–P2-10  
-**Branch:** `phase2/marketing-engine-foundation-p2-01-20261113`  
+**Current source:** `main` (PR #68 squash-merged 2026-11-14). Original P2 branch remains historical.  
 **Existing production:** The Discovery/GeoRank/nearby/hybrid search work is separate. Do **not** rebuild it as part of Marketing. Marketing already has an owner-aware campaign brief, manual multilingual copy drafting, simple text-based PNG export, owner-scoped campaign records and a **planning-only** date calendar. The current `/vendor/growth` page reads the wallet and audit ledger; its AI credit actions remain disabled unless separately enabled through reviewed backend logic.
 
 ## Shared Marketing Engine contract
@@ -111,3 +111,7 @@ Staging-only SQL function `slbi_claim_marketing_oauth_intent` is added in P2 dev
 ## 2026-11-14 — Owner-requested P2-07 continuation: secure OAuth Start/Callback
 
 Source-of-truth Library PDF v1.0 (19 pages) reviewed in full alongside editable Markdown, tracker, decision log, GitHub handoff and current P2 source. Preserve 11 pillars, six engines and untouched Discovery. New preview-only Google `openid email gmail.send` provider flow now has same-origin SSR owner/verified-Pro Start API, exact redirect callback, atomic one-time state, PKCE, encrypted tokens and 5/hour per-vendor initiation limits; fake provider/tenant A-B tests added. See `P2_07_OAUTH_IMPLEMENTATION_SECURITY_HANDOFF.md` and `IMPLEMENTATION_STATUS_LIVE.md` for **exact CI SHA, preview/migration/prod gates and blockers**. No Google account actually connected; SQL only disposable PostgreSQL, no production feature changes or paid external actions.
+
+## 2026-11-14 — Consolidated main source / preserve legacy Basic campaigns
+
+Owner approved merging reviewed P2 source after P1/P2 audit. Code `c2326c5` passed 7/7 GitHub workflow families and exact-sha Vercel Preview READY; PR #68 squash-merged as `main` SHA `852da22`. **This was source integration, not live provider rollout or Supabase P2 migration.** An audit found live `growth_entitlements` empty: legacy manual `/vendor/marketing/campaigns` is now correctly available to signed-in Basic business owners, while advanced agents/connectors/automation, brand/caption/design premium routes stay verified Pro. Staging P2-05 SQL now preserves Basic owner drafted/scheduled writes and prevents fake posted/approved claims. All pending tasks require server/DB/real-browser acceptance separately. Official Google test OAuth, KMS and provider revocation not live. Marketing → Growth → SEO; Discovery unchanged.

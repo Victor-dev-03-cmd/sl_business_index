@@ -87,3 +87,7 @@ Preview-only configuration flags (currently **not claimed enabled**):
 7. Update P2 \`IMPLEMENTATION_STATUS_LIVE.md\` **with exact code SHA, workflow URLs, Vercel URL/target, migration applied/not, browser acceptance, blockers and next file/function** at each checkpoint. Update main canonical handoff by reviewed documentation-only process without silently promoting unverified P2 code.
 
 **No Discovery reimplementation; Marketing → Growth → SEO.**
+
+## 2026-11-14 source consolidation status (read this after historical sections)
+
+P2 PR #68 was squash-merged into GitHub `main` at `852da229728ec4141b8f3ac3df3015c9dbbd99d2`. Source SHA `c2326c5` passed 7/7 CI workflows with Preview READY `dpl_H7GVfPcp5xsDsnXhXLuVDK6RRJdR`. **Source merge is not a real OAuth connection:** Vercel production OAuth remains hard-off, no live P2 Supabase schema, real provider account, Google client registration, KMS, token revoke, paid AI or external email. No real vendor-browser E2E. Next steps: verify production main build, review Supabase migration, wire real vendor consent via eligible Google app and safe token custody, implement disconnect/revocation. Existing Basic manual campaigns were preserved after audit; agents/connectors remain Pro-only. Read `docs/growth/p2/IMPLEMENTATION_STATUS_LIVE.md` on main, not historical branch-only handoffs.

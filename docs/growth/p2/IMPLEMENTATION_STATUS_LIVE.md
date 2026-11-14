@@ -3,9 +3,9 @@ Last status review: 2026-11-14 | Timezone Asia/Colombo
 This is the canonical, update-in-place state record across ChatGPT chats.
 Canonical cross-chat handoff: docs/growth/SLBI_MASTER_IMPLEMENTATION_HANDOFF.md on GitHub main
 Companion architecture: docs/growth/SLBI_GROWTHOS_MASTER_IMPLEMENTATION_CONTEXT.md
-Code branch: phase2/marketing-engine-foundation-p2-01-20261113
-Pull request: https://github.com/Victor-dev-03-cmd/sl_business_index/pull/68
-Production branch: main
+Current code branch: main (P2 PR #68 merged 2026-11-14)
+Historic development branch: phase2/marketing-engine-foundation-p2-01-20261113
+Merged pull request: https://github.com/Victor-dev-03-cmd/sl_business_index/pull/68
 
 ## Current milestone
 **Phase 2 Marketing Engine, owner-directed redesign and first-party connector architecture**.
@@ -42,12 +42,12 @@ Product refinement: Marketing Studio must become an overview-only page, and Mark
 | Usage Credits | P2-10 | SQL CODED + DOCKER TESTED / DISABLED | Atomic reservation/refund, limits; live gates pending |
 | Calls & Messages AI Agent | P2 OWNER ADDITION | RULE-BASED DEMO CODED | Local trilingual classifier, review/escalation; no inbound webhooks or telephony yet |
 | Leads & workflow integration | P2 OWNER ADDITION | REUSE EXISTING CRM | Connect approved agent events to leads |
-| Server-side Pro entitlement gate | CROSS-CUTTING | CODED + SECURITY TESTED; LIVE MIGRATION PENDING | Server page and API Pro checks; direct campaign write RLS upgraded in staging-only P2-05 migration, Docker Basic/expired Pro negative tests pass |
+| Server-side Pro entitlement gate | CROSS-CUTTING | SOURCE MERGED / LIVE ENTITLEMENTS 0 | Pro/Enterprise gates on connectors, agents and premium APIs; **legacy manual campaigns intentionally Basic-accessible**; P2-05 owner RLS revision SQL is staging-only |
 
 ## Where to pick up in next chat
 1. Check latest SHA of branch and PR #68. Read both this status and the master context document.
 2. COMPLETED IN DEV BRANCH (verify CI): Split /vendor/marketing overview-only, preserve existing drafting at /vendor/marketing/campaigns, add /vendor/marketing-engine and five separate module routes.
-3. PARTIAL: registry/disconnected-state UI, SSR/API Pro checks and legacy campaign Pro RLS staging migration coded; Docker tenant isolation, Basic/expired Pro write denial pass. NEXT: reviewed versioned live migration with rollback + provider OAuth adapters, exact redirect/state, signed webhooks, encrypted token storage/revocation.
+3. PARTIAL: provider registry, disconnected-state UI, OAuth preview-only start/callback and server Pro checks are coded. Legacy manual campaign drafts remain Basic-accessible; premium connector and agent access is Pro-only. NEXT: reviewed versioned live migration with rollback, real test-account OAuth, managed KMS, revoke and browser acceptance.
 4. Add Pro-only business Calls & Messages AI Agent admin UI and human-in-the-loop rule engine on existing Leads CRM.
 5. Complete P2-05/06 durable campaign, approvals and provider receipts.
 6. Implement official Meta onboarding, Google/Microsoft OAuth; send only with user/provider approval.
@@ -134,3 +134,13 @@ Release gates still open: GitHub contract + Docker + production build at exact S
 **CI ACCEPTED:** Exact application source SHA `f271294931644dea5ae46d9b1f241897df0f6531`: **7/7 distinct GitHub workflow families passed**, including Node OAuth flow/contract tests, TypeScript and optimized Next.js build, P1 regression/security gates, independent billing/SQL checks and the [P2 PostgreSQL 17 Docker job](https://github.com/Victor-dev-03-cmd/sl_business_index/actions/runs/43530529585). Docker covered one-time state, account-token atomic storage, Basic/expired-Pro/cross-vendor denials and 5/hour rate limit. Earlier failed commits `6bc9ce9` and `07f3481` were diagnosed/fixed (TypeScript Node import path, obsolete direct-write assertion). **No new Vercel Preview at `f271294` was confirmed**, and no real account consent/browser acceptance has been performed.
 
 **External blockers / next:** Google OAuth app registration and allowed callback; managed KMS and key rotation; preview schema release in approved testing environment; actual vendor-authenticated E2E; consent UI; refresh/revoke/disconnect; provider verification; production security sign-off. No provider account was connected, no paid credits or automated mail sent, no live DB writes or production deployments performed. Marketing first → Growth → SEO; Discovery unchanged.
+
+## 2026-11-14 — OWNER-APPROVED P1/P2 SOURCE CONSOLIDATION INTO MAIN (LATEST)
+
+- **GitHub:** Audited `main` at `e6221ff4e3151fb916b0408080bc25e2cf4a0873` against open P2 draft PR #68. 130 development commits / 72 changed files; four main-only commits added AGENTS.md and canonical handoff, with no overlapping source conflicts. Marked PR ready and squash-merged P2 at `852da229728ec4141b8f3ac3df3015c9dbbd99d2`. Source now lives on **main** rather than only the old branch. PR is merged/closed, not still draft; historical claims above refer to earlier timestamps.
+- **Pre-merge code acceptance:** `c2326c5c09ee7e99e5fdda5149c09f6d73e857ee` passed **7/7 distinct GitHub workflow families** plus second P2 trigger, including Node 24, TypeScript/optimized Next.js build, P1 security/overview/integrated, independent billing SQL, disposable PostgreSQL 17 brand/credit/campaign OAuth owner negative tests. [P2 CI](https://github.com/Victor-dev-03-cmd/sl_business_index/actions/runs/43576367475) · [Next.js](https://github.com/Victor-dev-03-cmd/sl_business_index/actions/runs/43576367515). Exact Vercel **Preview READY** `dpl_H7GVfPcp5xsDsnXhXLuVDK6RRJdR`: https://sl-business-index-jfuwe4ru3-victor-dev-03-cmds-projects.vercel.app. No authenticated paid-vendor browser E2E completed.
+- **Regression caught and fixed before source merge:** Live `growth_entitlements` had **zero rows** on read-only audit. The P2 draft had placed an unintended Pro gate around the existing manual Campaign Workspace. Commit `c2326c5` restores Basic-owner access to `/vendor/marketing/campaigns`; revises *staging-only* P2-05 RLS to permit owner-only drafted/scheduled manual work (not forged approved/posted), keeps revision history and Pro-only new agents/connectors/AI. Docker Basic B owner creation, cross-vendor denial and spoofed publish/approval negative tests passed. P1 marketing drafts/PNG/planning remain; no direct stored record rewrite.
+- **Live Supabase (read-only):** public `marketing_campaigns`, `growth_entitlements`, `growth_credit_actions` exist; **P2 brand, OAuth intents, connection vault and P2 AI/revisions tables absent**. Zero verified active Pro entitlement grants and three AI/SEO actions disabled. No production SQL or schema migration applied.
+- **Vercel:** Merging into main initiated production deployment `dpl_H1SMxuPuVBZefC2Ck3iNnSEVqgxC` at merge SHA `852da22`, status BUILDING at ledger write; recheck exact later main SHA and READY before claiming new production source served. No new paid envs or OAuth flags were set.
+- **Product status:** Marketing Studio overview-only, standalone Engine, Pro-only agents/connectors, Google start/callback **preview-gated**; without approved provider credentials/KMS/migrations they fail closed. P2 advanced backend functions and real email/social/voice are still incomplete. Growth and SEO follow Marketing, Discovery unchanged.
+- **Next gate:** verify main production deployment and runtime smoke, P2 migration/entitlement acceptance (review/rollback/test accounts), Google test-account consent, KMS and revoke, real owner/browser negative E2E. Never call staged source, a GitHub merge or a Preview READY a completed production integration.
