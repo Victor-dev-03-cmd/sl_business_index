@@ -14,6 +14,12 @@ import {
   type PosterStyle,type PosterMood,type PosterLayout,type PosterObjective,
 } from '@/lib/marketing/poster-creative-engine';
 type Business={id:string;name:string;logo_url:string|null};
+type BrowserSpeechRecognition={
+  lang:string;continuous:boolean;interimResults:boolean;
+  onresult:((event:{results:ArrayLike<ArrayLike<{transcript:string}>>})=>void)|null;
+  onerror:((event:{error?:string})=>void)|null;
+  onend:(()=>void)|null;start:()=>void;stop:()=>void;
+};
 const panel='rounded-[20px] border border-[#E7E7EC] bg-white p-5 shadow-[0_6px_24px_rgba(23,23,30,.045)] sm:p-6';
 const input='mt-1.5 w-full rounded-lg border border-[#E4E4E8] bg-white px-3.5 py-2.5 text-xs text-[#27272C] outline-none focus:border-[#FF7900]';
 const selectInput=input+' appearance-none pr-12';
@@ -113,6 +119,10 @@ function drawPoster(canvas:HTMLCanvasElement,project:PosterBlueprint,backdrop:HT
 }
 export default function MarketingDesignEditor(){
   const canvas=useRef<HTMLCanvasElement|null>(null);
+  const speech=useRef<BrowserSpeechRecognition|null>(null);
+  const [idea,setIdea]=useState('');
+  const [draftReady,setDraftReady]=useState(false);
+  const [voiceListening,setVoiceListening]=useState(false);
   const drag=useRef<{id:EditableTextLayer['id'];offsetX:number;offsetY:number}|null>(null);
   const [businesses,setBusinesses]=useState<Business[]>([]);
   const [businessId,setBusinessId]=useState('');
@@ -188,7 +198,7 @@ export default function MarketingDesignEditor(){
     void document.fonts.ready.then(()=>{if(mounted)render();});
     render();
     return()=>{mounted=false};
-  },[poster,backdrop]);
+  },[poster,backdrop,draftReady]);
   useEffect(()=>{
     if(!businessId)return;
     let current=true;
@@ -254,6 +264,38 @@ export default function MarketingDesignEditor(){
     reader.onerror=()=>setMessage('Could not read uploaded artwork.');
     reader.readAsDataURL(file);
   };
+  const startVoice=()=>{
+    if(voiceListening){speech.current?.stop();return;}
+    const speechBrowser=window as Window & {
+      SpeechRecognition?:new()=>BrowserSpeechRecognition;
+      webkitSpeechRecognition?:new()=>BrowserSpeechRecognition;
+    };
+    const Voice=speechBrowser.SpeechRecognition||speechBrowser.webkitSpeechRecognition;
+    if(!Voice){
+      setMessage('Voice typing is not supported by this browser. You can type in Tamil, Sinhala or English.');
+      return;
+    }
+    try{
+      const recognition=new Voice();
+      recognition.lang=artLanguage==='ta'?'ta-LK':artLanguage==='si'?'si-LK':'en-LK';
+      recognition.continuous=false;recognition.interimResults=false;
+      recognition.onresult=e=>{
+        const heard=Array.from(e.results).map(item=>item[0]?.transcript||'').join(' ').trim();
+        if(heard)setIdea(current=>[current.trim(),heard].filter(Boolean).join(' ').slice(0,400));
+      };
+      recognition.onerror=e=>{
+        setMessage(e.error==='not-allowed'?'Microphone permission was not granted. You can still type your idea.':
+          'Voice transcription was unavailable. Please type your idea instead.');
+      };
+      recognition.onend=()=>{setVoiceListening(false);speech.current=null;};
+      speech.current=recognition;
+      recognition.start();setVoiceListening(true);setMessage('');
+    }catch{
+      setVoiceListening(false);
+      setMessage('Could not start the microphone. Please type your idea instead.');
+    }
+  };
+  useEffect(()=>()=>speech.current?.stop(),[]);
   const creativeBrief=()=>({
     businessId,format:poster.format,style:artStyle,mood:artMood,
     layout:artLayout,objective:artObjective,language:artLanguage,
@@ -263,8 +305,9 @@ export default function MarketingDesignEditor(){
     businessId,poster.format,artStyle,artMood,artLayout,artObjective,
     artLanguage,artSubject,artOffer,artAudience,artNotes,
   ]);
-  const previewCreativePrompt=async()=>{
-    if(artBusy||!businessId||artSubject.trim().length<5){
+  const previewCreativePrompt=async(subjectOverride?:string)=>{
+    const subject=(subjectOverride??artSubject).trim();
+    if(artBusy||!businessId||subject.length<5){
       setMessage('Choose a business and describe its real product or service.');return;
     }
     setArtBusy(true);setArtPrompt('');setArtChecklist([]);setMessage('');
@@ -272,7 +315,7 @@ export default function MarketingDesignEditor(){
       const response=await fetch('/api/marketing/poster/prompt',{
         method:'POST',credentials:'same-origin',cache:'no-store',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify(creativeBrief()),
+        body:JSON.stringify({...creativeBrief(),subject}),
       });
       const result=await response.json() as {
         creative?:{prompt?:string;qualityChecklist?:string[]};error?:string;
@@ -389,25 +432,136 @@ export default function MarketingDesignEditor(){
       setPoster(validated);setMessage('Editable typography project restored. Reattach any separate background image.');
     }catch{setMessage('Invalid or unsupported poster project JSON.');}
   };
+  const createSimpleDraft=()=>{
+    const brief=idea.trim();
+    if(!businessId){setMessage('First, choose a business you own.');return;}
+    if(brief.length<5){setMessage('Tell us a little about the poster you need.');return;}
+    // Keep the full request for art direction; use a short, editable excerpt on the canvas.
+    const headline=brief.length>100?brief.slice(0,100).trimEnd()+'…':brief;
+    setPoster(previous=>{
+      const next=newPosterBlueprint(businesses.find(b=>b.id===businessId)?.name||'Business',previous.format);
+      return {...next,background:previous.background,accent:previous.accent,
+        foreground:previous.foreground,layers:next.layers.map(l=>
+          l.id==='headline'?{...l,value:headline}:l)};
+    });
+    setArtSubject(brief);setAiBrief(brief);setDraftReady(true);
+    void previewCreativePrompt(brief);
+  };
+  const startNewPoster=()=>{
+    speech.current?.stop();setVoiceListening(false);setDraftReady(false);
+    setArtPrompt('');setArtChecklist([]);setArtJobId('');setArtCredits(null);
+    setImageData(null);setMessage('');
+  };
   const setFormat=(format:PosterFormat)=>setPoster(p=>scalePosterBlueprint(p,format));
   const dimensions=POSTER_FORMATS[poster.format];
-  return <div className="mx-auto max-w-[1490px] space-y-5 pb-12 text-[#27272D]">
-    <header className="relative flex flex-wrap items-end justify-between gap-5 overflow-hidden rounded-[24px] bg-[#1E1D22] px-6 py-8 text-white sm:px-9 sm:py-10">
-      <div aria-hidden="true" className="pointer-events-none absolute -right-12 -top-24 h-72 w-72 rounded-full bg-[#FF7900]/25 blur-3xl"/>
-      <div className="relative"><p className="text-[10px] font-bold uppercase tracking-[.15em] text-[#F4AE7B]">Marketing Studio · P2-04</p>
-        <h1 className="mt-2 text-[29px] font-extrabold tracking-[-.045em] sm:text-[39px]">Poster Design Studio <span className="text-[#FF9747]">· Pro</span></h1>
-        <p className="mt-2 max-w-[680px] text-xs leading-6 text-white/70">
-          Create original social posters with movable text, localized AI copy assistance, adjustable layouts and full-size image exports.
-          Premium background image generation is staged behind verified credits and safety gates. Direct social publishing remains OFF.
-        </p></div>
-      <div className="relative flex flex-wrap gap-2">
-        <Link href="/vendor/marketing" className="rounded-xl border border-white/25 px-4 py-3 text-xs font-semibold text-white transition hover:bg-white/10">Marketing Studio</Link>
-        <Link href="/vendor/marketing/brand" className="rounded-xl border border-[#FF7900] bg-[#FF7900] px-4 py-3 text-xs font-semibold text-[#211A17] transition hover:bg-[#FFA252]">Brand Profile</Link>
+  return <div className="mx-auto max-w-[1120px] space-y-6 pb-16 text-[#26252A]">
+    <header className="flex flex-wrap items-center justify-between gap-3 px-1 pt-1">
+      <div className="flex items-center gap-3">
+        <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#1D1D20] text-[#FF9700] shadow-sm" aria-hidden="true">
+          <IconsaxIcon name="magic-star" size={22}/>
+        </span>
+        <div>
+          <p className="text-sm font-black tracking-tight">SLBI Creative AI</p>
+          <p className="text-[11px] text-[#898890]">Poster Studio · Pro</p>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        {draftReady&&<button type="button" onClick={startNewPoster}
+          className="rounded-full border border-[#E8E6EB] px-4 py-2 text-xs font-bold hover:bg-[#F7F6F7]">+ New poster</button>}
+        <Link href="/vendor/marketing" className="rounded-full border border-[#E8E6EB] px-4 py-2 text-xs font-semibold text-[#53505A] hover:bg-[#FAFAFB]">Back to Marketing</Link>
       </div>
     </header>
-    {message&&<div role="status" className="rounded-lg border border-[#F1D7BC] bg-[#FFF9F3] p-3 text-xs text-[#79532D]">{message}</div>}
-    <div className="grid gap-5 xl:grid-cols-[minmax(300px,420px)_minmax(0,1fr)]">
-      <section className={panel+' space-y-4'}>
+    {message&&<div role="status" className="rounded-xl border border-[#F0D5B5] bg-[#FFF8F0] p-3 text-xs leading-5 text-[#87501F]">{message}</div>}
+    {!draftReady&&<section className="mx-auto flex min-h-[min(630px,75vh)] max-w-[720px] flex-col justify-center py-6 sm:py-10">
+      <div className="mb-8 text-center">
+        <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#F3DCC8] bg-[#FFF8F1] px-4 py-2 text-[11px] font-bold text-[#A5581D]">
+          <IconsaxIcon name="magic-star" size={15}/> Your AI creative companion
+        </p>
+        <h1 className="text-[clamp(28px,5vw,44px)] font-extrabold leading-[1.16] tracking-[-.045em]">
+          What poster shall we create today?
+        </h1>
+        <p className="mx-auto mt-3 max-w-[510px] text-sm leading-7 text-[#77737F]">
+          சொல்லுங்க, අපට කියන්න, or tell us in English. No design experience needed.
+        </p>
+      </div>
+      <div className="rounded-[26px] border border-[#E7E5E9] bg-white p-3 shadow-[0_16px_48px_rgba(25,25,32,.065)] sm:p-5">
+        <label htmlFor="simple-poster-business" className="block px-1 text-xs font-bold text-[#55515A]">My business</label>
+        <select id="simple-poster-business" className={selectInput+' !mt-2'} style={selectStyle}
+          value={businessId} onChange={e=>setBusinessId(e.target.value)}>
+          {!businesses.length&&<option value="">Choose your business</option>}
+          {businesses.map(b=><option value={b.id} key={b.id}>{b.name}</option>)}
+        </select>
+        <label htmlFor="poster-simple-idea" className="sr-only">Describe your poster</label>
+        <textarea id="poster-simple-idea" value={idea} maxLength={400}
+          onChange={e=>setIdea(e.target.value)}
+          onKeyDown={e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();createSimpleDraft();}}}
+          placeholder="என் கடைக்கு ஒரு அழகான தீபாவளி offer poster வேணும்…"
+          className="mt-4 min-h-[142px] w-full resize-y border-0 bg-transparent px-1 py-2 text-[15px] leading-7 text-[#28262A] outline-none placeholder:text-[#A9A6AD]"/>
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#F0EDF0] pt-3">
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={startVoice} aria-label={voiceListening?'Stop voice typing':'Speak your poster idea'}
+              aria-pressed={voiceListening}
+              className={'inline-flex h-11 items-center gap-2 rounded-full border px-3 text-xs font-bold '+(voiceListening?'border-[#F6B48A] bg-[#FFF0E5] text-[#9F4A12]':'border-[#E9E7EB] text-[#66616C] hover:bg-[#F7F6F8]')}>
+              <IconsaxIcon name="microphone-2" size={17}/> {voiceListening?'Listening…':'Speak'}
+            </button>
+            <label htmlFor="simple-poster-photo" className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-full border border-[#E9E7EB] px-3 text-xs font-bold text-[#66616C] hover:bg-[#F7F6F8]">
+              <IconsaxIcon name="image" size={17}/> {imageData?'Photo added':'Add photo'}
+            </label>
+            <input id="simple-poster-photo" type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={onImage}/>
+          </div>
+          <button type="button" onClick={createSimpleDraft} disabled={!businessId||idea.trim().length<5}
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#1E1D21] px-5 text-xs font-extrabold text-white transition hover:bg-[#36333A] disabled:cursor-not-allowed disabled:opacity-40">
+            <IconsaxIcon name="magic-star" size={17}/> Create poster draft
+          </button>
+        </div>
+      </div>
+      <div className="mt-4 flex flex-wrap justify-center gap-2" aria-label="Try an idea">
+        {[
+          ['Offer poster','என் கடையில் 20% discount offer poster உருவாக்கு'],
+          ['Food promotion','Fresh Sri Lankan food promotion poster உருவாக்கு'],
+          ['New arrival','New arrivals பற்றிய modern shop poster உருவாக்கு'],
+          ['Festival','Festival greeting poster உருவாக்கு'],
+        ].map(([label,prompt])=><button key={label} type="button" onClick={()=>setIdea(prompt)}
+          className="rounded-full border border-[#E8E6EB] bg-white px-4 py-2 text-xs font-semibold text-[#66616C] hover:border-[#FFC48E] hover:bg-[#FFF9F2]">
+          {label}
+        </button>)}
+      </div>
+      <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+        <span className="text-[11px] text-[#8A8790]">Voice language:</span>
+        {([['ta','தமிழ்'],['si','සිංහල'],['en','English']] as const).map(([code,label])=>
+          <button type="button" key={code} aria-pressed={artLanguage===code} onClick={()=>setArtLanguage(code)}
+            className={'rounded-full px-3 py-1.5 text-xs font-bold '+(artLanguage===code?'bg-[#FFF0E3] text-[#A45012]':'text-[#89848E] hover:bg-[#F8F7F8]')}>{label}</button>)}
+      </div>
+      <p className="mt-5 text-center text-[11px] leading-5 text-[#9A949E]">
+        Creates an editable local draft and a professional art-direction prompt. Paid AI images and automatic posting remain unavailable until connected and approved.
+        Browser voice typing depends on device support and may use the browser provider&apos;s speech service.
+      </p>
+    </section>}
+    {draftReady&&<div className="space-y-5">
+      <div className="flex flex-wrap items-start justify-between gap-4 rounded-[22px] border border-[#EAE8EC] bg-[#FCFBFC] px-5 py-4">
+        <div><p className="text-[11px] font-bold uppercase tracking-wide text-[#A35D28]">Your editable draft</p>
+          <h1 className="mt-1 text-xl font-black tracking-tight">Here&apos;s your poster</h1>
+          <p className="mt-1 text-xs leading-5 text-[#807D86]">Tap the poster text to move it. Download or open Edit design for more control.</p>
+        </div>
+        <button type="button" onClick={startNewPoster}
+          className="rounded-full border border-[#E5E2E7] bg-white px-4 py-2 text-xs font-bold">Try another idea</button>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        {Object.entries(POSTER_FORMATS).map(([key,value])=><button key={key} type="button"
+          onClick={()=>setFormat(key as PosterFormat)} aria-pressed={poster.format===key}
+          className={'rounded-full border px-3.5 py-2 text-xs font-semibold '+(poster.format===key?'border-[#EE9B54] bg-[#FFF2E7] text-[#A85312]':'border-[#E7E5EA] bg-white text-[#6B6771]')}>
+          {value.label}
+        </button>)}
+      </div>
+      {artPrompt&&<div className="rounded-xl border border-[#E3E9E0] bg-[#F7FAF6] p-3 text-xs text-[#4A684F]">
+        Professional creative prompt ready. Use Edit design to review it or generate AI artwork when the paid service becomes available.
+      </div>}
+      {!artServiceEnabled&&<div className="rounded-xl border border-[#EEE7E0] bg-[#FCFAF7] p-3 text-xs leading-5 text-[#847567]">
+        AI image generation and auto-posting are not configured yet. This is an editable poster draft, not an AI-generated picture.
+      </div>}
+    <div className="flex flex-col gap-5">
+      <details className={panel+' order-2 space-y-4'}>
+        <summary className="cursor-pointer text-sm font-extrabold text-[#343137]">Edit design · Advanced controls</summary>
         <h2 className="text-sm font-extrabold">Creative controls</h2>
         <label className="block text-xs font-bold">Business
           <select className={selectInput} style={selectStyle} value={businessId} onChange={e=>setBusinessId(e.target.value)}>
@@ -587,19 +741,19 @@ export default function MarketingDesignEditor(){
               onChange={e=>updateLayer('bold',e.target.checked)} className="accent-[#FF7900]"/> Bold typography</label>
           </div>}
         </div>
-      </section>
-      <section className={panel+' min-w-0'}>
+      </details>
+      <section className={panel+' order-1 min-w-0'}>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <div><h2 className="text-sm font-extrabold">Full-resolution live preview</h2>
+          <div><h2 className="text-sm font-extrabold">Poster preview</h2>
             <p className="mt-1 text-xs text-[#8A8A91]">{dimensions.width} × {dimensions.height} · drag a text layer to reposition</p></div>
           <button type="button" onClick={()=>setPoster(newPosterBlueprint(businesses.find(b=>b.id===businessId)?.name||'Business name',poster.format))}
             className="rounded-lg border border-[#E8E8EC] px-3 py-2 text-xs font-semibold">Reset design</button>
         </div>
-        <div className="mx-auto w-full max-w-[590px] rounded-lg border border-[#E8E8EA] bg-[#F0F0F3] p-3">
+        <div className="mx-auto w-full max-w-[350px] rounded-lg border border-[#E8E8EA] bg-[#F0F0F3] p-3">
           <canvas ref={canvas} aria-label="Editable poster artwork preview" role="img"
             onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
             className="mx-auto block h-auto max-w-full cursor-move rounded-md shadow-lg"
-            style={{width:'100%',touchAction:'none'}}/>
+            style={{width:'auto',height:'auto',maxWidth:'100%',maxHeight:'450px',touchAction:'none'}}/>
         </div>
         {textOverflow&&<p role="alert" className="mt-4 rounded-lg border border-[#EDBE91] bg-[#FFF2E7] p-3 text-[11px] font-semibold text-[#9B521D]">Some poster text does not fit the current layout. Shorten or reposition layers; PNG export is blocked rather than clipping multilingual text.</p>}
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -621,5 +775,6 @@ export default function MarketingDesignEditor(){
         </div>
       </section>
     </div>
+    </div>}
   </div>;
 }
