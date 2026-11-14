@@ -1,4 +1,26 @@
 # SLBusinessIndex — Marketing Studio Global App Rollout Runbook
+
+## 2026-11-14 — LATEST OWNER HANDOFF: Billing QR + Marketing Studio App #10
+
+**Cross-chat contract:** Update GitHub AGENTS.md + master handoff + live ledger after each meaningful completed milestone. At the start of each new chat read their latest main versions. Record exact SHA, CI, production status, blockers, next actions. Do not imply background/asynchronous work beyond an active chat turn.
+
+**Deployment limit:** User requests no repetitive Vercel Preview deployments due to daily quota. Use source-only staging and CI/local verification first; deploy only when a reviewed feature is approved. Documentation changes must not silently turn on any app, gateway or paid features.
+
+**Billing decision:** Approved payment channels are **BOC Flex/SmartPay Merchant LankaQR** and **Payments.lk ONLY**; WEBXPAY excluded. User personally contacted BOC hotline and attempted SmartPay merchant enrollment three times; final Enroll button did not respond. BOC advised SmartPay or nearest branch. Owner plans visiting BOC branch **Monday 2026-11-16** to register and obtain merchant LankaQR. Owner will share QR PNG/JPG/WebP after approval. A personal/P2P QR is not a verified Merchant LankaQR. Never request banking login, OTP, secret credentials or full account details. A static QR is not automatic transaction verification. Bank settlement must be independently reconciled before activating paid entitlements.
+
+**Billing code is STAGED ONLY:** Detached/non-branch commit [371857bf402e342aec439517976b0946fae81166](https://github.com/Victor-dev-03-cmd/sl_business_index/commit/371857bf402e342aec439517976b0946fae81166) contains owner-authenticated read-only BOC QR options, awaiting_payment / server-confirmed quote gate, existing vendor Billing request confirmation UI, Payments.lk sandbox adapter and handoff guide. Not merged, not CI build-tested, not deployed; no online checkout, live payment or bank account connected. Payments.lk merchant approval, official API/keys/webhook verification and single billing authority still required. See staged docs/growth/p2/BOC_LANKAQR_PAYMENTS_LK_BILLING_HANDOFF.md. Final Basic/Plus/Pro pricing and Admin Dashboard redesign deferred pending owner decisions.
+
+**Marketing Studio app #10:** The 10th of 12 marketplace cards is Content Calendar (ID content-calendar). Current production page is informational only. Detached/non-branch source commit [de258220fcb8ceda73efeff2c161dd77f39b3dca](https://github.com/Victor-dev-03-cmd/sl_business_index/commit/de258220fcb8ceda73efeff2c161dd77f39b3dca) stages read-only owner-scoped monthly grid, Colombo timezone, owned-business filter and real saved campaign planning records. Not merged, not CI build-tested, not live. No worker, auto-post, mail sending, provider receipts or scheduling side effects.
+
+**Live database verified 2026-11-14:** marketing_studio_app_rollouts has 12/12 coming_soon; ZERO apps promoted live. Existing Basic Campaign Planner /vendor/marketing/campaigns and Leads CRM /vendor/leads remain independently accessible. Do not set any marketplace app to live without individually passing tested release gates. 10 premium apps should be delivered incrementally; never claim 10 live merely because UI foundations exist. Pro entitlements, provider access, managed KMS and production verified billing remain gating dependencies.
+
+**Next chat / next steps:**
+1. Inspect latest GitHub main SHA; read this handoff, master context, P2 live ledger and marketing rollout runbook. Check Supabase and Vercel status independently.
+2. Owner obtains and supplies *merchant-approved* BOC QR; check actual Merchant LankaQR classification, store QR image as approved asset, wire into existing pending Billing request confirmation only after owner quote staff approval; no screenshot-based verification.
+3. Review and run tests / Next build for staged Content Calendar detached commit against current main, improve date-window/pagination and actual two-tenant browser/pro-entitlement tests; preserve planning-only status. Avoid preview deployments.
+4. Complete legacy P2-05 campaign RLS hardening in tested versioned migration before any durable P2-06 scheduler/publish flow. Protect historical posted row and Basic owner planning.
+5. Integrate Payments.lk only after approved merchant credentials, official current API docs, immutable server-issued order, signed webhook, idempotency, bank reconciliation and authorization tests; do not take live payments without review.
+6. Deliver the remaining Premium Marketing Studio apps one at a time with provider permissions, spending controls, real E2E and release gates; finally update docs with committed SHA, passing CI and real deployment/migration evidence.
 2026-11-14 | Phase P2 | Owner-approved Production DB foundation
 
 ## Verified current environment
