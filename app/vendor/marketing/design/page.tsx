@@ -63,10 +63,24 @@ function drawPoster(canvas:HTMLCanvasElement,project:PosterBlueprint,backdrop:HT
     const scale=Math.max(w/backdrop.naturalWidth,h/backdrop.naturalHeight);
     const wd=backdrop.naturalWidth*scale,hd=backdrop.naturalHeight*scale;
     c.drawImage(backdrop,(w-wd)/2,(h-hd)/2,wd,hd);
-    c.fillStyle='rgba(0,0,0,.48)';c.fillRect(0,0,w,h);
+    // A directional shadow protects readable editable copy without hiding the
+    // valuable original AI hero subject beneath a uniform black overlay.
+    const readable=c.createLinearGradient(0,0,w*0.84,0);
+    readable.addColorStop(0,'rgba(8,9,14,.87)');
+    readable.addColorStop(0.45,'rgba(9,10,16,.69)');
+    readable.addColorStop(1,'rgba(10,11,17,.05)');
+    c.fillStyle=readable;c.fillRect(0,0,w,h);
+    const lower=c.createLinearGradient(0,h*.72,0,h);
+    lower.addColorStop(0,'rgba(8,9,14,0)');
+    lower.addColorStop(1,'rgba(8,9,14,.52)');
+    c.fillStyle=lower;c.fillRect(0,0,w,h);
   }
   const accent=project.accent;
-  if(project.style==='editorial'){
+  if(backdrop){
+    // A light brand rule leaves the generated artwork in focus.
+    c.fillStyle=accent;c.fillRect(0,0,Math.max(9,w*.012),h);
+    c.fillRect(65,h-90,Math.min(150,w*.22),7);
+  }else if(project.style==='editorial'){
     c.fillStyle=accent;c.fillRect(0,0,16,h);
     c.fillRect(w-230,0,230,18);
     c.strokeStyle=accent;c.lineWidth=5;c.strokeRect(57,72,w-114,h-144);
@@ -113,7 +127,12 @@ function drawPoster(canvas:HTMLCanvasElement,project:PosterBlueprint,backdrop:HT
   for(const block of layouts){
     c.font=(block.layer.bold?'800 ':'500 ')+block.size+'px "Noto Sans Tamil","Noto Sans Sinhala",system-ui,sans-serif';
     c.fillStyle=safeColor(block.layer.color);
+    if(backdrop){
+      c.shadowColor='rgba(0,0,0,.50)';c.shadowBlur=12;
+      c.shadowOffsetY=3;
+    }
     block.lines.forEach((line,i)=>c.fillText(line,block.layer.x,block.layer.y+i*block.lineHeight));
+    c.shadowColor='transparent';c.shadowBlur=0;c.shadowOffsetY=0;
   }
   return true;
 }
