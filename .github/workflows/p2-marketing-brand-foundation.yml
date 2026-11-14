@@ -74,6 +74,7 @@ jobs:
         run: |
           node --test tests/p2BrandProfile.test.mjs tests/p2AiCaption.test.mjs tests/p2PosterDesign.test.mjs tests/p2MarketingEngineShell.test.mjs tests/marketingStudioAppStore.test.mjs tests/p2GlobalMarketingLaunch.test.mjs tests/p2MarketingLoadingAndConnect.test.mjs tests/p2OAuthConnectors.test.mjs tests/p2OAuthFlow.test.mjs tests/p2OAuthDisconnect.test.mjs tests/p2OAuthCallbackRace.test.mjs tests/vendorNeutralUi.test.mjs
           node --test tests/vendorSettingsQrMarketing2026.test.mjs tests/vendorPortalRelease.test.mjs
+          node --test tests/p2CampaignReleaseCandidate.test.mjs
 
   docker-tenant-rls:
     runs-on: ubuntu-latest
@@ -177,7 +178,7 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261110010000_growth_os_credit_foundation.sql
           psql -v ON_ERROR_STOP=1 -f tests/p2-campaign/bootstrap.sql
       - name: Add revision history and block fake published status
-        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p2/P2_05_CAMPAIGN_REVISIONS_STAGING_ONLY.sql
+        run: psql -v ON_ERROR_STOP=1 -f docs/growth/p2/P2_05_CAMPAIGN_SECURITY_PRODUCTION_CANDIDATE.sql
       - name: Verify owner approval, revisions, cross-tenant isolation
         run: psql -v ON_ERROR_STOP=1 -f tests/p2-campaign/verify.sql
 
