@@ -100,14 +100,15 @@ export const POSTER_PROMPT_VERSION='slbi-creative-direction-v1.1' as const;
 /** Style suggestions are deterministic defaults, never a fake AI-generated graphic. */
 export function inferPosterArtStyle(brief:string):PosterStyle{
   const x=brief.toLocaleLowerCase();
-  if(/discount|sale|special offer|promotion|20%|50%|சலுகை|தள்ளுபடி|වට්ටම|ප්‍රවර්ධන/.test(x))return 'bold-retail';
+  // Strong numerical sale claims, when actually supplied, are visually prominent.
+  if(/\b\d{1,3}\s*%/.test(x))return 'bold-retail';
   if(/festival|greeting|diwali|deepavali|christmas|new year|தீபாவளி|பொங்கல்|උත්සව|අලුත් අවුරුදු/.test(x))return 'illustrated';
+  if(/travel|hotel|resort|spa|wellness|holiday|சுற்றுலா|සංචාර/.test(x))return 'fresh-lifestyle';
   if(/jewell?ery|fashion|bridal|boutique|silk|saree|நகை|ஆடை|ඇඳුම්|රන්/.test(x))return 'luxury-editorial';
   if(/food|lunch|dinner|breakfast|cafe|coffee|restaurant|biriyani|உணவு|சாப்பாடு|உணவகம்|කෑම|ආහාර/.test(x))return 'cinematic-product';
-  if(/travel|hotel|resort|spa|wellness|holiday|சுற்றுலா|සංචාර/.test(x))return 'fresh-lifestyle';
+  if(/discount|sale|special offer|promotion|சலுகை|தள்ளுபடி|වට්ටම|ප්‍රවර්ධන/.test(x))return 'bold-retail';
   return 'cinematic-product';
 }
-
 const copyZones:Record<PosterLayout,string>={
   'copy-left':'Leave the LEFT 42% visually quiet, clean and low-detail for a text overlay. Hero subject stays in the RIGHT half.',
   'copy-right':'Leave the RIGHT 42% visually quiet, clean and low-detail for a text overlay. Hero subject stays in the LEFT half.',
