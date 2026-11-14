@@ -70,3 +70,30 @@ test('Design Editor actually draws independent Canvas text and exports PNG',()=>
   assert.match(homepage,/MarketingAppStore/);
   assert.match(read('lib/marketing/studio-apps.ts'),/href:'\/vendor\/marketing\/design'/);
 });
+
+test('Poster Studio begins as a simple chat-style idea composer, not a giant canvas',()=>{
+  const ui=read('app/vendor/marketing/design/page.tsx');
+  assert.match(ui,/!draftReady&&<section/);
+  assert.match(ui,/What poster shall we create today\?/);
+  assert.match(ui,/createSimpleDraft/);
+  assert.match(ui,/Create poster draft/);
+  assert.match(ui,/aria-label="Try an idea"/);
+  assert.match(ui,/draftReady&&<div/);
+  assert.match(ui,/Edit design · Advanced controls/);
+  assert.match(ui,/maxHeight:'450px'/);
+  assert.match(ui,/Poster preview/);
+});
+test('Voice input, manual sharing and paid-provider protection remain honest',()=>{
+  const ui=read('app/vendor/marketing/design/page.tsx');
+  assert.match(ui,/webkitSpeechRecognition/);
+  assert.match(ui,/ta-LK/);
+  assert.match(ui,/si-LK/);
+  assert.match(ui,/en-LK/);
+  assert.match(ui,/not supported by this browser/);
+  assert.match(ui,/navigator\.canShare/);
+  assert.match(ui,/Share \/ post manually/);
+  assert.match(ui,/Automatic posting is not active/);
+  assert.match(ui,/if\(artGenerating\|\|!artPrompt\|\|!businessId\|\|!artServiceEnabled/);
+  assert.match(ui,/window\.confirm\('Generate ONE premium AI image/);
+  assert.doesNotMatch(ui,/AI poster published successfully/);
+});
