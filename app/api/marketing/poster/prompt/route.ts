@@ -1,6 +1,7 @@
 import {createClient} from '@/lib/supabase/server';
 import {isSameOrigin} from '@/lib/growth/ingestion-contract';
 import {getMarketingAccessForUser,rejectMarketingAccess} from '@/lib/marketing/pro-access-server';
+import {isPosterReviewAccount} from '@/lib/marketing/poster-review-access-server';
 import {buildPosterCreativePrompt,validatePosterCreativeInput} from '@/lib/marketing/poster-creative-engine';
 
 export const runtime='nodejs';
@@ -27,8 +28,13 @@ export async function POST(request:Request){
     const client=await createClient();
     const {data:{user},error:authError}=await client.auth.getUser();
     if(authError||!user)return reply(401,{error:'Sign in to create a poster creative brief.'});
-    const denied=rejectMarketingAccess(await getMarketingAccessForUser(user.id,client));
-    if(denied)return denied;
+    const [access,reviewer]=await Promise.all([
+      getMarketingAccessForUser(user.id,client),isPosterReviewAccount(user.id,client),
+    ]);
+    if(!access.allowed&&!reviewer){
+      const denied=rejectMarketingAccess(access);
+      if(denied)return denied;
+    }
     const {data:business,error:bError}=await client.from('businesses')
       .select('id,name,category,city').eq('id',check.value.businessId)
       .eq('owner_id',user.id).maybeSingle();
@@ -38,12 +44,12 @@ export async function POST(request:Request){
       .select('brand_name,primary_color,accent_color,tone,guidelines')
       .eq('business_id',business.id).eq('owner_id',user.id).maybeSingle();
     if(pError)return reply(503,{error:'Brand Kit could not be verified.'});
-    if(!brand)return reply(409,{error:'Complete the business Brand Kit before using AI art direction.'});
+    if(!brand&&!reviewer)return reply(409,{error:'Complete the business Brand Kit before using AI art direction.'});
     const draft=buildPosterCreativePrompt(check.value,{
       businessName:business.name,category:business.category||'',city:business.city||'',
-      brandName:brand.brand_name||business.name,
-      primaryColor:brand.primary_color||'',accentColor:brand.accent_color||'',
-      tone:brand.tone||'',guidelines:brand.guidelines||'',
+      brandName:brand?.brand_name||business.name,
+      primaryColor:brand?.primary_color||'#FF7900',accentColor:brand?.accent_color||'#282828',
+      tone:brand?.tone||'professional',guidelines:brand?.guidelines||'',
     });
     return reply(200,{creative:draft});
   }catch{
