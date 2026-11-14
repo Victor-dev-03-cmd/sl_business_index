@@ -35,6 +35,6 @@ export async function GET(request:Request){
   const binary=new Uint8Array(await blob.arrayBuffer());
   if(binary[0]!==137||binary[1]!==80||binary[2]!==78||binary[3]!==71)
     return fail(503,'Stored artwork is not a PNG.');
-  return new Response(binary,{status:200,headers:{...noStore,'Content-Type':'image/png',
+  return new Response(blob,{status:200,headers:{...noStore,'Content-Type':'image/png',
     'Content-Disposition':'inline; filename="slbi-poster-artwork.png"'}});
 }
