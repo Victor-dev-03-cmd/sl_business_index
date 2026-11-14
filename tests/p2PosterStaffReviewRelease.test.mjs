@@ -34,7 +34,9 @@ test('Only Poster page can use reviewer access: all other premium routes retain 
 test('Reviewer can preview only zero-cost creative prompt; model/provider remain Pro-only and OFF',()=>{
   assert.match(preview,/isPosterReviewAccount\(user\.id,client\)/);
   assert.match(preview,/!access\.allowed&&!reviewer/);
-  assert.match(preview,/!brand&&!reviewer/);
+  // A first-time vendor's optional Brand Kit must not prevent creative briefing.
+  assert.doesNotMatch(preview,/!brand&&!reviewer/);
+  assert.match(preview,/brand\?\.brand_name\|\|business\.name/);
   assert.doesNotMatch(preview,/OPENAI_API_KEY|GROQ_API_KEY|marketing_poster_reserve/);
   assert.match(image,/SLBI_POSTER_IMAGE_AI_ENABLED!=='true'/);
   assert.match(image,/getMarketingAccessForUser/);
