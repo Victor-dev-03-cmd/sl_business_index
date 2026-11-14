@@ -5,7 +5,7 @@ import {
   ChevronDown, ChevronUp, Building2, CalendarClock, Phone, ChartNoAxesCombined,
   CheckCircle2, ChevronLeft, ChevronRight, CirclePlus, Coins, Download,
   Eye, Zap, Globe, House, Mail, Menu, MessageSquareText, Users, RefreshCw, FileText,
-  Search, Settings2, ShieldCheck, Store, PanelLeft, Star,
+  Search, Settings2, ShieldCheck, Store, PanelLeft, Star, Sparkles, Mic, ImagePlus,
   TrendingUp, CircleX, type LucideIcon
 } from 'lucide-react';
 
@@ -14,6 +14,9 @@ import {
 // if a browser, chunk, or the icon name prevents Iconsax from drawing.
 let registration: Promise<unknown> | undefined;
 const fallbacks: Record<string, LucideIcon> = {
+  'magic-star': Sparkles,
+  'microphone-2': Mic,
+  'image': ImagePlus,
   'category': Building2,
   'chart': ChartNoAxesCombined,
   'eye': Eye,
