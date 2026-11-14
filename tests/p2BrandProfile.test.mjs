@@ -72,8 +72,10 @@ test('UI binds to real owned businesses; no fake AI generations, published campa
   assert.match(s,/logo_url/);
   assert.match(s,/Marketing Studio/);
   const homepage=read('app/vendor/marketing/page.tsx');
-  assert.match(homepage,/href:'\/vendor\/marketing\/brand'/);
-  assert.match(homepage,/Business Brand Profile/);
+  assert.match(homepage,/MarketingAppStore/);
+  const apps=read('lib/marketing/studio-apps.ts');
+  assert.match(apps,/href:'\/vendor\/marketing\/brand'/);
+  assert.match(apps,/Business Brand Kit/);
 });
 
 test('SQL guards tenant isolation, immutable owner identity and no anonymous writes',()=>{

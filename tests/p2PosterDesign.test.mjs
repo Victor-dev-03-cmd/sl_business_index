@@ -56,5 +56,6 @@ test('Design Editor actually draws independent Canvas text and exports PNG',()=>
   assert.match(s,/3\*1024\*1024/);
   assert.doesNotMatch(s,/AI-generated background successfully created/);
   const homepage=read('app/vendor/marketing/page.tsx');
-  assert.match(homepage,/href:'\/vendor\/marketing\/design'/);
+  assert.match(homepage,/MarketingAppStore/);
+  assert.match(read('lib/marketing/studio-apps.ts'),/href:'\/vendor\/marketing\/design'/);
 });

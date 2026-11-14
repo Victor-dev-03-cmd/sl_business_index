@@ -67,7 +67,7 @@ test('GrowthOS Marketing Studio is overview-only and preserves real manual campa
   assert.match(marketing,/count:'exact',head:true/);
   assert.match(marketing,/MarketingAppStore/);
   assert.match(load('lib/marketing/studio-apps.ts'),/\/vendor\/marketing-engine\/email/);
-  assert.match(marketing,/\/vendor\/marketing\/campaigns/);
+  assert.match(load('lib/marketing/studio-apps.ts'),/\/vendor\/marketing\/campaigns/);
   assert.doesNotMatch(marketing,/const exportBrandedCreative=|status:schedule\?'scheduled':'drafted'/);
   assert.match(campaignWorkspace,/Campaign Workspace/);
   assert.match(campaignWorkspace,/தமிழ்/);
