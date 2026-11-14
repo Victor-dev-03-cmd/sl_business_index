@@ -73,7 +73,8 @@ export async function POST(request:Request){
     .select('brand_name,primary_color,accent_color,tone,guidelines')
     .eq('business_id',business.id).eq('owner_id',user.id).maybeSingle();
   if(brandError)return reply(503,{error:'Brand Kit validation unavailable.'});
-  if(!brand)return reply(409,{error:'Set up your business Brand Kit before creating AI artwork.'});
+  // Brand Kit is optional for first-time vendors: the authenticated owned business
+  // name and verified listing details are enough to create an honest creative brief.
 
   const {data:bucket,error:bucketError}=await admin.storage.getBucket(BUCKET);
   if(bucketError||!bucket||bucket.public)
@@ -81,9 +82,9 @@ export async function POST(request:Request){
 
   const art=buildPosterCreativePrompt(checked.value,{
     businessName:business.name,category:business.category||'',city:business.city||'',
-    brandName:brand.brand_name||business.name,
-    primaryColor:brand.primary_color||'',accentColor:brand.accent_color||'',
-    tone:brand.tone||'',guidelines:brand.guidelines||'',
+    brandName:brand?.brand_name||business.name,
+    primaryColor:brand?.primary_color||'#FF7900',accentColor:brand?.accent_color||'#282828',
+    tone:brand?.tone||'professional',guidelines:brand?.guidelines||'',
   });
   // Hash server-derived brand facts as well as user input. Identical idempotency
   // keys cannot be reused with changed creative instructions or another brand.
