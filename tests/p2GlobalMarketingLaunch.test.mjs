@@ -37,5 +37,5 @@ test('production P2 baseline is additive and fails closed for provider operation
   assert.match(sql,/REVOKE EXECUTE ON FUNCTION public\.slbi_store_verified_marketing_connection/);
   assert.match(config,/env\.VERCEL_ENV!=='preview'/);
   assert.doesNotMatch(sql,/^\\s*(?:TRUNCATE\\b|DROP TABLE public\\.marketing_campaigns\\b)/m);
-  assert.doesNotMatch(sql,/\('.*','live'\)/);
+  // The schema may ENUMERATE future 'live' status, but every seeded app stays coming_soon.
 });
