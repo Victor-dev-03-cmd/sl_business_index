@@ -363,6 +363,13 @@ export default function MarketingDesignEditor(){
       reader.onerror=()=>reject(Error('Artwork could not be opened.'));
       reader.readAsDataURL(blob);
     });
+    // Decode and validate the actual generated image BEFORE revealing the canvas.
+    // An empty black frame must never flash as a supposedly completed AI result.
+    const decoded=new window.Image();
+    decoded.src=dataUrl;
+    await decoded.decode();
+    if(!decoded.naturalWidth||!decoded.naturalHeight)throw Error('Generated image could not be decoded.');
+    setBackdrop(decoded);
     setImageData(dataUrl);
   };
   const generateAiArtwork=async(subjectOverride?:string)=>{
