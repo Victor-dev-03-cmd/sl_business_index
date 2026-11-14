@@ -29,6 +29,8 @@ on:
       - 'tests/p2-brand/**'
       - 'tests/p2-ai/**'
       - 'tests/p2-campaign/**'
+      - 'tests/p2-poster-image/**'
+      - 'tests/p2PosterImageAPI.test.mjs'
       - 'docs/growth/p2/**'
       - 'app/vendor/layout.tsx'
       - '.github/workflows/p2-marketing-brand-foundation.yml'
@@ -43,6 +45,8 @@ on:
       - 'tests/p2-brand/**'
       - 'tests/p2-ai/**'
       - 'tests/p2-campaign/**'
+      - 'tests/p2-poster-image/**'
+      - 'tests/p2PosterImageAPI.test.mjs'
       - 'tests/p2PosterDesign.test.mjs'
       - 'tests/p2PosterCreativeEngine.test.mjs'
       - 'tests/p2AiCaption.test.mjs'
@@ -74,7 +78,7 @@ jobs:
           node-version: '24'
       - name: Brand validation, page/API contract and existing Marketing Studio tests
         run: |
-          node --test tests/p2BrandProfile.test.mjs tests/p2AiCaption.test.mjs tests/p2PosterDesign.test.mjs tests/p2PosterCreativeEngine.test.mjs tests/p2MarketingEngineShell.test.mjs tests/marketingStudioAppStore.test.mjs tests/p2GlobalMarketingLaunch.test.mjs tests/p2MarketingLoadingAndConnect.test.mjs tests/p2OAuthConnectors.test.mjs tests/p2OAuthFlow.test.mjs tests/p2OAuthDisconnect.test.mjs tests/p2OAuthCallbackRace.test.mjs tests/vendorNeutralUi.test.mjs
+          node --test tests/p2BrandProfile.test.mjs tests/p2AiCaption.test.mjs tests/p2PosterDesign.test.mjs tests/p2PosterCreativeEngine.test.mjs tests/p2PosterImageAPI.test.mjs tests/p2MarketingEngineShell.test.mjs tests/marketingStudioAppStore.test.mjs tests/p2GlobalMarketingLaunch.test.mjs tests/p2MarketingLoadingAndConnect.test.mjs tests/p2OAuthConnectors.test.mjs tests/p2OAuthFlow.test.mjs tests/p2OAuthDisconnect.test.mjs tests/p2OAuthCallbackRace.test.mjs tests/vendorNeutralUi.test.mjs
           node --test tests/vendorSettingsQrMarketing2026.test.mjs tests/vendorPortalRelease.test.mjs
           node --test tests/p2CampaignReleaseCandidate.test.mjs
           node --test tests/p2CampaignV2.test.mjs
@@ -278,6 +282,41 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -1 -f docs/growth/p2/P2_MARKETING_GLOBAL_BASELINE_PRODUCTION.sql
       - name: Verify 12 Coming Soon apps, owner reads, RLS and no OAuth tokens
         run: psql -v ON_ERROR_STOP=1 -f tests/p2-global-marketing/verify.sql
+
+  docker-poster-image-budget:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: slbi_p2_poster
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres -d slbi_p2_poster"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: slbi_p2_poster
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Seed two synthetic vendors and trusted wallet (disposable database)
+        run: |
+          psql -v ON_ERROR_STOP=1 -f tests/p2-brand/bootstrap.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261110010000_growth_os_credit_foundation.sql
+      - name: Apply staging-only Pro image credit and private job SQL (disposable)
+        run: psql -v ON_ERROR_STOP=1 -1 -f docs/growth/p2/P2_04_POSTER_IMAGE_AI_STAGING_ONLY.sql
+      - name: Test Basic denial, verified Pro, zero budget, race claim, refund, owner A/B RLS
+        run: psql -v ON_ERROR_STOP=1 -f tests/p2-poster-image/verify.sql
 
   nextjs-build:
     runs-on: ubuntu-latest
