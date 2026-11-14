@@ -1,0 +1,63 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
+const sql=read('docs/growth/p2/P2_04_POSTER_IMAGE_AI_STAGING_ONLY.sql');
+const generate=read('app/api/marketing/poster/generate/route.ts');
+const artwork=read('app/api/marketing/poster/artwork/route.ts');
+const editor=read('app/vendor/marketing/design/page.tsx');
+
+test('image spending cannot turn on without explicit action and zero-default cap approval',()=>{
+  assert.match(sql,/VALUES\('ai_poster_design',8,false\)/);
+  assert.match(sql,/max_attempts integer NOT NULL DEFAULT 0/);
+  assert.match(sql,/e\.plan_name IN \('Professional','Enterprise'\)/);
+  assert.match(sql,/b\.id=p_business_id AND b\.owner_id=p_user_id/);
+  assert.match(sql,/v_cost<>p_expected_credits/);
+  assert.match(sql,/IF v_global\.attempts>=v_global\.max_attempts/);
+  assert.match(sql,/UNIQUE\(user_id,request_key\)/);
+  assert.match(sql,/marketing_poster_claim/);
+  assert.match(sql,/marketing_poster_refund/);
+  assert.match(sql,/WITH CHECK|FOR SELECT TO authenticated/);
+  assert.doesNotMatch(sql,/GRANT INSERT ON public\.marketing_poster_jobs TO authenticated/);
+});
+test('image endpoint is server-only, Pro owner/RLS-gated, fully cost-reserved and idempotent',()=>{
+  assert.match(generate,/SLBI_POSTER_IMAGE_AI_ENABLED/);
+  assert.match(generate,/process\.env\.OPENAI_API_KEY/);
+  assert.match(generate,/getMarketingAccessForUser/);
+  assert.match(generate,/isSameOrigin/);
+  assert.match(generate,/\.eq\('owner_id',user\.id\)/);
+  assert.match(generate,/marketing_poster_reserve/);
+  assert.match(generate,/p_expected_credits/);
+  assert.match(generate,/marketing_poster_claim/);
+  assert.match(generate,/marketing_poster_complete/);
+  assert.match(generate,/marketing_poster_refund/);
+  assert.match(generate,/newly_created/);
+  assert.match(generate,/SLBI_POSTER_IMAGE_MODEL/);
+  assert.match(generate,/\bn:1\b/);
+  assert.match(generate,/https:\/\/api\.openai\.com\/v1\/images\/generations/);
+  assert.match(generate,/quality:'high'/);
+  assert.match(generate,/private/);
+  assert.doesNotMatch(generate,/NEXT_PUBLIC_OPENAI_API_KEY/);
+  assert.doesNotMatch(generate,/process\.env\.OPENAI_API_KEY\s*\|\|\s*['"]/);
+});
+test('private image download cannot disclose cross-tenant artwork',()=>{
+  assert.match(artwork,/getMarketingAccessForUser/);
+  assert.match(artwork,/marketing_poster_jobs/);
+  assert.match(artwork,/\.eq\('user_id',user\.id\)/);
+  assert.match(artwork,/\.eq\('id',jobId\)/);
+  assert.match(artwork,/job\.storage_path!==expected/);
+  assert.match(artwork,/admin\.storage\.from\(BUCKET\)\.download/);
+  assert.match(artwork,/private, no-store/);
+  assert.doesNotMatch(artwork,/createSignedUrl/);
+});
+test('client confirms exact paid credit price before generate and retains editable imagery',()=>{
+  assert.match(editor,/generateAiArtwork/);
+  assert.match(editor,/window\.confirm/);
+  assert.match(editor,/\/api\/marketing\/poster\/generate/);
+  assert.match(editor,/\/api\/marketing\/poster\/artwork/);
+  assert.match(editor,/setImageData/);
+  assert.match(editor,/new FileReader/);
+  assert.match(editor,/artJobId/);
+  assert.match(editor,/artCredits/);
+  assert.match(read('app/vendor/marketing/design/layout.tsx'),/MarketingProOnly/);
+});
