@@ -44,7 +44,7 @@ ALTER TABLE public.marketing_campaigns
      AND char_length(brief->>'offer') <=240
      AND char_length(brief->>'cta') <=130
      AND char_length(brief->>'terms') <=220
-     AND (SELECT count(*) FROM jsonb_object_keys(brief) k) <= 7
+     AND (brief - ARRAY['offer','cta','terms','language','objective','format','palette']) = '{}'::jsonb
     )
   );
 

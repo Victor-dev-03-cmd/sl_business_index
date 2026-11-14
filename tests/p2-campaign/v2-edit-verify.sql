@@ -4,7 +4,7 @@
 SET ROLE authenticated;
 SET "request.jwt.claim.sub"='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 DO $owner$
-DECLARE id uuid; cnt integer; bad boolean := false;
+DECLARE v_id uuid; cnt integer; bad boolean := false;
 BEGIN
   INSERT INTO public.marketing_campaigns(
     business_id,banner_text,banner_color,platforms,status,brief
@@ -12,23 +12,23 @@ BEGIN
     '11111111-1111-4111-8111-111111111111',
     'Original test campaign','#193E30',ARRAY['facebook'],'drafted',
     '{"offer":"Test message","cta":"Call now","terms":"","language":"English","objective":"promotion","format":"portrait","palette":"forest"}'::jsonb
-  ) RETURNING marketing_campaigns.id INTO id;
+  ) RETURNING marketing_campaigns.id INTO v_id;
   UPDATE public.marketing_campaigns
     SET banner_text='Edited campaign',brief=jsonb_set(brief,'{offer}','"Edited message"'),is_archived=true
-    WHERE marketing_campaigns.id=id;
-  IF (SELECT count(*) FROM public.marketing_campaigns WHERE marketing_campaigns.id=id AND is_archived=true AND brief->>'offer'='Edited message')<>1
+    WHERE marketing_campaigns.id=v_id;
+  IF (SELECT count(*) FROM public.marketing_campaigns WHERE marketing_campaigns.id=v_id AND is_archived=true AND brief->>'offer'='Edited message')<>1
   THEN RAISE EXCEPTION 'Editable draft or archive failed';END IF;
-  UPDATE public.marketing_campaigns SET is_archived=false WHERE marketing_campaigns.id=id;
-  IF (SELECT count(*) FROM public.marketing_campaign_revisions WHERE campaign_id=id)<>3
+  UPDATE public.marketing_campaigns SET is_archived=false WHERE marketing_campaigns.id=v_id;
+  IF (SELECT count(*) FROM public.marketing_campaign_revisions WHERE campaign_id=v_id)<>3
   THEN RAISE EXCEPTION 'Edit/archive/restore revision history missing';END IF;
   bad:=false;
   BEGIN
-    UPDATE public.marketing_campaigns SET brief='{"offer":"x"}'::jsonb WHERE marketing_campaigns.id=id;
+    UPDATE public.marketing_campaigns SET brief='{"offer":"x"}'::jsonb WHERE marketing_campaigns.id=v_id;
   EXCEPTION WHEN check_violation THEN bad:=true; END;
   IF NOT bad THEN RAISE EXCEPTION 'Malformed browser brief accepted';END IF;
   bad:=false;
   BEGIN
-    UPDATE public.marketing_campaigns SET status='posted' WHERE marketing_campaigns.id=id;
+    UPDATE public.marketing_campaigns SET status='posted' WHERE marketing_campaigns.id=v_id;
   EXCEPTION WHEN insufficient_privilege THEN bad:=true; END;
   IF NOT bad THEN RAISE EXCEPTION 'Browser can forge published status';END IF;
 END $owner$;
