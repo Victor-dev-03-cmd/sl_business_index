@@ -142,6 +142,9 @@ export default function MarketingDesignEditor(){
   const [artPrompt,setArtPrompt]=useState('');
   const [artChecklist,setArtChecklist]=useState<string[]>([]);
   const [artBusy,setArtBusy]=useState(false);
+  const [artGenerating,setArtGenerating]=useState(false);
+  const [artJobId,setArtJobId]=useState('');
+  const [artCredits,setArtCredits]=useState<number|null>(null);
   useEffect(()=>{
     let active=true;
     supabase.auth.getUser().then(async({data:{user}})=>{
@@ -236,6 +239,15 @@ export default function MarketingDesignEditor(){
     reader.onerror=()=>setMessage('Could not read uploaded artwork.');
     reader.readAsDataURL(file);
   };
+  const creativeBrief=()=>({
+    businessId,format:poster.format,style:artStyle,mood:artMood,
+    layout:artLayout,objective:artObjective,language:artLanguage,
+    subject:artSubject,offer:artOffer,audience:artAudience,notes:artNotes,
+  });
+  useEffect(()=>{setArtPrompt('');setArtChecklist([]);},[
+    businessId,poster.format,artStyle,artMood,artLayout,artObjective,
+    artLanguage,artSubject,artOffer,artAudience,artNotes,
+  ]);
   const previewCreativePrompt=async()=>{
     if(artBusy||!businessId||artSubject.trim().length<5){
       setMessage('Choose a business and describe its real product or service.');return;
@@ -245,11 +257,7 @@ export default function MarketingDesignEditor(){
       const response=await fetch('/api/marketing/poster/prompt',{
         method:'POST',credentials:'same-origin',cache:'no-store',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-          businessId,format:poster.format,style:artStyle,mood:artMood,
-          layout:artLayout,objective:artObjective,language:artLanguage,
-          subject:artSubject,offer:artOffer,audience:artAudience,notes:artNotes,
-        }),
+        body:JSON.stringify(creativeBrief()),
       });
       const result=await response.json() as {
         creative?:{prompt?:string;qualityChecklist?:string[]};error?:string;
@@ -261,6 +269,44 @@ export default function MarketingDesignEditor(){
       setMessage('Commercial art direction prepared. This is a prompt preview, not a billed image-generation request.');
     }catch(e){setMessage(e instanceof Error?e.message:'Creative direction unavailable.');}
     finally{setArtBusy(false);}
+  };
+  const loadGeneratedArtwork=async(jobId:string)=>{
+    const result=await fetch('/api/marketing/poster/artwork?jobId='+encodeURIComponent(jobId),{
+      credentials:'same-origin',cache:'no-store',
+    });
+    if(!result.ok)throw Error('Artwork was generated, but secure download is unavailable. Retry with the same job.');
+    const blob=await result.blob();
+    if(blob.type!=='image/png'||blob.size>12000000)
+      throw Error('Private artwork returned an invalid PNG file.');
+    const dataUrl=await new Promise<string>((resolve,reject)=>{
+      const reader=new FileReader();
+      reader.onload=()=>typeof reader.result==='string'?resolve(reader.result):reject(Error('Image decode failed.'));
+      reader.onerror=()=>reject(Error('Artwork could not be opened.'));
+      reader.readAsDataURL(blob);
+    });
+    setImageData(dataUrl);
+  };
+  const generateAiArtwork=async()=>{
+    if(artGenerating||!artPrompt||!businessId)return;
+    if(!window.confirm('Generate ONE premium AI image? This may consume Growth Credits after the Pro AI service is enabled. The result will remain a private draft, not a social post.'))return;
+    setArtGenerating(true);setMessage('');setArtCredits(null);
+    try{
+      const response=await fetch('/api/marketing/poster/generate',{
+        method:'POST',credentials:'same-origin',cache:'no-store',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({...creativeBrief(),requestKey:crypto.randomUUID()}),
+      });
+      const result=await response.json() as {
+        jobId?:string;artworkUrl?:string;chargedCredits?:number;error?:string;
+      };
+      if(!response.ok)throw Error(result.error||'AI artwork generation unavailable.');
+      if(!result.jobId||!result.artworkUrl)throw Error('Image generation completed without a usable asset.');
+      setArtJobId(result.jobId);
+      if(typeof result.chargedCredits==='number')setArtCredits(result.chargedCredits);
+      await loadGeneratedArtwork(result.jobId);
+      setMessage('AI artwork created and loaded privately. Review the subject, spelling, claims and usage rights before export.');
+    }catch(e){setMessage(e instanceof Error?e.message:'Unable to generate artwork.');}
+    finally{setArtGenerating(false);}
   };
   const generateAiCopy=async()=>{
     if(aiBusy||!businessId||aiBrief.trim().length<5){
@@ -335,7 +381,7 @@ export default function MarketingDesignEditor(){
         <h1 className="mt-2 text-[29px] font-extrabold tracking-[-.045em] sm:text-[39px]">Poster Design Studio <span className="text-[#FF9747]">· Pro</span></h1>
         <p className="mt-2 max-w-[680px] text-xs leading-6 text-white/70">
           Create original social posters with movable text, localized AI copy assistance, adjustable layouts and full-size image exports.
-          AI image backgrounds and direct social publishing are not connected.
+          Premium background image generation is staged behind verified credits and safety gates. Direct social publishing remains OFF.
         </p></div>
       <div className="relative flex flex-wrap gap-2">
         <Link href="/vendor/marketing" className="rounded-xl border border-white/25 px-4 py-3 text-xs font-semibold text-white transition hover:bg-white/10">Marketing Studio</Link>
@@ -372,7 +418,7 @@ export default function MarketingDesignEditor(){
           <label htmlFor="editor-artwork-upload" className="text-xs font-bold">Background artwork (local upload)</label>
           <input id="editor-artwork-upload" type="file" accept="image/png,image/jpeg,image/webp"
             className="mt-2 block w-full text-xs" onChange={onImage}/>
-          <p className="mt-2 text-[10px] leading-5 text-[#82828A]">Max 3 MB · PNG/JPEG/WebP. Source artwork stays in this browser; no cloud upload, no AI image generation.</p>
+          <p className="mt-2 text-[10px] leading-5 text-[#82828A]">Max 3 MB · PNG/JPEG/WebP. Local uploads stay in this browser. AI-created backgrounds (when enabled) are stored privately and retrieved with owner verification.</p>
           {imageData&&<button type="button" onClick={()=>{setImageData(null);setBackdrop(null)}} className="mt-2 text-xs font-semibold text-[#B55616]">Remove background artwork</button>}
         </div>
         <section aria-label="Advanced AI image prompt engineering" className="rounded-[18px] border border-[#F3D6B7] bg-gradient-to-br from-[#FFF8F0] via-[#FFFFFF] to-[#F7F1EA] p-4 sm:p-5">
@@ -438,6 +484,18 @@ export default function MarketingDesignEditor(){
               className="h-48 w-full resize-y rounded-lg bg-[#F8F8F7] p-3 font-mono text-[10px] leading-5 text-[#494445]"/>
             <button type="button" onClick={()=>void navigator.clipboard.writeText(artPrompt).then(()=>setMessage('Creative prompt copied. No model call or charge.')).catch(()=>setMessage('Copy unavailable in this browser.'))}
               className="rounded-lg bg-[#252326] px-4 py-2.5 text-[11px] font-bold text-white">Copy approved creative prompt</button>
+            <div className="rounded-lg border border-[#E8CBB4] bg-[#FFF6ED] p-3">
+              <p className="text-[11px] leading-5 text-[#865B3B]">AI image generation requires verified Pro, owner credits, an approved platform daily budget and a private storage configuration. This is currently a staged integration; the button fails closed while generation is disabled.</p>
+              <button type="button" onClick={()=>void generateAiArtwork()} disabled={artGenerating}
+                className="mt-3 w-full rounded-lg bg-[#FF7900] px-4 py-3 text-[12px] font-extrabold text-[#261B15] disabled:opacity-50">
+                {artGenerating?'Generating private AI artwork…':'Generate ONE premium artwork · Growth Credits apply'}
+              </button>
+              {artJobId&&<div className="mt-2 space-y-2">
+                <p className="text-[10px] text-[#6A625D]">{artCredits===null?'Artwork created.':artCredits+' Growth Credits charged for this image.'}</p>
+                <button type="button" disabled={artGenerating} onClick={()=>void loadGeneratedArtwork(artJobId).then(()=>setMessage('Private image loaded.')).catch(e=>setMessage(String(e)))}
+                  className="text-[11px] font-bold text-[#9B541F] underline">Reload my private artwork</button>
+              </div>}
+            </div>
             {artChecklist.length>0&&<div className="border-t border-[#F0E6DE] pt-3">
               <p className="text-[10px] font-bold uppercase tracking-wide text-[#A56127]">Artwork quality review</p>
               <ul className="mt-2 space-y-1">{artChecklist.map(item=><li key={item} className="text-[11px] leading-5 text-[#70665D]">• {item}</li>)}</ul>
@@ -542,7 +600,7 @@ export default function MarketingDesignEditor(){
         </label>
         <div className="mt-5 rounded-lg border border-[#F1D7B8] bg-[#FFFAF4] p-4 text-[11px] leading-6 text-[#6E5130]">
           Names, prices, dates and phone numbers remain editable layers. AI-written copy requires human review and never initiates publishing.
-          AI image generation and cloud project persistence require a separately reviewed provider/storage release.
+          AI image generation, billing flags and cloud project persistence need separate owner-approved production release.
         </div>
       </section>
     </div>
