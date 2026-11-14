@@ -3,6 +3,7 @@ import {createClient} from '@/lib/supabase/server';
 import {getMarketingAccessForUser} from '@/lib/marketing/pro-access-server';
 import IconsaxIcon from '../components/IconsaxIcon';
 import MarketingAppStore from './components/MarketingAppStore';
+import type {MarketingStudioLaunchStatuses} from '@/lib/marketing/studio-apps';
 
 export const dynamic='force-dynamic';
 const panel='rounded-xl border border-[#ECECF0] bg-white shadow-[0_10px_30px_rgba(17,17,20,.035)]';
@@ -39,6 +40,23 @@ export default async function MarketingOverview(){
     getMarketingAccessForUser(user.id,client),
   ]);
   const businessIds=(owned||[]).map(b=>b.id);
+  // Release state is DB-owned, read-only to authenticated vendors.
+  // Fail closed to Coming Soon if schema or RLS is unavailable.
+  const launchStatuses:MarketingStudioLaunchStatuses={};
+  try{
+    const {data,error}=await client.from('marketing_studio_app_rollouts')
+      .select('app_id,launch_status').limit(100);
+    if(!error){
+      for(const item of data||[]){
+        if(typeof item.app_id==='string'&&
+          (item.launch_status==='coming_soon'||item.launch_status==='preview'||
+           item.launch_status==='live')){
+          launchStatuses[item.app_id]=item.launch_status;
+        }
+      }
+    }
+  }catch{/* No launch is inferred when release governance is unavailable. */}
+
   const count=async(status?:string):Promise<number|null>=>{
     if(ownedError)return null;
     if(!businessIds.length)return 0;
@@ -99,7 +117,7 @@ export default async function MarketingOverview(){
         caption="Planning records — not queued publishing jobs" icon="calendar"/>
     </section>
     {ownedError&&<p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-xs text-red-800">Business records could not be loaded. Campaign counts are hidden rather than guessed.</p>}
-    <MarketingAppStore proEnabled={paid}/>
+    <MarketingAppStore proEnabled={paid} launchStatuses={launchStatuses}/>
     <p className="text-[11px] leading-6 text-[#96969D]">
       App cards describe existing workspaces and planned integration capabilities. Provider authorization, real sending and publishing, AI credit usage and background scheduling require separate enablement and review. Growth Credits remain metered independently.
     </p>

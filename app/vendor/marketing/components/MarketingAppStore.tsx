@@ -5,7 +5,7 @@ import Link from 'next/link';
 import IconsaxIcon from '@/app/vendor/components/IconsaxIcon';
 import {
   MARKETING_STUDIO_APPS,MARKETING_STUDIO_CATEGORIES,filterMarketingStudioApps,
-  type MarketingStudioApp,type StudioFilter,type StudioTone,
+  type MarketingStudioApp,type StudioFilter,type StudioTone,type MarketingStudioLaunchStatuses,type MarketingAppLaunchStatus,
 } from '@/lib/marketing/studio-apps';
 
 const tones:Record<StudioTone,{background:string;ink:string;outline:string;glow:string}>={
@@ -16,15 +16,15 @@ const tones:Record<StudioTone,{background:string;ink:string;outline:string;glow:
   rose:{background:'bg-[#FFF0F3]',ink:'text-[#B75779]',outline:'border-[#F4D7E1]',glow:'from-[#FFE3EB] to-[#FFFAFB]'},
   amber:{background:'bg-[#FFF4DD]',ink:'text-[#A6711E]',outline:'border-[#F3DDB4]',glow:'from-[#FFE9BC] to-[#FFFCF5]'},
 };
-const statusText={working:'Available workspace',foundation:'Foundation / preview',planned:'Integration planned'} as const;
 
-const AppTile=memo(function AppTile({app,proEnabled}:{app:MarketingStudioApp;proEnabled:boolean}){
+const AppTile=memo(function AppTile({app,proEnabled,launchStatus}:{
+  app:MarketingStudioApp;proEnabled:boolean;launchStatus:MarketingAppLaunchStatus;
+}){
   const style=tones[app.tone];
-  return <Link
-    href={app.href}
-    prefetch={false} // Do not eagerly fetch twelve separate Pro routes and entitlements.
+  const launched=launchStatus==='live';
+  return <article
     id={'marketing-app-'+app.id}
-    aria-label={app.title+(app.pro?' — Pro app':' — included app')}
+    aria-label={app.title+(launched?' — available app':' — coming soon')}
     className="group relative flex min-h-[273px] min-w-0 flex-col overflow-hidden rounded-[18px] border border-[#E9E8EA] bg-white p-5 shadow-[0_5px_18px_rgba(30,30,35,.035)] outline-none transition duration-200 hover:-translate-y-1 hover:border-[#F0BC8D] hover:shadow-[0_18px_32px_rgba(31,31,38,.10)] focus-visible:ring-2 focus-visible:ring-[#FF7900] motion-reduce:transform-none motion-reduce:transition-none"
   >
     <span className={'pointer-events-none absolute -right-10 -top-14 h-36 w-36 rounded-full bg-gradient-to-br opacity-65 blur-xl '+style.glow} aria-hidden="true"/>
@@ -45,18 +45,28 @@ const AppTile=memo(function AppTile({app,proEnabled}:{app:MarketingStudioApp;pro
     </div>
     <div className="relative mt-auto flex items-end justify-between gap-2 pt-5">
       <div className="space-y-1">
-        <p className="text-[10px] font-semibold text-[#8D8D95]">{statusText[app.availability]}</p>
-        <p className="text-[10px] text-[#95959C]">{app.note}</p>
+        <p className="text-[10px] font-extrabold uppercase tracking-[.08em] text-[#B75F19]">
+          {launched?'Available now':'Coming soon'}
+        </p>
+        <p className="text-[10px] text-[#95959C]">{launched?app.note:'Release pending verification'}</p>
       </div>
-      <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#E8E7E9] bg-[#FAFAFB] text-[#B9601B] transition group-hover:border-[#FF7900] group-hover:bg-[#FF7900] group-hover:text-white">
-        <IconsaxIcon name="arrow-right-2" size={16}/>
-      </span>
+      {launched
+        ?<Link href={app.href} prefetch={false}
+          aria-label={'Open '+app.title}
+          className="inline-flex h-9 items-center gap-1 rounded-lg bg-[#242326] px-3 text-[11px] font-bold text-white hover:bg-[#FF7900]">
+          Open <IconsaxIcon name="arrow-right-2" size={13} color="white"/>
+        </Link>
+        :<span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#E8E7E9] bg-[#FAFAFB] text-[#A18B80]">
+          <IconsaxIcon name="clock" size={16}/>
+        </span>}
     </div>
-    {app.pro&&!proEnabled&&<span className="sr-only">Requires a verified Professional or Enterprise subscription. Select to review upgrade options.</span>}
-  </Link>;
+    {app.pro&&!proEnabled&&<span className="sr-only">Will require verified Professional or Enterprise access when launched.</span>}
+  </article>;
 });
 
-export default function MarketingAppStore({proEnabled}:{proEnabled:boolean}){
+export default function MarketingAppStore({proEnabled,launchStatuses}:{
+  proEnabled:boolean;launchStatuses:MarketingStudioLaunchStatuses;
+}){
   const [category,setCategory]=useState<StudioFilter>('All apps');
   const [search,setSearch]=useState('');
   const deferredSearch=useDeferredValue(search);
@@ -66,9 +76,9 @@ export default function MarketingAppStore({proEnabled}:{proEnabled:boolean}){
       <div>
         <p className="text-[10px] font-extrabold uppercase tracking-[.16em] text-[#BA631C]">DISCOVER YOUR APPS</p>
         <h2 className="mt-1 text-[24px] font-extrabold tracking-[-.04em] text-[#242428] sm:text-[27px]">Explore the marketing collection</h2>
-        <p className="mt-1 text-[12px] leading-6 text-[#82818A]">Every app opens its own workspace. Pro features require a verified subscription, and provider connections need separate approval.</p>
+        <p className="mt-1 text-[12px] leading-6 text-[#82818A]">Our 12 marketing apps are rolling out progressively. Each app stays Coming Soon until its production release is verified.</p>
       </div>
-      <span className="rounded-full border border-[#E8E6E7] bg-[#FAFAFB] px-3 py-1.5 text-[11px] font-bold text-[#77767B]">{MARKETING_STUDIO_APPS.length} first-party apps</span>
+      <span className="rounded-full border border-[#E8E6E7] bg-[#FAFAFB] px-3 py-1.5 text-[11px] font-bold text-[#77767B]">{MARKETING_STUDIO_APPS.length} apps · rolling launch</span>
     </div>
     <div className="flex flex-col gap-3 rounded-[17px] border border-[#EAE9EB] bg-[#FCFCFD] p-3 sm:p-4">
       <label htmlFor="marketing-app-search" className="sr-only">Search marketing apps</label>
@@ -96,7 +106,8 @@ export default function MarketingAppStore({proEnabled}:{proEnabled:boolean}){
       <p className="hidden text-[11px] text-[#939098] sm:block">Official integrations · Human-controlled actions · No automatic publishing</p>
     </div>
     {filtered.length?<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-      {filtered.map(app=><AppTile key={app.id} app={app} proEnabled={proEnabled}/>)}
+      {filtered.map(app=><AppTile key={app.id} app={app} proEnabled={proEnabled}
+        launchStatus={launchStatuses[app.id]??'coming_soon'}/>)}
     </div>:<div className="rounded-[18px] border border-dashed border-[#E6E1E4] bg-[#FAFAFB] px-5 py-14 text-center">
       <IconsaxIcon name="search-normal" size={30} color="#A19AA0"/>
       <h3 className="mt-3 text-[16px] font-bold text-[#2D2B31]">No apps match your search</h3>
@@ -106,8 +117,8 @@ export default function MarketingAppStore({proEnabled}:{proEnabled:boolean}){
     </div>}
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#F0E1D5] bg-[#FFF9F3] p-4 sm:px-6">
       <div>
-        <p className="text-[12px] font-bold text-[#544030]">{proEnabled?'Your verified Pro tools are accessible.':'Want the full Marketing Studio experience?'}</p>
-        <p className="mt-1 text-[11px] leading-5 text-[#8E7A6D]">Apps display actual current capabilities. Email sending, provider account OAuth and automatic posts stay off until separate setup and consent.</p>
+        <p className="text-[12px] font-bold text-[#544030]">{proEnabled?'Verified Pro plan · app releases coming soon.':'Marketing Studio global launch is preparing.'}</p>
+        <p className="mt-1 text-[11px] leading-5 text-[#8E7A6D]">All 12 app cards start as Coming Soon. Existing manual Campaign Planner and Leads CRM remain accessible in their original vendor pages. Google OAuth, email sends and automatic posts are OFF.</p>
       </div>
       {!proEnabled&&<Link href="/vendor/billing"
         className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#252225] px-4 text-[11px] font-bold text-white transition hover:bg-[#43372F]">

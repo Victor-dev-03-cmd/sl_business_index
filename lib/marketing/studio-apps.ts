@@ -7,6 +7,8 @@
 export type StudioCategory='Content'|'Channels'|'AI & automation'|'Plugins'|'Customers';
 export type StudioFilter='All apps'|StudioCategory;
 export type StudioAvailability='working'|'foundation'|'planned';
+export type MarketingAppLaunchStatus='coming_soon'|'preview'|'live';
+export type MarketingStudioLaunchStatuses=Record<string,MarketingAppLaunchStatus>;
 export type StudioTone='orange'|'blue'|'purple'|'teal'|'rose'|'amber';
 export type MarketingStudioApp={
   id:string;title:string;subtitle:string;description:string;

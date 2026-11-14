@@ -49,6 +49,11 @@ test('Only Marketing Studio appears in top navigation and legacy engine hubs red
   assert.match(ui,/aria-pressed=\{category===option\}/);
   assert.match(ui,/role="status" aria-live="polite"/);
   assert.match(ui,/href=\{app\.href\}/);
+  assert.match(ui,/launchStatus===\x27live\x27/);
+  assert.match(ui,/Coming soon/);
+  assert.match(ui,/return <article/);
+  assert.match(studio,/marketing_studio_app_rollouts/);
+  assert.match(studio,/launchStatuses=\{launchStatuses\}/);
   assert.match(ui,/MARKETING_STUDIO_APPS\.map|filtered\.map/);
   assert.doesNotMatch(ui,/installPlugin|connected:true|autoPublish|sendEmail\(/);
 });
