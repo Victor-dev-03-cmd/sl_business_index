@@ -113,6 +113,27 @@ const languageNames:Record<PosterLanguage,string>={
   en:'English',ta:'Sri Lankan Tamil',si:'Sri Lankan Sinhala',
 };
 const limit=(s:string,max=300)=>s.trim().slice(0,max);
+const commercialContext=(category:string)=>{
+  const c=category.toLocaleLowerCase('en');
+  if(/food|dining|restaurant|cafe|coffee|bakery|catering|hotel/.test(c))
+    return 'Food direction: credible appetizing texture, freshly prepared ingredients, natural portions, purposeful steam only when appropriate, true-to-life food colors, immaculate plating and warm genuine hospitality; avoid plastic-looking food.';
+  if(/health|clinic|medical|pharmacy|dental|wellness/.test(c))
+    return 'Healthcare direction: clean trusted environment, calm approachable visual tone, immaculate surfaces and authentic staff context where explicitly described; NO invented medical claims, professional certifications, patient outcomes or before/after transformations.';
+  if(/salon|spa|beauty|cosmetic|grooming/.test(c))
+    return 'Beauty direction: luxurious authentic textures, flattering but believable skin/hair detail, refined professional lighting and genuine human variety; no exaggerated transformation or unrealistic skin retouching.';
+  if(/fashion|clothing|boutique|apparel|jewelry|jewellery/.test(c))
+    return 'Fashion direction: realistic fabric weave, accurate drape, tactile materials, contemporary editorial posing, tasteful styling; avoid fictitious designer labels and counterfeit brand elements.';
+  if(/electronics|mobile|technology|computer|software/.test(c))
+    return 'Technology direction: crisp believable product materials, controlled highlight edges, clean industrial details and subtle motion cues; do not invent interfaces, brand marks or impossible hardware specifications.';
+  if(/property|real estate|construction|interior|architecture/.test(c))
+    return 'Architecture direction: believable structural geometry, straight verticals, coherent natural light and original architectural details; never imply a generated building is a photograph of a real listed property.';
+  if(/education|school|tuition|training|academy/.test(c))
+    return 'Education direction: optimistic, credible learning atmosphere, diverse real-world tools and authentic study interactions; no fabricated certificates, school crests, rank claims or exam scores.';
+  if(/travel|tour|hospitality|destination/.test(c))
+    return 'Travel direction: geographically respectful South Asian landscape imagery where relevant, believable weather and environments; never misrepresent a generated place as an exact real destination photo.';
+  return 'Commercial direction: believable real-world scale, clear product/service benefit, authentic locally relevant context and fine materials; never create unverifiable evidence of an existing business asset.';
+};
+
 export function buildPosterCreativePrompt(input:PosterCreativeInput,ctx:PosterCreativeContext){
   const style=POSTER_STYLES[input.style];
   const colors=[ctx.primaryColor,ctx.accentColor].filter(x=>HEX.test(x)).slice(0,2);
@@ -131,6 +152,7 @@ export function buildPosterCreativePrompt(input:PosterCreativeInput,ctx:PosterCr
     'Create ONE visually striking, entirely ORIGINAL commercial background for a small Sri Lankan business.',
     'Visual priority: instantly legible hero subject on a mobile screen; elegant visual hierarchy; premium advertising execution, not a generic stock banner.',
     'Art direction: '+style.art,
+    commercialContext(ctx.category),
     'Emotional tone: '+input.mood+'. Campaign objective: '+input.objective+'.',
     'Output composition: '+formatInfo[input.format]+'. '+copyZones[input.layout],
     'Brand guidance: '+(colors.length?'use restrained accents inspired by '+colors.join(' and '):'use category-appropriate restrained complementary colors')+'. Avoid a flat single-color block; preserve natural skin/product colors where applicable.',
