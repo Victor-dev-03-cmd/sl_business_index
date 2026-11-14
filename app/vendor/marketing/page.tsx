@@ -33,10 +33,12 @@ export default async function MarketingOverview(){
     </main>;
   }
 
-  const {data:owned,error:ownedError}=await client.from('businesses')
-    .select('id').eq('owner_id',user.id).limit(1000);
+  // Independent, authenticated RLS reads run concurrently.
+  const [{data:owned,error:ownedError},access]=await Promise.all([
+    client.from('businesses').select('id').eq('owner_id',user.id).limit(1000),
+    getMarketingAccessForUser(user.id,client),
+  ]);
   const businessIds=(owned||[]).map(b=>b.id);
-  const access=await getMarketingAccessForUser(user.id,client);
   const count=async(status?:string):Promise<number|null>=>{
     if(ownedError)return null;
     if(!businessIds.length)return 0;
