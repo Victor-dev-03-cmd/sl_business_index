@@ -8,6 +8,7 @@ import NotificationBell from '@/app/components/NotificationBell';
 import VerifiedBadge from '@/app/components/VerifiedBadge';
 import { useUser } from '@/lib/hooks/useUser';
 import IconsaxIcon from './components/IconsaxIcon';
+import VendorBootSkeleton from './components/VendorBootSkeleton';
 import dynamic from 'next/dynamic';
 import { Toaster } from 'sonner';
 import { CircleCheck, CircleAlert, Info } from 'lucide-react';
@@ -88,11 +89,7 @@ export default function VendorLayout({children}:{children:React.ReactNode}){
   // A route transition closes an already-open palette; opening it must never close it.
   useEffect(()=>{setOpenMenu(null);setQuickOpen(false);},[pathname]);
 
-  if(isLoading)return <div className="flex min-h-screen items-center justify-center bg-[#F7F7F8]">
-    <div role="status" className="flex items-center gap-3 rounded-lg border border-[#E7E7E9] bg-white px-5 py-4 text-sm font-semibold text-[#242529]">
-      <span className="h-5 w-5 animate-spin rounded-full border-2 border-[#F5D7BB] border-t-[#FF7900]"/>Preparing your workspace
-    </div>
-  </div>;
+  if(isLoading)return <VendorBootSkeleton/>;
 
   return <div className="vendor-workspace vendor-workspace-v6 flex h-[100dvh] min-w-0 flex-col overflow-hidden bg-white text-[#202024]">
     <header className="vendor-topbar relative z-50 shrink-0 border-b border-[#efeff2] bg-white shadow-[0_3px_13px_rgba(28,28,34,0.055)]">

@@ -2,6 +2,13 @@ import Link from 'next/link';
 import IconsaxIcon from '@/app/vendor/components/IconsaxIcon';
 import MarketingModuleFrame from '@/app/vendor/marketing/engine/components/MarketingModuleFrame';
 import {MARKETING_CONNECTORS} from '@/lib/marketing/engine-registry';
+import {createClient} from '@/lib/supabase/server';
+import {getGooglePreviewConfig} from '@/lib/marketing/oauth-runtime';
+import GoogleMailPreviewConnect,{
+  type GoogleMailOwnedBusiness,type GoogleMailConnectionSummary,
+} from '@/app/vendor/marketing/engine/components/GoogleMailPreviewConnect';
+
+export const dynamic='force-dynamic';
 
 const groups=[
  {id:'social',name:'Social Publishing',desc:'Managed pages and approved creator accounts.',icon:'flash'},
@@ -9,9 +16,46 @@ const groups=[
  {id:'email',name:'Email & Mailboxes',desc:'Consented Google/Microsoft mail and verified-domain delivery.',icon:'sms'},
  {id:'voice',name:'Business Voice',desc:'Real phone-line and telephony authorization.',icon:'call'},
 ] as const;
-export default function MarketingConnections(){
+export default async function MarketingConnections(){
+  // Expensive owner/table checks run ONLY on explicitly configured Preview.
+  // Production never reads OAuth tables or queries a provider from this page.
+  const previewConfig=getGooglePreviewConfig();
+  let googleReady=false;
+  let owned:GoogleMailOwnedBusiness[]=[];
+  let connectionSummaries:GoogleMailConnectionSummary[]=[];
+  if(previewConfig&&process.env.SUPABASE_SERVICE_ROLE_KEY){
+    try{
+      const client=await createClient();
+      const {data:{user},error:authError}=await client.auth.getUser();
+      if(user&&!authError){
+        const [businesses,connections]=await Promise.all([
+          client.from('businesses').select('id,name')
+            .eq('owner_id',user.id).order('name').limit(50),
+          client.from('marketing_connections')
+            .select('business_id,account_display_name,status,connected_at')
+            .eq('user_id',user.id).eq('provider','google_mail').limit(25),
+        ]);
+        if(!businesses.error&&!connections.error){
+          owned=(businesses.data||[]).map(b=>({id:b.id,name:b.name}));
+          const ownedIds=new Set(owned.map(b=>b.id));
+          connectionSummaries=(connections.data||[])
+            .filter(c=>ownedIds.has(c.business_id))
+            .map(c=>({
+              business_id:c.business_id,
+              account_display_name:c.account_display_name,
+              status:c.status,connected_at:c.connected_at,
+            }));
+          googleReady=owned.length>0;
+        }
+      }
+    }catch{
+      // Fail closed: missing table/RLS/config is not proof of a connection.
+    }
+  }
+  const googleConnected=googleReady&&
+    connectionSummaries.some(c=>c.status==='connected');
   return <MarketingModuleFrame module="connections"
-    description="SLBI's own plugin catalogue. Each provider adapter is a first-party integration that will request official authorization from the provider. OAuth account connection is not enabled in this Preview.">
+    description="First-party plugin catalogue for official business account permissions. Google Mail consent can be tested only on an explicitly configured Preview. No production sending or third-party publishing is enabled.">
     <section className="rounded-xl border border-[#E9E9EC] bg-[#202024] p-5 text-white sm:p-7">
       <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-center">
         <div><p className="text-[10px] font-extrabold uppercase tracking-[.11em] text-[#FFAF6F]">Plug & play architecture</p>
@@ -20,7 +64,7 @@ export default function MarketingConnections(){
         <div className="rounded-xl border border-white/15 bg-white/10 px-5 py-4">
           <p className="text-[10px] uppercase text-white/50">Connector catalogue</p>
           <p className="mt-1 text-3xl font-extrabold">{MARKETING_CONNECTORS.length}</p>
-          <p className="text-[10px] text-white/60">Candidates · None authorized</p>
+          <p className="text-[10px] text-white/60">Candidates · Production integrations disabled</p>
         </div>
       </div>
     </section>
@@ -39,17 +83,21 @@ export default function MarketingConnections(){
             <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#FFF2E8] text-[#B75E18]">
               <IconsaxIcon name={provider.icon} size={19}/>
             </span>
-            <span className="rounded-full border border-[#E8E8EB] bg-[#FAFAFB] px-2.5 py-1 text-[10px] font-bold text-[#85858D]">{provider.status==='research'?'Provider research':'Not connected'}</span>
+            <span className="rounded-full border border-[#E8E8EB] bg-[#FAFAFB] px-2.5 py-1 text-[10px] font-bold text-[#85858D]">{provider.id==='gmail'&&googleConnected?'Preview connected':provider.status==='research'?'Provider research':'Not connected'}</span>
           </div>
           <h3 className="mt-3 text-[13px] font-extrabold">{provider.name}</h3>
           <p className="mt-1 text-[10px] font-semibold text-[#B06328]">{provider.api}</p>
           <p className="mt-2 text-[11px] leading-5 text-[#81818A]">{provider.requirements}</p>
-          <div className="mt-auto pt-4">
-            <button type="button" disabled aria-disabled="true" title="OAuth provider authorization not implemented"
-              className="w-full cursor-not-allowed rounded-lg border border-[#E5E5E8] bg-[#F5F5F6] px-4 py-2.5 text-[11px] font-bold text-[#96969D]">
-              Connect · not available yet
-            </button>
-          </div>
+          {provider.id==='gmail'
+            ?<GoogleMailPreviewConnect ready={googleReady} businesses={owned}
+                connections={connectionSummaries}/>
+            :<div className="mt-auto pt-4">
+              <button type="button" disabled aria-disabled="true"
+                title="Official provider registration and authorization are not enabled"
+                className="w-full cursor-not-allowed rounded-lg border border-[#E5E5E8] bg-[#F5F5F6] px-4 py-2.5 text-[11px] font-bold text-[#96969D]">
+                Connect · not available yet
+              </button>
+            </div>}
         </article>)}
       </div>
     </section>)}

@@ -1,6 +1,6 @@
 'use client';
 
-import {useMemo,useState} from 'react';
+import {memo,useDeferredValue,useMemo,useState} from 'react';
 import Link from 'next/link';
 import IconsaxIcon from '@/app/vendor/components/IconsaxIcon';
 import {
@@ -18,10 +18,11 @@ const tones:Record<StudioTone,{background:string;ink:string;outline:string;glow:
 };
 const statusText={working:'Available workspace',foundation:'Foundation / preview',planned:'Integration planned'} as const;
 
-function AppTile({app,proEnabled}:{app:MarketingStudioApp;proEnabled:boolean}){
+const AppTile=memo(function AppTile({app,proEnabled}:{app:MarketingStudioApp;proEnabled:boolean}){
   const style=tones[app.tone];
   return <Link
     href={app.href}
+    prefetch={false} // Do not eagerly fetch twelve separate Pro routes and entitlements.
     id={'marketing-app-'+app.id}
     aria-label={app.title+(app.pro?' — Pro app':' — included app')}
     className="group relative flex min-h-[273px] min-w-0 flex-col overflow-hidden rounded-[18px] border border-[#E9E8EA] bg-white p-5 shadow-[0_5px_18px_rgba(30,30,35,.035)] outline-none transition duration-200 hover:-translate-y-1 hover:border-[#F0BC8D] hover:shadow-[0_18px_32px_rgba(31,31,38,.10)] focus-visible:ring-2 focus-visible:ring-[#FF7900] motion-reduce:transform-none motion-reduce:transition-none"
@@ -53,12 +54,13 @@ function AppTile({app,proEnabled}:{app:MarketingStudioApp;proEnabled:boolean}){
     </div>
     {app.pro&&!proEnabled&&<span className="sr-only">Requires a verified Professional or Enterprise subscription. Select to review upgrade options.</span>}
   </Link>;
-}
+});
 
 export default function MarketingAppStore({proEnabled}:{proEnabled:boolean}){
   const [category,setCategory]=useState<StudioFilter>('All apps');
   const [search,setSearch]=useState('');
-  const filtered=useMemo(()=>filterMarketingStudioApps(MARKETING_STUDIO_APPS,search,category),[category,search]);
+  const deferredSearch=useDeferredValue(search);
+  const filtered=useMemo(()=>filterMarketingStudioApps(MARKETING_STUDIO_APPS,deferredSearch,category),[category,deferredSearch]);
   return <section id="marketing-app-store" aria-label="Marketing Studio app store" className="space-y-5">
     <div className="flex flex-wrap items-end justify-between gap-4">
       <div>
