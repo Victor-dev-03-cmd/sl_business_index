@@ -44,3 +44,7 @@
 12. Leads CRM
 
 Order remains Marketing → Growth → SEO. Do not reimplement Discovery.
+
+## 2026-11-14 owner priority: App #10
+
+Content Calendar staged implementation (SSR real owned records, Colombo month grid and filters) is **NOT a public launch**. Read `P2_06_CONTENT_CALENDAR_STAGE_20261114.md` and [living handoff issue #74](https://github.com/Victor-dev-03-cmd/sl_business_index/issues/74). Keep `content-calendar='coming_soon'` in production until exact-SHA CI, secure P2-05 policy, verified Pro billing and authenticated browser acceptance. No provider auto-post or paid jobs. Minimize repeated Vercel previews.

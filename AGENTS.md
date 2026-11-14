@@ -1,5 +1,8 @@
 # SLBusinessIndex — repository handoff for coding agents
 
+> **ACTIVE NEXT-CHAT HANDOFF — 2026-11-14:** [GitHub Issue #74](https://github.com/Victor-dev-03-cmd/sl_business_index/issues/74) tracks BOC Merchant LankaQR + Payments.lk and Marketing Studio **App #10 Content Calendar** implementation. New app code currently a release candidate, **not** live; avoid repeated Vercel previews. Future chats must inspect #74 and the latest main SHA first. See [P2-06 calendar implementation](docs/growth/p2/P2_06_CONTENT_CALENDAR_STAGE_20261114.md).
+
+
 ## First read (required before any implementation)
 
 1. **Canonical living handoff:** [docs/growth/SLBI_MASTER_IMPLEMENTATION_HANDOFF.md](docs/growth/SLBI_MASTER_IMPLEMENTATION_HANDOFF.md).
