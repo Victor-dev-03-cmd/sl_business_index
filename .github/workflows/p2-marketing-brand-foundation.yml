@@ -12,6 +12,8 @@ on:
       - 'tests/p2PosterDesign.test.mjs'
       - 'tests/p2AiCaption.test.mjs'
       - 'tests/p2MarketingEngineShell.test.mjs'
+      - 'tests/marketingStudioAppStore.test.mjs'
+      - 'tests/vendorNeutralUi.test.mjs'
       - 'tests/p2OAuthConnectors.test.mjs'
       - 'tests/p2OAuthFlow.test.mjs'
       - 'tests/p2-oauth/**'
@@ -35,6 +37,8 @@ on:
       - 'tests/p2PosterDesign.test.mjs'
       - 'tests/p2AiCaption.test.mjs'
       - 'tests/p2MarketingEngineShell.test.mjs'
+      - 'tests/marketingStudioAppStore.test.mjs'
+      - 'tests/vendorNeutralUi.test.mjs'
       - 'tests/p2OAuthConnectors.test.mjs'
       - 'tests/p2OAuthFlow.test.mjs'
       - 'tests/p2-oauth/**'
@@ -57,7 +61,7 @@ jobs:
           node-version: '24'
       - name: Brand validation, page/API contract and existing Marketing Studio tests
         run: |
-          node --test tests/p2BrandProfile.test.mjs tests/p2AiCaption.test.mjs tests/p2PosterDesign.test.mjs tests/p2MarketingEngineShell.test.mjs tests/p2OAuthConnectors.test.mjs tests/p2OAuthFlow.test.mjs
+          node --test tests/p2BrandProfile.test.mjs tests/p2AiCaption.test.mjs tests/p2PosterDesign.test.mjs tests/p2MarketingEngineShell.test.mjs tests/marketingStudioAppStore.test.mjs tests/p2OAuthConnectors.test.mjs tests/p2OAuthFlow.test.mjs tests/vendorNeutralUi.test.mjs
           node --test tests/vendorSettingsQrMarketing2026.test.mjs tests/vendorPortalRelease.test.mjs
 
   docker-tenant-rls:

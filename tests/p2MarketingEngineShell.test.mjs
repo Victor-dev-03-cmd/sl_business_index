@@ -32,8 +32,8 @@ test('Marketing Studio is overview-only, separate Campaign Workspace preserves f
   const campaigns=read('app/vendor/marketing/campaigns/page.tsx');
   assert.match(overview,/Marketing Studio/);
   assert.match(overview,/select\('id',\{count:'exact',head:true\}\)/);
-  assert.match(overview,/href="\/vendor\/marketing-engine"/);
-  assert.match(overview,/href:'\/vendor\/marketing\/campaigns'/);
+  assert.match(overview,/MarketingAppStore/);
+  assert.match(read('lib/marketing/studio-apps.ts'),/href:'\/vendor\/marketing\/campaigns'/);
   assert.match(overview,/Planning records — not queued publishing jobs/);
   assert.doesNotMatch(overview,/section==='social'|const exportBrandedCreative|canvas\.toDataURL|save=async\(schedule/);
   assert.match(campaigns,/const exportBrandedCreative=/);
@@ -43,10 +43,10 @@ test('Marketing Studio is overview-only, separate Campaign Workspace preserves f
 test('Marketing Engine is its own page with all requested Pro modules and truthful provider catalogue',()=>{
   const landing=read('app/vendor/marketing/engine/page.tsx');
   const standalone=read('app/vendor/marketing-engine/page.tsx');
-  assert.match(standalone,/MarketingEngineHome/);
-  assert.match(landing,/Marketing Engine/);
-  assert.match(landing,/ENGINE_MODULES\.map/);
-  assert.match(landing,/getMarketingAccess\(\)/);
+  assert.match(standalone,/redirect\('\/vendor\/marketing'\)/);
+  assert.match(landing,/redirect\('\/vendor\/marketing'\)/);
+  assert.match(read('app/vendor/marketing/page.tsx'),/MarketingAppStore/);
+  assert.match(read('lib/marketing/studio-apps.ts'),/Marketing Studio/);
   assert.equal(ENGINE_MODULES.length,5);
   for(const module of ['social','email','agent','connections','automation']){
     assert.ok(ENGINE_MODULES.some(x=>x.slug===module));
@@ -114,9 +114,9 @@ test('Trilingual deterministic enquiry routing escalates pricing, refunds and un
   assert.match(read('app/vendor/marketing/engine/(pro)/agent/page.tsx'),/No direct inbound call number/);
   assert.match(read('app/vendor/marketing/engine/(pro)/agent/page.tsx'),/Automatic replies disabled/);
 });
-test('Vendor top navigation contains two distinct Marketing links without false active parent',()=>{
+test('Vendor top navigation contains only Marketing Studio and keeps premium apps accessible',()=>{
   const s=read('app/vendor/layout.tsx');
   assert.match(s,/name:'Marketing Studio',href:'\/vendor\/marketing'/);
-  assert.match(s,/name:'Marketing Engine',href:'\/vendor\/marketing-engine'/);
-  assert.match(s,/href==='\/vendor\/marketing'\?pathname===href/);
+  assert.doesNotMatch(s,/name:'Marketing Engine',href:'\/vendor\/marketing-engine'/);
+  assert.match(s,/pathname\.startsWith\('\/vendor\/marketing-engine\/'\)/);
 });

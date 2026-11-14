@@ -12,8 +12,8 @@ export default function MarketingModuleFrame({module,description,children}:{
   const info=ENGINE_MODULES.find(m=>m.slug===module)!;
   return <main className="mx-auto w-full max-w-[1480px] space-y-5 pb-12 text-[#232327]">
     <header className={panel+' p-5 sm:p-8'}>
-      <Link href="/vendor/marketing-engine" className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#AA5A1A] hover:underline">
-        <IconsaxIcon name="arrow-left-2" size={14}/> Marketing Engine
+      <Link href="/vendor/marketing" className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#AA5A1A] hover:underline">
+        <IconsaxIcon name="arrow-left-2" size={14}/> Marketing Studio apps
       </Link>
       <div className="mt-4 flex flex-wrap items-start justify-between gap-5">
         <div>

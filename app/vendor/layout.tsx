@@ -34,7 +34,6 @@ const primaryNav:NavItem[]=[
 const growthNav:NavItem[]=[
   {name:'Growth OS',href:'/vendor/growth',icon:'chart'},
   {name:'Marketing Studio',href:'/vendor/marketing',icon:'flash'},
-  {name:'Marketing Engine',href:'/vendor/marketing-engine',icon:'global'},
   {name:'QR Studio',href:'/vendor/qr-code',icon:'scan-barcode'},
 ];
 const accountNav:NavItem[]=[
@@ -51,7 +50,9 @@ export default function VendorLayout({children}:{children:React.ReactNode}){
   const dropdownsRef=useRef<HTMLDivElement>(null);
   const toolsButtonRef=useRef<HTMLButtonElement>(null);
   const accountButtonRef=useRef<HTMLButtonElement>(null);
-  const active=(href:string)=>href==='/vendor/marketing'?pathname===href:pathname===href||pathname.startsWith(href+'/');
+  const active=(href:string)=>href==='/vendor/marketing'
+    ?pathname===href||pathname.startsWith('/vendor/marketing/')||pathname.startsWith('/vendor/marketing-engine/')
+    :pathname===href||pathname.startsWith(href+'/');
   const currentPage=allItems.find(item=>pathname===item.href)?.name
     ||[...allItems].sort((a,b)=>b.href.length-a.href.length).find(item=>pathname.startsWith(item.href+'/'))?.name
     ||'Business Workspace';

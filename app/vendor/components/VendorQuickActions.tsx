@@ -12,7 +12,7 @@ export const VENDOR_QUICK_ACTIONS = [
   { title:'Review & reply', description:'Review feedback and manage your reputation', href:'/vendor/reviews', icon:'star', group:'Customers', keywords:'ratings reputation replies' },
   { title:'Growth insights', description:'Views, clicks, enquiries and source attribution', href:'/vendor/insights', icon:'status-up', group:'Growth', keywords:'analytics statistics views' },
   { title:'Growth tools', description:'Credits, eligibility and upcoming growth services', href:'/vendor/growth', icon:'chart', group:'Growth', keywords:'credits allowance tools' },
-  { title:'Marketing studio', description:'Build promotions and manage campaign history', href:'/vendor/marketing', icon:'flash', group:'Growth', keywords:'campaign promotion editor' },
+  { title:'Marketing studio', description:'Open your marketing app collection, campaign planner and plugins', href:'/vendor/marketing', icon:'flash', group:'Growth', keywords:'campaign promotion editor' },
   { title:'Business QR codes', description:'Print or download a code linked to your profile', href:'/vendor/qr-code', icon:'scan-barcode', group:'Tools', keywords:'qr print download scan' },
   { title:'Billing & plans', description:'Review your subscription and invoices', href:'/vendor/billing', icon:'card', group:'Account', keywords:'payment invoice subscription' },
   { title:'Account & verification', description:'Profile, business verification and local SEO', href:'/vendor/settings', icon:'setting-2', group:'Account', keywords:'settings notification profile secure' },
