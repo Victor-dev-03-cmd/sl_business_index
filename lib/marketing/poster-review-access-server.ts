@@ -1,5 +1,6 @@
 import 'server-only';
 import {createClient} from '@/lib/supabase/server';
+import {evaluateMarketingEntitlement} from '@/lib/marketing/engine-registry';
 
 /**
  * Time-boxed, staff-only evaluation of the Poster Design Studio UI.
@@ -21,5 +22,27 @@ export async function isPosterReviewAccount(userId:string,client:Client):Promise
     const {data:owned,error:businessError}=await client.from('businesses')
       .select('id').eq('owner_id',userId).limit(1);
     return !businessError&&Boolean(owned?.length);
+  }catch{return false;}
+}
+
+
+/**
+ * Exact, trusted source-marker for owner-approved, no-payment Pro QA entitlements.
+ * The row is already owned by an Auth UUID and cannot be created/edited by clients.
+ * This lets the specific QA vendor open the Poster tile while marketplace rollout
+ * stays coming_soon for every other Basic/Pro account.
+ *
+ * The grant lifetime comes from the database entitlement, not the staff expiry.
+ * No user email, cookie, localStorage flag or client-provided plan is trusted.
+ */
+const OWNER_QA_GRANT='SLBI_INTERNAL_QA_NO_PAYMENT_20261114';
+export async function isPosterInternalQAAccount(userId:string,client:Client):Promise<boolean>{
+  if(!userId)return false;
+  try{
+    const {data,error}=await client.from('growth_entitlements')
+      .select('plan_name,payment_reference,verified_at,expires_at')
+      .eq('user_id',userId).maybeSingle();
+    if(error||data?.payment_reference!==OWNER_QA_GRANT)return false;
+    return evaluateMarketingEntitlement(data);
   }catch{return false;}
 }
