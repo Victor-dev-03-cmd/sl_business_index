@@ -10,7 +10,7 @@ import {
 } from '@/lib/marketing/poster-design';
 import {type CaptionLanguage,type CaptionObjective} from '@/lib/marketing/caption-contract';
 import {
-  POSTER_STYLES,POSTER_STYLE_KEYS,POSTER_MOODS,POSTER_LAYOUTS,POSTER_OBJECTIVES,
+  POSTER_STYLES,POSTER_STYLE_KEYS,POSTER_MOODS,POSTER_LAYOUTS,POSTER_OBJECTIVES,inferPosterArtStyle,
   type PosterStyle,type PosterMood,type PosterLayout,type PosterObjective,
 } from '@/lib/marketing/poster-creative-engine';
 type Business={id:string;name:string;logo_url:string|null};
@@ -157,18 +157,20 @@ export default function MarketingDesignEditor(){
   const [artCredits,setArtCredits]=useState<number|null>(null);
   const [artPrice,setArtPrice]=useState<number|null>(null);
   const [artServiceEnabled,setArtServiceEnabled]=useState(false);
+  const [checkingAi,setCheckingAi]=useState(true);
   useEffect(()=>{
-    let active=true;
-    void supabase.from('growth_credit_actions')
-      .select('credit_cost,is_enabled').eq('action_key','ai_poster_design')
-      .maybeSingle().then(({data,error})=>{
-        if(!active)return;
-        const cost=data?.credit_cost;
-        const allowed=!error&&data?.is_enabled===true&&Number.isInteger(cost)&&cost>0&&cost<=100;
-        setArtServiceEnabled(Boolean(allowed));
-        setArtPrice(allowed?cost:null);
-      });
-    return()=>{active=false};
+    let current=true;
+    void fetch('/api/marketing/poster/capabilities',{credentials:'same-origin',cache:'no-store'})
+      .then(response=>response.ok?response.json():null)
+      .then((data:{available?:boolean;creditCost?:number}|null)=>{
+        if(!current)return;
+        const allowed=data?.available===true&&Number.isInteger(data?.creditCost)
+          &&Number(data?.creditCost)>0&&Number(data?.creditCost)<=100;
+        setArtServiceEnabled(allowed);
+        setArtPrice(allowed?Number(data?.creditCost):null);
+      }).catch(()=>{if(current){setArtServiceEnabled(false);setArtPrice(null)}})
+      .finally(()=>{if(current)setCheckingAi(false)});
+    return()=>{current=false};
   },[]);
   useEffect(()=>{
     let active=true;
@@ -344,28 +346,44 @@ export default function MarketingDesignEditor(){
     });
     setImageData(dataUrl);
   };
-  const generateAiArtwork=async()=>{
-    if(artGenerating||!artPrompt||!businessId||!artServiceEnabled||artPrice===null){
-      setMessage('Paid AI images are not enabled for this Pro studio yet. Creative prompt preview remains free.');return;
+  const generateAiArtwork=async(subjectOverride?:string)=>{
+    const subject=(subjectOverride??artSubject).trim();
+    if(artGenerating||subject.length<5||!businessId||!artServiceEnabled||artPrice===null){
+      setMessage('Real AI poster generation is not available. No fake poster will be generated and no credits will be charged.');return;
     }
-    if(!window.confirm('Generate ONE premium AI image for exactly '+artPrice+' Growth Credits? This is a private draft and will NOT be posted automatically.'))return;
-    setArtGenerating(true);setMessage('');setArtCredits(null);
+    if(!window.confirm('Create ONE original AI artwork for exactly '+artPrice+' Growth Credits? This uses a real image model. Your poster remains a private draft until you approve publication.'))return;
+    setArtGenerating(true);setMessage('Creating a real AI poster image. Original commercial artwork can take a little while.');setArtCredits(null);
+    const autoStyle=subjectOverride?inferPosterArtStyle(subject):artStyle;
     try{
       const response=await fetch('/api/marketing/poster/generate',{
         method:'POST',credentials:'same-origin',cache:'no-store',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({...creativeBrief(),requestKey:crypto.randomUUID(),acceptedCredits:artPrice}),
+        body:JSON.stringify({...creativeBrief(),subject,style:autoStyle,
+          requestKey:crypto.randomUUID(),acceptedCredits:artPrice}),
       });
       const result=await response.json() as {
         jobId?:string;artworkUrl?:string;chargedCredits?:number;error?:string;
       };
       if(!response.ok)throw Error(result.error||'AI artwork generation unavailable.');
       if(!result.jobId||!result.artworkUrl)throw Error('Image generation completed without a usable asset.');
+      await loadGeneratedArtwork(result.jobId);
       setArtJobId(result.jobId);
       if(typeof result.chargedCredits==='number')setArtCredits(result.chargedCredits);
-      await loadGeneratedArtwork(result.jobId);
-      setMessage('AI artwork created and loaded privately. Review the subject, spelling, claims and usage rights before export.');
-    }catch(e){setMessage(e instanceof Error?e.message:'Unable to generate artwork.');}
+      setArtSubject(subject);setAiBrief(subject);setArtStyle(autoStyle);
+      if(!draftReady){
+        const name=businesses.find(b=>b.id===businessId)?.name||'My business';
+        setPoster(previous=>{
+          const next=newPosterBlueprint(name,previous.format);
+          return {...next,background:previous.background,accent:previous.accent,
+            foreground:previous.foreground,style:'minimal',
+            layers:next.layers.map(layer=>
+              layer.id==='headline'?{...layer,value:('Discover '+name).slice(0,100)}:
+              layer.id==='price'||layer.id==='date'?{...layer,value:''}:layer)};
+        });
+      }
+      setDraftReady(true);
+      setMessage('Genuine AI artwork is ready. Review editable text and business facts before downloading or sharing.');
+    }catch(e){setMessage(e instanceof Error?e.message:'Unable to generate real AI artwork.');}
     finally{setArtGenerating(false);}
   };
   const generateAiCopy=async()=>{
@@ -453,20 +471,18 @@ export default function MarketingDesignEditor(){
       setPoster(validated);setMessage('Editable typography project restored. Reattach any separate background image.');
     }catch{setMessage('Invalid or unsupported poster project JSON.');}
   };
-  const createSimpleDraft=()=>{
-    const brief=idea.trim();
-    if(!businessId){setMessage('First, choose a business you own.');return;}
-    if(brief.length<5){setMessage('Tell us a little about the poster you need.');return;}
-    // Keep the full request for art direction; use a short, editable excerpt on the canvas.
-    const headline=brief.length>100?brief.slice(0,100).trimEnd()+'…':brief;
+  const openManualEditor=()=>{
+    if(!businessId){setMessage('Choose your business to use the manual editor.');return;}
+    const name=businesses.find(b=>b.id===businessId)?.name||'My business';
     setPoster(previous=>{
-      const next=newPosterBlueprint(businesses.find(b=>b.id===businessId)?.name||'Business',previous.format);
+      const next=newPosterBlueprint(name,previous.format);
       return {...next,background:previous.background,accent:previous.accent,
         foreground:previous.foreground,layers:next.layers.map(l=>
-          l.id==='headline'?{...l,value:headline}:l)};
+          l.id==='headline'?{...l,value:('Discover '+name).slice(0,100)}:
+          l.id==='price'||l.id==='date'?{...l,value:''}:l)};
     });
-    setArtSubject(brief);setAiBrief(brief);setDraftReady(true);
-    void previewCreativePrompt(brief);
+    setArtJobId('');setDraftReady(true);
+    setMessage('Manual design editor opened. This is NOT AI-generated artwork; add your own photo or edit the layout.');
   };
   const startNewPoster=()=>{
     speech.current?.stop();setVoiceListening(false);setDraftReady(false);
@@ -515,7 +531,7 @@ export default function MarketingDesignEditor(){
         <label htmlFor="poster-simple-idea" className="sr-only">Describe your poster</label>
         <textarea id="poster-simple-idea" value={idea} maxLength={400}
           onChange={e=>setIdea(e.target.value)}
-          onKeyDown={e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();createSimpleDraft();}}}
+          onKeyDown={e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();void generateAiArtwork(idea.trim());}}}
           placeholder="என் கடைக்கு ஒரு அழகான தீபாவளி offer poster வேணும்…"
           className="mt-4 min-h-[142px] w-full resize-y border-0 bg-transparent px-1 py-2 text-[15px] leading-7 text-[#28262A] outline-none placeholder:text-[#A9A6AD]"/>
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#F0EDF0] pt-3">
@@ -530,9 +546,11 @@ export default function MarketingDesignEditor(){
             </label>
             <input id="simple-poster-photo" type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={onImage}/>
           </div>
-          <button type="button" onClick={createSimpleDraft} disabled={!businessId||idea.trim().length<5}
+          <button type="button" onClick={()=>void generateAiArtwork(idea.trim())}
+            disabled={!artServiceEnabled||artGenerating||!businessId||idea.trim().length<5}
             className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#1E1D21] px-5 text-xs font-extrabold text-white transition hover:bg-[#36333A] disabled:cursor-not-allowed disabled:opacity-40">
-            <IconsaxIcon name="magic-star" size={17}/> Create poster draft
+            <IconsaxIcon name="magic-star" size={17}/>
+            {artGenerating?'Generating real AI artwork…':artServiceEnabled&&artPrice!==null?'Generate AI poster · '+artPrice+' credits':'AI image service not connected'}
           </button>
         </div>
       </div>
@@ -553,15 +571,21 @@ export default function MarketingDesignEditor(){
           <button type="button" key={code} aria-pressed={artLanguage===code} onClick={()=>setArtLanguage(code)}
             className={'rounded-full px-3 py-1.5 text-xs font-bold '+(artLanguage===code?'bg-[#FFF0E3] text-[#A45012]':'text-[#89848E] hover:bg-[#F8F7F8]')}>{label}</button>)}
       </div>
-      <p className="mt-5 text-center text-[11px] leading-5 text-[#9A949E]">
-        Creates an editable local draft and a professional art-direction prompt. Paid AI images and automatic posting remain unavailable until connected and approved.
-        Browser voice typing depends on device support and may use the browser provider&apos;s speech service.
+      <div className="mx-auto mt-5 max-w-[600px] rounded-2xl border border-[#EEDFCF] bg-[#FFFAF4] p-4 text-center text-xs leading-6 text-[#7D5B3C]">
+        {checkingAi?'Checking secure AI image generation…':artServiceEnabled&&artPrice!==null
+          ?'A real neural image model will create an original visual. Confirm the '+artPrice+' credit price before each request.'
+          :'Real AI image generation is not connected or funded yet. We will not turn your words into a black text box and pretend it is AI.'}
+        <div className="mt-2"><button type="button" onClick={openManualEditor}
+          className="rounded-full border border-[#DFD4C9] bg-white px-4 py-2 text-xs font-bold text-[#80634B]">Open manual designer (not AI)</button></div>
+      </div>
+      <p className="mt-3 text-center text-[11px] leading-5 text-[#9A949E]">
+        Browser voice typing depends on device support. Automatic social publishing is not enabled.
       </p>
     </section>}
     {draftReady&&<div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-4 rounded-[22px] border border-[#EAE8EC] bg-[#FCFBFC] px-5 py-4">
-        <div><p className="text-[11px] font-bold uppercase tracking-wide text-[#A35D28]">Your editable draft</p>
-          <h1 className="mt-1 text-xl font-black tracking-tight">Here&apos;s your poster</h1>
+        <div><p className="text-[11px] font-bold uppercase tracking-wide text-[#A35D28]">{artJobId?'AI-generated artwork · editable poster':'Manual design · not AI-generated'}</p>
+          <h1 className="mt-1 text-xl font-black tracking-tight">{artJobId?'Your AI poster is ready':'Your manual poster editor'}</h1>
           <p className="mt-1 text-xs leading-5 text-[#807D86]">Tap the poster text to move it. Download or open Edit design for more control.</p>
         </div>
         <button type="button" onClick={startNewPoster}
@@ -574,11 +598,11 @@ export default function MarketingDesignEditor(){
           {value.label}
         </button>)}
       </div>
-      {artPrompt&&<div className="rounded-xl border border-[#E3E9E0] bg-[#F7FAF6] p-3 text-xs text-[#4A684F]">
-        Professional creative prompt ready. Use Edit design to review it or generate AI artwork when the paid service becomes available.
+      {artPrompt&&!artJobId&&<div className="rounded-xl border border-[#E3E9E0] bg-[#F7FAF6] p-3 text-xs text-[#4A684F]">
+        Creative direction prepared; this prompt alone is not an AI-generated image.
       </div>}
       {!artServiceEnabled&&<div className="rounded-xl border border-[#EEE7E0] bg-[#FCFAF7] p-3 text-xs leading-5 text-[#847567]">
-        AI image generation and auto-posting are not configured yet. This is an editable poster draft, not an AI-generated picture.
+        AI image generation and auto-posting are not configured yet. This is a manually editable layout, not an AI-generated picture.
       </div>}
     <div className="flex flex-col gap-5">
       <details className={panel+' order-2 space-y-4'}>
