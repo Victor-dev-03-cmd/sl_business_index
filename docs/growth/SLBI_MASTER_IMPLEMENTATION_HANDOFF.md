@@ -1,5 +1,7 @@
 # SLBusinessIndex — MASTER IMPLEMENTATION & CHAT HANDOFF
 
+**Latest 12-app per-app queue (2026-11-14):** [Marketing Studio 12-App Execution Handoff](p2/MARKETING_STUDIO_12_APP_EXECUTION_HANDOFF_20261114.md). All marketplace flags remain Coming Soon; no live paid provider. Refer to this queue on new chats.
+
 ## 2026-11-14 — LATEST OWNER HANDOFF: Billing QR + Marketing Studio App #10
 
 **Cross-chat contract:** Update GitHub AGENTS.md + master handoff + live ledger after each meaningful completed milestone. At the start of each new chat read their latest main versions. Record exact SHA, CI, production status, blockers, next actions. Do not imply background/asynchronous work beyond an active chat turn.
