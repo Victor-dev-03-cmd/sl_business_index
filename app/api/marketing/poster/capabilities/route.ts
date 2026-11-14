@@ -2,6 +2,7 @@ import 'server-only';
 import {createClient as createAdminClient} from '@supabase/supabase-js';
 import {createClient} from '@/lib/supabase/server';
 import {getMarketingAccessForUser,rejectMarketingAccess} from '@/lib/marketing/pro-access-server';
+import {getPosterImageProvider} from '@/lib/marketing/poster-image-provider';
 
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
@@ -21,7 +22,7 @@ export async function GET(){
   const denied=rejectMarketingAccess(access);
   if(denied)return denied;
   const unavailable={available:false,creditCost:null,reason:'Real AI image generation is not connected or funded yet. Your account will not be charged.'};
-  if(process.env.SLBI_POSTER_IMAGE_AI_ENABLED!=='true'||!process.env.OPENAI_API_KEY)
+  if(process.env.SLBI_POSTER_IMAGE_AI_ENABLED!=='true'||!getPosterImageProvider())
     return response(unavailable);
   const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
   const secret=process.env.SUPABASE_SERVICE_ROLE_KEY||process.env.SUPABASE_SECRET_KEY;
