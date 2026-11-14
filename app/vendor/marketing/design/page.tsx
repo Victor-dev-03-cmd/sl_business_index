@@ -9,6 +9,10 @@ import {
   type PosterBlueprint,type PosterFormat,type EditableTextLayer,
 } from '@/lib/marketing/poster-design';
 import {type CaptionLanguage,type CaptionObjective} from '@/lib/marketing/caption-contract';
+import {
+  POSTER_STYLES,POSTER_STYLE_KEYS,POSTER_MOODS,POSTER_LAYOUTS,POSTER_OBJECTIVES,
+  type PosterStyle,type PosterMood,type PosterLayout,type PosterObjective,
+} from '@/lib/marketing/poster-creative-engine';
 type Business={id:string;name:string;logo_url:string|null};
 const panel='rounded-[20px] border border-[#E7E7EC] bg-white p-5 shadow-[0_6px_24px_rgba(23,23,30,.045)] sm:p-6';
 const input='mt-1.5 w-full rounded-lg border border-[#E4E4E8] bg-white px-3.5 py-2.5 text-xs text-[#27272C] outline-none focus:border-[#FF7900]';
@@ -126,6 +130,18 @@ export default function MarketingDesignEditor(){
   const [aiCta,setAiCta]=useState('');
   const [aiDraft,setAiDraft]=useState('');
   const [aiBusy,setAiBusy]=useState(false);
+  const [artStyle,setArtStyle]=useState<PosterStyle>('cinematic-product');
+  const [artMood,setArtMood]=useState<PosterMood>('premium');
+  const [artLayout,setArtLayout]=useState<PosterLayout>('copy-left');
+  const [artObjective,setArtObjective]=useState<PosterObjective>('promotion');
+  const [artLanguage,setArtLanguage]=useState<CaptionLanguage>('ta');
+  const [artSubject,setArtSubject]=useState('');
+  const [artOffer,setArtOffer]=useState('');
+  const [artAudience,setArtAudience]=useState('');
+  const [artNotes,setArtNotes]=useState('');
+  const [artPrompt,setArtPrompt]=useState('');
+  const [artChecklist,setArtChecklist]=useState<string[]>([]);
+  const [artBusy,setArtBusy]=useState(false);
   useEffect(()=>{
     let active=true;
     supabase.auth.getUser().then(async({data:{user}})=>{
@@ -219,6 +235,32 @@ export default function MarketingDesignEditor(){
     reader.onload=()=>{if(typeof reader.result==='string'){setImageData(reader.result);setMessage('Local artwork imported. The text remains independently editable.')}};
     reader.onerror=()=>setMessage('Could not read uploaded artwork.');
     reader.readAsDataURL(file);
+  };
+  const previewCreativePrompt=async()=>{
+    if(artBusy||!businessId||artSubject.trim().length<5){
+      setMessage('Choose a business and describe its real product or service.');return;
+    }
+    setArtBusy(true);setArtPrompt('');setArtChecklist([]);setMessage('');
+    try{
+      const response=await fetch('/api/marketing/poster/prompt',{
+        method:'POST',credentials:'same-origin',cache:'no-store',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          businessId,format:poster.format,style:artStyle,mood:artMood,
+          layout:artLayout,objective:artObjective,language:artLanguage,
+          subject:artSubject,offer:artOffer,audience:artAudience,notes:artNotes,
+        }),
+      });
+      const result=await response.json() as {
+        creative?:{prompt?:string;qualityChecklist?:string[]};error?:string;
+      };
+      if(!response.ok)throw new Error(result.error||'Creative direction preview unavailable.');
+      if(!result.creative?.prompt)throw new Error('No creative direction was returned.');
+      setArtPrompt(result.creative.prompt);
+      setArtChecklist(result.creative.qualityChecklist||[]);
+      setMessage('Commercial art direction prepared. This is a prompt preview, not a billed image-generation request.');
+    }catch(e){setMessage(e instanceof Error?e.message:'Creative direction unavailable.');}
+    finally{setArtBusy(false);}
   };
   const generateAiCopy=async()=>{
     if(aiBusy||!businessId||aiBrief.trim().length<5){
@@ -333,6 +375,75 @@ export default function MarketingDesignEditor(){
           <p className="mt-2 text-[10px] leading-5 text-[#82828A]">Max 3 MB · PNG/JPEG/WebP. Source artwork stays in this browser; no cloud upload, no AI image generation.</p>
           {imageData&&<button type="button" onClick={()=>{setImageData(null);setBackdrop(null)}} className="mt-2 text-xs font-semibold text-[#B55616]">Remove background artwork</button>}
         </div>
+        <section aria-label="Advanced AI image prompt engineering" className="rounded-[18px] border border-[#F3D6B7] bg-gradient-to-br from-[#FFF8F0] via-[#FFFFFF] to-[#F7F1EA] p-4 sm:p-5">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-[.14em] text-[#B95E16]">Creative Direction Engine · Pro</p>
+              <h3 className="mt-1 text-[16px] font-extrabold tracking-tight">Design an exceptional poster</h3>
+            </div>
+            <span className="shrink-0 rounded-full border border-[#F1D2B1] bg-white px-2.5 py-1 text-[10px] font-bold text-[#A65414]">Studio v1</span>
+          </div>
+          <p className="mt-2 text-[11px] leading-6 text-[#776A61]">A professional art-direction prompt adapts your brand colors, objective, subject, mood, layout and social size. Image artwork and editable Tamil/Sinhala/English text remain separate. Prompt preview makes no paid provider call.</p>
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <label className="text-[11px] font-bold">Art direction
+              <select className={selectInput} style={selectStyle} value={artStyle} onChange={e=>setArtStyle(e.target.value as PosterStyle)}>
+                {POSTER_STYLE_KEYS.map(key=><option key={key} value={key}>{POSTER_STYLES[key].label}</option>)}
+              </select>
+            </label>
+            <label className="text-[11px] font-bold">Creative mood
+              <select className={selectInput} style={selectStyle} value={artMood} onChange={e=>setArtMood(e.target.value as PosterMood)}>
+                {POSTER_MOODS.map(item=><option value={item} key={item}>{item[0].toUpperCase()+item.slice(1)}</option>)}
+              </select>
+            </label>
+            <label className="text-[11px] font-bold">Text-safe composition
+              <select className={selectInput} style={selectStyle} value={artLayout} onChange={e=>setArtLayout(e.target.value as PosterLayout)}>
+                {POSTER_LAYOUTS.map(item=><option value={item} key={item}>{item.replace('copy-','Copy on ')}</option>)}
+              </select>
+            </label>
+            <label className="text-[11px] font-bold">Marketing objective
+              <select className={selectInput} style={selectStyle} value={artObjective} onChange={e=>setArtObjective(e.target.value as PosterObjective)}>
+                {POSTER_OBJECTIVES.map(item=><option value={item} key={item}>{item[0].toUpperCase()+item.slice(1)}</option>)}
+              </select>
+            </label>
+            <label className="col-span-2 text-[11px] font-bold">Poster language
+              <select className={selectInput} style={selectStyle} value={artLanguage} onChange={e=>setArtLanguage(e.target.value as CaptionLanguage)}>
+                <option value="en">English</option><option value="ta">தமிழ்</option><option value="si">සිංහල</option>
+              </select>
+            </label>
+          </div>
+          <label className="mt-4 block text-[11px] font-bold">What real product or service should the hero image depict?
+            <textarea className={input+' min-h-24 resize-y'} value={artSubject} maxLength={400}
+              placeholder="e.g., Freshly prepared Jaffna-style vegetarian lunch with authentic ingredients; no invented brand logos"
+              onChange={e=>setArtSubject(e.target.value)}/>
+          </label>
+          <label className="mt-3 block text-[11px] font-bold">Real offer or announcement (optional)
+            <input className={input} value={artOffer} maxLength={240} onChange={e=>setArtOffer(e.target.value)}
+              placeholder="Verified offer details only"/>
+          </label>
+          <label className="mt-3 block text-[11px] font-bold">Target customers (optional)
+            <input className={input} value={artAudience} maxLength={160} onChange={e=>setArtAudience(e.target.value)}
+              placeholder="e.g., families looking for local dining"/>
+          </label>
+          <label className="mt-3 block text-[11px] font-bold">Additional visual direction (optional)
+            <textarea className={input+' min-h-16 resize-y'} value={artNotes} maxLength={340} onChange={e=>setArtNotes(e.target.value)}
+              placeholder="Materials, season, desired camera angle, scene mood"/>
+          </label>
+          <button type="button" onClick={()=>void previewCreativePrompt()} disabled={artBusy||!businessId||artSubject.trim().length<5}
+            className="mt-4 w-full rounded-xl bg-[#F77C12] px-4 py-3.5 text-[12px] font-extrabold text-[#231C16] shadow-[0_8px_20px_rgba(255,121,0,.13)] transition hover:bg-[#FFA04A] disabled:cursor-not-allowed disabled:opacity-50">
+            {artBusy?'Preparing art direction…':'Prepare premium creative prompt · No charge'}
+          </button>
+          {artPrompt&&<div className="mt-4 space-y-3 rounded-xl border border-[#EED9C6] bg-white p-3">
+            <p className="text-[11px] font-bold text-[#4B3C32]">Production-ready art direction · editable-text safe</p>
+            <textarea aria-label="Generated premium art direction" readOnly value={artPrompt}
+              className="h-48 w-full resize-y rounded-lg bg-[#F8F8F7] p-3 font-mono text-[10px] leading-5 text-[#494445]"/>
+            <button type="button" onClick={()=>void navigator.clipboard.writeText(artPrompt).then(()=>setMessage('Creative prompt copied. No model call or charge.')).catch(()=>setMessage('Copy unavailable in this browser.'))}
+              className="rounded-lg bg-[#252326] px-4 py-2.5 text-[11px] font-bold text-white">Copy approved creative prompt</button>
+            {artChecklist.length>0&&<div className="border-t border-[#F0E6DE] pt-3">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-[#A56127]">Artwork quality review</p>
+              <ul className="mt-2 space-y-1">{artChecklist.map(item=><li key={item} className="text-[11px] leading-5 text-[#70665D]">• {item}</li>)}</ul>
+            </div>}
+          </div>}
+        </section>
         <section aria-label="AI poster copy assistant" className="rounded-xl border border-[#F2D8BE] bg-[#FFF8F1] p-4">
           <div className="flex items-start justify-between gap-3">
             <div><p className="text-[10px] font-black uppercase tracking-[.12em] text-[#B85C12]">AI Creative Assistant · Pro</p>
