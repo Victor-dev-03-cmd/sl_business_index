@@ -29,7 +29,7 @@ ALTER TABLE public.marketing_campaigns
 ALTER TABLE public.marketing_campaigns
   ADD CONSTRAINT marketing_campaign_brief_shape_v2 CHECK(
     brief IS NULL OR
-    (jsonb_typeof(brief)='object'
+    COALESCE((jsonb_typeof(brief)='object'
      AND jsonb_typeof(brief->'offer')='string'
      AND jsonb_typeof(brief->'cta')='string'
      AND jsonb_typeof(brief->'terms')='string'
@@ -45,7 +45,7 @@ ALTER TABLE public.marketing_campaigns
      AND char_length(brief->>'cta') <=130
      AND char_length(brief->>'terms') <=220
      AND (brief - ARRAY['offer','cta','terms','language','objective','format','palette']) = '{}'::jsonb
-    )
+    ),false)
   );
 
 -- Grant ONLY the new editable fields. Existing P2-05 column grants remain.

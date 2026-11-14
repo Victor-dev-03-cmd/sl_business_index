@@ -69,12 +69,15 @@ test('GrowthOS Marketing Studio is overview-only and preserves real manual campa
   assert.match(load('lib/marketing/studio-apps.ts'),/\/vendor\/marketing-engine\/email/);
   assert.match(load('lib/marketing/studio-apps.ts'),/\/vendor\/marketing\/campaigns/);
   assert.doesNotMatch(marketing,/const exportBrandedCreative=|status:schedule\?'scheduled':'drafted'/);
-  assert.match(campaignWorkspace,/Campaign Workspace/);
+  assert.match(campaignWorkspace,/copy.title/);
+  assert.match(campaignWorkspace,/CampaignFormatSelector/);
   assert.match(campaignWorkspace,/தமிழ்/);
   assert.match(campaignWorkspace,/සිංහල/);
-  assert.match(campaignWorkspace,/Consent-based Email/);
+  assert.match(campaignWorkspace,/copy.editor/);
+  assert.match(campaignWorkspace,/copy.library/);
   assert.match(campaignWorkspace,/status:schedule\?'scheduled':'drafted'/);
-  assert.match(campaignWorkspace,/external publishing is not automatic/);
+  assert.match(campaignWorkspace,/copy.noAuto/);
+  assert.match(load('lib/marketing/campaign-language.ts'),/noAuto:/);
   assert.doesNotMatch(campaignWorkspace,/MarketingDesignEditor|EditorCanvas|showEditor|js\.puter\.com/);
   assert.doesNotMatch(marketing,/2\.5k - 5k impressions|View Stats/);
 });

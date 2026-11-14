@@ -30,9 +30,11 @@ test('QR studio exports high-res raster, independent SVG and fitted A4 PDF',()=>
 
 test('marketing creates owner-provided copy as exportable reviewed image, not a simulated AI post',()=>{
   assert.match(marketing,/const exportBrandedCreative=/);
-  assert.match(marketing,/square:\[1080,1080\]/);
-  assert.match(marketing,/portrait:\[1080,1350\]/);
-  assert.match(marketing,/story:\[1080,1920\]/);
+  const formats=read('lib/marketing/campaign-language.ts');
+  assert.match(formats,/square:\{w:1080,h:1080/);
+  assert.match(formats,/portrait:\{w:1080,h:1350/);
+  assert.match(formats,/story:\{w:1080,h:1920/);
+  assert.match(formats,/landscape:\{w:1200,h:630/);
   assert.match(marketing,/DRAFT — REVIEW BEFORE PUBLISHING/);
   assert.match(marketing,/copy.exportPoster/);
   assert.match(marketing,/CampaignFormatSelector/);
