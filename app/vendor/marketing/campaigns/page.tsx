@@ -1,367 +1,413 @@
 'use client';
-import { neo } from '../../components/neumorphic';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import {useCallback,useEffect,useMemo,useState} from 'react';
 import Link from 'next/link';
-import { toast } from 'sonner';
-import { supabase } from '@/lib/supabaseClient';
+import {toast} from 'sonner';
+import {supabase} from '@/lib/supabaseClient';
 import IconsaxIcon from '../../components/IconsaxIcon';
+import CampaignFormatSelector from './CampaignFormatSelector';
+import {tFor,type CampaignFormat,type CampaignPalette,type CampaignLanguage,type CampaignObjective} from '@/lib/marketing/campaign-language';
+import {renderCampaignPoster} from '@/lib/marketing/campaign-poster';
 
-type Business = { id:string; name:string; category:string; city:string|null; status:string|null };
-type Campaign = {id:string;business_id:string|null;banner_text:string;banner_color:string;platforms:string[]|null;status:string|null;scheduled_at:string|null;created_at:string|null};
-type Objective = 'awareness'|'promotion'|'enquiries'|'announcement';
-type Language = 'English'|'தமிழ்'|'සිංහල';
-type Section = 'overview'|'social'|'email'|'calendar'|'library';
-const card = neo.card;
-const input = neo.input;
-const objectives: {key:Objective;title:string;description:string}[]=[
-  {key:'awareness',title:'Brand awareness',description:'Introduce your business and what makes it useful'},
-  {key:'promotion',title:'Offer / promotion',description:'Communicate a real offer and its conditions'},
-  {key:'enquiries',title:'Customer enquiries',description:'Encourage people to contact your business'},
-  {key:'announcement',title:'Announcement',description:'Opening hours, events or service updates'},
-];
+type Business={id:string;name:string;category:string;city:string|null;status:string|null};
+type CampaignBrief={
+  offer:string;cta:string;terms:string;language:CampaignLanguage;
+  objective:CampaignObjective;format:CampaignFormat;palette:CampaignPalette
+};
+type Campaign={
+  id:string;business_id:string|null;banner_text:string;banner_color:string;
+  platforms:string[]|null;status:string|null;scheduled_at:string|null;created_at:string|null;
+  brief:CampaignBrief|null;is_archived:boolean;
+};
+type Section='overview'|'social'|'calendar'|'library';
 const channels=['Facebook','Instagram','WhatsApp','LinkedIn'] as const;
-const languages:Language[]=['English','தமிழ்','සිංහල'];
-const clean=(value:string,max=250)=>value.replace(/\s+/g,' ').trim().slice(0,max);
-const day=(value:string|null)=>value?new Date(value).toLocaleDateString('en-LK',{day:'numeric',month:'short',year:'numeric'}):'—';
+const languages:CampaignLanguage[]=['English','தமிழ்','සිංහල'];
+const goals:CampaignObjective[]=['awareness','promotion','enquiries','announcement'];
+const validFormats:CampaignFormat[]=['square','portrait','story','landscape'];
+const clean=(s:string,limit=3000)=>s.trim().replace(/\r/g,'').slice(0,limit);
+const formatDate=(s:string|null)=>s?new Date(s).toLocaleDateString('en-LK',{day:'numeric',month:'short',year:'numeric'}):'—';
+const localDatetime=(iso:string|null)=>{
+  if(!iso)return '';
+  const d=new Date(iso);
+  if(!Number.isFinite(d.getTime()))return '';
+  const p=(n:number)=>String(n).padStart(2,'0');
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes());
+};
+const caption=(business:Business|undefined,brief:CampaignBrief)=>{
+  const name=business?.name||'Business';
+  const offer=clean(brief.offer,240),cta=clean(brief.cta,130),terms=clean(brief.terms,220);
+  if(brief.language==='தமிழ்')return [name,offer||'எங்கள் சேவைகளை அறிந்துகொள்ளுங்கள்.',cta||'மேலும் விவரங்களுக்கு தொடர்புகொள்ளுங்கள்.',terms?'நிபந்தனைகள்: '+terms:''].filter(Boolean).join('\n\n');
+  if(brief.language==='සිංහල')return [name,offer||'අපගේ සේවාවන් පිළිබඳ දැනගන්න.',cta||'වැඩි විස්තර සඳහා අමතන්න.',terms?'කොන්දේසි: '+terms:''].filter(Boolean).join('\n\n');
+  const headline={awareness:'Discover our business',promotion:'A special offer',enquiries:'We are here to help',announcement:'Latest announcement'}[brief.objective];
+  return [headline+' — '+name,offer||'Explore our services.',cta||'Contact us for details.',terms?'Terms: '+terms:''].filter(Boolean).join('\n\n');
+};
+function exportText(name:string,content:string){
+  const url=URL.createObjectURL(new Blob([content],{type:'text/plain;charset=utf-8'}));
+  const anchor=document.createElement('a');anchor.href=url;anchor.download=name;anchor.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
 
-function composeCaption(input:{business:string;city:string;category:string;offer:string;cta:string;objective:Objective;language:Language;terms:string}) {
-  const business=clean(input.business)||'Your business';
-  const city=clean(input.city,100);
-  const offer=clean(input.offer,240);
-  const cta=clean(input.cta,130);
-  const terms=clean(input.terms,220);
-  if(input.language==='தமிழ்')return [business+(city?' · '+city:''),offer||'எங்கள் சேவைகளை அறிந்துகொள்ளுங்கள்.',cta||'மேலும் விவரங்களுக்கு தொடர்புகொள்ளுங்கள்.',terms?'விதிமுறைகள்: '+terms:''].filter(Boolean).join('\n\n');
-  if(input.language==='සිංහල')return [business+(city?' · '+city:''),offer||'අපගේ සේවාවන් පිළිබඳ වැඩි විස්තර දැනගන්න.',cta||'වැඩි විස්තර සඳහා අප අමතන්න.',terms?'කොන්දේසි: '+terms:''].filter(Boolean).join('\n\n');
-  const headline=input.objective==='promotion'?'An offer worth knowing about':input.objective==='announcement'?'News from our business':input.objective==='enquiries'?'Looking for a local business?':'Discover what we do';
-  return [headline+' — '+business+(city?', '+city:''),offer||('Explore our '+(input.category||'local')+' services.'),cta||'Contact us for details.',terms?'Offer conditions: '+terms:''].filter(Boolean).join('\n\n');
-}
-function downloadText(name:string,contents:string) {
-  const file=new Blob([contents],{type:'text/plain;charset=utf-8'});
-  const url=URL.createObjectURL(file);const a=document.createElement('a');a.href=url;a.download=name;a.click();
-  URL.revokeObjectURL(url);
-}
-export default function MarketingPage() {
+export default function CampaignPlanner(){
   const [section,setSection]=useState<Section>('overview');
+  const [language,setLanguage]=useState<CampaignLanguage>('English');
   const [businesses,setBusinesses]=useState<Business[]>([]);
   const [campaigns,setCampaigns]=useState<Campaign[]>([]);
   const [selectedId,setSelectedId]=useState('');
-  const [objective,setObjective]=useState<Objective>('awareness');
-  const [language,setLanguage]=useState<Language>('English');
+  const [objective,setObjective]=useState<CampaignObjective>('awareness');
   const [offer,setOffer]=useState('');
-  const [terms,setTerms]=useState('');
   const [cta,setCta]=useState('');
+  const [terms,setTerms]=useState('');
   const [channelsSelected,setChannelsSelected]=useState<string[]>(['Facebook']);
   const [scheduledAt,setScheduledAt]=useState('');
+  const [posterSize,setPosterSize]=useState<CampaignFormat>('portrait');
+  const [posterPalette,setPosterPalette]=useState<CampaignPalette>('forest');
+  const [editingId,setEditingId]=useState<string|null>(null);
+  const [viewArchived,setViewArchived]=useState(false);
+  const [search,setSearch]=useState('');
   const [loading,setLoading]=useState(true);
   const [saving,setSaving]=useState(false);
+  const [exporting,setExporting]=useState(false);
   const [error,setError]=useState('');
   const [userId,setUserId]=useState<string|null>(null);
-  const [search,setSearch]=useState('');
-  const [posterSize,setPosterSize]=useState<'square'|'portrait'|'story'>('square');
-  const [posterPalette,setPosterPalette]=useState<'forest'|'navy'|'cream'>('forest');
+  const copy=tFor(language);
+  const business=businesses.find(b=>b.id===selectedId);
+  const brief:CampaignBrief={offer,cta,terms,language,objective,format:posterSize,palette:posterPalette};
+  const preview=useMemo(()=>caption(business,brief),[business,offer,cta,terms,language,objective,posterSize,posterPalette]);
+  const visible=useMemo(()=>campaigns.filter(c=>c.is_archived===viewArchived)
+    .filter(c=>[c.banner_text,c.status,c.platforms?.join(' '),businesses.find(b=>b.id===c.business_id)?.name]
+      .join(' ').toLocaleLowerCase().includes(search.toLocaleLowerCase())),[campaigns,viewArchived,search,businesses]);
+  const active=campaigns.filter(c=>!c.is_archived);
+  const plannedCount=active.filter(c=>c.status==='scheduled').length;
+  const draftCount=active.filter(c=>c.status==='drafted').length;
+  const now=localDatetime(new Date().toISOString());
 
   const load=useCallback(async()=>{
     setLoading(true);setError('');
-    try {
+    try{
       const {data:{user},error:authError}=await supabase.auth.getUser();
       if(authError)throw authError;
       if(!user){setUserId(null);setBusinesses([]);setCampaigns([]);return;}
       setUserId(user.id);
-      const owned=await supabase.from('businesses').select('id,name,category,city,status').eq('owner_id',user.id).order('name');
-      if(owned.error)throw owned.error;
-      const list=(owned.data||[]) as Business[];
-      setBusinesses(list);setSelectedId(prev=>list.some(b=>b.id===prev)?prev:list[0]?.id||'');
-      if(!list.length){setCampaigns([]);return;}
-      const result=await supabase.from('marketing_campaigns')
-        .select('id,business_id,banner_text,banner_color,platforms,status,scheduled_at,created_at')
-        .in('business_id',list.map(b=>b.id)).order('created_at',{ascending:false}).limit(200);
-      if(result.error)throw result.error;
-      setCampaigns((result.data||[]) as Campaign[]);
-    } catch(err){setError(err instanceof Error?err.message:'Could not load marketing workspace.');}
+      const own=await supabase.from('businesses').select('id,name,category,city,status').eq('owner_id',user.id).order('name').limit(300);
+      if(own.error)throw own.error;
+      const owned=(own.data||[]) as Business[];
+      setBusinesses(owned);setSelectedId(prev=>owned.some(b=>b.id===prev)?prev:(owned[0]?.id||''));
+      if(!owned.length){setCampaigns([]);return;}
+      const rows=await supabase.from('marketing_campaigns')
+        .select('id,business_id,banner_text,banner_color,platforms,status,scheduled_at,created_at,brief,is_archived')
+        .in('business_id',owned.map(b=>b.id)).order('created_at',{ascending:false}).limit(200);
+      if(rows.error)throw rows.error;
+      setCampaigns((rows.data||[]) as Campaign[]);
+    }catch(e){setError(e instanceof Error?e.message:'Campaigns unavailable.');}
     finally{setLoading(false);}
   },[]);
   useEffect(()=>{void load()},[load]);
-  const business=businesses.find(b=>b.id===selectedId);
-  const preview=useMemo(()=>composeCaption({
-    business:business?.name||'',city:business?.city||'',category:business?.category||'',
-    offer,terms,cta,objective,language,
-  }),[business,offer,terms,cta,objective,language]);
-  const visible=campaigns.filter(c=>[c.banner_text,c.status,c.platforms?.join(' '),businesses.find(b=>b.id===c.business_id)?.name].join(' ').toLowerCase().includes(search.toLowerCase()));
-  const scheduledCount=campaigns.filter(c=>c.status==='scheduled').length;
-  const draftCount=campaigns.filter(c=>c.status==='drafted').length;
-  const now=new Date().toISOString().slice(0,16);
 
+  const reset=()=>{
+    setEditingId(null);setObjective('awareness');setOffer('');setCta('');setTerms('');
+    setChannelsSelected(['Facebook']);setScheduledAt('');setPosterSize('portrait');setPosterPalette('forest');
+    setSection('social');window.scrollTo({top:0,behavior:'smooth'});
+  };
+  const openCampaign=(item:Campaign,duplicate=false)=>{
+    if(!item.business_id||!businesses.some(b=>b.id===item.business_id)){toast.error(copy.errorBusiness);return;}
+    setSelectedId(item.business_id);
+    const b=item.brief;
+    setEditingId(duplicate?null:item.id);
+    setObjective(b&&goals.includes(b.objective)?b.objective:'awareness');
+    // Older drafts pre-date structured campaign briefs. Reverse the original
+    // generated paragraphs without deleting words or translating vendor text.
+    const legacyParts=item.banner_text.split(/\n\s*\n/).map(s=>s.trim()).filter(Boolean);
+    const inferredLanguage:CampaignLanguage=/[\u0B80-\u0BFF]/u.test(item.banner_text)?'தமிழ்':
+      /[\u0D80-\u0DFF]/u.test(item.banner_text)?'සිංහල':'English';
+    const legacyStructured=legacyParts.length>=2 && Boolean(
+      businesses.find(o=>o.id===item.business_id) &&
+      legacyParts[0].includes(businesses.find(o=>o.id===item.business_id)!.name));
+    const legacyMessage=legacyStructured?legacyParts[1]:item.banner_text;
+    const legacyCta=legacyStructured?(legacyParts[2]||''):'';
+    const legacyTerms=legacyStructured?(legacyParts[3]||'')
+      .replace(/^(விதிமுறைகள்|කොන්දේසි|Offer conditions|Terms):\s*/iu,''):'';
+    setLanguage(b&&languages.includes(b.language)?b.language:inferredLanguage);
+    setOffer(b?b.offer:legacyMessage);
+    setCta(b?b.cta:legacyCta);setTerms(b?b.terms:legacyTerms);
+    setPosterSize(b&&validFormats.includes(b.format)?b.format:'portrait');
+    setPosterPalette(b&&['forest','navy','cream'].includes(b.palette)?b.palette:'forest');
+    setChannelsSelected((item.platforms||[]).map(p=>p.charAt(0).toUpperCase()+p.slice(1)).filter(p=>(channels as readonly string[]).includes(p)));
+    setScheduledAt(localDatetime(item.scheduled_at));
+    setSection('social');window.scrollTo({top:0,behavior:'smooth'});
+    if(!b)toast.message('Legacy campaign: review the original saved text before updating.');
+  };
   const save=async(schedule:boolean)=>{
-    if(!userId||!selectedId||!business){toast.error('Select a business first.');return;}
-    if(!clean(offer)&&!clean(cta)){toast.error('Add a campaign message or a call to action.');return;}
-    if(!channelsSelected.length){toast.error('Choose at least one distribution channel.');return;}
-    if(schedule&&(!scheduledAt||new Date(scheduledAt).getTime()<=Date.now())){toast.error('Choose a future date for a scheduling record.');return;}
+    if(saving)return;
+    if(!userId||!business||!selectedId){toast.error(copy.errorBusiness);return;}
+    if(!offer.trim()&&!cta.trim()){toast.error(copy.errorMessage);return;}
+    if(offer.length>240||cta.length>130||terms.length>220){toast.error(copy.offerLimit);return;}
+    if(!channelsSelected.length){toast.error(copy.errorChannel);return;}
+    if(schedule&&(!scheduledAt||new Date(scheduledAt).getTime()<=Date.now())){toast.error(copy.errorDate);return;}
     setSaving(true);
-    try {
-      // marketing_campaigns is owned through businesses RLS. A scheduled
-      // record is a planning entry, never a claim that the post was published.
-      const result=await supabase.from('marketing_campaigns').insert({
-        business_id:selectedId,banner_text:preview.slice(0,3000),banner_color:'growth-brief-v2',
+    try{
+      const patch={
+        banner_text:preview.slice(0,3000),
+        banner_color:'growth-brief-v3',
         platforms:channelsSelected.map(x=>x.toLowerCase()),
         scheduled_at:schedule?new Date(scheduledAt).toISOString():null,
         status:schedule?'scheduled':'drafted',
-      });
-      if(result.error)throw result.error;
-      toast.success(schedule?'Campaign planning date saved; external publishing is not automatic.':'Campaign draft saved.');
-      setSection('library');void load();
-    } catch(err){toast.error(err instanceof Error?err.message:'Could not save campaign.');}
+        brief,
+      };
+      if(editingId){
+        // Keep the original business_id immutable: only update a row that still
+        // belongs to the selected, server-RLS-owned business.
+        const result=await supabase.from('marketing_campaigns').update(patch)
+          .eq('id',editingId).eq('business_id',selectedId).select('id').maybeSingle();
+        if(result.error)throw result.error;
+        if(!result.data)throw new Error(copy.updateConflict);
+      }else{
+        const result=await supabase.from('marketing_campaigns').insert({
+          business_id:selectedId,...patch,
+        }).select('id').maybeSingle();
+        if(result.error)throw result.error;
+        if(!result.data)throw new Error(copy.updateConflict);
+      }
+      toast.success(copy.success);
+      // Reset the editing form after saving. Existing item stays in Library.
+      reset();setSection('library');await load();
+    }catch(e){toast.error(e instanceof Error?e.message:copy.updateConflict);}
     finally{setSaving(false);}
   };
-  const exportBrandedCreative=()=>{
-    if(!business){toast.error('Select an owned business first.');return;}
-    if(!clean(offer)){toast.error('Enter a factual campaign message to create a poster.');return;}
-    const dimensions={square:[1080,1080],portrait:[1080,1350],story:[1080,1920]} as const;
-    const [width,height]=dimensions[posterSize];
-    const palettes={
-      forest:{bg:'#173F2D',soft:'#23543D',accent:'#B4D8A9',text:'#F8FBF6'},
-      navy:{bg:'#192D43',soft:'#273F58',accent:'#B1D0E4',text:'#FAFBFE'},
-      cream:{bg:'#F3F0E5',soft:'#DFE7D7',accent:'#265E43',text:'#203A2A'},
-    } as const;
-    const p=palettes[posterPalette];
-    const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;
-    const ctx=canvas.getContext('2d');if(!ctx){toast.error('Canvas unavailable');return;}
-    ctx.fillStyle=p.bg;ctx.fillRect(0,0,width,height);
-    ctx.fillStyle=p.soft;ctx.fillRect(width*.64,0,width*.36,height);
-    ctx.fillStyle=p.accent;ctx.fillRect(0,0,13,height);
-    const left=88,contentWidth=width-176;
-    const typeface='system-ui, "Noto Sans Tamil", "Noto Sans Sinhala", sans-serif';
-    const wrap=(value:string,font:string,maxWidth:number,maxLines:number)=>{
-      ctx.font=font;
-      const words=value.trim().split(/\s+/);
-      const lines:string[]=[];let line='';
-      for(const word of words){
-        const next=line?line+' '+word:word;
-        if(ctx.measureText(next).width>maxWidth&&line){lines.push(line);line=word;}
-        else line=next;
-      }
-      if(line)lines.push(line);
-      if(lines.length>maxLines){
-        const clipped=lines.slice(0,maxLines);
-        while(clipped[maxLines-1].length>2&&ctx.measureText(clipped[maxLines-1]+'…').width>maxWidth)
-          clipped[maxLines-1]=clipped[maxLines-1].slice(0,-1);
-        clipped[maxLines-1]+='…';
-        return clipped;
-      }
-      return lines;
-    };
-    ctx.textBaseline='top';ctx.textAlign='left';
-    ctx.fillStyle=p.accent;ctx.font='700 25px '+typeface;
-    ctx.fillText('SLBI  /  BUSINESS CAMPAIGN',left,82);
-    ctx.fillStyle=p.text;
-    const names=wrap(business.name,'800 57px '+typeface,contentWidth,2);
-    names.forEach((line,i)=>{ctx.font='800 57px '+typeface;ctx.fillText(line,left,150+i*74);});
-    const top=Math.max(height*.35,330);
-    ctx.fillStyle=p.accent;ctx.fillRect(left,top-44,100,5);
-    ctx.fillStyle=p.text;
-    const message=wrap(clean(offer,240),'700 67px '+typeface,contentWidth,6);
-    message.forEach((line,i)=>{ctx.font='700 67px '+typeface;ctx.fillText(line,left,top+i*89);});
-    const footerY=height-260;
-    ctx.fillStyle=p.accent;ctx.fillRect(left,footerY,contentWidth,2);
-    ctx.fillStyle=p.text;ctx.font='600 29px '+typeface;
-    const action=clean(cta,120)||'Contact us for details';
-    const actionLines=wrap(action,'600 29px '+typeface,contentWidth,2);
-    actionLines.forEach((line,i)=>ctx.fillText(line,left,footerY+30+i*39));
-    ctx.font='500 21px '+typeface;ctx.fillStyle=p.accent;
-    ctx.fillText('SLBUSINESSINDEX.COM  ·  DRAFT — REVIEW BEFORE PUBLISHING',left,height-79);
-    const a=document.createElement('a');a.href=canvas.toDataURL('image/png');
-    a.download='slbi-'+business.id.slice(0,8)+'-'+posterSize+'-'+language+'.png';a.click();
-    toast.success('Branded '+posterSize+' draft downloaded for review.');
+  const changeArchive=async(c:Campaign)=>{
+    if(saving||!c.business_id)return;
+    if(c.status==='posted'){toast.error(copy.archiveError);return;}
+    if(!c.is_archived&&!window.confirm(copy.archiveConfirm))return;
+    setSaving(true);
+    try{
+      const result=await supabase.from('marketing_campaigns')
+        .update({is_archived:!c.is_archived})
+        .eq('id',c.id).eq('business_id',c.business_id).select('id').maybeSingle();
+      if(result.error)throw result.error;
+      if(!result.data)throw new Error(copy.archiveError);
+      await load();
+    }catch(e){toast.error(e instanceof Error?e.message:copy.archiveError);}
+    finally{setSaving(false);}
   };
-  const tabs:{key:Section;name:string;icon:string}[]=[
-    {key:'overview',name:'Overview',icon:'category'},
-    {key:'social',name:'Social campaigns',icon:'flash'},
-    {key:'email',name:'Email marketing',icon:'sms'},
-    {key:'calendar',name:'Calendar',icon:'calendar'},
-    {key:'library',name:'Campaign library',icon:'document-download'},
+  const exportBrandedCreative=async()=>{
+    if(exporting)return;
+    if(!business||!offer.trim()){toast.error(copy.errorMessage);return;}
+    setExporting(true);
+    try{
+      const result=await renderCampaignPoster({business:business.name,offer,cta,terms,language,format:posterSize,palette:posterPalette});
+      if(!result.ok){toast.error(result.error==='text_overflow'?copy.errorExport:'Canvas unavailable');return;}
+      const anchor=document.createElement('a');anchor.href=result.dataUrl;anchor.download=result.filename;anchor.click();
+      toast.success(copy.posterReady);
+    }catch{toast.error(copy.errorExport);}
+    finally{setExporting(false);}
+  };
+  const button='rounded-xl px-4 py-2.5 text-[12px] font-bold transition disabled:cursor-not-allowed disabled:opacity-50';
+  const field='mt-2 w-full rounded-xl border border-[#E6E3E0] bg-white p-3 text-[13px] text-[#29262B] outline-none focus:border-[#FA890C] focus:ring-2 focus:ring-[#FF7900]/15';
+  const label='block text-[12px] font-bold text-[#393238]';
+  const card='rounded-[19px] border border-[#E8E6E6] bg-white shadow-[0_4px_22px_rgba(20,20,28,.035)]';
+  const tabs:ReadonlyArray<[Section,string,string]>=[
+    ['overview',copy.overview,'element-4'],['social',copy.editor,'edit'],
+    ['calendar',copy.calendar,'calendar'],['library',copy.library,'document-text'],
   ];
-  const launch=(target:Section)=>{setSection(target);document.getElementById('marketing-workspace')?.scrollIntoView({behavior:'smooth',block:'start'});};
-  return (
-    <div className={neo.page + " mx-auto w-full  space-y-5 pb-8 text-[#28282D]"}>
-      <header className={neo.hero + " grid gap-5 px-5 py-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-end md:px-7"}>
+  return <main className="mx-auto w-full max-w-[1440px] space-y-5 pb-12 text-[#242429]">
+    <header className="relative overflow-hidden rounded-[23px] bg-[#1B1B20] px-5 py-7 text-white sm:px-8 sm:py-9">
+      <div aria-hidden className="pointer-events-none absolute -right-20 -top-32 h-80 w-80 rounded-full bg-[#FF7900]/15 blur-3xl"/>
+      <div className="relative flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#B3611E]">Marketing Engine / Manual Campaigns</p>
-          <h1 className="mt-2 text-[28px] font-bold tracking-[-.045em] md:text-[34px]">Campaign Workspace</h1>
-          <p className="mt-2 max-w-[720px] text-[12px] leading-6 text-[#777780]">Build and review campaign drafts, export creative artwork and record planning dates. External publishing is not automated.</p>
+          <Link href="/vendor/marketing" className="inline-flex items-center gap-2 text-[11px] font-bold text-[#FFC18A]">
+            <IconsaxIcon name="arrow-left-2" size={15} color="#FFC18A"/> Marketing Studio
+          </Link>
+          <p className="mt-5 text-[10px] font-extrabold uppercase tracking-[.2em] text-[#FB9C55]">{copy.subtitle}</p>
+          <h1 className="mt-2 text-[29px] font-extrabold tracking-[-.05em] sm:text-[40px]">{copy.title}</h1>
+          <p className="mt-2 max-w-[630px] text-[12px] leading-6 text-white/70">{copy.about}</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Link href="/vendor/marketing/brand" className="flex h-10 items-center gap-2 rounded-lg border border-[#F1C5A0] bg-[#FFF6EF] px-4 text-[12px] font-semibold text-[#B0520E] hover:bg-[#FFEAD9]"><IconsaxIcon name="shop" size={17}/> Brand Profile · P2-01</Link>
-          <Link href="/vendor/marketing/captions" className="flex h-10 items-center gap-2 rounded-lg border border-[#E7E7EC] bg-white px-4 text-[12px] font-semibold text-[#24242A] hover:bg-[#FFF8F2]"><IconsaxIcon name="flash" size={17}/> AI Caption Lab · P2-02</Link>
-          <Link href="/vendor/marketing/design" className="flex h-10 items-center gap-2 rounded-lg border border-[#E7E7EC] bg-white px-4 text-[12px] font-semibold text-[#24242A] hover:bg-[#FFF8F2]"><IconsaxIcon name="document" size={17}/> Design Studio · P2-04</Link>
-          <Link href="/vendor/insights" className="flex h-10 items-center gap-2 border border-[#DEDEE2] px-4 text-[12px] font-semibold text-[#54545C] hover:bg-[#FFF8F2]"><IconsaxIcon name="status-up" size={17}/> Growth insights</Link>
-          <button type="button" onClick={()=>launch('social')} className="flex h-10 items-center gap-2 bg-[#202024] px-4 text-[12px] font-semibold text-white hover:bg-[#39393E]"><IconsaxIcon name="add" size={17} color="white"/> New campaign</button>
+        <div className="relative flex flex-wrap items-center gap-2">
+          <label htmlFor="campaign-language" className="sr-only">{copy.language}</label>
+          <select id="campaign-language" value={language} onChange={e=>setLanguage(e.target.value as CampaignLanguage)}
+            className="h-11 rounded-xl border border-white/20 bg-[#333138] px-3 text-[12px] font-semibold text-white outline-none">
+            {languages.map(item=><option key={item} value={item}>{item}</option>)}
+          </select>
+          <button type="button" onClick={reset} className={button+' inline-flex h-11 items-center gap-2 bg-[#FF7900] text-[#211C1B] hover:bg-[#FFA253]'}>
+            <IconsaxIcon name="add" size={16}/>{copy.newCampaign}
+          </button>
         </div>
-      </header>
-      {error&&<div role="alert" className="border border-red-200 bg-red-50 p-4 text-[12px] text-red-800">{error}</div>}
-      {!loading&&!userId&&<div className={card+' p-6 text-sm'}>Sign in to manage marketing. <Link href="/login?redirect=/vendor/marketing" className="font-bold text-[#2C2C31] underline">Sign in</Link></div>}
-      <div className="grid gap-3 sm:grid-cols-3">
-        {[
-          {title:'Saved campaigns',value:campaigns.length,sub:'Actual directory records',icon:'document-download'},
-          {title:'Drafts',value:draftCount,sub:'Awaiting your approval',icon:'edit'},
-          {title:'Planning dates',value:scheduledCount,sub:'Not automatic social publishing',icon:'calendar'},
-        ].map(k=><div key={k.title} className={card+' flex items-start justify-between p-5'}>
-          <div><p className="text-[11px] font-semibold text-[#6D6D76]">{k.title}</p><p className="mt-2 text-[29px] font-bold tabular-nums tracking-tight">{loading?'—':k.value}</p><p className="mt-1 text-[10px] text-[#9898A0]">{k.sub}</p></div>
-          <span className="bg-[#FFF1E6] p-2.5 text-[#C56210]"><IconsaxIcon name={k.icon} size={20}/></span>
-        </div>)}
       </div>
-      <section aria-label="Marketing services" className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
-        <Link href="/vendor/marketing/brand" className={card+' group min-h-[176px] p-5 text-left transition hover:border-[#F5BC8B] hover:bg-[#FFF8F1]'}>
-          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#FFF1E5] text-[#C56210]"><IconsaxIcon name="shop" size={20}/></span>
-          <h2 className="mt-3 text-[15px] font-bold">Business Brand Profile</h2>
-          <p className="mt-1 text-[11px] leading-5 text-[#2C2C31]">Define the logo, voice, audience, colors, offers and English / Tamil / Sinhala guidelines once per business.</p>
-          <span className="mt-4 inline-flex items-center gap-1 text-[11px] font-bold text-[#B4530B]">Open Brand Profile <IconsaxIcon name="arrow-right-2" size={13}/></span>
-        </Link>
-        <Link href="/vendor/marketing/captions" className={card+' group min-h-[176px] p-5 text-left transition hover:border-[#F5BC8B] hover:bg-[#FFF8F1]'}>
-          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#FFF1E5] text-[#C56210]"><IconsaxIcon name="flash" size={20}/></span>
-          <h2 className="mt-3 text-[15px] font-bold">AI Caption Lab</h2>
-          <p className="mt-1 text-[11px] leading-5 text-[#2C2C31]">Review draft captions in English, Tamil or Sinhala. AI provider calls are locked until credits and spending controls are approved.</p>
-          <span className="mt-4 inline-flex items-center gap-1 text-[11px] font-bold text-[#B4530B]">Open Caption Lab <IconsaxIcon name="arrow-right-2" size={13}/></span>
-        </Link>
-        <Link href="/vendor/marketing/design" className={card+' group min-h-[176px] p-5 text-left transition hover:border-[#F5BC8B] hover:bg-[#FFF8F1]'}>
-          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#FFF1E5] text-[#C56210]"><IconsaxIcon name="document" size={20}/></span>
-          <h2 className="mt-3 text-[15px] font-bold">Editable Poster Studio</h2>
-          <p className="mt-1 text-[11px] leading-5 text-[#2C2C31]">Four original layouts, square/portrait/story formats, editable typography and high-resolution PNG export.</p>
-          <span className="mt-4 inline-flex items-center gap-1 text-[11px] font-bold text-[#B4530B]">Open Design Editor <IconsaxIcon name="arrow-right-2" size={13}/></span>
-        </Link>
-        {[
-          {title:'AI Social Marketing',sub:'Business brief, multilingual caption, creative review and campaign planning',icon:'flash',action:'Open social workflow',target:'social' as Section},
-          {title:'Consent-based Email',sub:'Audience permissions, segmentation, review and compliance checks',icon:'sms',action:'Review email readiness',target:'email' as Section},
-          {title:'Campaign Calendar',sub:'Plan your next promotions without misreporting automated publishing',icon:'calendar',action:'Open calendar',target:'calendar' as Section},
-        ].map(item=><button type="button" key={item.title} onClick={()=>launch(item.target)} className={card+' group min-h-[176px] p-5 text-left transition hover:border-[#F5BC8B] hover:bg-[#FCFEFC]'}>
-          <span className="flex h-10 w-10 items-center justify-center bg-[#F8F8FA] text-[#2C2C31]"><IconsaxIcon name={item.icon} size={20}/></span>
-          <h2 className="mt-3 text-[15px] font-bold">{item.title}</h2>
-          <p className="mt-1 text-[11px] leading-5 text-[#2C2C31]">{item.sub}</p>
-          <span className="mt-4 inline-flex items-center gap-1 text-[11px] font-bold text-[#2C2C31]">{item.action}<IconsaxIcon name="arrow-right-2" size={13}/></span>
+      <div className="relative mt-6 flex flex-wrap gap-2">
+        <span className="rounded-lg bg-white/10 px-3 py-2 text-[11px] text-white/90">{copy.method}</span>
+        <span className="rounded-lg bg-white/10 px-3 py-2 text-[11px] text-white/90">{copy.reviewWorkflow}</span>
+      </div>
+    </header>
+    {error&&<div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-xs text-red-800">{error}</div>}
+    {!loading&&!userId&&<div className={card+' p-5 text-sm'}><Link href="/login?redirect=/vendor/marketing/campaigns" className="underline">Sign in to open your campaigns</Link></div>}
+    <section aria-label="Campaign overview" className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      {[
+        [copy.saved,active.length,'document-text'],[copy.drafts,draftCount,'edit'],[copy.planned,plannedCount,'calendar']
+      ].map(([name,count,icon])=><div key={name} className={card+' flex items-center justify-between p-5'}>
+        <div><p className="text-[11px] font-semibold text-[#817982]">{name}</p>
+          <p className="mt-1 text-[29px] font-extrabold tabular-nums">{loading?'—':count}</p></div>
+        <span className="rounded-xl bg-[#FFF1E6] p-3"><IconsaxIcon name={String(icon)} size={22} color="#D56D18"/></span>
+      </div>)}
+    </section>
+    <div className="grid items-start gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
+      <nav aria-label="Campaign sections" className={card+' flex flex-wrap gap-2 p-3 lg:sticky lg:top-20 lg:flex-col'}>
+        {tabs.map(([key,name,icon])=><button type="button" key={key} onClick={()=>setSection(key)} aria-current={section===key?'page':undefined}
+          className={'flex min-h-11 items-center gap-2 rounded-xl px-3 text-left text-[12px] font-bold transition '+(section===key?'bg-[#242326] text-white':'text-[#716C72] hover:bg-[#FFF1E7]')}>
+          <IconsaxIcon name={icon} size={18} color={section===key?'#FFFFFF':'#9E7A60'}/>{name}
         </button>)}
-      </section>
-
-      <div id="marketing-workspace" className="scroll-mt-24 grid items-start gap-5 lg:grid-cols-[210px_minmax(0,1fr)]">
-        <nav aria-label="Marketing Studio sections" className={card+' flex flex-wrap gap-1 p-2 lg:sticky lg:top-3 lg:flex-col'}>
-          {tabs.map(tab=><button key={tab.key} type="button" onClick={()=>setSection(tab.key)} aria-current={section===tab.key?'page':undefined}
-            className={'flex min-h-11 items-center gap-2 border-l-[3px] px-3 py-2 text-left text-[11px] font-semibold transition '+(section===tab.key?'border-[#E7E7EC] bg-[#F8F8FA] text-[#2C2C31]':'border-transparent text-[#2C2C31] hover:bg-[#F5F8F5]')}>
-            <IconsaxIcon name={tab.icon} size={17}/>{tab.name}
-          </button>)}
-        </nav>
-        <div className="min-w-0">
-          {section==='overview'&&<div className={card+' p-6 md:p-8'}>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-[#2C2C31]">Campaign workflow</p>
-            <h2 className="mt-2 text-xl font-bold">Plan with a clear objective.</h2>
-            <p className="mt-2 text-[12px] leading-6 text-[#2C2C31]">Our GrowthOS roadmap requires business context, factual offers, multilingual copy, owner review and consent checks before distribution.</p>
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              {['1 · Select an owned business','2 · Define campaign objective','3 · Review multilingual copy','4 · Approve and export','5 · Record planned date','6 · Measure real results'].map(step=><div key={step} className="border border-[#E7E7EC] bg-[#FAFCFA] p-4 text-[12px] font-semibold text-[#2C2C31]">{step}</div>)}
+      </nav>
+      <div className="min-w-0">
+        {section==='overview'&&<section className={card+' p-6 md:p-9'}>
+          <p className="text-[10px] font-extrabold uppercase tracking-[.16em] text-[#BE6624]">BASIC MARKETING</p>
+          <h2 className="mt-3 text-[24px] font-extrabold">{copy.start}</h2>
+          <p className="mt-3 max-w-2xl text-[13px] leading-7 text-[#757078]">{copy.about}</p>
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            {[copy.business,copy.message,copy.poster].map((value,i)=><div key={value} className="rounded-2xl border border-[#EDE7E2] bg-[#FFF9F4] p-5">
+              <p className="text-[23px] font-bold text-[#E38032]">{String(i+1).padStart(2,'0')}</p>
+              <p className="mt-3 text-[12px] font-bold">{value}</p>
+            </div>)}
+          </div>
+          <button type="button" onClick={reset} className={button+' mt-6 bg-[#242326] text-white'}>{copy.start}</button>
+          <p className="mt-5 text-[11px] leading-6 text-[#907960]">{copy.noAuto}</p>
+        </section>}
+        {section==='social'&&<div className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(290px,.85fr)]">
+          <section className={card+' min-w-0 p-5 md:p-7'}>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div><p className="text-[10px] font-extrabold uppercase tracking-[.13em] text-[#C46B25]">{editingId?copy.editing:copy.newCampaign}</p>
+                <h2 className="mt-1 text-[20px] font-extrabold">{copy.editor}</h2></div>
+              {editingId&&<button type="button" onClick={reset} className={button+' border border-[#EDE2D8] text-[#A35C23]'}>{copy.reset}</button>}
             </div>
-            <button type="button" onClick={()=>setSection('social')} className="mt-6 bg-[#202024] px-5 py-3 text-xs font-bold text-white">Create a campaign brief</button>
-          </div>}
-          {section==='social'&&<div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(280px,.85fr)]">
-            <div className={card+' min-w-0 p-5 md:p-6'}>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-[#2C2C31]">01 · Creative brief</p>
-              <h2 className="mt-2 text-[19px] font-bold">Business-aware campaign</h2>
-              <p className="mt-1 text-[11px] leading-5 text-[#777780]">Drafting is local and editable; choose a language and provide reviewed text in that language. Automatic translation and social posting are not enabled.</p>
-              <div className="mt-6 space-y-4">
-                <label className="block text-[11px] font-semibold text-[#2C2C31]">Your business
-                  <select className={input+' mt-1.5'} value={selectedId} onChange={e=>setSelectedId(e.target.value)}>
-                    <option value="">Select business</option>{businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}
-                  </select></label>
-                <div><span className="text-[11px] font-semibold text-[#2C2C31]">Campaign objective</span>
-                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                    {objectives.map(o=><button type="button" key={o.key} onClick={()=>setObjective(o.key)}
-                      className={'border p-3 text-left '+(objective===o.key?'border-[#E7E7EC] bg-[#F8F8FA]':'border-[#E7E7EC] bg-white hover:border-[#F5BC8B]')}>
-                      <strong className="block text-[11px] text-[#2C2C31]">{o.title}</strong><span className="mt-1 block text-[10px] leading-4 text-[#777780]">{o.description}</span>
-                    </button>)}
-                  </div>
+            <p className="mt-3 text-[11px] leading-6 text-[#8B7D75]">{copy.captionHelp}</p>
+            <div className="mt-5 space-y-5">
+              <label className={label}>{copy.business}
+                <select className={field} value={selectedId} disabled={Boolean(editingId)} onChange={e=>setSelectedId(e.target.value)}>
+                  <option value="">{copy.selectBusiness}</option>
+                  {businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}
+                </select>
+              </label>
+              {!loading&&!businesses.length&&<p className="text-[12px] text-amber-700">{copy.noBusiness}</p>}
+              <div><p className={label}>{copy.objective}</p>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  {goals.map((g,i)=><button key={g} type="button" aria-pressed={objective===g}
+                    onClick={()=>setObjective(g)} className={'rounded-xl border p-3 text-left text-[11px] font-bold transition '+(objective===g?'border-[#FBA25B] bg-[#FFF2E7] text-[#A35218]':'border-[#E6E4E5] bg-white text-[#6D6970] hover:border-[#EDBC92]')}>
+                    {copy.goals[i]}
+                  </button>)}
                 </div>
-                <label className="block text-[11px] font-semibold text-[#2C2C31]">Language
-                  <select className={input+' mt-1.5'} value={language} onChange={e=>setLanguage(e.target.value as Language)}>{languages.map(l=><option key={l} value={l}>{l}</option>)}</select>
+              </div>
+              <label className={label}>{copy.language}
+                <select value={language} onChange={e=>setLanguage(e.target.value as CampaignLanguage)} className={field}>
+                  {languages.map(l=><option key={l} value={l}>{l}</option>)}
+                </select>
+              </label>
+              <label className={label}>{copy.message}
+                <textarea className={field+' min-h-32 resize-y'} maxLength={240} value={offer} onChange={e=>setOffer(e.target.value)}
+                  placeholder={copy.messageHint}/>
+                <span className="mt-1 block text-right text-[10px] text-[#89818A]">{offer.length}/240</span>
+              </label>
+              <label className={label}>{copy.cta}
+                <input className={field} maxLength={130} value={cta} onChange={e=>setCta(e.target.value)} placeholder={copy.ctaHint}/>
+              </label>
+              <label className={label}>{copy.terms}
+                <textarea className={field+' min-h-20 resize-y'} maxLength={220} value={terms} onChange={e=>setTerms(e.target.value)} placeholder={copy.termsHint}/>
+              </label>
+              <div><p className={label}>{copy.channels}</p>
+                <div className="mt-2 flex flex-wrap gap-2">{channels.map(name=><button type="button" key={name}
+                  aria-pressed={channelsSelected.includes(name)} onClick={()=>setChannelsSelected(a=>a.includes(name)?a.filter(x=>x!==name):[...a,name])}
+                  className={button+' border '+(channelsSelected.includes(name)?'border-[#FB790B] bg-[#FFF1E6] text-[#9C4F1F]':'border-[#E2DFE1] bg-white text-[#68616A]')}>{name}</button>)}</div>
+              </div>
+              <label className={label}>{copy.planningDate}
+                <input type="datetime-local" value={scheduledAt} min={now} onChange={e=>setScheduledAt(e.target.value)} className={field}/>
+              </label>
+            </div>
+            <div className="mt-6 flex flex-wrap gap-2 border-t border-[#F1ECE8] pt-5">
+              <button type="button" onClick={()=>void save(Boolean(editingId&&scheduledAt&&campaigns.find(c=>c.id===editingId)?.status==='scheduled'))} disabled={saving||!userId}
+                className={button+' bg-[#252329] text-white hover:bg-[#3F393C]'}>{saving?'…':editingId?copy.update:copy.save}</button>
+              <button type="button" onClick={()=>void save(true)} disabled={saving||!userId||!scheduledAt}
+                className={button+' border border-[#E9AD7C] bg-[#FFF2E7] text-[#A65A23]'}>{copy.schedule}</button>
+              <button type="button" onClick={reset} className={button+' border border-[#E3DFE0]'}>{copy.reset}</button>
+            </div>
+          </section>
+          <aside className={card+' min-w-0 overflow-hidden'}>
+            <div className="border-b border-[#E9E4E2] bg-[#FFF7F0] px-5 py-4">
+              <p className="text-[10px] font-extrabold uppercase tracking-[.13em] text-[#B96E33]">CREATIVE REVIEW</p>
+              <h2 className="mt-1 text-[17px] font-extrabold">{copy.preview}</h2>
+            </div>
+            <div className="space-y-5 p-5">
+              <div className="min-h-[190px] whitespace-pre-wrap break-words rounded-xl border border-[#E9E5E3] bg-[#FAFAFA] p-5 text-[13px] leading-7">{preview}</div>
+              <p className="text-[11px] leading-6 text-[#867D82]">{copy.review}</p>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" className={button+' border border-[#E9E3DE]'} onClick={()=>void navigator.clipboard.writeText(preview).then(()=>toast.success(copy.copy)).catch(()=>toast.error(copy.updateConflict))}>{copy.copy}</button>
+                <button type="button" className={button+' border border-[#E9E3DE]'} onClick={()=>exportText('slbi-campaign-'+language+'.txt',preview)}>{copy.exportText}</button>
+              </div>
+              <div className="border-t border-[#EEE8E3] pt-5">
+                <h3 className="text-[15px] font-extrabold">{copy.poster}</h3>
+                <p className="mt-2 text-[11px] leading-6 text-[#8B8185]">{copy.posterHelp}</p>
+                <p className="mt-5 mb-2 text-[12px] font-bold">{copy.formats}</p>
+                <CampaignFormatSelector selected={posterSize} onChange={setPosterSize} language={language}/>
+                <label className={label+' mt-5'}>{copy.palette}
+                  <select className={field} value={posterPalette} onChange={e=>setPosterPalette(e.target.value as CampaignPalette)}>
+                    <option value="forest">Forest Green</option><option value="navy">Midnight Navy</option><option value="cream">Warm Cream</option>
+                  </select>
                 </label>
-                <label className="block text-[11px] font-semibold text-[#2C2C31]">Key message / factual offer
-                  <textarea className={input+' mt-1.5 min-h-[96px] resize-y'} maxLength={240} value={offer} onChange={e=>setOffer(e.target.value)} placeholder="The verified service or offer you want customers to know…"/></label>
-                <label className="block text-[11px] font-semibold text-[#2C2C31]">Call to action
-                  <input className={input+' mt-1.5'} maxLength={130} value={cta} onChange={e=>setCta(e.target.value)} placeholder="Call us for availability"/></label>
-                <label className="block text-[11px] font-semibold text-[#2C2C31]">Offer terms / conditions
-                  <input className={input+' mt-1.5'} maxLength={220} value={terms} onChange={e=>setTerms(e.target.value)} placeholder="Valid until… / subject to availability"/></label>
-                <div><p className="text-[11px] font-semibold text-[#2C2C31]">Distribution channels (planning only)</p>
-                  <div className="mt-2 flex flex-wrap gap-2">{channels.map(channel=><button key={channel} type="button" aria-pressed={channelsSelected.includes(channel)}
-                    onClick={()=>setChannelsSelected(x=>x.includes(channel)?x.filter(v=>v!==channel):[...x,channel])}
-                    className={'border px-3 py-2 text-[11px] font-semibold '+(channelsSelected.includes(channel)?'border-[#E7E7EC] bg-[#F8F8FA] text-[#2C2C31]':'border-[#E7E7EC] bg-white text-[#2C2C31]')}>{channel}</button>)}</div>
-                </div>
-                <label className="block text-[11px] font-semibold text-[#2C2C31]">Optional planned date
-                  <input type="datetime-local" min={now} value={scheduledAt} onChange={e=>setScheduledAt(e.target.value)} className={input+' mt-1.5'}/></label>
-              </div>
-              <div className="mt-6 flex flex-wrap gap-2 border-t border-[#E7E7EC] pt-5">
-                <button type="button" disabled={saving||!userId} onClick={()=>void save(false)} className="bg-[#202024] px-4 py-2.5 text-[12px] font-bold text-white disabled:opacity-40">Save draft</button>
-                <button type="button" disabled={saving||!userId||!scheduledAt} onClick={()=>void save(true)} className="border border-[#E7E7EC] px-4 py-2.5 text-[12px] font-semibold text-[#2C2C31] disabled:opacity-40">Record planned date</button>
+                <p className="mt-3 text-[11px] leading-5 text-[#9A7A5D]">{copy.offerLimit}</p>
+                <button type="button" onClick={()=>void exportBrandedCreative()} disabled={exporting||!business||!offer.trim()}
+                  className={button+' mt-4 w-full bg-[#FF7900] py-3 text-[#211A16] hover:bg-[#FF9C40]'}>
+                  <IconsaxIcon name="document-download" size={17}/> {' '} {exporting?'…':copy.exportPoster}
+                </button>
+                <p className="mt-3 text-center text-[10px] text-[#97939A]">DRAFT — REVIEW BEFORE PUBLISHING</p>
               </div>
             </div>
-            <aside className={card+' min-w-0 overflow-hidden'}>
-              <div className="border-b border-[#E7E7EC] bg-[#F6FAF6] p-4"><p className="text-[10px] font-bold uppercase tracking-wider text-[#2C2C31]">02 · Review copy</p><h3 className="mt-1 text-[15px] font-bold">Live campaign draft</h3></div>
-              <div className="p-5"><div className="min-h-[255px] border border-[#E7E7EC] bg-[#FCFDFB] p-5">
-                <p className="whitespace-pre-wrap break-words text-[13px] leading-7 text-[#2C2C31]">{preview}</p></div>
-                <p className="mt-3 text-[10px] leading-5 text-[#777780]">Verify business facts, terms, translations and contact information before sending. This preview is editable through the brief fields.</p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <button type="button" onClick={()=>{void navigator.clipboard.writeText(preview).then(()=>toast.success('Copy saved to clipboard')).catch(()=>toast.error('Could not copy text'));}} className="border border-[#E7E7EC] px-3 py-2.5 text-[11px] font-semibold text-[#2C2C31]">Copy caption</button>
-                  <button type="button" onClick={()=>downloadText('slbi-campaign-'+language+'.txt',preview)} className="border border-[#E7E7EC] px-3 py-2.5 text-[11px] font-semibold text-[#2C2C31]">Export text</button>
+          </aside>
+        </div>}
+        {section==='calendar'&&<section className={card+' p-5 md:p-7'}>
+          <h2 className="text-[20px] font-extrabold">{copy.calendar}</h2>
+          <p className="mt-2 text-[11px] text-[#8A7F83]">{copy.noAuto}</p>
+          <div className="mt-5 space-y-3">
+            {active.filter(c=>c.scheduled_at).sort((a,b)=>String(a.scheduled_at).localeCompare(String(b.scheduled_at))).map(c=>
+              <div key={c.id} className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-[#EAE6E4] p-4">
+                <div><span className="text-[10px] font-bold text-[#BA6B29]">{formatDate(c.scheduled_at)}</span>
+                  <p className="mt-1 text-[12px] font-bold">{businesses.find(b=>b.id===c.business_id)?.name}</p>
+                  <p className="mt-2 max-w-[700px] line-clamp-2 text-[11px] text-[#79727A]">{c.banner_text}</p>
                 </div>
-                <div className="mt-5 border-t border-[#E7E7EC] pt-5">
-                  <h4 className="text-[12px] font-bold">Branded creative export</h4>
-                  <p className="mt-1 text-[11px] leading-5 text-[#777780]">Generate an editable-brief-based PNG design for social sharing. It only uses the business name and the text you supply; it is not an AI-generated image or an automatically published post.</p>
-                  <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    <label className="text-[11px] font-semibold text-[#2C2C31]">Canvas format
-                      <select value={posterSize} onChange={e=>setPosterSize(e.target.value as typeof posterSize)} className={input+' mt-1.5'}>
-                        <option value="square">Square · 1080 × 1080</option><option value="portrait">Portrait · 1080 × 1350</option><option value="story">Story · 1080 × 1920</option>
-                      </select>
-                    </label>
-                    <label className="text-[11px] font-semibold text-[#2C2C31]">Brand palette
-                      <select value={posterPalette} onChange={e=>setPosterPalette(e.target.value as typeof posterPalette)} className={input+' mt-1.5'}>
-                        <option value="forest">Forest</option><option value="navy">Navy</option><option value="cream">Cream</option>
-                      </select>
-                    </label>
-                  </div>
-                  <button type="button" disabled={!business||!clean(offer)} onClick={exportBrandedCreative} className="mt-3 w-full border border-[#E7E7EC] bg-[#F8F8FA] px-3 py-3 text-[11px] font-bold text-[#2C2C31] disabled:opacity-40">
-                    Download branded PNG draft
-                  </button>
-                </div>
-                <div className="mt-5 border-t border-[#E7E7EC] pt-5"><h4 className="text-[12px] font-bold">Next design phase</h4><p className="mt-1 text-[11px] leading-5 text-[#777780]">Model-generated creative variations, editable typography, human approval and social-platform API integrations are separate gated features—not a canvas editor or simulated publishing.</p></div>
+                <button type="button" className={button+' border border-[#E8DCCE]'} onClick={()=>openCampaign(c)}>{copy.edit}</button>
+              </div>)}
+            {!active.some(c=>c.scheduled_at)&&<p className="rounded-xl border border-dashed border-[#E8E4E2] p-8 text-[12px] text-[#8C838B]">{copy.empty}</p>}
+          </div>
+        </section>}
+        {section==='library'&&<section className={card+' overflow-hidden'}>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#ECE6E4] p-5">
+            <div><h2 className="text-[19px] font-extrabold">{copy.library}</h2>
+              <p className="mt-1 text-[11px] text-[#8F868A]">{copy.reviewWorkflow}</p></div>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" onClick={()=>setViewArchived(false)} aria-pressed={!viewArchived} className={button+(viewArchived?' border border-[#E3E1E3]':' bg-[#28262A] text-white')}>{copy.active}</button>
+              <button type="button" onClick={()=>setViewArchived(true)} aria-pressed={viewArchived} className={button+(viewArchived?' bg-[#28262A] text-white':' border border-[#E3E1E3]')}>{copy.archived}</button>
+            </div>
+            <input type="search" value={search} aria-label={copy.search} placeholder={copy.search} onChange={e=>setSearch(e.target.value)}
+              className="w-full max-w-[255px] rounded-xl border border-[#E6E2E3] px-3 py-2.5 text-[12px] outline-none focus:border-[#F69A56]"/>
+          </div>
+          {loading&&<p role="status" className="p-5 text-[12px] text-[#7F787D]">Loading…</p>}
+          <div className="divide-y divide-[#EFEBE8]">{visible.map(c=><article key={c.id} className="grid gap-4 p-5 transition hover:bg-[#FFFDFC] sm:grid-cols-[minmax(0,1fr)_auto]">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-lg bg-[#FFF2E7] px-2.5 py-1 text-[10px] font-bold text-[#A55A20]">
+                  {c.status==='scheduled'?copy.statusPlanned:c.status==='drafted'?copy.statusDraft:c.status}
+                </span>
+                <span className="text-[11px] font-bold text-[#373037]">{businesses.find(b=>b.id===c.business_id)?.name||copy.business}</span>
               </div>
-            </aside>
-          </div>}
-          {section==='email'&&<div className={card+' space-y-5 p-6 md:p-8'}>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-[#2C2C31]">Consent-based campaigns</p>
-            <h2 className="text-xl font-bold">Email Marketing · Compliance First</h2>
-            <p className="max-w-[720px] text-[12px] leading-6 text-[#777780]">Only use subscribers who explicitly agreed to the campaign purpose. Automated email sends are not enabled until consent records, suppression, unsubscribe handling and deliverability checks are implemented.</p>
-            <div className="grid gap-3 sm:grid-cols-2">{[
-              ['01','Audience consent','Verified opt-in and purpose-specific permissions'],
-              ['02','Segmentation','Relevant customers, without secret profiling'],
-              ['03','Human review','Subject, content, sender details and fact-checks'],
-              ['04','Compliance checks','Unsubscribe, suppression, SPF/DKIM/DMARC'],
-              ['05','Schedule & send','Only after mail provider and entitlements are connected'],
-              ['06','Reporting','Measured deliveries and opt-in conversions'],
-            ].map(x=><div key={x[0]} className="border border-[#E7E7EC] p-4"><span className="text-[10px] font-bold text-[#777780]">{x[0]}</span><h3 className="mt-1 text-[12px] font-bold">{x[1]}</h3><p className="mt-1 text-[11px] text-[#777780]">{x[2]}</p></div>)}</div>
-            <div className="border-l-[3px] border-[#B8984E] bg-[#FBF7E9] px-4 py-3 text-[11px] text-[#8E763E]">Email sending is not yet active. No unconsented leads or automatically imported CRM contacts are used.</div>
-          </div>}
-          {section==='calendar'&&<div className={card+' p-6'}>
-            <h2 className="text-xl font-bold">Campaign planning calendar</h2><p className="mt-1 text-[12px] text-[#777780]">These are planning records, not confirmed social-network publishing times.</p>
-            <div className="mt-6 space-y-2">{campaigns.filter(c=>c.scheduled_at).sort((a,b)=>String(a.scheduled_at).localeCompare(String(b.scheduled_at))).map(c=><div key={c.id} className="flex flex-wrap items-start gap-4 border border-[#E7E7EC] p-4 text-[11px]">
-              <span className="w-28 font-bold text-[#2C2C31]">{day(c.scheduled_at)}</span><div className="min-w-0 flex-1"><p className="font-semibold text-[#2C2C31]">{businesses.find(b=>b.id===c.business_id)?.name||'Business'}</p><p className="mt-1 line-clamp-2 text-[#777780]">{c.banner_text}</p></div><span className="border border-[#E7E7EC] px-2 py-1 text-[#777780]">{c.status}</span>
-            </div>)}{!campaigns.some(c=>c.scheduled_at)&&<p className="border border-dashed border-[#E7E7EC] p-6 text-sm text-[#777780]">No dates planned yet. Create a campaign brief to begin.</p>}</div>
-          </div>}
-          {section==='library'&&<div className={card+' overflow-hidden'}>
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E7E7EC] p-5"><div><h2 className="text-[17px] font-bold">Campaign library</h2><p className="mt-1 text-[11px] text-[#777780]">Owner-scoped saved drafts and scheduling records.</p></div>
-              <input aria-label="Filter saved campaigns" className={input+' max-w-[240px]'} placeholder="Search saved campaigns" value={search} onChange={e=>setSearch(e.target.value)}/></div>
-            <div className="divide-y divide-[#E7EDE7]">{visible.map(c=><div key={c.id} className="grid gap-3 p-5 sm:grid-cols-[minmax(0,1fr)_auto]">
-              <div className="min-w-0"><p className="text-[10px] font-bold uppercase tracking-wide text-[#2C2C31]">{businesses.find(b=>b.id===c.business_id)?.name||'Your business'} · {c.status}</p>
-                <p className="mt-2 line-clamp-3 whitespace-pre-wrap break-words text-[12px] leading-6 text-[#2C2C31]">{c.banner_text}</p>
-                <p className="mt-2 text-[10px] text-[#777780]">Created {day(c.created_at)} · {c.platforms?.join(', ')||'No channels'}{c.scheduled_at?' · Planned '+day(c.scheduled_at):''}</p></div>
-              <button type="button" onClick={()=>downloadText('slbi-campaign-'+c.id.slice(0,8)+'.txt',c.banner_text)} className="h-9 self-center border border-[#E7E7EC] px-3 text-[11px] font-semibold text-[#2C2C31]">Export copy</button>
-            </div>)}{!loading&&!visible.length&&<div className="p-8 text-center text-[12px] text-[#777780]">No saved campaigns match. Start with a business-aware brief.</div>}</div>
-          </div>}
-        </div>
+              <p className="mt-3 line-clamp-3 whitespace-pre-line break-words text-[12px] leading-6 text-[#5E5961]">{c.banner_text}</p>
+              <p className="mt-3 text-[10px] text-[#979097]">{copy.created} {formatDate(c.created_at)} · {c.platforms?.join(', ')||'—'} {c.scheduled_at?' · '+formatDate(c.scheduled_at):''}</p>
+            </div>
+            <div className="flex flex-wrap items-start gap-2 sm:max-w-[265px]">
+              {!c.is_archived&&c.status!=='posted'&&<button type="button" onClick={()=>openCampaign(c)} className={button+' border border-[#F1C49C] bg-[#FFF5ED] text-[#B45B16]'}>{copy.edit}</button>}
+              {!c.is_archived&&<button type="button" onClick={()=>openCampaign(c,true)} className={button+' border border-[#E8E3E3]'}>{copy.duplicate}</button>}
+              {!c.is_archived&&<button type="button" onClick={()=>openCampaign(c)} className={button+' border border-[#E8E3E3]'}>{copy.posterFromLibrary}</button>}
+              <button type="button" onClick={()=>exportText('slbi-campaign-'+c.id.slice(0,8)+'.txt',c.banner_text)} className={button+' border border-[#E8E3E3]'}>{copy.export}</button>
+              {c.status!=='posted'&&<button type="button" disabled={saving} onClick={()=>void changeArchive(c)}
+                className={button+' border border-[#E8E3E3] text-[#817780]'}>{c.is_archived?copy.restore:copy.archive}</button>}
+            </div>
+          </article>)}</div>
+          {!loading&&!visible.length&&<div className="p-10 text-center text-[12px] text-[#8D848A]">{copy.empty}</div>}
+        </section>}
       </div>
-      <footer className="border-t border-[#E7E7EC] pt-4 text-[10px] leading-5 text-[#777780]">Marketing workflow follows the SLBI Growth & Security OS roadmap. No invented reach, consent, AI generation or automatic publishing is reported.</footer>
     </div>
-  );
+    <footer className="px-3 text-[11px] leading-6 text-[#8A8187]">{copy.noAuto}</footer>
+  </main>;
 }
