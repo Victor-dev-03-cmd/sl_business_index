@@ -34,7 +34,8 @@ test('marketing creates owner-provided copy as exportable reviewed image, not a 
   assert.match(marketing,/portrait:\[1080,1350\]/);
   assert.match(marketing,/story:\[1080,1920\]/);
   assert.match(marketing,/DRAFT — REVIEW BEFORE PUBLISHING/);
-  assert.match(marketing,/Download branded PNG draft/);
+  assert.match(marketing,/copy.exportPoster/);
+  assert.match(marketing,/CampaignFormatSelector/);
   assert.doesNotMatch(marketing,/MarketingDesignEditor/);
   assert.doesNotMatch(marketing,/PromotionUploadForm/);
 });
