@@ -104,10 +104,16 @@ BEGIN
     );
   EXCEPTION WHEN insufficient_privilege THEN v_rejected:=true; END;
   IF NOT v_rejected THEN RAISE EXCEPTION 'Stale claimed callback resurrected tokens'; END IF;
+  -- Assert against the precise disconnected connection. Earlier independent
+  -- fixtures may have unrelated active credentials that this operation must
+  -- never delete across accounts or connection IDs.
   IF EXISTS(SELECT 1 FROM public.marketing_connection_secrets s
-    JOIN public.marketing_connections c ON c.id=s.connection_id
-    WHERE c.user_id=v_owner AND c.business_id=v_business)
-  THEN RAISE EXCEPTION 'Secret survived disconnect'; END IF;
+    WHERE s.connection_id=v_cid)
+  THEN RAISE EXCEPTION 'Disconnected connection secret survived purge'; END IF;
+  IF EXISTS(SELECT 1 FROM public.marketing_connections
+    WHERE user_id=v_owner AND business_id=v_business
+      AND external_account_id='stale-sub-123' AND status='connected')
+  THEN RAISE EXCEPTION 'Stale callback reconnected after disconnect'; END IF;
 
   v_rejected:=false;
   BEGIN

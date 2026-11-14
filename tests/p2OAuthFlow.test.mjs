@@ -102,7 +102,8 @@ test('start and callback do not trust browser identity or enable live sends',()=
   assert.match(start,/slbi_begin_marketing_oauth_intent/);
   assert.match(callback,/auth\.getUser\(\)/);
   assert.match(callback,/slbi_claim_marketing_oauth_intent/);
-  assert.match(callback,/slbi_store_verified_marketing_connection/);
+  assert.match(callback,/slbi_store_claimed_google_mail_connection/);
+  assert.match(callback,/p_intent_id:claimedIntentId/);
   assert.match(callback,/decryptPreviewValue/);
   assert.match(callback,/getMarketingAccessForUser/);
   assert.doesNotMatch(callback,/messages\/send|publishApproved|console\.log/);
