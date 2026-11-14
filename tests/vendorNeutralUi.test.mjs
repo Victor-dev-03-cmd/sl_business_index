@@ -86,8 +86,10 @@ test('owner workspace pages share restrained V7 shell without losing independent
   // styling rather than a legacy interactive client shell.
   const marketing=read('app/vendor/marketing/page.tsx');
   assert.match(marketing,/rounded-xl border border-\[#ECECF0\]/);
+  assert.match(marketing,/bg-\[#1D1D20\]/);
   assert.match(marketing,/bg-\[#FF7900\]/);
-  assert.match(marketing,/href="\/vendor\/marketing-engine"/);
+  assert.match(marketing,/MarketingAppStore/);
+  assert.doesNotMatch(vendorLayout,/name:'Marketing Engine',href:'\/vendor\/marketing-engine'/);
   assert.match(styles,/\.vendor-topbar-dropdown-panel/);
   assert.doesNotMatch(styles,/vendor-page-v7|vendor-page-v9|vendor-settings-v10/);
 });
