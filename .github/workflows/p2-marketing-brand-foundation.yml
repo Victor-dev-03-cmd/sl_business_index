@@ -31,6 +31,7 @@ on:
       - 'tests/p2-campaign/**'
       - 'tests/p2-poster-image/**'
       - 'tests/p2PosterImageAPI.test.mjs'
+      - 'tests/p2PosterStaffReviewRelease.test.mjs'
       - 'docs/growth/p2/**'
       - 'app/vendor/layout.tsx'
       - '.github/workflows/p2-marketing-brand-foundation.yml'
@@ -47,6 +48,7 @@ on:
       - 'tests/p2-campaign/**'
       - 'tests/p2-poster-image/**'
       - 'tests/p2PosterImageAPI.test.mjs'
+      - 'tests/p2PosterStaffReviewRelease.test.mjs'
       - 'tests/p2PosterDesign.test.mjs'
       - 'tests/p2PosterCreativeEngine.test.mjs'
       - 'tests/p2AiCaption.test.mjs'
@@ -78,7 +80,7 @@ jobs:
           node-version: '24'
       - name: Brand validation, page/API contract and existing Marketing Studio tests
         run: |
-          node --test tests/p2BrandProfile.test.mjs tests/p2AiCaption.test.mjs tests/p2PosterDesign.test.mjs tests/p2PosterCreativeEngine.test.mjs tests/p2PosterImageAPI.test.mjs tests/p2MarketingEngineShell.test.mjs tests/marketingStudioAppStore.test.mjs tests/p2GlobalMarketingLaunch.test.mjs tests/p2MarketingLoadingAndConnect.test.mjs tests/p2OAuthConnectors.test.mjs tests/p2OAuthFlow.test.mjs tests/p2OAuthDisconnect.test.mjs tests/p2OAuthCallbackRace.test.mjs tests/vendorNeutralUi.test.mjs
+          node --test tests/p2BrandProfile.test.mjs tests/p2AiCaption.test.mjs tests/p2PosterDesign.test.mjs tests/p2PosterCreativeEngine.test.mjs tests/p2PosterImageAPI.test.mjs tests/p2PosterStaffReviewRelease.test.mjs tests/p2MarketingEngineShell.test.mjs tests/marketingStudioAppStore.test.mjs tests/p2GlobalMarketingLaunch.test.mjs tests/p2MarketingLoadingAndConnect.test.mjs tests/p2OAuthConnectors.test.mjs tests/p2OAuthFlow.test.mjs tests/p2OAuthDisconnect.test.mjs tests/p2OAuthCallbackRace.test.mjs tests/vendorNeutralUi.test.mjs
           node --test tests/vendorSettingsQrMarketing2026.test.mjs tests/vendorPortalRelease.test.mjs
           node --test tests/p2CampaignReleaseCandidate.test.mjs
           node --test tests/p2CampaignV2.test.mjs
