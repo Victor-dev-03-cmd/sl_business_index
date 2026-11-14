@@ -75,8 +75,8 @@ test('Poster Studio begins as a simple chat-style idea composer, not a giant can
   const ui=read('app/vendor/marketing/design/page.tsx');
   assert.match(ui,/!draftReady&&<section/);
   assert.match(ui,/What poster shall we create today\?/);
-  assert.match(ui,/createSimpleDraft/);
-  assert.match(ui,/Create poster draft/);
+  assert.match(ui,/generateAiArtwork\(idea\.trim\(\)\)/);
+  assert.match(ui,/Generate AI poster/);
   assert.match(ui,/aria-label="Try an idea"/);
   assert.match(ui,/draftReady&&<div/);
   assert.match(ui,/Edit design · Advanced controls/);
@@ -93,7 +93,22 @@ test('Voice input, manual sharing and paid-provider protection remain honest',()
   assert.match(ui,/navigator\.canShare/);
   assert.match(ui,/Share \/ post manually/);
   assert.match(ui,/Automatic posting is not active/);
-  assert.match(ui,/if\(artGenerating\|\|!artPrompt\|\|!businessId\|\|!artServiceEnabled/);
-  assert.match(ui,/window\.confirm\('Generate ONE premium AI image/);
+  assert.match(ui,/if\(artGenerating\|\|subject\.length<5\|\|!businessId\|\|!artServiceEnabled/);
+  assert.match(ui,/window\.confirm\('Create ONE original AI artwork/);
   assert.doesNotMatch(ui,/AI poster published successfully/);
+});
+
+test('fake instant text-only image generation was removed from the primary path',()=>{
+  const ui=read('app/vendor/marketing/design/page.tsx');
+  assert.doesNotMatch(ui,/const createSimpleDraft/);
+  assert.doesNotMatch(ui,/id==='headline'\?\{\.\.\.l,value:headline\}/);
+  assert.match(ui,/\/api\/marketing\/poster\/capabilities/);
+  assert.match(ui,/not connected or funded yet/);
+  assert.match(ui,/Generate AI poster/);
+  assert.match(ui,/artGenerating\?'Generating real AI artwork/);
+  assert.match(ui,/await loadGeneratedArtwork\(result\.jobId\)/);
+  assert.match(ui,/setDraftReady\(true\)/);
+  assert.match(ui,/Manual design · not AI-generated/);
+  assert.match(ui,/Real AI poster generation is not available/);
+  assert.match(ui,/directional shadow|directional shadow/i);
 });
