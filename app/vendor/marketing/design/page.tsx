@@ -49,6 +49,7 @@ export default function PosterDesignStudio(){
   const [referenceSignature,setReferenceSignature]=useState('');
   const [price,setPrice]=useState<number|null>(null);
   const [available,setAvailable]=useState(false);
+  const [serviceReason,setServiceReason]=useState('');
   const [checking,setChecking]=useState(true);
   const [workspace,setWorkspace]=useState(false);
   const [busy,setBusy]=useState(false);
@@ -111,11 +112,12 @@ export default function PosterDesignStudio(){
     setChecking(true);
     try{
       const res=await fetch('/api/marketing/poster/capabilities',noStore);
-      const result=await res.json() as {available?:boolean;creditCost?:number};
+      const result=await res.json() as {available?:boolean;creditCost?:number;reason?:string};
       const ready=res.ok&&result.available===true&&Number.isInteger(result.creditCost)&&
         Number(result.creditCost)>0&&Number(result.creditCost)<=100;
       setAvailable(ready);setPrice(ready?Number(result.creditCost):null);
-    }catch{setAvailable(false);setPrice(null);}
+      setServiceReason(!ready?result.reason||'AI generation is unavailable.':'');
+    }catch{setAvailable(false);setPrice(null);setServiceReason('Cannot verify AI service readiness.');}
     finally{setChecking(false);}
   };
   const loadHistory=async()=>{
@@ -149,6 +151,7 @@ export default function PosterDesignStudio(){
   const chooseBusiness=(id:string)=>{
     if(busy)return;
     setBusinessId(id);clearArtwork();setWorkspace(false);setPhase('idle');
+    setAttachments(old=>{old.forEach(a=>{if(a.preview)URL.revokeObjectURL(a.preview);});return [];});
     setIdea('');setEditIdea('');setReferenceSummary('');setReferenceSignature('');
     setDirectReferenceId('');setMessage('');
   };
@@ -230,7 +233,7 @@ export default function PosterDesignStudio(){
     }
     if(refine&&!sourceJobId){setMessage('Open the existing poster you want to edit.');return;}
     if(!available||price===null){
-      setMessage('AI creation is temporarily unavailable or the daily limit has been reached.');return;
+      setMessage(serviceReason||'AI creation is unavailable or the daily limit is reached.');return;
     }
     if(refine&&directReferenceId){
       setMessage('Direct photo use is for new posters. Deselect it to edit your saved poster.');return;
@@ -357,6 +360,8 @@ export default function PosterDesignStudio(){
   const reset=()=>{
     if(busy)return;
     clearArtwork();setWorkspace(false);setPhase('idle');setPercent(0);
+    setAttachments(old=>{old.forEach(a=>{if(a.preview)URL.revokeObjectURL(a.preview);});return [];});
+    setReferenceSummary('');setReferenceSignature('');
     setIdea('');setEditIdea('');setDirectReferenceId('');setMessage('');setLastCharge(null);
   };
   const selectedHistory=history.filter(h=>h.business_id===businessId);
@@ -367,7 +372,7 @@ export default function PosterDesignStudio(){
     :phase==='failed'?'Generation could not be completed':'Ready';
   const serviceLabel=checking?'Checking AI provider…':available
     ?price+' Growth Credits per generation · Private AI image'
-    :'AI generation is currently unavailable or the daily limit is reached.';
+    :serviceReason||'AI generation is currently unavailable or the daily limit is reached.';
   const iconButton='inline-flex items-center justify-center gap-2 rounded-xl border border-[#E9E6E5] bg-white px-3 py-2.5 text-xs font-semibold text-[#615B5E] transition hover:border-[#EFAC78] hover:bg-[#FFF9F4] disabled:opacity-45';
   const composer=<div className="rounded-[25px] border border-[#E7E4E3] bg-white p-4 shadow-[0_18px_60px_rgba(30,24,20,.06)] sm:p-5">
     <div className="flex items-center justify-between gap-2">
