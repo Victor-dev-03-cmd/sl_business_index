@@ -24,6 +24,11 @@
 - **Cloudflare credentials NOT yet supplied/configured/verified** at this checkpoint. Owner needs Cloudflare dashboard → Workers AI → **Use REST API** → Create a Workers AI API Token, and copy **Account ID**. Custom token must have Workers AI Read/Edit permissions (per Cloudflare REST docs). Do NOT send secret token to chat or GitHub.
 - Add to SLBI Vercel **Production server-side** env (without `NEXT_PUBLIC_`): `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `SLBI_POSTER_IMAGE_PROVIDER=cloudflare`. Keep existing `SLBI_POSTER_IMAGE_AI_ENABLED` and database action/global attempt caps under deliberate control. No key values in code, logs or handoff.
 
+## Additional verified checkpoint — PR CI and Vercel credentials
+- GitHub **PR #85 code head `f29352994685cd58a2df23a07895cc83bf90530a` passed 6/6 workflows** (Next.js, Marketing/RLS, Billing/P1); this is NOT a real Cloudflare inference test. The main branch handoff was updated separately after the PR branch was created, so reconcile base before merge.
+- Vercel non-decrypted inventory checked: **no `CLOUDFLARE_API_TOKEN` nor `CLOUDFLARE_ACCOUNT_ID`** in SLBI Production. Current Production env **still says `SLBI_POSTER_IMAGE_PROVIDER=huggingface` and `SLBI_POSTER_IMAGE_AI_ENABLED=true`** at this checkpoint; these are existing legacy settings, not evidence that Cloudflare is live. Do not deploy until owner provides credentials and provider target is switched.
+- User action: Cloudflare Dashboard → Workers AI → Use REST API → Create a Workers AI API Token, copy Account ID. Save both only into Vercel Production; reveal no token in chat. After credentials are present, merge PR #85 and switch provider to `cloudflare` with a controlled, verified production release and owner test.
+
 ## Next exact tasks
 1. Owner creates/locates Cloudflare Workers AI Account ID and fine-grained API token; saves them in Vercel Production as server-side variables. Owner may send **redacted screenshot of variable names only**, not token. The developer can inspect non-decrypted env inventory via connected Vercel.
 2. Run CI on PR #85 with **exact commit head**: Next.js build and TypeScript, Poster Studio contracts, Marketing RLS, Billing, P1. Fix before merge. Confirm Cloudflare 4B response shape in a limited owner-approved live test; existing source tests alone do not prove model availability.
