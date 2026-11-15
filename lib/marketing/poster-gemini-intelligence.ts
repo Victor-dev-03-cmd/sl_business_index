@@ -134,7 +134,7 @@ export async function createGeminiPosterBrief(input:{
 }):Promise<PosterIntelligenceBrief>{
   const key=process.env.GEMINI_API_KEY?.trim();
   if(!key)throw new PosterIntelligenceError('unavailable');
-  const request=short(input.userRequest,400);
+  const request=short(input.userRequest,1200);
   if(request.length<5||input.facts.name.length<2)
     throw new PosterIntelligenceError('invalid-output');
   const system=[
@@ -154,6 +154,7 @@ export async function createGeminiPosterBrief(input:{
     'Translate meaning into English creativeDirectionEnglish, but preserve exact words',
     'from the supplied source when necessary. Be concise, specific and highly visual.',
     'Suggested headline and CTA are OPTIONAL artistic suggestions, never verified facts.',
+    'Return the JSON OBJECT matching these exact required keys and types, not the schema itself: '+JSON.stringify(schema),
   ].join(' ');
   const task={
     task:input.isEdit?'edit_this_existing_poster':'create_new_commercial_poster',
@@ -163,25 +164,33 @@ export async function createGeminiPosterBrief(input:{
     selectedBusinessFacts:input.facts,
     provenance:'Only selected owner-verified business listing. Empty fields are unknown.',
   };
-  const response=await fetch(GEMINI_ENDPOINT,{
+  let response:Response;
+  try{response=await fetch(GEMINI_ENDPOINT,{
     method:'POST',
     cache:'no-store',
     redirect:'error',
-    signal:AbortSignal.timeout(16000),
+    signal:AbortSignal.timeout(28000),
     headers:{'x-goog-api-key':key,'Content-Type':'application/json'},
     body:JSON.stringify({
       systemInstruction:{parts:[{text:system}]},
       contents:[{role:'user',parts:[{text:JSON.stringify(task)}]}],
       generationConfig:{
         responseMimeType:'application/json',
-        responseJsonSchema:schema,
+        // JSON mode plus explicit schema instructions avoid provider-side schema 400s.
         temperature:0.15,
-        maxOutputTokens:1100,
+        maxOutputTokens:2100,
       },
     }),
-  });
+  });}catch(err){
+    // Avoid logging request content or API keys; use safe error categories only.
+    console.warn('Poster Gemini prompt transport failed',err instanceof Error?err.name:'unknown');
+    throw new PosterIntelligenceError('unavailable');
+  }
   if(response.status===429)throw new PosterIntelligenceError('quota');
-  if(!response.ok)throw new PosterIntelligenceError('unavailable');
+  if(!response.ok){
+    console.warn('Poster Gemini prompt upstream HTTP failure',response.status);
+    throw new PosterIntelligenceError('unavailable');
+  }
   const raw=await response.text();
   if(raw.length>MAX_JSON_BYTES)throw new PosterIntelligenceError('invalid-output');
   let envelope:Record<string,unknown>;
@@ -190,7 +199,7 @@ export async function createGeminiPosterBrief(input:{
   const candidate=Array.isArray(candidates)?asRecord(candidates[0]):{};
   const parts=asRecord(candidate.content).parts;
   const text=Array.isArray(parts)?parts.map(p=>short(asRecord(p).text,6000)).join(''):'';
-  if(!text||text.length>7000)throw new PosterIntelligenceError('invalid-output');
+  if(!text||text.length>9000)throw new PosterIntelligenceError('invalid-output');
   try{return validatedBrief(JSON.parse(text))}
   catch{throw new PosterIntelligenceError('invalid-output');}
 }
