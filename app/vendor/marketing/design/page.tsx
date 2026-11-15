@@ -1,859 +1,290 @@
 'use client';
-import {useCallback,useEffect,useRef,useState} from 'react';
+/* eslint-disable @next/next/no-img-element */
+import {useEffect,useRef,useState} from 'react';
 import Link from 'next/link';
 import {supabase} from '@/lib/supabaseClient';
 import IconsaxIcon from '../../components/IconsaxIcon';
-import {
-  DESIGN_STYLES,POSTER_FORMATS,LAYER_LABELS,
-  newPosterBlueprint,parsePosterBlueprint,scalePosterBlueprint,
-  type PosterBlueprint,type PosterFormat,type EditableTextLayer,
-} from '@/lib/marketing/poster-design';
-import {type CaptionLanguage,type CaptionObjective} from '@/lib/marketing/caption-contract';
-import {
-  POSTER_STYLES,POSTER_STYLE_KEYS,POSTER_MOODS,POSTER_LAYOUTS,POSTER_OBJECTIVES,inferPosterArtStyle,
-  type PosterStyle,type PosterMood,type PosterLayout,type PosterObjective,
-} from '@/lib/marketing/poster-creative-engine';
-type Business={id:string;name:string;logo_url:string|null};
-type BrowserSpeechRecognition={
+import {POSTER_FORMATS,type PosterFormat} from '@/lib/marketing/poster-design';
+import {inferPosterArtStyle,type PosterLanguage} from '@/lib/marketing/poster-creative-engine';
+
+type Business={id:string;name:string};
+type HistoryItem={id:string;business_id:string;created_at:string};
+type SpeechRecognitionPort={
   lang:string;continuous:boolean;interimResults:boolean;
   onresult:((event:{results:ArrayLike<ArrayLike<{transcript:string}>>})=>void)|null;
   onerror:((event:{error?:string})=>void)|null;
   onend:(()=>void)|null;start:()=>void;stop:()=>void;
 };
-const panel='rounded-[20px] border border-[#E7E7EC] bg-white p-5 shadow-[0_6px_24px_rgba(23,23,30,.045)] sm:p-6';
-const input='mt-1.5 w-full rounded-lg border border-[#E4E4E8] bg-white px-3.5 py-2.5 text-xs text-[#27272C] outline-none focus:border-[#FF7900]';
-const selectInput=input+' appearance-none pr-12';
-const selectStyle={backgroundImage:'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 20 20\' fill=\'none\'%3E%3Cpath d=\'m5 7.5 5 5 5-5\' stroke=\'%23615A60\' stroke-width=\'1.8\' stroke-linecap=\'round\' stroke-linejoin=\'round\'/%3E%3C/svg%3E")',backgroundRepeat:'no-repeat',backgroundPosition:'right 16px center',backgroundSize:'16px 16px'} as const;
-const defaultPoster=newPosterBlueprint('Business name');
-const safeColor=(s:string)=>/^#[0-9A-Fa-f]{6}$/.test(s)?s:'#FFFFFF';
-const fileDownload=(name:string,blob:Blob)=>{
-  const url=URL.createObjectURL(blob);
-  const link=document.createElement('a');link.href=url;link.download=name;link.click();
-  window.setTimeout(()=>URL.revokeObjectURL(url),1500);
+type SpeechWindow=Window & {SpeechRecognition?:new()=>SpeechRecognitionPort;
+  webkitSpeechRecognition?:new()=>SpeechRecognitionPort};
+const noStore={cache:'no-store' as const,credentials:'same-origin' as const};
+const uuid=/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i;
+const formatNames:Record<PosterFormat,string>={
+  square:'Square post',portrait:'Portrait feed',story:'Story / WhatsApp',landscape:'Landscape',
 };
-function wrapPosterText(ctx:CanvasRenderingContext2D,text:string,maxWidth:number):string[]|null{
-  const lines:string[]=[];
-  const clusters=(word:string)=>typeof Intl.Segmenter==='undefined'?Array.from(word):
-    [...new Intl.Segmenter(undefined,{granularity:'grapheme'}).segment(word)].map(x=>x.segment);
-  for(const paragraph of text.replace(/\r/g,'').split('\n')){
-    if(!paragraph.trim()){lines.push('');continue;}
-    let current='';
-    for(const token of paragraph.split(/(\s+)/u).filter(Boolean)){
-      if(ctx.measureText(current+token).width<=maxWidth){current+=token;continue;}
-      if(current.trim()){lines.push(current.trimEnd());current='';}
-      if(ctx.measureText(token).width<=maxWidth){current=token.trimStart();continue;}
-      for(const letter of clusters(token.trim())){
-        if(current&&ctx.measureText(current+letter).width>maxWidth){lines.push(current);current='';}
-        if(ctx.measureText(letter).width>maxWidth)return null;
-        current+=letter;
-      }
-    }
-    lines.push(current.trimEnd());
-  }
-  return lines;
-}
-function drawPoster(canvas:HTMLCanvasElement,project:PosterBlueprint,backdrop:HTMLImageElement|null){
-  const dimensions=POSTER_FORMATS[project.format];
-  canvas.width=dimensions.width;canvas.height=dimensions.height;
-  const c=canvas.getContext('2d');
-  if(!c)return;
-  const w=dimensions.width,h=dimensions.height;
-  c.fillStyle=project.background;c.fillRect(0,0,w,h);
-  if(backdrop){
-    const scale=Math.max(w/backdrop.naturalWidth,h/backdrop.naturalHeight);
-    const wd=backdrop.naturalWidth*scale,hd=backdrop.naturalHeight*scale;
-    c.drawImage(backdrop,(w-wd)/2,(h-hd)/2,wd,hd);
-    // A directional shadow protects readable editable copy without hiding the
-    // valuable original AI hero subject beneath a uniform black overlay.
-    const readable=c.createLinearGradient(0,0,w*0.84,0);
-    readable.addColorStop(0,'rgba(8,9,14,.87)');
-    readable.addColorStop(0.45,'rgba(9,10,16,.69)');
-    readable.addColorStop(1,'rgba(10,11,17,.05)');
-    c.fillStyle=readable;c.fillRect(0,0,w,h);
-    const lower=c.createLinearGradient(0,h*.72,0,h);
-    lower.addColorStop(0,'rgba(8,9,14,0)');
-    lower.addColorStop(1,'rgba(8,9,14,.52)');
-    c.fillStyle=lower;c.fillRect(0,0,w,h);
-  }
-  const accent=project.accent;
-  if(backdrop){
-    // A light brand rule leaves the generated artwork in focus.
-    c.fillStyle=accent;c.fillRect(0,0,Math.max(9,w*.012),h);
-    c.fillRect(65,h-90,Math.min(150,w*.22),7);
-  }else if(project.style==='editorial'){
-    c.fillStyle=accent;c.fillRect(0,0,16,h);
-    c.fillRect(w-230,0,230,18);
-    c.strokeStyle=accent;c.lineWidth=5;c.strokeRect(57,72,w-114,h-144);
-  }else if(project.style==='spotlight'){
-    c.fillStyle=accent;c.beginPath();c.arc(w*0.9,h*0.12,Math.min(w,h)*0.47,0,Math.PI*2);c.fill();
-    c.fillStyle=project.background;c.beginPath();c.arc(w*0.9,h*0.12,Math.min(w,h)*0.34,0,Math.PI*2);c.fill();
-  }else if(project.style==='offset'){
-    c.fillStyle=accent;c.fillRect(w*0.63,0,w*0.37,h);
-    c.fillStyle=project.background;c.fillRect(w*0.66,36,w*.29,h-72);
-    c.fillStyle=accent;c.fillRect(50,h-160,Math.max(0,w-100),7);
-  }else{
-    c.strokeStyle=accent;c.lineWidth=7;c.beginPath();c.moveTo(78,65);c.lineTo(w-78,65);c.stroke();
-    c.beginPath();c.moveTo(78,h-80);c.lineTo(w-78,h-80);c.stroke();
-  }
-  // All text stays independently editable. Full export refuses overflow rather than cropping Tamil/Sinhala.
-  c.textBaseline='top';
-  const nonEmpty=[...project.layers].filter(layer=>layer.value.trim()).sort((a,b)=>a.y-b.y);
-  const layouts:Array<{layer:EditableTextLayer;size:number;lines:string[];lineHeight:number}>=[];
-  for(let i=0;i<nonEmpty.length;i++){
-    const layer=nonEmpty[i];
-    const maxWidth=w-layer.x-40;
-    const bottom=(nonEmpty[i+1]?.y??h-26)-16;
-    const maxHeight=bottom-layer.y;
-    let chosen:null|{size:number;lines:string[];lineHeight:number}=null;
-    if(maxWidth>40&&maxHeight>19){
-      for(let size=layer.fontSize;size>=16;size-=2){
-        c.font=(layer.bold?'800 ':'500 ')+size+'px "Noto Sans Tamil","Noto Sans Sinhala",system-ui,sans-serif';
-        const lines=wrapPosterText(c,layer.value,maxWidth);
-        const lineHeight=Math.ceil(size*1.25);
-        if(lines&&lines.length*lineHeight<=maxHeight&&
-            lines.every(line=>c.measureText(line).width<=maxWidth)){
-          chosen={size,lines,lineHeight};break;
-        }
-      }
-    }
-    if(!chosen){
-      c.fillStyle='rgba(32,20,20,.90)';c.fillRect(0,h-92,w,92);
-      c.fillStyle='#FFFFFF';c.font='600 22px system-ui,sans-serif';
-      c.fillText('Text does not fit. Edit or reposition layers before export.',32,h-62);
-      return false;
-    }
-    layouts.push({layer,...chosen});
-  }
-  for(const block of layouts){
-    c.font=(block.layer.bold?'800 ':'500 ')+block.size+'px "Noto Sans Tamil","Noto Sans Sinhala",system-ui,sans-serif';
-    c.fillStyle=safeColor(block.layer.color);
-    if(backdrop){
-      c.shadowColor='rgba(0,0,0,.50)';c.shadowBlur=12;
-      c.shadowOffsetY=3;
-    }
-    block.lines.forEach((line,i)=>c.fillText(line,block.layer.x,block.layer.y+i*block.lineHeight));
-    c.shadowColor='transparent';c.shadowBlur=0;c.shadowOffsetY=0;
-  }
-  return true;
-}
-export default function MarketingDesignEditor(){
-  const canvas=useRef<HTMLCanvasElement|null>(null);
-  const speech=useRef<BrowserSpeechRecognition|null>(null);
-  const [idea,setIdea]=useState('');
-  const [draftReady,setDraftReady]=useState(false);
-  const [voiceListening,setVoiceListening]=useState(false);
-  const drag=useRef<{id:EditableTextLayer['id'];offsetX:number;offsetY:number}|null>(null);
+const ideaChips=[
+  ['Festival','Design a premium festival greeting poster for my business'],
+  ['Special offer','Create an exciting promotion poster highlighting my real special offer'],
+  ['Food','Design an irresistible restaurant food promotion with professional photography'],
+  ['New arrival','Create a luxury new arrival announcement for my shop'],
+];
+export default function PosterCreativeChat(){
   const [businesses,setBusinesses]=useState<Business[]>([]);
   const [businessId,setBusinessId]=useState('');
-  const [poster,setPoster]=useState<PosterBlueprint>(()=>defaultPoster);
-  const [active,setActive]=useState<EditableTextLayer['id']>('headline');
-  const [imageData,setImageData]=useState<string|null>(null);
-  const [backdrop,setBackdrop]=useState<HTMLImageElement|null>(null);
-  const [message,setMessage]=useState('');
+  const [language,setLanguage]=useState<PosterLanguage>('ta');
+  const [format,setFormat]=useState<PosterFormat>('square');
+  const [idea,setIdea]=useState('');
+  const [editIdea,setEditIdea]=useState('');
+  const [sourceJobId,setSourceJobId]=useState('');
+  const [previewUrl,setPreviewUrl]=useState('');
+  const [history,setHistory]=useState<HistoryItem[]>([]);
+  const [price,setPrice]=useState<number|null>(null);
+  const [available,setAvailable]=useState(false);
+  const [checking,setChecking]=useState(true);
   const [busy,setBusy]=useState(false);
-  const [textOverflow,setTextOverflow]=useState(false);
-  const [aiLanguage,setAiLanguage]=useState<CaptionLanguage>('ta');
-  const [aiObjective,setAiObjective]=useState<CaptionObjective>('promotion');
-  const [aiBrief,setAiBrief]=useState('');
-  const [aiConditions,setAiConditions]=useState('');
-  const [aiCta,setAiCta]=useState('');
-  const [aiDraft,setAiDraft]=useState('');
-  const [aiBusy,setAiBusy]=useState(false);
-  const [artStyle,setArtStyle]=useState<PosterStyle>('cinematic-product');
-  const [artMood,setArtMood]=useState<PosterMood>('premium');
-  const [artLayout,setArtLayout]=useState<PosterLayout>('copy-left');
-  const [artObjective,setArtObjective]=useState<PosterObjective>('promotion');
-  const [artLanguage,setArtLanguage]=useState<CaptionLanguage>('ta');
-  const [artSubject,setArtSubject]=useState('');
-  const [artOffer,setArtOffer]=useState('');
-  const [artAudience,setArtAudience]=useState('');
-  const [artNotes,setArtNotes]=useState('');
-  const [artPrompt,setArtPrompt]=useState('');
-  const [artChecklist,setArtChecklist]=useState<string[]>([]);
-  const [artBusy,setArtBusy]=useState(false);
-  const [artGenerating,setArtGenerating]=useState(false);
-  const [artJobId,setArtJobId]=useState('');
-  const [artCredits,setArtCredits]=useState<number|null>(null);
-  const [artPrice,setArtPrice]=useState<number|null>(null);
-  const [artServiceEnabled,setArtServiceEnabled]=useState(false);
-  const [checkingAi,setCheckingAi]=useState(true);
+  const [listening,setListening]=useState(false);
+  const [message,setMessage]=useState('');
+  const [lastCharge,setLastCharge]=useState<number|null>(null);
+  const speech=useRef<SpeechRecognitionPort|null>(null);
+  const currentBlob=useRef<string|null>(null);
+  const [voiceForEdit,setVoiceForEdit]=useState(false);
+
+  const loadHistory=async(ownerId:string)=>{
+    const {data,error}=await supabase.from('marketing_poster_jobs')
+      .select('id,business_id,created_at').eq('user_id',ownerId)
+      .eq('state','completed').order('created_at',{ascending:false}).limit(18);
+    if(!error)setHistory((data||[]) as HistoryItem[]);
+  };
+  const checkService=async()=>{
+    try{
+      const response=await fetch('/api/marketing/poster/capabilities',noStore);
+      if(!response.ok)throw Error('Unavailable');
+      const info=await response.json() as {available?:boolean;creditCost?:number};
+      const ready=info.available===true&&Number.isInteger(info.creditCost)&&
+        Number(info.creditCost)>0&&Number(info.creditCost)<=100;
+      setAvailable(ready);setPrice(ready?Number(info.creditCost):null);
+    }catch{setAvailable(false);setPrice(null);}
+    finally{setChecking(false);}
+  };
   useEffect(()=>{
-    let current=true;
-    void fetch('/api/marketing/poster/capabilities',{credentials:'same-origin',cache:'no-store'})
-      .then(response=>response.ok?response.json():null)
-      .then((data:{available?:boolean;creditCost?:number}|null)=>{
-        if(!current)return;
-        const allowed=data?.available===true&&Number.isInteger(data?.creditCost)
-          &&Number(data?.creditCost)>0&&Number(data?.creditCost)<=100;
-        setArtServiceEnabled(allowed);
-        setArtPrice(allowed?Number(data?.creditCost):null);
-      }).catch(()=>{if(current){setArtServiceEnabled(false);setArtPrice(null)}})
-      .finally(()=>{if(current)setCheckingAi(false)});
-    return()=>{current=false};
-  },[]);
-  useEffect(()=>{
-    let active=true;
-    supabase.auth.getUser().then(async({data:{user}})=>{
-      if(!user||!active)return;
-      const {data}=await supabase.from('businesses').select('id,name,logo_url')
-        .eq('owner_id',user.id).order('name').limit(250);
-      if(!active)return;
-      const list=(data??[]) as Business[];setBusinesses(list);
-      setBusinessId(list[0]?.id||'');
-      if(list[0])setPoster(newPosterBlueprint(list[0].name));
-    });
-    return()=>{active=false};
-  },[]);
-  useEffect(()=>{
-    if(!imageData){setBackdrop(null);return;}
-    let alive=true;const img=new window.Image();
-    img.onload=()=>{if(alive)setBackdrop(img)};
-    img.onerror=()=>{if(alive)setMessage('This image could not be decoded.')};
-    img.src=imageData;
-    return()=>{alive=false};
-  },[imageData]);
-  useEffect(()=>{
-    const c=canvas.current;if(!c)return;
     let mounted=true;
-    const render=()=>setTextOverflow(!drawPoster(c,poster,backdrop));
-    void document.fonts.ready.then(()=>{if(mounted)render();});
-    render();
-    return()=>{mounted=false};
-  },[poster,backdrop,draftReady]);
-  useEffect(()=>{
-    if(!businessId)return;
-    let current=true;
-    const business=businesses.find(b=>b.id===businessId);
-    if(business)setPoster(p=>{
-      const layers=p.layers.map(l=>l.id==='business'?{...l,value:business.name}:l);
-      return {...p,layers};
+    void supabase.auth.getUser().then(async({data:{user}})=>{
+      if(!mounted||!user)return;
+      const {data}=await supabase.from('businesses').select('id,name')
+        .eq('owner_id',user.id).order('name').limit(250);
+      if(!mounted)return;
+      const owned=(data||[]) as Business[];
+      setBusinesses(owned);setBusinessId(owned[0]?.id||'');
+      await loadHistory(user.id);
     });
-    const ctrl=new AbortController();
-    void fetch('/api/marketing/brand-profile?businessId='+encodeURIComponent(businessId),{
-      cache:'no-store',credentials:'same-origin',signal:ctrl.signal,
-    }).then(r=>r.ok?r.json():null).then(v=>{
-      if(!current||!v?.profile)return;
-      setPoster(p=>({...p,
-        background:safeColor(v.profile.primary_color),
-        accent:safeColor(v.profile.accent_color),
-        foreground:safeColor(v.profile.secondary_color),
-        layers:p.layers.map(l=>l.id==='business'
-          ?{...l,value:v.profile.brand_name||business?.name||l.value}:l),
-      }));
-    }).catch(()=>{});
-    return()=>{current=false;ctrl.abort()};
-  },[businessId,businesses]);
-  const layer=poster.layers.find(l=>l.id===active);
-  const updateLayer=(key:keyof EditableTextLayer,value:string|number|boolean)=>{
-    setPoster(p=>({...p,layers:p.layers.map(l=>l.id===active?{...l,[key]:value}:l)}));
+    void checkService();
+    return()=>{mounted=false;speech.current?.stop();
+      if(currentBlob.current)URL.revokeObjectURL(currentBlob.current);};
+  },[]);
+
+  const openArtwork=async(jobId:string)=>{
+    if(!uuid.test(jobId))throw Error('Invalid private artwork ID.');
+    const res=await fetch('/api/marketing/poster/artwork?jobId='+encodeURIComponent(jobId),noStore);
+    if(!res.ok)throw Error('Unable to open this private image. Please sign in again.');
+    const blob=await res.blob();
+    if(blob.type!=='image/png'||blob.size<64||blob.size>12_000_000)
+      throw Error('Generated artwork was not a valid PNG.');
+    const newUrl=URL.createObjectURL(blob);
+    if(currentBlob.current)URL.revokeObjectURL(currentBlob.current);
+    currentBlob.current=newUrl;setPreviewUrl(newUrl);setSourceJobId(jobId);
   };
-  const getCoords=(e:React.PointerEvent<HTMLCanvasElement>)=>{
-    const el=canvas.current!,rect=el.getBoundingClientRect();
-    return {x:(e.clientX-rect.left)*el.width/rect.width,
-      y:(e.clientY-rect.top)*el.height/rect.height};
-  };
-  const onDown=(e:React.PointerEvent<HTMLCanvasElement>)=>{
-    const point=getCoords(e);
-    const found=[...poster.layers].reverse().find(l=>l.value.trim()
-      && point.x>=l.x-15 && point.x<=l.x+Math.max(240,Math.min(800,l.value.length*l.fontSize*.45))
-      && point.y>=l.y-20 && point.y<=l.y+l.fontSize*3.7);
-    if(!found)return;
-    setActive(found.id);
-    drag.current={id:found.id,offsetX:point.x-found.x,offsetY:point.y-found.y};
-    e.currentTarget.setPointerCapture(e.pointerId);
-  };
-  const onMove=(e:React.PointerEvent<HTMLCanvasElement>)=>{
-    if(!drag.current)return;
-    const point=getCoords(e),dragged=drag.current;
-    const {width,height}=POSTER_FORMATS[poster.format];
-    setPoster(p=>({...p,layers:p.layers.map(l=>l.id===dragged.id
-      ?{...l,x:Math.max(0,Math.min(width-40,Math.round(point.x-dragged.offsetX))),
-        y:Math.max(0,Math.min(height-40,Math.round(point.y-dragged.offsetY)))}
-      :l)}));
-  };
-  const onUp=(e:React.PointerEvent<HTMLCanvasElement>)=>{
-    drag.current=null;
-    if(e.currentTarget.hasPointerCapture(e.pointerId))e.currentTarget.releasePointerCapture(e.pointerId);
-  };
-  const onImage=(e:React.ChangeEvent<HTMLInputElement>)=>{
-    const file=e.target.files?.[0];if(!file)return;
-    if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>3*1024*1024){
-      setMessage('Upload a PNG, JPEG or WebP image under 3 MB.');return;
+  const selectedBusiness=businesses.find(x=>x.id===businessId);
+  const selectedHistory=history.filter(x=>x.business_id===businessId);
+  const submit=async(refine:boolean)=>{
+    const original=idea.trim();
+    const change=editIdea.trim();
+    if(!businessId||original.length<5&&!refine){
+      setMessage('Choose your business and describe the poster in a few words.');return;
     }
-    const reader=new FileReader();
-    reader.onload=()=>{if(typeof reader.result==='string'){setImageData(reader.result);setMessage('Local artwork imported. The text remains independently editable.')}};
-    reader.onerror=()=>setMessage('Could not read uploaded artwork.');
-    reader.readAsDataURL(file);
-  };
-  const startVoice=()=>{
-    if(voiceListening){speech.current?.stop();return;}
-    const speechBrowser=window as Window & {
-      SpeechRecognition?:new()=>BrowserSpeechRecognition;
-      webkitSpeechRecognition?:new()=>BrowserSpeechRecognition;
-    };
-    const Voice=speechBrowser.SpeechRecognition||speechBrowser.webkitSpeechRecognition;
-    if(!Voice){
-      setMessage('Voice typing is not supported by this browser. You can type in Tamil, Sinhala or English.');
-      return;
+    if(refine&&(!sourceJobId||change.length<5)){
+      setMessage('Choose your poster and describe exactly what you want changed.');return;
     }
+    if(!available||price===null){
+      setMessage('AI generation is currently unavailable. No image or credits will be charged.');return;
+    }
+    const text=original.length>=5?original:'Enhance this existing business marketing poster';
+    if(!window.confirm((refine?'Edit this SAME existing image':'Generate ONE new AI poster')+
+      ' using a real AI image model for '+price+' Growth Credits? The result stays private.'))return;
+    setBusy(true);setMessage(refine?'Editing your existing image with AI…':
+      'Generating a real premium marketing image…');
     try{
-      const recognition=new Voice();
-      recognition.lang=artLanguage==='ta'?'ta-LK':artLanguage==='si'?'si-LK':'en-LK';
-      recognition.continuous=false;recognition.interimResults=false;
-      recognition.onresult=e=>{
-        const heard=Array.from(e.results).map(item=>item[0]?.transcript||'').join(' ').trim();
-        if(heard)setIdea(current=>[current.trim(),heard].filter(Boolean).join(' ').slice(0,400));
+      const body:Record<string,unknown>={
+        businessId,format,style:inferPosterArtStyle(text),mood:'premium',
+        layout:'copy-left',objective:'promotion',language,
+        subject:text.slice(0,400),offer:'',audience:'',notes:'',
+        requestKey:crypto.randomUUID(),acceptedCredits:price,
       };
-      recognition.onerror=e=>{
-        setMessage(e.error==='not-allowed'?'Microphone permission was not granted. You can still type your idea.':
-          'Voice transcription was unavailable. Please type your idea instead.');
-      };
-      recognition.onend=()=>{setVoiceListening(false);speech.current=null;};
-      speech.current=recognition;
-      recognition.start();setVoiceListening(true);setMessage('');
-    }catch{
-      setVoiceListening(false);
-      setMessage('Could not start the microphone. Please type your idea instead.');
-    }
-  };
-  useEffect(()=>()=>speech.current?.stop(),[]);
-  const creativeBrief=()=>({
-    businessId,format:poster.format,style:artStyle,mood:artMood,
-    layout:artLayout,objective:artObjective,language:artLanguage,
-    subject:artSubject,offer:artOffer,audience:artAudience,notes:artNotes,
-  });
-  useEffect(()=>{setArtPrompt('');setArtChecklist([]);},[
-    businessId,poster.format,artStyle,artMood,artLayout,artObjective,
-    artLanguage,artSubject,artOffer,artAudience,artNotes,
-  ]);
-  const previewCreativePrompt=async(subjectOverride?:string)=>{
-    const subject=(subjectOverride??artSubject).trim();
-    if(artBusy||!businessId||subject.length<5){
-      setMessage('Choose a business and describe its real product or service.');return;
-    }
-    setArtBusy(true);setArtPrompt('');setArtChecklist([]);setMessage('');
-    try{
-      const response=await fetch('/api/marketing/poster/prompt',{
-        method:'POST',credentials:'same-origin',cache:'no-store',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({...creativeBrief(),subject}),
-      });
-      const result=await response.json() as {
-        creative?:{prompt?:string;qualityChecklist?:string[]};error?:string;
-      };
-      if(!response.ok)throw new Error(result.error||'Creative direction preview unavailable.');
-      if(!result.creative?.prompt)throw new Error('No creative direction was returned.');
-      setArtPrompt(result.creative.prompt);
-      setArtChecklist(result.creative.qualityChecklist||[]);
-      setMessage('Commercial art direction prepared. This is a prompt preview, not a billed image-generation request.');
-    }catch(e){setMessage(e instanceof Error?e.message:'Creative direction unavailable.');}
-    finally{setArtBusy(false);}
-  };
-  const loadGeneratedArtwork=async(jobId:string)=>{
-    const result=await fetch('/api/marketing/poster/artwork?jobId='+encodeURIComponent(jobId),{
-      credentials:'same-origin',cache:'no-store',
-    });
-    if(!result.ok)throw Error('Artwork was generated, but secure download is unavailable. Retry with the same job.');
-    const blob=await result.blob();
-    if(blob.type!=='image/png'||blob.size>12000000)
-      throw Error('Private artwork returned an invalid PNG file.');
-    const dataUrl=await new Promise<string>((resolve,reject)=>{
-      const reader=new FileReader();
-      reader.onload=()=>typeof reader.result==='string'?resolve(reader.result):reject(Error('Image decode failed.'));
-      reader.onerror=()=>reject(Error('Artwork could not be opened.'));
-      reader.readAsDataURL(blob);
-    });
-    // Decode and validate the actual generated image BEFORE revealing the canvas.
-    // An empty black frame must never flash as a supposedly completed AI result.
-    const decoded=new window.Image();
-    decoded.src=dataUrl;
-    await decoded.decode();
-    if(!decoded.naturalWidth||!decoded.naturalHeight)throw Error('Generated image could not be decoded.');
-    setBackdrop(decoded);
-    setImageData(dataUrl);
-  };
-  const generateAiArtwork=async(subjectOverride?:string)=>{
-    const subject=(subjectOverride??artSubject).trim();
-    if(artGenerating||subject.length<5||!businessId||!artServiceEnabled||artPrice===null){
-      setMessage('Real AI poster generation is not available. No fake poster will be generated and no credits will be charged.');return;
-    }
-    if(!window.confirm('Create ONE original AI artwork for exactly '+artPrice+' Growth Credits? This uses a real image model. Your poster remains a private draft until you approve publication.'))return;
-    setArtGenerating(true);setMessage('Creating a real AI poster image. Original commercial artwork can take a little while.');setArtCredits(null);
-    const autoStyle=subjectOverride?inferPosterArtStyle(subject):artStyle;
-    try{
+      if(refine){body.sourceJobId=sourceJobId;body.editInstruction=change;}
       const response=await fetch('/api/marketing/poster/generate',{
-        method:'POST',credentials:'same-origin',cache:'no-store',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({...creativeBrief(),subject,style:autoStyle,
-          requestKey:crypto.randomUUID(),acceptedCredits:artPrice}),
+        ...noStore,method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),
       });
-      const result=await response.json() as {
-        jobId?:string;artworkUrl?:string;chargedCredits?:number;error?:string;
-      };
-      if(!response.ok)throw Error(result.error||'AI artwork generation unavailable.');
-      if(!result.jobId||!result.artworkUrl)throw Error('Image generation completed without a usable asset.');
-      await loadGeneratedArtwork(result.jobId);
-      setArtJobId(result.jobId);
-      if(typeof result.chargedCredits==='number')setArtCredits(result.chargedCredits);
-      setArtSubject(subject);setAiBrief(subject);setArtStyle(autoStyle);
-      if(!draftReady){
-        const name=businesses.find(b=>b.id===businessId)?.name||'My business';
-        setPoster(previous=>{
-          const next=newPosterBlueprint(name,previous.format);
-          return {...next,background:previous.background,accent:previous.accent,
-            foreground:previous.foreground,style:'minimal',
-            layers:next.layers.map(layer=>
-              layer.id==='headline'?{...layer,value:('Discover '+name).slice(0,100)}:
-              layer.id==='price'||layer.id==='date'?{...layer,value:''}:layer)};
-        });
-      }
-      setDraftReady(true);
-      setMessage('Genuine AI artwork is ready. Review editable text and business facts before downloading or sharing.');
-    }catch(e){setMessage(e instanceof Error?e.message:'Unable to generate real AI artwork.');}
-    finally{setArtGenerating(false);}
-  };
-  const generateAiCopy=async()=>{
-    if(aiBusy||!businessId||aiBrief.trim().length<5){
-      setMessage('Choose an owned business and enter at least 5 characters about the offer.');return;
-    }
-    setAiBusy(true);setMessage('');setAiDraft('');
-    try{
-      // The existing caption endpoint rechecks verified Pro, RLS owner, Brand Kit,
-      // server enable flag and atomic credit reservation. Do not call a model from the browser.
-      const response=await fetch('/api/marketing/caption',{
-        method:'POST',credentials:'same-origin',cache:'no-store',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-          businessId,requestKey:crypto.randomUUID(),objective:aiObjective,
-          language:aiLanguage,message:aiBrief.trim(),
-          conditions:aiConditions.trim(),cta:aiCta.trim(),
-        }),
-      });
-      const result=await response.json() as {draft?:{caption?:unknown};error?:string};
-      if(!response.ok)throw new Error(result.error||'AI assistant unavailable.');
-      if(typeof result.draft?.caption!=='string'||!result.draft.caption.trim())
-        throw new Error('AI service returned no usable draft.');
-      setAiDraft(result.draft.caption);
-      setMessage('AI copy draft received. Verify facts and edit before applying it to the poster.');
-    }catch(error){setMessage(error instanceof Error?error.message:'AI assistant unavailable.');}
-    finally{setAiBusy(false);}
-  };
-  const applyAiHeadline=()=>{
-    const proposed=aiDraft.trim();
-    if(!proposed||proposed.length>250){
-      setMessage('Select or edit a short headline of 1–250 characters before applying it.');
-      return;
-    }
-    setPoster(current=>({...current,layers:current.layers.map(layer=>
-      layer.id==='headline'?{...layer,value:proposed}:layer)}));
-    setMessage('Applied to the editable headline layer. Review layout, claims and spelling before export.');
-  };
-  const exportPng=async()=>{
-    const c=canvas.current;if(!c)return;
-    setBusy(true);setMessage('');
-    try{
-      await document.fonts.ready;
-      if(!drawPoster(c,poster,backdrop))
-        throw Error('Text overflow: shorten or reposition the highlighted layers before PNG export.');
-      const blob=await new Promise<Blob|null>(resolve=>c.toBlob(resolve,'image/png'));
-      if(!blob)throw Error('Canvas export failed.');
-      fileDownload('slbi-original-'+poster.format+'-'+poster.style+'.png',blob);
-      setMessage('Full-size PNG exported. Verify the business facts, prices and text spelling before posting.');
-    }catch(error){setMessage(error instanceof Error?error.message:'Could not export PNG. Try another supported browser.');}
-    finally{setBusy(false);}
-  };
-  const sharePng=async()=>{
-    const c=canvas.current;if(!c)return;
-    setBusy(true);setMessage('');
-    try{
-      await document.fonts.ready;
-      if(!drawPoster(c,poster,backdrop))throw Error('Some text does not fit. Edit the poster before sharing.');
-      const blob=await new Promise<Blob|null>(resolve=>c.toBlob(resolve,'image/png'));
-      if(!blob)throw Error('Could not create a shareable PNG.');
-      const file=new File([blob],'slbi-poster-'+poster.format+'.png',{type:'image/png'});
-      if(navigator.share&&navigator.canShare?.({files:[file]})){
-        await navigator.share({files:[file],title:'My business poster'});
-        setMessage('Poster sent to your device share menu. Review and publish it in the app you choose.');
-      }else{
-        fileDownload(file.name,blob);
-        setMessage('Poster downloaded. Upload it to Facebook, Instagram or WhatsApp to publish manually.');
-      }
-    }catch(error){
-      if(error instanceof Error&&error.name==='AbortError')setMessage('Share cancelled. The design is unchanged.');
-      else setMessage(error instanceof Error?error.message:'Could not share this poster.');
+      const result=await response.json() as {jobId?:string;chargedCredits?:number;error?:string};
+      if(!response.ok||!result.jobId)throw Error(result.error||'AI provider did not create an image.');
+      await openArtwork(result.jobId);
+      const {data:{user}}=await supabase.auth.getUser();
+      if(user)await loadHistory(user.id);
+      setLastCharge(typeof result.chargedCredits==='number'?result.chargedCredits:null);
+      setEditIdea('');
+      setMessage(refine?'Your image was edited by AI. Review the result and request another change if needed.':
+        'Your real AI poster is ready. You can download it or edit it using another prompt.');
+    }catch(e){setMessage(e instanceof Error?e.message:'Image generation failed. No artwork was saved.');
+      // Re-read remaining daily capability: previous attempts may consume the cap,
+      // even if internal credits were refunded.
+      await checkService();
     }finally{setBusy(false);}
   };
-  const exportJson=()=>{
-    fileDownload('slbi-editable-poster.json',new Blob([JSON.stringify(poster,null,2)],{type:'application/json'}));
-    setMessage('Editable layout JSON exported. Local image upload is not embedded; keep the source artwork separately.');
-  };
-  const importJson=async(e:React.ChangeEvent<HTMLInputElement>)=>{
-    const f=e.target.files?.[0];if(!f)return;
-    if(f.size>40000){setMessage('Project JSON is too large.');return;}
+  const startVoice=(forEdit:boolean)=>{
+    if(listening){speech.current?.stop();return;}
+    const voice=window as SpeechWindow;
+    const Speech=voice.SpeechRecognition||voice.webkitSpeechRecognition;
+    if(!Speech){setMessage('Microphone typing is not available in this browser. Type your idea instead.');return;}
     try{
-      const input=JSON.parse(await f.text()) as unknown;
-      const validated=parsePosterBlueprint(input);
-      if(!validated)throw Error('Invalid design project.');
-      setPoster(validated);setMessage('Editable typography project restored. Reattach any separate background image.');
-    }catch{setMessage('Invalid or unsupported poster project JSON.');}
+      const rec=new Speech();
+      rec.lang=language==='ta'?'ta-LK':language==='si'?'si-LK':'en-LK';
+      rec.continuous=false;rec.interimResults=false;setVoiceForEdit(forEdit);
+      rec.onresult=e=>{
+        const heard=Array.from(e.results).map(v=>v[0]?.transcript||'').join(' ').trim();
+        if(forEdit)setEditIdea(v=>[v,heard].filter(Boolean).join(' ').slice(0,400));
+        else setIdea(v=>[v,heard].filter(Boolean).join(' ').slice(0,400));
+      };
+      rec.onerror=()=>setMessage('Could not transcribe that voice input. You can type instead.');
+      rec.onend=()=>{setListening(false);speech.current=null;};
+      speech.current=rec;rec.start();setListening(true);
+    }catch{setListening(false);setMessage('Microphone permission unavailable. Please type instead.');}
   };
-  const openManualEditor=()=>{
-    if(!businessId){setMessage('Choose your business to use the manual editor.');return;}
-    const name=businesses.find(b=>b.id===businessId)?.name||'My business';
-    setPoster(previous=>{
-      const next=newPosterBlueprint(name,previous.format);
-      return {...next,background:previous.background,accent:previous.accent,
-        foreground:previous.foreground,layers:next.layers.map(l=>
-          l.id==='headline'?{...l,value:('Discover '+name).slice(0,100)}:
-          l.id==='price'||l.id==='date'?{...l,value:''}:l)};
-    });
-    setArtJobId('');setDraftReady(true);
-    setMessage('Manual design editor opened. This is NOT AI-generated artwork; add your own photo or edit the layout.');
+  const download=async()=>{
+    if(!sourceJobId||!previewUrl)return;
+    const blob=await fetch(previewUrl).then(r=>r.blob());
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    a.download='slbi-ai-poster-'+format+'.png';a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),1000);
   };
-  const startNewPoster=()=>{
-    speech.current?.stop();setVoiceListening(false);setDraftReady(false);
-    setArtPrompt('');setArtChecklist([]);setArtJobId('');setArtCredits(null);
-    setArtSubject('');setArtOffer('');setArtAudience('');setArtNotes('');
-    setImageData(null);setMessage('');
+  const share=async()=>{
+    if(!previewUrl)return;
+    const blob=await fetch(previewUrl).then(r=>r.blob());
+    const image=new File([blob],'slbi-ai-poster.png',{type:'image/png'});
+    if(navigator.share&&navigator.canShare?.({files:[image]})){
+      try{await navigator.share({files:[image],title:'My AI business poster'});}
+      catch(e){if(e instanceof Error&&e.name!=='AbortError')setMessage('Sharing failed. Download and post manually.');}
+    }else{await download();setMessage('Image downloaded. Upload it manually to your social app.');}
   };
-  const setFormat=(format:PosterFormat)=>setPoster(p=>scalePosterBlueprint(p,format));
-  const dimensions=POSTER_FORMATS[poster.format];
-  return <div className="mx-auto max-w-[1120px] space-y-6 pb-16 text-[#26252A]">
-    <header className="flex flex-wrap items-center justify-between gap-3 px-1 pt-1">
+  const chooseOld=async(id:string)=>{
+    setBusy(true);setMessage('');
+    try{await openArtwork(id);setEditIdea('');setMessage('Saved AI poster opened. Describe any change to edit it.');}
+    catch(e){setMessage(e instanceof Error?e.message:'Could not open poster.');}
+    finally{setBusy(false);}
+  };
+  const reset=()=>{setSourceJobId('');setPreviewUrl('');setIdea('');setEditIdea('');
+    setLastCharge(null);setMessage('');};
+  const serviceLabel=checking?'Checking AI image provider…':available
+    ?'Real AI generation available · '+price+' Growth Credits per request'
+    :'AI generation currently unavailable. No fake image will be shown.';
+  return <main className="mx-auto max-w-[960px] space-y-7 px-3 pb-20 pt-3 text-[#252328] sm:px-5">
+    <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex items-center gap-3">
-        <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#1D1D20] text-[#FF9700] shadow-sm" aria-hidden="true">
-          <IconsaxIcon name="magic-star" size={22}/>
-        </span>
-        <div>
-          <p className="text-sm font-black tracking-tight">SLBI Creative AI</p>
-          <p className="text-[11px] text-[#898890]">Poster Studio · Pro</p>
-        </div>
+        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#1B1B1F] text-[#FF9A18]"><IconsaxIcon name="magic-star" size={21}/></div>
+        <div><p className="text-sm font-extrabold tracking-tight">SLBI Creative AI</p>
+          <p className="text-xs text-[#908994]">AI Poster Studio · Pro</p></div>
       </div>
-      <div className="flex items-center gap-2">
-        {draftReady&&<button type="button" onClick={startNewPoster}
-          className="rounded-full border border-[#E8E6EB] px-4 py-2 text-xs font-bold hover:bg-[#F7F6F7]">+ New poster</button>}
-        <Link href="/vendor/marketing" className="rounded-full border border-[#E8E6EB] px-4 py-2 text-xs font-semibold text-[#53505A] hover:bg-[#FAFAFB]">Back to Marketing</Link>
-      </div>
-    </header>
-    {message&&<div role="status" className="rounded-xl border border-[#F0D5B5] bg-[#FFF8F0] p-3 text-xs leading-5 text-[#87501F]">{message}</div>}
-    {!draftReady&&<section className="mx-auto flex min-h-[min(630px,75vh)] max-w-[720px] flex-col justify-center py-6 sm:py-10">
-      <div className="mb-8 text-center">
-        <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#F3DCC8] bg-[#FFF8F1] px-4 py-2 text-[11px] font-bold text-[#A5581D]">
-          <IconsaxIcon name="magic-star" size={15}/> Your AI creative companion
-        </p>
-        <h1 className="text-[clamp(28px,5vw,44px)] font-extrabold leading-[1.16] tracking-[-.045em]">
-          What poster shall we create today?
-        </h1>
-        <p className="mx-auto mt-3 max-w-[510px] text-sm leading-7 text-[#77737F]">
-          சொல்லுங்க, අපට කියන්න, or tell us in English. No design experience needed.
-        </p>
-      </div>
-      <div className="rounded-[26px] border border-[#E7E5E9] bg-white p-3 shadow-[0_16px_48px_rgba(25,25,32,.065)] sm:p-5">
-        <label htmlFor="simple-poster-business" className="block px-1 text-xs font-bold text-[#55515A]">My business</label>
-        <select id="simple-poster-business" className={selectInput+' !mt-2'} style={selectStyle}
-          value={businessId} onChange={e=>setBusinessId(e.target.value)}>
-          {!businesses.length&&<option value="">Choose your business</option>}
-          {businesses.map(b=><option value={b.id} key={b.id}>{b.name}</option>)}
-        </select>
-        <label htmlFor="poster-simple-idea" className="sr-only">Describe your poster</label>
-        <textarea id="poster-simple-idea" value={idea} maxLength={400}
-          onChange={e=>setIdea(e.target.value)}
-          onKeyDown={e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();void generateAiArtwork(idea.trim());}}}
-          placeholder="என் கடைக்கு ஒரு அழகான தீபாவளி offer poster வேணும்…"
-          className="mt-4 min-h-[142px] w-full resize-y border-0 bg-transparent px-1 py-2 text-[15px] leading-7 text-[#28262A] outline-none placeholder:text-[#A9A6AD]"/>
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#F0EDF0] pt-3">
-          <div className="flex items-center gap-2">
-            <button type="button" onClick={startVoice} aria-label={voiceListening?'Stop voice typing':'Speak your poster idea'}
-              aria-pressed={voiceListening}
-              className={'inline-flex h-11 items-center gap-2 rounded-full border px-3 text-xs font-bold '+(voiceListening?'border-[#F6B48A] bg-[#FFF0E5] text-[#9F4A12]':'border-[#E9E7EB] text-[#66616C] hover:bg-[#F7F6F8]')}>
-              <IconsaxIcon name="microphone-2" size={17}/> {voiceListening?'Listening…':'Speak'}
-            </button>
-            <label htmlFor="simple-poster-photo" className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-full border border-[#E9E7EB] px-3 text-xs font-bold text-[#66616C] hover:bg-[#F7F6F8]">
-              <IconsaxIcon name="image" size={17}/> {imageData?'My photo (manual)':'Use my photo manually'}
-            </label>
-            <input id="simple-poster-photo" type="file" accept="image/png,image/jpeg,image/webp" className="sr-only"
-              onChange={e=>{onImage(e);if(e.target.files?.[0]&&['image/png','image/jpeg','image/webp'].includes(e.target.files[0].type)&&e.target.files[0].size<=3*1024*1024)openManualEditor()}}/>
-          </div>
-          <button type="button" onClick={()=>void generateAiArtwork(idea.trim())}
-            disabled={!artServiceEnabled||artGenerating||!businessId||idea.trim().length<5}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#1E1D21] px-5 text-xs font-extrabold text-white transition hover:bg-[#36333A] disabled:cursor-not-allowed disabled:opacity-40">
-            <IconsaxIcon name="magic-star" size={17}/>
-            {artGenerating?'Generating real AI artwork…':artServiceEnabled&&artPrice!==null?'Generate AI poster · '+artPrice+' credits':'AI image service not connected'}
-          </button>
-        </div>
-      </div>
-      <div className="mt-4 flex flex-wrap justify-center gap-2" aria-label="Try an idea">
-        {[
-          ['Offer poster','என் கடைக்கான உண்மையான சிறப்பு சலுகை poster உருவாக்கு'],
-          ['Food promotion','Fresh Sri Lankan food promotion poster உருவாக்கு'],
-          ['New arrival','New arrivals பற்றிய modern shop poster உருவாக்கு'],
-          ['Festival','Festival greeting poster உருவாக்கு'],
-        ].map(([label,prompt])=><button key={label} type="button" onClick={()=>setIdea(prompt)}
-          className="rounded-full border border-[#E8E6EB] bg-white px-4 py-2 text-xs font-semibold text-[#66616C] hover:border-[#FFC48E] hover:bg-[#FFF9F2]">
-          {label}
-        </button>)}
-      </div>
-      <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
-        <span className="text-[11px] text-[#8A8790]">Voice language:</span>
-        {([['ta','தமிழ்'],['si','සිංහල'],['en','English']] as const).map(([code,label])=>
-          <button type="button" key={code} aria-pressed={artLanguage===code} onClick={()=>setArtLanguage(code)}
-            className={'rounded-full px-3 py-1.5 text-xs font-bold '+(artLanguage===code?'bg-[#FFF0E3] text-[#A45012]':'text-[#89848E] hover:bg-[#F8F7F8]')}>{label}</button>)}
-      </div>
-      <div className="mx-auto mt-5 max-w-[600px] rounded-2xl border border-[#EEDFCF] bg-[#FFFAF4] p-4 text-center text-xs leading-6 text-[#7D5B3C]">
-        {checkingAi?'Checking secure AI image generation…':artServiceEnabled&&artPrice!==null
-          ?'A real neural image model will create an original visual. Confirm the '+artPrice+' credit price before each request.'
-          :'Real AI image generation is not connected or funded yet. We will not turn your words into a black text box and pretend it is AI.'}
-        <div className="mt-2"><button type="button" onClick={openManualEditor}
-          className="rounded-full border border-[#DFD4C9] bg-white px-4 py-2 text-xs font-bold text-[#80634B]">Open manual designer (not AI)</button></div>
-      </div>
-      <p className="mt-3 text-center text-[11px] leading-5 text-[#9A949E]">
-        Browser voice typing depends on device support. Automatic social publishing is not enabled.
-      </p>
-    </section>}
-    {draftReady&&<div className="space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-4 rounded-[22px] border border-[#EAE8EC] bg-[#FCFBFC] px-5 py-4">
-        <div><p className="text-[11px] font-bold uppercase tracking-wide text-[#A35D28]">{artJobId?'AI-generated artwork · editable poster':'Manual design · not AI-generated'}</p>
-          <h1 className="mt-1 text-xl font-black tracking-tight">{artJobId?'Your AI poster is ready':'Your manual poster editor'}</h1>
-          <p className="mt-1 text-xs leading-5 text-[#807D86]">Tap the poster text to move it. Download or open Edit design for more control.</p>
-        </div>
-        <button type="button" onClick={startNewPoster}
-          className="rounded-full border border-[#E5E2E7] bg-white px-4 py-2 text-xs font-bold">Try another idea</button>
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        {Object.entries(POSTER_FORMATS).map(([key,value])=><button key={key} type="button"
-          onClick={()=>setFormat(key as PosterFormat)} aria-pressed={poster.format===key}
-          className={'rounded-full border px-3.5 py-2 text-xs font-semibold '+(poster.format===key?'border-[#EE9B54] bg-[#FFF2E7] text-[#A85312]':'border-[#E7E5EA] bg-white text-[#6B6771]')}>
-          {value.label}
-        </button>)}
-      </div>
-      {artPrompt&&!artJobId&&<div className="rounded-xl border border-[#E3E9E0] bg-[#F7FAF6] p-3 text-xs text-[#4A684F]">
-        Creative direction prepared; this prompt alone is not an AI-generated image.
-      </div>}
-      {!artServiceEnabled&&<div className="rounded-xl border border-[#EEE7E0] bg-[#FCFAF7] p-3 text-xs leading-5 text-[#847567]">
-        AI image generation and auto-posting are not configured yet. This is a manually editable layout, not an AI-generated picture.
-      </div>}
-    <div className="flex flex-col gap-5">
-      <details className={panel+' order-2 space-y-4'}>
-        <summary className="cursor-pointer text-sm font-extrabold text-[#343137]">Edit design · Advanced controls</summary>
-        <h2 className="text-sm font-extrabold">Creative controls</h2>
-        <label className="block text-xs font-bold">Business
-          <select className={selectInput} style={selectStyle} value={businessId} onChange={e=>setBusinessId(e.target.value)}>
-            {!businesses.length&&<option value="">Choose your business</option>}
-            {businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}
-          </select></label>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="block text-xs font-bold">Canvas format
-            <select className={selectInput} style={selectStyle} value={poster.format} onChange={e=>setFormat(e.target.value as PosterFormat)}>
-              {Object.entries(POSTER_FORMATS).map(([key,v])=><option key={key} value={key}>{v.label} · {v.width} × {v.height}</option>)}
-            </select></label>
-          <label className="block text-xs font-bold">Original layout
-            <select className={selectInput} style={selectStyle} value={poster.style} onChange={e=>setPoster(p=>({...p,style:e.target.value as typeof p.style}))}>
-              {DESIGN_STYLES.map(s=><option value={s} key={s}>{s[0].toUpperCase()+s.slice(1)}</option>)}
-            </select></label>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-3">
-          {(['background','accent','foreground'] as const).map(field=><label key={field} className="block text-[10px] font-bold capitalize">
-            {field}
-            <input type="color" value={safeColor(poster[field])} onChange={e=>setPoster(p=>({...p,[field]:e.target.value.toUpperCase()}))}
-              className="mt-2 h-11 w-full cursor-pointer rounded-lg border border-[#E7E7EA] bg-white p-1"/>
-          </label>)}
-        </div>
-        <div className="rounded-lg border border-[#ECECF0] bg-[#FBFBFC] p-4">
-          <label htmlFor="editor-artwork-upload" className="text-xs font-bold">Background artwork (local upload)</label>
-          <input id="editor-artwork-upload" type="file" accept="image/png,image/jpeg,image/webp"
-            className="mt-2 block w-full text-xs" onChange={onImage}/>
-          <p className="mt-2 text-[10px] leading-5 text-[#82828A]">Max 3 MB · PNG/JPEG/WebP. Local uploads stay in this browser. AI-created backgrounds (when enabled) are stored privately and retrieved with owner verification.</p>
-          {imageData&&<button type="button" onClick={()=>{setImageData(null);setBackdrop(null)}} className="mt-2 text-xs font-semibold text-[#B55616]">Remove background artwork</button>}
-        </div>
-        <section aria-label="Advanced AI image prompt engineering" className="rounded-[18px] border border-[#F3D6B7] bg-gradient-to-br from-[#FFF8F0] via-[#FFFFFF] to-[#F7F1EA] p-4 sm:p-5">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-[10px] font-extrabold uppercase tracking-[.14em] text-[#B95E16]">Creative Direction Engine · Pro</p>
-              <h3 className="mt-1 text-[16px] font-extrabold tracking-tight">Design an exceptional poster</h3>
-            </div>
-            <span className="shrink-0 rounded-full border border-[#F1D2B1] bg-white px-2.5 py-1 text-[10px] font-bold text-[#A65414]">Studio v1</span>
-          </div>
-          <p className="mt-2 text-[11px] leading-6 text-[#776A61]">A professional art-direction prompt adapts your brand colors, objective, subject, mood, layout and social size. Image artwork and editable Tamil/Sinhala/English text remain separate. Prompt preview makes no paid provider call.</p>
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            <label className="text-[11px] font-bold">Art direction
-              <select className={selectInput} style={selectStyle} value={artStyle} onChange={e=>setArtStyle(e.target.value as PosterStyle)}>
-                {POSTER_STYLE_KEYS.map(key=><option key={key} value={key}>{POSTER_STYLES[key].label}</option>)}
-              </select>
-            </label>
-            <label className="text-[11px] font-bold">Creative mood
-              <select className={selectInput} style={selectStyle} value={artMood} onChange={e=>setArtMood(e.target.value as PosterMood)}>
-                {POSTER_MOODS.map(item=><option value={item} key={item}>{item[0].toUpperCase()+item.slice(1)}</option>)}
-              </select>
-            </label>
-            <label className="text-[11px] font-bold">Text-safe composition
-              <select className={selectInput} style={selectStyle} value={artLayout} onChange={e=>setArtLayout(e.target.value as PosterLayout)}>
-                {POSTER_LAYOUTS.map(item=><option value={item} key={item}>{item.replace('copy-','Copy on ')}</option>)}
-              </select>
-            </label>
-            <label className="text-[11px] font-bold">Marketing objective
-              <select className={selectInput} style={selectStyle} value={artObjective} onChange={e=>setArtObjective(e.target.value as PosterObjective)}>
-                {POSTER_OBJECTIVES.map(item=><option value={item} key={item}>{item[0].toUpperCase()+item.slice(1)}</option>)}
-              </select>
-            </label>
-            <label className="col-span-2 text-[11px] font-bold">Poster language
-              <select className={selectInput} style={selectStyle} value={artLanguage} onChange={e=>setArtLanguage(e.target.value as CaptionLanguage)}>
-                <option value="en">English</option><option value="ta">தமிழ்</option><option value="si">සිංහල</option>
-              </select>
-            </label>
-          </div>
-          <label className="mt-4 block text-[11px] font-bold">What real product or service should the hero image depict?
-            <textarea className={input+' min-h-24 resize-y'} value={artSubject} maxLength={400}
-              placeholder="e.g., Freshly prepared Jaffna-style vegetarian lunch with authentic ingredients; no invented brand logos"
-              onChange={e=>setArtSubject(e.target.value)}/>
-          </label>
-          <label className="mt-3 block text-[11px] font-bold">Real offer or announcement (optional)
-            <input className={input} value={artOffer} maxLength={240} onChange={e=>setArtOffer(e.target.value)}
-              placeholder="Verified offer details only"/>
-          </label>
-          <label className="mt-3 block text-[11px] font-bold">Target customers (optional)
-            <input className={input} value={artAudience} maxLength={160} onChange={e=>setArtAudience(e.target.value)}
-              placeholder="e.g., families looking for local dining"/>
-          </label>
-          <label className="mt-3 block text-[11px] font-bold">Additional visual direction (optional)
-            <textarea className={input+' min-h-16 resize-y'} value={artNotes} maxLength={340} onChange={e=>setArtNotes(e.target.value)}
-              placeholder="Materials, season, desired camera angle, scene mood"/>
-          </label>
-          <button type="button" onClick={()=>void previewCreativePrompt()} disabled={artBusy||!businessId||artSubject.trim().length<5}
-            className="mt-4 w-full rounded-xl bg-[#F77C12] px-4 py-3.5 text-[12px] font-extrabold text-[#231C16] shadow-[0_8px_20px_rgba(255,121,0,.13)] transition hover:bg-[#FFA04A] disabled:cursor-not-allowed disabled:opacity-50">
-            {artBusy?'Preparing art direction…':'Prepare premium creative prompt · No charge'}
-          </button>
-          {artPrompt&&<div className="mt-4 space-y-3 rounded-xl border border-[#EED9C6] bg-white p-3">
-            <p className="text-[11px] font-bold text-[#4B3C32]">Production-ready art direction · editable-text safe</p>
-            <textarea aria-label="Generated premium art direction" readOnly value={artPrompt}
-              className="h-48 w-full resize-y rounded-lg bg-[#F8F8F7] p-3 font-mono text-[10px] leading-5 text-[#494445]"/>
-            <button type="button" onClick={()=>void navigator.clipboard.writeText(artPrompt).then(()=>setMessage('Creative prompt copied. No model call or charge.')).catch(()=>setMessage('Copy unavailable in this browser.'))}
-              className="rounded-lg bg-[#252326] px-4 py-2.5 text-[11px] font-bold text-white">Copy approved creative prompt</button>
-            <div className="rounded-lg border border-[#E8CBB4] bg-[#FFF6ED] p-3">
-              <p className="text-[11px] leading-5 text-[#865B3B]">AI image generation requires verified Pro, private storage and a capped platform budget. {artServiceEnabled&&artPrice!==null?'Current price: '+artPrice+' Growth Credits per generated image.':'Image generation is currently unavailable; no credits can be spent. The prompt preview remains available at no charge.'}</p>
-              <button type="button" onClick={()=>void generateAiArtwork()} disabled={artGenerating||!artServiceEnabled||artPrice===null}
-                className="mt-3 w-full rounded-lg bg-[#FF7900] px-4 py-3 text-[12px] font-extrabold text-[#261B15] disabled:opacity-50">
-                {artGenerating?'Generating private AI artwork…':artServiceEnabled&&artPrice!==null?'Generate one artwork · '+artPrice+' credits':'AI image generation · Coming soon'}
-              </button>
-              {artJobId&&<div className="mt-2 space-y-2">
-                <p className="text-[10px] text-[#6A625D]">{artCredits===null?'Artwork created.':artCredits+' Growth Credits charged for this image.'}</p>
-                <button type="button" disabled={artGenerating} onClick={()=>void loadGeneratedArtwork(artJobId).then(()=>setMessage('Private image loaded.')).catch(e=>setMessage(String(e)))}
-                  className="text-[11px] font-bold text-[#9B541F] underline">Reload my private artwork</button>
-              </div>}
-            </div>
-            {artChecklist.length>0&&<div className="border-t border-[#F0E6DE] pt-3">
-              <p className="text-[10px] font-bold uppercase tracking-wide text-[#A56127]">Artwork quality review</p>
-              <ul className="mt-2 space-y-1">{artChecklist.map(item=><li key={item} className="text-[11px] leading-5 text-[#70665D]">• {item}</li>)}</ul>
-            </div>}
-          </div>}
-        </section>
-        <section aria-label="AI poster copy assistant" className="rounded-xl border border-[#F2D8BE] bg-[#FFF8F1] p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div><p className="text-[10px] font-black uppercase tracking-[.12em] text-[#B85C12]">AI Creative Assistant · Pro</p>
-              <h3 className="mt-1 text-[15px] font-extrabold">Generate editable poster copy</h3></div>
-            <span className="rounded-full bg-[#242326] px-2.5 py-1 text-[10px] font-bold text-white">Review first</span>
-          </div>
-          <p className="mt-2 text-[11px] leading-5 text-[#806A58]">Uses the existing protected AI Caption service and credit reservation. Disabled until a verified plan, owner Brand Kit and approved provider budget are available. No image-model calls, charges or auto-publishing are initiated by opening this studio.</p>
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            <label className="text-[11px] font-bold">Language
-              <select className={selectInput} style={selectStyle} value={aiLanguage} onChange={e=>setAiLanguage(e.target.value as CaptionLanguage)}>
-                <option value="en">English</option><option value="ta">தமிழ்</option><option value="si">සිංහල</option>
-              </select></label>
-            <label className="text-[11px] font-bold">Objective
-              <select className={selectInput} style={selectStyle} value={aiObjective} onChange={e=>setAiObjective(e.target.value as CaptionObjective)}>
-                <option value="promotion">Promotion</option><option value="awareness">Awareness</option>
-                <option value="enquiries">Enquiries</option><option value="announcement">Announcement</option>
-              </select></label>
-          </div>
-          <label className="mt-3 block text-[11px] font-bold">Offer / business facts
-            <textarea className={input+' min-h-24 resize-y'} value={aiBrief} maxLength={600}
-              placeholder="Describe only confirmed products, offers and factual details" onChange={e=>setAiBrief(e.target.value)}/></label>
-          <label className="mt-3 block text-[11px] font-bold">Conditions (optional)
-            <input className={input} maxLength={300} value={aiConditions} onChange={e=>setAiConditions(e.target.value)}/></label>
-          <label className="mt-3 block text-[11px] font-bold">Call to action (optional)
-            <input className={input} maxLength={180} value={aiCta} onChange={e=>setAiCta(e.target.value)}/></label>
-          <button type="button" onClick={()=>void generateAiCopy()} disabled={aiBusy||!businessId||aiBrief.trim().length<5}
-            className="mt-4 w-full rounded-lg bg-[#252326] px-4 py-3 text-[12px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-50">
-            {aiBusy?'Generating secured draft…':'Generate AI copy (credits may apply)'}
-          </button>
-          {aiDraft&&<div className="mt-4 space-y-2">
-            <label className="block text-[11px] font-bold">Review the AI draft · choose a short headline
-              <textarea className={input+' min-h-28 resize-y'} value={aiDraft} onChange={e=>setAiDraft(e.target.value)}
-                maxLength={3000}/></label>
-            <p className="text-[10px] text-[#806A58]">The headline layer accepts up to 250 characters. Long captions remain editable here; they will never be silently truncated.</p>
-            <button type="button" onClick={applyAiHeadline} className="rounded-lg border border-[#E5B98E] bg-white px-4 py-2 text-[11px] font-bold text-[#95501E]">Apply reviewed headline to poster</button>
-          </div>}
-        </section>
-        <div className="border-t border-[#EEEEF0] pt-4">
-          <h3 className="text-sm font-bold">Editable text layers</h3>
-          <p className="mt-1 text-[11px] leading-5 text-[#85858A]">Choose a layer to change the text, color, size and position. Drag directly on the poster to move it.</p>
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            {poster.layers.map(l=><button key={l.id} type="button" onClick={()=>setActive(l.id)}
-              className={'rounded-lg border px-3 py-2 text-left text-[11px] font-bold '+(active===l.id?'border-[#F3AE72] bg-[#FFF2E5] text-[#A8520C]':'border-[#E3E3E8] bg-white text-[#60606A]')}>
-              {LAYER_LABELS[l.id]}
-            </button>)}
-          </div>
-          {layer&&<div className="mt-4 space-y-3 rounded-lg border border-[#F1E0CE] bg-[#FFFCF8] p-4">
-            <label className="block text-xs font-bold">{layer.label}
-              <textarea className={input+' min-h-16 resize-y'} value={layer.value} maxLength={250}
-                onChange={e=>updateLayer('value',e.target.value)}/></label>
-            <div className="grid grid-cols-2 gap-3">
-              <label className="block text-xs font-bold">Font size
-                <input type="number" min={16} max={125} className={input}
-                  value={layer.fontSize} onChange={e=>updateLayer('fontSize',Math.min(125,Math.max(16,Number(e.target.value)||16)))}/></label>
-              <label className="block text-xs font-bold">Text color
-                <input type="color" className="mt-1.5 h-10 w-full rounded-lg border bg-white p-1"
-                  value={layer.color} onChange={e=>updateLayer('color',e.target.value.toUpperCase())}/></label>
-              <label className="block text-xs font-bold">X position
-                <input type="number" min={0} max={dimensions.width} className={input}
-                  value={layer.x} onChange={e=>updateLayer('x',Math.min(dimensions.width,Math.max(0,Number(e.target.value)||0)))}/></label>
-              <label className="block text-xs font-bold">Y position
-                <input type="number" min={0} max={dimensions.height} className={input}
-                  value={layer.y} onChange={e=>updateLayer('y',Math.min(dimensions.height,Math.max(0,Number(e.target.value)||0)))}/></label>
-            </div>
-            <label className="inline-flex items-center gap-2 text-xs font-bold"><input type="checkbox" checked={layer.bold}
-              onChange={e=>updateLayer('bold',e.target.checked)} className="accent-[#FF7900]"/> Bold typography</label>
-          </div>}
-        </div>
-      </details>
-      <section className={panel+' order-1 min-w-0'}>
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <div><h2 className="text-sm font-extrabold">Poster preview</h2>
-            <p className="mt-1 text-xs text-[#8A8A91]">{dimensions.width} × {dimensions.height} · drag a text layer to reposition</p></div>
-          <button type="button" onClick={()=>setPoster(newPosterBlueprint(businesses.find(b=>b.id===businessId)?.name||'Business name',poster.format))}
-            className="rounded-lg border border-[#E8E8EC] px-3 py-2 text-xs font-semibold">Reset design</button>
-        </div>
-        <div className="mx-auto w-full max-w-[350px] rounded-lg border border-[#E8E8EA] bg-[#F0F0F3] p-3">
-          <canvas ref={canvas} aria-label="Editable poster artwork preview" role="img"
-            onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
-            className="mx-auto block h-auto max-w-full cursor-move rounded-md shadow-lg"
-            style={{width:'auto',height:'auto',maxWidth:'100%',maxHeight:'450px',touchAction:'none'}}/>
-        </div>
-        {textOverflow&&<p role="alert" className="mt-4 rounded-lg border border-[#EDBE91] bg-[#FFF2E7] p-3 text-[11px] font-semibold text-[#9B521D]">Some poster text does not fit the current layout. Shorten or reposition layers; PNG export is blocked rather than clipping multilingual text.</p>}
-        <div className="mt-5 grid gap-3 sm:grid-cols-2">
-          <button type="button" onClick={()=>void exportPng()} disabled={busy}
-            className="h-11 rounded-lg bg-[#222226] px-4 text-xs font-extrabold text-white disabled:opacity-40">
-            Export full-size PNG
-          </button>
-          <button type="button" onClick={()=>void sharePng()} disabled={busy}
-            className="h-11 rounded-lg border border-[#E7E7EC] px-4 text-xs font-bold text-[#34343C] disabled:opacity-40">
-            Share / post manually
-          </button>
-        </div>
-        <details className="mt-4 rounded-lg border border-[#ECE9EE] p-3">
-          <summary className="cursor-pointer text-xs font-bold text-[#64616A]">Save or restore editable design</summary>
-          <button type="button" onClick={exportJson}
-            className="mt-3 rounded-lg border border-[#E7E7EC] px-4 py-2 text-xs font-semibold">Export editable JSON</button>
-          <label className="mt-3 block text-xs font-bold">Import saved typography design JSON
-          <input type="file" accept=".json,application/json" className="mt-2 block w-full text-xs" onChange={e=>void importJson(e)}/>
-        </label>
-        </details>
-        <p className="mt-3 text-center text-[11px] text-[#88828A]">Automatic posting is not active. Social account connection and publishing approval will be introduced separately.</p>
-        <div className="mt-5 rounded-lg border border-[#F1D7B8] bg-[#FFFAF4] p-4 text-[11px] leading-6 text-[#6E5130]">
-          Names, prices, dates and phone numbers remain editable layers. AI-written copy requires human review and never initiates publishing.
-          AI image generation, billing flags and cloud project persistence need separate owner-approved production release.
-        </div>
-      </section>
+      <Link href="/vendor/marketing" className="rounded-full border border-[#E8E4EA] px-4 py-2 text-xs font-bold text-[#6E6874]">Back to Marketing</Link>
     </div>
-    </div>}
-  </div>;
+    <div role="status" aria-live="polite">
+      {message&&<p className="rounded-2xl border border-[#F2D9B8] bg-[#FFF9F0] p-4 text-sm leading-6 text-[#784B25]">{message}</p>}
+    </div>
+    {!previewUrl&&<section className="mx-auto max-w-[710px] space-y-5 py-7 sm:py-12">
+      <div className="text-center">
+        <span className="rounded-full border border-[#F3DCC9] bg-[#FFF8F1] px-4 py-2 text-[11px] font-bold text-[#9A501A]">✦ Your AI creative companion</span>
+        <h1 className="mt-6 text-[clamp(28px,5vw,42px)] font-black leading-[1.18] tracking-[-.04em]">What poster shall we create today?</h1>
+        <p className="mt-3 text-sm leading-6 text-[#88808C]">தமிழ், සිංහල or English — சொல்லுங்கள். AI design செய்யும்.</p>
+      </div>
+      <div className="rounded-[27px] border border-[#E6E2E9] bg-white p-4 shadow-[0_18px_54px_rgba(28,26,32,.06)] sm:p-5">
+        <label htmlFor="creative-business" className="text-xs font-bold">My business</label>
+        <select id="creative-business" value={businessId} onChange={e=>setBusinessId(e.target.value)}
+          className="mt-2 w-full appearance-none rounded-xl border border-[#E7E4E8] bg-white px-4 py-3 pr-10 text-sm focus:border-[#FF8300]"
+          style={{backgroundImage:"url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Cpath d=%27m6 9 6 6 6-6%27 fill=%27none%27 stroke=%27%2364646b%27 stroke-width=%272%27/%3E%3C/svg%3E')",backgroundPosition:'right 16px center',backgroundSize:'18px 18px',backgroundRepeat:'no-repeat'}}>
+          {!businesses.length&&<option value="">No business available</option>}
+          {businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}
+        </select>
+        <label htmlFor="creative-prompt" className="sr-only">Describe your AI poster</label>
+        <textarea id="creative-prompt" value={idea} onChange={e=>setIdea(e.target.value)}
+          maxLength={400} rows={5} placeholder="என் website development service-க்கு premium தீபாவளி offer poster உருவாக்கு…"
+          onKeyDown={e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();void submit(false);}}}
+          className="mt-4 w-full resize-y rounded-xl border-0 px-1 py-3 text-[15px] leading-7 outline-none placeholder:text-[#A5A0AA]"/>
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#F0ECF0] pt-3">
+          <button onClick={()=>startVoice(false)} disabled={busy} type="button"
+            aria-pressed={listening&&!voiceForEdit} className="rounded-full border border-[#E8E5E8] px-4 py-2.5 text-xs font-bold">
+            <IconsaxIcon name="microphone-2" size={16}/> {listening&&!voiceForEdit?'Listening…':'Speak'}
+          </button>
+          <button onClick={()=>void submit(false)} type="button"
+            disabled={busy||checking||!available||!businessId||idea.trim().length<5}
+            className="rounded-full bg-[#222125] px-5 py-3 text-xs font-extrabold text-white hover:bg-[#403C42] disabled:cursor-not-allowed disabled:opacity-40">
+            <IconsaxIcon name="magic-star" size={15}/> {busy?'Generating…':'Generate AI poster'}
+          </button>
+        </div>
+      </div>
+      <div className="flex flex-wrap justify-center gap-2" aria-label="Try an idea">
+        {ideaChips.map(([label,prompt])=><button type="button" key={label} onClick={()=>setIdea(prompt)}
+          className="rounded-full border border-[#E6E2E7] px-4 py-2 text-xs font-semibold text-[#665F6B] hover:border-[#FFC18D]">{label}</button>)}
+      </div>
+      <div className="flex flex-wrap items-center justify-center gap-3">
+        <span className="text-xs text-[#8C858F]">Voice language</span>
+        {([['ta','தமிழ்'],['si','සිංහල'],['en','English']] as const).map(([value,name])=>
+          <button key={value} type="button" onClick={()=>setLanguage(value)}
+            aria-pressed={language===value}
+            className={'rounded-full px-3 py-1.5 text-xs font-bold '+(language===value?'bg-[#FFF0E3] text-[#AE5C21]':'text-[#89828A]')}>{name}</button>)}
+      </div>
+      <p className="text-center text-xs text-[#7D7680]">{serviceLabel}</p>
+      <p className="text-center text-[11px] text-[#A19AA3]">Real image generation only. No manual designer, and nothing is posted automatically.</p>
+    </section>}
+    {!!previewUrl&&<section className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div><p className="text-xs font-bold uppercase tracking-wide text-[#A95B1D]">AI-generated image</p>
+          <h1 className="text-2xl font-extrabold tracking-tight">Your poster is ready</h1>
+          <p className="mt-1 text-xs text-[#77717B]">Describe a change below — AI will edit this image itself.</p></div>
+        <button type="button" onClick={reset} className="rounded-full border border-[#E6E2E7] px-4 py-2 text-xs font-bold">+ New poster</button>
+      </div>
+      <div className="rounded-[24px] border border-[#E8E4E9] bg-[#FAF9FB] p-4 sm:p-6">
+        <img src={previewUrl} alt="Your real AI-generated marketing artwork" className="mx-auto max-h-[620px] w-auto max-w-full rounded-xl object-contain shadow-lg"/>
+        <div className="mt-5 flex flex-wrap justify-center gap-2">
+          <button type="button" onClick={()=>void download()} className="rounded-full bg-[#242126] px-5 py-2.5 text-xs font-extrabold text-white">Download PNG</button>
+          <button type="button" onClick={()=>void share()} className="rounded-full border border-[#DDD9E0] bg-white px-5 py-2.5 text-xs font-bold">Share manually</button>
+        </div>
+      </div>
+      <div className="rounded-[24px] border border-[#E8E4E9] bg-white p-4 sm:p-5">
+        <label htmlFor="ai-edit-prompt" className="text-sm font-extrabold">What should AI change in this image?</label>
+        <textarea id="ai-edit-prompt" value={editIdea} onChange={e=>setEditIdea(e.target.value)}
+          placeholder="உதாரணம்: Background-ஐ gold ஆக்கி, product-ஐ மட்டும் மாற்றாமல் வை…"
+          maxLength={400} rows={3} className="mt-3 w-full resize-y rounded-xl border border-[#E7E3E9] p-3 text-sm leading-6 outline-none focus:border-[#F9A44E]"/>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+          <button type="button" onClick={()=>startVoice(true)} className="rounded-full border border-[#E9E5EA] px-4 py-2 text-xs font-bold">
+            <IconsaxIcon name="microphone-2" size={15}/> {listening&&voiceForEdit?'Listening…':'Speak change'}
+          </button>
+          <button type="button" onClick={()=>void submit(true)}
+            disabled={busy||!available||editIdea.trim().length<5}
+            className="rounded-full bg-[#212025] px-5 py-2.5 text-xs font-extrabold text-white disabled:opacity-40">
+            {busy?'Editing image…':'Edit this image with AI'}
+          </button>
+        </div>
+        {lastCharge!==null&&<p className="mt-2 text-[11px] text-[#8B838C]">Last successful generation charged {lastCharge} Growth Credits. AI edits use the same displayed credit price.</p>}
+      </div>
+    </section>}
+    <section className="space-y-3 border-t border-[#F0ECF0] pt-6">
+      <h2 className="text-sm font-bold">Your recent AI posters</h2>
+      {!selectedHistory.length?<p className="text-xs text-[#89818B]">No saved AI posters yet. Successfully generated images will appear here.</p>:
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+          {selectedHistory.map(item=><button type="button" key={item.id} onClick={()=>void chooseOld(item.id)}
+            className={'overflow-hidden rounded-xl border p-1 '+(item.id===sourceJobId?'border-[#FCA24F]':'border-[#E7E2E8]')}>
+            <img src={'/api/marketing/poster/artwork?jobId='+item.id}
+              alt={'Generated poster from '+new Date(item.created_at).toLocaleDateString()} loading="lazy"
+              className="aspect-square w-full rounded-lg object-cover"/>
+            <span className="block px-1 py-1 text-[10px] text-[#716A75]">{new Date(item.created_at).toLocaleDateString()}</span>
+          </button>)}
+        </div>}
+    </section>
+  </main>;
 }
