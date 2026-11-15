@@ -188,11 +188,15 @@ export async function POST(request:Request){
     }catch{console.error('Poster AI credit refund needs reconciliation');}
     const fault=err instanceof PosterProviderFailure?err.kind:null;
     console.warn('Poster image generation failed',fault||'invalid-provider-result');
-    const explanation=fault==='auth'?'Hugging Face authentication was rejected. Check the saved token and Inference Providers permission.':
-      fault==='credits'?'The image provider reports insufficient inference credits. No poster was created.':
-      fault==='model'?'This image model is temporarily unavailable from the selected provider.':
-      fault==='rate-limit'?'Hugging Face is rate-limiting image requests; please try again later.':
-      'The image provider did not return a valid image. This attempt was refunded.';
+    const explanation=fault==='auth'
+      ?'The AI provider rejected its credentials or account permission. Ask the studio owner to check the provider.'
+      :fault==='credits'
+        ?'This image provider has insufficient inference credits or requires billing. No poster was created.'
+        :fault==='model'
+          ?'The image model is unavailable or rejected the request. Try again after the owner checks model availability.'
+          :fault==='rate-limit'
+            ?'The image provider rate limit or daily free quota is exhausted. Try again after the quota resets.'
+            :'The image provider did not return a valid image. Reserved Growth Credits are eligible for refund.';
     return reply(fault==='credits'?402:503,{error:explanation});
   }
 }
