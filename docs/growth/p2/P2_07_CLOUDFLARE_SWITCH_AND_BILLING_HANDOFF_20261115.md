@@ -1,5 +1,13 @@
 # SLBI Poster Studio — Current handoff: Cloudflare Workers AI provider (15 November 2026)
 
+## 2026-11-15 — Cloudflare credential confirmation and release checkpoint (latest)
+- **Owner-confirmed:** they added two Vercel Production variables `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` and redeployed. Verified through Vercel's **non-decrypted** environment inventory: both variable names exist as **Sensitive**, targeted **Production**. Their nonempty runtime values/token permissions were deliberately **not inspected**, so live provider authentication is not proven. Owner's manual redeployment `dpl_9RpuMvjFAEyi3UGzYak8aBNjZBEg` was READY but still deployed existing main before PR #85 and could not switch from Hugging Face by itself.
+- **PR #85 is MERGED**, commit `39e928a0c6d438c499954b2a3ef5e728486d41e7`. Its exact premerge head `f29352994685cd58a2df23a07895cc83bf90530a` had 6/6 GitHub checks green. Cloudflare model is `@cf/black-forest-labs/flux-2-klein-4b`, multipart POST with optional owner-private resized source image for prompt edits; Cloudflare model is commercially usable, no silent Hugging Face/AWS fallback.
+- Production Supabase migration `p2_cloudflare_flux2_klein4b_model_allowlist` **APPLIED and verified**; trusted completion RPC supports new model, `authenticated` and `anon` retain no execution grant, storage bucket remains private. Existing 8 Growth Credit price, Pro QA, refund/idempotency, global UTC cap remain in force.
+- Production `SLBI_POSTER_IMAGE_PROVIDER` changed to `cloudflare`; `SLBI_POSTER_IMAGE_AI_ENABLED=true`. **Deployment after the env update must be verified as READY and matching a merged main commit**; no provider inference or image quality has yet been tested. At this checkpoint: 3 refunded Hugging Face jobs, 0 completed real posters, 0 stored images.
+- **Do not claim API works just because the credentials exist**. Next: Vercel READY → owner uses one POST → inspect actual job state/provider error promptly. Cloudflare Free 10,000 Neurons/day limit resets UTC, not 10,000 images; Free should reject when cap exhausted; confirm account plan separately. No AWS new usage. Keep this handoff synchronized after successful live test.
+
+
 **Read this first when continuing in a new ChatGPT session.** This checkpoint supersedes earlier 2026-11-15 handoff sections that still say PR #83/#84 pending or Hugging Face is the intended provider.
 
 ## Owner decision
