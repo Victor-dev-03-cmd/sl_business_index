@@ -65,8 +65,8 @@ export async function POST(request:Request){
   const editing=typeof sourceJobId==='string'&&sourceJobId.length>0;
   if(editing){
     if(!requestUuid.test(sourceJobId as string)||typeof editInstruction!=='string'||
-       editInstruction.trim().length<5||editInstruction.length>400)
-      return reply(400,{error:'Choose your saved poster and describe the change (5–400 characters).'});
+       editInstruction.trim().length<5||editInstruction.length>1200)
+      return reply(400,{error:'Choose your saved poster and describe the change (5–1200 characters).'});
   }else if(sourceJobId!==undefined||editInstruction!==undefined){
     return reply(400,{error:'A saved poster is required for AI edits.'});
   }

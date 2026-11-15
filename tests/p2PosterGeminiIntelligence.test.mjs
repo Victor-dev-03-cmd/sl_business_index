@@ -14,7 +14,9 @@ test('Gemini engine uses server-only key, structured output, current Flash-Lite 
   assert.match(brain,/SLBI_POSTER_PROMPT_AI_ENABLED/);
   assert.match(brain,/gemini-3\.5-flash-lite/);
   assert.match(brain,/responseMimeType:'application\/json'/);
-  assert.match(brain,/responseJsonSchema:schema/);
+  assert.match(brain,/JSON\.stringify\(schema\)/);
+  assert.doesNotMatch(brain,/responseJsonSchema:schema/);
+  assert.match(brain,/Poster Gemini prompt upstream HTTP failure/);
   assert.match(brain,/x-goog-api-key/);
   assert.match(brain,/AbortSignal\.timeout/);
   assert.match(brain,/PosterIntelligenceError/);
@@ -82,6 +84,8 @@ test('voice endpoint is private, origin-gated, owner-bound and transcript-only',
   assert.match(transcribe,/\.eq\('owner_id',user\.id\)/);
   assert.match(transcribe,/MIME_TYPES\.has\(mime\)/);
   assert.match(transcribe,/MAX_AUDIO_BYTES=1_500_000/);
+  assert.match(transcribe,/transcript\.length>1200/);
+  assert.match(transcribe,/maxOutputTokens:1800/);
   assert.match(transcribe,/marketing_poster_voice_try_reserve/);
   assert.match(transcribe,/inlineData:\{mimeType:mime/);
   assert.match(transcribe,/Gemini free quota reached/);

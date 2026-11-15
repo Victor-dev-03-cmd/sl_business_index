@@ -79,9 +79,9 @@ export function validatePosterCreativeInput(v:unknown):Validated{
      !isOne(POSTER_LAYOUTS,x.layout)||!isOne(POSTER_OBJECTIVES,x.objective)||
      !isOne(['en','ta','si'] as const,x.language))
     return {ok:false,error:'Choose supported creative direction settings.'};
-  const subject=text(x.subject,400),offer=text(x.offer,240),
+  const subject=text(x.subject,1200),offer=text(x.offer,240),
     audience=text(x.audience,160),notes=text(x.notes,340);
-  if(!subject||subject.length<5)return {ok:false,error:'Describe the real product or service (5–400 characters).'};
+  if(!subject||subject.length<5)return {ok:false,error:'Describe the real product or service (5–1200 characters).'};
   if(offer===null||audience===null||notes===null)
     return {ok:false,error:'One of the creative brief fields exceeds its limit.'};
   if([subject,offer,audience,notes].some(x=>suspicious.test(x)))

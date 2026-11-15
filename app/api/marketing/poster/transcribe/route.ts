@@ -7,7 +7,7 @@ import {GEMINI_POSTER_MODEL,isPosterIntelligenceEnabled} from '@/lib/marketing/p
 
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
-export const maxDuration=30;
+export const maxDuration=45;
 const MAX_AUDIO_BYTES=1_500_000;
 const UUID=/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i;
 const MIME_TYPES=new Set(['audio/webm','audio/ogg','audio/wav','audio/mp4','audio/mpeg','audio/mp3']);
@@ -54,7 +54,7 @@ export async function POST(request:Request){
   try{
     bytes=new Uint8Array(await request.arrayBuffer());
     if(bytes.length<800||bytes.length>MAX_AUDIO_BYTES)
-      return reply(413,{error:'Record a short, clear voice message (up to 1.5 MB).'});
+      return reply(413,{error:'Recording is too large (1.5 MB maximum). Please shorten it or type the remaining details.'});
   }catch{return reply(400,{error:'Invalid microphone recording.'});}
   // The server alone may reserve usage; errors always deny further Gemini calls.
   const admin=createAdminClient(url,secret,{auth:{persistSession:false,autoRefreshToken:false}});
@@ -82,7 +82,7 @@ export async function POST(request:Request){
               '. Preferred language: '+language+'. Transcribe this short recording verbatim.'},
             {inlineData:{mimeType:mime,data:Buffer.from(bytes).toString('base64')}},
           ]}],
-          generationConfig:{temperature:0,maxOutputTokens:600},
+          generationConfig:{temperature:0,maxOutputTokens:1800},
         }),
       });
     if(provider.status===429)return reply(429,{error:'Gemini free quota reached. Type your message instead.'});
@@ -94,8 +94,8 @@ export async function POST(request:Request){
     };
     const transcript=(data.candidates?.[0]?.content?.parts||[])
       .map(p=>p.text||'').join(' ').trim();
-    if(transcript.length<2||transcript.length>400)
-      return reply(422,{error:'Please record a shorter sentence or type your message.'});
+    if(transcript.length<2||transcript.length>1200)
+      return reply(422,{error:'Your transcription exceeds the 1,200-character poster brief limit. Please shorten it or type the essential details.'});
     return reply(200,{transcript,languageHint:language,reviewBeforeGenerating:true});
   }catch{return reply(503,{error:'Microphone transcription temporarily unavailable. Type instead.'});}
 }

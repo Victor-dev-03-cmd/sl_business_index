@@ -54,6 +54,7 @@ export default function PosterDesignStudio(){
   const [workspace,setWorkspace]=useState(false);
   const [busy,setBusy]=useState(false);
   const [recording,setRecording]=useState(false);
+  const [recordingSeconds,setRecordingSeconds]=useState(0);
   const [transcribing,setTranscribing]=useState(false);
   const [micHelp,setMicHelp]=useState(false);
   const [micRetryTarget,setMicRetryTarget]=useState<'create'|'edit'>('create');
@@ -66,7 +67,7 @@ export default function PosterDesignStudio(){
   const filePicker=useRef<HTMLInputElement|null>(null);
   const micStream=useRef<MediaStream|null>(null);
   const recorder=useRef<MediaRecorder|null>(null);
-  const recordingTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
+  const recordingClock=useRef<ReturnType<typeof setInterval>|null>(null);
   const attachmentsRef=useRef<Attachment[]>([]);
   useEffect(()=>{attachmentsRef.current=attachments;},[attachments]);
 
@@ -79,7 +80,7 @@ export default function PosterDesignStudio(){
   },[busy]);
 
   const stopMic=()=>{
-    if(recordingTimer.current){clearTimeout(recordingTimer.current);recordingTimer.current=null;}
+    if(recordingClock.current){clearInterval(recordingClock.current);recordingClock.current=null;}
     const r=recorder.current;
     if(r&&r.state!=='inactive')r.stop();
     micStream.current?.getTracks().forEach(track=>track.stop());
@@ -103,7 +104,7 @@ export default function PosterDesignStudio(){
     void checkService();
     return()=>{
       mounted=false;
-      if(recordingTimer.current)clearTimeout(recordingTimer.current);
+      if(recordingClock.current)clearInterval(recordingClock.current);
       if(recorder.current?.state!=='inactive')recorder.current?.stop();
       micStream.current?.getTracks().forEach(track=>track.stop());
       if(currentBlob.current)URL.revokeObjectURL(currentBlob.current);
@@ -250,12 +251,12 @@ export default function PosterDesignStudio(){
       const body:Record<string,unknown>={
         businessId,format,style:inferPosterArtStyle(text),mood:'premium',
         layout:'copy-left',objective:'promotion',language,
-        subject:refine?(idea.trim()||'Edit the existing poster while preserving its other elements'):text.slice(0,400),
+        subject:refine?(idea.trim()||'Edit the existing poster while preserving its other elements'):text.slice(0,1200),
         offer:'',audience:'',notes:'',
         requestKey:crypto.randomUUID(),acceptedCredits:price,
       };
       if(summary)body.referenceSummary=summary;
-      if(refine){body.sourceJobId=sourceJobId;body.editInstruction=text.slice(0,400);}
+      if(refine){body.sourceJobId=sourceJobId;body.editInstruction=text.slice(0,1200);}
       if(!refine&&directReferenceId){
         body.directImageUse=true;
         body.referenceImageMime='image/jpeg';
@@ -287,7 +288,7 @@ export default function PosterDesignStudio(){
     try{
       if(!businessId)throw Error('Choose a business before speaking.');
       if(blob.size<800||blob.size>1_500_000)
-        throw Error('Record a short clear message (maximum 1.5 MB).');
+        throw Error('Your recording exceeds the 1.5 MB secure voice limit. Please record a shorter clip or type the remaining details.');
       const res=await fetch('/api/marketing/poster/transcribe',{
         method:'POST',cache:'no-store',credentials:'same-origin',
         headers:{'Content-Type':blob.type||'audio/webm',
@@ -297,8 +298,8 @@ export default function PosterDesignStudio(){
       const data=await res.json() as {transcript?:string;error?:string};
       if(!res.ok||!data.transcript)throw Error(data.error||'Voice could not be transcribed.');
       const heard=data.transcript.trim();
-      if(target==='edit')setEditIdea(v=>[v,heard].filter(Boolean).join(' ').slice(0,400));
-      else setIdea(v=>[v,heard].filter(Boolean).join(' ').slice(0,400));
+      if(target==='edit')setEditIdea(v=>[v,heard].filter(Boolean).join(' ').slice(0,1200));
+      else setIdea(v=>[v,heard].filter(Boolean).join(' ').slice(0,1200));
       setMessage('Transcript ready. Please check the words, then press Generate yourself.');
     }catch(err){setMessage(friendlyError(err));}
     finally{setTranscribing(false);}
@@ -341,12 +342,14 @@ export default function PosterDesignStudio(){
       rec.onerror=()=>{setMessage('Microphone recording failed. Please type instead.');stopMic();};
       rec.onstop=()=>{
         stream.getTracks().forEach(t=>t.stop());micStream.current=null;recorder.current=null;
-        if(recordingTimer.current)clearTimeout(recordingTimer.current);
+        if(recordingClock.current)clearInterval(recordingClock.current);
         setRecording(false);
         if(parts.length)void transcribeAudio(new Blob(parts,{type:rec.mimeType}),target);
       };
-      rec.start(250);setRecording(true);setMessage('Listening… click the microphone again when you finish.');
-      recordingTimer.current=setTimeout(()=>{if(rec.state==='recording')rec.stop();},12000);
+      // The vendor, not a twelve-second timer, decides when the full message ends.
+      setRecordingSeconds(0);
+      rec.start(250);setRecording(true);setMessage('Listening… speak freely, then click Stop recording to transcribe.');
+      recordingClock.current=setInterval(()=>setRecordingSeconds(seconds=>seconds+1),1000);
     }catch(err){
       setRecording(false);
       micStream.current?.getTracks().forEach(track=>track.stop());
@@ -421,7 +424,7 @@ export default function PosterDesignStudio(){
     </div>
     <label htmlFor="creative-prompt" className="mt-5 block text-[11px] font-extrabold uppercase tracking-[.13em] text-[#948A86]">Describe your poster</label>
     <textarea id="creative-prompt" value={idea} onChange={e=>setIdea(e.target.value)}
-      maxLength={400} rows={workspace?4:6}
+      maxLength={1200} rows={workspace?4:6}
       placeholder="Describe the poster you want… தமிழ், සිංහල, English or Tanglish — anything works."
       onKeyDown={e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();void submit(false);}}}
       className="mt-2 w-full resize-none rounded-[16px] border border-[#EFECEB] bg-[#FCFBFA] px-4 py-3.5 text-sm leading-7 text-[#252124] outline-none placeholder:text-[#A6A09F] focus:border-[#F5AD76]"/>
@@ -444,7 +447,7 @@ export default function PosterDesignStudio(){
         aria-pressed={recording&&voiceTarget==='create'}
         onClick={()=>void startVoice('create')}>
         {transcribing?<LoaderCircle size={16} className="animate-spin"/>:<Mic size={16} className={recording&&voiceTarget==='create'?'text-red-500 animate-pulse':''}/>}
-        {recording&&voiceTarget==='create'?'Stop recording':transcribing?'Transcribing…':'Voice message'}
+        {recording&&voiceTarget==='create'?`Stop recording (${recordingSeconds}s)`:transcribing?'Transcribing…':'Voice message'}
       </button>
       <button type="button" disabled={busy||checking||!available||!businessId||idea.trim().length<5}
         onClick={()=>void submit(false)}
@@ -510,13 +513,13 @@ export default function PosterDesignStudio(){
     <p className="mt-1 text-xs leading-5 text-[#958B86]">Tell AI what to change. The saved original image is used as the source.</p>
     <label htmlFor="ai-edit-prompt" className="sr-only">Describe the change to this image</label>
     <textarea id="ai-edit-prompt" value={editIdea} onChange={e=>setEditIdea(e.target.value)}
-      rows={3} maxLength={400} placeholder="Make the background gold, keep the same product and contact details…"
+      rows={3} maxLength={1200} placeholder="Make the background gold, keep the same product and contact details…"
       className="mt-3 w-full resize-none rounded-xl border border-[#EEEAE7] bg-[#FCFBFA] p-3 text-sm leading-6 outline-none focus:border-[#E7A56C]"/>
     <div className="mt-2 flex flex-wrap items-center gap-2">
       <button type="button" className={iconButton} disabled={busy||transcribing}
         onClick={()=>void startVoice('edit')}>
         <Mic size={15} className={recording&&voiceTarget==='edit'?'animate-pulse text-red-500':''}/>
-        {recording&&voiceTarget==='edit'?'Stop voice':'Voice'}
+        {recording&&voiceTarget==='edit'?`Stop voice (${recordingSeconds}s)`:'Voice'}
       </button>
       <button type="button" disabled={busy||!available||editIdea.trim().length<5}
         onClick={()=>void submit(true)}
