@@ -1,5 +1,10 @@
 # SLBusinessIndex — repository handoff for coding agents
 
+## 2026-11-15 — P2-12: Fixed preview ratio; exact poster typography architecture pending
+- [P2-12 fixed preview and typography design](docs/growth/p2/P2_12_POSTER_FIXED_PREVIEW_AND_EXACT_TYPOGRAPHY_PLAN_20261115.md). Owner supplied successful Cloudflare 9:16 output: **real PNG is 1080×1920**, but glyphs, numerals, offer and domain are gibberish. Current Cloudflare `flux-2-klein-4b` does not guarantee exact Tamil/Sinhala/English copy; swapping to Hugging Face FLUX.1 Schnell is not a deterministic text fix.
+- Current branch `fix/p2-poster-preview-ratio-20261115` pins the entire progress / final image to the SAME measured aspect frame with stable download controls. Do not call this merged/deployed until exact CI/release is checked.
+- **Next deliberate feature:** separate text-free art generation from trusted, precisely typeset Unicode composition (licensed Tamil/Sinhala/Latin fonts); preserve selected-business facts, 25% exact offer, private storage, image credit budget and owner-only edits. No AI model training/provider switch or new spend in preview patch.
+
 ## 2026-11-15 — P2-11: Voice duration and Gemini brief recovery (PR #90)
 - **Read first:** [P2-11 voice and Gemini recovery](docs/growth/p2/P2_11_POSTER_LONG_VOICE_GEMINI_RECOVERY_HANDOFF_20261115.md). User confirmed accurate Gemini voice but recorder auto-stopped at 12s; source `setTimeout(...,12000)` removed. User explicitly stops, editable brief now supports up to 1200 characters and existing 1.5MB / 12-per-day voice quota remains.
 - Owner image Generate produced `gemini-unavailable` (Vercel runtime 2026-11-15 11:51:23Z, production `5ec6386`), before Cloudflare image API. Upstream HTTP status not observable in old code. Prompt adapter now uses Gemini JSON MIME with explicit required shape plus validation; logs safe HTTP status / timeout class without prompt/key leakage.
