@@ -1,5 +1,6 @@
 import 'server-only';
 import {createHash} from 'node:crypto';
+import sharp from 'sharp';
 
 /**
  * Provider-specific, server-only media calls. This module does not authorize
@@ -7,8 +8,8 @@ import {createHash} from 'node:crypto';
  * Hugging Face FLUX text-to-image is a SYNCHRONOUS FalAITask; image-to-image is
  * a FalAIQueueTask. Never treat a synchronous image response as a queue ID.
  */
-export type PosterImageProvider='openai'|'huggingface';
-export type ImageProviderConfig={provider:PosterImageProvider;model:string;token:string};
+export type PosterImageProvider='openai'|'huggingface'|'cloudflare';
+export type ImageProviderConfig={provider:PosterImageProvider;model:string;token:string;accountId?:string};
 const OPENAI_MODELS=[
   'gpt-image-2.5-flare','gpt-image-2.5-sunburst',
   'gpt-image-2.6-flare','gpt-image-2.6-sunburst',
@@ -16,10 +17,19 @@ const OPENAI_MODELS=[
 const HF_CREATE='black-forest-labs/FLUX.1-schnell';
 const HF_EDIT='Qwen/Qwen-Image-Edit-2509';
 const HF_ROUTER='https://router.huggingface.co/fal-ai/';
+const CF_MODEL='@cf/black-forest-labs/flux-2-klein-4b';
+const CF_ROOT='https://api.cloudflare.com/client/v4/accounts/';
 const MAX_BYTES=15_000_000;
 
 export function getPosterImageProvider():ImageProviderConfig|null {
   const provider=process.env.SLBI_POSTER_IMAGE_PROVIDER||'openai';
+  if(provider==='cloudflare'){
+    // Never accept the account or model name from a user request.
+    const token=process.env.CLOUDFLARE_API_TOKEN?.trim();
+    const accountId=process.env.CLOUDFLARE_ACCOUNT_ID?.trim();
+    if(!token||!accountId||!/^[a-f0-9]{32}$/i.test(accountId))return null;
+    return {provider,model:CF_MODEL,token,accountId};
+  }
   if(provider==='huggingface'){
     const token=process.env.HF_TOKEN;
     const model=process.env.SLBI_POSTER_HF_MODEL||HF_CREATE;
@@ -168,10 +178,75 @@ async function hfImage(config:ImageProviderConfig,prompt:string,size:string,sour
   const payload=await response.json() as {images?:Array<{url?:string}>};
   return fetchFalArtwork(payload.images?.[0]?.url,signal);
 }
+/**
+ * Cloudflare-hosted FLUX.2 klein 4B: one commercial-friendly model for both
+ * initial posters and image-to-image edits. No AI Gateway, third-party billing
+ * route, or user-provided URLs. Workers AI Free has its own 10k Neuron/day cap.
+ * Cloudflare's model-specific REST call requires multipart FormData, including
+ * for pure text-to-image. Responses return { success, result: { image: base64 } }.
+ */
+const cfPosterSize=(size:string):[number,number]=>{
+  const allowed:Record<string,[number,number]>={
+    '1024x1024':[1024,1024],
+    '1024x1280':[1024,1280],
+    '1008x1792':[1008,1792],
+    '1216x640':[1216,640],
+  };
+  const result=allowed[size];
+  if(!result)throw Error('Unapproved Cloudflare poster size');
+  return result;
+};
+const cfImage=async(config:ImageProviderConfig,prompt:string,size:string,source?:Buffer)=>{
+  if(!config.accountId||!/^[a-f0-9]{32}$/i.test(config.accountId)||config.model!==CF_MODEL)
+    throw Error('Cloudflare image provider configuration invalid');
+  const [width,height]=cfPosterSize(size);
+  const form=new FormData();
+  form.set('prompt',prompt.slice(0,2048));
+  form.set('width',String(width));form.set('height',String(height));
+  if(source){
+    // Workers AI documents that FLUX.2 input reference images must be
+    // smaller than 512x512. Keep original user-owned poster in private storage.
+    const small=await sharp(source,{limitInputPixels:20000000})
+      .resize(480,480,{fit:'inside',withoutEnlargement:true})
+      .png().toBuffer();
+    form.set('input_image_0',new Blob([new Uint8Array(small)],{type:'image/png'}),'original.png');
+  }
+  const response=await fetch(CF_ROOT+config.accountId+'/ai/run/'+CF_MODEL,{
+    method:'POST',
+    headers:{Authorization:'Bearer '+config.token},
+    body:form,cache:'no-store',redirect:'error',
+    signal:AbortSignal.timeout(105_000),
+  });
+  // Free allocation exhausted should produce a clear cap error, never a
+  // charged alternative provider call or silent retry.
+  requireProviderOk(response.status);
+  const raw=await response.text();
+  if(raw.length>24_000_000)throw Error('Cloudflare response exceeds image limit');
+  let payload:{success?:boolean;result?:{image?:unknown};errors?:unknown[]};
+  try{payload=JSON.parse(raw) as typeof payload}
+  catch{throw Error('Cloudflare image provider returned invalid JSON');}
+  if(payload.success!==true||!payload.result?.image)
+    throw Error('Cloudflare image provider returned no image');
+  const encoded=payload.result.image;
+  if(typeof encoded!=='string'||encoded.length<64||encoded.length>23_000_000)
+    throw Error('Cloudflare encoded image is invalid');
+  const bytes=Buffer.from(encoded,'base64');
+  if(bytes.length<64||bytes.length>MAX_BYTES)throw Error('Cloudflare generated image exceeds limit');
+  // Some Cloudflare image models return JPEG, while others return PNG or WebP.
+  // Sharp validates the decoded pixels; the existing generation route stores
+  // the normalized, private PNG regardless of provider output encoding.
+  const metadata=await sharp(bytes,{limitInputPixels:20000000}).metadata();
+  if(!['jpeg','png','webp'].includes(metadata.format||''))
+    throw Error('Cloudflare generated unsupported image format');
+  return bytes;
+};
+
 export async function generatePosterProviderImage(args:{
   config:ImageProviderConfig;prompt:string;size:string;userId:string;sourceImage?:Buffer;
 }):Promise<Buffer>{
   if(!args.prompt||args.prompt.length>18_000)throw Error('Invalid image prompt');
+  if(args.config.provider==='cloudflare')
+    return cfImage(args.config,args.prompt,args.size,args.sourceImage);
   if(args.config.provider==='huggingface')
     return hfImage(args.config,args.prompt,args.size,args.sourceImage);
   return openAiImage(args.config,args.prompt,args.size,args.userId,args.sourceImage);
