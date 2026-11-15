@@ -134,3 +134,27 @@ test('private image-to-image edits preserve source ownership and send the real i
   assert.match(providers,/redirect:'error'/);
   assert.match(generate,/marketing_poster_refund/);
 });
+
+test('Cloudflare Workers AI adapter uses commercial FLUX.2 Klein 4B with strict server secrets',()=>{
+  const model='@cf/black-forest-labs/flux-2-klein-4b';
+  const migration=read('supabase/migrations/20261115091000_p2_cloudflare_flux2_klein4b_model_allowlist.sql');
+  assert.ok(providers.includes(model));
+  assert.match(providers,/provider==='cloudflare'/);
+  assert.match(providers,/process\.env\.CLOUDFLARE_ACCOUNT_ID/);
+  assert.match(providers,/process\.env\.CLOUDFLARE_API_TOKEN/);
+  assert.match(providers,/api\.cloudflare\.com\/client\/v4\/accounts/);
+  assert.match(providers,/new FormData\(\)/);
+  assert.match(providers,/form\.set\('prompt'/);
+  assert.match(providers,/form\.set\('width'/);
+  assert.match(providers,/form\.set\('height'/);
+  assert.match(providers,/form\.set\('input_image_0'/);
+  assert.match(providers,/\.resize\(480,480/);
+  assert.match(providers,/payload\.result\?\.image/);
+  assert.match(providers,/AbortSignal\.timeout/);
+  assert.match(providers,/redirect:'error'/);
+  assert.match(providers,/MAX_BYTES/);
+  assert.match(migration,/flux-2-klein-4b/);
+  assert.match(migration,/REVOKE ALL ON FUNCTION public\.marketing_poster_complete/);
+  assert.doesNotMatch(providers,/NEXT_PUBLIC_CLOUDFLARE/);
+  assert.doesNotMatch(providers,/fetch\(.*request\..*url/);
+});
