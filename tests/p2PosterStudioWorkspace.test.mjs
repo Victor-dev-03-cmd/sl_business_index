@@ -133,3 +133,43 @@ test('Cloudflare prompt keeps user request, true business and chosen references 
   assert.match(ui,/Attachments are sent to Gemini for temporary AI analysis/);
   assert.match(ui,/100% complete/);
 });
+
+
+test('microphone policy allows browser permission only on Poster Studio, not across the whole site',()=>{
+  const config=read('next.config.ts');
+  const deny="value: 'camera=(), microphone=(), geolocation=(self)'";
+  const allow="value: 'camera=(), microphone=(self), geolocation=(self)'";
+  assert.ok(config.includes(deny));
+  assert.ok(config.includes("source: '/vendor/marketing/design'"));
+  assert.ok(config.includes(allow));
+  assert.ok(config.indexOf(deny)<config.indexOf(allow),
+    'Next.js last matching header overrides global microphone denial');
+  assert.doesNotMatch(config,/camera=\(self\)/);
+});
+
+test('microphone handles origin policy blocks and persistent browser denial with actionable recovery',()=>{
+  assert.match(ui,/navigator\.mediaDevices\.getUserMedia\(\{audio:true\}\)/);
+  assert.match(ui,/window\.isSecureContext/);
+  assert.match(ui,/permissionsPolicy\?:\{allowsFeature/);
+  assert.match(ui,/featurePolicy\?:\{allowsFeature/);
+  assert.match(ui,/allowedByPolicy===false/);
+  assert.match(ui,/NotAllowedError/);
+  assert.match(ui,/SecurityError/);
+  assert.match(ui,/NotFoundError/);
+  assert.match(ui,/NotReadableError/);
+  assert.match(ui,/role="alert" aria-label="Restore microphone permission"/);
+  assert.match(ui,/Site settings → Microphone → Allow/);
+  assert.match(ui,/Try microphone again/);
+  assert.match(ui,/startVoice\(micRetryTarget\)/);
+  const mic=ui.slice(ui.indexOf('const startVoice='),ui.indexOf('const download='));
+  assert.doesNotMatch(mic,/submit\(true\)|submit\(false\)/);
+});
+
+test('QA image allowance remains a database-enforced gate, not a disabled-button hack',()=>{
+  const cap=read('app/api/marketing/poster/capabilities/route.ts');
+  assert.match(cap,/marketing_poster_daily_limits/);
+  assert.match(cap,/max_attempts/);
+  assert.match(cap,/Number\(limits\.data\.max_attempts\)<=Number\(limits\.data\.attempts\)/);
+  assert.match(ui,/disabled=\{busy\|\|checking\|\|!available\|\|!businessId/);
+  assert.match(ui,/serviceReason/);
+});
