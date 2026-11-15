@@ -1,5 +1,12 @@
 # SLBI Marketing Engine | LIVE IMPLEMENTATION STATUS
 
+## 2026-11-15 — LATEST P2-10: microphone permission + Generate QA unblock
+- **Read first:** [P2-10 Poster microphone and QA quota handoff](docs/growth/p2/P2_10_POSTER_MIC_PERMISSION_QUOTA_FIX_20261115.md). User found native mic Allow popup was absent and Generate disabled on live Pro Studio.
+- Confirmed site policy bug: `next.config.ts` globally had `microphone=()`; specific poster route now overrides it with `microphone=(self)`, while global pages and camera remain denied. If Chrome has persistently blocked mic, no code can force prompt: new UI explains browser Site settings → Mic Allow → Reload → Retry. Gemini voice transcription is still manual review before image Generate.
+- Confirmed DB global cap was 2/2 (1 completed, 3 refunded), verified Pro and 8 internal Growth Credit action present. Owner's request authorizes a strictly bounded +2 QA requests **for UTC 2026-11-15 only**, so UPDATE `max_attempts=4`, unchanged `attempts=2`; no AI model requests by assistant, no plan upgrades, no recurring/unlimited budget.
+- Git branch `fix/p2-poster-microphone-permission-qa-budget-20261115`; verify exact PR head CI, main merge, Vercel Production READY and alias before claiming released. No change to P2-09 left-controls / right-output UI, multi-business ownership, RLS or credit refund.
+
+
 ## 2026-11-15 — LATEST P2-09 Poster Studio split UI / voice / safe attachments
 - **Authoritative design/handoff:** [P2-09 LLM-style Poster Workspace](docs/growth/p2/P2_09_POSTER_SPLIT_WORKSPACE_VOICE_REFERENCE_HANDOFF_20261115.md). Owner explicitly corrected layout: **LEFT controls, RIGHT output on desktop** (not the reverse); center composer on initial visit; image output above controls on mobile.
 - Workflow: vendor selects owner-verified business → prompt or browser-Allow Gemini microphone transcription (human reviews transcript) → optionally add PNG/JPEG/WebP/PDF/TXT/MD references → Gemini reference-only style/context, no raw pixels sent to image model unless explicit **Use this actual image** opt-in → Cloudflare genuine image → animated **estimated** percent capped <100 until private image decoded → prompt-to-edit same image → PNG/export/share. No auto posting, preset food/festival chips or manual X/Y layer designer.
