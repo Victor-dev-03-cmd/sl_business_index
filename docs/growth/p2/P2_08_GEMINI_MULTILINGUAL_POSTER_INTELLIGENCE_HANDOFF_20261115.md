@@ -1,4 +1,13 @@
 # SLBI P2-08 — Gemini Multilingual Business-Grounded Poster Intelligence Handoff
+
+## 2026-11-15 — Actual release status, supersedes this document's initial pending-branch checkpoint
+- The owner **has added `GEMINI_API_KEY`** to Vercel Production as a Sensitive env var, confirmed via decrypt=false metadata; secret value was never inspected. They had planned to redeploy.
+- **PR #86 MERGED** `890f9c132df14d1edfd5f539beca874e2da71cb2` with **6/6 CI green**. Owner-scoped business facts, multilingual JSON Gemini brief, claim-before-model/idempotency/refund, private transcription route and strict 12/day voice SQL quota all in main.
+- **PR #87 MERGED** `36a013cf3b87a7fb0a155efd70e2ce6baa08fa13` with **6/6 CI green**. Output poster text language now honors vendor-selected language independently of spoken/input language.
+- Supabase migration `p2_poster_gemini_voice_quota_20261115` **applied**; DB verified RLS/client denial and service-only voice reservation; no voice calls yet.
+- Assistant set Production `SLBI_POSTER_PROMPT_AI_ENABLED=true` after verifying the key exists. This is a rollback kill-switch separate from `SLBI_POSTER_IMAGE_PROVIDER=cloudflare`. Do not assume the API key is valid, Gemini free quota exists, or that any new AI output works until owner tests on live site.
+- Current web UI has **NOT been changed** for MediaRecorder speech. Existing browser speech input is still in use; Gemini transcript endpoint exists but needs future UI wiring upon owner instruction. Not yet an end-to-end voice-to-Gemini-to-image demonstration.
+- Original motivation and permanent decision remain below. Never reintroduce manual editor, invented contact details or automatic paid fallback to AWS/HF/OpenAI. Exact poster typography with automatic system composition remains future QA work, not guaranteed.
 **Checkpoint:** 2026-11-15 (Asia/Colombo) — source branch under development, NOT yet an enabled production Gemini integration.
 
 ## Owner decision — read this first in next ChatGPT session
