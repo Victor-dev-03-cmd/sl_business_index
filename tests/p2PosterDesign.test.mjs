@@ -46,69 +46,43 @@ test('import rejects malicious or oversize project text',()=>{
     {...x,format:'landscape',layers:x.layers.map(l=>l.id==='price'?{...l,x:1300}:l)},
   ])assert.equal(parsePosterBlueprint(altered),null);
 });
-test('Design Editor actually draws independent Canvas text and exports PNG',()=>{
-  const s=read('app/vendor/marketing/design/page.tsx');
-  assert.match(s,/drawPoster\(/);
-  assert.match(s,/c\.fillText\(/);
-  assert.match(s,/onPointerDown=\{onDown\}/);
-  assert.match(s,/onPointerMove=\{onMove\}/);
-  assert.match(s,/document\.fonts\.ready/);
-  assert.match(s,/c\.toBlob\(resolve,'image\/png'\)/);
-  assert.match(s,/parsePosterBlueprint\(input\)/);
-  assert.match(s,/image\/png,image\/jpeg,image\/webp/);
-  assert.match(s,/3\*1024\*1024/);
-  assert.doesNotMatch(s,/AI-generated background successfully created/);
-  assert.match(s,/wrapPosterText/);
-  assert.match(s,/Intl.Segmenter/);
-  assert.match(s,/throw Error\('Text overflow:/);
-  assert.doesNotMatch(s,/Math\.min\(3,lines\.length\)/);
-  assert.match(s,/\/api\/marketing\/caption/);
-  assert.match(s,/Generate AI copy \(credits may apply\)/);
-  assert.match(s,/applyAiHeadline/);
-  assert.match(read('app/vendor/marketing/campaigns/page.tsx'),/dropdownArrowOnDark/);
-  const homepage=read('app/vendor/marketing/page.tsx');
-  assert.match(homepage,/MarketingAppStore/);
-  assert.match(read('lib/marketing/studio-apps.ts'),/href:'\/vendor\/marketing\/design'/);
-});
 
-test('Poster Studio begins as a simple chat-style idea composer, not a giant canvas',()=>{
+test('vendor Poster Studio uses a single natural language prompt, not a manual graphic editor',()=>{
   const ui=read('app/vendor/marketing/design/page.tsx');
-  assert.match(ui,/!draftReady&&<section/);
   assert.match(ui,/What poster shall we create today\?/);
-  assert.match(ui,/generateAiArtwork\(idea\.trim\(\)\)/);
+  assert.match(ui,/id="creative-prompt"/);
   assert.match(ui,/Generate AI poster/);
   assert.match(ui,/aria-label="Try an idea"/);
-  assert.match(ui,/draftReady&&<div/);
-  assert.match(ui,/Edit design · Advanced controls/);
-  assert.match(ui,/maxHeight:'450px'/);
-  assert.match(ui,/Poster preview/);
-});
-test('Voice input, manual sharing and paid-provider protection remain honest',()=>{
-  const ui=read('app/vendor/marketing/design/page.tsx');
   assert.match(ui,/webkitSpeechRecognition/);
   assert.match(ui,/ta-LK/);
   assert.match(ui,/si-LK/);
   assert.match(ui,/en-LK/);
-  assert.match(ui,/not supported by this browser/);
-  assert.match(ui,/navigator\.canShare/);
-  assert.match(ui,/Share \/ post manually/);
-  assert.match(ui,/Automatic posting is not active/);
-  assert.match(ui,/if\(artGenerating\|\|subject\.length<5\|\|!businessId\|\|!artServiceEnabled/);
-  assert.match(ui,/window\.confirm\('Create ONE original AI artwork/);
-  assert.doesNotMatch(ui,/AI poster published successfully/);
+  assert.match(ui,/POSTER_FORMATS|formatNames/);
+  assert.doesNotMatch(ui,/drawPoster\(|onPointerDown|onPointerMove|EditableTextLayer|parsePosterBlueprint|createSimpleDraft/);
+  assert.match(read('app/vendor/marketing/campaigns/page.tsx'),/dropdownArrowOnDark/);
 });
-
-test('fake instant text-only image generation was removed from the primary path',()=>{
+test('AI poster appears only after verified private image bytes, then accepts edit instructions',()=>{
   const ui=read('app/vendor/marketing/design/page.tsx');
-  assert.doesNotMatch(ui,/const createSimpleDraft/);
-  assert.doesNotMatch(ui,/id==='headline'\?\{\.\.\.l,value:headline\}/);
+  assert.match(ui,/await openArtwork\(result\.jobId\)/);
+  assert.match(ui,/\/api\/marketing\/poster\/artwork\?jobId=/);
+  assert.match(ui,/result\.error/);
+  assert.match(ui,/refine\?\{/);
+  assert.match(ui,/sourceJobId/);
+  assert.match(ui,/editInstruction/);
+  assert.match(ui,/Edit this image with AI/);
+  assert.match(ui,/Your recent AI posters/);
+  assert.match(ui,/Download PNG/);
+  assert.match(ui,/Share manually/);
+  assert.match(ui,/No fake image will be shown|No fake image|No fake|No manual designer/i);
+  assert.doesNotMatch(ui,/Edit design · Advanced controls|Export editable JSON|Drag a text layer|Your manual poster editor/);
+});
+test('retains Pro-only app routing and honest no-auto-publish claims',()=>{
+  const ui=read('app/vendor/marketing/design/page.tsx');
+  assert.match(ui,/window\.confirm/);
   assert.match(ui,/\/api\/marketing\/poster\/capabilities/);
-  assert.match(ui,/not connected or funded yet/);
-  assert.match(ui,/Generate AI poster/);
-  assert.match(ui,/artGenerating\?'Generating real AI artwork/);
-  assert.match(ui,/await loadGeneratedArtwork\(result\.jobId\)/);
-  assert.match(ui,/setDraftReady\(true\)/);
-  assert.match(ui,/Manual design · not AI-generated/);
-  assert.match(ui,/Real AI poster generation is not available/);
-  assert.match(ui,/directional shadow|directional shadow/i);
+  assert.match(ui,/No manual designer/);
+  assert.match(ui,/nothing is posted automatically/);
+  const homepage=read('app/vendor/marketing/page.tsx');
+  assert.match(homepage,/MarketingAppStore/);
+  assert.match(read('lib/marketing/studio-apps.ts'),/href:'\/vendor\/marketing\/design'/);
 });
