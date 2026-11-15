@@ -55,6 +55,8 @@ export default function PosterDesignStudio(){
   const [busy,setBusy]=useState(false);
   const [recording,setRecording]=useState(false);
   const [transcribing,setTranscribing]=useState(false);
+  const [micHelp,setMicHelp]=useState(false);
+  const [micRetryTarget,setMicRetryTarget]=useState<'create'|'edit'>('create');
   const [voiceTarget,setVoiceTarget]=useState<'create'|'edit'>('create');
   const [phase,setPhase]=useState<Phase>('idle');
   const [percent,setPercent]=useState(0);
@@ -304,12 +306,31 @@ export default function PosterDesignStudio(){
   const startVoice=async(target:'create'|'edit')=>{
     if(recording){stopMic();return;}
     if(busy||transcribing)return;
+    setMicRetryTarget(target);
+    if(!window.isSecureContext){
+      setMicHelp(true);
+      setMessage('Voice recording requires HTTPS. Open the secure SLBI website.');
+      return;
+    }
     if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined'){
       setMessage('This browser cannot record microphone audio. Please use a supported browser or type.');
       return;
     }
+    // When Permissions-Policy blocks a microphone, no browser popup is shown.
+    const policy=document as Document&{
+      permissionsPolicy?:{allowsFeature:(feature:string)=>boolean};
+      featurePolicy?:{allowsFeature:(feature:string)=>boolean};
+    };
+    const allowedByPolicy=policy.permissionsPolicy?.allowsFeature('microphone') ??
+      policy.featurePolicy?.allowsFeature('microphone');
+    if(allowedByPolicy===false){
+      setMicHelp(true);
+      setMessage('Microphone access is blocked by this page. Reload to get the latest Studio policy.');
+      return;
+    }
+    setMicHelp(false);
     try{
-      // Trigger the browser's native microphone Allow permission prompt.
+      // First-time browser permission prompts are native, not app-controlled.
       const stream=await navigator.mediaDevices.getUserMedia({audio:true});
       const mime=['audio/webm;codecs=opus','audio/webm','audio/mp4'].find(
         t=>MediaRecorder.isTypeSupported(t));
@@ -328,9 +349,19 @@ export default function PosterDesignStudio(){
       recordingTimer.current=setTimeout(()=>{if(rec.state==='recording')rec.stop();},12000);
     }catch(err){
       setRecording(false);
-      setMessage(err instanceof Error&&err.name==='NotAllowedError'
-        ?'Microphone access was denied. Allow it in your browser settings or type your idea.'
-        :'Unable to access your microphone. Type your prompt instead.');
+      micStream.current?.getTracks().forEach(track=>track.stop());
+      micStream.current=null;
+      const code=err instanceof Error?err.name:'';
+      if(code==='NotAllowedError'||code==='SecurityError'){
+        setMicHelp(true);
+        setMessage('Microphone permission is blocked. Update this site’s microphone permission, then retry.');
+      }else if(code==='NotFoundError'){
+        setMessage('No microphone detected. Connect a microphone or type your idea.');
+      }else if(code==='NotReadableError'){
+        setMessage('Microphone is busy or unavailable. Close other recording apps and retry.');
+      }else{
+        setMessage('Unable to access the microphone. Type your prompt instead.');
+      }
     }
   };
   const download=async()=>{
@@ -556,6 +587,17 @@ export default function PosterDesignStudio(){
       className={'mb-4 rounded-2xl border px-4 py-3 text-xs leading-6 '+(phase==='failed'?
         'border-[#F2CAC6] bg-[#FFF5F3] text-[#A24337]':'border-[#F3E1CD] bg-[#FFF9F0] text-[#8B6339]')}>
       {message}<button aria-label="Dismiss message" className="float-right ml-4 p-1" onClick={()=>setMessage('')}><X size={14}/></button>
+    </div>}
+    {micHelp&&<div role="alert" aria-label="Restore microphone permission"
+      className="mb-4 rounded-2xl border border-[#E9D6C6] bg-[#FFFCF8] px-4 py-4 text-xs leading-6 text-[#6D5141]">
+      <p className="font-extrabold text-[#493528]">Allow microphone access for SLBI</p>
+      <p className="mt-1">In Chrome: click the site controls icon beside the address bar → Site settings → Microphone → Allow. Reload this page and tap the microphone again. If you previously blocked it, browsers will not show another popup until you change that permission.</p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button type="button" onClick={()=>void startVoice(micRetryTarget)}
+          className="rounded-xl bg-[#282127] px-4 py-2 font-extrabold text-white">Try microphone again</button>
+        <button type="button" onClick={()=>setMicHelp(false)}
+          className="rounded-xl border border-[#E7D5C8] bg-white px-4 py-2 font-bold">Dismiss</button>
+      </div>
     </div>}
     {!workspace?<div className="mx-auto flex w-full max-w-[740px] flex-1 flex-col justify-center pb-7 pt-3 lg:min-h-[calc(100dvh-220px)]">
       <div className="mb-7 text-center">
