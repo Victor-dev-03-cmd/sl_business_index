@@ -38,6 +38,19 @@ test('progress is transparent, estimated, and never 100 before private image loa
   assert.doesNotMatch(ui,/setPercent\(100\).*fetch\('\/api\/marketing\/poster\/generate'/s);
 });
 
+test('one responsive aspect frame is retained while generating and after private artwork loads',()=>{
+  assert.match(ui,/const numericAspects:Record<PosterFormat,number>/);
+  assert.match(ui,/story:9\/16/);
+  assert.match(ui,/landscape:1200\/630/);
+  assert.match(ui,/new ResizeObserver\(measure\)/);
+  assert.match(ui,/const frameWidth=Math\.max\(1,Math\.floor\(Math\.min\(stageWidth,stageHeight\*aspect\)\)\)/);
+  assert.match(ui,/data-testid="poster-aspect-frame"/);
+  assert.match(ui,/width:frameWidth,height:frameHeight/);
+  assert.match(ui,/className="h-full w-full object-contain"/);
+  assert.match(ui,/min-h-\[62px\]/);
+  assert.doesNotMatch(ui,/min-h-\[min\(72%,280px\)\]/);
+});
+
 test('mic click requests native browser permission then Gemini returns a visible editable transcript, never auto-sends poster',()=>{
   assert.match(ui,/navigator\.mediaDevices\.getUserMedia\(\{audio:true\}\)/);
   assert.match(ui,/new MediaRecorder\(stream/);
