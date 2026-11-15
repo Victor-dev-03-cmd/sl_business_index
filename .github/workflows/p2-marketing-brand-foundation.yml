@@ -31,6 +31,7 @@ on:
       - 'tests/p2-campaign/**'
       - 'tests/p2-poster-image/**'
       - 'tests/p2PosterImageAPI.test.mjs'
+      - 'tests/p2PosterGeminiIntelligence.test.mjs'
       - 'tests/p2PosterStaffReviewRelease.test.mjs'
       - 'tests/p2PosterPermanentQA.test.mjs'
       - 'docs/growth/p2/**'
@@ -49,6 +50,7 @@ on:
       - 'tests/p2-campaign/**'
       - 'tests/p2-poster-image/**'
       - 'tests/p2PosterImageAPI.test.mjs'
+      - 'tests/p2PosterGeminiIntelligence.test.mjs'
       - 'tests/p2PosterStaffReviewRelease.test.mjs'
       - 'tests/p2PosterPermanentQA.test.mjs'
       - 'tests/p2PosterDesign.test.mjs'
@@ -82,7 +84,7 @@ jobs:
           node-version: '24'
       - name: Brand validation, page/API contract and existing Marketing Studio tests
         run: |
-          node --test tests/p2BrandProfile.test.mjs tests/p2AiCaption.test.mjs tests/p2PosterDesign.test.mjs tests/p2PosterCreativeEngine.test.mjs tests/p2PosterImageAPI.test.mjs tests/p2PosterStaffReviewRelease.test.mjs tests/p2PosterPermanentQA.test.mjs tests/p2MarketingEngineShell.test.mjs tests/marketingStudioAppStore.test.mjs tests/p2GlobalMarketingLaunch.test.mjs tests/p2MarketingLoadingAndConnect.test.mjs tests/p2OAuthConnectors.test.mjs tests/p2OAuthFlow.test.mjs tests/p2OAuthDisconnect.test.mjs tests/p2OAuthCallbackRace.test.mjs tests/vendorNeutralUi.test.mjs
+          node --test tests/p2BrandProfile.test.mjs tests/p2AiCaption.test.mjs tests/p2PosterDesign.test.mjs tests/p2PosterCreativeEngine.test.mjs tests/p2PosterImageAPI.test.mjs tests/p2PosterGeminiIntelligence.test.mjs tests/p2PosterStaffReviewRelease.test.mjs tests/p2PosterPermanentQA.test.mjs tests/p2MarketingEngineShell.test.mjs tests/marketingStudioAppStore.test.mjs tests/p2GlobalMarketingLaunch.test.mjs tests/p2MarketingLoadingAndConnect.test.mjs tests/p2OAuthConnectors.test.mjs tests/p2OAuthFlow.test.mjs tests/p2OAuthDisconnect.test.mjs tests/p2OAuthCallbackRace.test.mjs tests/vendorNeutralUi.test.mjs
           node --test tests/vendorSettingsQrMarketing2026.test.mjs tests/vendorPortalRelease.test.mjs
           node --test tests/p2CampaignReleaseCandidate.test.mjs
           node --test tests/p2CampaignV2.test.mjs
@@ -321,6 +323,10 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -1 -f docs/growth/p2/P2_04_POSTER_IMAGE_AI_STAGING_ONLY.sql
       - name: Test Basic denial, verified Pro, zero budget, race claim, refund, owner A/B RLS
         run: psql -v ON_ERROR_STOP=1 -f tests/p2-poster-image/verify.sql
+      - name: Apply scoped Gemini voice quota in disposable DB
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261115094500_p2_poster_gemini_voice_quota.sql
+      - name: Verify 12/day quota and browser role denial
+        run: psql -v ON_ERROR_STOP=1 -f tests/p2-poster-image/gemini-voice-verify.sql
 
   nextjs-build:
     runs-on: ubuntu-latest

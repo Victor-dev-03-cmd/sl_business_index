@@ -5,6 +5,9 @@ import {createClient as createAdminClient} from '@supabase/supabase-js';
 import {createClient} from '@/lib/supabase/server';
 import {isSameOrigin} from '@/lib/growth/ingestion-contract';
 import {getMarketingAccessForUser,rejectMarketingAccess} from '@/lib/marketing/pro-access-server';
+import {preparePosterBusinessFacts,createGeminiPosterBrief,buildGroundedImagePrompt,
+  isPosterIntelligenceEnabled,GEMINI_POSTER_SCHEMA_VERSION,PosterIntelligenceError,
+} from '@/lib/marketing/poster-gemini-intelligence';
 import {
   buildPosterCreativePrompt,validatePosterCreativeInput,POSTER_PROMPT_VERSION,
 } from '@/lib/marketing/poster-creative-engine';
@@ -76,12 +79,12 @@ export async function POST(request:Request){
   const denied=rejectMarketingAccess(await getMarketingAccessForUser(user.id,client));
   if(denied)return denied;
   const {data:business,error:businessError}=await client.from('businesses')
-    .select('id,name,category,city').eq('id',checked.value.businessId)
+    .select('id,name,category,description,phone,email,address,detailed_address,city,website_url').eq('id',checked.value.businessId)
     .eq('owner_id',user.id).maybeSingle();
   if(businessError)return reply(503,{error:'Business ownership validation unavailable.'});
   if(!business)return reply(404,{error:'You do not own this business.'});
   const {data:brand,error:brandError}=await client.from('social_brand_profiles')
-    .select('brand_name,primary_color,accent_color,tone,guidelines')
+    .select('brand_name,slogan,primary_color,accent_color,tone,guidelines')
     .eq('business_id',business.id).eq('owner_id',user.id).maybeSingle();
   if(brandError)return reply(503,{error:'Brand Kit validation unavailable.'});
   // Brand Kit is optional for first-time vendors: the authenticated owned business
@@ -91,6 +94,8 @@ export async function POST(request:Request){
   if(bucketError||!bucket||bucket.public)
     return reply(503,{error:'Private image storage is not available. No credits were charged.'});
 
+  const facts=preparePosterBusinessFacts(business,brand);
+  const useGemini=isPosterIntelligenceEnabled();
   const art=buildPosterCreativePrompt(checked.value,{
     businessName:business.name,category:business.category||'',city:business.city||'',
     brandName:brand?.brand_name||business.name,
@@ -127,9 +132,18 @@ export async function POST(request:Request){
   const operationModel=getPosterOperationModel(provider,editing);
   // Hash server-derived brand facts + original poster + change request. A
   // duplicate idempotency key cannot be replayed with different instructions.
+  // Idempotency must hash stable user input, verified business facts and image
+  // config, NOT nondeterministic Gemini text. The expensive model is invoked
+  // once only AFTER an owner/Pro/credit/global-cap reservation has been claimed.
   const briefHash=createHash('sha256').update(
-    JSON.stringify({prompt,sourceJobId:editing?sourceJobId:null,
-      provider:provider.provider,model:operationModel,providerSize:art.providerSize})
+    JSON.stringify({
+      originalRequest:checked.value.subject,
+      editInstruction:editing?editInstruction:null,
+      businessId:business.id,facts,format:checked.value.format,
+      promptVersion:useGemini?GEMINI_POSTER_SCHEMA_VERSION:art.version,
+      sourceJobId:editing?sourceJobId:null,
+      provider:provider.provider,model:operationModel,providerSize:art.providerSize,
+    })
   ).digest('hex');
   const {data:reservation,error:reserveError}=await admin.rpc('marketing_poster_reserve',{
     p_user_id:user.id,p_business_id:business.id,p_request_key:requestKey,
@@ -158,8 +172,26 @@ export async function POST(request:Request){
   const path=user.id+'/'+business.id+'/'+job.job_id+'.png';
   let uploaded=false;
   try{
+    let effectivePrompt=prompt;
+    if(useGemini){
+      // Gemini receives ONLY the selected owner-verified public listing facts,
+      // the user's language request and edit/new intent. It never receives
+      // private billing details, other businesses, service-role keys or assets.
+      const interpreted=await createGeminiPosterBrief({
+        userRequest:editing?(editInstruction as string):checked.value.subject,
+        facts,
+        preferredLanguage:checked.value.language,
+        isEdit:editing,
+      });
+      effectivePrompt=buildGroundedImagePrompt({
+        rawUserRequest:editing?(editInstruction as string):checked.value.subject,
+        facts,brief:interpreted,
+        format:checked.value.format,
+        isEdit:editing,
+      });
+    }
     const binary=await generatePosterProviderImage({
-      config:provider,prompt,size:art.providerSize,userId:user.id,sourceImage,
+      config:provider,prompt:effectivePrompt,size:art.providerSize,userId:user.id,sourceImage,
     });
     const normalized=await sharp(binary,{limitInputPixels:20000000})
       .resize(art.targetSize.width,art.targetSize.height,{fit:'cover',position:'centre'})
@@ -170,12 +202,14 @@ export async function POST(request:Request){
     if(uploadError)throw Error('Private artwork upload failed.');
     uploaded=true;
     const {data:settled,error:settleError}=await admin.rpc('marketing_poster_complete',{
-      p_job_id:job.job_id,p_storage_path:path,p_model:operationModel,p_prompt_version:art.version,
+      p_job_id:job.job_id,p_storage_path:path,p_model:operationModel,
+      p_prompt_version:useGemini?GEMINI_POSTER_SCHEMA_VERSION:art.version,
     });
     if(settleError||settled!==true)throw Error('Image credit settlement failed.');
     return reply(201,{
       jobId:job.job_id,artworkUrl:'/api/marketing/poster/artwork?jobId='+job.job_id,
-      cached:false,chargedCredits:job.charged_credits,promptVersion:art.version,
+      cached:false,chargedCredits:job.charged_credits,
+      promptVersion:useGemini?GEMINI_POSTER_SCHEMA_VERSION:art.version,
       review:'Artwork is a draft. Verify authenticity, commercial rights and editable text before exporting.',
     });
   }catch(err){
@@ -187,8 +221,13 @@ export async function POST(request:Request){
       if(error)console.error('Poster AI credit refund needs reconciliation',error.code);
     }catch{console.error('Poster AI credit refund needs reconciliation');}
     const fault=err instanceof PosterProviderFailure?err.kind:null;
-    console.warn('Poster image generation failed',fault||'invalid-provider-result');
-    const explanation=fault==='auth'
+    const geminiFault=err instanceof PosterIntelligenceError?err.kind:null;
+    console.warn('Poster image generation failed',geminiFault?'gemini-'+geminiFault:(fault||'invalid-provider-result'));
+    const explanation=geminiFault==='quota'
+      ?'Language intelligence has reached its free usage limit. No image was generated and your reserved Growth Credits are eligible for refund.'
+      :geminiFault
+        ?'Multilingual creative prompt preparation is temporarily unavailable. No image was generated; please retry later.'
+        :fault==='auth'
       ?'The AI provider rejected its credentials or account permission. Ask the studio owner to check the provider.'
       :fault==='credits'
         ?'This image provider has insufficient inference credits or requires billing. No poster was created.'
