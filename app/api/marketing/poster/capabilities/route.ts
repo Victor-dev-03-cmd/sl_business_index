@@ -38,10 +38,14 @@ export async function GET(){
       admin.storage.getBucket('slbi-poster-ai-private'),
     ]);
     const cost=action.data?.credit_cost;
-    const ready=!action.error&&!limits.error&&!bucket.error&&bucket.data?.public===false
-      &&action.data?.is_enabled===true&&Number.isInteger(cost)&&cost>0&&cost<=100
-      &&Boolean(limits.data)&&Number(limits.data!.max_attempts)>Number(limits.data!.attempts);
-    if(!ready)return response(unavailable);
+    const configured=!action.error&&!limits.error&&!bucket.error&&bucket.data?.public===false
+      &&action.data?.is_enabled===true&&Number.isInteger(cost)&&cost>0&&cost<=100;
+    if(!configured)return response(unavailable);
+    if(!limits.data)return response({available:false,creditCost:null,
+      reason:'The studio daily AI allowance is not configured. Please contact support.'});
+    if(Number(limits.data.max_attempts)<=Number(limits.data.attempts))
+      return response({available:false,creditCost:null,
+        reason:'Today’s AI poster generation limit has been reached. The allowance resets at 00:00 UTC.'});
     return response({available:true,creditCost:cost,reason:null});
   }catch{return response(unavailable);}
 }
