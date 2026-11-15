@@ -124,9 +124,10 @@ test('Cloudflare prompt keeps user request, true business and chosen references 
   assert.match(compact,/useUploadedPixels/);
   assert.match(generate,/buildCompactCloudflarePosterPrompt/);
   assert.match(generate,/provider\.provider==='cloudflare'/);
-  const requestAt=compact.indexOf('EXACT vendor request');
-  const artAt=compact.indexOf('Art direction:');
-  assert.ok(requestAt<artAt);
+  const chunks=compact.slice(compact.indexOf('const chunks='));
+  const requestAt=chunks.indexOf('EXACT vendor request');
+  const notesAt=chunks.indexOf('    notes,');
+  assert.ok(requestAt>=0&&notesAt>requestAt,'user request must precede generic art notes');
   assert.match(ui,/Attachments are sent to Gemini for temporary AI analysis/);
   assert.match(ui,/100% complete/);
 });
