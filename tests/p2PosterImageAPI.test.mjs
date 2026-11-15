@@ -55,14 +55,14 @@ test('private image download cannot disclose cross-tenant artwork',()=>{
   assert.doesNotMatch(artwork,/createSignedUrl/);
 });
 test('client confirms exact paid credit price before generate and retains editable imagery',()=>{
-  assert.match(editor,/generateAiArtwork/);
+  assert.match(editor,/submit=async/);
   assert.match(editor,/window\.confirm/);
   assert.match(editor,/\/api\/marketing\/poster\/generate/);
   assert.match(editor,/\/api\/marketing\/poster\/artwork/);
   assert.match(editor,/setPreviewUrl/);
   assert.match(editor,/URL\.createObjectURL/);
-  assert.match(editor,/artJobId/);
-  assert.match(editor,/artCredits/);
+  assert.match(editor,/sourceJobId/);
+  assert.match(editor,/lastCharge/);
   assert.match(read('app/vendor/marketing/design/layout.tsx'),/MarketingProOnly/);
 });
 
