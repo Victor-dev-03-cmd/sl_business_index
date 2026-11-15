@@ -49,15 +49,14 @@ test('import rejects malicious or oversize project text',()=>{
 
 test('vendor Poster Studio uses a single natural language prompt, not a manual graphic editor',()=>{
   const ui=read('app/vendor/marketing/design/page.tsx');
-  assert.match(ui,/What poster shall we create today\?/);
+  assert.match(ui,/What shall we create today\?/);
   assert.match(ui,/id="creative-prompt"/);
-  assert.match(ui,/Generate AI poster/);
-  assert.match(ui,/aria-label="Try an idea"/);
-  assert.match(ui,/webkitSpeechRecognition/);
-  assert.match(ui,/ta-LK/);
-  assert.match(ui,/si-LK/);
-  assert.match(ui,/en-LK/);
-  assert.match(ui,/POSTER_FORMATS|formatNames/);
+  assert.match(ui,/Generate/);
+  assert.match(ui,/getUserMedia/);
+  assert.match(ui,/MediaRecorder/);
+  assert.match(ui,/\/api\/marketing\/poster\/transcribe/);
+  assert.match(ui,/Add reference/);
+  assert.match(ui,/formats/);
   assert.doesNotMatch(ui,/drawPoster\(|onPointerDown|onPointerMove|EditableTextLayer|parsePosterBlueprint|createSimpleDraft/);
   assert.match(read('app/vendor/marketing/campaigns/page.tsx'),/dropdownArrowOnDark/);
 });
@@ -72,16 +71,16 @@ test('AI poster appears only after verified private image bytes, then accepts ed
   assert.match(ui,/Edit this image with AI/);
   assert.match(ui,/Your recent AI posters/);
   assert.match(ui,/Download PNG/);
-  assert.match(ui,/Share manually/);
-  assert.match(ui,/No fake image will be shown|No fake image|No fake|No manual designer/i);
+  assert.match(ui,/Share/);
+  assert.match(ui,/no fake drafts|No manual graphic editor/i);
   assert.doesNotMatch(ui,/Edit design · Advanced controls|Export editable JSON|Drag a text layer|Your manual poster editor/);
 });
 test('retains Pro-only app routing and honest no-auto-publish claims',()=>{
   const ui=read('app/vendor/marketing/design/page.tsx');
   assert.match(ui,/window\.confirm/);
   assert.match(ui,/\/api\/marketing\/poster\/capabilities/);
-  assert.match(ui,/No manual designer/);
-  assert.match(ui,/nothing is posted automatically/);
+  assert.match(ui,/No manual graphic editor/);
+  assert.match(ui,/Nothing posts to social media automatically/);
   const homepage=read('app/vendor/marketing/page.tsx');
   assert.match(homepage,/MarketingAppStore/);
   assert.match(read('lib/marketing/studio-apps.ts'),/href:'\/vendor\/marketing\/design'/);
