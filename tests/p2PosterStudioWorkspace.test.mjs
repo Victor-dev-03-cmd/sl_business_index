@@ -111,3 +111,22 @@ test('desktop workflow preserves existing owner-scoped image edit, download, and
   assert.match(ui,/Nothing posts to social media automatically/);
   assert.doesNotMatch(ui,/auto-post|facebookPublish|schedulePost\(/);
 });
+
+
+test('Cloudflare prompt keeps user request, true business and chosen references ahead of 2048-character cap',()=>{
+  const compact=read('lib/marketing/poster-cloudflare-prompt.ts');
+  assert.match(compact,/slice\(0,2048\)/);
+  assert.match(compact,/Selected business:/);
+  assert.match(compact,/Actual category:/);
+  assert.match(compact,/EXACT vendor request \(highest priority\):/);
+  assert.match(compact,/Style\/context inspiration only/);
+  assert.match(compact,/Verified phone/);
+  assert.match(compact,/useUploadedPixels/);
+  assert.match(generate,/buildCompactCloudflarePosterPrompt/);
+  assert.match(generate,/provider\.provider==='cloudflare'/);
+  const requestAt=compact.indexOf('EXACT vendor request');
+  const artAt=compact.indexOf('Art direction:');
+  assert.ok(requestAt<artAt);
+  assert.match(ui,/Attachments are sent to Gemini for temporary AI analysis/);
+  assert.match(ui,/100% complete/);
+});
