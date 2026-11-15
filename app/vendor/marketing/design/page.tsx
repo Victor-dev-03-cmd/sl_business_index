@@ -4,7 +4,7 @@ import {useEffect,useRef,useState} from 'react';
 import Link from 'next/link';
 import {supabase} from '@/lib/supabaseClient';
 import IconsaxIcon from '../../components/IconsaxIcon';
-import {POSTER_FORMATS,type PosterFormat} from '@/lib/marketing/poster-design';
+import {type PosterFormat} from '@/lib/marketing/poster-design';
 import {inferPosterArtStyle,type PosterLanguage} from '@/lib/marketing/poster-creative-engine';
 
 type Business={id:string;name:string};
@@ -90,10 +90,15 @@ export default function PosterCreativeChat(){
     if(blob.type!=='image/png'||blob.size<64||blob.size>12_000_000)
       throw Error('Generated artwork was not a valid PNG.');
     const newUrl=URL.createObjectURL(blob);
+    // Recover the aspect ratio of previous private jobs before editing.
+    try{
+      const bitmap=await createImageBitmap(blob);
+      const ratio=bitmap.width/bitmap.height;bitmap.close();
+      setFormat(ratio>1.3?'landscape':ratio<0.66?'story':ratio<0.9?'portrait':'square');
+    }catch{ /* Keep the user's chosen format if decoding metadata is unavailable. */ }
     if(currentBlob.current)URL.revokeObjectURL(currentBlob.current);
     currentBlob.current=newUrl;setPreviewUrl(newUrl);setSourceJobId(jobId);
   };
-  const selectedBusiness=businesses.find(x=>x.id===businessId);
   const selectedHistory=history.filter(x=>x.business_id===businessId);
   const submit=async(refine:boolean)=>{
     const original=idea.trim();
@@ -215,6 +220,14 @@ export default function PosterCreativeChat(){
           maxLength={400} rows={5} placeholder="என் website development service-க்கு premium தீபாவளி offer poster உருவாக்கு…"
           onKeyDown={e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();void submit(false);}}}
           className="mt-4 w-full resize-y rounded-xl border-0 px-1 py-3 text-[15px] leading-7 outline-none placeholder:text-[#A5A0AA]"/>
+        <div className="mb-3 flex flex-wrap gap-2" aria-label="Poster size">
+          {(Object.entries(formatNames) as Array<[PosterFormat,string]>).map(([key,label])=>
+            <button key={key} type="button" aria-pressed={format===key}
+              onClick={()=>setFormat(key)}
+              className={'rounded-full border px-3 py-1.5 text-[11px] font-bold '+(format===key?
+                'border-[#F1AC6A] bg-[#FFF4EA] text-[#A45722]':
+                'border-[#E9E5EA] text-[#7F7882] hover:bg-[#FAF9FA]')}>{label}</button>)}
+        </div>
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#F0ECF0] pt-3">
           <button onClick={()=>startVoice(false)} disabled={busy} type="button"
             aria-pressed={listening&&!voiceForEdit} className="rounded-full border border-[#E8E5E8] px-4 py-2.5 text-xs font-bold">
