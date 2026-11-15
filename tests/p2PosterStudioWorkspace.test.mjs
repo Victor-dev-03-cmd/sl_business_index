@@ -50,6 +50,11 @@ test('mic click requests native browser permission then Gemini returns a visible
   assert.match(ui,/setEditIdea\(v=>/);
   assert.match(ui,/setIdea\(v=>/);
   assert.match(ui,/Transcript ready\. Please check the words/);
+  assert.match(ui,/setRecordingSeconds\(0\)/);
+  assert.match(ui,/setInterval\(\(\)=>setRecordingSeconds/);
+  assert.match(ui,/Stop recording/);
+  assert.doesNotMatch(ui,/setTimeout\(\(\)=>\{if\(rec\.state==='recording'\)rec\.stop\(\);\},12000\)/);
+  assert.match(ui,/maxLength=\{1200\}/);
   const mic=ui.slice(ui.indexOf('const startVoice='),ui.indexOf('const download='));
   assert.doesNotMatch(mic,/submit\(true\)|submit\(false\)|\/api\/marketing\/poster\/generate/);
 });
