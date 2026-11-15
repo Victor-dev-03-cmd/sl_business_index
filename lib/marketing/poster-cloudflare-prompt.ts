@@ -41,7 +41,7 @@ export function buildCompactCloudflarePosterPrompt(input:{
   const chunks=[
     mode,
     selected,
-    'EXACT vendor request (highest priority): '+take(input.request,400),
+    'EXACT vendor request (highest priority): '+take(input.request,800),
     input.referenceSummary?'Style/context inspiration only (do NOT paste reference image): '+
       take(input.referenceSummary,380):'',
     'Poster format '+input.format+', text language '+input.outputLanguage+'.',
