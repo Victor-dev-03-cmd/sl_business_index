@@ -45,7 +45,7 @@ export async function GET(){
       reason:'The studio daily AI allowance is not configured. Please contact support.'});
     if(Number(limits.data.max_attempts)<=Number(limits.data.attempts))
       return response({available:false,creditCost:null,
-        reason:'Today’s AI poster generation limit has been reached. The allowance resets at 00:00 UTC.'});
+        reason:'Today’s AI poster generation limit has been reached. A new daily allowance must be configured before more requests.'});
     return response({available:true,creditCost:cost,reason:null});
   }catch{return response(unavailable);}
 }

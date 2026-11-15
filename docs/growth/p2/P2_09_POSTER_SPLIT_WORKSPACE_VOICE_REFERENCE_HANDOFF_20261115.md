@@ -1,4 +1,12 @@
 # SLBI P2-09 — Poster Studio LLM UI, Voice Transcript, Safe Reference Attachments
+
+## 2026-11-15 — Production VERIFIED (latest factual release checkpoint)
+- **PR #88 merged** source `7b9f60d06051b622e12b4afca63b558dd107a877`. Candidate code head `a9364f0b9f0eeb67bb8dda27656a1f32dd53859a` passed **6/6 exact-head CI** including Next.js production build, P2 Marketing/RLS, P1 and billing checks. Initial contract test error was a static test-only source-order assertion; fixed before merge.
+- **Vercel Production READY** `dpl_9hrgBZk2CHSRaqmW3Jtuqp2BBSXt`, source `7b9f60d06051b622e12b4afca63b558dd107a877`, alias `www.slbusinessindex.com` independently verified. Main source confirms desktop LEFT controls and RIGHT output, center first load, Gemini voice, reference-only opt-in, 100%-after-load.
+- **Quota truth:** On 2026-11-15 UTC, Supabase global image budget **2 attempts / 2 max**, 1 completed real private image, 0 voice/reference quota usages. The SQL reserve function auto-creates a new UTC day row with **max_attempts DEFAULT 0**, so **do not promise the budget resets to 2 at midnight**. A future administrator-approved allocation must be configured. User-visible capability copy was patched to state this truth. Do not increase global spending cap without owner approval.
+- **Not yet user-E2E verified:** No assistant-triggered Gemini transcription, reference analysis or Cloudflare image request; authenticated owner browser QA is still needed for actual image quality and edits. Build/release READY is not proof of successful provider calls. Uploaded PDFs/TXT/MD and images analyzed by Gemini are not retained in SLBI, but third-party Free API terms apply.
+- The exact PR #88 release notes are in its GitHub Conversation comment. Further code/deployments may change latest SHA; always re-check Vercel before claiming final deployed.
+
 **Date:** 2026-11-15 (Sri Lanka, UTC+05:30)  
 **Repo:** `Victor-dev-03-cmd/sl_business_index`  
 **GitHub PR:** https://github.com/Victor-dev-03-cmd/sl_business_index/pull/88  
