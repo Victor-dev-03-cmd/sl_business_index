@@ -66,7 +66,7 @@ test('AI poster appears only after verified private image bytes, then accepts ed
   assert.match(ui,/await openArtwork\(result\.jobId\)/);
   assert.match(ui,/\/api\/marketing\/poster\/artwork\?jobId=/);
   assert.match(ui,/result\.error/);
-  assert.match(ui,/refine\?\{/);
+  assert.match(ui,/if\(refine\)\{body\.sourceJobId/);
   assert.match(ui,/sourceJobId/);
   assert.match(ui,/editInstruction/);
   assert.match(ui,/Edit this image with AI/);
