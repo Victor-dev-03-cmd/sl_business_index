@@ -187,6 +187,7 @@ export async function POST(request:Request){
         rawUserRequest:editing?(editInstruction as string):checked.value.subject,
         facts,brief:interpreted,
         format:checked.value.format,
+        preferredLanguage:checked.value.language,
         isEdit:editing,
       });
     }
