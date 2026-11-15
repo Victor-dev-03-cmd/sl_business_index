@@ -45,6 +45,8 @@ test('mic click requests native browser permission then Gemini returns a visible
   assert.match(ui,/rec\.onstop/);
   assert.match(ui,/\/api\/marketing\/poster\/transcribe/);
   assert.match(ui,/x-slbi-business-id/);
+  assert.match(ui,/x-slbi-language':'auto'/);
+  assert.match(ui,/Voice language is detected automatically/);
   assert.match(ui,/setEditIdea\(v=>/);
   assert.match(ui,/setIdea\(v=>/);
   assert.match(ui,/Transcript ready\. Please check the words/);
