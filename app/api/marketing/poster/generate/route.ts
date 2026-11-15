@@ -1,6 +1,7 @@
 import {createHash} from 'node:crypto';
 import sharp from 'sharp';
 import {decodeExplicitPosterSource} from '@/lib/marketing/poster-reference-input';
+import {buildCompactCloudflarePosterPrompt} from '@/lib/marketing/poster-cloudflare-prompt';
 import {getPosterImageProvider,getPosterOperationModel,generatePosterProviderImage,PosterProviderFailure} from '@/lib/marketing/poster-image-provider';
 import {createClient as createAdminClient} from '@supabase/supabase-js';
 import {createClient} from '@/lib/supabase/server';
@@ -193,6 +194,7 @@ export async function POST(request:Request){
   let uploaded=false;
   try{
     let effectivePrompt=prompt;
+    let interpretedBrief:Awaited<ReturnType<typeof createGeminiPosterBrief>>|undefined;
     if(useGemini){
       // Gemini receives ONLY the selected owner-verified public listing facts,
       // the user's language request and edit/new intent. It never receives
@@ -204,6 +206,7 @@ export async function POST(request:Request){
         referenceContext:referenceSummary,
         isEdit:editing,
       });
+      interpretedBrief=interpreted;
       effectivePrompt=buildGroundedImagePrompt({
         rawUserRequest:editing?(editInstruction as string):checked.value.subject,
         facts,brief:interpreted,
@@ -222,6 +225,17 @@ export async function POST(request:Request){
       effectivePrompt+='\n\nThe vendor explicitly requested use of the attached actual image. '+
         'Base the new poster on that image, retaining verified business facts. '+
         'Do not promise pixel-perfect preservation.';
+    }
+    if(provider.provider==='cloudflare'){
+      // Cloudflare adapter limits model prompts to 2048 characters.
+      // Put verified selected business, exact vendor request and optional
+      // reference style at the START, not after long generic marketing prose.
+      effectivePrompt=buildCompactCloudflarePosterPrompt({
+        facts,request:editing?(editInstruction as string):checked.value.subject,
+        format:checked.value.format,outputLanguage:checked.value.language,
+        edit:editing,useUploadedPixels:Boolean(directSource),
+        referenceSummary,intelligence:interpretedBrief,fallbackCreative:art.prompt,
+      });
     }
     const binary=await generatePosterProviderImage({
       config:provider,prompt:effectivePrompt,size:art.providerSize,userId:user.id,sourceImage,
