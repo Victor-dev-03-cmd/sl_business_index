@@ -48,6 +48,9 @@ test('Gemini structured response cannot replace authoritative contact details or
   assert.match(brain,/Do not make up numerical discounts/);
   assert.match(brain,/original user message|ORIGINAL USER REQUEST/i);
   assert.match(brain,/input\.isEdit/);
+  assert.match(brain,/Preferred poster COPY language: /);
+  assert.match(brain,/input\.preferredLanguage/);
+  assert.match(generate,/preferredLanguage:checked\.value\.language/);
   assert.doesNotMatch(brain,/GEMINI_API_KEY\s*=\s*['"]/);
 });
 
