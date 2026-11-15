@@ -80,7 +80,7 @@ test('Pro-only, same-origin, owner-verified, no-pay preview route',()=>{
 });
 test('Creative AI is prompt-first: no manual layers or fake text-based image generation',()=>{
   const ui=read('app/vendor/marketing/design/page.tsx');
-  assert.match(ui,/What poster shall we create today/);
+  assert.match(ui,/What shall we create today/);
   assert.match(ui,/\/api\/marketing\/poster\/generate/);
   assert.match(ui,/Edit this image with AI/);
   assert.match(ui,/sourceJobId/);

@@ -107,6 +107,6 @@ test('Gemini rollout does not alter Cloudflare image model or manual UI',()=>{
   const ui=read('app/vendor/marketing/design/page.tsx');
   assert.match(provider,/@cf\/black-forest-labs\/flux-2-klein-4b/);
   assert.match(ui,/Edit this image with AI/);
-  assert.match(ui,/What poster shall we create today/);
+  assert.match(ui,/What shall we create today/);
   assert.doesNotMatch(ui,/drawPoster\(/);
 });
