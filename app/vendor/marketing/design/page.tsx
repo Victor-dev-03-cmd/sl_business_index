@@ -23,6 +23,10 @@ const formats:Record<PosterFormat,{label:string;ratio:string}>={
   landscape:{label:'Wide',ratio:'1200 / 630'},
 };
 const languageLabels={ta:'தமிழ்',si:'සිංහල',en:'English'} as const;
+// Keep the generating skeleton and actual private PNG in one identical frame.
+const numericAspects:Record<PosterFormat,number>={
+  square:1,portrait:4/5,story:9/16,landscape:1200/630,
+};
 const maxAttachment=1_500_000;
 const allowedMimes=new Set(['image/png','image/jpeg','image/webp','application/pdf','text/plain','text/markdown']);
 const mimeFor=(f:File):string=>{
@@ -42,6 +46,7 @@ export default function PosterDesignStudio(){
   const [editIdea,setEditIdea]=useState('');
   const [sourceJobId,setSourceJobId]=useState('');
   const [previewUrl,setPreviewUrl]=useState('');
+  const [stageBounds,setStageBounds]=useState({width:0,height:0});
   const [history,setHistory]=useState<HistoryItem[]>([]);
   const [attachments,setAttachments]=useState<Attachment[]>([]);
   const [directReferenceId,setDirectReferenceId]=useState('');
@@ -64,6 +69,7 @@ export default function PosterDesignStudio(){
   const [message,setMessage]=useState('');
   const [lastCharge,setLastCharge]=useState<number|null>(null);
   const currentBlob=useRef<string|null>(null);
+  const stageRef=useRef<HTMLDivElement|null>(null);
   const filePicker=useRef<HTMLInputElement|null>(null);
   const micStream=useRef<MediaStream|null>(null);
   const recorder=useRef<MediaRecorder|null>(null);
@@ -78,6 +84,26 @@ export default function PosterDesignStudio(){
     const interval=setInterval(()=>setPercent(p=>Math.min(94,p+(p<35?2:p<70?1:0.4))),680);
     return()=>clearInterval(interval);
   },[busy]);
+
+  // Measure the stable preview area, not the generated image. Changing state to
+  // ready must never cause the native PNG dimensions to enlarge the frame.
+  useEffect(()=>{
+    if(!workspace||!stageRef.current)return;
+    const stage=stageRef.current;
+    const measure=()=>{
+      const {width,height}=stage.getBoundingClientRect();
+      const next={width:Math.max(0,Math.floor(width)),height:Math.max(0,Math.floor(height)-40)};
+      setStageBounds(prev=>prev.width===next.width&&prev.height===next.height?prev:next);
+    };
+    measure();
+    if(typeof ResizeObserver==='undefined'){
+      window.addEventListener('resize',measure);
+      return()=>window.removeEventListener('resize',measure);
+    }
+    const observer=new ResizeObserver(measure);
+    observer.observe(stage);
+    return()=>observer.disconnect();
+  },[workspace]);
 
   const stopMic=()=>{
     if(recordingClock.current){clearInterval(recordingClock.current);recordingClock.current=null;}
@@ -530,7 +556,13 @@ export default function PosterDesignStudio(){
     {lastCharge!==null&&<p className="mt-2 text-[11px] text-[#9B928F]">Last successful request: {lastCharge} Growth Credits.</p>}
   </section>;
 
-  const output=<section aria-label="AI artwork output" className="flex h-full min-h-[430px] flex-col overflow-hidden rounded-[26px] border border-[#E8E3E0] bg-[radial-gradient(ellipse_at_50%_10%,#FFF4E9_0%,#F8F7F7_52%,#F2F0F0_100%)] p-4 shadow-[0_20px_65px_rgba(42,32,26,.07)] sm:p-5">
+  const aspect=numericAspects[format];
+  // Fit the chosen aspect inside BOTH stage dimensions, without stretching.
+  const stageWidth=stageBounds.width||320;
+  const stageHeight=stageBounds.height||390;
+  const frameWidth=Math.max(1,Math.floor(Math.min(stageWidth,stageHeight*aspect)));
+  const frameHeight=Math.max(1,Math.floor(frameWidth/aspect));
+  const output=<section aria-label="AI artwork output" className="flex h-[min(74dvh,720px)] min-h-[430px] flex-col overflow-hidden rounded-[26px] lg:h-full border border-[#E8E3E0] bg-[radial-gradient(ellipse_at_50%_10%,#FFF4E9_0%,#F8F7F7_52%,#F2F0F0_100%)] p-4 shadow-[0_20px_65px_rgba(42,32,26,.07)] sm:p-5">
     <div className="flex flex-wrap items-center justify-between gap-2">
       <div><p className="text-[10px] font-bold uppercase tracking-[.15em] text-[#B36B37]">Your AI workspace</p>
         <h2 className="mt-0.5 text-base font-extrabold text-[#2E292C]">{busy?'Creating something beautiful':previewUrl?'Your generated artwork':'Live poster preview'}</h2></div>
@@ -539,13 +571,13 @@ export default function PosterDesignStudio(){
         <span className="rounded-full border border-white bg-white/75 px-3 py-2 text-[11px] font-bold text-[#8A7C75]">{formats[format].label}</span>
       </div>
     </div>
-    <div className="relative flex min-h-0 flex-1 items-center justify-center py-5">
-      <div style={{aspectRatio:formats[format].ratio}}
-        className={'relative flex max-h-full w-auto max-w-full items-center justify-center overflow-hidden rounded-2xl bg-[#E5E2E0] shadow-[0_24px_60px_rgba(37,31,30,.18)] '+
-          (format==='landscape'?'min-w-[min(100%,320px)]':'min-h-[min(72%,280px)]')}>
+    <div ref={stageRef} className="relative flex min-h-0 flex-1 items-center justify-center py-5">
+      <div data-testid="poster-aspect-frame"
+        style={{aspectRatio:formats[format].ratio,width:frameWidth,height:frameHeight}}
+        className="relative flex max-h-full max-w-full shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-[#E5E2E0] shadow-[0_24px_60px_rgba(37,31,30,.18)]">
         {previewUrl&&!busy?
           <img src={previewUrl} alt="Your actual AI-generated marketing poster" className="h-full w-full object-contain"/>:
-          <div className="relative flex h-full w-full min-h-[280px] flex-col items-center justify-center overflow-hidden bg-[linear-gradient(145deg,#F9EEE5,#E9E1DF_55%,#F6F2EF)] px-5 text-center">
+          <div className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden bg-[linear-gradient(145deg,#F9EEE5,#E9E1DF_55%,#F6F2EF)] px-5 text-center">
             <div className="absolute inset-0 opacity-50 [background:linear-gradient(100deg,transparent_10%,rgba(255,255,255,.55)_45%,transparent_75%)] [background-size:220%_100%] motion-safe:animate-pulse"/>
             <div className="relative grid h-16 w-16 place-items-center rounded-2xl border border-white bg-white/75 shadow-sm">
               {busy?<LoaderCircle size={27} className="animate-spin text-[#DF8D49]"/>:<ImageIcon size={26} className="text-[#CB9673]"/>}
@@ -562,17 +594,19 @@ export default function PosterDesignStudio(){
           </div>}
       </div>
     </div>
-    {previewUrl&&!busy&&<div className="flex flex-wrap justify-center gap-2 border-t border-[#E9E4E1] pt-4">
+    <div className="flex min-h-[62px] flex-wrap items-center justify-center gap-2 border-t border-[#E9E4E1] pt-3">
+    {previewUrl&&!busy&&<>
       <button className="inline-flex items-center gap-2 rounded-xl bg-[#262125] px-4 py-3 text-xs font-bold text-white" onClick={()=>void download()}>
         <Download size={15}/> Download PNG
       </button>
       <button className={iconButton} onClick={()=>void share()}><Share2 size={15}/> Share</button>
       <button className={iconButton} onClick={reset}><Plus size={15}/> New poster</button>
-    </div>}
-    {!previewUrl&&!busy&&<p className="pb-2 text-center text-xs text-[#938781]">
+    </>}
+    {!previewUrl&&!busy&&<p className="text-center text-xs text-[#938781]">
       {phase==='failed'?'Please review the error in the left panel and retry.':
       'Only real AI-generated images will appear here — no fake drafts.'}
     </p>}
+    </div>
   </section>;
 
   return <main className="mx-auto flex w-full max-w-[1480px] flex-col px-3 pb-6 pt-3 text-[#262225] sm:px-5 lg:pb-3">
