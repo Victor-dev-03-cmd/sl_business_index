@@ -289,7 +289,7 @@ export default function PosterDesignStudio(){
       const res=await fetch('/api/marketing/poster/transcribe',{
         method:'POST',cache:'no-store',credentials:'same-origin',
         headers:{'Content-Type':blob.type||'audio/webm',
-          'x-slbi-business-id':businessId,'x-slbi-language':language},
+          'x-slbi-business-id':businessId,'x-slbi-language':'auto'},
         body:blob,
       });
       const data=await res.json() as {transcript?:string;error?:string};
@@ -451,6 +451,7 @@ export default function PosterDesignStudio(){
         className={'rounded-full px-3 py-1.5 font-bold '+(lang===language?'bg-[#FFF0E5] text-[#AB602A]':'text-[#A39B99] hover:bg-[#F7F5F4]')}>
         {languageLabels[lang]}</button>)}
     </div>
+    <p className="mt-2 text-[10px] leading-5 text-[#A39A96]">Voice language is detected automatically. Poster text language follows the selected setting.</p>
     <p className="mt-4 text-[11px] leading-5 text-[#8E8581]">{serviceLabel}</p>
   </div>;
 
