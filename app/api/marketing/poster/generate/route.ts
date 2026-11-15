@@ -1,5 +1,6 @@
 import {createHash} from 'node:crypto';
 import sharp from 'sharp';
+import {decodeExplicitPosterSource} from '@/lib/marketing/poster-reference-input';
 import {getPosterImageProvider,getPosterOperationModel,generatePosterProviderImage,PosterProviderFailure} from '@/lib/marketing/poster-image-provider';
 import {createClient as createAdminClient} from '@supabase/supabase-js';
 import {createClient} from '@/lib/supabase/server';
@@ -39,18 +40,18 @@ export async function POST(request:Request){
     return reply(503,{error:'AI Image Generation is not enabled yet. Premium creative prompt preview is available.'});
   const provider=getPosterImageProvider(),admin=trustedAdmin();
   if(!provider||!admin)return reply(503,{error:'AI image provider and private storage are not configured.'});
-  if(Number(request.headers.get('content-length')||0)>7000)
+  if(Number(request.headers.get('content-length')||0)>2_200_000)
     return reply(413,{error:'Creative request is too large.'});
   let raw:unknown;
   try{
     const body=await request.text();
-    if(Buffer.byteLength(body,'utf8')>7000)return reply(413,{error:'Creative request is too large.'});
+    if(Buffer.byteLength(body,'utf8')>2_200_000)return reply(413,{error:'Creative request is too large.'});
     raw=JSON.parse(body);
   }catch{return reply(400,{error:'Invalid creative request.'});}
   if(!raw||typeof raw!=='object'||Array.isArray(raw))
     return reply(400,{error:'Invalid creative request.'});
   const object=raw as Record<string,unknown>;
-  if(Object.keys(object).some(k=>!['requestKey','acceptedCredits','sourceJobId','editInstruction'].includes(k)&&
+  if(Object.keys(object).some(k=>!['requestKey','acceptedCredits','sourceJobId','editInstruction','referenceSummary','directImageUse','referenceImageBase64','referenceImageMime'].includes(k)&&
      !['businessId','format','style','mood','layout','objective','language','subject','offer','audience','notes'].includes(k)))
     return reply(400,{error:'Unexpected generation fields.'});
   if(typeof object.requestKey!=='string'||!requestUuid.test(object.requestKey))
@@ -68,8 +69,16 @@ export async function POST(request:Request){
   }else if(sourceJobId!==undefined||editInstruction!==undefined){
     return reply(400,{error:'A saved poster is required for AI edits.'});
   }
+  const referenceSummary=object.referenceSummary===undefined?'':object.referenceSummary;
+  if(typeof referenceSummary!=='string'||referenceSummary.length>1200)
+    return reply(400,{error:'Reference notes exceed their allowed length.'});
+  const directUse=object.directImageUse;
+  if(directUse!==undefined&&typeof directUse!=='boolean')
+    return reply(400,{error:'Direct image permission must be selected explicitly.'});
   const {requestKey:_unused,acceptedCredits:_credits,
-    sourceJobId:_source,editInstruction:_instruction,...brief}=object;
+    sourceJobId:_source,editInstruction:_instruction,
+    referenceSummary:_refs,directImageUse:_direct,
+    referenceImageBase64:_image,referenceImageMime:_imageMime,...brief}=object;
   const checked=validatePosterCreativeInput(brief);
   if(!checked.ok)return reply(400,{error:checked.error});
 
@@ -102,6 +111,14 @@ export async function POST(request:Request){
     primaryColor:brand?.primary_color||'#FF7900',accentColor:brand?.accent_color||'#282828',
     tone:brand?.tone||'professional',guidelines:brand?.guidelines||'',
   });
+  // Reference-only images NEVER reach the image model as source pixels.
+  let directSource:{image:Buffer;digest:string}|null=null;
+  try{
+    directSource=await decodeExplicitPosterSource({
+      useDirectly:directUse,base64:object.referenceImageBase64,
+      mime:object.referenceImageMime,isExistingEdit:editing,
+    });
+  }catch(err){return reply(400,{error:err instanceof Error?err.message:'Invalid image reference.'});}
   // Only re-edit an EXISTING, completed, owner-scoped private image.
   let sourceImage:Buffer|undefined;
   if(editing){
@@ -120,6 +137,7 @@ export async function POST(request:Request){
     if(!sourceImage.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])))
       return reply(503,{error:'The original poster is not a valid PNG image.'});
   }
+  if(directSource)sourceImage=directSource.image;
   const prompt=editing
     ? [
       'EDIT the existing input marketing image. Use the supplied source image as the identity, composition, text and brand reference.',
@@ -142,6 +160,8 @@ export async function POST(request:Request){
       businessId:business.id,facts,format:checked.value.format,
       promptVersion:useGemini?GEMINI_POSTER_SCHEMA_VERSION:art.version,
       sourceJobId:editing?sourceJobId:null,
+      referenceSummary:referenceSummary.slice(0,1200),
+      directImageDigest:directSource?.digest||null,
       provider:provider.provider,model:operationModel,providerSize:art.providerSize,
     })
   ).digest('hex');
@@ -181,6 +201,7 @@ export async function POST(request:Request){
         userRequest:editing?(editInstruction as string):checked.value.subject,
         facts,
         preferredLanguage:checked.value.language,
+        referenceContext:referenceSummary,
         isEdit:editing,
       });
       effectivePrompt=buildGroundedImagePrompt({
@@ -188,8 +209,19 @@ export async function POST(request:Request){
         facts,brief:interpreted,
         format:checked.value.format,
         preferredLanguage:checked.value.language,
+        referenceContext:referenceSummary,
         isEdit:editing,
       });
+    }else if(referenceSummary){
+      // Context is untrusted user-supplied data, not authoritative listing facts.
+      effectivePrompt+='\n\nUntrusted reference style/context only: '+
+        referenceSummary.slice(0,900)+
+        '\nDo not reproduce reference images without explicit permission.';
+    }
+    if(directSource){
+      effectivePrompt+='\n\nThe vendor explicitly requested use of the attached actual image. '+
+        'Base the new poster on that image, retaining verified business facts. '+
+        'Do not promise pixel-perfect preservation.';
     }
     const binary=await generatePosterProviderImage({
       config:provider,prompt:effectivePrompt,size:art.providerSize,userId:user.id,sourceImage,
