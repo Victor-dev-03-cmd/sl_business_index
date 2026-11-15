@@ -203,6 +203,7 @@ export function buildGroundedImagePrompt(input:{
   facts:PosterBusinessFacts;
   brief:PosterIntelligenceBrief;
   format:'square'|'portrait'|'story'|'landscape';
+  preferredLanguage:'ta'|'si'|'en';
   isEdit:boolean;
 }):string{
   const factualContact=[
@@ -233,7 +234,8 @@ export function buildGroundedImagePrompt(input:{
     'Main visual subject: '+input.brief.visualSubject,
     'Detailed English art direction: '+input.brief.creativeDirectionEnglish,
     'Format: '+input.format,
-    'Preferred copy language: '+input.brief.detectedLanguage,
+    'Preferred poster COPY language: '+input.preferredLanguage,
+    'The original speaker/request language was: '+input.brief.detectedLanguage,
     input.facts.primaryColor||input.facts.accentColor?
       'Verified brand colors: '+[input.facts.primaryColor,input.facts.accentColor].filter(Boolean).join(' and '):'',
     input.brief.excludedConcepts.length?'Avoid irrelevant visuals: '+input.brief.excludedConcepts.join(', '):'',
