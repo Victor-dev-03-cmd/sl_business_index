@@ -55,14 +55,14 @@ test('private image download cannot disclose cross-tenant artwork',()=>{
   assert.doesNotMatch(artwork,/createSignedUrl/);
 });
 test('client confirms exact paid credit price before generate and retains editable imagery',()=>{
-  assert.match(editor,/generateAiArtwork/);
+  assert.match(editor,/submit=async/);
   assert.match(editor,/window\.confirm/);
   assert.match(editor,/\/api\/marketing\/poster\/generate/);
   assert.match(editor,/\/api\/marketing\/poster\/artwork/);
-  assert.match(editor,/setImageData/);
-  assert.match(editor,/new FileReader/);
-  assert.match(editor,/artJobId/);
-  assert.match(editor,/artCredits/);
+  assert.match(editor,/setPreviewUrl/);
+  assert.match(editor,/URL\.createObjectURL/);
+  assert.match(editor,/sourceJobId/);
+  assert.match(editor,/lastCharge/);
   assert.match(read('app/vendor/marketing/design/layout.tsx'),/MarketingProOnly/);
 });
 
@@ -89,7 +89,7 @@ test('Hugging Face provider adapter cannot spend merely because HF_TOKEN is conf
   assert.match(providers,/router\.huggingface\.co\/fal-ai/);
   assert.match(providers,/num_inference_steps:4/);
   assert.match(providers,/enable_safety_checker:true/);
-  assert.match(providers,/status\?_subdomain=queue/);
+  assert.match(providers,/status'\+queueQuery/);
   assert.match(providers,/redirect:'error'/);
   assert.match(providers,/\.endsWith\('\.fal\.media'\)/);
   assert.match(generate,/marketing_poster_reserve/);
@@ -109,4 +109,28 @@ test('first-time vendor without optional Brand Kit is not blocked from premium c
   assert.doesNotMatch(generation,/Set up your business Brand Kit before creating AI artwork/);
   assert.doesNotMatch(prompt,/Complete the business Brand Kit before using AI art direction/);
   assert.match(prompt,/brand\?\.brand_name\|\|business\.name/);
+});
+
+test('FLUX text-to-image uses official synchronous Fal task, not missing queue request ID',()=>{
+  assert.match(providers,/HF_ROUTER\+'fal-ai\/flux\/schnell'/);
+  assert.match(providers,/const payload=await response\.json/);
+  assert.match(providers,/payload\.images\?\.\[0\]\?\.url/);
+  assert.doesNotMatch(providers,/queueUrl=HF_ROUTER\+providerPath/);
+  assert.match(providers,/requireProviderOk\(response\.status\)/);
+  assert.match(providers,/PosterProviderFailure/);
+});
+test('private image-to-image edits preserve source ownership and send the real image to Qwen',()=>{
+  assert.match(generate,/sourceJobId/);
+  assert.match(generate,/editInstruction/);
+  assert.match(generate,/\.eq\('user_id',user\.id\)/);
+  assert.match(generate,/\.eq\('business_id',business\.id\)/);
+  assert.match(generate,/source\.state!=='completed'/);
+  assert.match(generate,/source\.storage_path!==expected/);
+  assert.match(generate,/sourceImage=Buffer\.from/);
+  assert.match(generate,/operationModel=getPosterOperationModel/);
+  assert.match(providers,/Qwen\/Qwen-Image-Edit-2509/);
+  assert.match(providers,/image_urls:/);
+  assert.match(providers,/source\.toString\('base64'\)/);
+  assert.match(providers,/redirect:'error'/);
+  assert.match(generate,/marketing_poster_refund/);
 });

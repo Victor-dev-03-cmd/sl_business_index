@@ -51,7 +51,7 @@ test('six distinct design directions and four independent social aspect ratios',
     assert.equal(built.providerSize,POSTER_PROVIDER_SIZES[format]);
     assert.ok(built.prompt.includes('No')||built.prompt.includes('NO'));
     assert.match(built.prompt,/original|ORIGINAL/i);
-    assert.match(built.prompt,/copy|overlay/i);
+    assert.match(built.prompt,/typography|headline/i);
     assert.ok(built.qualityChecklist.length>=6);
   }
 });
@@ -63,8 +63,8 @@ test('premium commercial prompt is grounded in approved brand facts',()=>{
   assert.match(v.prompt,/Jaffna/);
   assert.match(v.prompt,/Sri Lankan Tamil/);
   assert.match(v.prompt,/#FF7900/);
-  assert.match(v.prompt,/LEFT 42%/);
-  assert.match(v.prompt,/no.*(typography|letters)/i);
+  assert.match(v.prompt,/left-aligned headline/);
+  assert.match(v.prompt,/TYPOGRAPHY:/);
   assert.match(v.prompt,/untrusted merchant data/);
   assert.match(v.prompt,/never.*instructions/i);
   assert.doesNotMatch(v.prompt,/generate 4 images/i);
@@ -78,20 +78,17 @@ test('Pro-only, same-origin, owner-verified, no-pay preview route',()=>{
   assert.match(route,/buildPosterCreativePrompt/);
   assert.doesNotMatch(route,/OPENAI_API_KEY|GROQ_API_KEY|fetch\('https:\/\/api\./);
 });
-test('poster editor exposes premium prompt panel but preserves editable text and zero charge on preview',()=>{
+test('Creative AI is prompt-first: no manual layers or fake text-based image generation',()=>{
   const ui=read('app/vendor/marketing/design/page.tsx');
-  assert.match(ui,/Creative Direction Engine/);
-  assert.match(ui,/\/api\/marketing\/poster\/prompt/);
-  assert.match(ui,/Prepare premium creative prompt · No charge/);
-  assert.match(ui,/POSTER_STYLE_KEYS/);
-  assert.match(ui,/setArtPrompt/);
-  assert.match(ui,/drawPoster\(/);
-  assert.match(ui,/applyAiHeadline/);
-  assert.match(ui,/Text overflow/);
+  assert.match(ui,/What poster shall we create today/);
+  assert.match(ui,/\/api\/marketing\/poster\/generate/);
+  assert.match(ui,/Edit this image with AI/);
+  assert.match(ui,/sourceJobId/);
+  assert.match(ui,/editInstruction/);
+  assert.doesNotMatch(ui,/drawPoster\(|onPointerDown|EditableTextLayer|x position|font size/i);
   const layout=read('app/vendor/marketing/design/layout.tsx');
   assert.match(layout,/MarketingProOnly/);
 });
-
 test('industry-aware campaign style mapping favors visual concepts over black text panels',()=>{
   assert.equal(inferPosterArtStyle('என் உணவகத்திற்கு பிரியாணி special poster'),'cinematic-product');
   assert.equal(inferPosterArtStyle('50% discount SALE this weekend'),'bold-retail');

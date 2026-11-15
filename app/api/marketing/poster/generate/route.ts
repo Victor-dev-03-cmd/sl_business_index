@@ -1,6 +1,6 @@
 import {createHash} from 'node:crypto';
 import sharp from 'sharp';
-import {getPosterImageProvider,generatePosterProviderImage} from '@/lib/marketing/poster-image-provider';
+import {getPosterImageProvider,getPosterOperationModel,generatePosterProviderImage,PosterProviderFailure} from '@/lib/marketing/poster-image-provider';
 import {createClient as createAdminClient} from '@supabase/supabase-js';
 import {createClient} from '@/lib/supabase/server';
 import {isSameOrigin} from '@/lib/growth/ingestion-contract';
@@ -47,7 +47,7 @@ export async function POST(request:Request){
   if(!raw||typeof raw!=='object'||Array.isArray(raw))
     return reply(400,{error:'Invalid creative request.'});
   const object=raw as Record<string,unknown>;
-  if(Object.keys(object).some(k=>!['requestKey','acceptedCredits'].includes(k)&&
+  if(Object.keys(object).some(k=>!['requestKey','acceptedCredits','sourceJobId','editInstruction'].includes(k)&&
      !['businessId','format','style','mood','layout','objective','language','subject','offer','audience','notes'].includes(k)))
     return reply(400,{error:'Unexpected generation fields.'});
   if(typeof object.requestKey!=='string'||!requestUuid.test(object.requestKey))
@@ -55,7 +55,18 @@ export async function POST(request:Request){
   const requestKey=object.requestKey;
   if(!Number.isInteger(object.acceptedCredits)||Number(object.acceptedCredits)<1||Number(object.acceptedCredits)>100)
     return reply(400,{error:'Confirm the current per-image Growth Credit price first.'});
-  const {requestKey:_unused,acceptedCredits:_credits,...brief}=object;
+  const sourceJobId=object.sourceJobId;
+  const editInstruction=object.editInstruction;
+  const editing=typeof sourceJobId==='string'&&sourceJobId.length>0;
+  if(editing){
+    if(!requestUuid.test(sourceJobId as string)||typeof editInstruction!=='string'||
+       editInstruction.trim().length<5||editInstruction.length>400)
+      return reply(400,{error:'Choose your saved poster and describe the change (5–400 characters).'});
+  }else if(sourceJobId!==undefined||editInstruction!==undefined){
+    return reply(400,{error:'A saved poster is required for AI edits.'});
+  }
+  const {requestKey:_unused,acceptedCredits:_credits,
+    sourceJobId:_source,editInstruction:_instruction,...brief}=object;
   const checked=validatePosterCreativeInput(brief);
   if(!checked.ok)return reply(400,{error:checked.error});
 
@@ -86,10 +97,39 @@ export async function POST(request:Request){
     primaryColor:brand?.primary_color||'#FF7900',accentColor:brand?.accent_color||'#282828',
     tone:brand?.tone||'professional',guidelines:brand?.guidelines||'',
   });
-  // Hash server-derived brand facts as well as user input. Identical idempotency
-  // keys cannot be reused with changed creative instructions or another brand.
+  // Only re-edit an EXISTING, completed, owner-scoped private image.
+  let sourceImage:Buffer|undefined;
+  if(editing){
+    const {data:source,error:sourceError}=await admin.from('marketing_poster_jobs')
+      .select('id,user_id,business_id,state,storage_path')
+      .eq('id',sourceJobId as string).eq('user_id',user.id)
+      .eq('business_id',business.id).maybeSingle();
+    const expected=user.id+'/'+business.id+'/'+sourceJobId+'.png';
+    if(sourceError)return reply(503,{error:'Private poster history is temporarily unavailable.'});
+    if(!source||source.state!=='completed'||source.storage_path!==expected)
+      return reply(404,{error:'Your original poster is missing or cannot be edited.'});
+    const {data:asset,error:assetError}=await admin.storage.from(BUCKET).download(expected);
+    if(assetError||!asset||asset.size<64||asset.size>12_000_000)
+      return reply(503,{error:'Could not retrieve the original poster securely.'});
+    sourceImage=Buffer.from(await asset.arrayBuffer());
+    if(!sourceImage.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])))
+      return reply(503,{error:'The original poster is not a valid PNG image.'});
+  }
+  const prompt=editing
+    ? [
+      'EDIT the existing input marketing image. Use the supplied source image as the identity, composition, text and brand reference.',
+      'Apply ONLY the requested edit: '+(editInstruction as string).trim(),
+      'Preserve all other subjects, placement, brand styling and image quality. Keep visible original words unchanged unless explicitly requested.',
+      'Maintain professional Sri Lankan commercial poster quality. No invented phone numbers, discounts, prices, claims, certifications or logos.',
+      'Business context: '+JSON.stringify({name:business.name,category:business.category,city:business.city}),
+    ].join('\n')
+    : art.prompt;
+  const operationModel=getPosterOperationModel(provider,editing);
+  // Hash server-derived brand facts + original poster + change request. A
+  // duplicate idempotency key cannot be replayed with different instructions.
   const briefHash=createHash('sha256').update(
-    JSON.stringify({prompt:art.prompt,provider:provider.provider,model:provider.model,providerSize:art.providerSize})
+    JSON.stringify({prompt,sourceJobId:editing?sourceJobId:null,
+      provider:provider.provider,model:operationModel,providerSize:art.providerSize})
   ).digest('hex');
   const {data:reservation,error:reserveError}=await admin.rpc('marketing_poster_reserve',{
     p_user_id:user.id,p_business_id:business.id,p_request_key:requestKey,
@@ -119,7 +159,7 @@ export async function POST(request:Request){
   let uploaded=false;
   try{
     const binary=await generatePosterProviderImage({
-      config:provider,prompt:art.prompt,size:art.providerSize,userId:user.id,
+      config:provider,prompt,size:art.providerSize,userId:user.id,sourceImage,
     });
     const normalized=await sharp(binary,{limitInputPixels:20000000})
       .resize(art.targetSize.width,art.targetSize.height,{fit:'cover',position:'centre'})
@@ -130,7 +170,7 @@ export async function POST(request:Request){
     if(uploadError)throw Error('Private artwork upload failed.');
     uploaded=true;
     const {data:settled,error:settleError}=await admin.rpc('marketing_poster_complete',{
-      p_job_id:job.job_id,p_storage_path:path,p_model:provider.provider==='huggingface'?provider.model:provider.model,p_prompt_version:art.version,
+      p_job_id:job.job_id,p_storage_path:path,p_model:operationModel,p_prompt_version:art.version,
     });
     if(settleError||settled!==true)throw Error('Image credit settlement failed.');
     return reply(201,{
@@ -146,7 +186,13 @@ export async function POST(request:Request){
       const {error}=await admin.rpc('marketing_poster_refund',{p_job_id:job.job_id});
       if(error)console.error('Poster AI credit refund needs reconciliation',error.code);
     }catch{console.error('Poster AI credit refund needs reconciliation');}
-    console.warn('Poster image generation failed',err instanceof Error?err.name:'unknown');
-    return reply(503,{error:'AI image could not be completed. Reserved credits are eligible for refund; no image was published.'});
+    const fault=err instanceof PosterProviderFailure?err.kind:null;
+    console.warn('Poster image generation failed',fault||'invalid-provider-result');
+    const explanation=fault==='auth'?'Hugging Face authentication was rejected. Check the saved token and Inference Providers permission.':
+      fault==='credits'?'The image provider reports insufficient inference credits. No poster was created.':
+      fault==='model'?'This image model is temporarily unavailable from the selected provider.':
+      fault==='rate-limit'?'Hugging Face is rate-limiting image requests; please try again later.':
+      'The image provider did not return a valid image. This attempt was refunded.';
+    return reply(fault==='credits'?402:503,{error:explanation});
   }
 }
