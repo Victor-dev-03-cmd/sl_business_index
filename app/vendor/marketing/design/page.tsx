@@ -4,7 +4,7 @@ import {useEffect,useRef,useState} from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft,ArrowUpRight,Check,Download,FileText,Image as ImageIcon,
-  LoaderCircle,Mic,Paperclip,Plus,Share2,Sparkles,Square,Trash2,WandSparkles,X,
+  LoaderCircle,Mic,Paperclip,Plus,Share2,Sparkles,WandSparkles,X,
 } from 'lucide-react';
 import {supabase} from '@/lib/supabaseClient';
 import {type PosterFormat} from '@/lib/marketing/poster-design';
@@ -499,7 +499,10 @@ export default function PosterDesignStudio(){
     <div className="flex flex-wrap items-center justify-between gap-2">
       <div><p className="text-[10px] font-bold uppercase tracking-[.15em] text-[#B36B37]">Your AI workspace</p>
         <h2 className="mt-0.5 text-base font-extrabold text-[#2E292C]">{busy?'Creating something beautiful':previewUrl?'Your generated artwork':'Live poster preview'}</h2></div>
-      <span className="rounded-full border border-white bg-white/75 px-3 py-2 text-[11px] font-bold text-[#8A7C75]">{formats[format].label}</span>
+      <div className="flex items-center gap-2">
+        {phase==='ready'&&previewUrl&&!busy&&<span className="inline-flex items-center gap-1 rounded-full bg-[#E7F6E9] px-3 py-2 text-[11px] font-extrabold text-[#3C8547]"><Check size={13}/> 100% complete</span>}
+        <span className="rounded-full border border-white bg-white/75 px-3 py-2 text-[11px] font-bold text-[#8A7C75]">{formats[format].label}</span>
+      </div>
     </div>
     <div className="relative flex min-h-0 flex-1 items-center justify-center py-5">
       <div style={{aspectRatio:formats[format].ratio}}
@@ -563,7 +566,7 @@ export default function PosterDesignStudio(){
       </div>
       {composer}
       <div className="mt-5">{historyView}</div>
-      <p className="mt-5 text-center text-[11px] text-[#A49B98]">Your files stay private. Nothing posts to social media automatically. No manual graphic editor.</p>
+      <p className="mt-5 text-center text-[11px] text-[#A49B98]">Attachments are sent to Gemini for temporary AI analysis, never publicly posted or stored. Nothing posts to social media automatically. No manual graphic editor.</p>
     </div>:
     <div className="grid min-h-0 flex-1 gap-4 lg:h-[calc(100dvh-170px)] lg:min-h-[570px] lg:grid-cols-[minmax(345px,.86fr)_minmax(0,1.14fr)] lg:overflow-hidden">
       {/* Desktop: LEFT controls; RIGHT output. Mobile: output above controls. */}
