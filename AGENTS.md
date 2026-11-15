@@ -1,5 +1,10 @@
 # SLBusinessIndex — repository handoff for coding agents
 
+## 2026-11-15 — P2-11: Voice duration and Gemini brief recovery (PR #90)
+- **Read first:** [P2-11 voice and Gemini recovery](docs/growth/p2/P2_11_POSTER_LONG_VOICE_GEMINI_RECOVERY_HANDOFF_20261115.md). User confirmed accurate Gemini voice but recorder auto-stopped at 12s; source `setTimeout(...,12000)` removed. User explicitly stops, editable brief now supports up to 1200 characters and existing 1.5MB / 12-per-day voice quota remains.
+- Owner image Generate produced `gemini-unavailable` (Vercel runtime 2026-11-15 11:51:23Z, production `5ec6386`), before Cloudflare image API. Upstream HTTP status not observable in old code. Prompt adapter now uses Gemini JSON MIME with explicit required shape plus validation; logs safe HTTP status / timeout class without prompt/key leakage.
+- **Status:** PR #90 staged; confirm exact-head CI, merge to main, Vercel READY/alias and owner E2E before claiming resolved. Do not invoke billable inference or add image global attempts automatically. Keep LEFT controls / RIGHT image and private credits/refund unchanged.
+
 ## 2026-11-15 — LATEST P2-10: microphone permission + Generate QA unblock
 - **Read first:** [P2-10 Poster microphone and QA quota handoff](docs/growth/p2/P2_10_POSTER_MIC_PERMISSION_QUOTA_FIX_20261115.md). User found native mic Allow popup was absent and Generate disabled on live Pro Studio.
 - Confirmed site policy bug: `next.config.ts` globally had `microphone=()`; specific poster route now overrides it with `microphone=(self)`, while global pages and camera remain denied. If Chrome has persistently blocked mic, no code can force prompt: new UI explains browser Site settings → Mic Allow → Reload → Retry. Gemini voice transcription is still manual review before image Generate.
