@@ -78,17 +78,18 @@ test('Pro-only, same-origin, owner-verified, no-pay preview route',()=>{
   assert.match(route,/buildPosterCreativePrompt/);
   assert.doesNotMatch(route,/OPENAI_API_KEY|GROQ_API_KEY|fetch\('https:\/\/api\./);
 });
-test('Creative AI is prompt-first: no manual layers or fake text-based image generation',()=>{
-  const ui=read('app/vendor/marketing/design/page.tsx');
-  assert.match(ui,/What shall we create today/);
-  assert.match(ui,/\/api\/marketing\/poster\/generate/);
-  assert.match(ui,/Edit this image with AI/);
-  assert.match(ui,/sourceJobId/);
-  assert.match(ui,/editInstruction/);
-  assert.doesNotMatch(ui,/drawPoster\(|onPointerDown|EditableTextLayer|x position|font size/i);
+test('active AI Poster Studio is prompt-first with no retired Creative AI UI',()=>{
+  const ui=read('app/vendor/marketing/design/puter-lab/page.tsx');
+  assert.match(ui,/SLBI AI Poster Studio/);
+  assert.match(ui,/Prepare with Gemini/);
+  assert.match(ui,/composeExactPoster/);
+  assert.match(ui,/PUTER|Puter/);
+  assert.match(ui,/realMode&&!consent/);
+  assert.doesNotMatch(ui,/drawPoster\(|onPointerDown|EditableTextLayer|x position/);
   const layout=read('app/vendor/marketing/design/layout.tsx');
   assert.match(layout,/MarketingProOnly/);
 });
+
 test('industry-aware campaign style mapping favors visual concepts over black text panels',()=>{
   assert.equal(inferPosterArtStyle('என் உணவகத்திற்கு பிரியாணி special poster'),'cinematic-product');
   assert.equal(inferPosterArtStyle('50% discount SALE this weekend'),'bold-retail');

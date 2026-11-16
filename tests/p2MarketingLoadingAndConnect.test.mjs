@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {existsSync,readFileSync} from 'node:fs';
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 
 test('vendor boot renders a neutral skeleton rather than a blocking full-page spinner',()=>{
@@ -24,11 +24,13 @@ test('Marketing Studio has route-level loading boundaries with no fake data or s
   const routes=[
     'marketing/loading.tsx','marketing-engine/loading.tsx',
     'marketing/engine/loading.tsx','marketing/campaigns/loading.tsx',
-    'marketing/design/loading.tsx','marketing/brand/loading.tsx',
+    'marketing/brand/loading.tsx',
     'marketing/captions/loading.tsx','marketing-engine/(pro)/loading.tsx',
     'marketing/engine/(pro)/loading.tsx','dashboard/loading.tsx',
   ];
   for(const p of routes)assert.match(read('app/vendor/'+p),/MarketingRouteSkeleton/);
+  assert.equal(existsSync(new URL('../app/vendor/marketing/design/loading.tsx',import.meta.url)),false,
+    'retired Poster loading skeleton must not flash before current Studio');
 });
 
 test('Marketing Studio avoids sequential entitlement fetches and expensive prefetch of Pro routes',()=>{

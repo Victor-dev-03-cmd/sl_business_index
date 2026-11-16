@@ -6,7 +6,7 @@ const sql=read('docs/growth/p2/P2_04_POSTER_IMAGE_AI_STAGING_ONLY.sql');
 const generate=read('app/api/marketing/poster/generate/route.ts');
 const providers=read('lib/marketing/poster-image-provider.ts');
 const artwork=read('app/api/marketing/poster/artwork/route.ts');
-const editor=read('app/vendor/marketing/design/page.tsx');
+const editor=read('app/vendor/marketing/design/puter-lab/page.tsx');
 
 test('image spending cannot turn on without explicit action and zero-default cap approval',()=>{
   assert.match(sql,/VALUES\('ai_poster_design',8,false\)/);
@@ -54,16 +54,17 @@ test('private image download cannot disclose cross-tenant artwork',()=>{
   assert.match(artwork,/private, no-store/);
   assert.doesNotMatch(artwork,/createSignedUrl/);
 });
-test('client confirms exact paid credit price before generate and retains editable imagery',()=>{
-  assert.match(editor,/submit=async/);
-  assert.match(editor,/window\.confirm/);
-  assert.match(editor,/\/api\/marketing\/poster\/generate/);
-  assert.match(editor,/\/api\/marketing\/poster\/artwork/);
-  assert.match(editor,/setPreviewUrl/);
+test('current Studio uses explicit Puter User-Pays consent, while retired Cloudflare API stays independently guarded',()=>{
+  assert.match(editor,/realMode&&!consent/);
+  assert.match(editor,/test_mode:!realMode/);
+  assert.match(editor,/I understand this uses my Puter AI balance and may create a charge/);
+  assert.match(editor,/puter\.ai\.txt2img\(creative,options\)/);
+  assert.match(editor,/finalBlob/);
   assert.match(editor,/URL\.createObjectURL/);
-  assert.match(editor,/sourceJobId/);
-  assert.match(editor,/lastCharge/);
+  assert.match(editor,/composeExactPoster/);
   assert.match(read('app/vendor/marketing/design/layout.tsx'),/MarketingProOnly/);
+  const newOwner=read('app/vendor/marketing/design/puter-lab/layout.tsx');
+  assert.match(newOwner,/isPosterInternalQAAccount/);
 });
 
 test('real artwork capability is verified server-side, not inferred from a visible browser button',()=>{

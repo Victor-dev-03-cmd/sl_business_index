@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {existsSync,readFileSync} from 'node:fs';
 
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const brain=read('lib/marketing/poster-gemini-intelligence.ts');
@@ -106,11 +106,13 @@ test('voice daily quota uses service-only atomic count and strict RLS',()=>{
   assert.doesNotMatch(voiceSql,/GRANT (EXECUTE|SELECT|INSERT) .* TO authenticated/);
 });
 
-test('Gemini rollout does not alter Cloudflare image model or manual UI',()=>{
+test('legacy Cloudflare adapter remains independently protected while retired UI is absent',()=>{
   const provider=read('lib/marketing/poster-image-provider.ts');
-  const ui=read('app/vendor/marketing/design/page.tsx');
+  const ui=read('app/vendor/marketing/design/puter-lab/page.tsx');
   assert.match(provider,/@cf\/black-forest-labs\/flux-2-klein-4b/);
-  assert.match(ui,/Edit this image with AI/);
-  assert.match(ui,/What shall we create today/);
+  assert.equal(existsSync(new URL('../app/vendor/marketing/design/page.tsx',import.meta.url)),false);
+  assert.match(ui,/SLBI AI Poster Studio/);
+  assert.match(ui,/Prepare with Gemini/);
+  assert.match(ui,/composeExactPoster/);
   assert.doesNotMatch(ui,/drawPoster\(/);
 });

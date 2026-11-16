@@ -44,6 +44,16 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // The old 40KB Creative AI page has been retired. A legacy bookmark gets
+  // an immediate Next.js server redirect; no client HTML, fetch or flash.
+  // Marketing App Store links directly to the owner-authorized new Studio.
+  async redirects() {
+    return [{
+      source: '/vendor/marketing/design',
+      destination: '/vendor/marketing/design/puter-lab',
+      permanent: false,
+    }];
+  },
   async headers() {
     return [
       {
@@ -59,12 +69,6 @@ const nextConfig: NextConfig = {
       // Last matching header wins: microphone prompting is allowed only in
       // the owner-authenticated Poster Studio and its owner-only Puter lab.
       // Global camera and microphone access remain disabled elsewhere.
-      {
-        source: '/vendor/marketing/design',
-        headers: [
-          { key: 'Permissions-Policy', value: 'camera=(), microphone=(self), geolocation=(self)' },
-        ],
-      },
       {
         source: '/vendor/marketing/design/puter-lab',
         headers: [

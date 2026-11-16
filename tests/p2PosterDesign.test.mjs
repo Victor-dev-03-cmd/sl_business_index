@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {existsSync,readFileSync} from 'node:fs';
 import {
   DESIGN_STYLES,POSTER_FORMATS,newPosterBlueprint,
   parsePosterBlueprint,scalePosterBlueprint,
@@ -47,41 +47,42 @@ test('import rejects malicious or oversize project text',()=>{
   ])assert.equal(parsePosterBlueprint(altered),null);
 });
 
-test('vendor Poster Studio uses a single natural language prompt, not a manual graphic editor',()=>{
-  const ui=read('app/vendor/marketing/design/page.tsx');
-  assert.match(ui,/What shall we create today\?/);
-  assert.match(ui,/id="creative-prompt"/);
-  assert.match(ui,/Generate/);
+
+test('active Poster Studio is the sole production page; no retired Creative AI DOM can flash',()=>{
+
+  assert.equal(existsSync(new URL('../app/vendor/marketing/design/page.tsx',import.meta.url)),false);
+  const config=read('next.config.ts');
+  assert.match(config,/source: '\/vendor\/marketing\/design'/);
+  assert.match(config,/destination: '\/vendor\/marketing\/design\/puter-lab'/);
+  const catalog=read('lib/marketing/studio-apps.ts');
+  assert.match(catalog,/href:'\/vendor\/marketing\/design\/puter-lab'/);
+  assert.doesNotMatch(catalog,/href:'\/vendor\/marketing\/design',/);
+});
+test('one active Studio uses Gemini, Puter, exact Canvas and multilingual review',()=>{
+  const ui=read('app/vendor/marketing/design/puter-lab/page.tsx');
+  const composer=read('lib/marketing/puter-poster-composer.ts');
+  assert.match(ui,/SLBI AI Poster Studio/);
+  assert.match(ui,/id="puter-prompt"/);
   assert.match(ui,/getUserMedia/);
   assert.match(ui,/MediaRecorder/);
   assert.match(ui,/\/api\/marketing\/poster\/transcribe/);
-  assert.match(ui,/Add reference/);
-  assert.match(ui,/formats/);
-  assert.doesNotMatch(ui,/drawPoster\(|onPointerDown|onPointerMove|EditableTextLayer|parsePosterBlueprint|createSimpleDraft/);
+  assert.match(ui,/Prepare with Gemini/);
+  assert.match(ui,/CONTENT_PANEL_STYLES\.map/);
+  assert.match(ui,/composeExactPoster/);
+  assert.match(ui,/puter\.ai\.txt2img/);
+  assert.match(composer,/renderPremiumPoster/);
+  assert.match(ui,/realMode&&!consent/);
   assert.match(read('app/vendor/marketing/campaigns/page.tsx'),/dropdownArrowOnDark/);
 });
-test('AI poster appears only after verified private image bytes, then accepts edit instructions',()=>{
-  const ui=read('app/vendor/marketing/design/page.tsx');
-  assert.match(ui,/await openArtwork\(result\.jobId\)/);
-  assert.match(ui,/\/api\/marketing\/poster\/artwork\?jobId=/);
-  assert.match(ui,/result\.error/);
-  assert.match(ui,/if\(refine\)\{body\.sourceJobId/);
-  assert.match(ui,/sourceJobId/);
-  assert.match(ui,/editInstruction/);
-  assert.match(ui,/Edit this image with AI/);
-  assert.match(ui,/Your recent AI posters/);
-  assert.match(ui,/Download PNG/);
-  assert.match(ui,/Share/);
-  assert.match(ui,/no fake drafts|No manual graphic editor/i);
-  assert.doesNotMatch(ui,/Edit design · Advanced controls|Export editable JSON|Drag a text layer|Your manual poster editor/);
-});
-test('retains Pro-only app routing and honest no-auto-publish claims',()=>{
-  const ui=read('app/vendor/marketing/design/page.tsx');
-  assert.match(ui,/window\.confirm/);
-  assert.match(ui,/\/api\/marketing\/poster\/capabilities/);
-  assert.match(ui,/No manual graphic editor/);
-  assert.match(ui,/Nothing posts to social media automatically/);
-  const homepage=read('app/vendor/marketing/page.tsx');
-  assert.match(homepage,/MarketingAppStore/);
-  assert.match(read('lib/marketing/studio-apps.ts'),/href:'\/vendor\/marketing\/design'/);
+test('approved poster image is never fictional and final PNG remains local and precise',()=>{
+  const ui=read('app/vendor/marketing/design/puter-lab/page.tsx');
+  const composer=read('lib/marketing/puter-poster-composer.ts');
+  assert.match(ui,/isPosterCopyInLanguage/);
+  assert.match(ui,/review.*headline/i);
+  assert.match(ui,/finalBlob/);
+  assert.match(ui,/anchor\.download/);
+  assert.match(ui,/Generate no-credit poster sample/);
+  assert.match(composer,/canvas\.width=d\.width;canvas\.height=d\.height/);
+  assert.match(composer,/canvas\.toBlob/);
+  assert.doesNotMatch(ui,/drawPoster\(|EditableTextLayer|Your manual poster editor/);
 });
