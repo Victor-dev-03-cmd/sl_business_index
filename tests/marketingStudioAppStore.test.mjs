@@ -14,7 +14,7 @@ test('Marketing Studio offers searchable, categorized distinct first-party apps'
   assert.deepEqual(filterMarketingStudioApps(MARKETING_STUDIO_APPS,'email','All apps')
     .filter(x=>x.id==='email-marketing').map(x=>x.href),['/vendor/marketing-engine/email']);
   assert.deepEqual(filterMarketingStudioApps(MARKETING_STUDIO_APPS,'poster','Content')
-    .map(x=>x.id),['poster-editor']);
+    .map(x=>x.id),['poster-editor','caption-lab']);
   assert.equal(filterMarketingStudioApps(MARKETING_STUDIO_APPS,'','Plugins').length,1);
   assert.equal(filterMarketingStudioApps(MARKETING_STUDIO_APPS,'UNLIKELY_MATCH_945','All apps').length,0);
   assert.ok(MARKETING_STUDIO_APPS.every(x=>x.href.startsWith('/vendor/')));
