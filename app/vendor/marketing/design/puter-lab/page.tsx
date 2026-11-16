@@ -12,10 +12,10 @@ type PuterClient={
 declare global {interface Window {puter?:PuterClient;}}
 
 const models=[
-  {id:'openai/gpt-image-2',label:'GPT Image 2'},
-  {id:'google/gemini-3-pro-image-preview',label:'Gemini 3 Pro Image'},
+  {id:'openai/gpt-image-2.6-flare',label:'GPT Image 2.6 Flare'},
+  {id:'google/gemini-3-pro-image',label:'Gemini 3 Pro Image'},
   {id:'black-forest-labs/flux-2-pro',label:'FLUX.2 Pro'},
-  {id:'qwen/qwen-image-2.0',label:'Qwen Image 2.0 (not 2.1)'},
+  {id:'qwen/qwen-image',label:'Qwen Image (version unspecified)'},
 ] as const;
 type ModelId=typeof models[number]['id'];
 const example='Create an elegant Deepavali-themed software development promotion. Navy and gold technology artwork with glowing lamps. Leave clear, clean space for typography. No words, letters, logos or prices.';
@@ -65,7 +65,7 @@ export default function PuterExperimentalStudio(){
       <div className="flex items-center gap-3">
         <span className="rounded-2xl bg-[#252126] p-3 text-[#F4A25A]"><FlaskConical size={21}/></span>
         <div><h1 className="text-xl font-extrabold">Puter AI Image Lab</h1>
-          <p className="text-xs text-[#887E82]">Preview experiment · Separate from SLBI poster generation</p></div>
+          <p className="text-xs text-[#887E82]">Private owner QA experiment · Separate from SLBI poster generation</p></div>
       </div>
       <Link href="/vendor/marketing/design" className="inline-flex items-center gap-1 rounded-full border border-[#E8E2DD] px-4 py-2 text-xs font-semibold">
         <ArrowLeft size={14}/> Creative AI
@@ -87,7 +87,7 @@ export default function PuterExperimentalStudio(){
             className="mt-2 w-full rounded-xl border border-[#E6E0DC] bg-[#FCFAF8] p-3 text-sm">
             {models.map(item=><option key={item.id} value={item.id}>{item.label}</option>)}
           </select>
-          <p className="mt-2 text-[11px] text-[#8D8080]">Qwen Image 2.1 has not been verified in the Puter API catalog. Do not confuse it with Qwen Image 2.0.</p>
+          <p className="mt-2 text-[11px] text-[#8D8080]">Puter lists qwen/qwen-image but does not identify it as Qwen Image 2.1. Provider quality and spelling need real owner testing.</p>
         </div>
         <div>
           <label htmlFor="puter-prompt" className="text-xs font-bold">Image prompt</label>
@@ -125,7 +125,7 @@ export default function PuterExperimentalStudio(){
           <div className="flex flex-col items-center gap-3 text-center text-[#968D89]">
             <ImageIcon size={44}/>
             <p className="text-sm font-semibold">Experimental output appears here</p>
-            <p className="max-w-[360px] text-xs leading-6">No model is called automatically. SDK test mode does not prove image quality. The regular SLBI production provider remains unchanged.</p>
+            <p className="max-w-[360px] text-xs leading-6">No model is called automatically. SDK test mode does not prove image quality. The normal SLBI poster production provider remains unchanged.</p>
           </div>}
       </section>
     </div>
