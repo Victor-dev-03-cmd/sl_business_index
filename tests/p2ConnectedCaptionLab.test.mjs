@@ -29,7 +29,7 @@ test('SLBI PRO Caption Lab uses existing Poster three-column mental model and Gr
   const css=read('app/vendor/marketing/captions/caption-fonts.css');
   assert.match(css,/var\(--font-tamil\)/);
   assert.match(css,/var\(--font-sinhala\)/);
-  assert.match(css,/line-height:1\.6/);
+  assert.match(css,/line-height:\s*1\.6/);
 });
 
 test('Marketing Studio pairs both creative tools under the existing owner QA launch gate',()=>{
