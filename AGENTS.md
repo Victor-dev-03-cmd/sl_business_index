@@ -1,5 +1,11 @@
 # SLBusinessIndex — repository handoff for coding agents
 
+## 2026-11-16 — P2-13: Puter owner-only model quality lab, live login route
+- See [P2-13 Puter owner QA lab handoff](docs/growth/p2/P2_13_PUTER_USER_PAYS_BROWSER_LAB_20261116.md). Initial Preview failed login because Turnstile keys were scoped **Production only**. Do not bypass the login challenge or spread Production secrets to preview.
+- Route `/vendor/marketing/design/puter-lab` is nested behind server-verified `isPosterInternalQAAccount` entitlement and existing Pro auth on the **normal production domain**, so owner may use normal Cloudflare-protected login. Source `app/login/page.tsx` remains identical to main.
+- Only client-side Puter.js model comparisons, default no-credit sample, explicit owner Puter User-Pays consent for genuine images; no API token, no SLBI backend provider/credit/quota changes. Model IDs taken from current Puter catalog; Qwen Image 2.1 *not* confirmed through Puter.
+- Check PR #92 exact head CI and Production Vercel READY before claiming deployed. Owner browser sign-in and Puter popup still require QA; no assistant-triggered paid image request.
+
 ## 2026-11-15 — P2-12: Fixed preview ratio; exact poster typography architecture pending
 - [P2-12 fixed preview and typography design](docs/growth/p2/P2_12_POSTER_FIXED_PREVIEW_AND_EXACT_TYPOGRAPHY_PLAN_20261115.md). Owner supplied successful Cloudflare 9:16 output: **real PNG is 1080×1920**, but glyphs, numerals, offer and domain are gibberish. Current Cloudflare `flux-2-klein-4b` does not guarantee exact Tamil/Sinhala/English copy; swapping to Hugging Face FLUX.1 Schnell is not a deterministic text fix.
 - Current branch `fix/p2-poster-preview-ratio-20261115` pins the entire progress / final image to the SAME measured aspect frame with stable download controls. Do not call this merged/deployed until exact CI/release is checked.
