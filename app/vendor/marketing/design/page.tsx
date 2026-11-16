@@ -77,6 +77,22 @@ export default function PosterDesignStudio(){
   const attachmentsRef=useRef<Attachment[]>([]);
   useEffect(()=>{attachmentsRef.current=attachments;},[attachments]);
 
+  // For the verified private Poster QA owner, the new Gemini/Puter/Canvas
+  // Studio is the current production experience. Keep the existing Cloudflare
+  // Creative AI page unchanged for everybody else. The permission decision
+  // comes exclusively from the existing server-verified owner-only endpoint.
+  useEffect(()=>{
+    const controller=new AbortController();
+    void fetch('/api/marketing/poster/puter-lab',{
+      credentials:'same-origin',cache:'no-store',signal:controller.signal,
+    }).then(response=>{
+      if(response.ok&&!controller.signal.aborted)
+        window.location.replace('/vendor/marketing/design/puter-lab');
+    }).catch(()=>{ /* Legacy Studio remains available if access check fails. */ });
+    return()=>controller.abort();
+  },[]);
+
+
   useEffect(()=>{
     if(!busy)return;
     // This is estimated animation progress, not a false provider percentage.

@@ -1,5 +1,10 @@
 # SLBusinessIndex — repository handoff for coding agents
 
+## 2026-11-16 — P2-22: Owner Production entry + live bottom-panel selector
+- [P2-22 production route and bottom panel usability fix](docs/growth/p2/P2_22_OWNER_POSTER_PRODUCTION_ENTRY_AND_PANEL_SELECTOR_20261116.md). After P2-21 Production READY, owner still saw old Poster Studio: `/vendor/marketing/design` remained Cloudflare Creative AI, while all new Puter/Gemini/Canvas lower-card visuals live at `/vendor/marketing/design/puter-lab`. Owner's old route now redirects to the new Studio **only if existing server-authorized internal owner QA GET returns HTTP 200**; all other Pro vendors still use unchanged old provider and old page.
+- Existing right column now exposes 8 `Bottom content panel style` options + Gemini Auto, without changing 3-column layout or poster geometry. Manual selection paints ONLY the lower panel on existing full-resolution PNG via local Canvas; no new paid Puter inference, Gemini quota or user-verified content changed. After new Gemini Prepare, auto style resumes.
+- Keep exact owner QA access gate, Puter User-Pays consent, no-credit samples and verified business facts; latest-head CI + Vercel Production READY and owner in-browser QA mandatory.
+
 ## 2026-11-16 — P2-21: Bottom content-panel styles, preview-only
 - [P2-21 bottom-card style variants](docs/growth/p2/P2_21_BOTTOM_CONTENT_PANEL_STYLES_PREVIEW_20261116.md). Owner specifically ordered **only** lower information card styling variations, with top headline/hero, 3-column workspace, safe-zone geometry, verified exact copy, voice, Puter User-Pays, Gemini schema and full-resolution PNG behavior retained.
 - Adds optional validated `layoutStyling.contentPanelStyle` to Gemini JSON, eight curated lower-surface styles, and independent Canvas painter `puter-content-panel-styles.ts`. Purely visual changes to existing measured lower card bounds and CTA surface, no upper composition changes. Legacy JSON defaults safely to black marble.
