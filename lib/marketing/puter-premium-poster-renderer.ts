@@ -41,7 +41,13 @@ function weight(language:PosterCopyLanguage,role:Role):number{
 }
 function setFont(ctx:Ctx,size:number,role:Role,language:PosterCopyLanguage,p:PremiumPosterPreset){
   const value=Math.max(12,Math.round(size));
-  ctx.font=weight(language,role)+' '+value+'px '+family(language,role,p);
+  const selectedFamily=role==='display'?
+    (language==='en'?p.font.display:p.font.scriptHeadline):
+    (language==='en'&&role==='body'?p.font.body:
+      language!=='en'?p.font.scriptBody:'');
+  const resolvedWeight=selectedFamily==='Kavivanar'||selectedFamily==='Anton'||
+    selectedFamily==='Bebas Neue'?400:weight(language,role);
+  ctx.font=resolvedWeight+' '+value+'px '+family(language,role,p);
   const tracked=ctx as Ctx & {letterSpacing?:string};
   tracked.letterSpacing=role==='display'&&language==='en'?
     Math.round(-0.02*value)+'px':'0px';
@@ -261,7 +267,8 @@ function renderStacked(ctx:Ctx,copy:ExactPosterCopy,p:PremiumPosterPreset,format
   const titleFit=fit(ctx,{
     value:title,width:w-2*side,height:titleMax-40*scale,maxLines:3,
     start:p.tokens.storyDisplaySize[1]*scale,
-    min:Math.max(35,82*scale),lineHeight:p.tokens.displayLineHeight,
+    min:Math.max(35,82*scale),
+    lineHeight:displayLanguage==='en'?p.tokens.displayLineHeight:1.3,
     role:'display',lang:displayLanguage,preset:p,label:'Display headline',
   });
   renderFitted(ctx,{fit:titleFit,x:side,
@@ -334,7 +341,8 @@ function renderWide(ctx:Ctx,copy:ExactPosterCopy,p:PremiumPosterPreset){
     color:p.palette.glow,role:'brand',language:scriptOf(copy.businessName,copy.language),preset:p});
   row+=9;
   const headline=fit(ctx,{value:headlineLanguage==='en'?copy.headline.toUpperCase():copy.headline,
-    width:innerWidth,height:125,maxLines:3,start:59,min:28,lineHeight:.95,
+    width:innerWidth,height:125,maxLines:3,start:59,min:28,
+    lineHeight:headlineLanguage==='en'?.95:1.3,
     role:'display',lang:headlineLanguage,preset:p,label:'Headline'});
   row=renderFitted(ctx,{fit:headline,x:inner,y:row,width:innerWidth,
     color:p.palette.white,role:'display',language:headlineLanguage,preset:p});
