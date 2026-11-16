@@ -181,25 +181,25 @@ export async function composeExactPoster(input:{
   y+=landscape?12:22;
   const availableHeading=landscape?135:input.format==='square'?190:250;
   y=textBlock(ctx,{text:copy.headline,x:left,y,width:maxWidth,maxLines:3,
-    font:landscape?50:input.format==='square'?67:82,minFont:landscape?26:30,
+    font:landscape?50:input.format==='square'?56:input.format==='portrait'?68:82,minFont:landscape?26:28,
     lineHeight:1.3,weight:700,color:'#FFFFFF',
     language:copy.language,label:'Headline',maxHeight:availableHeading});
   y+=landscape?10:18;
   if(copy.offer){
     y=textBlock(ctx,{text:copy.offer,x:left,y,width:maxWidth,maxLines:2,
-      font:landscape?52:86,minFont:landscape?24:34,lineHeight:1.24,
+      font:landscape?52:input.format==='square'?65:input.format==='portrait'?76:86,minFont:landscape?24:30,lineHeight:1.24,
       weight:700,color:accent,language:copy.language,label:'Exact offer',maxHeight:landscape?120:180});
     y+=landscape?9:16;
   }
   if(copy.service){
     y=textBlock(ctx,{text:copy.service,x:left,y,width:maxWidth,maxLines:2,
-      font:landscape?24:37,minFont:landscape?18:22,lineHeight:1.36,
+      font:landscape?24:input.format==='square'?29:input.format==='portrait'?30:37,minFont:landscape?18:20,lineHeight:1.36,
       weight:400,color:'#E8EFF8',language:copy.language,label:'Verified service',maxHeight:landscape?72:120});
     y+=landscape?9:19;
   }
   if(copy.cta){
     y=textBlock(ctx,{text:copy.cta,x:left,y,width:maxWidth,maxLines:2,
-      font:landscape?22:32,minFont:landscape?16:20,lineHeight:1.4,
+      font:landscape?22:input.format==='square'?25:input.format==='portrait'?27:32,minFont:landscape?16:18,lineHeight:1.4,
       weight:600,color:'#FFFFFF',language:copy.language,label:'Call to action',maxHeight:landscape?58:100});
   }
   const contact=[clean(copy.website,180),clean(copy.phone,45)].filter(Boolean).join('   •   ');
