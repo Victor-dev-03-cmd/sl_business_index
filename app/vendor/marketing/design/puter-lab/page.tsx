@@ -19,7 +19,7 @@ import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import Link from 'next/link';
 import Script from 'next/script';
 import {
-  ArrowLeft,CheckCircle2,Download,FlaskConical,
+  ArrowLeft,ArrowRight,CheckCircle2,Download,FlaskConical,
   LoaderCircle,Mic,SquarePen,StopCircle,WandSparkles,Shuffle,
 } from 'lucide-react';
 import {POSTER_FORMATS,type PosterFormat} from '@/lib/marketing/poster-design';
@@ -28,6 +28,7 @@ import {
   type ExactPosterCopy,type PosterCopyLanguage,
 } from '@/lib/marketing/puter-poster-composer';
 import type {PosterBusinessFacts,PosterIntelligenceBrief} from '@/lib/marketing/poster-gemini-intelligence';
+import {saveLinkedPoster} from '@/lib/marketing/caption-poster-handoff';
 import {
   STARTER_COPY,isPosterCopyInLanguage,isPosterTextInLanguage,isNaturalEnglishOffer,
   starterHeadline,localizedPercentOffer,posterLanguageName,
@@ -106,6 +107,7 @@ export default function PuterMultilingualPosterLab(){
   const [artworkSrc,setArtworkSrc]=useState('');
   const [finalUrl,setFinalUrl]=useState('');
   const [finalBlob,setFinalBlob]=useState<Blob|null>(null);
+  const [linkingCaption,setLinkingCaption]=useState(false);
   const [isRealOutput,setIsRealOutput]=useState(false);
   const [error,setError]=useState('');
   const [status,setStatus]=useState('');
@@ -424,6 +426,23 @@ export default function PuterMultilingualPosterLab(){
       (isRealOutput?'':'-sample')+'.png';
     document.body.appendChild(anchor);anchor.click();anchor.remove();
   };
+  const continueToCaption=async()=>{
+    if(!finalBlob||!facts||!businessId||composing||linkingCaption)return;
+    setLinkingCaption(true);setError('');
+    try{
+      const id=await saveLinkedPoster({
+        businessId,businessName:facts.name,category:facts.category,
+        city:facts.city,address:facts.address,
+        phone:facts.phone,website:facts.website,
+        headline:headline.trim(),offer:offer.trim(),cta:cta.trim(),
+        vibe:currentBlueprint?.styling.vibe||selectedPremiumStyle,
+        language,source:'poster_studio',sample:!isRealOutput,format,
+      },finalBlob);
+      // This is a user-initiated navigation only. No paid caption
+      // model is called without the Caption Lab Generate action.
+      window.location.assign('/vendor/marketing/captions?handoff='+encodeURIComponent(id));
+    }catch(e){setError(errorMessage(e));setLinkingCaption(false);}
+  };
   const locked=generating||geminiBusy||transcribing||recording;
   return <main className="mx-auto flex w-full max-w-[1620px] flex-col gap-3 px-3 py-3 text-[#292327] sm:px-5 xl:h-[calc(100dvh-9.5rem)] xl:min-h-0 xl:overflow-hidden xl:py-2">
     <Script src="https://js.puter.com/v2/" strategy="afterInteractive"
@@ -609,10 +628,19 @@ export default function PuterMultilingualPosterLab(){
             {finalBlob?(isRealOutput?'Real artwork · exact browser text':'No-credit SAMPLE · exact text'):
               'No automatic publishing or SLBI storage'}
           </p>
-          <button type="button" onClick={download} disabled={!finalBlob||composing||generating}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-[#262126] px-3 py-2.5 text-[11px] font-bold text-white disabled:opacity-40">
-            <Download size={14}/> Download PNG
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button type="button" onClick={download} disabled={!finalBlob||composing||generating}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[#E6DED8] bg-white px-3 py-2.5 text-[11px] font-bold text-[#292327] disabled:opacity-40">
+              <Download size={14}/> Download PNG
+            </button>
+            <button type="button" onClick={()=>void continueToCaption()}
+              disabled={!finalBlob||composing||generating||linkingCaption||!businessId}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-[#262126] px-3 py-2.5 text-[11px] font-bold text-white disabled:opacity-40">
+              <WandSparkles size={14} className="text-[#FDBA74]"/>
+              {linkingCaption?'Linking poster…':'Write Caption for this Poster'}
+              <ArrowRight size={13}/>
+            </button>
+          </div>
         </div>
       </section>
 

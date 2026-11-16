@@ -22,7 +22,7 @@ const AppTile=memo(function AppTile({app,proEnabled,launchStatus,posterReviewAll
 }){
   const style=tones[app.tone];
   const review=posterReviewAllowed&&app.id==='poster-editor'&&launchStatus==='coming_soon';
-  const qa=posterQaAllowed&&app.id==='poster-editor'&&launchStatus==='coming_soon';
+  const qa=posterQaAllowed&&['poster-editor','caption-lab'].includes(app.id)&&launchStatus==='coming_soon';
   const launched=launchStatus==='live'||review||qa;
   return <article
     id={'marketing-app-'+app.id}
