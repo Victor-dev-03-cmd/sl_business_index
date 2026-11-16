@@ -6,6 +6,7 @@
  */
 import type {PosterFormat} from '@/lib/marketing/poster-design';
 import type {PosterCopyLanguage} from '@/lib/marketing/puter-poster-composer';
+import {isPosterCopyInLanguage,isNaturalEnglishOffer} from '@/lib/marketing/poster-language-copy';
 
 export const POSTER_VIBES=['festive','modern_tech','luxury','bold_sale','warm_retail'] as const;
 export type PosterVibe=typeof POSTER_VIBES[number];
@@ -91,7 +92,7 @@ const percentages=(text:string)=>Array.from(
   m=>Number(m[1]),
 );
 export function validatePosterBlueprint(value:unknown,input:{
-  language:PosterCopyLanguage;vendorPrompt:string;
+  language:PosterCopyLanguage;vendorPrompt:string;approvedOffer?:string;
 }):PosterBlueprint{
   const obj=record(value),copy=record(obj.posterCopy),style=record(obj.styling);
   const headline=clean(copy.headline,120);
@@ -100,6 +101,12 @@ export function validatePosterBlueprint(value:unknown,input:{
   const imagePrompt=clean(obj.imagePrompt,2300);
   if(!headline||!ctaText||imagePrompt.length<80)
     throw Error('Gemini blueprint is incomplete. Keep your edited original prompt.');
+  // Selected copy language is a validated content contract, not just a font
+  // preference. No English headline/offer sneaking into Tamil/Sinhala posters.
+  if(!isPosterCopyInLanguage({headline,offerText,ctaText},input.language))
+    throw Error('Gemini poster copy does not match the selected language. Retry Prepare with Gemini or edit the exact copy.');
+  if(input.language==='en'&&!isNaturalEnglishOffer(offerText))
+    throw Error('Gemini returned unnatural English offer copy. Please retry.');
   if(!includes(POSTER_VIBES,style.vibe)||!includes(POSTER_OVERLAYS,style.overlayGradient))
     throw Error('Gemini blueprint contains an unsupported design style.');
   if(!enumFonts[input.language].includes(style.headlineFont as never)||
@@ -113,7 +120,7 @@ export function validatePosterBlueprint(value:unknown,input:{
     pair.bodyFont===style.bodyFont)||
     approvedPairs.find(pair=>pair.headlineFont===style.headlineFont)||
     approvedPairs[0];
-  const requestedPercent=new Set(percentages(input.vendorPrompt));
+  const requestedPercent=new Set(percentages(input.vendorPrompt+' '+(input.approvedOffer||'')));
   for(const found of percentages([headline,offerText,ctaText].join(' '))){
     if(!requestedPercent.has(found))
       throw Error('Gemini invented or changed a percentage. Keep the approved vendor offer.');
