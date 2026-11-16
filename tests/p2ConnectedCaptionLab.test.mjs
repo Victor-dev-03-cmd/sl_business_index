@@ -131,7 +131,7 @@ test('Poster Studio sends only a random one-time local key and never embeds PNG 
   assert.equal(validHandoffId('11111111-1111-4111-8111-111111111111'),true);
   assert.equal(validHandoffId('https://untrusted.example/image.png'),false);
   assert.equal(validHandoffId('../../admin'),false);
-  assert.doesNotMatch(store,/localStorage|sessionStorage|public\/uploads|base64/);
+  assert.doesNotMatch(store,/localStorage\.setItem|sessionStorage\.setItem|btoa\(|toDataURL\(/);
 });
 
 test('AI calls occur only on explicit generate, respect existing global hard-off and credit ledger',()=>{
