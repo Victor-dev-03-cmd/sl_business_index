@@ -21,7 +21,7 @@ export type LinkedPosterContext={
   vibe:string;
   language:'ta'|'si'|'en';
   sample:boolean;
-  source:'poster_studio';
+  source:'poster_studio'|'device_upload';
   format:string;
 };
 export type LinkedPosterRecord={
@@ -78,7 +78,9 @@ export async function saveLinkedPoster(context:LinkedPosterContext,image:Blob):P
     website:clean(context.website,180),headline:clean(context.headline,180),
     offer:clean(context.offer,180),cta:clean(context.cta,180),
     vibe:clean(context.vibe,80),language:context.language,
-    sample:Boolean(context.sample),source:'poster_studio',format:clean(context.format,20),
+    sample:Boolean(context.sample),
+    source:context.source==='device_upload'?'device_upload':'poster_studio',
+    format:clean(context.format,20),
   };
   await operation<void>('readwrite',(store,done)=>{
     // Remove old short-lived private poster assets. Limit retained records
@@ -120,4 +122,23 @@ export async function removeLinkedPoster(id:string):Promise<void>{
   await operation<void>('readwrite',(store,done)=>{
     const del=store.delete(id);del.onsuccess=()=>done(undefined);
   });
+}
+
+/** Recent private browser assets. Caller must still verify current business
+ * ownership via its authenticated business list before rendering a thumbnail. */
+export async function listLinkedPosters(businessId:string):Promise<LinkedPosterRecord[]>{
+  if(!validHandoffId(businessId))return [];
+  const rows=await operation<unknown[]>('readonly',(store,done)=>{
+    const request=store.getAll();
+    request.onsuccess=()=>done(request.result);
+  });
+  return rows.filter((value):value is LinkedPosterRecord=>{
+    if(!value||typeof value!=='object')return false;
+    const item=value as Partial<LinkedPosterRecord>;
+    return validHandoffId(item.id)&&!!item.context&&item.context.businessId===businessId&&
+      item.context.source==='poster_studio'&&
+      typeof item.createdAt==='number'&&item.createdAt<=Date.now()+60_000&&
+      Date.now()-item.createdAt<=MAX_AGE&&
+      item.image?.type==='image/png'&&item.image.size<=MAX_SIZE;
+  }).sort((a,b)=>b.createdAt-a.createdAt).slice(0,6);
 }

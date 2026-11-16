@@ -5,8 +5,8 @@ import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft,ArrowRight,Check,CheckCircle2,Copy,
-  Download,Facebook,Instagram,Image as ImageIcon,LoaderCircle,Mic,
-  Plus,RefreshCcw,Send,ShieldCheck,SlidersHorizontal,Sparkles,
+  Download,Facebook,Instagram,Image as ImageIcon,Info,LoaderCircle,Mic,
+  Plus,RefreshCcw,Send,SlidersHorizontal,Sparkles,
   StopCircle,Volume2,WandSparkles,
 } from 'lucide-react';
 import {supabase} from '@/lib/supabaseClient';
@@ -20,7 +20,8 @@ import {
   type SocialPlatform,type TonePosition,
 } from '@/lib/marketing/caption-workspace';
 import {
-  loadLinkedPoster,validHandoffId,type LinkedPosterRecord,
+  listLinkedPosters,loadLinkedPoster,saveLinkedPoster,validHandoffId,
+  type LinkedPosterContext,type LinkedPosterRecord,
 } from '@/lib/marketing/caption-poster-handoff';
 
 type Business={id:string;name:string;city:string|null;category:string;phone:string|null;website_url:string|null;address:string|null};
@@ -29,7 +30,7 @@ type ApiBody={error?:string;draft?:StoredDraft;drafts?:StoredDraft[];chargedCred
 const uuid=/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i;
 const field='w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-3 text-[12px] text-[#1F2937] outline-none transition focus:border-[#FB923C] focus:ring-2 focus:ring-[#F97316]/10';
 const panel='min-w-0 rounded-2xl border border-[#E5E7EB] bg-white shadow-[0_7px_24px_rgba(17,24,39,.035)]';
-const tab='rounded-lg border px-3 py-2 text-[11px] font-semibold transition-colors';
+const tab='rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold transition-colors';
 const textFont=(lang:CaptionLanguage)=>lang==='ta'?'slbi-caption-tamil':
   lang==='si'?'slbi-caption-sinhala':'slbi-caption-english';
 const short=(value:string,max=600)=>value.trim().slice(0,max);
@@ -40,6 +41,38 @@ const labelsByPlatform:Record<SocialPlatform,string>={
   facebook:'Facebook Post',instagram:'Instagram Feed',whatsapp:'WhatsApp Broadcast',
 };
 const newDraftLanguage=(list:StoredDraft[],lang:CaptionLanguage)=>list.find(x=>x.language===lang);
+const DRAFT_TARGETS:Record<SocialPlatform,number>={facebook:2200,instagram:2200,whatsapp:1000};
+const countCharacters=(value:string)=>Array.from(value).length;
+
+/** Browser-local attachment: accepts standard raster images, never HTML/SVG,
+ * normalizes JPEG/WebP to PNG so existing private handoff remains consistent. */
+async function imageFileToPng(file:File):Promise<Blob>{
+  if(!['image/png','image/jpeg','image/webp'].includes(file.type)||!file.size||
+      file.size>12_000_000)
+    throw Error('Choose a PNG, JPG or WebP image smaller than 12 MB.');
+  if(file.type==='image/png')return file;
+  const src=URL.createObjectURL(file);
+  try{
+    const img=new Image();
+    await new Promise<void>((resolve,reject)=>{
+      img.onload=()=>resolve();
+      img.onerror=()=>reject(Error('Could not read the image. Choose another file.'));
+      img.src=src;
+    });
+    if(!img.naturalWidth||!img.naturalHeight||
+      img.naturalWidth*img.naturalHeight>16_000_000)
+      throw Error('Choose an image up to 16 megapixels.');
+    const canvas=document.createElement('canvas');
+    canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;
+    const ctx=canvas.getContext('2d');
+    if(!ctx)throw Error('This browser cannot prepare the poster image.');
+    ctx.drawImage(img,0,0);
+    const png=await new Promise<Blob>((resolve,reject)=>
+      canvas.toBlob(blob=>blob?resolve(blob):reject(Error('Could not prepare the PNG.')),'image/png'));
+    if(png.size>15_000_000)throw Error('The PNG is too large. Choose a smaller image.');
+    return png;
+  }finally{URL.revokeObjectURL(src);}
+}
 
 export default function ConnectedCaptionLab(){
   const [businesses,setBusinesses]=useState<Business[]>([]);
@@ -48,6 +81,10 @@ export default function ConnectedCaptionLab(){
   const [linked,setLinked]=useState<LinkedPosterRecord|null>(null);
   const [posterUrl,setPosterUrl]=useState('');
   const [posterKey,setPosterKey]=useState('');
+  const [posterPickerOpen,setPosterPickerOpen]=useState(false);
+  const [posterChoices,setPosterChoices]=useState<LinkedPosterRecord[]>([]);
+  const [posterThumbnails,setPosterThumbnails]=useState<Record<string,string>>({});
+  const [posterBusy,setPosterBusy]=useState(false);
   const [goal,setGoal]=useState<CampaignGoal>('flash_sale');
   const [languageSelections,setLanguageSelections]=useState<CaptionLanguage[]>(['ta','si','en']);
   const [previewLanguage,setPreviewLanguage]=useState<CaptionLanguage|'all'>('all');
@@ -76,6 +113,31 @@ export default function ConnectedCaptionLab(){
   const streamRef=useRef<MediaStream|null>(null);
   const importingRef=useRef('');
   const posterUrlRef=useRef('');
+  const posterInputRef=useRef<HTMLInputElement|null>(null);
+  const posterDialogRef=useRef<HTMLDivElement|null>(null);
+  useEffect(()=>{
+    const urls:Record<string,string>={};
+    for(const record of posterChoices)urls[record.id]=URL.createObjectURL(record.image);
+    setPosterThumbnails(urls);
+    return()=>{for(const url of Object.values(urls))URL.revokeObjectURL(url);};
+  },[posterChoices]);
+  useEffect(()=>{
+    if(!posterPickerOpen)return;
+    const previousFocus=document.activeElement instanceof HTMLElement?document.activeElement:null;
+    posterDialogRef.current?.focus();
+    const onKeyDown=(event:KeyboardEvent)=>{
+      if(event.key==='Escape'){event.preventDefault();setPosterPickerOpen(false);return;}
+      if(event.key!=='Tab'||!posterDialogRef.current)return;
+      const tabbable=Array.from(posterDialogRef.current.querySelectorAll<HTMLElement>(
+        'a[href],button:not([disabled]),input:not([disabled])'));
+      const first=tabbable[0],last=tabbable[tabbable.length-1];
+      if(!first||!last)return;
+      if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
+      if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+    };
+    document.addEventListener('keydown',onKeyDown);
+    return()=>{document.removeEventListener('keydown',onKeyDown);previousFocus?.focus();};
+  },[posterPickerOpen]);
   const selected=useMemo(()=>businesses.find(b=>b.id===businessId),[businesses,businessId]);
   const hasLinked=Boolean(linked&&linked.context.businessId===businessId);
   const chosenLanguages:CaptionLanguage[]=languageSelections.length?languageSelections:['ta'];
@@ -102,6 +164,10 @@ export default function ConnectedCaptionLab(){
     return includeTags?withHashtags(source,visibleTags):removeHashtags(source);
   },[currentCaption,hasAI,message,includeTags,visibleTags]);
   const fold=previewFold(previewText,expanded);
+  const characterCount=countCharacters(previewText);
+  const draftTarget=DRAFT_TARGETS[platform];
+  const hookCount=countCharacters(captions[activePreviewLanguage].hook.trim()||(!hasAI?message.trim():''));
+  const hookStatus=!hookCount?'Add a hook':hookCount<=125?'Hook on target':'Try a shorter hook';
 
   const loadBusinesses=useCallback(async()=>{
     setLoading(true);setError('');
@@ -143,7 +209,7 @@ export default function ConnectedCaptionLab(){
       setGoal(record.context.offer?'flash_sale':'festival');
       setTone(record.context.vibe.includes('bold')?2:record.context.vibe.includes('luxury')?1:0);
       setGeneratedLanguages([]);
-      setNotice('Linked from Poster Studio. Your exact approved poster and business details are ready. Review, then generate captions.');
+      setNotice('Poster linked from Studio. Your campaign is ready to refine.');
     }).catch(()=>{if(!cancelled)setNotice('This browser could not open the linked PNG. Continue without a poster.');});
     return()=>{cancelled=true;};
   },[loading,businesses]);
@@ -332,13 +398,52 @@ export default function ConnectedCaptionLab(){
         .select('id').maybeSingle();
       if(saved.error||!saved.data)throw Error(saved.error?.message||'Campaign Planner could not save this draft.');
       setSavedCampaignId(saved.data.id);
-      setNotice('Caption bundle saved in Campaign Planner. Linked PNG remains stored in this browser only; cloud poster sync is not enabled.');
+      setNotice('Caption saved to Campaign Planner. Your attached poster remains on this device.');
     }catch(e){setError(e instanceof Error?e.message:'Save to Campaign Planner failed.');}
     finally{setSaving(false);}
+  };
+  const pickPoster=async()=>{
+    if(!businessId||!selected){setError('Select your business before attaching a poster.');return;}
+    setPosterPickerOpen(true);setError('');
+    try{setPosterChoices(await listLinkedPosters(businessId));}
+    catch{setPosterChoices([]);setNotice('Recent Studio posters are not available in this browser. You can upload an image.');}
+  };
+  const selectRecentPoster=(record:LinkedPosterRecord)=>{
+    if(!businesses.some(b=>b.id===record.context.businessId)||record.context.businessId!==businessId){
+      setError('This poster is not available for your selected business.');return;
+    }
+    if(posterUrlRef.current)URL.revokeObjectURL(posterUrlRef.current);
+    const url=URL.createObjectURL(record.image);
+    posterUrlRef.current=url;setPosterUrl(url);
+    setLinked(record);setPosterKey(record.id);setPosterPickerOpen(false);
+    setMessage(previous=>previous.trim()?previous:
+      [record.context.headline,record.context.offer].filter(Boolean).join('. ').slice(0,600));
+    setCta(previous=>previous.trim()?previous:record.context.cta.slice(0,180));
+    setNotice('Poster attached. Review your campaign brief, then generate captions.');
+  };
+  const uploadDevicePoster=async(file?:File)=>{
+    if(!file)return;
+    if(!selected||!businessId){setError('Select your business first.');return;}
+    setPosterBusy(true);setError('');
+    try{
+      const image=await imageFileToPng(file);
+      const context:LinkedPosterContext={
+        businessId:selected.id,businessName:selected.name,category:selected.category||'',
+        city:selected.city||'',address:selected.address||'',phone:selected.phone||'',
+        website:selected.website_url||'',headline:'',offer:'',
+        cta:'',vibe:'',language:activePreviewLanguage,
+        sample:false,source:'device_upload',format:'uploaded',
+      };
+      const id=await saveLinkedPoster(context,image);
+      selectRecentPoster({id,createdAt:Date.now(),context,image});
+      setNotice('Image attached from your device. It stays private in this browser.');
+    }catch(e){setError(e instanceof Error?e.message:'Could not attach this image.');}
+    finally{setPosterBusy(false);}
   };
   const onBusinessChange=(id:string)=>{
     if(id===businessId)return;
     setBusinessId(id);setLinked(null);setPosterKey('');
+    setPosterPickerOpen(false);setPosterChoices([]);
     if(posterUrlRef.current)URL.revokeObjectURL(posterUrlRef.current);
     posterUrlRef.current='';setPosterUrl('');
     setMessage('');setConditions('');setCta('');setError('');setNotice('');
@@ -349,7 +454,7 @@ export default function ConnectedCaptionLab(){
     const a=document.createElement('a');a.href=posterUrl;
     a.download='slbi-linked-poster-'+linked.context.format+'.png';a.click();
   };
-  const isBusy=busy||voiceBusy||recording||saving;
+  const isBusy=busy||voiceBusy||recording||saving||posterBusy;
   const previewAccount=selected?.name||'Your Business';
 
   return <main className="mx-auto w-full max-w-[1640px] space-y-4 px-2 pb-12 text-[#111827] sm:px-4">
@@ -374,11 +479,56 @@ export default function ConnectedCaptionLab(){
       </div>
     </header>
     {error&&<div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-800">{error}</div>}
-    {notice&&<div role="status" className="rounded-xl border border-[#FED7AA] bg-[#FFF7ED] p-3 text-xs text-[#92400E]">{notice}</div>}
+    {notice&&<div role="status" className="flex items-center gap-2 rounded-lg border border-[#FED7AA] bg-[#FFF7ED] px-3 py-2 text-[11px] font-medium text-[#92400E]"><CheckCircle2 size={14} className="shrink-0"/>{notice}</div>}
+    <input ref={posterInputRef} type="file" accept="image/png,image/jpeg,image/webp"
+      tabIndex={-1} className="sr-only" aria-label="Upload a local poster image"
+      onChange={e=>{void uploadDevicePoster(e.currentTarget.files?.[0]);e.currentTarget.value='';}}/>
+    {posterPickerOpen&&<div className="fixed inset-0 z-[90] flex items-center justify-center p-4">
+      <button type="button" aria-label="Close poster picker"
+        className="absolute inset-0 bg-[#111827]/55" onClick={()=>setPosterPickerOpen(false)}/>
+      <div ref={posterDialogRef} tabIndex={-1} role="dialog" aria-modal="true"
+        aria-labelledby="caption-poster-dialog-title"
+        className="relative z-10 w-full max-w-[530px] space-y-4 rounded-2xl border border-[#E5E7EB] bg-white p-5 shadow-2xl outline-none">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 id="caption-poster-dialog-title" className="text-base font-bold text-[#111827]">Attach a poster</h2>
+            <p className="mt-1 text-[11px] text-[#6B7280]">Recent Studio designs or an image from your device</p>
+          </div>
+          <button type="button" onClick={()=>setPosterPickerOpen(false)}
+            className="rounded-lg border border-[#E5E7EB] px-3 py-2 text-[11px] font-semibold text-[#374151] hover:bg-[#F9FAFB]">Close</button>
+        </div>
+        {posterChoices.length>0&&<div>
+          <p className="mb-2 text-[11px] font-semibold text-[#374151]">Recent Poster Studio designs</p>
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+            {posterChoices.map(item=><button key={item.id} type="button"
+              onClick={()=>selectRecentPoster(item)} title={item.context.headline||'Recent Studio poster'}
+              className="flex min-w-0 flex-col items-center gap-1 rounded-lg border border-[#E5E7EB] p-1.5 hover:border-[#F97316] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#F97316]">
+              <span className="flex h-16 w-full items-center justify-center overflow-hidden rounded bg-[#F9FAFB]">
+                {posterThumbnails[item.id]?
+                  <img src={posterThumbnails[item.id]} alt="" className="h-full w-full object-cover"/>:
+                  <ImageIcon size={18}/>}
+              </span>
+              <span className="max-w-full truncate text-[10px] font-medium text-[#374151]">{item.context.headline||'Studio design'}</span>
+            </button>)}
+          </div>
+        </div>}
+        <div className="grid grid-cols-2 gap-2">
+          <button type="button" onClick={()=>posterInputRef.current?.click()} disabled={posterBusy}
+            className="flex items-center justify-center gap-1.5 rounded-xl border border-[#111827] bg-[#111827] px-3 py-3 text-[12px] font-semibold text-white hover:bg-[#293241] disabled:border-[#E5E7EB] disabled:bg-[#F3F4F6] disabled:text-[#9CA3AF]">
+            <Plus size={15}/> Upload image
+          </button>
+          <Link href="/vendor/marketing/design/puter-lab"
+            className="flex items-center justify-center gap-1.5 rounded-xl border border-[#FDBA74] bg-[#FFF7ED] px-3 py-3 text-[12px] font-semibold text-[#C2410C] hover:bg-[#FFEDD5]">
+            Open Poster Studio <ArrowRight size={13}/>
+          </Link>
+        </div>
+        <p className="text-[10px] leading-4 text-[#6B7280]">PNG, JPG or WebP · Up to 12 MB · Recent Studio designs are available on this device for two hours.</p>
+      </div>
+    </div>}
     <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,30fr)_minmax(0,42fr)_minmax(0,28fr)]">
       {/* 01 / Campaign Brief — same mental model as Poster Studio */}
-      <section aria-label="Campaign Brief" className={panel+' space-y-4 p-4'}>
-        <div className="flex items-center gap-2 border-b border-[#F0F0F2] pb-3">
+      <section aria-label="Campaign Brief" className={panel+' space-y-3 p-3 sm:p-3.5'}>
+        <div className="flex items-center gap-2 border-b border-[#F0F0F2] pb-2">
           <span className="rounded-lg bg-[#FFF1E6] px-2 py-1 text-[11px] font-black text-[#EA580C]">01</span>
           <h2 className="slbi-section-title text-[15px]">Campaign Brief</h2>
           <span className="ml-auto text-[10px] text-[#9CA3AF]">Input</span>
@@ -391,23 +541,24 @@ export default function ConnectedCaptionLab(){
           </select>
         </label>
         {selected&&<p className="text-[10px] text-[#6B7280]">{selected.category} · {selected.city||'Sri Lanka'}</p>}
-        <div className="rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-3">
-          <div className="mb-2 flex items-center justify-between gap-2">
-            <span className="text-[11px] font-bold">Linked Poster <span className="font-normal text-[#9CA3AF]">(optional)</span></span>
-            {hasLinked&&<span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#059669]"><Check size={12}/> Linked</span>}
+        <div className="flex min-h-11 items-center justify-between gap-2 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-2">
+          <div className="flex min-w-0 items-center gap-2">
+            {hasLinked&&posterUrl?
+              <img src={posterUrl} alt="Attached poster" className="h-9 w-8 shrink-0 rounded border border-[#E5E7EB] object-cover"/>:
+              <ImageIcon size={17} className="shrink-0 text-[#6B7280]"/>}
+            <span className="truncate text-[11px] font-semibold text-[#374151]">
+              {hasLinked?(linked?.context.source==='device_upload'?'Image attached':'Studio poster linked'):'Poster (optional)'}
+            </span>
           </div>
-          {hasLinked&&posterUrl?<div className="flex items-center gap-3">
-            <img alt="Actual poster linked from AI Poster Studio" src={posterUrl}
-              className="h-24 w-[70px] shrink-0 rounded-lg border border-[#E5E7EB] bg-white object-contain"/>
-            <div className="min-w-0 space-y-1">
-              <p className="truncate text-[11px] font-extrabold">{linked?.context.headline}</p>
-              <p className="text-[10px] leading-4 text-[#6B7280]">Linked from Poster Studio · {linked?.context.sample?'No-credit sample':'Export-quality PNG'}</p>
-              <button type="button" onClick={downloadPoster}
-                className="inline-flex items-center gap-1 text-[10px] font-bold text-[#C2410C]"><Download size={12}/> Save image</button>
-            </div>
-          </div>:<div className="flex items-center gap-2 py-2 text-[11px] leading-5 text-[#9CA3AF]">
-            <ImageIcon size={18}/><span>Start here or continue from a completed Poster Studio PNG.</span>
-          </div>}
+          <div className="flex shrink-0 items-center gap-1">
+            {hasLinked&&<button type="button" onClick={downloadPoster}
+              title="Download attached PNG" aria-label="Download attached PNG"
+              className="rounded-lg p-1.5 text-[#6B7280] hover:bg-white hover:text-[#111827]"><Download size={14}/></button>}
+            <button type="button" disabled={posterBusy||!businessId} onClick={()=>void pickPoster()}
+              className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-semibold text-[#C2410C] hover:bg-[#FFEDD5] disabled:opacity-45">
+              <Plus size={13}/>{hasLinked?'Change':'Attach'}
+            </button>
+          </div>
         </div>
         <div>
           <p className="mb-2 text-[11px] font-bold text-[#374151]">Campaign Goal / Angle</p>
@@ -453,44 +604,55 @@ export default function ConnectedCaptionLab(){
               </button>
             </div>
           </div>
-          <textarea id="caption-brief" rows={4} maxLength={600} value={message}
+          <textarea id="caption-brief" rows={3} maxLength={600} value={message}
             onChange={e=>setMessage(e.target.value)}
             className={field+' resize-y leading-6'}
             placeholder="Tell us your real offer, product or campaign in தமிழ், සිංහල, English or Tanglish."/>
-          <p className="mt-1 text-[10px] text-[#9CA3AF]">Only verified facts. Voice transcript stays editable before AI generation.</p>
-          <div className="mt-2 flex flex-wrap gap-1.5">
+          <p className="mt-1 text-[10px] text-[#6B7280]">Add your offer, key details or record a voice brief.</p>
+                <button type="button" onClick={()=>void generate()}
+          disabled={!businessId||message.trim().length<5||isBusy}
+          className="group flex w-full items-center justify-center gap-2 rounded-xl border border-[#111827] bg-[#111827] px-3 py-3 text-[12px] font-bold text-white shadow-sm transition-colors hover:bg-[#292F3D] disabled:cursor-not-allowed disabled:border-[#E5E7EB] disabled:bg-[#F3F4F6] disabled:text-[#9CA3AF] disabled:shadow-none">
+          {busy?<LoaderCircle size={17} className="animate-spin"/>:<WandSparkles size={17} className="text-[#FDBA74] group-disabled:text-[#9CA3AF]"/>}
+          {busy?'Generating drafts…':'Generate Caption Variations'} <ArrowRight size={14}/>
+        </button>
+        <div className="flex items-center justify-between gap-2 text-[10px] text-[#6B7280]">
+          <span>{chosenLanguages.length} {chosenLanguages.length===1?'language':'languages'} selected · Credits apply on Generate</span>
+          <details className="group relative">
+            <summary className="flex cursor-pointer list-none items-center gap-1 font-semibold text-[#C2410C]"><Info size={13}/> Info</summary>
+            <div className="absolute right-0 top-6 z-30 w-64 rounded-xl border border-[#E5E7EB] bg-white p-3 text-[11px] leading-5 text-[#374151] shadow-xl">
+              <p>One provider request and applicable credit reservation per selected language; never auto-charged on page open.</p>
+              <p className="mt-2">Linked PNG remains on this device for up to two hours; saving to Campaign Planner stores captions, not a cloud copy of your image.</p>
+              <p className="mt-2">Social previews are visual estimates. Character goals are editorial targets, not social platform limits. Nothing is automatically published.</p>
+            </div>
+          </details>
+        </div>
+
+          <details className="mt-2 rounded-lg border border-[#E5E7EB] p-2">
+            <summary className="cursor-pointer text-[11px] font-semibold text-[#6B7280]">Quick brief suggestions</summary>
+            <div className="mt-2 flex flex-wrap gap-1.5">
             {promptChips.map(chip=><button key={chip.label} type="button"
               onClick={()=>setMessage(previous=>[previous,chip.text].filter(Boolean).join(' ').slice(0,600))}
               disabled={isBusy}
               className="rounded-full border border-[#E5E7EB] px-2.5 py-1.5 text-[10px] font-semibold text-[#6B7280] hover:bg-[#FFF7ED]">
               + {chip.label}</button>)}
-          </div>
+            </div>
+          </details>
         </div>
-        <details className="rounded-xl border border-[#E5E7EB] p-3">
+        <details className="rounded-xl border border-[#E5E7EB] p-2.5">
           <summary className="cursor-pointer text-[11px] font-bold">Offer terms & CTA <span className="font-normal text-[#9CA3AF]">(optional)</span></summary>
           <textarea rows={2} maxLength={300} value={conditions} onChange={e=>setConditions(e.target.value)}
             placeholder="Only genuine terms or valid dates" className={field+' mt-3'}/>
           <input maxLength={180} value={cta} onChange={e=>setCta(e.target.value)}
             placeholder="Contact us for more details" className={field+' mt-2'}/>
         </details>
-        <button type="button" onClick={()=>void generate()}
-          disabled={!businessId||message.trim().length<5||isBusy}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#111827] px-4 py-3.5 text-[12px] font-extrabold text-white hover:bg-[#292F3D] disabled:cursor-not-allowed disabled:opacity-40">
-          {busy?<LoaderCircle size={17} className="animate-spin"/>:<WandSparkles size={17} className="text-[#FDBA74]"/>}
-          {busy?'Generating reviewed drafts…':'Generate Caption Variations'} <ArrowRight size={14}/>
-        </button>
-        <p className="text-[10px] leading-5 text-[#6B7280]">
-          <ShieldCheck size={12} className="mr-1 inline"/>
-          Real AI requires the enabled, credit-reserved Caption service. One provider request and applicable credit reservation per selected language; never auto-charged on page open.
-        </p>
       </section>
 
       {/* 02 / Live Social Preview */}
-      <section aria-label="Live Social Preview" className={panel+' space-y-4 p-4'}>
+      <section aria-label="Live Social Preview" className={panel+' space-y-3 p-3.5 xl:sticky xl:top-6 xl:max-h-[calc(100dvh-3rem)] xl:self-start xl:overflow-y-auto'}>
         <div className="flex items-center gap-2 border-b border-[#F0F0F2] pb-3">
           <span className="rounded-lg bg-[#FFF1E6] px-2 py-1 text-[11px] font-black text-[#EA580C]">02</span>
           <h2 className="slbi-section-title text-[15px]">Live Social Preview</h2>
-          <span className="ml-auto text-[10px] text-[#9CA3AF]">Workspace</span>
+          <span className="ml-auto text-[10px] font-medium text-[#6B7280]">Live preview</span>
         </div>
         <div className="grid grid-cols-3 gap-1.5 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-1">
           {PLATFORMS.map(p=><button key={p} type="button" onClick={()=>{setPlatform(p);setExpanded(false);}}
@@ -516,76 +678,105 @@ export default function ConnectedCaptionLab(){
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-[12px] font-extrabold">{previewAccount}</p>
-              <p className="text-[10px] text-[#9CA3AF]">Social preview · Just now · Not published</p>
+              <p className="text-[10px] text-[#6B7280]">Live social preview · Not published</p>
             </div>
             {platform==='facebook'?<Facebook size={17} className="text-[#2563EB]"/>:
               platform==='instagram'?<Instagram size={17} className="text-[#D946EF]"/>:
               <Volume2 size={17} className="text-[#16A34A]"/>}
           </div>
           <div className="p-3.5">
-            {!currentCaption&&<p className="mb-2 rounded-lg bg-[#FFFBEB] p-2 text-[10px] font-medium text-[#92400E]">
-              Brief preview only — no AI caption generated yet. Review before using.
-            </p>}
             <p className={'whitespace-pre-line break-words text-[14px] leading-[1.6] text-[#1F2937] '+textFont(activePreviewLanguage)}>
-              {fold.visible||'Your generated social caption will appear here. Add a campaign brief or continue from Poster Studio.'}
+              {fold.visible||'Your social copy appears here as you write.'}
             </p>
             {fold.folded&&<button type="button" onClick={()=>setExpanded(true)}
               className="mt-1 text-[11px] font-bold text-[#6B7280] hover:text-[#EA580C]">…See more</button>}
             {expanded&&previewText.length>180&&<button type="button" onClick={()=>setExpanded(false)}
               className="mt-1 text-[11px] font-bold text-[#6B7280]">Show less</button>}
           </div>
-          {posterUrl&&hasLinked?<img src={posterUrl} alt="Linked high-resolution poster preview"
-            className="max-h-[510px] w-full bg-[#F9FAFB] object-contain"/>:
-            <div className="flex min-h-40 items-center justify-center gap-2 border-y border-dashed border-[#E5E7EB] bg-[#F9FAFB] text-center text-[11px] text-[#9CA3AF]">
-              <ImageIcon size={22}/> No poster linked · captions work independently
-            </div>}
+          {posterUrl&&hasLinked?
+            <div className="relative border-y border-[#E5E7EB] bg-[#F9FAFB]">
+              <img src={posterUrl} alt="Attached poster preview"
+                className="max-h-[430px] w-full object-contain"/>
+              <button type="button" onClick={()=>void pickPoster()}
+                className="absolute bottom-3 right-3 rounded-lg border border-[#E5E7EB] bg-white/95 px-3 py-2 text-[11px] font-semibold text-[#111827] shadow-sm hover:bg-white">
+                Change poster
+              </button>
+            </div>:
+            <button type="button" disabled={!businessId||posterBusy}
+              onClick={()=>void pickPoster()}
+              onDragOver={e=>e.preventDefault()}
+              onDrop={e=>{e.preventDefault();void uploadDevicePoster(e.dataTransfer.files?.[0]);}}
+              aria-label="Attach a poster from Studio or upload a device image"
+              className="group flex min-h-32 w-full flex-col items-center justify-center gap-2 border-y border-dashed border-[#D1D5DB] bg-[#F9FAFB] px-4 py-4 text-center transition-colors hover:border-[#F97316] hover:bg-[#FFF7ED] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#F97316] disabled:cursor-not-allowed">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#F97316] shadow-sm">
+                <ImageIcon size={19}/>
+              </span>
+              <span className="text-[12px] font-semibold text-[#374151]">Attach your creative</span>
+              <span className="text-[10px] leading-4 text-[#6B7280]">Choose from Poster Studio, upload, or drop an image</span>
+            </button>}
           <div className="flex items-center justify-between gap-3 border-t border-[#F3F4F6] px-4 py-3 text-[11px] text-[#6B7280]">
-            <span>{labelsByPlatform[platform]} · Mockup only</span>
-            <span className="inline-flex items-center gap-1"><CheckCircle2 size={13} className="text-[#F97316]"/> Preview</span>
+            <span>{labelsByPlatform[platform]} · Draft</span>
+            <span className="inline-flex items-center gap-1"><CheckCircle2 size={13} className="text-[#F97316]"/> Not published</span>
           </div>
         </div>
-        <p className="text-center text-[10px] leading-4 text-[#9CA3AF]">Approximate read-more fold, not the exact Facebook/Instagram truncation algorithm.</p>
         <div className="grid gap-2 sm:grid-cols-3">
           <button type="button" disabled={!currentCaption.trim()} onClick={()=>void copyCaption(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#111827] px-3 py-3 text-[11px] font-extrabold text-white disabled:opacity-35">
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#111827] bg-[#111827] px-3 py-3 text-[11px] font-bold text-white hover:bg-[#293241] disabled:cursor-not-allowed disabled:border-[#E5E7EB] disabled:bg-[#F3F4F6] disabled:text-[#9CA3AF]">
             <Copy size={14}/> Copy + Hashtags</button>
           <button type="button" disabled={!currentCaption.trim()} onClick={()=>void copyCaption(false)}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] px-3 py-3 text-[11px] font-bold disabled:opacity-35">
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] bg-white px-3 py-3 text-[11px] font-semibold text-[#111827] hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:bg-[#F3F4F6] disabled:text-[#9CA3AF]">
             <Copy size={14}/> Copy Caption</button>
           <button type="button" disabled={!currentCaption.trim()||saving} onClick={()=>void savePlanner()}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#FDBA74] bg-[#FFF7ED] px-3 py-3 text-[11px] font-bold text-[#9A3412] disabled:opacity-35">
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#FDBA74] bg-[#FFF7ED] px-3 py-3 text-[11px] font-semibold text-[#9A3412] hover:bg-[#FFEDD5] disabled:cursor-not-allowed disabled:border-[#E5E7EB] disabled:bg-[#F3F4F6] disabled:text-[#9CA3AF]">
             {saving?<LoaderCircle size={14} className="animate-spin"/>:<Send size={14}/>}
             Save to Planner</button>
+        </div>
+        <div className="space-y-2 rounded-xl border border-[#E5E7EB] bg-[#FAFAFB] px-3 py-2.5"
+          aria-label="Character and hook meter">
+          <div className="flex items-center justify-between gap-3 text-[10px]">
+            <span className="font-semibold text-[#374151]">{labelsByPlatform[platform]} · Draft length</span>
+            <span className="font-bold tabular-nums text-[#111827]">{characterCount.toLocaleString()} / {draftTarget.toLocaleString()} target</span>
+          </div>
+          <div className="h-1.5 overflow-hidden rounded-full bg-[#E5E7EB]" role="progressbar"
+            aria-label="Suggested draft length" aria-valuenow={Math.min(characterCount,draftTarget)}
+            aria-valuemin={0} aria-valuemax={draftTarget}>
+            <div className="h-full rounded-full bg-[#F97316] transition-[width] duration-200"
+              style={{width:Math.min(100,(characterCount/draftTarget)*100)+'%'}}/>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-1 text-[10px] text-[#6B7280]">
+            <span>Hook: {hookCount} characters · {hookStatus}</span>
+            <span>Suggested hook ≤ 125</span>
+          </div>
         </div>
         {savedCampaignId&&<Link href="/vendor/marketing/campaigns?source=caption-lab"
           className="inline-flex items-center gap-1.5 rounded-xl border border-[#FDBA74] bg-[#FFF7ED] px-3 py-2.5 text-[11px] font-bold text-[#9A3412]">
           <CheckCircle2 size={15}/> Open saved Campaign Planner draft <ArrowRight size={13}/>
         </Link>}
-        <p className="text-[10px] leading-4 text-[#6B7280]">Campaign Planner saves your edited caption bundle. Linked PNG remains on this device until secure cloud asset storage is configured; no automatic social posting.</p>
+        <p className="text-center text-[10px] font-medium text-[#6B7280]">Live social preview · Ready to copy or save when your draft is complete</p>
       </section>
 
       {/* 03 / Refine and copy */}
-      <section aria-label="Variations and Optimization" className={panel+' space-y-4 p-4'}>
+      <section aria-label="Variations and Optimization" className={panel+' space-y-3 p-3.5'}>
         <div className="flex items-center gap-2 border-b border-[#F0F0F2] pb-3">
           <span className="rounded-lg bg-[#FFF1E6] px-2 py-1 text-[11px] font-black text-[#EA580C]">03</span>
           <h2 className="slbi-section-title text-[15px]">Refine & Copy</h2>
           <span className="ml-auto text-[10px] text-[#9CA3AF]">Optimize</span>
         </div>
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {ANGLES.map((a,i)=><button key={a} type="button" onClick={()=>{setAngle(a);setExpanded(false);}}
             aria-pressed={angle===a}
-            className={'w-full rounded-xl border p-3 text-left transition '+
+            className={'w-full rounded-xl border px-2.5 py-2 text-left transition '+
               (angle===a?'border-[#FDBA74] bg-[#FFF7ED] shadow-sm':'border-[#E5E7EB] bg-white hover:bg-[#F9FAFB]')}>
             <div className="flex items-center gap-2">
-              <span className={'flex h-7 w-7 items-center justify-center rounded-lg text-[10px] font-black '+(angle===a?'bg-[#F97316] text-white':'bg-[#F3F4F6] text-[#6B7280]')}>
+              <span className={'flex h-6 w-6 items-center justify-center rounded-md text-[10px] font-semibold '+(angle===a?'bg-[#F97316] text-white':'bg-[#F3F4F6] text-[#6B7280]')}>
                 {i+1}</span>
               <div className="flex-1">
-                <p className="text-[11px] font-black">{angleLabels[a].title}</p>
-                <p className="text-[10px] text-[#9CA3AF]">{angleLabels[a].subtitle}</p>
+                <p className="text-[11px] font-bold leading-4">{angleLabels[a].title}</p>
+                <p className="text-[10px] leading-4 text-[#6B7280]">{angleLabels[a].subtitle}</p>
               </div>
               {angle===a&&<Check size={14} className="text-[#EA580C]"/>}
             </div>
-            <p className="mt-1.5 line-clamp-2 pl-9 text-[10px] leading-4 text-[#6B7280]">
+            <p className="mt-1 line-clamp-1 pl-8 text-[10px] leading-4 text-[#6B7280]">
               {captions[activePreviewLanguage][a]||'Generate AI copy to populate this angle.'}
             </p>
           </button>)}
@@ -660,7 +851,7 @@ export default function ConnectedCaptionLab(){
             })}
           </div>
         </div>
-        <p className="text-[10px] leading-5 text-[#9CA3AF]">The Facebook, Instagram and WhatsApp cards are visual simulators, not connected social accounts. No automatic posting or invented customer reviews.</p>
+        <p className="text-[10px] leading-5 text-[#6B7280]">Every edit updates your preview instantly.</p>
       </section>
     </div>
   </main>;
