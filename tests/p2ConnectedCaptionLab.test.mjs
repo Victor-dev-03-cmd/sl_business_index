@@ -143,7 +143,7 @@ test('Poster Studio sends only a random one-time local key and never embeds PNG 
   assert.match(page,/loadLinkedPoster\(key\)/);
   assert.match(page,/businesses\.some\(b=>b\.id===record\.context\.businessId\)/);
   assert.match(page,/URL\.createObjectURL\(record\.image\)/);
-  assert.match(page,/Linked from Poster Studio/);
+  assert.match(page,/Poster linked from Studio/);
   assert.equal(validHandoffId('11111111-1111-4111-8111-111111111111'),true);
   assert.equal(validHandoffId('https://untrusted.example/image.png'),false);
   assert.equal(validHandoffId('../../admin'),false);
@@ -218,6 +218,9 @@ test('Sticky preview has a real local asset picker, drop input and interactive m
   assert.match(page,/xl:sticky xl:top-6/);
   assert.match(page,/xl:max-h-\[calc\(100dvh-3rem\)\]/);
   assert.match(page,/listLinkedPosters\(businessId\)/);
+  assert.match(page,/role="dialog" aria-modal="true"/);
+  assert.match(page,/posterDialogRef\.current\?\.focus\(\)/);
+  assert.match(page,/previousFocus\?\.focus\(\)/);
   assert.match(page,/posterChoices\.map/);
   assert.match(page,/posterThumbnails\[item\.id\]/);
   assert.match(page,/imageFileToPng\(file\)/);
