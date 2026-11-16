@@ -1,4 +1,17 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+Sinhala:wght@400;500;600;700;800&family=Noto+Sans+Tamil:wght@400;500;600;700;800&display=swap');
-.slbi-caption-tamil{font-family:'Noto Sans Tamil','Inter',sans-serif;line-height:1.6;overflow-wrap:anywhere;}
-.slbi-caption-sinhala{font-family:'Noto Sans Sinhala','Inter',sans-serif;line-height:1.6;overflow-wrap:anywhere;}
-.slbi-caption-english{font-family:'Inter',sans-serif;line-height:1.6;overflow-wrap:anywhere;}
+/* Shared Inter/Noto font assets are loaded once by the Next.js root layout.
+   Script-specific line height keeps Tamil/Sinhala captions legible. */
+.slbi-caption-tamil {
+  font-family: var(--font-tamil), var(--font-inter), sans-serif;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.slbi-caption-sinhala {
+  font-family: var(--font-sinhala), var(--font-inter), sans-serif;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.slbi-caption-english {
+  font-family: var(--font-inter), sans-serif;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
