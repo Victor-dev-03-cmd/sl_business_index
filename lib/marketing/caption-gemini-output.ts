@@ -16,6 +16,13 @@ export type GeminiCaptionOutput={
   hashtags:string[];
 };
 const ANGLE_LIMITS={hook:700,story:1000,short:450} as const;
+const KNOWN_SRI_LANKAN_CITY_TAGS=new Set([
+  'colombo','jaffna','kandy','galle','negombo','batticaloa','vavuniya',
+  'mannar','trincomalee','anuradhapura','kurunegala','matara',
+  'kilinochchi','mullaitivu','ratnapura','badulla','puttalam',
+  'hambantota','kalutara','nuwaraeliya','polonnaruwa','ampara',
+]);
+const citySlug=(value:string)=>value.toLocaleLowerCase('en').replace(/[^\p{L}\p{N}]/gu,'');
 const hasOnlyKeys=(value:Record<string,unknown>,keys:readonly string[])=>
   Object.keys(value).length===keys.length&&keys.every(key=>Object.hasOwn(value,key));
 const record=(value:unknown):Record<string,unknown>|null=>
@@ -56,7 +63,7 @@ export function captionGeminiResponseSchema(language:CaptionLanguage){
 /** Reject invalid keys/angles/scripts/hashtag markup instead of trusting
  * superficial model JSON compliance. Per-language prompts require real script.
  */
-export function parseGeminiCaptionOutput(raw:unknown,language:CaptionLanguage):GeminiCaptionOutput|null{
+export function parseGeminiCaptionOutput(raw:unknown,language:CaptionLanguage,verifiedCity=''):GeminiCaptionOutput|null{
   if(typeof raw!=='string'||raw.length>16000||raw.length<25)return null;
   let parsed:unknown;
   try{parsed=JSON.parse(raw);}catch{return null;}
@@ -84,6 +91,11 @@ export function parseGeminiCaptionOutput(raw:unknown,language:CaptionLanguage):G
   const tags:string[]=[];
   for(const value of root.hashtags){
     if(typeof value!=='string'||normalizedTag(value)!==value||tags.includes(value))return null;
+    // No unverified city hashtags: the city is taken from the owned business
+    // record, never from a model-provided poster or user-written city field.
+    const tagCity=citySlug(value.slice(1));
+    if(KNOWN_SRI_LANKAN_CITY_TAGS.has(tagCity)&&
+      !citySlug(verifiedCity).includes(tagCity))return null;
     tags.push(value);
   }
   return {variations:{[key]:angles},hashtags:tags};
