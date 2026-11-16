@@ -108,3 +108,47 @@ test('production Cloudflare provider and Turnstile login remain unchanged',()=>{
   assert.match(backend,/https:\/\/challenges\.cloudflare\.com\/turnstile\/v0\/siteverify/);
   assert.doesNotMatch(lab,/CLOUDFLARE_TURNSTILE_SECRET_KEY|SLBI_POSTER_IMAGE_PROVIDER/);
 });
+
+
+test('desktop layout uses the agreed LEFT controls, CENTER poster and RIGHT settings',()=>{
+  assert.match(lab,/xl:grid-cols-\[minmax\(0,0\.91fr\)_minmax\(0,1\.36fr\)_minmax\(0,0\.9fr\)\]/);
+  assert.match(lab,/xl:h-\[calc\(100dvh-8\.5rem\)\]/);
+  assert.match(lab,/xl:overflow-hidden/);
+  const left=lab.indexOf('aria-label="Poster creation controls"');
+  const center=lab.indexOf('aria-label="Exact AI poster preview"');
+  const right=lab.indexOf('aria-label="Poster size and exact text settings"');
+  assert.ok(left>0&&center>left&&right>center,'left, preview, right DOM order');
+  assert.match(lab,/lg:order-1/);
+  assert.match(lab,/lg:order-2/);
+  assert.match(lab,/order-3/);
+  assert.match(lab,/xl:overflow-y-auto/);
+  assert.match(lab,/h-\[min\(60dvh,620px\)\]/);
+  assert.match(lab,/xl:h-auto xl:min-h-0/);
+  assert.match(lab,/h-full w-full max-h-full max-w-full object-contain/);
+  assert.doesNotMatch(lab,/max-h-\[72vh\]/);
+});
+test('compact four-format SVG picker reuses Campaign Planner picture silhouettes',()=>{
+  const original=read('app/vendor/marketing/campaigns/CampaignFormatSelector.tsx');
+  const selector=read('app/vendor/marketing/design/puter-lab/PuterCompactFormatSelector.tsx');
+  for(const key of ["square:{w:70,h:70}","portrait:{w:57,h:76}","story:{w:43,h:76}","landscape:{w:78,h:43}"]){
+    assert.ok(original.includes(key),key+' original');
+    assert.ok(selector.includes(key),key+' compact');
+  }
+  assert.match(selector,/role="radiogroup"/);
+  assert.match(selector,/role="radio" aria-checked=\{active\}/);
+  assert.match(selector,/aria-label=\{names\[type\]\+': '/);
+  assert.match(selector,/className="grid grid-cols-4 gap-1\.5"/);
+  assert.match(selector,/h-\[43px\]/);
+  assert.doesNotMatch(selector,/min-h-\[158px\]/);
+  assert.match(lab,/<PuterCompactFormatSelector selected=\{format\} disabled=\{locked\} onChange=\{setFormat\}\/>/);
+});
+test('UI-only compact redesign preserves voice, Gemini, paid consent and exact PNG behavior',()=>{
+  assert.match(lab,/const startVoice=async\(\)=>/);
+  assert.match(lab,/const transcribe=async\(blob:Blob\)=>/);
+  assert.match(lab,/const prepareWithGemini=async\(\)=>/);
+  assert.match(lab,/onClick=\{\(\)=>void generate\(\)\}/);
+  assert.match(lab,/realMode&&!consent/);
+  assert.match(lab,/canvas|composeExactPoster/);
+  assert.match(lab,/anchor\.download=/);
+  assert.match(lab,/dimensions\.width\} × \{dimensions\.height\}/);
+});
