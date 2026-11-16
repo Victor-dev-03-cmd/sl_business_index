@@ -1,5 +1,10 @@
 # SLBusinessIndex — repository handoff for coding agents
 
+## 2026-11-16 — P2-18: Adaptive glass-card spacing and hero quality
+- [P2-18 content-driven poster layout](docs/growth/p2/P2_18_ADAPTIVE_POSTER_GLASS_SPACING_20261116.md). Owner shared downloaded Halloween Neon poster showing ~200px empty gap between service/offer and lower CTA. Root cause in fixed percentage glass-card height and footer-anchored button; this was a code geometry issue, not a model text failure.
+- New pure `puter-adaptive-card-layout.ts` plans vertical content bounds from measured brand/offer/service/CTA/verified contacts. `puter-premium-poster-renderer.ts` renders a compact bottom-anchored card and adjacent CTA, preserving more upper center hero. Story/Portrait/Square dynamic; Wide existing path unchanged. Reject overflow, do not hallucinate offers or fill whitespace with unrelated content.
+- Art prompt and Halloween preset now reserve strong upper/middle photoreal hero and smaller lower content zone, respecting explicit owner prompt priority. No Puter inference or credits changed. Latest PR-head CI and Vercel READY required; owner live poster screenshot QA necessary.
+
 ## 2026-11-16 — P2-17: Owner's exact premium Halloween poster design architecture
 - [P2-17 premium Halloween design system](docs/growth/p2/P2_17_OWNER_PREMIUM_HALLOWEEN_DESIGN_SYSTEM_20261116.md). Owner supplied exact palette: #07070C / #18082E / #FF5E00 / #FF8A00 / #8A2BE2 / #FFFFFF / #B8B8C7; headline Anton/Bebas Neue, brand Space Grotesk, offer/CTA Plus Jakarta Sans, service Inter, footer JetBrains Mono, plus 24px frosted-glass lower card, orange neon CTA, 9:16 headline/hero layering.
 - `poster-premium-presets.ts` holds trusted tokens; `puter-premium-poster-renderer.ts` paints the *actual* full-resolution browser PNG with glass, display typography, one exact approved offer and verified icon contacts; uses Noto for Tamil/Sinhala with Latin detection per copy field. CSS preview alone does not satisfy the export contract.
