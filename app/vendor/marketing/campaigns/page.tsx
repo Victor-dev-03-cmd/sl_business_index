@@ -410,7 +410,7 @@ export default function CampaignPlanner(){
                 </span>}
               <p className="mt-3 line-clamp-3 whitespace-pre-line break-words text-[12px] leading-6 text-[#5E5961]">{c.banner_text}</p>
               {c.brief?.createdFrom==='caption_lab'&&
-                <LinkedCaptionPoster localKey={c.brief.posterLocalKey} businessId={c.business_id}/>
+                <LinkedCaptionPoster localKey={c.brief.posterLocalKey} businessId={c.business_id}/>}
               <p className="mt-3 text-[10px] text-[#979097]">{copy.created} {formatDate(c.created_at)} · {c.platforms?.join(', ')||'—'} {c.scheduled_at?' · '+formatDate(c.scheduled_at):''}</p>
             </div>
             <div className="flex flex-wrap items-start gap-2 sm:max-w-[265px]">
