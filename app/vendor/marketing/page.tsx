@@ -81,7 +81,7 @@ export default async function MarketingOverview(){
           <div className="inline-flex items-center gap-2 rounded-full border border-white/[.12] bg-white/[.06] px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[.17em] text-[#FFB177]">
             <span className="h-1.5 w-1.5 rounded-full bg-[#FF7900]"/> SLBI GrowthOS / Marketing Studio
           </div>
-          <h1 className="mt-5 text-[31px] font-extrabold tracking-[-.045em] text-white sm:text-[42px]">
+          <h1 className="slbi-display-title mt-5 text-[31px] text-white sm:text-[42px]">
             Your marketing apps. <span className="text-[#FF9A4E]">All in one place.</span>
           </h1>
           <p className="mt-3 max-w-[670px] text-[13px] leading-7 text-white/[.68]">
