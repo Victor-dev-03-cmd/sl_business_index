@@ -103,7 +103,10 @@ test('voice daily quota uses service-only atomic count and strict RLS',()=>{
   assert.match(voiceSql,/attempts<12/);
   assert.match(voiceSql,/REVOKE ALL ON FUNCTION public\.marketing_poster_voice_try_reserve/);
   assert.match(voiceSql,/TO service_role/);
-  assert.doesNotMatch(voiceSql,/GRANT (EXECUTE|SELECT|INSERT) .* TO authenticattest('legacy Cloudflare adapter is still isolated while only the new Gemini/Puter Studio UI remains',()=>{
+  assert.doesNotMatch(voiceSql,/GRANT (EXECUTE|SELECT|INSERT) .* TO authenticated/);
+});
+
+test('legacy Cloudflare adapter remains independently protected while retired UI is absent',()=>{
   const provider=read('lib/marketing/poster-image-provider.ts');
   const ui=read('app/vendor/marketing/design/puter-lab/page.tsx');
   assert.match(provider,/@cf\/black-forest-labs\/flux-2-klein-4b/);
