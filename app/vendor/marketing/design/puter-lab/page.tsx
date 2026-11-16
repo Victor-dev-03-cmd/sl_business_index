@@ -485,7 +485,7 @@ export default function PuterMultilingualPosterLab(){
                   setDesignOverride(null);setShuffleIndex(0);
                   setStatus('Poster language set to '+posterLanguageName(next)+
                     '. Review all copy or click Prepare with Gemini to localize it.');
-                }
+                }}
                 className="w-full rounded-xl border border-[#E4DDDA] bg-[#FDFBF9] px-2 py-2.5 text-[11px]">
                 {(Object.entries(languageLabels) as Array<[PosterCopyLanguage,string]>)
                   .map(([key,val])=><option key={key} value={key}>{val}</option>)}
