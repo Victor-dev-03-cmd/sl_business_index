@@ -1,6 +1,8 @@
 import {createClient as createAdminClient} from '@supabase/supabase-js';
 import {createClient} from '@/lib/supabase/server';
 import {isSameOrigin} from '@/lib/growth/ingestion-contract';
+import {GEMINI_POSTER_MODEL} from '@/lib/marketing/poster-gemini-intelligence';
+import {parseThreeAngles} from '@/lib/marketing/caption-workspace';
 import {getMarketingAccessForUser,rejectMarketingAccess} from '@/lib/marketing/pro-access-server';
 import {
   buildCaptionMessages,CAPTION_MODEL,MAX_OUTPUT_TOKENS,
@@ -84,8 +86,8 @@ export async function POST(request:Request){
   // the server flag + the database-owned ai_social_draft action.
   if(process.env.SLBI_MARKETING_AI_ENABLED!=='true')
     return response(503,{error:'AI Caption Generation is not enabled yet. Manual captions remain available.'});
-  const admin=safeAdmin(),key=process.env.GROQ_API_KEY;
-  if(!admin||!key)return response(503,{error:'AI provider or credit backend is not configured.'});
+  const admin=safeAdmin();
+  if(!admin)return response(503,{error:'AI credit backend is not configured.'});
   const client=await createClient();
   const {data:{user},error:authError}=await client.auth.getUser();
   if(authError||!user)return response(401,{error:'Sign in to create an AI caption.'});
@@ -100,6 +102,13 @@ export async function POST(request:Request){
   const check=validateCaptionInput(parsed);
   if(!check.ok)return response(400,{error:check.error});
   const brief=check.value;
+  const useGemini=brief.mode==='three_angles';
+  // Both providers are server-side only. Never implicitly fall back to an
+  // unapproved model if the selected provider is not configured.
+  const key=useGemini?process.env.GEMINI_API_KEY?.trim():process.env.GROQ_API_KEY?.trim();
+  if(!key)return response(503,{error:useGemini?
+    'Gemini Caption Engine is not configured; manual drafts remain available.':
+    'Legacy caption provider is not configured.'});
   // Tenant ownership is verified on an authenticated SSR client first,
   // and *again* inside the privileged transactional reservation function.
   const {data:business,error:businessError}=await client.from('businesses')
@@ -154,29 +163,67 @@ export async function POST(request:Request){
   },brief);
 
   try{
-    const upstream=await fetch('https://api.groq.com/openai/v1/chat/completions',{
-      method:'POST',signal:AbortSignal.timeout(18000),
-      headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:CAPTION_MODEL,
-        messages,temperature:0.35,
-        max_completion_tokens:brief.mode==='three_angles'?1100:MAX_OUTPUT_TOKENS,
-        stream:false,
-      }),
-      cache:'no-store',
-    });
-    if(!upstream.ok)throw new Error('Provider HTTP '+upstream.status);
-    const result=await upstream.json() as {
-      choices?:Array<{message?:{content?:string}}>;
-      usage?:{prompt_tokens?:number;completion_tokens?:number};
-    };
-    const caption=sanitizeModelCaption(result.choices?.[0]?.message?.content);
-    if(!caption)throw new Error('Provider returned an unusable caption');
+    let rawCaption:unknown;
+    let inputTokens=0,outputTokens=0;
+    if(useGemini){
+      // This is the owner-requested Gemini Brain for connected tri-lingual
+      // variants. Exactly one language per reserved credit transaction, not
+      // nine provider calls; script-specific content is required in prompt.
+      const upstream=await fetch(
+        'https://generativelanguage.googleapis.com/v1beta/models/'+
+        GEMINI_POSTER_MODEL+':generateContent',{
+        method:'POST',cache:'no-store',redirect:'error',
+        signal:AbortSignal.timeout(24000),
+        headers:{'x-goog-api-key':key,'Content-Type':'application/json'},
+        body:JSON.stringify({
+          systemInstruction:{parts:[{text:messages[0].content}]},
+          contents:[{role:'user',parts:[{text:messages[1].content}]}],
+          generationConfig:{temperature:0.3,maxOutputTokens:2200},
+        }),
+      });
+      if(!upstream.ok)throw Error('Gemini provider HTTP '+upstream.status);
+      const result=await upstream.json() as {
+        candidates?:Array<{content?:{parts?:Array<{text?:string}>}}>;
+        usageMetadata?:{promptTokenCount?:number;candidatesTokenCount?:number};
+      };
+      rawCaption=(result.candidates?.[0]?.content?.parts||[])
+        .map(part=>part.text||'').join('').trim();
+      inputTokens=result.usageMetadata?.promptTokenCount||0;
+      outputTokens=result.usageMetadata?.candidatesTokenCount||0;
+    }else{
+      // Preserve the working single-caption Groq route and its old contract.
+      const upstream=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+        method:'POST',signal:AbortSignal.timeout(18000),
+        headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},
+        body:JSON.stringify({
+          model:CAPTION_MODEL,
+          messages,temperature:0.35,max_completion_tokens:MAX_OUTPUT_TOKENS,
+          stream:false,
+        }),
+        cache:'no-store',
+      });
+      if(!upstream.ok)throw new Error('Provider HTTP '+upstream.status);
+      const result=await upstream.json() as {
+        choices?:Array<{message?:{content?:string}}>;
+        usage?:{prompt_tokens?:number;completion_tokens?:number};
+      };
+      rawCaption=result.choices?.[0]?.message?.content;
+      inputTokens=result.usage?.prompt_tokens||0;
+      outputTokens=result.usage?.completion_tokens||0;
+    }
+    const caption=sanitizeModelCaption(rawCaption);
+    if(!caption)throw Error('Provider returned an unusable caption');
+    if(useGemini){
+      const triple=parseThreeAngles(caption);
+      if(!triple.hook||!triple.story||!triple.short)
+        throw Error('Gemini did not return all three complete caption angles');
+    }
+    const actualModel=useGemini?GEMINI_POSTER_MODEL:CAPTION_MODEL;
     const {data:draftId,error:finalError}=await admin.rpc('marketing_complete_ai_draft',{
       p_job_id:reserved.job_id,
-      p_language:brief.language,p_caption:caption,p_model_id:CAPTION_MODEL,
-      p_input_tokens:result.usage?.prompt_tokens||0,
-      p_output_tokens:result.usage?.completion_tokens||0,
+      p_language:brief.language,p_caption:caption,p_model_id:actualModel,
+      p_input_tokens:inputTokens,
+      p_output_tokens:outputTokens,
     });
     if(finalError||!draftId)throw new Error('Unable to settle or save completed AI draft');
     return response(201,{
