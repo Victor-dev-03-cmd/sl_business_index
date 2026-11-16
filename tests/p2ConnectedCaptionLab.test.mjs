@@ -119,6 +119,8 @@ test('Poster Studio sends only a random one-time local key and never embeds PNG 
   assert.match(store,/MAX_AGE=2\*60\*60\*1000/);
   assert.match(store,/image\.type!=='image\/png'/);
   assert.match(store,/crypto\.randomUUID\(\)/);
+  assert.match(store,/tx\.oncomplete=\(\)=>\{/);
+  assert.match(store,/const cutoff=Date\.now\(\)-MAX_AGE/);
   assert.match(store,/return id/);
   assert.match(poster,/saveLinkedPoster\(\{/);
   assert.match(poster,/Write Caption for this Poster/);
