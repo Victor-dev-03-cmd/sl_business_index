@@ -39,7 +39,7 @@ export const MARKETING_STUDIO_APPS:readonly MarketingStudioApp[]=[
     id:'caption-lab',title:'AI Caption Lab',subtitle:'Tri-lingual · Linked Posts',
     description:'Continue from AI Poster Studio into a live Facebook, Instagram and WhatsApp caption workspace in Tamil, Sinhala and English.',
     href:'/vendor/marketing/captions',category:'Content',icon:'message-text',
-    tone:'orange',pro:true,availability:'foundation',note:'Live preview · AI credits gated',
+    tone:'purple',pro:true,availability:'foundation',note:'Live preview · AI credits gated',
     keywords:'captions ai tamil sinhala english copywriting poster linked campaign social simulator',
   },
   {
