@@ -1,218 +1,652 @@
 'use client';
-import {useCallback,useEffect,useMemo,useState} from 'react';
+/* eslint-disable @next/next/no-img-element */
+import './caption-fonts.css';
+import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import Link from 'next/link';
+import {
+  ArrowLeft,ArrowRight,Check,CheckCircle2,ChevronDown,Copy,
+  Download,Facebook,Instagram,Image as ImageIcon,LoaderCircle,Mic,
+  Plus,RefreshCcw,Send,ShieldCheck,SlidersHorizontal,Sparkles,
+  StopCircle,Trash2,Volume2,WandSparkles,
+} from 'lucide-react';
 import {supabase} from '@/lib/supabaseClient';
-import IconsaxIcon from '../../components/IconsaxIcon';
-import {CAPTION_LANGUAGES,CAPTION_OBJECTIVES,type CaptionLanguage,type CaptionObjective} from '@/lib/marketing/caption-contract';
+import type {CaptionLanguage} from '@/lib/marketing/caption-contract';
+import {
+  ANGLES,GOALS,LANGUAGES,PLATFORMS,angleLabels,emptyCaptions,goalLabel,
+  goalObjective,hashtagsFrom,languageBundle,labels,normalizedTag,
+  parseThreeAngles,previewFold,promptChips,removeHashtags,safeLocalPolish,
+  toneLabels,withHashtags,
+  type CaptionAngle,type CaptionSet,type CampaignGoal,
+  type SocialPlatform,type TonePosition,
+} from '@/lib/marketing/caption-workspace';
+import {
+  loadLinkedPoster,validHandoffId,type LinkedPosterRecord,
+} from '@/lib/marketing/caption-poster-handoff';
 
-type Business={id:string;name:string;city:string|null;category:string};
-type Draft={id:string;business_id?:string;caption:string;language:CaptionLanguage;review_status:string;created_at?:string;updated_at?:string};
-const input='w-full rounded-lg border border-[#E5E5EA] bg-white px-3.5 py-2.5 text-sm outline-none focus:border-[#FF7900] focus:ring-2 focus:ring-[#FF7900]/15';
-const languages:Record<CaptionLanguage,string>={en:'English',ta:'தமிழ்',si:'සිංහල'};
-const objectives:Record<CaptionObjective,string>={
-  awareness:'Brand awareness',promotion:'Promotion',enquiries:'Customer enquiries',announcement:'Announcement',
+type Business={id:string;name:string;city:string|null;category:string;phone:string|null;website_url:string|null;address:string|null};
+type StoredDraft={id:string;business_id?:string;caption:string;language:CaptionLanguage;review_status:string;created_at?:string};
+type ApiBody={error?:string;draft?:StoredDraft;drafts?:StoredDraft[];chargedCredits?:number};
+const uuid=/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i;
+const field='w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-3 text-[12px] text-[#1F2937] outline-none transition focus:border-[#FB923C] focus:ring-2 focus:ring-[#F97316]/10';
+const panel='min-w-0 rounded-2xl border border-[#E5E7EB] bg-white shadow-[0_7px_24px_rgba(17,24,39,.035)]';
+const tab='rounded-lg border px-3 py-2 text-[11px] font-semibold transition-colors';
+const textFont=(lang:CaptionLanguage)=>lang==='ta'?'slbi-caption-tamil':
+  lang==='si'?'slbi-caption-sinhala':'slbi-caption-english';
+const short=(value:string,max=600)=>value.trim().slice(0,max);
+const decode=async(response:Response):Promise<ApiBody>=>{
+  try{return await response.json() as ApiBody;}catch{return {error:'Caption service returned no valid response.'};}
 };
-const card='rounded-xl border border-[#E9E9ED] bg-white p-5 sm:p-6';
-const parse=async(resp:Response):Promise<Record<string,any>>=>{
-  try{return await resp.json() as Record<string,any>;}catch{return {error:'Service response is unavailable.'};}
+const labelsByPlatform:Record<SocialPlatform,string>={
+  facebook:'Facebook Post',instagram:'Instagram Feed',whatsapp:'WhatsApp Broadcast',
 };
-export default function CaptionLab(){
+const newDraftLanguage=(list:StoredDraft[],lang:CaptionLanguage)=>list.find(x=>x.language===lang);
+
+export default function ConnectedCaptionLab(){
   const [businesses,setBusinesses]=useState<Business[]>([]);
   const [businessId,setBusinessId]=useState('');
-  const [objective,setObjective]=useState<CaptionObjective>('awareness');
-  const [language,setLanguage]=useState<CaptionLanguage>('en');
+  const [loading,setLoading]=useState(true);
+  const [linked,setLinked]=useState<LinkedPosterRecord|null>(null);
+  const [posterUrl,setPosterUrl]=useState('');
+  const [posterKey,setPosterKey]=useState('');
+  const [goal,setGoal]=useState<CampaignGoal>('flash_sale');
+  const [languageSelections,setLanguageSelections]=useState<CaptionLanguage[]>(['ta','si','en']);
+  const [previewLanguage,setPreviewLanguage]=useState<CaptionLanguage|'all'>('all');
+  const [angle,setAngle]=useState<CaptionAngle>('hook');
+  const [platform,setPlatform]=useState<SocialPlatform>('facebook');
+  const [tone,setTone]=useState<TonePosition>(1);
   const [message,setMessage]=useState('');
   const [conditions,setConditions]=useState('');
   const [cta,setCta]=useState('');
-  const [drafts,setDrafts]=useState<Draft[]>([]);
-  const [draftEdits,setDraftEdits]=useState<Record<string,string>>({});
+  const [captions,setCaptions]=useState<CaptionSet>(()=>emptyCaptions());
+  const [drafts,setDrafts]=useState<StoredDraft[]>([]);
+  const [customTags,setCustomTags]=useState<Record<string,string[]>>({});
+  const [removedTags,setRemovedTags]=useState<Record<string,string[]>>({});
+  const [tagInput,setTagInput]=useState('');
+  const [includeTags,setIncludeTags]=useState(true);
+  const [expanded,setExpanded]=useState(false);
   const [busy,setBusy]=useState(false);
-  const [loading,setLoading]=useState(true);
+  const [saving,setSaving]=useState(false);
+  const [recording,setRecording]=useState(false);
+  const [voiceBusy,setVoiceBusy]=useState(false);
   const [error,setError]=useState('');
   const [notice,setNotice]=useState('');
+  const [generatedLanguages,setGeneratedLanguages]=useState<CaptionLanguage[]>([]);
+  const recorderRef=useRef<MediaRecorder|null>(null);
+  const streamRef=useRef<MediaStream|null>(null);
+  const importingRef=useRef('');
+  const posterUrlRef=useRef('');
   const selected=useMemo(()=>businesses.find(b=>b.id===businessId),[businesses,businessId]);
+  const hasLinked=Boolean(linked&&linked.context.businessId===businessId);
+  const chosenLanguages=languageSelections.length?languageSelections:['ta'];
+  const activePreviewLanguage=previewLanguage==='all'?chosenLanguages[0]:previewLanguage;
+  const hasAI=chosenLanguages.some(lang=>Boolean(captions[lang][angle]?.trim()));
+  const activeText=captions[activePreviewLanguage]?.[angle]?.trim()||'';
+  const suggestedTags=useMemo(()=>hashtagsFrom(
+    languageBundle(captions,angle,chosenLanguages)),[captions,angle,chosenLanguages]);
+  const visibleTags=useMemo(()=>Array.from(new Set([
+    ...suggestedTags,...(customTags[businessId]||[]),
+  ])).filter(tag=>!(removedTags[businessId]||[]).includes(tag)).slice(0,12),
+  [suggestedTags,customTags,removedTags,businessId]);
+  const currentCaption=useMemo(()=>{
+    const value=previewLanguage==='all'?
+      languageBundle(captions,angle,chosenLanguages):captions[previewLanguage][angle];
+    return value.trim();
+  },[captions,angle,chosenLanguages,previewLanguage]);
+  const previewText=useMemo(()=>{
+    const source=currentCaption||(!hasAI?message:'');
+    return includeTags?withHashtags(source,visibleTags):removeHashtags(source);
+  },[currentCaption,hasAI,message,includeTags,visibleTags]);
+  const fold=previewFold(previewText,expanded);
+
   const loadBusinesses=useCallback(async()=>{
-    setError('');setLoading(true);
+    setLoading(true);setError('');
     try{
-      const {data:{user},error:authErr}=await supabase.auth.getUser();
-      if(authErr||!user)throw new Error('Sign in to use your Marketing Studio.');
-      const {data,error:dbErr}=await supabase.from('businesses')
-        .select('id,name,city,category').eq('owner_id',user.id).order('name').limit(250);
-      if(dbErr)throw new Error('Unable to load your businesses.');
+      const {data:{user},error:authError}=await supabase.auth.getUser();
+      if(authError||!user)throw Error('Sign in to access your Marketing Studio.');
+      const {data,error:dbError}=await supabase.from('businesses')
+        .select('id,name,city,category,phone,website_url,address')
+        .eq('owner_id',user.id).order('name').limit(250);
+      if(dbError)throw Error('Could not load your owned business profiles.');
       const list=(data||[]) as Business[];
       setBusinesses(list);
-      setBusinessId(current=>list.some(x=>x.id===current)?current:list[0]?.id||'');
-    }catch(e){setError(e instanceof Error?e.message:'Business list unavailable.');}
+      setBusinessId(previous=>list.some(x=>x.id===previous)?previous:list[0]?.id||'');
+    }catch(e){setError(e instanceof Error?e.message:'Business profiles unavailable.');}
     finally{setLoading(false);}
   },[]);
   useEffect(()=>{void loadBusinesses();},[loadBusinesses]);
-  const reload=useCallback(async(signal?:AbortSignal)=>{
-    if(!businessId){setDrafts([]);return;}
-    try{
-      const resp=await fetch('/api/marketing/caption?businessId='+encodeURIComponent(businessId),{
-        method:'GET',cache:'no-store',credentials:'same-origin',signal,
-      });
-      const data=await parse(resp);
-      if(!resp.ok)throw new Error(String(data.error||'Unable to fetch AI drafts.'));
-      if(signal?.aborted)return;
-      const d=(Array.isArray(data.drafts)?data.drafts:[]) as Draft[];
-      setDrafts(d);
-      setDraftEdits(Object.fromEntries(d.map(x=>[x.id,x.caption])));
-    }catch(e){if(!signal?.aborted)setNotice(e instanceof Error?e.message:'Draft history is unavailable.');}
-  },[businessId]);
-  useEffect(()=>{const ctrl=new AbortController();void reload(ctrl.signal);return()=>ctrl.abort();},[reload]);
 
-  const generate=async(e:React.FormEvent)=>{
-    e.preventDefault();
-    if(!businessId||busy||message.trim().length<5)return;
-    setBusy(true);setError('');setNotice('');
+  // Resolve only a UUID-based local asset AFTER checking this user owns the
+  // linked business. Never let URL text select a third-party image or claim.
+  useEffect(()=>{
+    if(loading||!businesses.length||typeof window==='undefined')return;
+    const key=new URLSearchParams(window.location.search).get('handoff')||'';
+    if(!validHandoffId(key)||importingRef.current===key)return;
+    importingRef.current=key;
+    let cancelled=false;
+    void loadLinkedPoster(key).then(record=>{
+      if(cancelled)return;
+      if(!record||!businesses.some(b=>b.id===record.context.businessId)){
+        setNotice('Linked poster expired or does not belong to this account. Start a new caption brief.');
+        return;
+      }
+      if(posterUrlRef.current)URL.revokeObjectURL(posterUrlRef.current);
+      const src=URL.createObjectURL(record.image);
+      posterUrlRef.current=src;setPosterUrl(src);
+      setPosterKey(key);setLinked(record);setBusinessId(record.context.businessId);
+      setMessage([record.context.headline,record.context.offer].filter(Boolean).join('. ').slice(0,600));
+      setCta(record.context.cta.slice(0,180));
+      setGoal(record.context.offer?'flash_sale':'festival');
+      setTone(record.context.vibe.includes('bold')?2:record.context.vibe.includes('luxury')?1:0);
+      setGeneratedLanguages([]);
+      setNotice('Linked from Poster Studio. Your exact approved poster and business details are ready. Review, then generate captions.');
+    }).catch(()=>{if(!cancelled)setNotice('This browser could not open the linked PNG. Continue without a poster.');});
+    return()=>{cancelled=true;};
+  },[loading,businesses]);
+  useEffect(()=>()=>{if(posterUrlRef.current)URL.revokeObjectURL(posterUrlRef.current);
+    recorderRef.current?.state==='recording'&&recorderRef.current.stop();
+    streamRef.current?.getTracks().forEach(track=>track.stop());},[]);
+
+  const loadDrafts=useCallback(async()=>{
+    if(!businessId){setDrafts([]);setCaptions(emptyCaptions());return;}
     try{
-      const resp=await fetch('/api/marketing/caption',{
-        method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-          businessId,requestKey:crypto.randomUUID(),objective,language,
-          message,conditions,cta,
-        }),
+      const res=await fetch('/api/marketing/caption?businessId='+encodeURIComponent(businessId),{
+        credentials:'same-origin',cache:'no-store',
       });
-      const result=await parse(resp);
-      if(!resp.ok)throw new Error(String(result.error||'AI caption request failed.'));
-      if(!result.draft?.id)throw new Error('Provider result was not saved safely.');
-      setNotice('AI draft saved. Verify the language, every business fact and offer condition, then approve explicitly.');
-      await reload();
-    }catch(err){setError(err instanceof Error?err.message:'AI caption unavailable.');}
-    finally{setBusy(false);}
+      const data=await decode(res);
+      if(!res.ok)throw Error(data.error||'Unable to read saved captions.');
+      const list=Array.isArray(data.drafts)?data.drafts:[];
+      setDrafts(list);
+      const next=emptyCaptions();
+      for(const lang of LANGUAGES){
+        const draft=newDraftLanguage(list,lang);
+        if(draft)next[lang]=parseThreeAngles(draft.caption);
+      }
+      setCaptions(next);
+      setGeneratedLanguages(LANGUAGES.filter(lang=>Boolean(newDraftLanguage(list,lang))));
+    }catch(e){setNotice(e instanceof Error?e.message:'Existing drafts unavailable.');}
+  },[businessId]);
+  useEffect(()=>{void loadDrafts();},[loadDrafts]);
+
+  const toggleLanguage=(lang:CaptionLanguage)=>{
+    setLanguageSelections(current=>current.includes(lang)?
+      (current.length===1?current:current.filter(x=>x!==lang)):
+      LANGUAGES.filter(x=>x===lang||current.includes(x)));
   };
-  const review=async(id:string,status:'pending_review'|'approved'|'rejected')=>{
-    const caption=(draftEdits[id]||'').trim();
-    if(caption.length<2){setError('Enter the text you want to save.');return;}
-    setBusy(true);setError('');setNotice('');
+  const updateAngle=(lang:CaptionLanguage,value:string)=>{
+    setCaptions(previous=>({...previous,[lang]:{...previous[lang],[angle]:value.slice(0,1100)}}));
+  };
+  const transcribe=async(blob:Blob)=>{
+    if(!businessId||blob.size<800||blob.size>1_500_000){
+      setError('Choose a business and record a shorter voice message (1.5 MB maximum).');return;
+    }
+    setVoiceBusy(true);setError('');
     try{
-      const resp=await fetch('/api/marketing/caption',{
-        method:'PATCH',credentials:'same-origin',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({id,caption,status}),
+      const response=await fetch('/api/marketing/poster/transcribe',{
+        method:'POST',credentials:'same-origin',cache:'no-store',body:blob,
+        headers:{
+          'Content-Type':blob.type||'audio/webm',
+          'x-slbi-business-id':businessId,
+          'x-slbi-language':'auto',
+        },
       });
-      const result=await parse(resp);
-      if(!resp.ok)throw new Error(String(result.error||'Cannot save this review.'));
-      setNotice(status==='approved'
-        ? 'Caption approved by you. No external publishing has occurred.'
-        : status==='rejected'?'Caption rejected and retained for audit.':'Edited caption saved for review.');
-      await reload();
-    }catch(e){setError(e instanceof Error?e.message:'Cannot save caption review.');}
-    finally{setBusy(false);}
+      const data=await response.json() as {error?:string;transcript?:string};
+      if(!response.ok||!data.transcript)throw Error(data.error||'Unable to transcribe audio.');
+      setMessage(previous=>[previous,data.transcript].filter(Boolean).join(' ').slice(0,600));
+      setNotice('Voice transcript added. Review and correct the facts before generating.');
+    }catch(e){setError(e instanceof Error?e.message:'Microphone transcription unavailable.');}
+    finally{setVoiceBusy(false);}
   };
-  return <div className="mx-auto w-full max-w-[1400px] space-y-5 pb-10 text-[#26262D]">
-    <header className={card+' flex flex-wrap items-end justify-between gap-4'}>
-      <div>
-        <p className="text-[10px] font-extrabold uppercase tracking-[.13em] text-[#CA6617]">SLBI Marketing Engine / P2-02</p>
-        <h1 className="mt-2 text-[28px] font-extrabold tracking-tight">AI Caption Lab</h1>
-        <p className="mt-2 max-w-[700px] text-xs leading-6 text-[#76767E]">
-          Draft business-aware social captions in English, Tamil or Sinhala.
-          Generated text always needs owner review. AI usage is disabled until
-          secure credits and provider spending limits are explicitly enabled.
-        </p>
+  const startVoice=async()=>{
+    if(voiceBusy||recording)return;
+    setError('');
+    try{
+      if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined')
+        throw Error('This browser does not support microphone recording.');
+      const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+      streamRef.current=stream;
+      const preferred=['audio/webm;codecs=opus','audio/webm','audio/mp4'];
+      const mime=preferred.find(t=>MediaRecorder.isTypeSupported(t));
+      const recorder=new MediaRecorder(stream,mime?{mimeType:mime}:undefined);
+      const chunks:Blob[]=[];
+      recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
+      recorder.onstop=()=>{
+        setRecording(false);
+        const blob=new Blob(chunks,{type:recorder.mimeType||'audio/webm'});
+        stream.getTracks().forEach(t=>t.stop());streamRef.current=null;
+        void transcribe(blob);
+      };
+      recorderRef.current=recorder;recorder.start(250);setRecording(true);
+    }catch(e){setError(e instanceof Error?e.message:'Microphone permission was denied.');}
+  };
+  const stopVoice=()=>{
+    if(recorderRef.current?.state==='recording')recorderRef.current.stop();
+  };
+
+  const generate=async()=>{
+    if(busy||!selected||message.trim().length<5)return;
+    setBusy(true);setError('');setNotice('');
+    let succeeded=0;
+    try{
+      // Existing credit-reserved provider route bills per language, never
+      // before the explicit Generate click. Hard-off flag remains respected.
+      for(const language of chosenLanguages){
+        const prompt=[message.trim(),
+          'Campaign angle: '+goalLabel[goal],
+          hasLinked?'Poster theme: '+linked?.context.vibe:'',
+        ].filter(Boolean).join('\n').slice(0,600);
+        const response=await fetch('/api/marketing/caption',{
+          method:'POST',credentials:'same-origin',cache:'no-store',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({
+            businessId:businessId,requestKey:crypto.randomUUID(),
+            objective:goalObjective[goal],language,
+            mode:'three_angles',
+            tone:(['friendly','professional','urgent'] as const)[tone],
+            message:prompt,conditions:conditions.trim().slice(0,300),
+            cta:cta.trim().slice(0,180),
+          }),
+        });
+        const data=await decode(response);
+        if(!response.ok||!data.draft?.caption)
+          throw Error(data.error||'AI Caption generation is unavailable.');
+        const parsed=parseThreeAngles(data.draft.caption);
+        setCaptions(previous=>({...previous,[language]:parsed}));
+        setGeneratedLanguages(previous=>Array.from(new Set([...previous,language])));
+        succeeded++;
+      }
+      setNotice('AI drafts saved for '+succeeded+' language(s). Review every fact and offer before copying or planning.');
+      await loadDrafts();
+    }catch(e){setError((e instanceof Error?e.message:'Caption generation failed.')+
+      (succeeded?' '+succeeded+' language(s) completed and saved.':' No credits were requested for languages not processed.'));
+    }finally{setBusy(false);}
+  };
+  const editTags=(tag:string,action:'add'|'remove')=>{
+    const normalized=normalizedTag(tag);
+    if(!normalized)return;
+    if(action==='add'){
+      setCustomTags(p=>({...p,[businessId]:Array.from(new Set([...(p[businessId]||[]),normalized])).slice(0,12)}));
+      setRemovedTags(p=>({...p,[businessId]:(p[businessId]||[]).filter(x=>x!==normalized)}));
+    }else{
+      setRemovedTags(p=>({...p,[businessId]:Array.from(new Set([...(p[businessId]||[]),normalized]))}));
+      setCustomTags(p=>({...p,[businessId]:(p[businessId]||[]).filter(x=>x!==normalized)}));
+    }
+  };
+  const copyCaption=async(withTags:boolean)=>{
+    const value=currentCaption.trim();
+    if(!value){setError('No caption drafted yet. Generate or type a caption first.');return;}
+    const final=withTags?withHashtags(value,visibleTags):removeHashtags(value);
+    try{await navigator.clipboard.writeText(final);setNotice('Copied caption '+(withTags?'with':'without')+' hashtags. Review before publishing.');}
+    catch{setError('Clipboard access is blocked. Copy the caption text from the editor.');}
+  };
+  const polish=(kind:'shorten'|'urgency'|'emojis'|'contact')=>{
+    if(previewLanguage==='all'){
+      setError('Select a single language before applying a local quick polish.');return;
+    }
+    updateAngle(previewLanguage,safeLocalPolish(
+      captions[previewLanguage][angle],kind,previewLanguage,
+      {phone:selected?.phone||'',city:selected?.city||'',website:selected?.website_url||''},
+    ));
+    setNotice('Quick polish applied locally. No AI credits used. Review the exact words.');
+  };
+  const savePlanner=async()=>{
+    if(saving||!selected||!currentCaption.trim())return;
+    setSaving(true);setError('');setNotice('');
+    try{
+      const {data:{user},error:authError}=await supabase.auth.getUser();
+      if(authError||!user)throw Error('Sign in before saving a campaign.');
+      // Re-check ownership at write time, not trusting only the imported UUID.
+      const ownership=await supabase.from('businesses').select('id')
+        .eq('id',businessId).eq('owner_id',user.id).maybeSingle();
+      if(ownership.error||!ownership.data)throw Error('Business ownership could not be verified.');
+      const combined=currentCaption.trim().slice(0,3000);
+      const first=previewLanguage==='all'?chosenLanguages[0]:previewLanguage;
+      const patch={
+        business_id:businessId,
+        banner_text:combined,
+        banner_color:'caption-lab-connected-v1',
+        platforms:[platform],
+        scheduled_at:null,
+        status:'drafted',
+        brief:{
+          offer:short(combined,240),cta:short(cta,130),terms:short(conditions,220),
+          language:({ta:'தமிழ்',si:'සිංහල',en:'English'} as const)[first],
+          objective:goalObjective[goal],format:'portrait',palette:'navy',
+          captionBundle:captions,
+          posterLocalKey:hasLinked?posterKey:null,
+          linkedPosterSample:hasLinked?Boolean(linked?.context.sample):null,
+          createdFrom:'caption_lab',
+          selectedAngle:angle,
+        },
+      };
+      const saved=await supabase.from('marketing_campaigns').insert(patch)
+        .select('id').maybeSingle();
+      if(saved.error||!saved.data)throw Error(saved.error?.message||'Campaign Planner could not save this draft.');
+      setNotice('Caption bundle saved in Campaign Planner. Linked PNG remains stored in this browser only; cloud poster sync is not enabled.');
+    }catch(e){setError(e instanceof Error?e.message:'Save to Campaign Planner failed.');}
+    finally{setSaving(false);}
+  };
+  const onBusinessChange=(id:string)=>{
+    if(id===businessId)return;
+    setBusinessId(id);setLinked(null);setPosterKey('');
+    if(posterUrlRef.current)URL.revokeObjectURL(posterUrlRef.current);
+    posterUrlRef.current='';setPosterUrl('');
+    setMessage('');setConditions('');setCta('');setError('');setNotice('');
+    setCustomTags({});setRemovedTags({});
+  };
+  const downloadPoster=()=>{
+    if(!posterUrl||!linked)return;
+    const a=document.createElement('a');a.href=posterUrl;
+    a.download='slbi-linked-poster-'+linked.context.format+'.png';a.click();
+  };
+  const isBusy=busy||voiceBusy||recording||saving;
+  const previewAccount=selected?.name||'Your Business';
+
+  return <main className="mx-auto w-full max-w-[1640px] space-y-4 px-2 pb-12 text-[#111827] sm:px-4">
+    <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E5E7EB] bg-white px-2 py-4 sm:px-4">
+      <div className="flex items-center gap-3">
+        <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#111827] text-[#F97316]"><Sparkles size={22}/></span>
+        <div>
+          <p className="text-[10px] font-extrabold uppercase tracking-[.15em] text-[#EA580C]">SLBI GrowthOS · Creative Suite</p>
+          <h1 className="text-[20px] font-black tracking-tight sm:text-2xl">AI Caption Lab</h1>
+          <p className="text-[11px] text-[#6B7280]">Connected to AI Poster Studio · Tri-lingual social copy</p>
+        </div>
       </div>
       <div className="flex flex-wrap gap-2">
-        <Link href="/vendor/marketing/brand" className="inline-flex h-10 items-center gap-2 rounded-lg border px-3.5 text-xs font-bold text-[#AF5511] hover:bg-[#FFF5ED]">
-          <IconsaxIcon name="shop" size={16}/> Brand Profile
+        <Link href="/vendor/marketing/design/puter-lab"
+          className="inline-flex items-center gap-2 rounded-xl border border-[#E5E7EB] bg-white px-3 py-2.5 text-xs font-bold hover:bg-[#FFF7ED]">
+          <ImageIcon size={15}/> AI Poster Studio <ArrowRight size={13}/>
         </Link>
-        <Link href="/vendor/marketing" className="inline-flex h-10 items-center gap-2 rounded-lg border px-3.5 text-xs font-bold hover:bg-[#FAFAFA]">
-          <IconsaxIcon name="arrow-left-2" size={16}/> Marketing Studio
+        <Link href="/vendor/marketing"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-[#E5E7EB] bg-white px-3 py-2.5 text-xs font-bold hover:bg-[#F9FAFB]">
+          <ArrowLeft size={14}/> Marketing Studio
         </Link>
       </div>
     </header>
-    {error&&<div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-800">{error}</div>}
-    {notice&&<div role="status" className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-[#6E4A1D]">{notice}</div>}
-    <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(370px,.9fr)]">
-      <form onSubmit={e=>void generate(e)} className={card+' space-y-4'}>
-        <div>
-          <h2 className="text-sm font-bold">Business-aware creative brief</h2>
-          <p className="mt-1 text-xs leading-5 text-[#7B7B83]">Use only genuine offers and facts. Never provide personal customer information.</p>
+    {error&&<div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-800">{error}</div>}
+    {notice&&<div role="status" className="rounded-xl border border-[#FED7AA] bg-[#FFF7ED] p-3 text-xs text-[#92400E]">{notice}</div>}
+    <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,30fr)_minmax(0,42fr)_minmax(0,28fr)]">
+      {/* 01 / Campaign Brief — same mental model as Poster Studio */}
+      <section aria-label="Campaign Brief" className={panel+' space-y-4 p-4'}>
+        <div className="flex items-center gap-2 border-b border-[#F0F0F2] pb-3">
+          <span className="rounded-lg bg-[#FFF1E6] px-2 py-1 text-[11px] font-black text-[#EA580C]">01</span>
+          <h2 className="text-sm font-black">Campaign Brief</h2>
+          <span className="ml-auto text-[10px] text-[#9CA3AF]">Input</span>
         </div>
-        <label className="block text-xs font-bold">Your business
-          <select value={businessId} onChange={e=>setBusinessId(e.target.value)}
-            disabled={loading} className={input+' mt-1.5'}>
+        <label className="block text-[11px] font-bold text-[#374151]">Selected Business
+          <select value={businessId} onChange={e=>onBusinessChange(e.target.value)}
+            disabled={loading||isBusy} className={field+' mt-1.5'}>
             {!businesses.length&&<option value="">No owned businesses</option>}
             {businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}
           </select>
         </label>
-        {selected&&<p className="text-[11px] text-[#8A8A91]">{selected.category} · {selected.city||'Sri Lanka'} · Uses Brand Profile guidelines</p>}
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="block text-xs font-bold">Campaign objective
-            <select className={input+' mt-1.5'} value={objective} onChange={e=>setObjective(e.target.value as CaptionObjective)}>
-              {CAPTION_OBJECTIVES.map(o=><option key={o} value={o}>{objectives[o]}</option>)}
-            </select>
-          </label>
-          <label className="block text-xs font-bold">Target language
-            <select className={input+' mt-1.5'} value={language} onChange={e=>setLanguage(e.target.value as CaptionLanguage)}>
-              {CAPTION_LANGUAGES.map(l=><option key={l} value={l}>{languages[l]}</option>)}
-            </select>
-          </label>
+        {selected&&<p className="text-[10px] text-[#6B7280]">{selected.category} · {selected.city||'Sri Lanka'}</p>}
+        <div className="rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-3">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <span className="text-[11px] font-bold">Linked Poster <span className="font-normal text-[#9CA3AF]">(optional)</span></span>
+            {hasLinked&&<span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#059669]"><Check size={12}/> Linked</span>}
+          </div>
+          {hasLinked&&posterUrl?<div className="flex items-center gap-3">
+            <img alt="Actual poster linked from AI Poster Studio" src={posterUrl}
+              className="h-24 w-[70px] shrink-0 rounded-lg border border-[#E5E7EB] bg-white object-contain"/>
+            <div className="min-w-0 space-y-1">
+              <p className="truncate text-[11px] font-extrabold">{linked?.context.headline}</p>
+              <p className="text-[10px] leading-4 text-[#6B7280]">Linked from Poster Studio · {linked?.context.sample?'No-credit sample':'Export-quality PNG'}</p>
+              <button type="button" onClick={downloadPoster}
+                className="inline-flex items-center gap-1 text-[10px] font-bold text-[#C2410C]"><Download size={12}/> Save image</button>
+            </div>
+          </div>:<div className="flex items-center gap-2 py-2 text-[11px] leading-5 text-[#9CA3AF]">
+            <ImageIcon size={18}/><span>Start here or continue from a completed Poster Studio PNG.</span>
+          </div>}
         </div>
-        <label className="block text-xs font-bold">Factual campaign message
-          <textarea required minLength={5} maxLength={600} rows={4}
-            value={message} onChange={e=>setMessage(e.target.value)}
-            className={input+' mt-1.5 resize-y'} placeholder="Describe a real product, service or promotion, without inventing prices or achievements."/>
-        </label>
-        <label className="block text-xs font-bold">Offer conditions (optional)
-          <textarea maxLength={300} rows={2} value={conditions}
-            onChange={e=>setConditions(e.target.value)}
-            className={input+' mt-1.5 resize-y'} placeholder="Availability, valid dates or other true limitations"/>
-        </label>
-        <label className="block text-xs font-bold">Call to action (optional)
+        <div>
+          <p className="mb-2 text-[11px] font-bold text-[#374151]">Campaign Goal / Angle</p>
+          <div className="flex flex-wrap gap-1.5">
+            {GOALS.map(g=><button key={g} type="button" disabled={isBusy}
+              onClick={()=>setGoal(g)} aria-pressed={goal===g}
+              className={tab+' '+(goal===g?'border-[#FB923C] bg-[#FFF7ED] text-[#C2410C]':'border-[#E5E7EB] bg-white text-[#6B7280] hover:bg-[#F9FAFB]')}>
+              {goalLabel[g]}</button>)}
+          </div>
+        </div>
+        <div>
+          <p className="mb-2 text-[11px] font-bold text-[#374151]">Target Languages <span className="font-normal text-[#9CA3AF]">(choose up to 3)</span></p>
+          <div className="grid grid-cols-3 gap-1.5">
+            {LANGUAGES.map(l=><button key={l} type="button"
+              disabled={isBusy} onClick={()=>toggleLanguage(l)}
+              aria-pressed={chosenLanguages.includes(l)}
+              className={'rounded-xl border px-1 py-2.5 text-center text-[11px] font-extrabold '+
+                (chosenLanguages.includes(l)?'border-[#FDBA74] bg-[#FFF7ED] text-[#C2410C]':'border-[#E5E7EB] bg-white text-[#6B7280]')}>
+              {chosenLanguages.includes(l)?'✓ ':''}{labels[l]}
+            </button>)}
+          </div>
+        </div>
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <label htmlFor="caption-tone" className="text-[11px] font-bold text-[#374151]">Brand Voice</label>
+            <span className="text-[10px] font-semibold text-[#EA580C]">{toneLabels[tone]}</span>
+          </div>
+          <input id="caption-tone" aria-label="Caption brand voice" type="range" min={0} max={2} step={1}
+            value={tone} onChange={e=>setTone(Number(e.target.value) as TonePosition)}
+            className="w-full accent-[#F97316]"/>
+          <div className="flex justify-between gap-1 text-[9px] text-[#9CA3AF]"><span>Friendly</span><span>Professional</span><span>Energetic</span></div>
+        </div>
+        <div>
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <label htmlFor="caption-brief" className="text-[11px] font-bold text-[#374151]">Campaign Message</label>
+            <div className="flex items-center gap-1">
+              <button type="button" disabled={isBusy||!businessId}
+                onClick={()=>recording?stopVoice():void startVoice()}
+                className={'inline-flex items-center gap-1 rounded-lg border px-2 py-1.5 text-[10px] font-bold disabled:opacity-40 '+
+                  (recording?'border-red-200 bg-red-50 text-red-700':'border-[#E5E7EB] text-[#374151]')}>
+                {recording?<StopCircle size={13}/>:<Mic size={13}/>}
+                {recording?'Stop':voiceBusy?'Transcribing':'Voice'}
+              </button>
+            </div>
+          </div>
+          <textarea id="caption-brief" rows={4} maxLength={600} value={message}
+            onChange={e=>setMessage(e.target.value)}
+            className={field+' resize-y leading-6'}
+            placeholder="Tell us your real offer, product or campaign in தமிழ், සිංහල, English or Tanglish."/>
+          <p className="mt-1 text-[10px] text-[#9CA3AF]">Only verified facts. Voice transcript stays editable before AI generation.</p>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {promptChips.map(chip=><button key={chip.label} type="button"
+              onClick={()=>setMessage(previous=>[previous,chip.text].filter(Boolean).join(' ').slice(0,600))}
+              disabled={isBusy}
+              className="rounded-full border border-[#E5E7EB] px-2.5 py-1.5 text-[10px] font-semibold text-[#6B7280] hover:bg-[#FFF7ED]">
+              + {chip.label}</button>)}
+          </div>
+        </div>
+        <details className="rounded-xl border border-[#E5E7EB] p-3">
+          <summary className="cursor-pointer text-[11px] font-bold">Offer terms & CTA <span className="font-normal text-[#9CA3AF]">(optional)</span></summary>
+          <textarea rows={2} maxLength={300} value={conditions} onChange={e=>setConditions(e.target.value)}
+            placeholder="Only genuine terms or valid dates" className={field+' mt-3'}/>
           <input maxLength={180} value={cta} onChange={e=>setCta(e.target.value)}
-            className={input+' mt-1.5'} placeholder="Contact our shop for details"/>
-        </label>
-        <div className="rounded-lg border border-[#F2D6B9] bg-[#FFFAF4] p-3 text-[11px] leading-5 text-[#725334]">
-          AI requests use a per-user daily limit, platform-wide budget and transactional Growth Credits.
-          A provider failure should trigger a compensating refund. No credits are charged by this form
-          while the AI service is disabled.
-        </div>
-        <button type="submit" disabled={busy||!businessId||message.trim().length<5}
-          className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#242429] px-5 text-xs font-extrabold text-white hover:bg-[#39393D] disabled:opacity-40">
-          <IconsaxIcon name="flash" color="white" size={17}/>
-          {busy?'Processing…':'Generate and save for review'}
+            placeholder="Contact us for more details" className={field+' mt-2'}/>
+        </details>
+        <button type="button" onClick={()=>void generate()}
+          disabled={!businessId||message.trim().length<5||isBusy}
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#111827] px-4 py-3.5 text-[12px] font-extrabold text-white hover:bg-[#292F3D] disabled:cursor-not-allowed disabled:opacity-40">
+          {busy?<LoaderCircle size={17} className="animate-spin"/>:<WandSparkles size={17} className="text-[#FDBA74]"/>}
+          {busy?'Generating reviewed drafts…':'Generate Caption Variations'} <ArrowRight size={14}/>
         </button>
-      </form>
+        <p className="text-[10px] leading-5 text-[#6B7280]">
+          <ShieldCheck size={12} className="mr-1 inline"/>
+          Real AI requires the enabled, credit-reserved Caption service. One provider request and applicable credit reservation per selected language; never auto-charged on page open.
+        </p>
+      </section>
 
-      <section className={card}>
-        <div className="flex items-center justify-between gap-3">
-          <div><h2 className="text-sm font-bold">Private caption drafts</h2>
-            <p className="mt-1 text-xs text-[#777780]">Saved drafts remain private until explicitly reviewed.</p></div>
-          <button type="button" onClick={()=>void reload()} disabled={busy}
-            className="rounded-lg border px-3 py-2 text-xs font-semibold hover:bg-[#FAFAFB]">Refresh</button>
+      {/* 02 / Live Social Preview */}
+      <section aria-label="Live Social Preview" className={panel+' space-y-4 p-4'}>
+        <div className="flex items-center gap-2 border-b border-[#F0F0F2] pb-3">
+          <span className="rounded-lg bg-[#FFF1E6] px-2 py-1 text-[11px] font-black text-[#EA580C]">02</span>
+          <h2 className="text-sm font-black">Live Social Preview</h2>
+          <span className="ml-auto text-[10px] text-[#9CA3AF]">Workspace</span>
         </div>
-        <div className="mt-4 max-h-[700px] space-y-4 overflow-y-auto pr-0.5">
-          {drafts.map(d=><div key={d.id} className="rounded-lg border border-[#ECECF1] bg-[#FAFAFC] p-4">
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <span className="text-[10px] font-bold text-[#BB6318]">{languages[d.language]} · {d.review_status.replace('_',' ')}</span>
-              <span className="text-[10px] text-[#8B8B92]">{d.created_at?new Date(d.created_at).toLocaleDateString('en-LK'):'Saved draft'}</span>
-            </div>
-            <label className="text-xs font-bold">Review and edit the full caption
-              <textarea rows={7} maxLength={3000} value={draftEdits[d.id]??d.caption}
-                onChange={e=>setDraftEdits(s=>({...s,[d.id]:e.target.value}))}
-                className={input+' mt-2 resize-y text-xs leading-6'}/>
-            </label>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button type="button" disabled={busy} onClick={()=>void review(d.id,'approved')}
-                className="rounded-lg bg-[#202024] px-3.5 py-2 text-[11px] font-bold text-white disabled:opacity-40">
-                Approve edited caption
-              </button>
-              <button type="button" disabled={busy} onClick={()=>void review(d.id,'pending_review')}
-                className="rounded-lg border border-[#E6E6EA] bg-white px-3.5 py-2 text-[11px] font-bold disabled:opacity-40">
-                Save edits
-              </button>
-              <button type="button" disabled={busy} onClick={()=>void review(d.id,'rejected')}
-                className="rounded-lg border border-[#EEC9C9] px-3.5 py-2 text-[11px] font-bold text-red-700 disabled:opacity-40">
-                Reject
-              </button>
-            </div>
-          </div>)}
-          {!drafts.length&&<p className="rounded-lg border border-dashed border-[#E2E2E7] p-6 text-xs leading-6 text-[#777781]">
-            No saved AI captions for this business yet. Existing manual drafting is still available in Marketing Studio.
-          </p>}
+        <div className="grid grid-cols-3 gap-1.5 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-1">
+          {PLATFORMS.map(p=><button key={p} type="button" onClick={()=>{setPlatform(p);setExpanded(false);}}
+            aria-pressed={platform===p}
+            className={'rounded-lg px-1.5 py-2 text-[10px] font-bold transition '+
+              (platform===p?'bg-white text-[#111827] shadow-sm':'text-[#6B7280]')}>
+            {p==='facebook'?'Facebook':p==='instagram'?'Instagram':'WhatsApp'}
+          </button>)}
         </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          {chosenLanguages.map(l=><button key={l} type="button" onClick={()=>{setPreviewLanguage(l);setExpanded(false);}}
+            className={'rounded-full border px-3 py-1.5 text-[10px] font-bold '+
+              (previewLanguage===l?'border-[#FDBA74] bg-[#FFF7ED] text-[#C2410C]':'border-[#E5E7EB] text-[#6B7280]')}>
+            {labels[l]}</button>)}
+          {chosenLanguages.length>1&&<button type="button" onClick={()=>{setPreviewLanguage('all');setExpanded(false);}}
+            className={'rounded-full border px-3 py-1.5 text-[10px] font-bold '+
+              (previewLanguage==='all'?'border-[#FDBA74] bg-[#FFF7ED] text-[#C2410C]':'border-[#E5E7EB] text-[#6B7280]')}>All 3 Combined</button>}
+        </div>
+        <div className="mx-auto w-full max-w-[520px] overflow-hidden rounded-2xl border border-[#E5E7EB] bg-white shadow-[0_14px_38px_rgba(17,24,39,.08)]">
+          <div className="flex items-center gap-2.5 border-b border-[#F3F4F6] p-3.5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#F97316] to-[#111827] text-sm font-black text-white">
+              {previewAccount.charAt(0).toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[12px] font-extrabold">{previewAccount}</p>
+              <p className="text-[10px] text-[#9CA3AF]">Social preview · Just now · Not published</p>
+            </div>
+            {platform==='facebook'?<Facebook size={17} className="text-[#2563EB]"/>:
+              platform==='instagram'?<Instagram size={17} className="text-[#D946EF]"/>:
+              <Volume2 size={17} className="text-[#16A34A]"/>}
+          </div>
+          <div className="p-3.5">
+            {!currentCaption&&<p className="mb-2 rounded-lg bg-[#FFFBEB] p-2 text-[10px] font-medium text-[#92400E]">
+              Brief preview only — no AI caption generated yet. Review before using.
+            </p>}
+            <p className={'whitespace-pre-line break-words text-[14px] leading-[1.6] text-[#1F2937] '+textFont(activePreviewLanguage)}>
+              {fold.visible||'Your generated social caption will appear here. Add a campaign brief or continue from Poster Studio.'}
+            </p>
+            {fold.folded&&<button type="button" onClick={()=>setExpanded(true)}
+              className="mt-1 text-[11px] font-bold text-[#6B7280] hover:text-[#EA580C]">…See more</button>}
+            {expanded&&previewText.length>180&&<button type="button" onClick={()=>setExpanded(false)}
+              className="mt-1 text-[11px] font-bold text-[#6B7280]">Show less</button>}
+          </div>
+          {posterUrl&&hasLinked?<img src={posterUrl} alt="Linked high-resolution poster preview"
+            className="max-h-[510px] w-full bg-[#F9FAFB] object-contain"/>:
+            <div className="flex min-h-40 items-center justify-center gap-2 border-y border-dashed border-[#E5E7EB] bg-[#F9FAFB] text-center text-[11px] text-[#9CA3AF]">
+              <ImageIcon size={22}/> No poster linked · captions work independently
+            </div>}
+          <div className="flex items-center justify-between gap-3 border-t border-[#F3F4F6] px-4 py-3 text-[11px] text-[#6B7280]">
+            <span>{labelsByPlatform[platform]} · Mockup only</span>
+            <span className="inline-flex items-center gap-1"><CheckCircle2 size={13} className="text-[#F97316]"/> Preview</span>
+          </div>
+        </div>
+        <p className="text-center text-[10px] leading-4 text-[#9CA3AF]">Approximate read-more fold, not the exact Facebook/Instagram truncation algorithm.</p>
+        <div className="grid gap-2 sm:grid-cols-3">
+          <button type="button" disabled={!currentCaption.trim()} onClick={()=>void copyCaption(true)}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#111827] px-3 py-3 text-[11px] font-extrabold text-white disabled:opacity-35">
+            <Copy size={14}/> Copy + Hashtags</button>
+          <button type="button" disabled={!currentCaption.trim()} onClick={()=>void copyCaption(false)}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] px-3 py-3 text-[11px] font-bold disabled:opacity-35">
+            <Copy size={14}/> Copy Caption</button>
+          <button type="button" disabled={!currentCaption.trim()||saving} onClick={()=>void savePlanner()}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#FDBA74] bg-[#FFF7ED] px-3 py-3 text-[11px] font-bold text-[#9A3412] disabled:opacity-35">
+            {saving?<LoaderCircle size={14} className="animate-spin"/>:<Send size={14}/>}
+            Save to Planner</button>
+        </div>
+        <p className="text-[10px] leading-4 text-[#6B7280]">Campaign Planner saves your approved caption bundle. Linked PNG remains on this device until secure cloud asset storage is configured; no automatic social posting.</p>
+      </section>
+
+      {/* 03 / Refine and copy */}
+      <section aria-label="Variations and Optimization" className={panel+' space-y-4 p-4'}>
+        <div className="flex items-center gap-2 border-b border-[#F0F0F2] pb-3">
+          <span className="rounded-lg bg-[#FFF1E6] px-2 py-1 text-[11px] font-black text-[#EA580C]">03</span>
+          <h2 className="text-sm font-black">Refine & Copy</h2>
+          <span className="ml-auto text-[10px] text-[#9CA3AF]">Optimize</span>
+        </div>
+        <div className="space-y-2">
+          {ANGLES.map((a,i)=><button key={a} type="button" onClick={()=>{setAngle(a);setExpanded(false);}}
+            aria-pressed={angle===a}
+            className={'w-full rounded-xl border p-3 text-left transition '+
+              (angle===a?'border-[#FDBA74] bg-[#FFF7ED] shadow-sm':'border-[#E5E7EB] bg-white hover:bg-[#F9FAFB]')}>
+            <div className="flex items-center gap-2">
+              <span className={'flex h-7 w-7 items-center justify-center rounded-lg text-[10px] font-black '+(angle===a?'bg-[#F97316] text-white':'bg-[#F3F4F6] text-[#6B7280]')}>
+                {i+1}</span>
+              <div className="flex-1">
+                <p className="text-[11px] font-black">{angleLabels[a].title}</p>
+                <p className="text-[10px] text-[#9CA3AF]">{angleLabels[a].subtitle}</p>
+              </div>
+              {angle===a&&<Check size={14} className="text-[#EA580C]"/>}
+            </div>
+            <p className="mt-1.5 line-clamp-2 pl-9 text-[10px] leading-4 text-[#6B7280]">
+              {captions[activePreviewLanguage][a]||'Generate AI copy to populate this angle.'}
+            </p>
+          </button>)}
+        </div>
+        <div>
+          <label htmlFor="caption-edit" className="mb-1.5 block text-[11px] font-bold">
+            Edit {angleLabels[angle].title} · {labels[activePreviewLanguage]}
+          </label>
+          <textarea id="caption-edit" rows={5} maxLength={1100}
+            value={captions[activePreviewLanguage][angle]}
+            onChange={e=>updateAngle(activePreviewLanguage,e.target.value)}
+            className={field+' resize-y leading-6 '+textFont(activePreviewLanguage)}
+            placeholder="Generate AI variations or write your own fully editable copy here."/>
+          <p className="mt-1 text-[10px] text-[#9CA3AF]">Edits update the live preview immediately; no regeneration cost.</p>
+        </div>
+        <div className="border-t border-[#F3F4F6] pt-3">
+          <div className="mb-2 flex items-center gap-2">
+            <SlidersHorizontal size={14} className="text-[#EA580C]"/>
+            <h3 className="text-[11px] font-black">Smart Hashtag Manager</h3>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {visibleTags.map(tag=><button key={tag} type="button"
+              onClick={()=>editTags(tag,'remove')}
+              aria-label={'Remove '+tag}
+              className="inline-flex items-center gap-1 rounded-full border border-[#FED7AA] bg-[#FFF7ED] px-2 py-1.5 text-[10px] font-semibold text-[#C2410C]">
+              {tag} <span aria-hidden>×</span></button>)}
+            {!visibleTags.length&&<p className="text-[10px] text-[#9CA3AF]">AI hashtags appear here. Add only accurate local tags.</p>}
+          </div>
+          <div className="mt-2 flex gap-2">
+            <input value={tagInput} maxLength={40}
+              onChange={e=>setTagInput(e.target.value)}
+              onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();editTags(tagInput,'add');setTagInput('');}}}
+              aria-label="Add a hashtag" placeholder="#SriLanka" className={field+' min-w-0 flex-1 py-2'}/>
+            <button type="button" onClick={()=>{editTags(tagInput,'add');setTagInput('');}}
+              disabled={!normalizedTag(tagInput)} className="rounded-lg bg-[#111827] px-3 text-white disabled:opacity-40">
+              <Plus size={15}/></button>
+          </div>
+          <label className="mt-2 inline-flex items-center gap-2 text-[10px] font-semibold text-[#6B7280]">
+            <input type="checkbox" checked={includeTags} onChange={e=>setIncludeTags(e.target.checked)}
+              className="accent-[#F97316]"/> Include hashtags in live preview
+          </label>
+        </div>
+        <div className="border-t border-[#F3F4F6] pt-3">
+          <h3 className="mb-2 text-[11px] font-black">Quick Polish <span className="font-normal text-[#9CA3AF]">· No new AI credits</span></h3>
+          <div className="grid grid-cols-2 gap-2">
+            <button type="button" onClick={()=>polish('shorten')} disabled={!activeText}
+              className="rounded-lg border border-[#E5E7EB] px-2 py-2.5 text-[10px] font-bold disabled:opacity-40">✨ Make it shorter</button>
+            <button type="button" onClick={()=>polish('urgency')} disabled={!activeText}
+              className="rounded-lg border border-[#E5E7EB] px-2 py-2.5 text-[10px] font-bold disabled:opacity-40">🔥 Add urgency</button>
+            <button type="button" onClick={()=>polish('emojis')} disabled={!activeText}
+              className="rounded-lg border border-[#E5E7EB] px-2 py-2.5 text-[10px] font-bold disabled:opacity-40">😊 Add emojis</button>
+            <button type="button" onClick={()=>polish('contact')} disabled={!activeText}
+              className="rounded-lg border border-[#E5E7EB] px-2 py-2.5 text-[10px] font-bold disabled:opacity-40">📞 Include contacts</button>
+          </div>
+        </div>
+        <div className="rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-3">
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] font-extrabold">Saved AI Drafts</p>
+            <button type="button" onClick={()=>void loadDrafts()} disabled={isBusy}
+              className="text-[#6B7280] disabled:opacity-40" aria-label="Refresh drafts"><RefreshCcw size={15}/></button>
+          </div>
+          <p className="mt-1 text-[10px] text-[#9CA3AF]">{drafts.length} saved records · pending owner review</p>
+          <div className="mt-2 space-y-1.5">
+            {LANGUAGES.map(l=>{
+              const draft=newDraftLanguage(drafts,l);
+              return <div key={l} className="flex items-center justify-between gap-2 text-[10px]">
+                <span>{labels[l]}</span>
+                <span className={draft?'font-bold text-[#374151]':'text-[#9CA3AF]'}>
+                  {draft?draft.review_status.replaceAll('_',' '):'No saved draft'}
+                </span>
+              </div>;
+            })}
+          </div>
+        </div>
+        <p className="text-[10px] leading-5 text-[#9CA3AF]">The Facebook, Instagram and WhatsApp cards are visual simulators, not connected social accounts. No automatic posting or invented customer reviews.</p>
       </section>
     </div>
-  </div>;
+  </main>;
 }
