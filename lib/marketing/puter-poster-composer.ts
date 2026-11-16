@@ -1,6 +1,7 @@
 import {POSTER_FORMATS,type PosterFormat} from '@/lib/marketing/poster-design';
 import {renderPremiumPoster} from '@/lib/marketing/puter-premium-poster-renderer';
 import type {PremiumPosterStyle} from '@/lib/marketing/poster-premium-presets';
+import type {VerifiedPosterDesign} from '@/lib/marketing/poster-design-blueprint';
 
 export type PosterCopyLanguage='ta'|'si'|'en';
 export type ExactPosterCopy={
@@ -66,7 +67,7 @@ export function buildArtOnlyPrompt(input:{
 
 const clean=(v:string,max:number)=>v.replace(/[\u0000-\u001f\u007f]/g,' ').trim().slice(0,max);
 const hex=(v:string)=>/^#[\da-f]{6}$/i.test(v)?v:'#F7B45C';
-async function ensureFonts(language:PosterCopyLanguage,style?:PremiumPosterStyle,copy?:ExactPosterCopy){
+async function ensureFonts(language:PosterCopyLanguage,style?:PremiumPosterStyle,copy?:ExactPosterCopy,design?:VerifiedPosterDesign|null){
   if(typeof document==='undefined')throw Error('Poster typography needs a browser.');
   const name=language==='ta'?'Noto Sans Tamil':language==='si'?'Noto Sans Sinhala':'Inter';
   const sample=language==='ta'?'தமிழ்':language==='si'?'සිංහල':'Poster';
@@ -95,6 +96,13 @@ async function ensureFonts(language:PosterCopyLanguage,style?:PremiumPosterStyle
     ] as string[][]){
       for(const size of [500,700,800])
         requires.push([size+' 84px "'+required+'"',scriptSample]);
+    }
+    if(design){
+      const specialSample=language==='ta'?'தமிழ் பொங்கல்':language==='si'?'සිංහල අලුත් අවුරුද්ද':'HALLOWEEN SALE';
+      const headlineWeight=design.styling.headlineFont==='Anton'||design.styling.headlineFont==='Bebas Neue'||
+        design.styling.headlineFont==='Kavivanar'?400:700;
+      requires.push([headlineWeight+' 140px "'+design.styling.headlineFont+'"',specialSample]);
+      requires.push(['500 40px "'+design.styling.bodyFont+'"',specialSample]);
     }
     for(const [spec,sampleText] of requires){
       const ready=await document.fonts.load(spec,sampleText);
@@ -173,8 +181,9 @@ async function decodedImage(src:string):Promise<HTMLImageElement>{
 
 export async function composeExactPoster(input:{
   backgroundSrc:string;format:PosterFormat;copy:ExactPosterCopy;style?:PremiumPosterStyle;
+  design?:VerifiedPosterDesign|null;
 }):Promise<Blob>{
-  await ensureFonts(input.copy.language,input.style,input.copy);
+  await ensureFonts(input.copy.language,input.style,input.copy,input.design);
   const img=await decodedImage(input.backgroundSrc);
   const d=POSTER_FORMATS[input.format];
   const canvas=document.createElement('canvas');
@@ -182,7 +191,8 @@ export async function composeExactPoster(input:{
   const ctx=canvas.getContext('2d');
   if(!ctx)throw Error('Canvas image composition is not available.');
   if(input.style){
-    renderPremiumPoster({ctx,image:img,format:input.format,copy:input.copy,style:input.style});
+    renderPremiumPoster({ctx,image:img,format:input.format,copy:input.copy,
+      style:input.style,design:input.design,language:input.copy.language});
   }else{
   const w=d.width,h=d.height,landscape=input.format==='landscape';
   ctx.fillStyle='#102039';ctx.fillRect(0,0,w,h);
