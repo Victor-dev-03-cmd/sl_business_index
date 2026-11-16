@@ -450,6 +450,24 @@ export default function PuterMultilingualPosterLab(){
               placeholder="தமிழ் · සිංහල · English · Tanglish — describe your campaign."
               className="max-h-[190px] min-h-[110px] w-full resize-none rounded-xl border border-[#E4DDDA] bg-[#FDFBF9] p-3 text-[12px] leading-5 outline-none focus:border-[#EC9D68]"/>
           </div>
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-[10px] font-bold text-[#6B5E55]">Quick campaign ideas</p>
+              <span className="text-[9px] text-[#988A81]">Click to edit · no AI call</span>
+            </div>
+            <div className="flex flex-wrap gap-1.5" aria-label="Seasonal and category-aware campaign suggestions">
+              {suggestedCampaigns.map(suggestion=><button key={suggestion.id} type="button"
+                disabled={locked} aria-pressed={selectedSuggestionId===suggestion.id}
+                title={suggestion.prompt}
+                onClick={()=>chooseSuggestion(suggestion)}
+                className={'rounded-full border px-2.5 py-1.5 text-[10px] font-semibold transition-colors disabled:opacity-50 '+
+                  (selectedSuggestionId===suggestion.id?
+                    'border-[#F08C42] bg-[#FFF0E1] text-[#9C4C16]':
+                    'border-[#E7DEDA] bg-white text-[#75685F] hover:border-[#E0AB83]')}>
+                {suggestion.label}
+              </button>)}
+            </div>
+          </div>
           <div className="flex flex-wrap gap-2">
             <button type="button" disabled={generating||geminiBusy||transcribing||!businessId}
               onClick={()=>void startVoice()}
@@ -465,9 +483,9 @@ export default function PuterMultilingualPosterLab(){
               Prepare with Gemini
             </button>
           </div>
-          {currentBrief&&<div className="flex items-start gap-1.5 rounded-xl border border-[#DDE8DC] bg-[#F5FAF5] p-2 text-[11px] leading-4 text-[#4C6951]">
+          {(currentBrief||currentBlueprint)&&<div className="flex items-start gap-1.5 rounded-xl border border-[#DDE8DC] bg-[#F5FAF5] p-2 text-[11px] leading-4 text-[#4C6951]">
             <CheckCircle2 size={13} className="mt-0.5 shrink-0"/>
-            Gemini brief prepared. Review exact headline, offer and CTA in the right panel.
+            Gemini {currentBlueprint?'art direction + typography blueprint':'brief'} prepared. Review exact headline, offer and CTA in the right panel.
           </div>}
           <p className="text-[10px] leading-4 text-[#958681]">
             Voice stops manually. Gemini transcript stays editable; audio limit 1.5 MB.
@@ -586,6 +604,34 @@ export default function PuterMultilingualPosterLab(){
                 .map((color,index)=><span key={index} title={color}
                   className="h-4 w-6 rounded-md border border-black/10"
                   style={{backgroundColor:color}}/>)}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button type="button" onClick={()=>{
+                const next=shuffleIndex+1;
+                setDesignOverride(shufflePosterDesign(activeDesign,language,next,format));
+                setShuffleIndex(next);
+                setStatus('Font, palette and safe-zone layout changed locally. No Puter credit was used.');
+              }} disabled={locked}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-[#292328] px-2.5 py-1.5 text-[10px] font-bold text-white disabled:opacity-50">
+                <Shuffle size={13}/> Shuffle font & colors
+              </button>
+              <span className="text-[9px] text-[#8C7E77]">No image regeneration</span>
+            </div>
+            <div>
+              <label htmlFor="puter-safe-layout" className="mb-1 block text-[10px] font-bold text-[#6C5F58]">
+                Safe-zone layout
+              </label>
+              <select id="puter-safe-layout" value={activeDesign?.layout||'top_center_hero'}
+                disabled={locked} onChange={e=>{
+                  const layout=e.target.value as SafeZoneLayout;
+                  if(!SAFE_ZONE_LAYOUTS.includes(layout))return;
+                  const starting=activeDesign||shufflePosterDesign(null,language,0,format);
+                  setDesignOverride({...starting,layout});
+                }} className="w-full rounded-lg border border-[#E5D9D0] bg-white px-2 py-2 text-[11px]">
+                <option value="top_center_hero">Top-Center Hero</option>
+                <option value="bottom_left_editorial">Bottom-Left Editorial</option>
+                <option value="split_card">Split Card</option>
+              </select>
             </div>
           </div>
           <div className="space-y-2.5 border-t border-[#EEE8E5] pt-3">
