@@ -25,6 +25,8 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [challengeVersion, setChallengeVersion] = useState(0);
+  const [turnstileLoadFailed, setTurnstileLoadFailed] = useState(false);
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY?.trim();
   const searchParams = useSearchParams();
   const next = safeInternalPath(searchParams.get('next') || searchParams.get('redirect'));
   const isPasswordReset = searchParams.get('reset') === 'success';
@@ -212,18 +214,31 @@ function LoginForm() {
               </div>
           )}
 
-          <Turnstile
-            key={challengeVersion}
-            siteKey={process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY!}
-            onSuccess={(token) => setTurnstileToken(token)}
-            onError={() => setTurnstileToken(null)}
-            onExpire={() => setTurnstileToken(null)}
-            options={{ theme: 'light', size: 'flexible' }}
-          />
+          {turnstileSiteKey ? (
+            <>
+              <Turnstile
+                key={challengeVersion}
+                siteKey={turnstileSiteKey}
+                onSuccess={(token) => { setTurnstileToken(token); setTurnstileLoadFailed(false); }}
+                onError={() => { setTurnstileToken(null); setTurnstileLoadFailed(true); }}
+                onExpire={() => setTurnstileToken(null)}
+                options={{ theme: 'light', size: 'flexible' }}
+              />
+              {turnstileLoadFailed && (
+                <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-3 text-xs leading-5 text-red-700">
+                  Cloudflare verification could not load for this website address. Please check that this hostname is allowed in the Turnstile widget, then reload.
+                </p>
+              )}
+            </>
+          ) : (
+            <p role="alert" className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-3 text-xs leading-5 text-amber-900">
+              Secure password sign-in is not configured on this Preview deployment. The Cloudflare verification widget cannot appear until this Preview branch has its own Turnstile site key and server-side secret. No password was submitted. Please use the configured production login for normal account access.
+            </p>
+          )}
 
           <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !turnstileSiteKey || turnstileLoadFailed || !turnstileToken}
               className="w-full py-4 px-6 bg-brand-dark text-white font-normal rounded-[6px] hover:bg-brand-blue shadow-lg shadow-brand-dark/10 transition-all transform active:scale-[0.98] disabled:opacity-50 text-sm"
           >
             {loading ? 'Authenticating...' : 'Sign In'}
