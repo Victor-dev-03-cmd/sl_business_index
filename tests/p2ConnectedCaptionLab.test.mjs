@@ -32,6 +32,20 @@ test('SLBI PRO Caption Lab uses existing Poster three-column mental model and Gr
   assert.match(css,/line-height:1\.6/);
 });
 
+test('Marketing Studio pairs both creative tools under the existing owner QA launch gate',()=>{
+  const catalog=read('lib/marketing/studio-apps.ts');
+  const appStore=read('app/vendor/marketing/components/MarketingAppStore.tsx');
+  const i=catalog.indexOf("id:'poster-editor'");
+  const j=catalog.indexOf("id:'caption-lab'");
+  assert.ok(i>=0&&j>i);
+  assert.match(catalog,/href:'\/vendor\/marketing\/design\/puter-lab'/);
+  assert.match(catalog,/href:'\/vendor\/marketing\/captions'/);
+  assert.match(appStore,/posterQaAllowed&&\['poster-editor','caption-lab'\]\.includes\(app\.id\)/);
+  assert.match(appStore,/const launched=launchStatus==='live'\|\|review\|\|qa/);
+  assert.match(appStore,/href=\{app\.href\}/);
+  assert.match(read('app/vendor/marketing/captions/layout.tsx'),/MarketingProOnly/);
+});
+
 test('tri-lingual previews support Facebook Instagram WhatsApp, read more and human editing',()=>{
   assert.deepEqual(LANGUAGES,['ta','si','en']);
   assert.deepEqual(PLATFORMS,['facebook','instagram','whatsapp']);
