@@ -430,7 +430,7 @@ export default function ConnectedCaptionLab(){
       const context:LinkedPosterContext={
         businessId:selected.id,businessName:selected.name,category:selected.category||'',
         city:selected.city||'',address:selected.address||'',phone:selected.phone||'',
-        website:selected.website_url||'',headline:file.name.slice(0,100),offer:'',
+        website:selected.website_url||'',headline:'',offer:'',
         cta:'',vibe:'',language:activePreviewLanguage,
         sample:false,source:'device_upload',format:'uploaded',
       };
