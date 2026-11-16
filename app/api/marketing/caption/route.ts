@@ -159,7 +159,8 @@ export async function POST(request:Request){
       headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},
       body:JSON.stringify({
         model:CAPTION_MODEL,
-        messages,temperature:0.35,max_completion_tokens:MAX_OUTPUT_TOKENS,
+        messages,temperature:0.35,
+        max_completion_tokens:brief.mode==='three_angles'?1100:MAX_OUTPUT_TOKENS,
         stream:false,
       }),
       cache:'no-store',
