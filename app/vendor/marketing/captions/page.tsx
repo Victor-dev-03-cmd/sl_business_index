@@ -114,12 +114,30 @@ export default function ConnectedCaptionLab(){
   const importingRef=useRef('');
   const posterUrlRef=useRef('');
   const posterInputRef=useRef<HTMLInputElement|null>(null);
+  const posterDialogRef=useRef<HTMLDivElement|null>(null);
   useEffect(()=>{
     const urls:Record<string,string>={};
     for(const record of posterChoices)urls[record.id]=URL.createObjectURL(record.image);
     setPosterThumbnails(urls);
     return()=>{for(const url of Object.values(urls))URL.revokeObjectURL(url);};
   },[posterChoices]);
+  useEffect(()=>{
+    if(!posterPickerOpen)return;
+    const previousFocus=document.activeElement instanceof HTMLElement?document.activeElement:null;
+    posterDialogRef.current?.focus();
+    const onKeyDown=(event:KeyboardEvent)=>{
+      if(event.key==='Escape'){event.preventDefault();setPosterPickerOpen(false);return;}
+      if(event.key!=='Tab'||!posterDialogRef.current)return;
+      const tabbable=Array.from(posterDialogRef.current.querySelectorAll<HTMLElement>(
+        'a[href],button:not([disabled]),input:not([disabled])'));
+      const first=tabbable[0],last=tabbable[tabbable.length-1];
+      if(!first||!last)return;
+      if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
+      if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+    };
+    document.addEventListener('keydown',onKeyDown);
+    return()=>{document.removeEventListener('keydown',onKeyDown);previousFocus?.focus();};
+  },[posterPickerOpen]);
   const selected=useMemo(()=>businesses.find(b=>b.id===businessId),[businesses,businessId]);
   const hasLinked=Boolean(linked&&linked.context.businessId===businessId);
   const chosenLanguages:CaptionLanguage[]=languageSelections.length?languageSelections:['ta'];
@@ -465,6 +483,48 @@ export default function ConnectedCaptionLab(){
     <input ref={posterInputRef} type="file" accept="image/png,image/jpeg,image/webp"
       tabIndex={-1} className="sr-only" aria-label="Upload a local poster image"
       onChange={e=>{void uploadDevicePoster(e.currentTarget.files?.[0]);e.currentTarget.value='';}}/>
+    {posterPickerOpen&&<div className="fixed inset-0 z-[90] flex items-center justify-center p-4">
+      <button type="button" aria-label="Close poster picker"
+        className="absolute inset-0 bg-[#111827]/55" onClick={()=>setPosterPickerOpen(false)}/>
+      <div ref={posterDialogRef} tabIndex={-1} role="dialog" aria-modal="true"
+        aria-labelledby="caption-poster-dialog-title"
+        className="relative z-10 w-full max-w-[530px] space-y-4 rounded-2xl border border-[#E5E7EB] bg-white p-5 shadow-2xl outline-none">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 id="caption-poster-dialog-title" className="text-base font-bold text-[#111827]">Attach a poster</h2>
+            <p className="mt-1 text-[11px] text-[#6B7280]">Recent Studio designs or an image from your device</p>
+          </div>
+          <button type="button" onClick={()=>setPosterPickerOpen(false)}
+            className="rounded-lg border border-[#E5E7EB] px-3 py-2 text-[11px] font-semibold text-[#374151] hover:bg-[#F9FAFB]">Close</button>
+        </div>
+        {posterChoices.length>0&&<div>
+          <p className="mb-2 text-[11px] font-semibold text-[#374151]">Recent Poster Studio designs</p>
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+            {posterChoices.map(item=><button key={item.id} type="button"
+              onClick={()=>selectRecentPoster(item)} title={item.context.headline||'Recent Studio poster'}
+              className="flex min-w-0 flex-col items-center gap-1 rounded-lg border border-[#E5E7EB] p-1.5 hover:border-[#F97316] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#F97316]">
+              <span className="flex h-16 w-full items-center justify-center overflow-hidden rounded bg-[#F9FAFB]">
+                {posterThumbnails[item.id]?
+                  <img src={posterThumbnails[item.id]} alt="" className="h-full w-full object-cover"/>:
+                  <ImageIcon size={18}/>}
+              </span>
+              <span className="max-w-full truncate text-[10px] font-medium text-[#374151]">{item.context.headline||'Studio design'}</span>
+            </button>)}
+          </div>
+        </div>}
+        <div className="grid grid-cols-2 gap-2">
+          <button type="button" onClick={()=>posterInputRef.current?.click()} disabled={posterBusy}
+            className="flex items-center justify-center gap-1.5 rounded-xl border border-[#111827] bg-[#111827] px-3 py-3 text-[12px] font-semibold text-white hover:bg-[#293241] disabled:border-[#E5E7EB] disabled:bg-[#F3F4F6] disabled:text-[#9CA3AF]">
+            <Plus size={15}/> Upload image
+          </button>
+          <Link href="/vendor/marketing/design/puter-lab"
+            className="flex items-center justify-center gap-1.5 rounded-xl border border-[#FDBA74] bg-[#FFF7ED] px-3 py-3 text-[12px] font-semibold text-[#C2410C] hover:bg-[#FFEDD5]">
+            Open Poster Studio <ArrowRight size={13}/>
+          </Link>
+        </div>
+        <p className="text-[10px] leading-4 text-[#6B7280]">PNG, JPG or WebP · Up to 12 MB · Recent Studio designs are available on this device for two hours.</p>
+      </div>
+    </div>}
     <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,30fr)_minmax(0,42fr)_minmax(0,28fr)]">
       {/* 01 / Campaign Brief — same mental model as Poster Studio */}
       <section aria-label="Campaign Brief" className={panel+' space-y-3 p-3 sm:p-3.5'}>
@@ -500,38 +560,6 @@ export default function ConnectedCaptionLab(){
             </button>
           </div>
         </div>
-        {posterPickerOpen&&<div className="space-y-2 rounded-xl border border-[#FED7AA] bg-white p-2.5 shadow-sm">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[11px] font-bold text-[#111827]">Choose your poster</span>
-            <button type="button" onClick={()=>setPosterPickerOpen(false)}
-              className="text-[11px] font-semibold text-[#6B7280] hover:text-[#111827]">Close</button>
-          </div>
-          {posterChoices.length>0&&<div className="grid grid-cols-3 gap-2">
-            {posterChoices.map(item=><button key={item.id} type="button"
-              onClick={()=>selectRecentPoster(item)} title={item.context.headline||'Recent Studio poster'}
-              className="flex min-w-0 flex-col items-center gap-1 rounded-lg border border-[#E5E7EB] p-1.5 hover:border-[#F97316]">
-              <span className="flex h-12 w-full items-center justify-center overflow-hidden rounded bg-[#F9FAFB]">
-                {posterThumbnails[item.id]?
-                  <img src={posterThumbnails[item.id]} alt="" className="h-full w-full object-cover"/>:
-                  <ImageIcon size={18}/>}
-              </span>
-              <span className="max-w-full truncate text-[10px] font-medium">{item.context.headline||'Studio design'}</span>
-            </button>)}
-          </div>}
-          <div className="grid grid-cols-2 gap-2">
-            <button type="button" onClick={()=>posterInputRef.current?.click()} disabled={posterBusy}
-              className="flex items-center justify-center gap-1 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-2 py-2 text-[11px] font-semibold text-[#111827] hover:bg-[#F3F4F6]">
-              <Plus size={13}/> Upload image
-            </button>
-            <Link href="/vendor/marketing/design/puter-lab"
-              className="flex items-center justify-center gap-1 rounded-lg border border-[#F97316] px-2 py-2 text-[11px] font-semibold text-[#C2410C] hover:bg-[#FFF7ED]">
-              Open Studio <ArrowRight size={12}/>
-            </Link>
-          </div>
-          <p className="text-[10px] leading-4 text-[#6B7280]">
-            Recent Studio designs appear here when saved on this device. PNG, JPG or WebP uploads supported.
-          </p>
-        </div>}
         <div>
           <p className="mb-2 text-[11px] font-bold text-[#374151]">Campaign Goal / Angle</p>
           <div className="flex flex-wrap gap-1.5">
