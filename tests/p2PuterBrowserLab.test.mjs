@@ -161,7 +161,7 @@ test('seasonal references are original local SVG mini artworks, not scraped publ
     const svg=read('public/poster-references/'+key+'.svg');
     assert.match(svg,/^<svg /);
     assert.match(svg,/viewBox="0 0 320 256"/);
-    assert.doesNotMatch(svg,/<image\b|<script\b|http:|https:/);
+    assert.doesNotMatch(svg.replace('http://www.w3.org/2000/svg',''),/<image\b|<script\b|http:|https:/);
     assert.match(library,new RegExp("id:'"+key+"'"));
     assert.match(library,new RegExp("/poster-references/"+key+"\\.svg"));
   }
