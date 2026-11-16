@@ -105,6 +105,14 @@ export function validatePosterBlueprint(value:unknown,input:{
   if(!enumFonts[input.language].includes(style.headlineFont as never)||
      !enumFonts[input.language].includes(style.bodyFont as never))
     throw Error('Gemini suggested a font not approved for the selected language.');
+  // Gemini sometimes mixes two separately allowed families that were not a
+  // tested pairing. Keep its headline selection where possible and normalize
+  // the accompanying body face to the verified family-specific partner.
+  const approvedPairs=POSTER_FONT_PAIRS[input.language];
+  const pairing=approvedPairs.find(pair=>pair.headlineFont===style.headlineFont&&
+    pair.bodyFont===style.bodyFont)||
+    approvedPairs.find(pair=>pair.headlineFont===style.headlineFont)||
+    approvedPairs[0];
   const requestedPercent=new Set(percentages(input.vendorPrompt));
   for(const found of percentages([headline,offerText,ctaText].join(' '))){
     if(!requestedPercent.has(found))
@@ -116,7 +124,7 @@ export function validatePosterBlueprint(value:unknown,input:{
   return {
     posterCopy:{headline,offerText,ctaText},
     styling:{
-      vibe:style.vibe,headlineFont:String(style.headlineFont),bodyFont:String(style.bodyFont),
+      vibe:style.vibe,headlineFont:pairing.headlineFont,bodyFont:pairing.bodyFont,
       primaryColor:hex(style.primaryColor),accentColor:hex(style.accentColor),
       textColor:hex(style.textColor),overlayGradient:style.overlayGradient,
     },
