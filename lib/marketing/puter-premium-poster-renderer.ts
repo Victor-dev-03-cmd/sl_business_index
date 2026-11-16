@@ -401,12 +401,13 @@ export function renderPremiumPoster(input:{
   ctx:Ctx;image:HTMLImageElement;copy:ExactPosterCopy;
   format:PosterFormat;style?:PremiumPosterStyle|null;
   design?:VerifiedPosterDesign|null;language:PosterCopyLanguage;
+  contentPanelStyle?:ContentPanelStyle;
 }):void{
   const preset=withVerifiedPosterDesign(resolvePremiumPosterPreset(input.style),
     input.design,input.language);
   const mode=input.format==='landscape'?'wide':'stacked';
   drawBackdrop(input.ctx,input.image,mode,preset);
-  const panelStyle=input.design?.contentPanelStyle||DEFAULT_CONTENT_PANEL_STYLE;
+  const panelStyle=input.contentPanelStyle||input.design?.contentPanelStyle||DEFAULT_CONTENT_PANEL_STYLE;
   if(mode==='wide')renderWide(input.ctx,input.copy,preset,panelStyle);
   else renderStacked(input.ctx,input.copy,preset,input.format,input.design?.layout,panelStyle);
 }
