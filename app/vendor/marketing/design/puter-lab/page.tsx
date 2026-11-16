@@ -41,7 +41,8 @@ type PuterClient={
 declare global {interface Window {puter?:PuterClient;}}
 type OwnedBusiness={id:string;name:string;facts:PosterBusinessFacts};
 type ApiError={error?:string};
-type ContextResponse=ApiError&{businesses?:OwnedBusiness[]};
+type GeminiQuota={used:number;limit:number;remaining:number;dayUtc:string};
+type ContextResponse=ApiError&{businesses?:OwnedBusiness[];quota?:GeminiQuota|null};
 type BriefResponse=ApiError&{brief?:PosterIntelligenceBrief;blueprint?:PosterBlueprint};
 const models=[
   {id:'openai/gpt-image-2.6-flare',label:'GPT Image 2.6 Flare'},
@@ -72,6 +73,7 @@ export default function PuterMultilingualPosterLab(){
   const [imageRevision,setImageRevision]=useState(0);
   const [businesses,setBusinesses]=useState<OwnedBusiness[]>([]);
   const [businessId,setBusinessId]=useState('');
+  const [geminiQuota,setGeminiQuota]=useState<GeminiQuota|null>(null);
   const [loadingBusiness,setLoadingBusiness]=useState(true);
   const [model,setModel]=useState<ModelId>(models[0].id);
   const [format,setFormat]=useState<PosterFormat>('story');
@@ -194,16 +196,26 @@ export default function PuterMultilingualPosterLab(){
     streamRef.current=null;setRecording(false);
   },[]);
 
+  const refreshGeminiQuota=useCallback(async()=>{
+    try{
+      const res=await fetch('/api/marketing/poster/puter-lab?quota=1',reqOptions);
+      const data=await res.json() as {quota?:GeminiQuota};
+      if(res.ok&&data.quota)setGeminiQuota(data.quota);
+    }catch{/* Quota display is advisory; the server's atomic RPC is authoritative. */}
+  },[]);
+
   useEffect(()=>{
     const controller=new AbortController();
     void fetch('/api/marketing/poster/puter-lab',{...reqOptions,signal:controller.signal})
       .then(async res=>{
         const value=await res.json() as ContextResponse;
         if(!res.ok)throw Error(value.error||'Could not load owned business details.');
-        return value.businesses||[];
-      }).then(items=>{
+        return value;
+      }).then(value=>{
         if(controller.signal.aborted)return;
+        const items=value.businesses||[];
         setBusinesses(items);setBusinessId(items[0]?.id||'');
+        if(value.quota)setGeminiQuota(value.quota);
       }).catch(e=>{if(!controller.signal.aborted)setError(errorMessage(e));})
       .finally(()=>{if(!controller.signal.aborted)setLoadingBusiness(false);});
     return()=>controller.abort();
@@ -276,7 +288,7 @@ export default function PuterMultilingualPosterLab(){
       setBrief(null);setBriefKey('');
       setStatus('Gemini transcript added. Check the words, campaign offer and business details before continuing.');
     }catch(e){setError(errorMessage(e));}
-    finally{setTranscribing(false);}
+    finally{setTranscribing(false);void refreshGeminiQuota();}
   };
   const startVoice=async()=>{
     if(recording){stopVoice();return;}
@@ -365,7 +377,7 @@ export default function PuterMultilingualPosterLab(){
         setStatus('Gemini brief ready. Review the text before using Puter.');
       }else throw Error('Gemini returned no valid design blueprint.');
     }catch(e){setError(errorMessage(e));}
-    finally{setGeminiBusy(false);}
+    finally{setGeminiBusy(false);void refreshGeminiQuota();}
   };
   const generate=async()=>{
     if(!sdkReady||!window.puter){setError('Puter.js is not ready. Reload and retry.');return;}
@@ -569,6 +581,17 @@ export default function PuterMultilingualPosterLab(){
           {(currentBrief||currentBlueprint)&&<div className="flex items-start gap-1.5 rounded-xl border border-[#DDE8DC] bg-[#F5FAF5] p-2 text-[11px] leading-4 text-[#4C6951]">
             <CheckCircle2 size={13} className="mt-0.5 shrink-0"/>
             Gemini {currentBlueprint?'art direction + typography blueprint':'brief'} prepared. Review exact headline, offer and CTA in the right panel.
+          </div>}
+          {geminiQuota&&<div role="status" aria-label="Shared Gemini daily quota"
+            className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[#E8DFD8] bg-[#FFF9F3] px-2.5 py-2 text-[10px]">
+            <span className="font-semibold text-[#6D5440]">Gemini voice + design briefs</span>
+            <span className={'tabular-nums font-bold '+(geminiQuota.remaining?
+              'text-[#8A471A]':'text-[#B42318]')}>
+              {geminiQuota.remaining} / {geminiQuota.limit} requests left (UTC)
+            </span>
+            <p className="w-full text-[#827166]">
+              Resets at 00:00 UTC. Separate from SLBI Growth Credits and Puter image usage.
+            </p>
           </div>}
           <p className="text-[10px] leading-4 text-[#958681]">
             Voice stops manually. Gemini transcript stays editable; audio limit 1.5 MB.
