@@ -38,8 +38,16 @@ export const promptChips=[
 export const emptyAngleSet=():AngleSet=>({hook:'',story:'',short:''});
 export const emptyCaptions=():CaptionSet=>({ta:emptyAngleSet(),si:emptyAngleSet(),en:emptyAngleSet()});
 const cap=(v:string,n:number)=>v.trim().slice(0,n);
+/** Extract generated hashtags retained alongside an existing DB text draft. */
+export function extractSavedCaptionHashtags(raw:string):string[]{
+  const hit=raw.match(/\n\[\[HASHTAGS\]\]\s*([^\n]*)\s*$/);
+  if(!hit)return [];
+  return Array.from(new Set((hit[1].match(/#[\p{L}\p{M}\p{N}_\u200C\u200D]+/gu)||[])
+    .filter(tag=>normalizedTag(tag)===tag))).slice(0,8);
+}
 export function parseThreeAngles(raw:string):AngleSet{
-  const text=cap(raw,3000);
+  // Keep legacy [[HOOK]] drafts and remove structured JSON's metadata trailer.
+  const text=cap(raw,3000).replace(/\n\[\[HASHTAGS\]\]\s*[^\n]*\s*$/,'').trim();
   const match=text.match(/^\s*\[\[HOOK\]\]\s*([\s\S]*?)\s*\[\[STORY\]\]\s*([\s\S]*?)\s*\[\[SHORT\]\]\s*([\s\S]+?)\s*$/i);
   if(!match)return {hook:text,story:'',short:''};
   return {hook:cap(match[1],900),story:cap(match[2],1100),short:cap(match[3],600)};
