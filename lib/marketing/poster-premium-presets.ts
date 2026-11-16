@@ -6,6 +6,9 @@
  * Other palettes are color adaptations, sharing the controlled layout grammar.
  */
 import type {PosterStyleId} from '@/lib/marketing/poster-reference-library';
+import type {VerifiedPosterDesign} from '@/lib/marketing/poster-design-blueprint';
+import {POSTER_FONT_PAIRS} from '@/lib/marketing/poster-design-blueprint';
+import type {PosterCopyLanguage} from '@/lib/marketing/puter-poster-composer';
 export type PremiumPosterStyle=PosterStyleId|'modern';
 export type PosterPalette={
   obsidian:string;ambient:string;accent:string;glow:string;violet:string;
@@ -14,9 +17,11 @@ export type PosterPalette={
 export type PremiumPosterPreset={
   id:PremiumPosterStyle;label:string;palette:PosterPalette;
   font:{
-    display:'Anton';displayAlt:'Bebas Neue';brand:'Space Grotesk';
-    offer:'Plus Jakarta Sans';body:'Inter';footer:'JetBrains Mono';
+    display:string;displayAlt:string;brand:string;
+    offer:string;body:string;footer:string;
+    scriptHeadline?:string;scriptBody?:string;
   };
+  overlayGradient?:'dark_bottom_top'|'subtle_vignette';
   tokens:{
     storyDisplaySize:readonly [180,220];storyBrandSize:36;storyOfferSize:84;
     storyServiceSize:32;storyButtonSize:28;storyFooterSize:24;
@@ -109,4 +114,52 @@ export const PREMIUM_POSTER_PRESETS:Readonly<Record<PremiumPosterStyle,PremiumPo
 };
 export function resolvePremiumPosterPreset(id:PremiumPosterStyle|null|undefined):PremiumPosterPreset{
   return PREMIUM_POSTER_PRESETS[id||'modern']||PREMIUM_POSTER_PRESETS.modern;
+}
+
+
+/**
+ * AI-selected fonts/colors never directly become arbitrary CSS or a remote
+ * font URL. Selected pair must match known language-specific OFL families.
+ * Existing preset remains the fallback when there is no reviewed blueprint.
+ */
+export function withVerifiedPosterDesign(
+  base:PremiumPosterPreset,design:VerifiedPosterDesign|null|undefined,
+  language:PosterCopyLanguage,
+):PremiumPosterPreset{
+  if(!design)return base;
+  const allowed=POSTER_FONT_PAIRS[language].some(pair=>
+    pair.headlineFont===design.styling.headlineFont&&
+    pair.bodyFont===design.styling.bodyFont);
+  if(!allowed)return base;
+  const safeHex=(v:string,fallback:string)=>
+    /^#[0-9a-f]{6}$/i.test(v)?v:fallback;
+  const primary=safeHex(design.styling.primaryColor,base.palette.obsidian);
+  const accent=safeHex(design.styling.accentColor,base.palette.accent);
+  const requestedText=safeHex(design.styling.textColor,base.palette.white);
+  // The information card is dark translucent glass. Reject dark-on-dark
+  // text: use white rather than trusting arbitrary AI text color blindly.
+  const rgb=(hex:string)=>[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)/255);
+  const luminance=(hex:string)=>{
+    const v=rgb(hex).map(c=>c<=.04045?c/12.92:((c+.055)/1.055)**2.4);
+    return .2126*v[0]+.7152*v[1]+.0722*v[2];
+  };
+  const foreground=luminance(requestedText)<.45?'#FFFFFF':requestedText;
+  return {
+    ...base,
+    font:{
+      ...base.font,
+      ...(language==='en'?{
+        display:design.styling.headlineFont,
+        body:design.styling.bodyFont,
+      }:{
+        scriptHeadline:design.styling.headlineFont,
+        scriptBody:design.styling.bodyFont,
+      }),
+    },
+    palette:{
+      ...base.palette,obsidian:primary,ambient:primary,
+      accent,glow:accent,white:foreground,
+    },
+    overlayGradient:design.styling.overlayGradient,
+  };
 }
