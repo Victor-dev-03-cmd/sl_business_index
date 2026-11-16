@@ -27,6 +27,10 @@ import {
   type ExactPosterCopy,type PosterCopyLanguage,
 } from '@/lib/marketing/puter-poster-composer';
 import type {PosterBusinessFacts,PosterIntelligenceBrief} from '@/lib/marketing/poster-gemini-intelligence';
+import {
+  STARTER_COPY,isPosterCopyInLanguage,isPosterTextInLanguage,isNaturalEnglishOffer,
+  starterHeadline,localizedPercentOffer,posterLanguageName,
+} from '@/lib/marketing/poster-language-copy';
 
 type PuterClient={
   auth:{signIn:()=>Promise<unknown>;isSignedIn:()=>boolean};
@@ -71,9 +75,9 @@ export default function PuterMultilingualPosterLab(){
   const [format,setFormat]=useState<PosterFormat>('story');
   const [language,setLanguage]=useState<PosterCopyLanguage>('ta');
   const [prompt,setPrompt]=useState(samplePrompt);
-  const [headline,setHeadline]=useState('Deepavali Special');
+  const [headline,setHeadline]=useState(STARTER_COPY.ta.headline);
   const [offer,setOffer]=useState('');
-  const [cta,setCta]=useState('Contact us for details');
+  const [cta,setCta]=useState(STARTER_COPY.ta.cta);
   const [showPhone,setShowPhone]=useState(true);
   const [showWebsite,setShowWebsite]=useState(true);
   const [showEmail,setShowEmail]=useState(true);
@@ -122,6 +126,9 @@ export default function PuterMultilingualPosterLab(){
   const suggestedCampaigns=useMemo(()=>posterSuggestions(new Date(),facts?.category||'',7),
     [facts?.category]);
   const dimensions=POSTER_FORMATS[format];
+  const copyLanguageConsistent=isPosterCopyInLanguage(
+    {headline,offerText:offer,ctaText:cta},language,
+  );
 
   // Dual execution: once the owner reviews a JSON blueprint, warm the chosen
   // licensed fonts independently of the next image-model request.
@@ -153,7 +160,10 @@ export default function PuterMultilingualPosterLab(){
     setBlueprint(null);setBlueprintKey('');setBrief(null);setBriefKey('');
     setDesignOverride(null);setShuffleIndex(0);
     const matching=getPosterReferenceStyle(suggestion.id as PosterStyleId);
-    if(matching){setSelectedReferenceId(matching.id);setSendReferenceImage(false);}
+    if(matching){
+      setSelectedReferenceId(matching.id);setSendReferenceImage(false);
+      if(!manualHeadline)setHeadline(starterHeadline(language,matching.id));
+    }
     setStatus(suggestion.label+' staged as an editable suggestion. Review before Prepare with Gemini.');
   };
   const chooseReference=(reference:PosterReferenceStyle)=>{
@@ -163,8 +173,8 @@ export default function PuterMultilingualPosterLab(){
       setPrompt('Create a premium '+reference.name+' visual campaign for my selected business. Modern, tasteful, professional quality.');
       setBrief(null);setBriefKey('');
     }
-    if(!manualHeadline&&(headline==='Deepavali Special'||!headline.trim()))
-      setHeadline(reference.name+' Special');
+    if(!manualHeadline)
+      setHeadline(starterHeadline(language,reference.id));
     setStatus(reference.name+' selected. The look is applied on your NEXT Generate; no paid AI call happened.');
   };
 
@@ -207,7 +217,7 @@ export default function PuterMultilingualPosterLab(){
   // Recompose typography at the exact selected PNG dimensions. Changing text,
   // format or contact options never triggers a new billable Puter request.
   useEffect(()=>{
-    if(!artworkSrc||!exactCopy)return;
+    if(!artworkSrc||!exactCopy||!copyLanguageConsistent)return;
     let cancelled=false;
     setComposing(true);setGenerationStage('typography');setEstimatedProgress(94);setError('');
     const timeout=setTimeout(()=>{
@@ -227,7 +237,12 @@ export default function PuterMultilingualPosterLab(){
         .finally(()=>{if(!cancelled)setComposing(false);});
     },220);
     return()=>{cancelled=true;clearTimeout(timeout);};
-  },[artworkSrc,imageRevision,format,exactCopy,selectedPremiumStyle,activeDesign,isRealOutput,dimensions.width,dimensions.height]);
+  },[artworkSrc,imageRevision,format,exactCopy,copyLanguageConsistent,selectedPremiumStyle,activeDesign,isRealOutput,dimensions.width,dimensions.height]);
+  useEffect(()=>{
+    if(copyLanguageConsistent||!finalUrlRef.current)return;
+    URL.revokeObjectURL(finalUrlRef.current);finalUrlRef.current='';
+    setFinalUrl('');setFinalBlob(null);
+  },[copyLanguageConsistent]);
 
   const transcribe=async(blob:Blob)=>{
     setTranscribing(true);setError('');setStatus('Gemini is transcribing your original-language voice. Please review the text.');
@@ -247,7 +262,8 @@ export default function PuterMultilingualPosterLab(){
       if(!res.ok||!data.transcript)throw Error(data.error||'Gemini could not transcribe the recording.');
       const heard=data.transcript.trim();
       setPrompt(prev=>[prev,heard].filter(Boolean).join(' ').slice(0,1200));
-      setOffer(prev=>prev||extractExplicitPercentage(heard));
+      const explicit=extractExplicitPercentage(heard);
+      if(explicit&&!manualOffer)setOffer(localizedPercentOffer(explicit,language));
       setBrief(null);setBriefKey('');
       setStatus('Gemini transcript added. Check the words, campaign offer and business details before continuing.');
     }catch(e){setError(errorMessage(e));}
@@ -304,6 +320,7 @@ export default function PuterMultilingualPosterLab(){
         body:JSON.stringify({
           businessId,prompt:prompt.trim(),language,
           format,mode:'blueprint',campaignStyle:selectedSuggestionId,
+          approvedOffer:manualOffer?offer.trim():'',
         }),
       });
       const data=await res.json() as BriefResponse;
@@ -314,9 +331,19 @@ export default function PuterMultilingualPosterLab(){
         // Business contacts always remain from the selected verified listing.
         setBlueprint(data.blueprint);setBlueprintKey(forKey);
         setDesignOverride(null);setShuffleIndex(0);
-        if(!manualHeadline)setHeadline(data.blueprint.posterCopy.headline);
-        if(!manualCta)setCta(data.blueprint.posterCopy.ctaText);
-        if(!manualOffer)setOffer(data.blueprint.posterCopy.offerText);
+        // A previously reviewed English draft must NOT override a fresh Tamil
+        // or Sinhala blueprint. Preserve manual copy ONLY if it already matches
+        // the newly selected output language.
+        if(!manualHeadline||!isPosterTextInLanguage(headline,language)){
+          setHeadline(data.blueprint.posterCopy.headline);setManualHeadline(false);
+        }
+        if(!manualCta||!isPosterTextInLanguage(cta,language)){
+          setCta(data.blueprint.posterCopy.ctaText);setManualCta(false);
+        }
+        if(!manualOffer||!isPosterTextInLanguage(offer,language)||
+           (language==='en'&&!isNaturalEnglishOffer(offer))){
+          setOffer(data.blueprint.posterCopy.offerText);setManualOffer(false);
+        }
         setStatus('Gemini design blueprint ready. Review the headline, exact offer and CTA before any Puter generation.');
       }else if(data.brief){
         // Backward compatibility for an older brief response.
@@ -337,6 +364,11 @@ export default function PuterMultilingualPosterLab(){
     if(recording||transcribing||geminiBusy||generating)return;
     if(prompt.trim().length<5||!headline.trim()){
       setError('Enter your campaign idea and an exact headline for the poster.');return;
+    }
+    if(!copyLanguageConsistent){
+      setError('Poster headline, offer and CTA must all match '+posterLanguageName(language)+
+        '. Edit the exact fields or use Prepare with Gemini before generating.');
+      return;
     }
     if(realMode&&!consent){setError('Please explicitly confirm possible Puter charges.');return;}
     setGenerating(true);setComposing(false);setError('');
@@ -394,8 +426,8 @@ export default function PuterMultilingualPosterLab(){
       <div className="flex items-center gap-2.5">
         <span className="rounded-xl bg-[#262125] p-2.5 text-[#F9B16F]"><FlaskConical size={18}/></span>
         <div>
-          <h1 className="text-base font-extrabold leading-5 sm:text-lg">SLBI · Puter AI Poster Composer</h1>
-          <p className="text-[11px] leading-4 text-[#8C7F82]">Private owner QA · Voice, artwork & exact typography</p>
+          <h1 className="text-base font-extrabold leading-5 sm:text-lg">SLBI AI Poster Studio</h1>
+          <p className="text-[11px] leading-4 text-[#8C7F82]">Voice · Multilingual design · High-resolution posters</p>
         </div>
       </div>
       <Link href="/vendor/marketing/design"
@@ -403,11 +435,6 @@ export default function PuterMultilingualPosterLab(){
         <ArrowLeft size={13}/> Creative AI
       </Link>
     </header>
-    <div className="flex shrink-0 items-center gap-2 rounded-xl border border-[#F3D9BB] bg-[#FFF8EF] px-3 py-2 text-[11px] leading-[18px] text-[#94623C]">
-      <ShieldCheck size={15} className="shrink-0"/>
-      <p><strong>Owner-only sandbox.</strong> Real Puter images use your own User-Pays balance; Gemini voice/brief uses the existing shared daily quota.
-        No SLBI Growth Credits, publishing or automatic poster storage.</p>
-    </div>
     {(error||status)&&<div role={error?'alert':'status'} aria-live="polite"
       className={'shrink-0 rounded-xl border px-3 py-2 text-[11px] leading-5 '+
       (error?'border-red-200 bg-red-50 text-red-800':'border-emerald-200 bg-emerald-50 text-emerald-800')}>
@@ -428,7 +455,9 @@ export default function PuterMultilingualPosterLab(){
               onChange={e=>{
                 setBusinessId(e.target.value);setBrief(null);setBriefKey('');
                 setArtworkSrc('');setFinalBlob(null);setFinalUrl('');
-                setHeadline('');setOffer('');setManualHeadline(false);
+                setHeadline(starterHeadline(language,selectedReferenceId));setOffer('');
+                setCta(STARTER_COPY[language].cta);
+                setManualHeadline(false);setManualOffer(false);setManualCta(false);
                 setBlueprint(null);setBlueprintKey('');setDesignOverride(null);setShuffleIndex(0);
               }} className="w-full rounded-xl border border-[#E4DDDA] bg-[#FDFBF9] px-3 py-2.5 text-[12px] font-semibold">
               {!businesses.length&&<option value="">No owned business available</option>}
@@ -442,7 +471,21 @@ export default function PuterMultilingualPosterLab(){
             <div>
               <label htmlFor="puter-language" className="mb-1.5 block text-[11px] font-bold">Language</label>
               <select id="puter-language" value={language} disabled={locked}
-                onChange={e=>setLanguage(e.target.value as PosterCopyLanguage)}
+                onChange={e=>{
+                  const next=e.target.value as PosterCopyLanguage;
+                  if(next===language)return;
+                  setLanguage(next);
+                  // Leave explicitly typed copy untouched, but prevent mixed-
+                  // language Generate until it is translated/reviewed.
+                  if(!manualHeadline)setHeadline(starterHeadline(next,selectedReferenceId));
+                  if(!manualCta)setCta(STARTER_COPY[next].cta);
+                  if(!manualOffer)setOffer('');
+                  setBrief(null);setBriefKey('');
+                  setBlueprint(null);setBlueprintKey('');
+                  setDesignOverride(null);setShuffleIndex(0);
+                  setStatus('Poster language set to '+posterLanguageName(next)+
+                    '. Review all copy or click Prepare with Gemini to localize it.');
+                }
                 className="w-full rounded-xl border border-[#E4DDDA] bg-[#FDFBF9] px-2 py-2.5 text-[11px]">
                 {(Object.entries(languageLabels) as Array<[PosterCopyLanguage,string]>)
                   .map(([key,val])=><option key={key} value={key}>{val}</option>)}
@@ -656,6 +699,12 @@ export default function PuterMultilingualPosterLab(){
             <p className="text-[10px] leading-4 text-[#907D75]">
               Your approved text is drawn with Unicode fonts, not spelled by the image model.
             </p>
+            {!copyLanguageConsistent&&<p role="alert"
+              className="rounded-lg border border-amber-200 bg-amber-50 p-2 text-[10px] leading-4 text-amber-900">
+              Selected language: {posterLanguageName(language)}. Headline, offer and CTA must all use
+              this language. Edit any unmatched text or use Prepare with Gemini before Generate.
+              Your business name, website, phone and email are kept exactly as verified.
+            </p>}
             <div>
               <label htmlFor="puter-headline" className="mb-1 block text-[11px] font-semibold">Headline</label>
               <input id="puter-headline" value={headline} maxLength={120} disabled={generating}
