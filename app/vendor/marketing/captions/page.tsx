@@ -4,10 +4,10 @@ import './caption-fonts.css';
 import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import Link from 'next/link';
 import {
-  ArrowLeft,ArrowRight,Check,CheckCircle2,ChevronDown,Copy,
+  ArrowLeft,ArrowRight,Check,CheckCircle2,Copy,
   Download,Facebook,Instagram,Image as ImageIcon,LoaderCircle,Mic,
   Plus,RefreshCcw,Send,ShieldCheck,SlidersHorizontal,Sparkles,
-  StopCircle,Trash2,Volume2,WandSparkles,
+  StopCircle,Volume2,WandSparkles,
 } from 'lucide-react';
 import {supabase} from '@/lib/supabaseClient';
 import type {CaptionLanguage} from '@/lib/marketing/caption-contract';
@@ -71,14 +71,19 @@ export default function ConnectedCaptionLab(){
   const [error,setError]=useState('');
   const [notice,setNotice]=useState('');
   const [generatedLanguages,setGeneratedLanguages]=useState<CaptionLanguage[]>([]);
+  const [savedCampaignId,setSavedCampaignId]=useState('');
   const recorderRef=useRef<MediaRecorder|null>(null);
   const streamRef=useRef<MediaStream|null>(null);
   const importingRef=useRef('');
   const posterUrlRef=useRef('');
   const selected=useMemo(()=>businesses.find(b=>b.id===businessId),[businesses,businessId]);
   const hasLinked=Boolean(linked&&linked.context.businessId===businessId);
-  const chosenLanguages=languageSelections.length?languageSelections:['ta'];
-  const activePreviewLanguage=previewLanguage==='all'?chosenLanguages[0]:previewLanguage;
+  const chosenLanguages:CaptionLanguage[]=languageSelections.length?languageSelections:['ta'];
+  const activePreviewLanguage:CaptionLanguage=previewLanguage==='all'?chosenLanguages[0]:previewLanguage;
+  useEffect(()=>{
+    if(previewLanguage!=='all'&&!chosenLanguages.includes(previewLanguage))
+      setPreviewLanguage(chosenLanguages[0]);
+  },[languageSelections,previewLanguage,chosenLanguages]);
   const hasAI=chosenLanguages.some(lang=>Boolean(captions[lang][angle]?.trim()));
   const activeText=captions[activePreviewLanguage]?.[angle]?.trim()||'';
   const suggestedTags=useMemo(()=>hashtagsFrom(
@@ -146,14 +151,15 @@ export default function ConnectedCaptionLab(){
     recorderRef.current?.state==='recording'&&recorderRef.current.stop();
     streamRef.current?.getTracks().forEach(track=>track.stop());},[]);
 
-  const loadDrafts=useCallback(async()=>{
+  const loadDrafts=useCallback(async(signal?:AbortSignal)=>{
     if(!businessId){setDrafts([]);setCaptions(emptyCaptions());return;}
     try{
       const res=await fetch('/api/marketing/caption?businessId='+encodeURIComponent(businessId),{
-        credentials:'same-origin',cache:'no-store',
+        credentials:'same-origin',cache:'no-store',signal,
       });
       const data=await decode(res);
       if(!res.ok)throw Error(data.error||'Unable to read saved captions.');
+      if(signal?.aborted)return;
       const list=Array.isArray(data.drafts)?data.drafts:[];
       setDrafts(list);
       const next=emptyCaptions();
@@ -163,9 +169,13 @@ export default function ConnectedCaptionLab(){
       }
       setCaptions(next);
       setGeneratedLanguages(LANGUAGES.filter(lang=>Boolean(newDraftLanguage(list,lang))));
-    }catch(e){setNotice(e instanceof Error?e.message:'Existing drafts unavailable.');}
+    }catch(e){if(!signal?.aborted)setNotice(e instanceof Error?e.message:'Existing drafts unavailable.');}
   },[businessId]);
-  useEffect(()=>{void loadDrafts();},[loadDrafts]);
+  useEffect(()=>{
+    const controller=new AbortController();
+    void loadDrafts(controller.signal);
+    return()=>controller.abort();
+  },[loadDrafts]);
 
   const toggleLanguage=(lang:CaptionLanguage)=>{
     setLanguageSelections(current=>current.includes(lang)?
@@ -321,6 +331,7 @@ export default function ConnectedCaptionLab(){
       const saved=await supabase.from('marketing_campaigns').insert(patch)
         .select('id').maybeSingle();
       if(saved.error||!saved.data)throw Error(saved.error?.message||'Campaign Planner could not save this draft.');
+      setSavedCampaignId(saved.data.id);
       setNotice('Caption bundle saved in Campaign Planner. Linked PNG remains stored in this browser only; cloud poster sync is not enabled.');
     }catch(e){setError(e instanceof Error?e.message:'Save to Campaign Planner failed.');}
     finally{setSaving(false);}
@@ -331,7 +342,7 @@ export default function ConnectedCaptionLab(){
     if(posterUrlRef.current)URL.revokeObjectURL(posterUrlRef.current);
     posterUrlRef.current='';setPosterUrl('');
     setMessage('');setConditions('');setCta('');setError('');setNotice('');
-    setCustomTags({});setRemovedTags({});
+    setCustomTags({});setRemovedTags({});setSavedCampaignId('');
   };
   const downloadPoster=()=>{
     if(!posterUrl||!linked)return;
@@ -546,7 +557,11 @@ export default function ConnectedCaptionLab(){
             {saving?<LoaderCircle size={14} className="animate-spin"/>:<Send size={14}/>}
             Save to Planner</button>
         </div>
-        <p className="text-[10px] leading-4 text-[#6B7280]">Campaign Planner saves your approved caption bundle. Linked PNG remains on this device until secure cloud asset storage is configured; no automatic social posting.</p>
+        {savedCampaignId&&<Link href="/vendor/marketing/campaigns?source=caption-lab"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-[#FDBA74] bg-[#FFF7ED] px-3 py-2.5 text-[11px] font-bold text-[#9A3412]">
+          <CheckCircle2 size={15}/> Open saved Campaign Planner draft <ArrowRight size={13}/>
+        </Link>}
+        <p className="text-[10px] leading-4 text-[#6B7280]">Campaign Planner saves your edited caption bundle. Linked PNG remains on this device until secure cloud asset storage is configured; no automatic social posting.</p>
       </section>
 
       {/* 03 / Refine and copy */}
@@ -632,7 +647,7 @@ export default function ConnectedCaptionLab(){
             <button type="button" onClick={()=>void loadDrafts()} disabled={isBusy}
               className="text-[#6B7280] disabled:opacity-40" aria-label="Refresh drafts"><RefreshCcw size={15}/></button>
           </div>
-          <p className="mt-1 text-[10px] text-[#9CA3AF]">{drafts.length} saved records · pending owner review</p>
+          <p className="mt-1 text-[10px] text-[#9CA3AF]">{drafts.length} saved records · {generatedLanguages.length} language(s) available for review</p>
           <div className="mt-2 space-y-1.5">
             {LANGUAGES.map(l=>{
               const draft=newDraftLanguage(drafts,l);
