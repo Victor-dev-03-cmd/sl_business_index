@@ -25,7 +25,7 @@ test('Only Poster page can use reviewer access: all other premium routes retain 
   assert.match(layout,/getUser\(\)/);
   assert.match(layout,/if\(reviewer\)/);
   assert.match(layout,/MarketingProOnly/);
-  assert.match(layout,/automatically expires/);
+  assert.doesNotMatch(layout,/Private staff review|automatically expires/);
   assert.match(overview,/isPosterReviewAccount\(user\.id,client\)/);
   assert.match(tiles,/app\.id==='poster-editor'&&launchStatus==='coming_soon'/);
   assert.match(tiles,/Staff review/);
