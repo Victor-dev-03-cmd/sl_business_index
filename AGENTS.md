@@ -1,5 +1,11 @@
 # SLBusinessIndex — repository handoff for coding agents
 
+## 2026-11-16 — P2-17: Owner's exact premium Halloween poster design architecture
+- [P2-17 premium Halloween design system](docs/growth/p2/P2_17_OWNER_PREMIUM_HALLOWEEN_DESIGN_SYSTEM_20261116.md). Owner supplied exact palette: #07070C / #18082E / #FF5E00 / #FF8A00 / #8A2BE2 / #FFFFFF / #B8B8C7; headline Anton/Bebas Neue, brand Space Grotesk, offer/CTA Plus Jakarta Sans, service Inter, footer JetBrains Mono, plus 24px frosted-glass lower card, orange neon CTA, 9:16 headline/hero layering.
+- `poster-premium-presets.ts` holds trusted tokens; `puter-premium-poster-renderer.ts` paints the *actual* full-resolution browser PNG with glass, display typography, one exact approved offer and verified icon contacts; uses Noto for Tamil/Sinhala with Latin detection per copy field. CSS preview alone does not satisfy the export contract.
+- Puter Lab passes reference style to Canvas, adds optional published email, and preserves no-credit/paid-consent rules. Prompt order: owner's **explicit instructions first**, compatible seasonal reference hints next, Gemini optional suggestions last. Puter `auth.isSignedIn()` reuses valid login. No general production Cloudflare image switch.
+- Build+security checks, Vercel Production READY and owner real-browser typography QA required before marking done. No artwork generator can guarantee mask-level hero/heading layering from a flat PNG.
+
 ## 2026-11-16 — P2-16: Puter seasonal reference image suggestions and progress
 - [P2-16 seasonal reference library, opt-in image-to-image and animated loading](docs/growth/p2/P2_16_PUTER_SEASONAL_REFERENCE_LIBRARY_20261116.md). Owner wants clickable small poster examples in empty center, smart Christmas/New Year/Pongal/Avurudu and evergreen recommendations. Use SLBI-authored nine SVG thumbnail templates; no Google image scraping, no other owner assets or external stock licensing issues.
 - Puter `txt2img` now verifiably supports `input_images` PNG Blob for every provider: default hidden art-direction prompt only, user can opt into sending the selected SLBI-authored reference as an image. Keep real Puter User-Pays checkbox separate, and owner QA route gate unchanged. No remote generation on thumbnail selection.
