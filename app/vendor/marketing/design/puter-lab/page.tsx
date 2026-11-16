@@ -123,6 +123,20 @@ export default function PuterMultilingualPosterLab(){
     [facts?.category]);
   const dimensions=POSTER_FORMATS[format];
 
+  // Dual execution: once the owner reviews a JSON blueprint, warm the chosen
+  // licensed fonts independently of the next image-model request.
+  // Never fetch a model or use Puter allowance from this effect.
+  useEffect(()=>{
+    if(!activeDesign||typeof document==='undefined')return;
+    const selected=activeDesign.styling;
+    const sample=language==='ta'?'தமிழ் பொங்கல்':language==='si'?'සිංහල අලුත් අවුරුද්ද':'PREMIUM SALE';
+    const displayWeight=['Anton','Bebas Neue','Kavivanar'].includes(selected.headlineFont)?400:700;
+    void Promise.all([
+      document.fonts.load(displayWeight+' 140px "'+selected.headlineFont+'"',sample),
+      document.fonts.load('500 40px "'+selected.bodyFont+'"',sample),
+    ]).catch(()=>{ /* Canvas export reports any missing font explicitly. */ });
+  },[activeDesign,language]);
+
   // The provider has no progress callbacks. This is deliberately displayed
   // as an ESTIMATE, capped below 100 until a real PNG Blob is composed.
   useEffect(()=>{
