@@ -139,7 +139,14 @@ test('AI calls occur only on explicit generate, respect existing global hard-off
   assert.match(api,/admin\.rpc\('marketing_reserve_ai_draft'/);
   assert.match(api,/admin\.rpc\('marketing_refund_ai_draft'/);
   assert.match(api,/admin\.rpc\('marketing_complete_ai_draft'/);
-  assert.match(api,/max_completion_tokens:brief\.mode==='three_angles'\?1100:MAX_OUTPUT_TOKENS/);
+  assert.match(api,/const useGemini=brief.mode==='three_angles'/);
+  assert.match(api,/GEMINI_POSTER_MODEL\+':generateContent'/);
+  assert.match(api,/const triple=parseThreeAngles\(caption\)/);
+  assert.match(api,/if\(!triple.hook\|\|!triple.story\|\|!triple.short\)/);
+  assert.match(api,/p_model_id:actualModel/);
+  assert.match(api,/fetch\('https:\/\/api\.groq\.com\/openai\/v1\/chat\/completions'/);
+  assert.match(api,/admin\.rpc\('marketing_complete_ai_draft'/);
+  assert.match(api,/admin\.rpc\('marketing_refund_ai_draft'/);
   assert.match(contracts,/mode\?:CaptionMode/);
   assert.match(page,/const generate=async\(\)=>/);
   assert.match(page,/onClick=\{\(\)=>void generate\(\)\}/);
