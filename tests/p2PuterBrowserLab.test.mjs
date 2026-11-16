@@ -96,7 +96,7 @@ test('only approved published contacts are drawn and changing copy avoids a new 
   assert.match(compose,/Never infer an amount/);
   assert.match(compose,/copy\.website/);
   assert.match(compose,/copy\.phone/);
-  assert.match(lab,/Changing text,/);
+  assert.match(lab,/Editing headline, offer, CTA, contact visibility or size rebuilds the PNG locally/);
   assert.doesNotMatch(compose,/OpenAI|Gemini API|createGeminiPosterBrief/);
 });
 test('production Cloudflare provider and Turnstile login remain unchanged',()=>{
