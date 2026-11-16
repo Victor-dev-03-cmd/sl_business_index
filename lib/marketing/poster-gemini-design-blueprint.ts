@@ -17,11 +17,13 @@ import type {PosterFormat} from '@/lib/marketing/poster-design';
  */
 export async function createGeminiPosterDesignBlueprint(input:{
   userRequest:string;facts:PosterBusinessFacts;preferredLanguage:PosterCopyLanguage;
-  format:PosterFormat;campaignStyle:string;
+  format:PosterFormat;campaignStyle:string;approvedOffer?:string;
 }):Promise<PosterBlueprint>{
   const key=process.env.GEMINI_API_KEY?.trim();
   if(!key)throw new PosterIntelligenceError('unavailable');
   const request=input.userRequest.replace(/[\u0000-\u001f\u007f]/g,' ').trim().slice(0,1200);
+  const approvedOffer=typeof input.approvedOffer==='string'?
+    input.approvedOffer.replace(/[\u0000-\u001f\u007f]/g,' ').trim().slice(0,60):'';
   if(request.length<5||input.facts.name.length<2)
     throw new PosterIntelligenceError('invalid-output');
   const task={
@@ -40,6 +42,9 @@ export async function createGeminiPosterDesignBlueprint(input:{
       input.format==='square'?'1:1':'1200:630',
     suggestionStyle:input.campaignStyle.slice(0,80),
     vendorRequest:request,
+    vendorReviewedOffer:approvedOffer,
+    // Language selection always wins over source-language voice/code switching.
+    outputCopyLanguage:input.preferredLanguage,
   };
   const system=[
     'You are Lead Art Director and Brand Designer for SL Business Index in Sri Lanka.',
@@ -50,7 +55,19 @@ export async function createGeminiPosterDesignBlueprint(input:{
     'The actual business and all verified contacts are server-owned and rendered separately, not from your output.',
     'Do not invent prices, discounts, percentages, dates, certifications, products, addresses, phone numbers or websites.',
     'Never change or translate an explicit numeric percentage. When the vendor supplied NO real offer, leave posterCopy.offerText empty.',
-    'Use the selected language for natural, concise headline (ideally 4-5 words), offer (6-8 words maximum) and actionable CTA. All copy is vendor-reviewable.',
+    'HARD REQUIREMENT — STRICTLY output posterCopy.headline, posterCopy.offerText and posterCopy.ctaText in the SELECTED outputCopyLanguage, regardless of whether the input is English, Tamil, Sinhala, Tanglish or mixed. The imagePrompt must remain in ENGLISH. Never default to English for a Tamil or Sinhala selection.',
+    'If outputCopyLanguage is ta: write ALL three nonempty poster-copy values with Tamil-script words only; avoid untranslated Latin English words, even Christmas/Sale/Offer. Use natural Sri Lankan Tamil wording, not word-by-word translation.',
+    'If outputCopyLanguage is si: write ALL three nonempty poster-copy values with Sinhala-script words only; avoid untranslated Latin English words. Use natural Sri Lankan Sinhala ad copy.',
+    'If outputCopyLanguage is en: write all nonempty poster-copy values in idiomatic English; no Tamil/Sinhala script.',
+    'The business brand name and verified website/email/phone remain separate and must NOT be translated or included in posterCopy.',
+    'Use the selected language for concise headline (ideally 4-5 words), offer (6-8 words maximum) and actionable CTA; all copy is vendor-reviewable.',
+    'NATURAL MARKETING COPY: Never use awkward phrases like "30% Offer for price" or literal translations. Examples, keeping only the supplied business claim and percentage:',
+    'EXAMPLE ta: request "Christmas promotion with 30% discount"; headline "கிறிஸ்துமஸ் சிறப்புச் சலுகை"; offerText "30% சிறப்புத் தள்ளுபடி"; ctaText "இன்றே தொடர்பு கொள்ளவும்".',
+    'EXAMPLE si: request "Christmas promotion with 30% discount"; headline "නත්තල් විශේෂ දීමනා"; offerText "30%ක විශේෂ වට්ටමක්"; ctaText "අදම අප අමතන්න".',
+    'EXAMPLE en: request "Christmas promotion with 30% discount"; headline "CHRISTMAS SPECIAL"; offerText "30% OFF"; ctaText "CONTACT US".',
+    'EXAMPLE ta: only when the OWNER EXPLICITLY includes "all services": offerText "அனைத்து சேவைகளுக்கும் 30% தள்ளுபடி"; otherwise do not claim all services.',
+    'EXAMPLE en: only when the OWNER EXPLICITLY includes "all services": offerText "30% Off on All Services"; otherwise "30% OFF" or "30% Flat Discount" (only if an actual flat discount is confirmed).',
+    'If the vendor supplied a separately reviewed offer, use its exact numeric amount but rewrite the phrasing into outputCopyLanguage without adding scope or new facts. If neither the request nor reviewed offer includes a real discount, offerText must be empty.',
     'Select headlineFont and bodyFont ONLY from this per-language list: Tamil: Noto Sans Tamil, Hind Madurai, Noto Serif Tamil, Mukta Malar, Kavivanar; Sinhala: Noto Sans Sinhala, Gemunu Libre, Abhaya Libre; English: Anton, Bebas Neue, Montserrat, Poppins, Playfair Display, Plus Jakarta Sans, Inter.',
     'Match festival/industry and choose valid #RRGGBB primaryColor, accentColor, textColor. overlayGradient must be dark_bottom_top or subtle_vignette.',
     'Choose vibe from festive, modern_tech, luxury, bold_sale, warm_retail.',
@@ -94,7 +111,7 @@ export async function createGeminiPosterDesignBlueprint(input:{
     .filter((p):p is string=>typeof p==='string').join('');
   if(!raw||raw.length>10500)throw new PosterIntelligenceError('invalid-output');
   try{return validatePosterBlueprint(JSON.parse(raw),{
-    language:input.preferredLanguage,vendorPrompt:request,
+    language:input.preferredLanguage,vendorPrompt:request,approvedOffer,
   });}
   catch(e){
     console.warn('P2 blueprint validation',e instanceof Error?e.name:'unknown');
