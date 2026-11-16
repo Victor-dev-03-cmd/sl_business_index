@@ -27,8 +27,8 @@ test('SLBI PRO Caption Lab uses existing Poster three-column mental model and Gr
   assert.match(page,/id="caption-brief"/);
   assert.match(page,/promptChips\.map/);
   const css=read('app/vendor/marketing/captions/caption-fonts.css');
-  assert.match(css,/Noto\+Sans\+Tamil/);
-  assert.match(css,/Noto\+Sans\+Sinhala/);
+  assert.match(css,/var\(--font-tamil\)/);
+  assert.match(css,/var\(--font-sinhala\)/);
   assert.match(css,/line-height:1\.6/);
 });
 

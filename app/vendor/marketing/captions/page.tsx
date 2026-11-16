@@ -357,8 +357,8 @@ export default function ConnectedCaptionLab(){
       <div className="flex items-center gap-3">
         <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#111827] text-[#F97316]"><Sparkles size={22}/></span>
         <div>
-          <p className="text-[10px] font-extrabold uppercase tracking-[.15em] text-[#EA580C]">SLBI GrowthOS · Creative Suite</p>
-          <h1 className="text-[20px] font-black tracking-tight sm:text-2xl">AI Caption Lab</h1>
+          <p className="slbi-overline text-[#EA580C]">SLBI GrowthOS · Creative Suite</p>
+          <h1 className="slbi-display-title text-[22px] sm:text-[26px]">AI Caption Lab</h1>
           <p className="text-[11px] text-[#6B7280]">Connected to AI Poster Studio · Tri-lingual social copy</p>
         </div>
       </div>
@@ -380,7 +380,7 @@ export default function ConnectedCaptionLab(){
       <section aria-label="Campaign Brief" className={panel+' space-y-4 p-4'}>
         <div className="flex items-center gap-2 border-b border-[#F0F0F2] pb-3">
           <span className="rounded-lg bg-[#FFF1E6] px-2 py-1 text-[11px] font-black text-[#EA580C]">01</span>
-          <h2 className="text-sm font-black">Campaign Brief</h2>
+          <h2 className="slbi-section-title text-[15px]">Campaign Brief</h2>
           <span className="ml-auto text-[10px] text-[#9CA3AF]">Input</span>
         </div>
         <label className="block text-[11px] font-bold text-[#374151]">Selected Business
@@ -489,7 +489,7 @@ export default function ConnectedCaptionLab(){
       <section aria-label="Live Social Preview" className={panel+' space-y-4 p-4'}>
         <div className="flex items-center gap-2 border-b border-[#F0F0F2] pb-3">
           <span className="rounded-lg bg-[#FFF1E6] px-2 py-1 text-[11px] font-black text-[#EA580C]">02</span>
-          <h2 className="text-sm font-black">Live Social Preview</h2>
+          <h2 className="slbi-section-title text-[15px]">Live Social Preview</h2>
           <span className="ml-auto text-[10px] text-[#9CA3AF]">Workspace</span>
         </div>
         <div className="grid grid-cols-3 gap-1.5 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-1">
@@ -568,7 +568,7 @@ export default function ConnectedCaptionLab(){
       <section aria-label="Variations and Optimization" className={panel+' space-y-4 p-4'}>
         <div className="flex items-center gap-2 border-b border-[#F0F0F2] pb-3">
           <span className="rounded-lg bg-[#FFF1E6] px-2 py-1 text-[11px] font-black text-[#EA580C]">03</span>
-          <h2 className="text-sm font-black">Refine & Copy</h2>
+          <h2 className="slbi-section-title text-[15px]">Refine & Copy</h2>
           <span className="ml-auto text-[10px] text-[#9CA3AF]">Optimize</span>
         </div>
         <div className="space-y-2">
@@ -604,7 +604,7 @@ export default function ConnectedCaptionLab(){
         <div className="border-t border-[#F3F4F6] pt-3">
           <div className="mb-2 flex items-center gap-2">
             <SlidersHorizontal size={14} className="text-[#EA580C]"/>
-            <h3 className="text-[11px] font-black">Smart Hashtag Manager</h3>
+            <h3 className="slbi-section-title text-[12px]">Smart Hashtag Manager</h3>
           </div>
           <div className="flex flex-wrap gap-1.5">
             {visibleTags.map(tag=><button key={tag} type="button"
@@ -629,7 +629,7 @@ export default function ConnectedCaptionLab(){
           </label>
         </div>
         <div className="border-t border-[#F3F4F6] pt-3">
-          <h3 className="mb-2 text-[11px] font-black">Quick Polish <span className="font-normal text-[#9CA3AF]">· No new AI credits</span></h3>
+          <h3 className="slbi-section-title mb-2 text-[12px]">Quick Polish <span className="font-normal text-[#9CA3AF]">· No new AI credits</span></h3>
           <div className="grid grid-cols-2 gap-2">
             <button type="button" onClick={()=>polish('shorten')} disabled={!activeText}
               className="rounded-lg border border-[#E5E7EB] px-2 py-2.5 text-[10px] font-bold disabled:opacity-40">✨ Make it shorter</button>

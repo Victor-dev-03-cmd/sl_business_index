@@ -1,5 +1,49 @@
 @import "tailwindcss";
 
+/* SLBI typography system (2026): Inter for every English UI surface.
+   Tailwind v4 theme overrides normalize older 800/900-heavy components
+   without changing their spacing/layout. Noto preserves non-Latin scripts. */
+@theme inline {
+  --font-sans: var(--font-inter), var(--font-tamil), var(--font-sinhala), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-inter), var(--font-tamil), var(--font-sinhala), ui-sans-serif, system-ui, sans-serif;
+}
+@theme {
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 700;
+  --font-weight-black: 700;
+  --tracking-tight: -0.025em;
+  --tracking-tighter: -0.04em;
+}
+
+/* Consistent default headings; page-specific Tailwind utilities keep control
+   of responsive sizes, contrast, line-height, and deliberate creative art. */
+@layer base {
+  html { font-family: var(--font-inter), var(--font-tamil), var(--font-sinhala), ui-sans-serif, system-ui, sans-serif; }
+  :where(h1,h2,h3,h4,h5,h6) {
+    font-family: inherit;
+    font-optical-sizing: auto;
+    text-wrap: balance;
+  }
+  h1 { font-weight: 700; line-height: 1.16; letter-spacing: -0.035em; }
+  h2 { font-weight: 650; line-height: 1.24; letter-spacing: -0.025em; }
+  h3 { font-weight: 600; line-height: 1.3; letter-spacing: -0.015em; }
+  :where(button,input,select,textarea,option) { font-family: inherit; }
+}
+
+/* Reusable roles for newly built sections, dashboards and compact labels.
+   These intentionally do not force a single font size on every heading. */
+@layer components {
+  .slbi-display-title { font-weight: 700; line-height: 1.14; letter-spacing: -0.035em; text-wrap: balance; }
+  .slbi-section-title { font-weight: 650; line-height: 1.25; letter-spacing: -0.025em; text-wrap: balance; }
+  .slbi-overline { font-size: 11px; line-height: 1.4; font-weight: 650; letter-spacing: .12em; text-transform: uppercase; }
+  .slbi-field-label { font-size: 12px; line-height: 1.4; font-weight: 600; }
+  .slbi-body-copy { font-weight: 400; line-height: 1.65; }
+}
+
+
 html {
   scrollbar-gutter: stable;
 }

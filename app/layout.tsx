@@ -1,4 +1,4 @@
-import { Inter, Manrope, Noto_Sans_Tamil, Noto_Sans_Sinhala } from "next/font/google";
+import { Inter, Noto_Sans_Tamil, Noto_Sans_Sinhala } from "next/font/google";
 import RootClientLayout from "./RootClientLayout";
 import "./globals.css";
 
@@ -7,9 +7,6 @@ const inter = Inter({
   variable: "--font-inter",
   display: "swap",
 });
-
-// Distinctive Manrope wordmark, while Inter remains the product UI typeface.
-const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope", display: "swap" });
 
 // Script-specific fallbacks preserve readable Tamil and Sinhala text.
 const tamil = Noto_Sans_Tamil({ subsets: ["tamil"], variable: "--font-tamil", display: "swap" });
@@ -27,7 +24,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${manrope.variable} ${tamil.variable} ${sinhala.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${tamil.variable} ${sinhala.variable}`} suppressHydrationWarning>
       <body className="antialiased" suppressHydrationWarning>
         <RootClientLayout>
           {children}
