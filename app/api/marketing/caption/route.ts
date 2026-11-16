@@ -225,7 +225,7 @@ export async function POST(request:Request){
     }
     // Gemini returns strictly schema-constrained JSON, validated again on
     // our server. Only the backward-compatible plain text is ever persisted.
-    const structured=useGemini?parseGeminiCaptionOutput(rawCaption,brief.language):null;
+    const structured=useGemini?parseGeminiCaptionOutput(rawCaption,brief.language,business.city||''):null;
     if(useGemini&&!structured)
       throw Error('Gemini returned invalid copy or hashtag structure');
     const persisted=useGemini&&structured?
