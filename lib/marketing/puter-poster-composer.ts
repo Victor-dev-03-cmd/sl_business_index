@@ -59,7 +59,7 @@ export function buildArtOnlyPrompt(input:{
     input.city?'Location context: '+short(input.city,75):'',
     input.brandColor?'Brand accent palette hint: '+short(input.brandColor,14):'',
     'Polished premium editorial graphic design, sharp commercial studio lighting, high-end realistic 3D depth, clean layout, uncluttered typography-safe spaces.',
-    'STRICT: no AI-generated words, letters, numerals, prices, slogans, watermarks, logos, pseudo-glyphs, fake UI labels, invented brand names, contact details or offer percentages. They will be composited exactly by the web typography engine.',
+    'STRICT: NO TEXT of any kind in the AI artwork: no AI-generated words, letters, numerals, prices, slogans, watermarks, logos, pseudo-glyphs, fake UI labels, invented brand names, contact details or offer percentages. They will be composited exactly by the web typography engine.',
     'When a seasonal reference and the user request disagree, ALWAYS honor the user request. No extra pumpkins, moons, trees, fireworks, people or objects unless requested.',
   ].filter(Boolean).join('\n').slice(0,3900);
 }
