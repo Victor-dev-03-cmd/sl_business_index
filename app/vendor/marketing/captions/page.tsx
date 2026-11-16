@@ -83,6 +83,7 @@ export default function ConnectedCaptionLab(){
   const [posterKey,setPosterKey]=useState('');
   const [posterPickerOpen,setPosterPickerOpen]=useState(false);
   const [posterChoices,setPosterChoices]=useState<LinkedPosterRecord[]>([]);
+  const [posterThumbnails,setPosterThumbnails]=useState<Record<string,string>>({});
   const [posterBusy,setPosterBusy]=useState(false);
   const [goal,setGoal]=useState<CampaignGoal>('flash_sale');
   const [languageSelections,setLanguageSelections]=useState<CaptionLanguage[]>(['ta','si','en']);
@@ -113,6 +114,12 @@ export default function ConnectedCaptionLab(){
   const importingRef=useRef('');
   const posterUrlRef=useRef('');
   const posterInputRef=useRef<HTMLInputElement|null>(null);
+  useEffect(()=>{
+    const urls:Record<string,string>={};
+    for(const record of posterChoices)urls[record.id]=URL.createObjectURL(record.image);
+    setPosterThumbnails(urls);
+    return()=>{for(const url of Object.values(urls))URL.revokeObjectURL(url);};
+  },[posterChoices]);
   const selected=useMemo(()=>businesses.find(b=>b.id===businessId),[businesses,businessId]);
   const hasLinked=Boolean(linked&&linked.context.businessId===businessId);
   const chosenLanguages:CaptionLanguage[]=languageSelections.length?languageSelections:['ta'];
@@ -391,6 +398,9 @@ export default function ConnectedCaptionLab(){
     const url=URL.createObjectURL(record.image);
     posterUrlRef.current=url;setPosterUrl(url);
     setLinked(record);setPosterKey(record.id);setPosterPickerOpen(false);
+    setMessage(previous=>previous.trim()?previous:
+      [record.context.headline,record.context.offer].filter(Boolean).join('. ').slice(0,600));
+    setCta(previous=>previous.trim()?previous:record.context.cta.slice(0,180));
     setNotice('Poster attached. Review your campaign brief, then generate captions.');
   };
   const uploadDevicePoster=async(file?:File)=>{
@@ -500,7 +510,11 @@ export default function ConnectedCaptionLab(){
             {posterChoices.map(item=><button key={item.id} type="button"
               onClick={()=>selectRecentPoster(item)} title={item.context.headline||'Recent Studio poster'}
               className="flex min-w-0 flex-col items-center gap-1 rounded-lg border border-[#E5E7EB] p-1.5 hover:border-[#F97316]">
-              <span className="flex h-12 w-full items-center justify-center rounded bg-[#F9FAFB]"><ImageIcon size={18}/></span>
+              <span className="flex h-12 w-full items-center justify-center overflow-hidden rounded bg-[#F9FAFB]">
+                {posterThumbnails[item.id]?
+                  <img src={posterThumbnails[item.id]} alt="" className="h-full w-full object-cover"/>:
+                  <ImageIcon size={18}/>}
+              </span>
               <span className="max-w-full truncate text-[10px] font-medium">{item.context.headline||'Studio design'}</span>
             </button>)}
           </div>}
