@@ -101,12 +101,6 @@ export function validatePosterBlueprint(value:unknown,input:{
   const imagePrompt=clean(obj.imagePrompt,2300);
   if(!headline||!ctaText||imagePrompt.length<80)
     throw Error('Gemini blueprint is incomplete. Keep your edited original prompt.');
-  // Selected copy language is a validated content contract, not just a font
-  // preference. No English headline/offer sneaking into Tamil/Sinhala posters.
-  if(!isPosterCopyInLanguage({headline,offerText,ctaText},input.language))
-    throw Error('Gemini poster copy does not match the selected language. Retry Prepare with Gemini or edit the exact copy.');
-  if(input.language==='en'&&!isNaturalEnglishOffer(offerText))
-    throw Error('Gemini returned unnatural English offer copy. Please retry.');
   if(!includes(POSTER_VIBES,style.vibe)||!includes(POSTER_OVERLAYS,style.overlayGradient))
     throw Error('Gemini blueprint contains an unsupported design style.');
   if(!enumFonts[input.language].includes(style.headlineFont as never)||
@@ -128,6 +122,12 @@ export function validatePosterBlueprint(value:unknown,input:{
   if(/(?:https?:\/\/|www\.|@[\w.-]+\.[a-z]{2,}|\+?\d[\d()\s-]{8,})/i.test(
     [headline,offerText,ctaText].join(' ')))
     throw Error('Gemini added contact information. Only owner-verified business contacts can appear.');
+  // Verify factual ownership first, then enforce the selected copy script.
+  // This preserves explicit security errors for invented contacts/discounts.
+  if(!isPosterCopyInLanguage({headline,offerText,ctaText},input.language))
+    throw Error('Gemini poster copy does not match the selected language. Retry Prepare with Gemini or edit the exact copy.');
+  if(input.language==='en'&&!isNaturalEnglishOffer(offerText))
+    throw Error('Gemini returned unnatural English offer copy. Please retry.');
   return {
     posterCopy:{headline,offerText,ctaText},
     styling:{
