@@ -121,6 +121,7 @@ export default function PuterMultilingualPosterLab(){
     (currentBlueprint?{
       styling:currentBlueprint.styling,
       layout:selectLayout(format,currentBlueprint.styling.vibe),
+      contentPanelStyle:currentBlueprint.layoutStyling?.contentPanelStyle,
     }:null),[designOverride,currentBlueprint,format]);
   const displayedPreset=withVerifiedPosterDesign(typographyPreset,activeDesign,language);
   const suggestedCampaigns=useMemo(()=>posterSuggestions(new Date(),facts?.category||'',7),
