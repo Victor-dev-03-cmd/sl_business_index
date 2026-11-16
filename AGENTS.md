@@ -1,5 +1,10 @@
 # SLBusinessIndex — repository handoff for coding agents
 
+## 2026-11-16 — P2-15: Compact Campaign Planner SVG picker and 3-column Puter Studio
+- [P2-15 3-column compact owner QA workspace](docs/growth/p2/P2_15_PUTER_THREE_COLUMN_COMPACT_SVG_WORKSPACE_20261116.md). Owner screenshot: tall 2-column desktop preview, oversized 2×2 size buttons; wants left controls, **center image**, right format/copy, all within desktop screen height.
+- Puter Lab only: reuse existing Campaign Planner SVG size silhouettes in a small 4-across radio selector; desktop viewport-constrained 3 columns (xl), constrained object-contain center; independent side-panel overflow if needed, vertical mobile stacking unchanged. Export 1080×1080 / 1080×1350 / 1080×1920 / 1200×630 pixels unchanged.
+- No image-provider, quota, browser voice, Gemini, billing, verified business, login, credits, or data storage modifications. Test exact PR commit and production Vercel alias before claiming released. Owner visual screenshot QA still required.
+
 ## 2026-11-16 — P2-14: Puter owner QA voice, verified business and exact multilingual PNG
 - See [P2-14 Puter Gemini voice and Unicode composer](docs/growth/p2/P2_14_PUTER_VOICE_BUSINESS_EXACT_TYPOGRAPHY_20261116.md). Owner has personally proven one real GPT Image 2.6 Flare generation; the new QA flow adds voice → server Gemini transcription → owner-verified facts → explicit Gemini creative understanding → Puter text-free art → browser Unicode typography → exact format PNG.
 - New GET/POST `/api/marketing/poster/puter-lab` independently gate current owner QA entitlement and business ownership; POST uses existing 12/day **shared voice/brief** atomic quota. No anonymous Gemini proxy; no public/secrets/other-tenant data.
