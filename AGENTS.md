@@ -1,5 +1,11 @@
 # SLBusinessIndex — repository handoff for coding agents
 
+## 2026-11-16 — P2-14: Puter owner QA voice, verified business and exact multilingual PNG
+- See [P2-14 Puter Gemini voice and Unicode composer](docs/growth/p2/P2_14_PUTER_VOICE_BUSINESS_EXACT_TYPOGRAPHY_20261116.md). Owner has personally proven one real GPT Image 2.6 Flare generation; the new QA flow adds voice → server Gemini transcription → owner-verified facts → explicit Gemini creative understanding → Puter text-free art → browser Unicode typography → exact format PNG.
+- New GET/POST `/api/marketing/poster/puter-lab` independently gate current owner QA entitlement and business ownership; POST uses existing 12/day **shared voice/brief** atomic quota. No anonymous Gemini proxy; no public/secrets/other-tenant data.
+- Browser Canvas composes approved exact business/headline/offer/CTA/phone/website using Noto Sans Tamil/Sinhala/Inter fonts, refuses unfit text, downloads matching high-res 1:1/4:5/9:16/1200×630 image. No SLBI poster storage, wallet or publishing. Paid Puter generation still requires user's checkbox consent.
+- Client entry `/vendor/marketing/design/puter-lab` remains internal QA, not a vendor-wide provider rollout. Confirm PR head CI and Vercel Production READY before release; owner must test live mic, fonts and download. Normal Cloudflare production poster provider and Turnstile remain untouched.
+
 ## 2026-11-16 — P2-13: Puter owner-only model quality lab, live login route
 - See [P2-13 Puter owner QA lab handoff](docs/growth/p2/P2_13_PUTER_USER_PAYS_BROWSER_LAB_20261116.md). Initial Preview failed login because Turnstile keys were scoped **Production only**. Do not bypass the login challenge or spread Production secrets to preview.
 - Route `/vendor/marketing/design/puter-lab` is nested behind server-verified `isPosterInternalQAAccount` entitlement and existing Pro auth on the **normal production domain**, so owner may use normal Cloudflare-protected login. Source `app/login/page.tsx` remains identical to main.

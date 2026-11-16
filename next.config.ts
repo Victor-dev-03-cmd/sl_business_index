@@ -56,11 +56,17 @@ const nextConfig: NextConfig = {
           { key: 'X-DNS-Prefetch-Control', value: 'on' },
         ],
       },
-      // Last matching Next.js header wins: allow browser microphone prompting
-      // ONLY on the owner-authenticated Poster Studio route.
-      // Keep microphone disabled everywhere else, and camera disabled globally.
+      // Last matching header wins: microphone prompting is allowed only in
+      // the owner-authenticated Poster Studio and its owner-only Puter lab.
+      // Global camera and microphone access remain disabled elsewhere.
       {
         source: '/vendor/marketing/design',
+        headers: [
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(self), geolocation=(self)' },
+        ],
+      },
+      {
+        source: '/vendor/marketing/design/puter-lab',
         headers: [
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(self), geolocation=(self)' },
         ],

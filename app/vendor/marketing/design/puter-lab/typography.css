@@ -1,0 +1,4 @@
+/* Runtime-loaded licensed OFL font families for browser-generated multilingual PNG.
+ * The exact exported pixels use the same text shaping as the preview.
+ * Do not silently export tofu glyphs if a required complex-script font fails. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+Sinhala:wght@400;600;700&family=Noto+Sans+Tamil:wght@400;600;700&display=swap');
