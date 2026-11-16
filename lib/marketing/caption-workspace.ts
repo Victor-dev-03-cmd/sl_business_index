@@ -45,13 +45,13 @@ export function parseThreeAngles(raw:string):AngleSet{
   return {hook:cap(match[1],900),story:cap(match[2],1100),short:cap(match[3],600)};
 }
 export function hashtagsFrom(text:string):string[]{
-  return Array.from(new Set((text.match(/#[\p{L}\p{N}_]+/gu)||[]).map(x=>x.slice(0,48)))).slice(0,14);
+  return Array.from(new Set((text.match(/#[\p{L}\p{M}\p{N}_]+/gu)||[]).map(x=>x.slice(0,48)))).slice(0,14);
 }
 export function removeHashtags(text:string):string{
-  return text.replace(/(^|\s)#[\p{L}\p{N}_]+/gu,' ').replace(/ {2,}/g,' ').replace(/\n{3,}/g,'\n\n').trim();
+  return text.replace(/(^|\s)#[\p{L}\p{M}\p{N}_]+/gu,' ').replace(/ {2,}/g,' ').replace(/\n{3,}/g,'\n\n').trim();
 }
 export function normalizedTag(raw:string):string|null{
-  const word=raw.trim().replace(/^#+/,'').replace(/[^\p{L}\p{N}_]/gu,'');
+  const word=raw.trim().replace(/^#+/,'').replace(/[^\p{L}\p{M}\p{N}_]/gu,'');
   if(word.length<2||word.length>40)return null;
   return '#'+word;
 }
