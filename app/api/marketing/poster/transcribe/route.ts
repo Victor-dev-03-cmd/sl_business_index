@@ -16,6 +16,30 @@ const reply=(status:number,body:Record<string,unknown>)=>Response.json(body,{
 });
 
 /**
+ * Current user's shared Voice + Gemini creative brief allowance.
+ * A read-only status call never reserves quota or invokes the AI provider.
+ */
+export async function GET(){
+  const client=await createClient();
+  const {data:{user},error:authError}=await client.auth.getUser();
+  if(authError||!user)return reply(401,{error:'Sign in to view your Gemini voice allowance.'});
+  const denied=rejectMarketingAccess(await getMarketingAccessForUser(user.id,client));
+  if(denied)return denied;
+  const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const secret=process.env.SUPABASE_SERVICE_ROLE_KEY||process.env.SUPABASE_SECRET_KEY;
+  if(!url||!secret)return reply(503,{error:'Gemini quota status unavailable.'});
+  const admin=createAdminClient(url,secret,{auth:{persistSession:false,autoRefreshToken:false}});
+  const day=new Date().toISOString().slice(0,10);
+  const {data:row,error}=await admin.from('marketing_poster_voice_quotas')
+    .select('attempts,max_attempts').eq('user_id',user.id).eq('day_utc',day).maybeSingle();
+  if(error)return reply(503,{error:'Gemini quota status unavailable.'});
+  const used=Math.max(0,Number(row?.attempts||0));
+  const limit=Math.max(0,Number(row?.max_attempts??12));
+  return reply(200,{quota:{used,limit,remaining:Math.max(0,limit-used),
+    resetAtUtc:new Date(Date.parse(day+'T00:00:00Z')+86_400_000).toISOString()}});
+}
+
+/**
  * Backend-only, owner-authenticated microphone transcription.
  * The frontend will attach MediaRecorder audio after UX approval. The returned
  * original-language transcript is SHOWN to the vendor for correction; it never
