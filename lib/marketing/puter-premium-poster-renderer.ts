@@ -1,4 +1,5 @@
 import type {PosterFormat} from '@/lib/marketing/poster-design';
+import {planStackedCard} from '@/lib/marketing/puter-adaptive-card-layout';
 import type {ExactPosterCopy,PosterCopyLanguage} from '@/lib/marketing/puter-poster-composer';
 import {
   resolvePremiumPosterPreset,
@@ -233,7 +234,9 @@ function drawContacts(ctx:Ctx,p:{
 function renderStacked(ctx:Ctx,copy:ExactPosterCopy,p:PremiumPosterPreset,format:PosterFormat){
   const w=ctx.canvas.width,h=ctx.canvas.height;
   const scale=h/1920;
-  const side=Math.round(w*.047),inner=side+35*scale;
+  const side=Math.round(w*.047);
+  const inset=35*scale;
+  const inner=side+inset;
   const displayLanguage=scriptOf(copy.headline,copy.language);
   const brandLanguage=scriptOf(copy.businessName,copy.language);
   const offerLanguage=scriptOf(copy.offer,copy.language);
@@ -246,62 +249,58 @@ function renderStacked(ctx:Ctx,copy:ExactPosterCopy,p:PremiumPosterPreset,format
     min:Math.max(35,82*scale),lineHeight:p.tokens.displayLineHeight,
     role:'display',lang:displayLanguage,preset:p,label:'Display headline',
   });
-  // LARGE DISPLAY is rendered in the top third. AI hero is composited in
-  // the photo below; keep this text at a professional readable contrast.
   renderFitted(ctx,{fit:titleFit,x:side,y:55*scale,width:w-2*side,
     color:p.palette.white,role:'display',language:displayLanguage,preset:p,
     center:true,glow:18*scale,glowColor:'rgba(0,0,0,.82)',
     emphasizeFinalLine:displayLanguage==='en'&&titleFit.lines.length>1,
   });
-  const panelY=h*(format==='square'?.53:format==='portrait'?.57:.575);
-  const panelBottom=h*.938;
-  const panelW=w-2*side,panelH=panelBottom-panelY;
-  glassPanel(ctx,side,panelY,panelW,panelH,p,scale);
-  let y=panelY+32*scale,midX=side+panelW/2;
-  const insideWidth=panelW-70*scale;
-  const brand=fit(ctx,{value:copy.businessName,width:insideWidth,height:53*scale,maxLines:1,
+
+  // Measure approved text BEFORE painting the glass. The card fits its actual
+  // content, rather than spanning a fixed 59%-94% region and pinning the CTA
+  // far from the offer. Short copy => a compact card and more visible hero.
+  const panelW=w-2*side;
+  const insideWidth=panelW-2*inset;
+  const brand=fit(ctx,{value:copy.businessName,width:insideWidth,height:60*scale,maxLines:1,
     start:p.tokens.storyBrandSize*scale,min:22*scale,lineHeight:1.2,
     role:'brand',lang:brandLanguage,preset:p,label:'Business name'});
-  y=renderFitted(ctx,{fit:brand,x:side+35*scale,y,width:insideWidth,
+  const offer=copy.offer.trim()?fit(ctx,{
+    value:copy.offer,width:insideWidth,height:172*scale,maxLines:2,
+    start:p.tokens.storyOfferSize*scale,min:28*scale,lineHeight:1.12,
+    role:'offer',lang:offerLanguage,preset:p,label:'Approved offer'}):null;
+  const service=copy.service.trim()?fit(ctx,{
+    value:copy.service,width:insideWidth,height:88*scale,maxLines:2,
+    start:p.tokens.storyServiceSize*scale,min:18*scale,lineHeight:1.32,
+    role:'body',lang:serviceLanguage,preset:p,label:'Service line'}):null;
+  const contactRows=Number(Boolean(copy.website))+Number(Boolean(copy.phone))+Number(Boolean(copy.email));
+  const layout=planStackedCard({
+    format:format as 'square'|'portrait'|'story',canvasHeight:h,scale,
+    brandHeight:brand.height,offerHeight:offer?.height||0,
+    serviceHeight:service?.height||0,hasCta:Boolean(copy.cta.trim()),contactRows,
+  });
+  glassPanel(ctx,side,layout.top,panelW,layout.height,p,scale);
+  renderFitted(ctx,{fit:brand,x:inner,y:layout.brandY,width:insideWidth,
     color:p.palette.glow,role:'brand',language:brandLanguage,preset:p,center:true});
-  y+=14*scale;
-  if(copy.offer.trim()){
-    const available=Math.min(170*scale,panelY+panelH*.43-y);
-    const offer=fit(ctx,{
-      value:copy.offer,width:insideWidth,height:available,maxLines:2,
-      start:p.tokens.storyOfferSize*scale,min:28*scale,lineHeight:1.12,
-      role:'offer',lang:offerLanguage,preset:p,label:'Approved offer',
-    });
-    y=renderFitted(ctx,{fit:offer,x:side+35*scale,y,width:insideWidth,
+  if(offer&&layout.offerY!==null)
+    renderFitted(ctx,{fit:offer,x:inner,y:layout.offerY,width:insideWidth,
       color:p.palette.accent,role:'offer',language:offerLanguage,preset:p,center:true,
       glow:p.tokens.neonTextBlur*scale,glowColor:'rgba(255,94,0,.6)'});
-    y+=13*scale;
-  }
-  const service=fit(ctx,{value:copy.service,width:insideWidth,
-    height:86*scale,maxLines:2,
-    start:p.tokens.storyServiceSize*scale,min:18*scale,
-    lineHeight:1.32,role:'body',lang:serviceLanguage,preset:p,label:'Service line'});
-  y=renderFitted(ctx,{fit:service,x:side+35*scale,y,width:insideWidth,
-    color:p.palette.white,role:'body',language:serviceLanguage,preset:p,center:true});
-  const contactRows=Number(Boolean(copy.website))+Number(Boolean(copy.phone))+Number(Boolean(copy.email));
-  const contactArea=Math.max(80*scale,contactRows*42*scale);
-  const contactTop=panelY+panelH-contactArea-23*scale;
-  const buttonTop=Math.max(y+22*scale,contactTop-93*scale);
-  const buttonH=74*scale;
-  if(copy.cta.trim()&&buttonTop+buttonH>contactTop-5*scale)
-    throw Error('Headline, approved offer and CTA need more room. Shorten copy or switch to Story format.');
-  if(copy.cta.trim()){
+  if(service&&layout.serviceY!==null)
+    renderFitted(ctx,{fit:service,x:inner,y:layout.serviceY,width:insideWidth,
+      color:p.palette.white,role:'body',language:serviceLanguage,preset:p,center:true});
+  if(copy.cta.trim()&&layout.ctaY!==null){
     const buttonW=Math.min(panelW*.6,490*scale);
-    drawPill(ctx,{text:copy.cta,x:midX-buttonW/2,y:buttonTop,
-      w:buttonW,h:buttonH,scale,language:scriptOf(copy.cta,copy.language),preset:p});
+    drawPill(ctx,{text:copy.cta,
+      x:side+(panelW-buttonW)/2,y:layout.ctaY,w:buttonW,
+      h:layout.ctaHeight,scale,language:scriptOf(copy.cta,copy.language),preset:p});
   }
-  if(contactRows){
-    ctx.save();ctx.lineWidth=Math.max(1,scale);
+  if(contactRows&&layout.contactsY!==null&&layout.dividerY!==null){
+    ctx.save();
+    ctx.lineWidth=Math.max(1,scale);
     ctx.strokeStyle=p.palette.glassBorder;
-    ctx.beginPath();ctx.moveTo(inner,contactTop-19*scale);
-    ctx.lineTo(side+panelW-35*scale,contactTop-19*scale);ctx.stroke();ctx.restore();
-    drawContacts(ctx,{copy,x:inner,y:contactTop,width:insideWidth,
-      height:contactArea,scale,preset:p,lang:copy.language});
+    ctx.beginPath();ctx.moveTo(inner,layout.dividerY);
+    ctx.lineTo(side+panelW-inset,layout.dividerY);ctx.stroke();ctx.restore();
+    drawContacts(ctx,{copy,x:inner,y:layout.contactsY,width:insideWidth,
+      height:layout.contactsHeight,scale,preset:p,lang:copy.language});
   }
 }
 function renderWide(ctx:Ctx,copy:ExactPosterCopy,p:PremiumPosterPreset){
