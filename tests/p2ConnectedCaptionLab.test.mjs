@@ -51,15 +51,15 @@ test('tri-lingual previews support Facebook Instagram WhatsApp, read more and hu
   assert.deepEqual(PLATFORMS,['facebook','instagram','whatsapp']);
   assert.deepEqual(ANGLES,['hook','story','short']);
   assert.equal(GOALS.length,5);
-  assert.equal(page.includes('Social preview · Just now · Not published'),true);
+  assert.equal(page.includes('Live social preview · Not published'),true);
   assert.match(page,/chosenLanguages\.map/);
   assert.match(page,/All 3 Combined/);
   assert.match(page,/previewFold\(previewText,expanded\)/);
   assert.match(page,/setExpanded\(true\)/);
   assert.match(page,/updateAngle\(activePreviewLanguage,e\.target\.value\)/);
   assert.match(page,/aria-label="Live Social Preview"/);
-  assert.match(page,/Mockup only/);
-  assert.match(page,/No poster linked · captions work independently/);
+  assert.match(page,/Not published/);
+  assert.match(page,/Attach your creative/);
   const fold=previewFold('A'.repeat(240),false);
   assert.equal(fold.folded,true);
   assert.equal(previewFold('A'.repeat(240),true).folded,false);
@@ -192,4 +192,50 @@ test('Campaign Planner saves tri-language caption bundle and displays same-devic
   assert.match(linked,/on this device/);
   assert.doesNotMatch(linked,/supabase\.storage|storage\.from/);
   assert.match(page,/Linked PNG remains on this device/);
+});
+
+test('Enterprise polish keeps credit and preview truth in Info while removing developer banners',()=>{
+  for(const text of [
+    'Brief preview only — no AI caption generated yet',
+    'Approximate read-more fold, not the exact Facebook/Instagram truncation algorithm.',
+    'Real AI requires the enabled, credit-reserved Caption service.',
+    'Linked PNG remains on this device until secure cloud asset storage is configured',
+  ])assert.equal(page.includes(text),false,text);
+  assert.match(page,/<summary[^>]*>.*?<Info size=\{13\}\/?> Info<\/summary>/s);
+  assert.match(page,/One provider request and applicable credit reservation per selected language/);
+  assert.match(page,/Nothing is automatically published/);
+  assert.match(page,/Linked PNG remains on this device/);
+});
+test('Primary CTA appears ahead of secondary brief tools and has accessible disabled contrast',()=>{
+  const cta=page.indexOf('Generate Caption Variations');
+  const chips=page.indexOf('Quick brief suggestions');
+  const terms=page.indexOf('Offer terms & CTA');
+  assert.ok(cta>0&&chips>cta&&terms>chips);
+  assert.match(page,/disabled:border-\[#E5E7EB\] disabled:bg-\[#F3F4F6\] disabled:text-\[#9CA3AF\]/);
+  assert.match(page,/rows=\{3\} maxLength=\{600\}/);
+});
+test('Sticky preview has a real local asset picker, drop input and interactive metrics',()=>{
+  assert.match(page,/xl:sticky xl:top-6/);
+  assert.match(page,/xl:max-h-\[calc\(100dvh-3rem\)\]/);
+  assert.match(page,/listLinkedPosters\(businessId\)/);
+  assert.match(page,/posterChoices\.map/);
+  assert.match(page,/posterThumbnails\[item\.id\]/);
+  assert.match(page,/imageFileToPng\(file\)/);
+  assert.match(page,/onDrop=\{e=>\{e\.preventDefault\(\)/);
+  assert.match(page,/accept="image\/png,image\/jpeg,image\/webp"/);
+  assert.match(page,/aria-label="Character and hook meter"/);
+  assert.match(page,/Suggested hook ≤ 125/);
+  assert.match(page,/DRAFT_TARGETS/);
+  assert.match(page,/aria-valuenow=\{Math\.min\(characterCount,draftTarget\)\}/);
+  assert.match(page,/disabled:bg-\[#F3F4F6\]/);
+  const store=read('lib/marketing/caption-poster-handoff.ts');
+  assert.match(store,/export async function listLinkedPosters\(businessId:string\)/);
+  assert.match(store,/item\.context\.businessId===businessId/);
+  assert.match(store,/source:context\.source==='device_upload'/);
+  assert.doesNotMatch(store,/cloudinary|supabase\.storage/);
+});
+test('Three angle cards are compact and remain readable without hiding available choices',()=>{
+  assert.match(page,/ANGLES\.map\(\(a,i\)=>/);
+  assert.match(page,/border px-2\.5 py-2 text-left transition/);
+  assert.match(page,/line-clamp-1 pl-8/);
 });
