@@ -30,7 +30,7 @@ type ApiBody={error?:string;draft?:StoredDraft;drafts?:StoredDraft[];chargedCred
 const uuid=/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i;
 const field='w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-3 text-[12px] text-[#1F2937] outline-none transition focus:border-[#FB923C] focus:ring-2 focus:ring-[#F97316]/10';
 const panel='min-w-0 rounded-2xl border border-[#E5E7EB] bg-white shadow-[0_7px_24px_rgba(17,24,39,.035)]';
-const tab='rounded-lg border px-3 py-2 text-[11px] font-semibold transition-colors';
+const tab='rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold transition-colors';
 const textFont=(lang:CaptionLanguage)=>lang==='ta'?'slbi-caption-tamil':
   lang==='si'?'slbi-caption-sinhala':'slbi-caption-english';
 const short=(value:string,max=600)=>value.trim().slice(0,max);
@@ -451,11 +451,14 @@ export default function ConnectedCaptionLab(){
       </div>
     </header>
     {error&&<div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-800">{error}</div>}
-    {notice&&<div role="status" className="rounded-xl border border-[#FED7AA] bg-[#FFF7ED] p-3 text-xs text-[#92400E]">{notice}</div>}
+    {notice&&<div role="status" className="flex items-center gap-2 rounded-lg border border-[#FED7AA] bg-[#FFF7ED] px-3 py-2 text-[11px] font-medium text-[#92400E]"><CheckCircle2 size={14} className="shrink-0"/>{notice}</div>}
+    <input ref={posterInputRef} type="file" accept="image/png,image/jpeg,image/webp"
+      tabIndex={-1} className="sr-only" aria-label="Upload a local poster image"
+      onChange={e=>{void uploadDevicePoster(e.currentTarget.files?.[0]);e.currentTarget.value='';}}/>
     <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,30fr)_minmax(0,42fr)_minmax(0,28fr)]">
       {/* 01 / Campaign Brief — same mental model as Poster Studio */}
-      <section aria-label="Campaign Brief" className={panel+' space-y-4 p-4'}>
-        <div className="flex items-center gap-2 border-b border-[#F0F0F2] pb-3">
+      <section aria-label="Campaign Brief" className={panel+' space-y-3 p-3 sm:p-3.5'}>
+        <div className="flex items-center gap-2 border-b border-[#F0F0F2] pb-2">
           <span className="rounded-lg bg-[#FFF1E6] px-2 py-1 text-[11px] font-black text-[#EA580C]">01</span>
           <h2 className="slbi-section-title text-[15px]">Campaign Brief</h2>
           <span className="ml-auto text-[10px] text-[#9CA3AF]">Input</span>
@@ -468,24 +471,48 @@ export default function ConnectedCaptionLab(){
           </select>
         </label>
         {selected&&<p className="text-[10px] text-[#6B7280]">{selected.category} · {selected.city||'Sri Lanka'}</p>}
-        <div className="rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-3">
-          <div className="mb-2 flex items-center justify-between gap-2">
-            <span className="text-[11px] font-bold">Linked Poster <span className="font-normal text-[#9CA3AF]">(optional)</span></span>
-            {hasLinked&&<span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#059669]"><Check size={12}/> Linked</span>}
+        <div className="flex min-h-11 items-center justify-between gap-2 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-2">
+          <div className="flex min-w-0 items-center gap-2">
+            {hasLinked&&posterUrl?
+              <img src={posterUrl} alt="Attached poster" className="h-9 w-8 shrink-0 rounded border border-[#E5E7EB] object-cover"/>:
+              <ImageIcon size={17} className="shrink-0 text-[#6B7280]"/>}
+            <span className="truncate text-[11px] font-semibold text-[#374151]">
+              {hasLinked?(linked?.context.source==='device_upload'?'Image attached':'Studio poster linked'):'Poster (optional)'}
+            </span>
           </div>
-          {hasLinked&&posterUrl?<div className="flex items-center gap-3">
-            <img alt="Actual poster linked from AI Poster Studio" src={posterUrl}
-              className="h-24 w-[70px] shrink-0 rounded-lg border border-[#E5E7EB] bg-white object-contain"/>
-            <div className="min-w-0 space-y-1">
-              <p className="truncate text-[11px] font-extrabold">{linked?.context.headline}</p>
-              <p className="text-[10px] leading-4 text-[#6B7280]">Linked from Poster Studio · {linked?.context.sample?'No-credit sample':'Export-quality PNG'}</p>
-              <button type="button" onClick={downloadPoster}
-                className="inline-flex items-center gap-1 text-[10px] font-bold text-[#C2410C]"><Download size={12}/> Save image</button>
-            </div>
-          </div>:<div className="flex items-center gap-2 py-2 text-[11px] leading-5 text-[#9CA3AF]">
-            <ImageIcon size={18}/><span>Start here or continue from a completed Poster Studio PNG.</span>
-          </div>}
+          <button type="button" disabled={posterBusy||!businessId} onClick={()=>void pickPoster()}
+            className="inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-semibold text-[#C2410C] hover:bg-[#FFEDD5] disabled:opacity-45">
+            <Plus size={13}/>{hasLinked?'Change':'Attach'}
+          </button>
         </div>
+        {posterPickerOpen&&<div className="space-y-2 rounded-xl border border-[#FED7AA] bg-white p-2.5 shadow-sm">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[11px] font-bold text-[#111827]">Choose your poster</span>
+            <button type="button" onClick={()=>setPosterPickerOpen(false)}
+              className="text-[11px] font-semibold text-[#6B7280] hover:text-[#111827]">Close</button>
+          </div>
+          {posterChoices.length>0&&<div className="grid grid-cols-3 gap-2">
+            {posterChoices.map(item=><button key={item.id} type="button"
+              onClick={()=>selectRecentPoster(item)} title={item.context.headline||'Recent Studio poster'}
+              className="flex min-w-0 flex-col items-center gap-1 rounded-lg border border-[#E5E7EB] p-1.5 hover:border-[#F97316]">
+              <span className="flex h-12 w-full items-center justify-center rounded bg-[#F9FAFB]"><ImageIcon size={18}/></span>
+              <span className="max-w-full truncate text-[10px] font-medium">{item.context.headline||'Studio design'}</span>
+            </button>)}
+          </div>}
+          <div className="grid grid-cols-2 gap-2">
+            <button type="button" onClick={()=>posterInputRef.current?.click()} disabled={posterBusy}
+              className="flex items-center justify-center gap-1 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-2 py-2 text-[11px] font-semibold text-[#111827] hover:bg-[#F3F4F6]">
+              <Plus size={13}/> Upload image
+            </button>
+            <Link href="/vendor/marketing/design/puter-lab"
+              className="flex items-center justify-center gap-1 rounded-lg border border-[#F97316] px-2 py-2 text-[11px] font-semibold text-[#C2410C] hover:bg-[#FFF7ED]">
+              Open Studio <ArrowRight size={12}/>
+            </Link>
+          </div>
+          <p className="text-[10px] leading-4 text-[#6B7280]">
+            Recent Studio designs appear here when saved on this device. PNG, JPG or WebP uploads supported.
+          </p>
+        </div>}
         <div>
           <p className="mb-2 text-[11px] font-bold text-[#374151]">Campaign Goal / Angle</p>
           <div className="flex flex-wrap gap-1.5">
@@ -530,36 +557,47 @@ export default function ConnectedCaptionLab(){
               </button>
             </div>
           </div>
-          <textarea id="caption-brief" rows={4} maxLength={600} value={message}
+          <textarea id="caption-brief" rows={3} maxLength={600} value={message}
             onChange={e=>setMessage(e.target.value)}
             className={field+' resize-y leading-6'}
             placeholder="Tell us your real offer, product or campaign in தமிழ், සිංහල, English or Tanglish."/>
-          <p className="mt-1 text-[10px] text-[#9CA3AF]">Only verified facts. Voice transcript stays editable before AI generation.</p>
-          <div className="mt-2 flex flex-wrap gap-1.5">
+          <p className="mt-1 text-[10px] text-[#6B7280]">Add your offer, key details or record a voice brief.</p>
+                <button type="button" onClick={()=>void generate()}
+          disabled={!businessId||message.trim().length<5||isBusy}
+          className="group flex w-full items-center justify-center gap-2 rounded-xl border border-[#111827] bg-[#111827] px-3 py-3 text-[12px] font-bold text-white shadow-sm transition-colors hover:bg-[#292F3D] disabled:cursor-not-allowed disabled:border-[#E5E7EB] disabled:bg-[#F3F4F6] disabled:text-[#9CA3AF] disabled:shadow-none">
+          {busy?<LoaderCircle size={17} className="animate-spin"/>:<WandSparkles size={17} className="text-[#FDBA74] group-disabled:text-[#9CA3AF]"/>}
+          {busy?'Generating drafts…':'Generate Caption Variations'} <ArrowRight size={14}/>
+        </button>
+        <div className="flex items-center justify-between gap-2 text-[10px] text-[#6B7280]">
+          <span>{chosenLanguages.length} {chosenLanguages.length===1?'language':'languages'} selected · Credits apply on Generate</span>
+          <details className="group relative">
+            <summary className="flex cursor-pointer list-none items-center gap-1 font-semibold text-[#C2410C]"><Info size={13}/> Info</summary>
+            <div className="absolute right-0 top-6 z-30 w-64 rounded-xl border border-[#E5E7EB] bg-white p-3 text-[11px] leading-5 text-[#374151] shadow-xl">
+              <p>One provider request and applicable credit reservation per selected language; never auto-charged on page open.</p>
+              <p className="mt-2">Linked PNG remains on this device for up to two hours; saving to Campaign Planner stores captions, not a cloud copy of your image.</p>
+              <p className="mt-2">Social previews are visual estimates. Nothing is automatically published.</p>
+            </div>
+          </details>
+        </div>
+
+          <details className="mt-2 rounded-lg border border-[#E5E7EB] p-2">
+            <summary className="cursor-pointer text-[11px] font-semibold text-[#6B7280]">Quick brief suggestions</summary>
+            <div className="mt-2 flex flex-wrap gap-1.5">
             {promptChips.map(chip=><button key={chip.label} type="button"
               onClick={()=>setMessage(previous=>[previous,chip.text].filter(Boolean).join(' ').slice(0,600))}
               disabled={isBusy}
               className="rounded-full border border-[#E5E7EB] px-2.5 py-1.5 text-[10px] font-semibold text-[#6B7280] hover:bg-[#FFF7ED]">
               + {chip.label}</button>)}
-          </div>
+            </div>
+          </details>
         </div>
-        <details className="rounded-xl border border-[#E5E7EB] p-3">
+        <details className="rounded-xl border border-[#E5E7EB] p-2.5">
           <summary className="cursor-pointer text-[11px] font-bold">Offer terms & CTA <span className="font-normal text-[#9CA3AF]">(optional)</span></summary>
           <textarea rows={2} maxLength={300} value={conditions} onChange={e=>setConditions(e.target.value)}
             placeholder="Only genuine terms or valid dates" className={field+' mt-3'}/>
           <input maxLength={180} value={cta} onChange={e=>setCta(e.target.value)}
             placeholder="Contact us for more details" className={field+' mt-2'}/>
         </details>
-        <button type="button" onClick={()=>void generate()}
-          disabled={!businessId||message.trim().length<5||isBusy}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#111827] px-4 py-3.5 text-[12px] font-extrabold text-white hover:bg-[#292F3D] disabled:cursor-not-allowed disabled:opacity-40">
-          {busy?<LoaderCircle size={17} className="animate-spin"/>:<WandSparkles size={17} className="text-[#FDBA74]"/>}
-          {busy?'Generating reviewed drafts…':'Generate Caption Variations'} <ArrowRight size={14}/>
-        </button>
-        <p className="text-[10px] leading-5 text-[#6B7280]">
-          <ShieldCheck size={12} className="mr-1 inline"/>
-          Real AI requires the enabled, credit-reserved Caption service. One provider request and applicable credit reservation per selected language; never auto-charged on page open.
-        </p>
       </section>
 
       {/* 02 / Live Social Preview */}
