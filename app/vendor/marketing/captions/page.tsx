@@ -106,6 +106,7 @@ export default function ConnectedCaptionLab(){
   const [saving,setSaving]=useState(false);
   const [recording,setRecording]=useState(false);
   const [voiceBusy,setVoiceBusy]=useState(false);
+  const [micHelp,setMicHelp]=useState(false);
   const [error,setError]=useState('');
   const [notice,setNotice]=useState('');
   const [generatedLanguages,setGeneratedLanguages]=useState<CaptionLanguage[]>([]);
@@ -288,9 +289,23 @@ export default function ConnectedCaptionLab(){
     if(voiceBusy||recording)return;
     setError('');
     try{
-      if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined')
-        throw Error('This browser does not support microphone recording.');
+      if(typeof window==='undefined'||!window.isSecureContext||
+        !navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined')
+        throw Error('Microphone recording requires HTTPS and a supported browser.');
+      const permissionDoc=document as Document&{
+        permissionsPolicy?:{allowsFeature:(name:string)=>boolean};
+        featurePolicy?:{allowsFeature:(name:string)=>boolean};
+      };
+      const allowed=permissionDoc.permissionsPolicy?.allowsFeature('microphone') ??
+        permissionDoc.featurePolicy?.allowsFeature('microphone');
+      if(allowed===false){
+        setMicHelp(true);
+        throw Error('Microphone is blocked by the browser policy. Reload this page and retry.');
+      }
+      // This user click directly requests browser permission. Browser-denied
+      // permissions cannot be reopened programmatically after a saved Block.
       const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+      setMicHelp(false);
       streamRef.current=stream;
       const preferred=['audio/webm;codecs=opus','audio/webm','audio/mp4'];
       const mime=preferred.find(t=>MediaRecorder.isTypeSupported(t));
@@ -301,10 +316,24 @@ export default function ConnectedCaptionLab(){
         setRecording(false);
         const blob=new Blob(chunks,{type:recorder.mimeType||'audio/webm'});
         stream.getTracks().forEach(t=>t.stop());streamRef.current=null;
-        void transcribe(blob);
+        recorderRef.current=null;
+        if(blob.size)void transcribe(blob);
+      };
+      recorder.onerror=()=>{
+        setError('Microphone stopped unexpectedly. Check your recording device.');
+        recorderRef.current=null;setRecording(false);
+        stream.getTracks().forEach(t=>t.stop());streamRef.current=null;
       };
       recorderRef.current=recorder;recorder.start(250);setRecording(true);
-    }catch(e){setError(e instanceof Error?e.message:'Microphone permission was denied.');}
+    }catch(e){
+      const name=e instanceof Error?e.name:'';
+      if(name==='NotAllowedError'||name==='SecurityError'){
+        setMicHelp(true);
+        setError('Microphone permission is blocked. Allow it in browser Site settings, then click Retry microphone.');
+      }else{
+        setError(e instanceof Error?e.message:'Could not open microphone. Check your recording device.');
+      }
+    }
   };
   const stopVoice=()=>{
     if(recorderRef.current?.state==='recording')recorderRef.current.stop();
@@ -612,7 +641,7 @@ export default function ConnectedCaptionLab(){
           <div className="mb-2 flex items-center justify-between gap-2">
             <label htmlFor="caption-brief" className="text-[11px] font-bold text-[#374151]">Campaign Message</label>
             <div className="flex items-center gap-1">
-              <button type="button" disabled={isBusy||!businessId}
+              <button type="button" disabled={busy||voiceBusy||saving||posterBusy||!businessId}
                 onClick={()=>recording?stopVoice():void startVoice()}
                 className={'inline-flex items-center gap-1 rounded-lg border px-2 py-1.5 text-[10px] font-bold disabled:opacity-40 '+
                   (recording?'border-red-200 bg-red-50 text-red-700':'border-[#E5E7EB] text-[#374151]')}>
@@ -621,6 +650,15 @@ export default function ConnectedCaptionLab(){
               </button>
             </div>
           </div>
+          {micHelp&&<div role="note" className="mb-2 space-y-2 rounded-lg border border-[#FED7AA] bg-[#FFF7ED] p-2.5 text-[11px] leading-5 text-[#92400E]">
+            <p className="font-semibold">Microphone access needs your browser permission.</p>
+            <p>Open the site controls beside the address bar → Site settings → Microphone → Allow. Reload this page if you previously selected Block.</p>
+            <button type="button" disabled={voiceBusy||recording}
+              onClick={()=>void startVoice()}
+              className="rounded-lg border border-[#FDBA74] bg-white px-2.5 py-1.5 font-semibold text-[#9A3412]">
+              Retry microphone
+            </button>
+          </div>}
           <textarea id="caption-brief" rows={3} maxLength={600} value={message}
             onChange={e=>setMessage(e.target.value)}
             className={field+' resize-y leading-6'}
