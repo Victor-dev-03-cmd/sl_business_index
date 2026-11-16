@@ -82,7 +82,7 @@ test('canvas composes all four exact sizes with Unicode font shaping',()=>{
   assert.match(compose,/canvas\.toBlob/);
   assert.match(compose,/image\.crossOrigin='anonymous'/);
   assert.match(compose,/exact words were NOT truncated or changed/);
-  assert.match(lab,/composeExactPoster\(\{backgroundSrc:artworkSrc,format,copy:exactCopy\}\)/);
+  assert.match(lab,/composeExactPoster\(\{backgroundSrc:artworkSrc,format,copy:exactCopy,style:selectedPremiumStyle\}\)/);
   assert.match(lab,/anchor\.download=/);
   assert.match(lab,/finalBlob/);
   assert.doesNotMatch(compose,/format==='story'.*1024x/);
@@ -190,7 +190,7 @@ test('reference images are transferred only with explicit user opt-in as PNG Blo
   assert.match(lab,/puter\.ai\.txt2img\(creative,options\)/);
   assert.match(lab,/setSendReferenceImage\(false\)/);
   assert.match(lab,/getPosterReferenceStyle\(selectedReferenceId\)/);
-  assert.match(lab,/styleDirection,briefDirection/);
+  assert.match(lab,/request:prompt\.trim\(\),styleDirection,creativeDirection:briefDirection/);
   assert.doesNotMatch(lab,/NEXT_PUBLIC_UNSPLASH_KEY|PEXELS_API_KEY|google\.com\/search/);
 });
 
@@ -219,4 +219,68 @@ test('original poster preview frame is preserved with seasonal suggestions inste
   assert.match(lab,/Browse styles/);
   assert.match(lab,/xl:grid-cols-\[minmax\(0,0\.91fr\)_minmax\(0,1\.36fr\)_minmax\(0,0\.9fr\)\]/);
   assert.match(lab,/Editing headline, offer, CTA, contact visibility or size rebuilds the PNG locally/);
+});
+
+
+test('owner-provided Halloween font, effects and exact color tokens are preserved',()=>{
+  const p=read('lib/marketing/poster-premium-presets.ts');
+  const css=read('app/vendor/marketing/design/puter-lab/typography.css');
+  for(const color of ['#07070C','#18082E','#FF5E00','#FF8A00','#8A2BE2','#FFFFFF','#B8B8C7']){
+    assert.ok(p.includes(color),'palette color '+color);
+  }
+  for(const font of ['Anton','Bebas Neue','Space Grotesk','Plus Jakarta Sans','Inter','JetBrains Mono']){
+    assert.ok(p.includes(font),'design font '+font);
+    assert.ok(css.includes(font),'loaded font '+font);
+  }
+  assert.match(p,/glass:'rgba\(18, 16, 28, 0\.72\)'/);
+  assert.match(p,/glassBorder:'rgba\(255, 255, 255, 0\.14\)'/);
+  assert.match(p,/storyDisplaySize:readonly \[180,220\]/);
+  assert.match(p,/storyBrandSize:36;storyOfferSize:84/);
+  assert.match(p,/storyServiceSize:32;storyButtonSize:28;storyFooterSize:24/);
+  assert.match(p,/glassBlur:24;glassRadius:32;glassBorderWidth:1\.5/);
+  assert.match(p,/displayTracking:-0\.02;displayLineHeight:0\.9/);
+  assert.match(css,/backdrop-filter:blur\(24px\)/);
+  assert.match(css,/border-radius:32px/);
+  assert.match(css,/linear-gradient\(90deg,#FF5E00 0%,#FF8A00 100%\)/);
+  assert.match(css,/text-shadow:0 0 28px rgba\(255,94,0,\.65\)/);
+});
+test('premium Canvas renderer draws fonts, glass, CTA, and icon contact rows into exported PNG',()=>{
+  const premium=read('lib/marketing/puter-premium-poster-renderer.ts');
+  assert.match(premium,/export function renderPremiumPoster/);
+  assert.match(compose,/renderPremiumPoster\(\{ctx,image:img,format:input\.format,copy:input\.copy,style:input\.style\}\)/);
+  assert.match(premium,/ctx\.filter='blur\('/);
+  assert.match(premium,/rgba\(255,94,0,\.55\)/);
+  assert.match(premium,/role:'display'/);
+  assert.match(premium,/role:'offer'/);
+  assert.match(premium,/drawPill/);
+  assert.match(premium,/contactIcon/);
+  assert.match(premium,/kind:'mail'/);
+  assert.match(premium,/kind:'phone'/);
+  assert.match(premium,/kind:'globe'/);
+  assert.match(premium,/ctx\.fillText/);
+  assert.match(premium,/ctx\.canvas\.width/);
+  assert.match(premium,/copy\.email\?\.trim\(\)/);
+  assert.match(premium,/spelling and content were not changed/);
+  assert.match(lab,/email:showEmail\?facts\.email:''/);
+  assert.match(lab,/Verified business email/);
+  assert.match(lab,/Premium typography preset/);
+  assert.match(lab,/typographyPreset\.label/);
+  assert.doesNotMatch(premium,/puter\.ai|GEMINI_API_KEY|fetch\(/);
+});
+test('user requirements win over season and Gemini style, with no model-drawn fake text',()=>{
+  const p=read('lib/marketing/poster-premium-presets.ts');
+  assert.match(compose,/HIGHEST PRIORITY — USER REQUIREMENTS/);
+  assert.match(compose,/SECOND PRIORITY — OUTPUT COMPOSITION/);
+  assert.match(compose,/THIRD PRIORITY — STYLE INSPIRATION ONLY/);
+  assert.match(compose,/FOURTH PRIORITY — OPTIONAL GEMINI CREATIVE SUGGESTION/);
+  assert.ok(compose.indexOf('short(input.request,1200)')<compose.indexOf("short(input.styleDirection||'',700)"));
+  assert.match(compose,/No extra pumpkins, moons, trees, fireworks/);
+  assert.match(p,/If the owner requested a specific hero/);
+  assert.match(compose,/no AI-generated words, letters, numerals/);
+  assert.match(lab,/request:prompt\.trim\(\),styleDirection,creativeDirection:briefDirection/);
+  assert.match(lab,/setBrief\(null\);setBriefKey\(''\)/);
+});
+test('reuse Puter login in active SDK session rather than presenting popup every generation',()=>{
+  assert.match(lab,/auth:\{signIn:\(\)=>Promise<unknown>;isSignedIn:\(\)=>boolean\}/);
+  assert.match(lab,/if\(!puter\.auth\.isSignedIn\(\)\)await puter\.auth\.signIn\(\)/);
 });
