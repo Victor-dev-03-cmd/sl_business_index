@@ -27,7 +27,7 @@ export default function BrandLogo({
         className="h-[42px] w-[42px] shrink-0 sm:h-12 sm:w-12"
         unoptimized
       />
-      <span className="flex min-w-0 flex-col justify-center" style={{ fontFamily: "var(--font-manrope), var(--font-inter), sans-serif" }}>
+      <span className="flex min-w-0 flex-col justify-center font-sans">
         <span className={`block whitespace-nowrap text-[15px] font-extrabold leading-[1.17] tracking-[-0.065em] sm:text-[18px] ${inverse ? "text-[#F9F7EF]" : "text-[#1B3430]"}`}>
           SL Business
         </span>
