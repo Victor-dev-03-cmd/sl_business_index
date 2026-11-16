@@ -1,0 +1,25 @@
+.puter-loader-grid {
+  background-image:linear-gradient(to right,rgba(255,255,255,.2) 1px,transparent 1px),
+    linear-gradient(to bottom,rgba(255,255,255,.2) 1px,transparent 1px);
+  background-size:32px 32px;
+  mask-image:linear-gradient(to bottom,transparent,black 25%,black 75%,transparent);
+}
+.puter-loader-shine{animation:puter-image-scan 2.8s ease-in-out infinite;}
+.puter-loader-aurora{animation:puter-soft-float 5s ease-in-out infinite;}
+.puter-loader-delay{animation-delay:-2.5s;}
+.puter-loader-spark{animation:puter-soft-spark 2.2s ease-in-out infinite;}
+@keyframes puter-image-scan {
+  from{transform:translateX(-120%);}
+  55%,to{transform:translateX(130%);}
+}
+@keyframes puter-soft-float {
+  0%,100%{transform:translate(0,0) scale(1);opacity:.55}
+  50%{transform:translate(8%,7%) scale(1.18);opacity:1}
+}
+@keyframes puter-soft-spark {
+  0%,100%{transform:scale(.92) rotate(-8deg);opacity:.75}
+  50%{transform:scale(1.11) rotate(8deg);opacity:1}
+}
+@media(prefers-reduced-motion:reduce){
+ .puter-loader-shine,.puter-loader-aurora,.puter-loader-spark{animation:none!important;}
+}

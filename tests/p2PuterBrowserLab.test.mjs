@@ -152,3 +152,71 @@ test('UI-only compact redesign preserves voice, Gemini, paid consent and exact P
   assert.match(lab,/anchor\.download=/);
   assert.match(lab,/dimensions\.width\} × \{dimensions\.height\}/);
 });
+
+
+test('seasonal references are original local SVG mini artworks, not scraped public images',()=>{
+  const library=read('lib/marketing/poster-reference-library.ts');
+  const gallery=read('app/vendor/marketing/design/puter-lab/PuterReferenceGallery.tsx');
+  for(const key of ['christmas','newyear','pongal','avurudu','deepavali','halloween','flash','tech','luxury']){
+    const svg=read('public/poster-references/'+key+'.svg');
+    assert.match(svg,/^<svg /);
+    assert.match(svg,/viewBox="0 0 320 256"/);
+    assert.doesNotMatch(svg.replace('http://www.w3.org/2000/svg',''),/<image\b|<script\b|http:|https:/);
+    assert.match(library,new RegExp("id:'"+key+"'"));
+    assert.match(library,new RegExp("/poster-references/"+key+"\\.svg"));
+  }
+  assert.match(library,/timeZone:'Asia\/Colombo'/);
+  assert.match(library,/v\.months\.includes\(month\)\?0:v\.months\.includes\(next\)\?1/);
+  assert.match(library,/id:'christmas'.*months:\[11,12\]/);
+  assert.match(library,/id:'newyear'.*months:\[12,1\]/);
+  assert.match(library,/id:'pongal'.*months:\[1\]/);
+  assert.match(library,/id:'avurudu'.*months:\[4\]/);
+  assert.match(gallery,/type="button"/); // Accessible native buttons
+  assert.match(gallery,/aria-pressed=\{selected\}/);
+  assert.match(gallery,/onChoose\(style\)/);
+  assert.match(gallery,/showAll\?POSTER_REFERENCE_STYLES:suggestedPosterStyles\(new Date\(\)\)/);
+  assert.doesNotMatch(gallery,/images\.unsplash\.com|images\.pexels\.com|google\.com\/search/);
+});
+
+test('reference images are transferred only with explicit user opt-in as PNG Blobs',()=>{
+  const library=read('lib/marketing/poster-reference-library.ts');
+  assert.match(library,/originalReferencePng\(thumbnail:string\)/);
+  assert.match(library,/\^\\\/poster-references\\\//);
+  assert.match(library,/canvas\.toBlob/);
+  assert.match(library,/return await new Promise<Blob>/);
+  assert.match(lab,/const \[sendReferenceImage,setSendReferenceImage\]=useState\(false\)/);
+  assert.match(lab,/if\(sendReferenceImage&&selectedReference\)/);
+  assert.match(lab,/options\.input_images=\[await originalReferencePng\(selectedReference\.thumbnail\)\]/);
+  assert.match(lab,/puter\.ai\.txt2img\(creative,options\)/);
+  assert.match(lab,/setSendReferenceImage\(false\)/);
+  assert.match(lab,/getPosterReferenceStyle\(selectedReferenceId\)/);
+  assert.match(lab,/styleDirection,briefDirection/);
+  assert.doesNotMatch(lab,/NEXT_PUBLIC_UNSPLASH_KEY|PEXELS_API_KEY|google\.com\/search/);
+});
+
+test('estimated loading animation never claims actual provider progress or 100 early',()=>{
+  const motion=read('app/vendor/marketing/design/puter-lab/PuterGenerationMotion.tsx');
+  const motionCss=read('app/vendor/marketing/design/puter-lab/loading-motion.css');
+  assert.match(lab,/Math\.min\(89,value\+\(value<65\?3:1\)\)/);
+  assert.match(lab,/setEstimatedProgress\(94\)/);
+  assert.match(lab,/setEstimatedProgress\(100\);setGenerationStage\('ready'\)/);
+  assert.match(lab,/<PuterGenerationMotion/);
+  assert.match(motion,/percentage is estimated/);
+  assert.match(motion,/aria-valuenow=\{progress\}/);
+  assert.match(motion,/progress\}%/);
+  assert.match(motion,/relative aspect-\[4\/5\]/);
+  assert.match(motionCss,/@media\(prefers-reduced-motion:reduce\)/);
+  assert.match(motionCss,/@keyframes puter-image-scan/);
+  assert.doesNotMatch(motion,/100% completed before model response|true API progress/);
+});
+
+test('original poster preview frame is preserved with seasonal suggestions instead of empty state',()=>{
+  assert.match(lab,/<PuterReferenceGallery/);
+  assert.match(lab,/chosen=\{selectedReferenceId\}/);
+  assert.match(lab,/onChoose=\{chooseReference\}/);
+  assert.match(lab,/finalUrl&&!browseReferences/);
+  assert.match(lab,/setBrowseReferences\(false\)/);
+  assert.match(lab,/Browse styles/);
+  assert.match(lab,/xl:grid-cols-\[minmax\(0,0\.91fr\)_minmax\(0,1\.36fr\)_minmax\(0,0\.9fr\)\]/);
+  assert.match(lab,/Editing headline, offer, CTA, contact visibility or size rebuilds the PNG locally/);
+});

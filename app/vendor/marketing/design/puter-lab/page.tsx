@@ -1,12 +1,19 @@
 'use client';
 /* eslint-disable @next/next/no-img-element */
 import './typography.css';
+import './loading-motion.css';
+import PuterReferenceGallery from './PuterReferenceGallery';
+import PuterGenerationMotion,{type PosterGenerationStage} from './PuterGenerationMotion';
 import PuterCompactFormatSelector from './PuterCompactFormatSelector';
+import {
+  getPosterReferenceStyle,originalReferencePng,
+  type PosterReferenceStyle,type PosterStyleId,
+} from '@/lib/marketing/poster-reference-library';
 import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import Link from 'next/link';
 import Script from 'next/script';
 import {
-  ArrowLeft,CheckCircle2,Download,FlaskConical,Image as ImageIcon,
+  ArrowLeft,CheckCircle2,Download,FlaskConical,
   LoaderCircle,Mic,ShieldCheck,SquarePen,StopCircle,WandSparkles,
 } from 'lucide-react';
 import {POSTER_FORMATS,type PosterFormat} from '@/lib/marketing/poster-design';
@@ -18,7 +25,7 @@ import type {PosterBusinessFacts,PosterIntelligenceBrief} from '@/lib/marketing/
 
 type PuterClient={
   auth:{signIn:()=>Promise<unknown>};
-  ai:{txt2img:(prompt:string,options:{model:string;test_mode:boolean;ratio?:{w:number;h:number}})=>Promise<HTMLImageElement>};
+  ai:{txt2img:(prompt:string,options:{model:string;test_mode:boolean;ratio?:{w:number;h:number};input_images?:Blob[]})=>Promise<HTMLImageElement>};
 };
 declare global {interface Window {puter?:PuterClient;}}
 type OwnedBusiness={id:string;name:string;facts:PosterBusinessFacts};
@@ -45,6 +52,13 @@ function ratioFor(format:PosterFormat):{w:number;h:number}{
 
 export default function PuterMultilingualPosterLab(){
   const [sdkReady,setSdkReady]=useState(false);
+  const [selectedReferenceId,setSelectedReferenceId]=useState<PosterStyleId|null>(null);
+  const [sendReferenceImage,setSendReferenceImage]=useState(false);
+  const [browseAllStyles,setBrowseAllStyles]=useState(false);
+  const [browseReferences,setBrowseReferences]=useState(true);
+  const [generationStage,setGenerationStage]=useState<PosterGenerationStage>('idle');
+  const [estimatedProgress,setEstimatedProgress]=useState(0);
+  const [imageRevision,setImageRevision]=useState(0);
   const [businesses,setBusinesses]=useState<OwnedBusiness[]>([]);
   const [businessId,setBusinessId]=useState('');
   const [loadingBusiness,setLoadingBusiness]=useState(true);
@@ -79,11 +93,32 @@ export default function PuterMultilingualPosterLab(){
   const streamRef=useRef<MediaStream|null>(null);
   const clockRef=useRef<ReturnType<typeof setInterval>|null>(null);
   const finalUrlRef=useRef('');
+  const selectedReference=getPosterReferenceStyle(selectedReferenceId);
   const business=businesses.find(b=>b.id===businessId);
   const facts=business?.facts;
   const currentKey=businessId+'|'+language+'|'+prompt.trim();
   const currentBrief=brief&&briefKey===currentKey?brief:null;
   const dimensions=POSTER_FORMATS[format];
+
+  // The provider has no progress callbacks. This is deliberately displayed
+  // as an ESTIMATE, capped below 100 until a real PNG Blob is composed.
+  useEffect(()=>{
+    if(generationStage!=='artwork')return;
+    const timer=setInterval(()=>setEstimatedProgress(value=>Math.min(89,value+(value<65?3:1))),900);
+    return()=>clearInterval(timer);
+  },[generationStage]);
+
+  const chooseReference=(reference:PosterReferenceStyle)=>{
+    setSelectedReferenceId(reference.id);
+    setSendReferenceImage(false);
+    if(prompt===samplePrompt||!prompt.trim()){
+      setPrompt('Create a premium '+reference.name+' visual campaign for my selected business. Modern, tasteful, professional quality.');
+      setBrief(null);setBriefKey('');
+    }
+    if(!manualHeadline&&(headline==='Deepavali Special'||!headline.trim()))
+      setHeadline(reference.name+' Special');
+    setStatus(reference.name+' selected. The look is applied on your NEXT Generate; no paid AI call happened.');
+  };
 
   const stopVoice=useCallback(()=>{
     if(clockRef.current){clearInterval(clockRef.current);clockRef.current=null;}
@@ -125,7 +160,7 @@ export default function PuterMultilingualPosterLab(){
   useEffect(()=>{
     if(!artworkSrc||!exactCopy)return;
     let cancelled=false;
-    setComposing(true);setError('');
+    setComposing(true);setGenerationStage('typography');setEstimatedProgress(94);setError('');
     const timeout=setTimeout(()=>{
       void composeExactPoster({backgroundSrc:artworkSrc,format,copy:exactCopy})
         .then(blob=>{
@@ -133,15 +168,16 @@ export default function PuterMultilingualPosterLab(){
           const url=URL.createObjectURL(blob);
           if(finalUrlRef.current)URL.revokeObjectURL(finalUrlRef.current);
           finalUrlRef.current=url;setFinalBlob(blob);setFinalUrl(url);
+          setEstimatedProgress(100);setGenerationStage('ready');
           setStatus(isRealOutput?
             'Exact-text poster composed at '+dimensions.width+'×'+dimensions.height+' PNG. Ready to download.':
             'No-credit SAMPLE composed for layout testing. It does not measure model quality.');
         })
-        .catch(e=>{if(!cancelled){setFinalBlob(null);setError(errorMessage(e));}})
+        .catch(e=>{if(!cancelled){setFinalBlob(null);setGenerationStage('error');setError(errorMessage(e));}})
         .finally(()=>{if(!cancelled)setComposing(false);});
     },220);
     return()=>{cancelled=true;clearTimeout(timeout);};
-  },[artworkSrc,format,exactCopy,isRealOutput,dimensions.width,dimensions.height]);
+  },[artworkSrc,imageRevision,format,exactCopy,isRealOutput,dimensions.width,dimensions.height]);
 
   const transcribe=async(blob:Blob)=>{
     setTranscribing(true);setError('');setStatus('Gemini is transcribing your original-language voice. Please review the text.');
@@ -238,29 +274,39 @@ export default function PuterMultilingualPosterLab(){
       setError('Enter your campaign idea and an exact headline for the poster.');return;
     }
     if(realMode&&!consent){setError('Please explicitly confirm possible Puter charges.');return;}
-    setGenerating(true);setComposing(false);setError('');setStatus('Signing in to Puter and generating text-free artwork…');
+    setGenerating(true);setComposing(false);setError('');
+    setGenerationStage('connecting');setEstimatedProgress(7);
+    setStatus('Signing in to Puter and generating text-free artwork…');
     try{
       const puter=window.puter;
       await puter.auth.signIn();
+      setGenerationStage('artwork');setEstimatedProgress(18);
+      const styleDirection=selectedReference?.artDirection;
+      const briefDirection=currentBrief?.creativeDirectionEnglish;
       const creative=buildArtOnlyPrompt({
-        request:prompt.trim(),creativeDirection:currentBrief?.creativeDirectionEnglish,
+        request:prompt.trim(),creativeDirection:[styleDirection,briefDirection].filter(Boolean).join('\n')||undefined,
         businessCategory:facts.category,city:facts.city,
         brandColor:facts.primaryColor||'#F7B45C',format,
       });
-      const options:{model:string;test_mode:boolean;ratio?:{w:number;h:number}}={
+      const options:{model:string;test_mode:boolean;ratio?:{w:number;h:number};input_images?:Blob[]}={
         model,test_mode:!realMode,
       };
       // The ratio option is documented for Gemini and GPT; the other providers
       // use their default sizes and get safely cropped into exact final ratios.
       if(model.startsWith('openai/')||model.startsWith('google/'))
         options.ratio=ratioFor(format);
+      // No reference uploads by default; the user must opt in independently.
+      // Puter supports input_images for all image providers (PNG Blob).
+      if(sendReferenceImage&&selectedReference)
+        options.input_images=[await originalReferencePng(selectedReference.thumbnail)];
       const image=await puter.ai.txt2img(creative,options);
       if(!image?.src||typeof image.src!=='string')
         throw Error('Puter returned no image. No printable poster was prepared.');
-      setArtworkSrc(image.src);setIsRealOutput(realMode);
+      setArtworkSrc(image.src);setImageRevision(n=>n+1);setIsRealOutput(realMode);
+      setGenerationStage('typography');setEstimatedProgress(94);setBrowseReferences(false);
       setStatus(realMode?'Puter artwork returned. Composing exact approved copy…':
         'Puter sample returned. Composing a sample poster at exact size…');
-    }catch(e){setError(errorMessage(e));setStatus('Generation failed; previous poster remains available.');}
+    }catch(e){setGenerationStage('error');setError(errorMessage(e));setStatus('Generation failed; previous poster remains available.');}
     finally{setGenerating(false);}
   };
   const download=()=>{
@@ -408,23 +454,18 @@ export default function PuterMultilingualPosterLab(){
           </span>
         </div>
         <div className="relative flex h-[min(60dvh,620px)] min-h-[270px] flex-1 items-center justify-center overflow-hidden rounded-xl bg-[#EAE4DE] p-3 lg:h-[min(70dvh,680px)] xl:h-auto xl:min-h-0">
-          {finalUrl?<img src={finalUrl} alt="Exact composed poster with verified business facts"
+          {finalUrl&&!browseReferences?<img src={finalUrl} alt="Exact composed poster with verified business facts"
             className="block h-full w-full max-h-full max-w-full object-contain drop-shadow-[0_12px_24px_rgba(24,22,25,.17)]"
             style={{aspectRatio:dimensions.width+'/'+dimensions.height}}/>:
-          <div className="flex flex-col items-center gap-3 text-center text-[#897E77]">
-            <ImageIcon size={34}/>
-            <p className="text-[12px] font-bold">Final high-resolution poster preview</p>
-            <p className="max-w-[260px] text-[11px] leading-5">
-              Describe your campaign, approve the copy and generate artwork.
-              Your PNG always retains the selected export dimensions.
-            </p>
-          </div>}
-          {(generating||composing)&&<div className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-xl bg-white/80 backdrop-blur-sm">
-            <LoaderCircle size={25} className="animate-spin text-orange-500"/>
-            <p className="text-[11px] font-bold text-[#6E5C51]">
-              {generating?'Generating text-free artwork…':'Rendering exact typography…'}
-            </p>
-          </div>}
+          <PuterReferenceGallery
+            chosen={selectedReferenceId}
+            onChoose={chooseReference}
+            showAll={browseAllStyles}
+            onToggleAll={()=>setBrowseAllStyles(value=>!value)}/>}
+          {(generating||composing)&&<PuterGenerationMotion
+            stage={generationStage}
+            percentage={estimatedProgress}
+            reference={selectedReference}/>} 
         </div>
         <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-[#E7E1DE] pt-2.5">
           <p className="min-w-0 flex-1 text-[10px] leading-4 text-[#81736E]">
@@ -454,6 +495,25 @@ export default function PuterMultilingualPosterLab(){
               </span>
             </div>
             <PuterCompactFormatSelector selected={format} disabled={locked} onChange={setFormat}/>
+          </div>
+          <div className="space-y-2.5 border-t border-[#EEE8E5] pt-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-[11px] font-bold">Campaign reference</p>
+              <button type="button" onClick={()=>setBrowseReferences(value=>!value)}
+                disabled={generating||composing}
+                className="rounded-lg border border-[#E5D8CC] px-2 py-1 text-[10px] font-semibold text-[#8D572D] disabled:opacity-50">
+                {browseReferences&&finalUrl?'View poster':'Browse styles'}
+              </button>
+            </div>
+            <p className="text-[11px] text-[#756A65]">
+              {selectedReference?selectedReference.name+' · applied to the next generation':'Choose an example in the center to guide your next artwork.'}
+            </p>
+            {selectedReference&&<label className="flex items-start gap-2 rounded-lg bg-[#F7F4F1] px-2.5 py-2 text-[10px] leading-4 text-[#77665D]">
+              <input type="checkbox" checked={sendReferenceImage}
+                disabled={locked} onChange={e=>setSendReferenceImage(e.target.checked)}/>
+              <span>Also send this original preview image to Puter as an image-to-image reference.
+                Otherwise use its hidden style directions only.</span>
+            </label>}
           </div>
           <div className="space-y-2.5 border-t border-[#EEE8E5] pt-3">
             <div className="flex items-center gap-2">

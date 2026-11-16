@@ -1,5 +1,11 @@
 # SLBusinessIndex — repository handoff for coding agents
 
+## 2026-11-16 — P2-16: Puter seasonal reference image suggestions and progress
+- [P2-16 seasonal reference library, opt-in image-to-image and animated loading](docs/growth/p2/P2_16_PUTER_SEASONAL_REFERENCE_LIBRARY_20261116.md). Owner wants clickable small poster examples in empty center, smart Christmas/New Year/Pongal/Avurudu and evergreen recommendations. Use SLBI-authored nine SVG thumbnail templates; no Google image scraping, no other owner assets or external stock licensing issues.
+- Puter `txt2img` now verifiably supports `input_images` PNG Blob for every provider: default hidden art-direction prompt only, user can opt into sending the selected SLBI-authored reference as an image. Keep real Puter User-Pays checkbox separate, and owner QA route gate unchanged. No remote generation on thumbnail selection.
+- Loading frame animates in-place with percentage explicitly labelled estimated, capped at 89% during remote image inference, 94% for client PNG rendering and 100% only after successful poster Blob creation. Honor reduced motion. Original three-column sizing, voice, Gemini, verified business and PNG format/download remain.
+- Require green latest-head tests and Vercel Production READY; in-browser owner visual and paid image-to-image QA still outstanding. Footer icons/email and typography redesign are future phase, not yet shipped.
+
 ## 2026-11-16 — P2-15: Compact Campaign Planner SVG picker and 3-column Puter Studio
 - [P2-15 3-column compact owner QA workspace](docs/growth/p2/P2_15_PUTER_THREE_COLUMN_COMPACT_SVG_WORKSPACE_20261116.md). Owner screenshot: tall 2-column desktop preview, oversized 2×2 size buttons; wants left controls, **center image**, right format/copy, all within desktop screen height.
 - Puter Lab only: reuse existing Campaign Planner SVG size silhouettes in a small 4-across radio selector; desktop viewport-constrained 3 columns (xl), constrained object-contain center; independent side-panel overflow if needed, vertical mobile stacking unchanged. Export 1080×1080 / 1080×1350 / 1080×1920 / 1200×630 pixels unchanged.
