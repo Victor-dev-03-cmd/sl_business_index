@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   ArrowLeft,ArrowRight,Check,CheckCircle2,Copy,
   Download,Facebook,Instagram,Image as ImageIcon,Info,LoaderCircle,Mic,
-  Plus,RefreshCcw,Send,ShieldCheck,SlidersHorizontal,Sparkles,
+  Plus,RefreshCcw,Send,SlidersHorizontal,Sparkles,
   StopCircle,Volume2,WandSparkles,
 } from 'lucide-react';
 import {supabase} from '@/lib/supabaseClient';
@@ -480,10 +480,15 @@ export default function ConnectedCaptionLab(){
               {hasLinked?(linked?.context.source==='device_upload'?'Image attached':'Studio poster linked'):'Poster (optional)'}
             </span>
           </div>
-          <button type="button" disabled={posterBusy||!businessId} onClick={()=>void pickPoster()}
-            className="inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-semibold text-[#C2410C] hover:bg-[#FFEDD5] disabled:opacity-45">
-            <Plus size={13}/>{hasLinked?'Change':'Attach'}
-          </button>
+          <div className="flex shrink-0 items-center gap-1">
+            {hasLinked&&<button type="button" onClick={downloadPoster}
+              title="Download attached PNG" aria-label="Download attached PNG"
+              className="rounded-lg p-1.5 text-[#6B7280] hover:bg-white hover:text-[#111827]"><Download size={14}/></button>}
+            <button type="button" disabled={posterBusy||!businessId} onClick={()=>void pickPoster()}
+              className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-semibold text-[#C2410C] hover:bg-[#FFEDD5] disabled:opacity-45">
+              <Plus size={13}/>{hasLinked?'Change':'Attach'}
+            </button>
+          </div>
         </div>
         {posterPickerOpen&&<div className="space-y-2 rounded-xl border border-[#FED7AA] bg-white p-2.5 shadow-sm">
           <div className="flex items-center justify-between gap-2">
@@ -601,11 +606,11 @@ export default function ConnectedCaptionLab(){
       </section>
 
       {/* 02 / Live Social Preview */}
-      <section aria-label="Live Social Preview" className={panel+' space-y-4 p-4'}>
+      <section aria-label="Live Social Preview" className={panel+' space-y-3 p-3.5 xl:sticky xl:top-6 xl:max-h-[calc(100dvh-3rem)] xl:self-start xl:overflow-y-auto'}>
         <div className="flex items-center gap-2 border-b border-[#F0F0F2] pb-3">
           <span className="rounded-lg bg-[#FFF1E6] px-2 py-1 text-[11px] font-black text-[#EA580C]">02</span>
           <h2 className="slbi-section-title text-[15px]">Live Social Preview</h2>
-          <span className="ml-auto text-[10px] text-[#9CA3AF]">Workspace</span>
+          <span className="ml-auto text-[10px] font-medium text-[#6B7280]">Live preview</span>
         </div>
         <div className="grid grid-cols-3 gap-1.5 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-1">
           {PLATFORMS.map(p=><button key={p} type="button" onClick={()=>{setPlatform(p);setExpanded(false);}}
@@ -631,76 +636,105 @@ export default function ConnectedCaptionLab(){
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-[12px] font-extrabold">{previewAccount}</p>
-              <p className="text-[10px] text-[#9CA3AF]">Social preview · Just now · Not published</p>
+              <p className="text-[10px] text-[#6B7280]">Live social preview · Not published</p>
             </div>
             {platform==='facebook'?<Facebook size={17} className="text-[#2563EB]"/>:
               platform==='instagram'?<Instagram size={17} className="text-[#D946EF]"/>:
               <Volume2 size={17} className="text-[#16A34A]"/>}
           </div>
           <div className="p-3.5">
-            {!currentCaption&&<p className="mb-2 rounded-lg bg-[#FFFBEB] p-2 text-[10px] font-medium text-[#92400E]">
-              Brief preview only — no AI caption generated yet. Review before using.
-            </p>}
             <p className={'whitespace-pre-line break-words text-[14px] leading-[1.6] text-[#1F2937] '+textFont(activePreviewLanguage)}>
-              {fold.visible||'Your generated social caption will appear here. Add a campaign brief or continue from Poster Studio.'}
+              {fold.visible||'Your social copy appears here as you write.'}
             </p>
             {fold.folded&&<button type="button" onClick={()=>setExpanded(true)}
               className="mt-1 text-[11px] font-bold text-[#6B7280] hover:text-[#EA580C]">…See more</button>}
             {expanded&&previewText.length>180&&<button type="button" onClick={()=>setExpanded(false)}
               className="mt-1 text-[11px] font-bold text-[#6B7280]">Show less</button>}
           </div>
-          {posterUrl&&hasLinked?<img src={posterUrl} alt="Linked high-resolution poster preview"
-            className="max-h-[510px] w-full bg-[#F9FAFB] object-contain"/>:
-            <div className="flex min-h-40 items-center justify-center gap-2 border-y border-dashed border-[#E5E7EB] bg-[#F9FAFB] text-center text-[11px] text-[#9CA3AF]">
-              <ImageIcon size={22}/> No poster linked · captions work independently
-            </div>}
+          {posterUrl&&hasLinked?
+            <div className="relative border-y border-[#E5E7EB] bg-[#F9FAFB]">
+              <img src={posterUrl} alt="Attached poster preview"
+                className="max-h-[430px] w-full object-contain"/>
+              <button type="button" onClick={()=>void pickPoster()}
+                className="absolute bottom-3 right-3 rounded-lg border border-[#E5E7EB] bg-white/95 px-3 py-2 text-[11px] font-semibold text-[#111827] shadow-sm hover:bg-white">
+                Change poster
+              </button>
+            </div>:
+            <button type="button" disabled={!businessId||posterBusy}
+              onClick={()=>void pickPoster()}
+              onDragOver={e=>e.preventDefault()}
+              onDrop={e=>{e.preventDefault();void uploadDevicePoster(e.dataTransfer.files?.[0]);}}
+              aria-label="Attach a poster from Studio or upload a device image"
+              className="group flex min-h-32 w-full flex-col items-center justify-center gap-2 border-y border-dashed border-[#D1D5DB] bg-[#F9FAFB] px-4 py-4 text-center transition-colors hover:border-[#F97316] hover:bg-[#FFF7ED] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#F97316] disabled:cursor-not-allowed">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#F97316] shadow-sm">
+                <ImageIcon size={19}/>
+              </span>
+              <span className="text-[12px] font-semibold text-[#374151]">Attach your creative</span>
+              <span className="text-[10px] leading-4 text-[#6B7280]">Choose from Poster Studio, upload, or drop an image</span>
+            </button>}
           <div className="flex items-center justify-between gap-3 border-t border-[#F3F4F6] px-4 py-3 text-[11px] text-[#6B7280]">
-            <span>{labelsByPlatform[platform]} · Mockup only</span>
-            <span className="inline-flex items-center gap-1"><CheckCircle2 size={13} className="text-[#F97316]"/> Preview</span>
+            <span>{labelsByPlatform[platform]} · Draft</span>
+            <span className="inline-flex items-center gap-1"><CheckCircle2 size={13} className="text-[#F97316]"/> Not published</span>
           </div>
         </div>
-        <p className="text-center text-[10px] leading-4 text-[#9CA3AF]">Approximate read-more fold, not the exact Facebook/Instagram truncation algorithm.</p>
         <div className="grid gap-2 sm:grid-cols-3">
           <button type="button" disabled={!currentCaption.trim()} onClick={()=>void copyCaption(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#111827] px-3 py-3 text-[11px] font-extrabold text-white disabled:opacity-35">
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#111827] bg-[#111827] px-3 py-3 text-[11px] font-bold text-white hover:bg-[#293241] disabled:cursor-not-allowed disabled:border-[#E5E7EB] disabled:bg-[#F3F4F6] disabled:text-[#9CA3AF]">
             <Copy size={14}/> Copy + Hashtags</button>
           <button type="button" disabled={!currentCaption.trim()} onClick={()=>void copyCaption(false)}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] px-3 py-3 text-[11px] font-bold disabled:opacity-35">
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] bg-white px-3 py-3 text-[11px] font-semibold text-[#111827] hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:bg-[#F3F4F6] disabled:text-[#9CA3AF]">
             <Copy size={14}/> Copy Caption</button>
           <button type="button" disabled={!currentCaption.trim()||saving} onClick={()=>void savePlanner()}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#FDBA74] bg-[#FFF7ED] px-3 py-3 text-[11px] font-bold text-[#9A3412] disabled:opacity-35">
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#FDBA74] bg-[#FFF7ED] px-3 py-3 text-[11px] font-semibold text-[#9A3412] hover:bg-[#FFEDD5] disabled:cursor-not-allowed disabled:border-[#E5E7EB] disabled:bg-[#F3F4F6] disabled:text-[#9CA3AF]">
             {saving?<LoaderCircle size={14} className="animate-spin"/>:<Send size={14}/>}
             Save to Planner</button>
+        </div>
+        <div className="space-y-2 rounded-xl border border-[#E5E7EB] bg-[#FAFAFB] px-3 py-2.5"
+          aria-label="Character and hook meter">
+          <div className="flex items-center justify-between gap-3 text-[10px]">
+            <span className="font-semibold text-[#374151]">{labelsByPlatform[platform]} · Draft length</span>
+            <span className="font-bold tabular-nums text-[#111827]">{characterCount.toLocaleString()} / {draftTarget.toLocaleString()} target</span>
+          </div>
+          <div className="h-1.5 overflow-hidden rounded-full bg-[#E5E7EB]" role="progressbar"
+            aria-label="Suggested draft length" aria-valuenow={Math.min(characterCount,draftTarget)}
+            aria-valuemin={0} aria-valuemax={draftTarget}>
+            <div className="h-full rounded-full bg-[#F97316] transition-[width] duration-200"
+              style={{width:Math.min(100,(characterCount/draftTarget)*100)+'%'}}/>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-1 text-[10px] text-[#6B7280]">
+            <span>Hook: {hookCount} characters · {hookStatus}</span>
+            <span>Suggested hook ≤ 125</span>
+          </div>
         </div>
         {savedCampaignId&&<Link href="/vendor/marketing/campaigns?source=caption-lab"
           className="inline-flex items-center gap-1.5 rounded-xl border border-[#FDBA74] bg-[#FFF7ED] px-3 py-2.5 text-[11px] font-bold text-[#9A3412]">
           <CheckCircle2 size={15}/> Open saved Campaign Planner draft <ArrowRight size={13}/>
         </Link>}
-        <p className="text-[10px] leading-4 text-[#6B7280]">Campaign Planner saves your edited caption bundle. Linked PNG remains on this device until secure cloud asset storage is configured; no automatic social posting.</p>
+        <p className="text-center text-[10px] font-medium text-[#6B7280]">Live social preview · Ready to copy or save when your draft is complete</p>
       </section>
 
       {/* 03 / Refine and copy */}
-      <section aria-label="Variations and Optimization" className={panel+' space-y-4 p-4'}>
+      <section aria-label="Variations and Optimization" className={panel+' space-y-3 p-3.5'}>
         <div className="flex items-center gap-2 border-b border-[#F0F0F2] pb-3">
           <span className="rounded-lg bg-[#FFF1E6] px-2 py-1 text-[11px] font-black text-[#EA580C]">03</span>
           <h2 className="slbi-section-title text-[15px]">Refine & Copy</h2>
           <span className="ml-auto text-[10px] text-[#9CA3AF]">Optimize</span>
         </div>
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {ANGLES.map((a,i)=><button key={a} type="button" onClick={()=>{setAngle(a);setExpanded(false);}}
             aria-pressed={angle===a}
-            className={'w-full rounded-xl border p-3 text-left transition '+
+            className={'w-full rounded-xl border px-2.5 py-2 text-left transition '+
               (angle===a?'border-[#FDBA74] bg-[#FFF7ED] shadow-sm':'border-[#E5E7EB] bg-white hover:bg-[#F9FAFB]')}>
             <div className="flex items-center gap-2">
-              <span className={'flex h-7 w-7 items-center justify-center rounded-lg text-[10px] font-black '+(angle===a?'bg-[#F97316] text-white':'bg-[#F3F4F6] text-[#6B7280]')}>
+              <span className={'flex h-6 w-6 items-center justify-center rounded-md text-[10px] font-semibold '+(angle===a?'bg-[#F97316] text-white':'bg-[#F3F4F6] text-[#6B7280]')}>
                 {i+1}</span>
               <div className="flex-1">
-                <p className="text-[11px] font-black">{angleLabels[a].title}</p>
-                <p className="text-[10px] text-[#9CA3AF]">{angleLabels[a].subtitle}</p>
+                <p className="text-[11px] font-bold leading-4">{angleLabels[a].title}</p>
+                <p className="text-[10px] leading-4 text-[#6B7280]">{angleLabels[a].subtitle}</p>
               </div>
               {angle===a&&<Check size={14} className="text-[#EA580C]"/>}
             </div>
-            <p className="mt-1.5 line-clamp-2 pl-9 text-[10px] leading-4 text-[#6B7280]">
+            <p className="mt-1 line-clamp-1 pl-8 text-[10px] leading-4 text-[#6B7280]">
               {captions[activePreviewLanguage][a]||'Generate AI copy to populate this angle.'}
             </p>
           </button>)}
@@ -775,7 +809,7 @@ export default function ConnectedCaptionLab(){
             })}
           </div>
         </div>
-        <p className="text-[10px] leading-5 text-[#9CA3AF]">The Facebook, Instagram and WhatsApp cards are visual simulators, not connected social accounts. No automatic posting or invented customer reviews.</p>
+        <p className="text-[10px] leading-5 text-[#6B7280]">Every edit updates your preview instantly.</p>
       </section>
     </div>
   </main>;
