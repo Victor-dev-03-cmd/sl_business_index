@@ -29,10 +29,10 @@ export const MARKETING_STUDIO_APPS:readonly MarketingStudioApp[]=[
     keywords:'free campaign studio copy tamil sinhala calendar png',
   },
   {
-    id:'poster-editor',title:'Poster Design Studio',subtitle:'Editable creative',
-    description:'Design square, portrait and story posters with draggable text and local PNG export.',
-    href:'/vendor/marketing/design',category:'Content',icon:'document',
-    tone:'purple',pro:true,availability:'working',note:'Local editing & export',
+    id:'poster-editor',title:'AI Poster Studio',subtitle:'Gemini · Puter · Canvas',
+    description:'Create multilingual promotional posters with editable exact text and high-resolution PNG export.',
+    href:'/vendor/marketing/design/puter-lab',category:'Content',icon:'document',
+    tone:'purple',pro:true,availability:'working',note:'Owner QA · Export PNG',
     keywords:'ai poster editor creative typography artwork image designs',
   },
   {
