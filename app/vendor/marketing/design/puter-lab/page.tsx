@@ -8,7 +8,8 @@ import PuterCompactFormatSelector from './PuterCompactFormatSelector';
 import {resolvePremiumPosterPreset,withVerifiedPosterDesign} from '@/lib/marketing/poster-premium-presets';
 import {
   posterSuggestions,shufflePosterDesign,selectLayout,SAFE_ZONE_LAYOUTS,
-  type PosterBlueprint,type VerifiedPosterDesign,type SafeZoneLayout,
+  CONTENT_PANEL_STYLES,DEFAULT_CONTENT_PANEL_STYLE,
+  type ContentPanelStyle,type PosterBlueprint,type VerifiedPosterDesign,type SafeZoneLayout,
 } from '@/lib/marketing/poster-design-blueprint';
 import {
   getPosterReferenceStyle,originalReferencePng,
@@ -88,6 +89,9 @@ export default function PuterMultilingualPosterLab(){
   const [blueprint,setBlueprint]=useState<PosterBlueprint|null>(null);
   const [blueprintKey,setBlueprintKey]=useState('');
   const [designOverride,setDesignOverride]=useState<VerifiedPosterDesign|null>(null);
+  // Independent from Gemini typography and safe-zone geometry: this changes
+  // only the existing bottom panel pixels, never the artwork or top headline.
+  const [panelStyleOverride,setPanelStyleOverride]=useState<ContentPanelStyle|null>(null);
   const [shuffleIndex,setShuffleIndex]=useState(0);
   const [brief,setBrief]=useState<PosterIntelligenceBrief|null>(null);
   const [briefKey,setBriefKey]=useState('');
@@ -123,6 +127,8 @@ export default function PuterMultilingualPosterLab(){
       layout:selectLayout(format,currentBlueprint.styling.vibe),
       contentPanelStyle:currentBlueprint.layoutStyling?.contentPanelStyle,
     }:null),[designOverride,currentBlueprint,format]);
+  const selectedPanelStyle=panelStyleOverride||
+    activeDesign?.contentPanelStyle||DEFAULT_CONTENT_PANEL_STYLE;
   const displayedPreset=withVerifiedPosterDesign(typographyPreset,activeDesign,language);
   const suggestedCampaigns=useMemo(()=>posterSuggestions(new Date(),facts?.category||'',7),
     [facts?.category]);
@@ -223,7 +229,7 @@ export default function PuterMultilingualPosterLab(){
     setComposing(true);setGenerationStage('typography');setEstimatedProgress(94);setError('');
     const timeout=setTimeout(()=>{
       void composeExactPoster({backgroundSrc:artworkSrc,format,copy:exactCopy,
-        style:selectedPremiumStyle,design:activeDesign})
+        style:selectedPremiumStyle,design:activeDesign,contentPanelStyle:selectedPanelStyle})
         .then(blob=>{
           if(cancelled)return;
           const url=URL.createObjectURL(blob);
@@ -238,7 +244,7 @@ export default function PuterMultilingualPosterLab(){
         .finally(()=>{if(!cancelled)setComposing(false);});
     },220);
     return()=>{cancelled=true;clearTimeout(timeout);};
-  },[artworkSrc,imageRevision,format,exactCopy,copyLanguageConsistent,selectedPremiumStyle,activeDesign,isRealOutput,dimensions.width,dimensions.height]);
+  },[artworkSrc,imageRevision,format,exactCopy,copyLanguageConsistent,selectedPremiumStyle,activeDesign,selectedPanelStyle,isRealOutput,dimensions.width,dimensions.height]);
   useEffect(()=>{
     if(copyLanguageConsistent||!finalUrlRef.current)return;
     URL.revokeObjectURL(finalUrlRef.current);finalUrlRef.current='';
@@ -331,7 +337,7 @@ export default function PuterMultilingualPosterLab(){
         // Dual-output: creative art direction + reviewed typography JSON.
         // Business contacts always remain from the selected verified listing.
         setBlueprint(data.blueprint);setBlueprintKey(forKey);
-        setDesignOverride(null);setShuffleIndex(0);
+        setDesignOverride(null);setPanelStyleOverride(null);setShuffleIndex(0);
         // A previously reviewed English draft must NOT override a fresh Tamil
         // or Sinhala blueprint. Preserve manual copy ONLY if it already matches
         // the newly selected output language.
@@ -674,6 +680,33 @@ export default function PuterMultilingualPosterLab(){
                 <Shuffle size={13}/> Shuffle font & colors
               </button>
               <span className="text-[9px] text-[#8C7E77]">No image regeneration</span>
+            </div>
+            <div>
+              <label htmlFor="puter-panel-style" className="mb-1 flex items-center justify-between text-[10px] font-bold text-[#6C5F58]">
+                <span>Bottom content panel style</span>
+                <span className="font-medium text-[#A36A42]">PNG styling only</span>
+              </label>
+              <select id="puter-panel-style" aria-label="Bottom content panel style"
+                value={panelStyleOverride||'auto'} disabled={locked}
+                onChange={e=>{
+                  const value=e.target.value;
+                  if(value!=='auto'&&!CONTENT_PANEL_STYLES.includes(value as ContentPanelStyle))return;
+                  setPanelStyleOverride(value==='auto'?null:value as ContentPanelStyle);
+                  setStatus(value==='auto'?
+                    'Bottom panel is using Gemini-selected styling (or the default).':
+                    'Bottom panel changed to '+value.replaceAll('_',' ')+'. Existing artwork is re-composed locally without a new Puter request.');
+                }}
+                className="w-full rounded-lg border border-[#E5D9D0] bg-white px-2 py-2 text-[11px]">
+                <option value="auto">Gemini Auto ({selectedPanelStyle.replaceAll('_',' ')})</option>
+                {CONTENT_PANEL_STYLES.map(style=>
+                  <option key={style} value={style}>
+                    {style.split('_').map(word=>word.charAt(0).toUpperCase()+word.slice(1)).join(' ')}
+                  </option>)}
+              </select>
+              <p className="mt-1 text-[10px] leading-4 text-[#8C7E77]">
+                Current: {selectedPanelStyle.replaceAll('_',' ')}. Changes only the existing offer,
+                CTA and contact card. The top headline and image remain unchanged.
+              </p>
             </div>
             <div>
               <label htmlFor="puter-safe-layout" className="mb-1 block text-[10px] font-bold text-[#6C5F58]">
