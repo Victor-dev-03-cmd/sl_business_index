@@ -135,7 +135,7 @@ export async function listLinkedPosters(businessId:string):Promise<LinkedPosterR
   return rows.filter((value):value is LinkedPosterRecord=>{
     if(!value||typeof value!=='object')return false;
     const item=value as Partial<LinkedPosterRecord>;
-    return validHandoffId(item.id)&&item.context?.businessId===businessId&&
+    return validHandoffId(item.id)&&!!item.context&&item.context.businessId===businessId&&
       item.context.source==='poster_studio'&&
       typeof item.createdAt==='number'&&item.createdAt<=Date.now()+60_000&&
       Date.now()-item.createdAt<=MAX_AGE&&
