@@ -437,9 +437,9 @@ export default function PuterMultilingualPosterLab(){
           <p className="text-[11px] leading-4 text-[#8C7F82]">Voice · Multilingual design · High-resolution posters</p>
         </div>
       </div>
-      <Link href="/vendor/marketing/design"
+      <Link href="/vendor/marketing"
         className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#E8DED8] px-3 py-2 text-[11px] font-bold hover:bg-[#FAF7F4]">
-        <ArrowLeft size={13}/> Creative AI
+        <ArrowLeft size={13}/> Marketing Studio
       </Link>
     </header>
     {(error||status)&&<div role={error?'alert':'status'} aria-live="polite"
