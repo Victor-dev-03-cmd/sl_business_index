@@ -552,3 +552,79 @@ test('stale English fields can no longer be silently exported on Tamil or Sinhal
   assert.match(lab,/localizedPercentOffer\(explicit,language\)/);
   assert.match(lab,/Edit any unmatched text or use Prepare with Gemini/);
 });
+
+
+test('v2.1 lower content-panel variants preserve selected architecture and top headline',async()=>{
+  const blueprint=read('lib/marketing/poster-design-blueprint.ts');
+  const brain=read('lib/marketing/poster-gemini-design-blueprint.ts');
+  const module=read('lib/marketing/puter-content-panel-styles.ts');
+  const renderer=read('lib/marketing/puter-premium-poster-renderer.ts');
+  for(const variant of [
+    'black_marble_luxury','frosted_glass_modern','neon_glow_card',
+    'minimal_editorial_strip','split_info_panel','premium_gradient_plate',
+    'soft_dark_blur_panel','bold_sale_badge_layout',
+  ]){
+    assert.ok(blueprint.includes("'"+variant+"'"),'panel enum '+variant);
+    assert.ok(module.includes("'"+variant+"'"),'Canvas painter '+variant);
+  }
+  assert.match(blueprint,/DEFAULT_CONTENT_PANEL_STYLE:ContentPanelStyle='black_marble_luxury'/);
+  assert.match(blueprint,/layoutStyling:\{contentPanelStyle:panelStyle\}/);
+  assert.match(brain,/layoutStyling\.contentPanelStyle/);
+  assert.match(brain,/BOTTOM INFORMATION PANEL ONLY/);
+  assert.match(brain,/Do not add marble or CTA text to the AI background imagePrompt/);
+  assert.match(renderer,/paintLowerContentPanel/);
+  assert.match(renderer,/paintLowerCta/);
+  assert.match(renderer,/paintLowerOfferHighlight/);
+  assert.match(renderer,/const panelStyle=input\.design\?\.contentPanelStyle\|\|DEFAULT_CONTENT_PANEL_STYLE/);
+  assert.match(renderer,/if\(panelStyle==='frosted_glass_modern'\)/);
+  assert.match(lab,/contentPanelStyle:currentBlueprint\.layoutStyling\?\.contentPanelStyle/);
+  assert.doesNotMatch(module,/puter\.ai|Gemini|fetch\(|storage\.from|credit/);
+});
+test('panel styles are allowlisted and legacy Gemini JSON remains compatible',async()=>{
+  const {validatePosterBlueprint,CONTENT_PANEL_STYLES,
+    DEFAULT_CONTENT_PANEL_STYLE,shufflePosterDesign}=await import(
+    '../lib/marketing/poster-design-blueprint.ts'
+  );
+  const blueprint={
+    posterCopy:{headline:'WE ARE HIRING',offerText:'JOIN OUR DEVELOPMENT TEAM',ctaText:'APPLY NOW'},
+    styling:{
+      vibe:'modern_tech',headlineFont:'Anton',bodyFont:'Montserrat',
+      primaryColor:'#091322',accentColor:'#31BAEE',textColor:'#FFFFFF',
+      overlayGradient:'dark_bottom_top',
+    },
+    imagePrompt:'Premium editorial commercial studio photograph of a professional software developer working at a modern dual-monitor workstation, tasteful indigo light, expressive natural portrait, sophisticated cinematic reflections, genuine photography-like materials, deliberately blank space for UI typography at top and bottom. NO text, NO letters, NO numbers, NO signs, NO logos, pure background artwork only.',
+  };
+  const input={language:'en',vendorPrompt:'Please make a WE ARE HIRING development team poster'};
+  assert.equal(validatePosterBlueprint(blueprint,input).layoutStyling?.contentPanelStyle,
+    DEFAULT_CONTENT_PANEL_STYLE);
+  for(const contentPanelStyle of CONTENT_PANEL_STYLES){
+    const result=validatePosterBlueprint({...blueprint,
+      layoutStyling:{contentPanelStyle}},input);
+    assert.equal(result.layoutStyling?.contentPanelStyle,contentPanelStyle);
+  }
+  assert.throws(()=>validatePosterBlueprint({...blueprint,
+    layoutStyling:{contentPanelStyle:'external_code_or_css'}},input),/unsupported lower content panel/);
+  const current={
+    styling:{...blueprint.styling},
+    layout:'top_center_hero',
+    contentPanelStyle:'neon_glow_card',
+  };
+  const shuffled=shufflePosterDesign(current,'en',2,'story');
+  assert.equal(shuffled.contentPanelStyle,'neon_glow_card',
+    'shuffling fonts must not erase Gemini-selected lower card style');
+});
+test('lower-only Canvas style variants do not shift the verified headline or adaptive card geometry',()=>{
+  const renderer=read('lib/marketing/puter-premium-poster-renderer.ts');
+  const layout=read('lib/marketing/puter-adaptive-card-layout.ts');
+  const card=read('lib/marketing/puter-content-panel-styles.ts');
+  assert.match(renderer,/renderFitted\(ctx,\{fit:titleFit,x:side,/);
+  assert.match(renderer,/const layout=planStackedCard\(\{/);
+  assert.match(renderer,/glassPanel\(ctx,side,layout\.top,panelW,layout\.height,p,scale\)/);
+  assert.match(renderer,/x:side,y:layout\.top,w:panelW,h:layout\.height/);
+  assert.match(renderer,/y:layout\.ctaY/);
+  assert.match(renderer,/y:layout\.contactsY/);
+  assert.match(card,/All styles render inside the existing, content-measured glass-card bounds/);
+  assert.match(card,/rounded\(ctx,x,y,w,h,args\.radius\*s\);ctx\.clip\(\)/);
+  assert.match(layout,/const top=bottom-cardHeight/);
+  assert.doesNotMatch(card,/renderFitted|posterCopy\.|brandY|offerY|ctaY/);
+});
