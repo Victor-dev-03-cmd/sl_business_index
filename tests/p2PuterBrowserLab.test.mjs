@@ -444,3 +444,111 @@ test('Gemini may not hallucinate a vendor percentage or contact and cannot selec
   assert.throws(()=>validatePosterBlueprint({...valid,styling:{...valid.styling,headlineFont:'https://untrusted.example/evil.woff'}},
     {language:'ta',vendorPrompt:request}),/font not approved/);
 });
+
+
+test('poster copy language is an enforced content contract, not merely the dropdown or font',async()=>{
+  const language=read('lib/marketing/poster-language-copy.ts');
+  const blueprint=read('lib/marketing/poster-design-blueprint.ts');
+  const brain=read('lib/marketing/poster-gemini-design-blueprint.ts');
+  assert.match(blueprint,/isPosterCopyInLanguage\(\{headline,offerText,ctaText\},input.language\)/);
+  assert.match(blueprint,/does not match the selected language/);
+  assert.match(brain,/HARD REQUIREMENT — STRICTLY output posterCopy.headline, posterCopy.offerText and posterCopy.ctaText/);
+  assert.match(brain,/If outputCopyLanguage is ta:/);
+  assert.match(brain,/If outputCopyLanguage is si:/);
+  assert.match(brain,/If outputCopyLanguage is en:/);
+  assert.match(brain,/approvedOffer/);
+  assert.match(brain,/EXAMPLE ta:/);
+  assert.match(brain,/EXAMPLE si:/);
+  assert.match(brain,/EXAMPLE en:/);
+  assert.match(brain,/30% Offer for price/);
+  assert.match(language,/isPosterTextInLanguage/);
+  assert.match(api,/approvedOffer:typeof body.approvedOffer==='string'/);
+  const {isPosterCopyInLanguage,localizedPercentOffer,starterHeadline,STARTER_COPY}
+    =await import('../lib/marketing/poster-language-copy.ts');
+  assert.equal(localizedPercentOffer('30%','ta'),'30% தள்ளுபடி');
+  assert.equal(localizedPercentOffer('30%','si'),'30% වට්ටමක්');
+  assert.equal(localizedPercentOffer('30%','en'),'30% OFF');
+  assert.equal(starterHeadline('ta','christmas'),'கிறிஸ்துமஸ் சிறப்புச் சலுகை');
+  assert.equal(starterHeadline('si','christmas'),'නත්තල් විශේෂ දීමනා');
+  assert.ok(isPosterCopyInLanguage({
+    headline:'கிறிஸ்துமஸ் சிறப்புச் சலுகை',
+    offerText:'30% தள்ளுபடி',ctaText:'இன்றே தொடர்பு கொள்ளவும்',
+  },'ta'));
+  assert.ok(isPosterCopyInLanguage({
+    headline:'නත්තල් විශේෂ දීමනා',
+    offerText:'30%ක විශේෂ වට්ටමක්',ctaText:'අදම අප අමතන්න',
+  },'si'));
+  assert.ok(!isPosterCopyInLanguage({
+    headline:'CHRISTMAS SPECIAL',
+    offerText:'30% Offer for price',ctaText:'இன்றே தொடர்பு கொள்ளவும்',
+  },'ta'));
+  assert.ok(STARTER_COPY.ta.headline.match(/[\u0B80-\u0BFF]/u));
+  assert.ok(STARTER_COPY.si.headline.match(/[\u0D80-\u0DFF]/u));
+});
+test('Gemini rejects mixed-language copy, preserves vendor-reviewed percent and refuses unnatural English discounts',async()=>{
+  const {validatePosterBlueprint}=await import('../lib/marketing/poster-design-blueprint.ts');
+  const base={
+    posterCopy:{
+      headline:'கிறிஸ்துமஸ் சிறப்புச் சலுகை',
+      offerText:'30% தள்ளுபடி',ctaText:'இன்றே தொடர்பு கொள்ளவும்',
+    },
+    styling:{
+      vibe:'festive',headlineFont:'Noto Serif Tamil',bodyFont:'Mukta Malar',
+      primaryColor:'#1C2A2A',accentColor:'#FF8000',textColor:'#FFFFFF',
+      overlayGradient:'dark_bottom_top',
+    },
+    imagePrompt:'Premium Christmas commercial photography for a Sri Lankan software service business. Sophisticated festive ornaments, warm forest green, golden lights, and dual-monitor developer workspace. Reserve clear copy-safe space in top and lower quarter, with exceptionally clean modern editorial lighting, detailed credible hero object, no invented services or discounts. NO text, NO letters, NO numbers, NO signs, NO logos, pure background artwork only.',
+  };
+  // The vendor explicitly approved a percentage in the exact offer field
+  // even though their new creative art prompt doesn't repeat that number.
+  const input={language:'ta',vendorPrompt:'ஒரு கிறிஸ்துமஸ் போஸ்டர் செய்யவும்',
+    approvedOffer:'30% Offer for price'};
+  assert.equal(validatePosterBlueprint(base,input).posterCopy.offerText,'30% தள்ளுபடி');
+  assert.throws(()=>validatePosterBlueprint({...base,posterCopy:{
+    ...base.posterCopy,headline:'CHRISTMAS SPECIAL'}},input),/selected language/);
+  assert.throws(()=>validatePosterBlueprint({...base,posterCopy:{
+    ...base.posterCopy,offerText:'30% Offer for price'}},input),/selected language/);
+  assert.throws(()=>validatePosterBlueprint({...base,posterCopy:{
+    ...base.posterCopy,ctaText:'Contact us now'}},input),/selected language/);
+  assert.throws(()=>validatePosterBlueprint(base,{
+    language:'ta',vendorPrompt:'ஒரு கிறிஸ்துமஸ் போஸ்டர் செய்யவும்',
+  }),/invented or changed a percentage/);
+  const english={
+    ...base,posterCopy:{
+      headline:'CHRISTMAS SPECIAL',offerText:'30% Offer for price',
+      ctaText:'CONTACT US',
+    },
+    styling:{...base.styling,headlineFont:'Anton',bodyFont:'Montserrat'},
+  };
+  assert.throws(()=>validatePosterBlueprint(english,{
+    language:'en',vendorPrompt:'Christmas sale with 30% discount',
+  }),/unnatural English offer/);
+  assert.equal(validatePosterBlueprint({
+    ...english,posterCopy:{...english.posterCopy,offerText:'30% OFF'},
+  },{
+    language:'en',vendorPrompt:'Christmas sale with 30% discount',
+  }).posterCopy.offerText,'30% OFF');
+});
+test('production polish removes only sandbox UI, never owner-only authorization or Puter user-pay consent',()=>{
+  assert.doesNotMatch(lab,/Owner-only sandbox\./);
+  assert.doesNotMatch(lab,/Private owner QA ·/);
+  assert.match(lab,/SLBI AI Poster Studio/);
+  assert.match(lab,/Voice · Multilingual design · High-resolution posters/);
+  assert.match(api,/isPosterInternalQAAccount/);
+  assert.match(api,/only to the internal QA owner/);
+  assert.match(lab,/realMode&&!consent/);
+  assert.match(lab,/I understand this uses my Puter AI balance and may create a charge/);
+});
+test('stale English fields can no longer be silently exported on Tamil or Sinhala selection',()=>{
+  assert.match(lab,/copyLanguageConsistent=isPosterCopyInLanguage/);
+  assert.match(lab,/if\(!artworkSrc\|\|!exactCopy\|\|!copyLanguageConsistent\)return/);
+  assert.match(lab,/if\(!copyLanguageConsistent\)\{/);
+  assert.match(lab,/setFinalUrl\(''\);setFinalBlob\(null\)/);
+  assert.match(lab,/if\(!manualHeadline\|\|!isPosterTextInLanguage\(headline,language\)\)/);
+  assert.match(lab,/if\(!manualCta\|\|!isPosterTextInLanguage\(cta,language\)\)/);
+  assert.match(lab,/if\(!manualOffer\|\|!isPosterTextInLanguage\(offer,language\)\|\|/);
+  assert.match(lab,/setHeadline\(starterHeadline\(next,selectedReferenceId\)\)/);
+  assert.match(lab,/setCta\(STARTER_COPY\[next\]\.cta\)/);
+  assert.match(lab,/localizedPercentOffer\(explicit,language\)/);
+  assert.match(lab,/Edit any unmatched text or use Prepare with Gemini/);
+});
