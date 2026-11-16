@@ -1,4 +1,46 @@
-/* Runtime-loaded licensed OFL font families for browser-generated multilingual PNG.
- * The exact exported pixels use the same text shaping as the preview.
- * Do not silently export tofu glyphs if a required complex-script font fails. */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+Sinhala:wght@400;600;700&family=Noto+Sans+Tamil:wght@400;600;700&display=swap');
+/* Runtime-loaded Open Font License families for exact browser-printed PNG.
+ * Latin premium roles: Anton condensed, Space Grotesk brand, Plus Jakarta offer/CTA,
+ * Inter body, JetBrains Mono footer. Complex scripts use Noto fonts throughout. */
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400&family=Noto+Sans+Sinhala:wght@400;500;600;700;800&family=Noto+Sans+Tamil:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;700;800&family=Space+Grotesk:wght@600&display=swap');
+
+:root {
+  --slbi-neon-obsidian: #07070C;
+  --slbi-neon-purple: #18082E;
+  --slbi-neon-orange: #FF5E00;
+  --slbi-neon-amber: #FF8A00;
+  --slbi-neon-violet: #8A2BE2;
+  --slbi-neon-white: #FFFFFF;
+  --slbi-neon-muted: #B8B8C7;
+}
+/* Design tokens for the owner lab UI. The downloaded PNG uses equivalent
+ * Canvas gradients + clipped blurred bitmap, never screenshot-based export. */
+.slbi-premium-poster-bg {
+  background:radial-gradient(circle at 50% 25%,#240b42 0%,#07070c 65%);
+  color:#ffffff;
+  font-family:'Plus Jakarta Sans',sans-serif;
+}
+.slbi-premium-display {
+  font-family:'Anton','Bebas Neue',sans-serif;
+  text-transform:uppercase;
+  line-height:.9;
+  letter-spacing:-.02em;
+}
+.slbi-premium-orange-glow {
+  color:#FF5E00;
+  text-shadow:0 0 28px rgba(255,94,0,.65);
+}
+.slbi-premium-glass-card {
+  background:rgba(18,16,28,.72);
+  backdrop-filter:blur(24px);
+  -webkit-backdrop-filter:blur(24px);
+  border:1.5px solid rgba(255,255,255,.14);
+  border-radius:32px;
+}
+.slbi-premium-cta {
+  background:linear-gradient(90deg,#FF5E00 0%,#FF8A00 100%);
+  color:#07070C;
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-weight:800;
+  border-radius:9999px;
+  box-shadow:0 0 24px rgba(255,94,0,.55);
+}
