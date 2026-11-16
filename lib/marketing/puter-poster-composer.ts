@@ -66,7 +66,7 @@ export function buildArtOnlyPrompt(input:{
 
 const clean=(v:string,max:number)=>v.replace(/[\u0000-\u001f\u007f]/g,' ').trim().slice(0,max);
 const hex=(v:string)=>/^#[\da-f]{6}$/i.test(v)?v:'#F7B45C';
-async function ensureFonts(language:PosterCopyLanguage,style?:PremiumPosterStyle){
+async function ensureFonts(language:PosterCopyLanguage,style?:PremiumPosterStyle,copy?:ExactPosterCopy){
   if(typeof document==='undefined')throw Error('Poster typography needs a browser.');
   const name=language==='ta'?'Noto Sans Tamil':language==='si'?'Noto Sans Sinhala':'Inter';
   const sample=language==='ta'?'தமிழ்':language==='si'?'සිංහල':'Poster';
@@ -76,18 +76,26 @@ async function ensureFonts(language:PosterCopyLanguage,style?:PremiumPosterStyle
   if(loaded.length===0&&language!=='en')
     throw Error('The '+name+' font was not loaded. Check network access and retry PNG export.');
   if(style){
-    const requires=language==='en'?[
-      ['400 190px "Anton"','HEADLINE'],
-      ['600 36px "Space Grotesk"','Brand'],
-      ['800 84px "Plus Jakarta Sans"','OFF'],
-      ['500 32px "Inter"','Service'],
+    // Latin brand/contact fragments can occur inside a Tamil/Sinhala poster;
+    // load the role-specific Latin fonts regardless of the UI language.
+    const requires:[string,string][]=[
+      ['400 190px "Anton"','HALLOWEEN'],
+      ['600 36px "Space Grotesk"','Laxsan Dev'],
+      ['800 84px "Plus Jakarta Sans"','30% OFF'],
+      ['500 32px "Inter"','Professional Services'],
       ['700 28px "Plus Jakarta Sans"','CONTACT'],
       ['400 24px "JetBrains Mono"','example.com'],
-    ]:[
-      ['700 190px "'+(language==='ta'?'Noto Sans Tamil':'Noto Sans Sinhala')+'"',sample],
-      ['800 84px "'+(language==='ta'?'Noto Sans Tamil':'Noto Sans Sinhala')+'"',sample],
-      ['500 32px "'+(language==='ta'?'Noto Sans Tamil':'Noto Sans Sinhala')+'"',sample],
     ];
+    const allText=copy?Object.values(copy).filter(v=>typeof v==='string').join(' '):'';
+    const needsTamil=language==='ta'||/[\u0B80-\u0BFF]/u.test(allText);
+    const needsSinhala=language==='si'||/[\u0D80-\u0DFF]/u.test(allText);
+    for(const [required,scriptSample] of [
+      ...(needsTamil?[['Noto Sans Tamil','தமிழ்']]:[]),
+      ...(needsSinhala?[['Noto Sans Sinhala','සිංහල']]:[]),
+    ] as string[][]){
+      for(const size of [500,700,800])
+        requires.push([size+' 84px "'+required+'"',scriptSample]);
+    }
     for(const [spec,sampleText] of requires){
       const ready=await document.fonts.load(spec,sampleText);
       if(!ready.length)
@@ -166,7 +174,7 @@ async function decodedImage(src:string):Promise<HTMLImageElement>{
 export async function composeExactPoster(input:{
   backgroundSrc:string;format:PosterFormat;copy:ExactPosterCopy;style?:PremiumPosterStyle;
 }):Promise<Blob>{
-  await ensureFonts(input.copy.language,input.style);
+  await ensureFonts(input.copy.language,input.style,input.copy);
   const img=await decodedImage(input.backgroundSrc);
   const d=POSTER_FORMATS[input.format];
   const canvas=document.createElement('canvas');
