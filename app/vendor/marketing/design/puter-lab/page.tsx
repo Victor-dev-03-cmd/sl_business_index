@@ -41,6 +41,7 @@ type PuterClient={
 declare global {interface Window {puter?:PuterClient;}}
 type OwnedBusiness={id:string;name:string;facts:PosterBusinessFacts};
 type ApiError={error?:string};
+type VoiceQuota={used:number;limit:number;remaining:number;resetAtUtc:string};
 type ContextResponse=ApiError&{businesses?:OwnedBusiness[]};
 type BriefResponse=ApiError&{brief?:PosterIntelligenceBrief;blueprint?:PosterBlueprint};
 const models=[
@@ -101,6 +102,7 @@ export default function PuterMultilingualPosterLab(){
   const [recordingSeconds,setRecordingSeconds]=useState(0);
   const [transcribing,setTranscribing]=useState(false);
   const [micHelp,setMicHelp]=useState(false);
+  const [voiceQuota,setVoiceQuota]=useState<VoiceQuota|null>(null);
   const [realMode,setRealMode]=useState(false);
   const [consent,setConsent]=useState(false);
   const [generating,setGenerating]=useState(false);
@@ -187,6 +189,16 @@ export default function PuterMultilingualPosterLab(){
       setHeadline(starterHeadline(language,reference.id));
     setStatus(reference.name+' selected. The look is applied on your NEXT Generate; no paid AI call happened.');
   };
+
+  const refreshVoiceQuota=useCallback(async()=>{
+    try{
+      const response=await fetch('/api/marketing/poster/transcribe',{...reqOptions});
+      if(!response.ok)return;
+      const data=await response.json() as {quota?:VoiceQuota};
+      if(data.quota)setVoiceQuota(data.quota);
+    }catch{ /* A quota badge must never block normal manual editing. */ }
+  },[]);
+  useEffect(()=>{void refreshVoiceQuota();},[refreshVoiceQuota]);
 
   const stopVoice=useCallback(()=>{
     if(clockRef.current){clearInterval(clockRef.current);clockRef.current=null;}
@@ -277,7 +289,7 @@ export default function PuterMultilingualPosterLab(){
       setBrief(null);setBriefKey('');
       setStatus('Gemini transcript added. Check the words, campaign offer and business details before continuing.');
     }catch(e){setError(errorMessage(e));}
-    finally{setTranscribing(false);}
+    finally{setTranscribing(false);void refreshVoiceQuota();}
   };
   const startVoice=async()=>{
     if(recording){stopVoice();return;}
@@ -372,7 +384,7 @@ export default function PuterMultilingualPosterLab(){
         setStatus('Gemini brief ready. Review the text before using Puter.');
       }else throw Error('Gemini returned no valid design blueprint.');
     }catch(e){setError(errorMessage(e));}
-    finally{setGeminiBusy(false);}
+    finally{setGeminiBusy(false);void refreshVoiceQuota();}
   };
   const generate=async()=>{
     if(!sdkReady||!window.puter){setError('Puter.js is not ready. Reload and retry.');return;}
@@ -582,6 +594,9 @@ export default function PuterMultilingualPosterLab(){
               Retry microphone
             </button>
           </div>}
+          {voiceQuota&&<p className="text-[10px] leading-4 text-[#7C6F69]" role="status">
+            Gemini Voice + Brief: <span className="font-semibold text-[#292327]">{voiceQuota.remaining} of {voiceQuota.limit} daily requests remaining</span> · Resets at 00:00 UTC.
+          </p>}
           {(currentBrief||currentBlueprint)&&<div className="flex items-start gap-1.5 rounded-xl border border-[#DDE8DC] bg-[#F5FAF5] p-2 text-[11px] leading-4 text-[#4C6951]">
             <CheckCircle2 size={13} className="mt-0.5 shrink-0"/>
             Gemini {currentBlueprint?'art direction + typography blueprint':'brief'} prepared. Review exact headline, offer and CTA in the right panel.
