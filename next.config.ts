@@ -75,15 +75,6 @@ const nextConfig: NextConfig = {
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(self), geolocation=(self)' },
         ],
       },
-      // Caption Lab uses the same owner-authenticated voice transcription
-      // endpoint. Without this exact override, getUserMedia is denied BEFORE
-      // Chrome can display the native microphone consent prompt.
-      {
-        source: '/vendor/marketing/captions',
-        headers: [
-          { key: 'Permissions-Policy', value: 'camera=(), microphone=(self), geolocation=(self)' },
-        ],
-      },
       {
         source: '/vendor/marketing/captions',
         headers: [
