@@ -15,6 +15,23 @@ export type PosterOverlay=typeof POSTER_OVERLAYS[number];
 export const SAFE_ZONE_LAYOUTS=['top_center_hero','bottom_left_editorial','split_card'] as const;
 export type SafeZoneLayout=typeof SAFE_ZONE_LAYOUTS[number];
 
+/**
+ * Lower information card appearance only. Does NOT control poster geometry,
+ * headline, hero, business content, safe-zone or image generation.
+ */
+export const CONTENT_PANEL_STYLES=[
+  'black_marble_luxury',
+  'frosted_glass_modern',
+  'neon_glow_card',
+  'minimal_editorial_strip',
+  'split_info_panel',
+  'premium_gradient_plate',
+  'soft_dark_blur_panel',
+  'bold_sale_badge_layout',
+] as const;
+export type ContentPanelStyle=typeof CONTENT_PANEL_STYLES[number];
+export const DEFAULT_CONTENT_PANEL_STYLE:ContentPanelStyle='black_marble_luxury';
+
 /** All families are served with SIL OFL fonts by Google Fonts, on demand. */
 export const POSTER_FONT_PAIRS={
   ta:[
@@ -47,11 +64,14 @@ export type PosterBlueprint={
     overlayGradient:PosterOverlay;
   };
   imagePrompt:string;
+  /** Optional in provider JSON for backward compatibility with old briefs. */
+  layoutStyling?:{contentPanelStyle:ContentPanelStyle};
 };
 /** Client-side override NEVER chooses unvalidated arbitrary font/gradient. */
 export type VerifiedPosterDesign={
   styling:PosterBlueprint['styling'];
   layout:SafeZoneLayout;
+  contentPanelStyle?:ContentPanelStyle;
 };
 export const POSTER_BLUEPRINT_JSON_SCHEMA={
   type:'object',
@@ -73,6 +93,11 @@ export const POSTER_BLUEPRINT_JSON_SCHEMA={
         'textColor','overlayGradient'],additionalProperties:false,
     },
     imagePrompt:{type:'string'},
+    layoutStyling:{
+      type:'object',properties:{
+        contentPanelStyle:{type:'string',enum:[...CONTENT_PANEL_STYLES]},
+      },required:['contentPanelStyle'],additionalProperties:false,
+    },
   },required:['posterCopy','styling','imagePrompt'],additionalProperties:false,
 } as const;
 function record(v:unknown):Record<string,unknown>{
@@ -95,6 +120,12 @@ export function validatePosterBlueprint(value:unknown,input:{
   language:PosterCopyLanguage;vendorPrompt:string;approvedOffer?:string;
 }):PosterBlueprint{
   const obj=record(value),copy=record(obj.posterCopy),style=record(obj.styling);
+  const panel=record(obj.layoutStyling);
+  const rawPanelStyle=panel.contentPanelStyle;
+  if(rawPanelStyle!==undefined&&!includes(CONTENT_PANEL_STYLES,rawPanelStyle))
+    throw Error('Gemini suggested an unsupported lower content panel style.');
+  const panelStyle=includes(CONTENT_PANEL_STYLES,rawPanelStyle)?
+    rawPanelStyle:DEFAULT_CONTENT_PANEL_STYLE;
   const headline=clean(copy.headline,120);
   const offerText=clean(copy.offerText,60);
   const ctaText=clean(copy.ctaText,105);
@@ -136,6 +167,7 @@ export function validatePosterBlueprint(value:unknown,input:{
       textColor:hex(style.textColor),overlayGradient:style.overlayGradient,
     },
     imagePrompt,
+    layoutStyling:{contentPanelStyle:panelStyle},
   };
 }
 export function selectLayout(format:PosterFormat,vibe:PosterVibe):SafeZoneLayout{
@@ -169,6 +201,7 @@ export function shufflePosterDesign(
       overlayGradient:i%2?'subtle_vignette':'dark_bottom_top',
     },
     layout:layouts[i%layouts.length],
+    contentPanelStyle:current?.contentPanelStyle,
   };
 }
 export type PosterSuggestion={
