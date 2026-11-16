@@ -66,11 +66,17 @@ const nextConfig: NextConfig = {
           { key: 'X-DNS-Prefetch-Control', value: 'on' },
         ],
       },
-      // Last matching header wins: microphone prompting is allowed only in
-      // the owner-authenticated Poster Studio and its owner-only Puter lab.
-      // Global camera and microphone access remain disabled elsewhere.
+      // Explicit same-origin microphone permission only for authenticated
+      // Marketing Studio voice tools; global camera/microphone remain blocked.
+      // The browser still requires a direct user click and user permission.
       {
         source: '/vendor/marketing/design/puter-lab',
+        headers: [
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(self), geolocation=(self)' },
+        ],
+      },
+      {
+        source: '/vendor/marketing/captions',
         headers: [
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(self), geolocation=(self)' },
         ],

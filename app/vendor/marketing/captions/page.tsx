@@ -105,6 +105,8 @@ export default function ConnectedCaptionLab(){
   const [busy,setBusy]=useState(false);
   const [saving,setSaving]=useState(false);
   const [recording,setRecording]=useState(false);
+  const [requestingMic,setRequestingMic]=useState(false);
+  const [voicePermissionHelp,setVoicePermissionHelp]=useState(false);
   const [voiceBusy,setVoiceBusy]=useState(false);
   const [error,setError]=useState('');
   const [notice,setNotice]=useState('');
@@ -285,26 +287,74 @@ export default function ConnectedCaptionLab(){
     finally{setVoiceBusy(false);}
   };
   const startVoice=async()=>{
-    if(voiceBusy||recording)return;
-    setError('');
+    if(voiceBusy||recording||requestingMic||saving||busy)return;
+    setError('');setVoicePermissionHelp(false);
+    if(typeof window==='undefined'||!window.isSecureContext||
+      !navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined'){
+      setError('Voice recording requires HTTPS and a browser with microphone support.');
+      setVoicePermissionHelp(true);
+      return;
+    }
+    // A policy restriction prevents the browser from showing a prompt at all.
+    // Keep this test as a friendly diagnostic; getUserMedia is still the
+    // real permission request, triggered directly by the vendor's click.
+    const policy=document as Document&{
+      permissionsPolicy?:{allowsFeature:(name:string)=>boolean};
+      featurePolicy?:{allowsFeature:(name:string)=>boolean};
+    };
+    const allowed=policy.permissionsPolicy?.allowsFeature('microphone') ??
+      policy.featurePolicy?.allowsFeature('microphone');
+    if(allowed===false){
+      setError('Microphone access is blocked for this page. Reload the latest Caption Lab and try again.');
+      setVoicePermissionHelp(true);
+      return;
+    }
+    setRequestingMic(true);
+    setNotice('Allow microphone access in your browser to record a voice brief.');
     try{
-      if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined')
-        throw Error('This browser does not support microphone recording.');
       const stream=await navigator.mediaDevices.getUserMedia({audio:true});
       streamRef.current=stream;
       const preferred=['audio/webm;codecs=opus','audio/webm','audio/mp4'];
       const mime=preferred.find(t=>MediaRecorder.isTypeSupported(t));
       const recorder=new MediaRecorder(stream,mime?{mimeType:mime}:undefined);
       const chunks:Blob[]=[];
+      let failed=false;
       recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
+      recorder.onerror=()=>{
+        failed=true;
+        setError('Microphone recording interrupted. Check your device and try again.');
+        if(recorder.state==='recording')recorder.stop();
+      };
       recorder.onstop=()=>{
-        setRecording(false);
+        setRecording(false);recorderRef.current=null;
+        stream.getTracks().forEach(track=>track.stop());streamRef.current=null;
+        if(failed)return;
         const blob=new Blob(chunks,{type:recorder.mimeType||'audio/webm'});
-        stream.getTracks().forEach(t=>t.stop());streamRef.current=null;
+        if(blob.size<800){
+          setError('No audio captured. Speak for a few seconds before selecting Stop.');
+          return;
+        }
         void transcribe(blob);
       };
-      recorderRef.current=recorder;recorder.start(250);setRecording(true);
-    }catch(e){setError(e instanceof Error?e.message:'Microphone permission was denied.');}
+      recorder.start(250);recorderRef.current=recorder;setRecording(true);
+      setNotice('Recording voice brief. Speak clearly, then tap Stop to transcribe.');
+    }catch(e){
+      streamRef.current?.getTracks().forEach(track=>track.stop());
+      streamRef.current=null;recorderRef.current=null;
+      const name=e instanceof Error?e.name:'';
+      if(name==='NotAllowedError'||name==='PermissionDeniedError'||name==='SecurityError'){
+        setError('Microphone blocked. Allow access in your browser site settings, then retry.');
+        setVoicePermissionHelp(true);
+      }else if(name==='NotFoundError'||name==='DevicesNotFoundError'){
+        setError('No microphone detected. Connect a recording device and try again.');
+      }else if(name==='NotReadableError'||name==='TrackStartError'){
+        setError('Your microphone is in use by another application. Close it and retry.');
+      }else{
+        setError('Unable to open the microphone. Check browser permissions and audio input.');
+        setVoicePermissionHelp(true);
+      }
+      setNotice('');
+    }finally{setRequestingMic(false);}
   };
   const stopVoice=()=>{
     if(recorderRef.current?.state==='recording')recorderRef.current.stop();
@@ -471,7 +521,7 @@ export default function ConnectedCaptionLab(){
     const a=document.createElement('a');a.href=posterUrl;
     a.download='slbi-linked-poster-'+linked.context.format+'.png';a.click();
   };
-  const isBusy=busy||voiceBusy||recording||saving||posterBusy;
+  const isBusy=busy||voiceBusy||requestingMic||recording||saving||posterBusy;
   const previewAccount=selected?.name||'Your Business';
 
   return <main className="mx-auto w-full max-w-[1640px] space-y-4 px-2 pb-12 text-[#111827] sm:px-4">
@@ -612,12 +662,16 @@ export default function ConnectedCaptionLab(){
           <div className="mb-2 flex items-center justify-between gap-2">
             <label htmlFor="caption-brief" className="text-[11px] font-bold text-[#374151]">Campaign Message</label>
             <div className="flex items-center gap-1">
-              <button type="button" disabled={isBusy||!businessId}
+              <button type="button"
+                disabled={(!recording&&isBusy)||!businessId}
                 onClick={()=>recording?stopVoice():void startVoice()}
-                className={'inline-flex items-center gap-1 rounded-lg border px-2 py-1.5 text-[10px] font-bold disabled:opacity-40 '+
-                  (recording?'border-red-200 bg-red-50 text-red-700':'border-[#E5E7EB] text-[#374151]')}>
-                {recording?<StopCircle size={13}/>:<Mic size={13}/>}
-                {recording?'Stop':voiceBusy?'Transcribing':'Voice'}
+                aria-label={recording?'Stop voice recording':'Record voice campaign brief'}
+                aria-pressed={recording}
+                className={'inline-flex items-center gap-1 rounded-lg border px-2 py-1.5 text-[10px] font-bold disabled:cursor-not-allowed disabled:border-[#E5E7EB] disabled:bg-[#F3F4F6] disabled:text-[#9CA3AF] '+
+                  (recording?'border-red-200 bg-red-50 text-red-700':'border-[#E5E7EB] text-[#374151] hover:border-[#F97316]')}>
+                {recording?<StopCircle size={13}/>:requestingMic||voiceBusy?
+                  <LoaderCircle size={13} className="animate-spin"/>:<Mic size={13}/>}
+                {recording?'Stop':requestingMic?'Allow microphone':voiceBusy?'Transcribing':'Voice'}
               </button>
             </div>
           </div>
@@ -626,6 +680,11 @@ export default function ConnectedCaptionLab(){
             className={field+' resize-y leading-6'}
             placeholder="Tell us your real offer, product or campaign in தமிழ், සිංහල, English or Tanglish."/>
           <p className="mt-1 text-[10px] text-[#6B7280]">Add your offer, key details or record a voice brief.</p>
+          {voicePermissionHelp&&<div role="status" className="mt-2 rounded-lg border border-[#FED7AA] bg-[#FFF7ED] px-3 py-2.5 text-[11px] leading-5 text-[#7C2D12]">
+            <p className="font-semibold">Enable microphone for Caption Lab</p>
+            <p>In Chrome, click the site controls icon beside the address bar, open Site settings, set Microphone to Allow, and reload this page. Then tap Voice again.</p>
+            <p className="mt-1">If no microphone prompt appears, check your operating system's microphone privacy settings.</p>
+          </div>}
                 <button type="button" onClick={()=>void generate()}
           disabled={!businessId||message.trim().length<5||isBusy}
           className="group flex w-full items-center justify-center gap-2 rounded-xl border border-[#111827] bg-[#111827] px-3 py-3 text-[12px] font-bold text-white shadow-sm transition-colors hover:bg-[#292F3D] disabled:cursor-not-allowed disabled:border-[#E5E7EB] disabled:bg-[#F3F4F6] disabled:text-[#9CA3AF] disabled:shadow-none">
