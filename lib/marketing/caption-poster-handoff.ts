@@ -49,11 +49,19 @@ function openDb():Promise<IDBDatabase>{
 async function operation<T>(mode:IDBTransactionMode,callback:(store:IDBObjectStore,finish:(r:T)=>void)=>void):Promise<T>{
   const db=await openDb();
   return new Promise<T>((resolve,reject)=>{
-    let settled=false;
+    let pending:T;let hasValue=false;let settled=false;
     const tx=db.transaction(STORE,mode);
-    const finish=(value:T)=>{if(!settled){settled=true;resolve(value);}};
-    tx.oncomplete=()=>db.close();
-    tx.onerror=()=>{db.close();if(!settled){settled=true;reject(Error('Unable to access this browser’s linked poster.'));}};
+    const finish=(value:T)=>{pending=value;hasValue=true;};
+    // Wait for the *transaction commit*, not the early IDB put success.
+    // Navigation before commit would otherwise intermittently lose the PNG.
+    tx.oncomplete=()=>{
+      db.close();
+      if(!settled){settled=true;hasValue?resolve(pending):reject(Error('Poster storage returned no value.'));}
+    };
+    tx.onerror=()=>{
+      db.close();
+      if(!settled){settled=true;reject(Error('Unable to access this browser’s linked poster.'));}
+    };
     tx.onabort=tx.onerror;
     try{callback(tx.objectStore(STORE),finish);}catch(e){db.close();reject(e);}
   });
@@ -73,8 +81,24 @@ export async function saveLinkedPoster(context:LinkedPosterContext,image:Blob):P
     sample:Boolean(context.sample),source:'poster_studio',format:clean(context.format,20),
   };
   await operation<void>('readwrite',(store,done)=>{
-    const put=store.put({id,createdAt:Date.now(),context:sanitized,image} satisfies LinkedPosterRecord);
-    put.onsuccess=()=>done(undefined);
+    // Remove old short-lived private poster assets. Limit retained records
+    // so repeated experiments do not silently fill low-end phone storage.
+    const cutoff=Date.now()-MAX_AGE;
+    const cursor=store.openCursor();
+    let scanned=0;
+    cursor.onsuccess=()=>{
+      const current=cursor.result;
+      if(current&&scanned<300){
+        const record=current.value as Partial<LinkedPosterRecord>;
+        if(typeof record.createdAt!=='number'||record.createdAt<cutoff||scanned>=12)
+          current.delete();
+        scanned++;
+        current.continue();
+      }else{
+        const put=store.put({id,createdAt:Date.now(),context:sanitized,image} satisfies LinkedPosterRecord);
+        put.onsuccess=()=>done(undefined);
+      }
+    };
   });
   return id;
 }
