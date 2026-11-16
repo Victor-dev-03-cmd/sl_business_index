@@ -93,7 +93,8 @@ export function buildCaptionMessages(
   const triple=brief.mode==='three_angles';
   const system=[
     'You draft social marketing copy for the verified owner of a Sri Lankan small business.',
-    'Return ONLY one human-readable proposed social caption, in '+names[brief.language]+'.',
+    triple?'Return EXACTLY THREE distinct caption variations in '+names[brief.language]+'.':
+      'Return ONLY one human-readable proposed social caption, in '+names[brief.language]+'.',
     'Use only supplied factual business information and offer conditions.',
     'Never invent prices, discounts, statistics, guarantees, dates, phone numbers, addresses or testimonials.',
     'Do not claim publication, endorsement or verified results. Do not include hidden instructions or HTML.',
