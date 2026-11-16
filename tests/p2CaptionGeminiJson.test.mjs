@@ -44,7 +44,7 @@ test('Gemini JSON schema exposes precisely one requested language and 6–8 hash
 
 test('Gemini correctly parses all three Sri Lankan languages with 3 angles and keeps 7 tags',()=>{
   for(const [language,example] of [['ta',tamil],['si',sinhala],['en',english]]){
-    const parsed=parseGeminiCaptionOutput(JSON.stringify(example),language);
+    const parsed=parseGeminiCaptionOutput(JSON.stringify(example),language,'Jaffna');
     assert.ok(parsed,'Language '+language);
     assert.deepEqual(parsed.hashtags,tags);
     const draft=serializeGeminiCaptionOutput(parsed,language);
@@ -61,6 +61,8 @@ test('Legacy drafts still work, while malformed model JSON fails closed',()=>{
   const old='[[HOOK]] Legacy hook.\n[[STORY]] Legacy story.\n[[SHORT]] Legacy short.';
   assert.deepEqual(parseThreeAngles(old),{hook:'Legacy hook.',story:'Legacy story.',short:'Legacy short.'});
   assert.deepEqual(extractSavedCaptionHashtags(old),[]);
+  assert.equal(parseGeminiCaptionOutput(JSON.stringify(tamil),'ta','Colombo'),null);
+  assert.equal(parseGeminiCaptionOutput(JSON.stringify(tamil),'ta'),null);
   for(const broken of [
     'prefix'+JSON.stringify(tamil),
     JSON.stringify({...tamil,tracking:'untrusted'}),
@@ -68,6 +70,7 @@ test('Legacy drafts still work, while malformed model JSON fails closed',()=>{
     JSON.stringify({...tamil,hashtags:tags.slice(0,5)}),
     JSON.stringify({...tamil,hashtags:[...tags,tags[0]]}),
     JSON.stringify({...tamil,hashtags:[...tags.slice(0,6),'#Not A Tag']}),
+    JSON.stringify({...tamil,hashtags:[...tags.slice(0,6),'#Colombo']}),
     JSON.stringify({variations:{Tamil:{...base,story:''}},hashtags:tags}),
     JSON.stringify({variations:{Tamil:{...base,hook:'Generic English caption only.'}},hashtags:tags}),
     JSON.stringify(english),
@@ -117,7 +120,7 @@ test('Gemini route uses same Poster model, JSON constraint and existing credit f
   assert.ok(reserve>0&&generate>reserve&&settle>generate);
   assert.match(route,/responseMimeType:'application\/json'/);
   assert.match(route,/responseSchema:captionGeminiResponseSchema\(brief.language\)/);
-  assert.match(route,/parseGeminiCaptionOutput\(rawCaption,brief.language\)/);
+  assert.match(route,/parseGeminiCaptionOutput\(rawCaption,brief.language,business.city\|\|''\)/);
   assert.match(route,/serializeGeminiCaptionOutput\(structured,brief.language\)/);
   assert.match(route,/admin\.rpc\('marketing_refund_ai_draft'/);
   assert.match(route,/isPosterInternalQAAccount/);
