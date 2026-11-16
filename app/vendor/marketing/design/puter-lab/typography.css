@@ -1,7 +1,7 @@
 /* Runtime-loaded Open Font License families for exact browser-printed PNG.
  * Latin premium roles: Anton condensed, Space Grotesk brand, Plus Jakarta offer/CTA,
  * Inter body, JetBrains Mono footer. Complex scripts use Noto fonts throughout. */
-@import url('https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400&family=Noto+Sans+Sinhala:wght@400;500;600;700;800&family=Noto+Sans+Tamil:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;700;800&family=Space+Grotesk:wght@600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Abhaya+Libre:wght@500;600;700;800&family=Anton&family=Bebas+Neue&family=Gemunu+Libre:wght@400;500;600;700;800&family=Hind+Madurai:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400&family=Kavivanar&family=Montserrat:wght@400;500;600;700;800;900&family=Mukta+Malar:wght@400;500;600;700&family=Noto+Sans+Sinhala:wght@400;500;600;700;800;900&family=Noto+Sans+Tamil:wght@400;500;600;700;800;900&family=Noto+Serif+Tamil:wght@400;500;600;700;800&family=Playfair+Display:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;700;800&family=Poppins:wght@400;500;600;700;800&family=Space+Grotesk:wght@600&display=swap');
 
 :root {
   --slbi-neon-obsidian: #07070C;
