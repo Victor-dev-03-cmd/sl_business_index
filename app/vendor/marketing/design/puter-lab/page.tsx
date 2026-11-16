@@ -100,6 +100,7 @@ export default function PuterMultilingualPosterLab(){
   const [recording,setRecording]=useState(false);
   const [recordingSeconds,setRecordingSeconds]=useState(0);
   const [transcribing,setTranscribing]=useState(false);
+  const [micHelp,setMicHelp]=useState(false);
   const [realMode,setRealMode]=useState(false);
   const [consent,setConsent]=useState(false);
   const [generating,setGenerating]=useState(false);
@@ -290,10 +291,15 @@ export default function PuterMultilingualPosterLab(){
     };
     const allowed=policy.permissionsPolicy?.allowsFeature('microphone') ??
       policy.featurePolicy?.allowsFeature('microphone');
-    if(allowed===false){setError('Microphone blocked by Permissions-Policy. Reload and retry.');return;}
+    if(allowed===false){
+      setMicHelp(true);
+      setError('Microphone is blocked by browser policy. Reload this page and retry.');
+      return;
+    }
     try{
       setError('');
       const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+      setMicHelp(false);
       const mime=['audio/webm;codecs=opus','audio/webm','audio/mp4']
         .find(v=>MediaRecorder.isTypeSupported(v));
       const rec=new MediaRecorder(stream,mime?{mimeType:mime}:undefined);
@@ -313,8 +319,9 @@ export default function PuterMultilingualPosterLab(){
       setStatus('Listening. Stop recording when you finish; the 1.5 MB Gemini audio limit still applies.');
     }catch(e){
       const name=e instanceof Error?e.name:'';
+      if(name==='NotAllowedError'||name==='SecurityError')setMicHelp(true);
       setError(name==='NotAllowedError'||name==='SecurityError'?
-        'Microphone permission denied. Chrome site controls → Microphone → Allow, then retry.':
+        'Microphone blocked. Open browser site controls → Site settings → Microphone → Allow, then retry.':
         'Unable to open microphone. Check your recording device or type instead.');
     }
   };
@@ -566,6 +573,15 @@ export default function PuterMultilingualPosterLab(){
               Prepare with Gemini
             </button>
           </div>
+          {micHelp&&<div role="note" className="space-y-2 rounded-xl border border-[#FED7AA] bg-[#FFF7ED] p-2.5 text-[11px] leading-5 text-[#92400E]">
+            <p className="font-semibold">Allow microphone access in your browser.</p>
+            <p>Click the controls beside the address bar → Site settings → Microphone → Allow. If you previously blocked it, reload, then retry.</p>
+            <button type="button" disabled={recording||geminiBusy||transcribing||generating}
+              onClick={()=>void startVoice()}
+              className="rounded-lg border border-[#FDBA74] bg-white px-2.5 py-1.5 font-semibold text-[#9A3412]">
+              Retry microphone
+            </button>
+          </div>}
           {(currentBrief||currentBlueprint)&&<div className="flex items-start gap-1.5 rounded-xl border border-[#DDE8DC] bg-[#F5FAF5] p-2 text-[11px] leading-4 text-[#4C6951]">
             <CheckCircle2 size={13} className="mt-0.5 shrink-0"/>
             Gemini {currentBlueprint?'art direction + typography blueprint':'brief'} prepared. Review exact headline, offer and CTA in the right panel.
