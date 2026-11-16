@@ -19,7 +19,7 @@ import Link from 'next/link';
 import Script from 'next/script';
 import {
   ArrowLeft,CheckCircle2,Download,FlaskConical,
-  LoaderCircle,Mic,ShieldCheck,SquarePen,StopCircle,WandSparkles,Shuffle,
+  LoaderCircle,Mic,SquarePen,StopCircle,WandSparkles,Shuffle,
 } from 'lucide-react';
 import {POSTER_FORMATS,type PosterFormat} from '@/lib/marketing/poster-design';
 import {
