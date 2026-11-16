@@ -5,7 +5,7 @@ import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft,ArrowRight,Check,CheckCircle2,Copy,
-  Download,Facebook,Instagram,Image as ImageIcon,LoaderCircle,Mic,
+  Download,Facebook,Instagram,Image as ImageIcon,Info,LoaderCircle,Mic,
   Plus,RefreshCcw,Send,ShieldCheck,SlidersHorizontal,Sparkles,
   StopCircle,Volume2,WandSparkles,
 } from 'lucide-react';
@@ -20,7 +20,8 @@ import {
   type SocialPlatform,type TonePosition,
 } from '@/lib/marketing/caption-workspace';
 import {
-  loadLinkedPoster,validHandoffId,type LinkedPosterRecord,
+  listLinkedPosters,loadLinkedPoster,saveLinkedPoster,validHandoffId,
+  type LinkedPosterContext,type LinkedPosterRecord,
 } from '@/lib/marketing/caption-poster-handoff';
 
 type Business={id:string;name:string;city:string|null;category:string;phone:string|null;website_url:string|null;address:string|null};
@@ -40,6 +41,38 @@ const labelsByPlatform:Record<SocialPlatform,string>={
   facebook:'Facebook Post',instagram:'Instagram Feed',whatsapp:'WhatsApp Broadcast',
 };
 const newDraftLanguage=(list:StoredDraft[],lang:CaptionLanguage)=>list.find(x=>x.language===lang);
+const DRAFT_TARGETS:Record<SocialPlatform,number>={facebook:2200,instagram:2200,whatsapp:1000};
+const countCharacters=(value:string)=>Array.from(value).length;
+
+/** Browser-local attachment: accepts standard raster images, never HTML/SVG,
+ * normalizes JPEG/WebP to PNG so existing private handoff remains consistent. */
+async function imageFileToPng(file:File):Promise<Blob>{
+  if(!['image/png','image/jpeg','image/webp'].includes(file.type)||!file.size||
+      file.size>12_000_000)
+    throw Error('Choose a PNG, JPG or WebP image smaller than 12 MB.');
+  if(file.type==='image/png')return file;
+  const src=URL.createObjectURL(file);
+  try{
+    const img=new Image();
+    await new Promise<void>((resolve,reject)=>{
+      img.onload=()=>resolve();
+      img.onerror=()=>reject(Error('Could not read the image. Choose another file.'));
+      img.src=src;
+    });
+    if(!img.naturalWidth||!img.naturalHeight||
+      img.naturalWidth*img.naturalHeight>16_000_000)
+      throw Error('Choose an image up to 16 megapixels.');
+    const canvas=document.createElement('canvas');
+    canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;
+    const ctx=canvas.getContext('2d');
+    if(!ctx)throw Error('This browser cannot prepare the poster image.');
+    ctx.drawImage(img,0,0);
+    const png=await new Promise<Blob>((resolve,reject)=>
+      canvas.toBlob(blob=>blob?resolve(blob):reject(Error('Could not prepare the PNG.')),'image/png'));
+    if(png.size>15_000_000)throw Error('The PNG is too large. Choose a smaller image.');
+    return png;
+  }finally{URL.revokeObjectURL(src);}
+}
 
 export default function ConnectedCaptionLab(){
   const [businesses,setBusinesses]=useState<Business[]>([]);
@@ -48,6 +81,9 @@ export default function ConnectedCaptionLab(){
   const [linked,setLinked]=useState<LinkedPosterRecord|null>(null);
   const [posterUrl,setPosterUrl]=useState('');
   const [posterKey,setPosterKey]=useState('');
+  const [posterPickerOpen,setPosterPickerOpen]=useState(false);
+  const [posterChoices,setPosterChoices]=useState<LinkedPosterRecord[]>([]);
+  const [posterBusy,setPosterBusy]=useState(false);
   const [goal,setGoal]=useState<CampaignGoal>('flash_sale');
   const [languageSelections,setLanguageSelections]=useState<CaptionLanguage[]>(['ta','si','en']);
   const [previewLanguage,setPreviewLanguage]=useState<CaptionLanguage|'all'>('all');
@@ -76,6 +112,7 @@ export default function ConnectedCaptionLab(){
   const streamRef=useRef<MediaStream|null>(null);
   const importingRef=useRef('');
   const posterUrlRef=useRef('');
+  const posterInputRef=useRef<HTMLInputElement|null>(null);
   const selected=useMemo(()=>businesses.find(b=>b.id===businessId),[businesses,businessId]);
   const hasLinked=Boolean(linked&&linked.context.businessId===businessId);
   const chosenLanguages:CaptionLanguage[]=languageSelections.length?languageSelections:['ta'];
@@ -102,6 +139,10 @@ export default function ConnectedCaptionLab(){
     return includeTags?withHashtags(source,visibleTags):removeHashtags(source);
   },[currentCaption,hasAI,message,includeTags,visibleTags]);
   const fold=previewFold(previewText,expanded);
+  const characterCount=countCharacters(previewText);
+  const draftTarget=DRAFT_TARGETS[platform];
+  const hookCount=countCharacters(captions[activePreviewLanguage].hook.trim()||(!hasAI?message.trim():''));
+  const hookStatus=!hookCount?'Add a hook':hookCount<=125?'Hook on target':'Try a shorter hook';
 
   const loadBusinesses=useCallback(async()=>{
     setLoading(true);setError('');
@@ -336,9 +377,45 @@ export default function ConnectedCaptionLab(){
     }catch(e){setError(e instanceof Error?e.message:'Save to Campaign Planner failed.');}
     finally{setSaving(false);}
   };
+  const pickPoster=async()=>{
+    if(!businessId||!selected){setError('Select your business before attaching a poster.');return;}
+    setPosterPickerOpen(true);setError('');
+    try{setPosterChoices(await listLinkedPosters(businessId));}
+    catch{setPosterChoices([]);setNotice('Recent Studio posters are not available in this browser. You can upload an image.');}
+  };
+  const selectRecentPoster=(record:LinkedPosterRecord)=>{
+    if(!businesses.some(b=>b.id===record.context.businessId)||record.context.businessId!==businessId){
+      setError('This poster is not available for your selected business.');return;
+    }
+    if(posterUrlRef.current)URL.revokeObjectURL(posterUrlRef.current);
+    const url=URL.createObjectURL(record.image);
+    posterUrlRef.current=url;setPosterUrl(url);
+    setLinked(record);setPosterKey(record.id);setPosterPickerOpen(false);
+    setNotice('Poster attached. Review your campaign brief, then generate captions.');
+  };
+  const uploadDevicePoster=async(file?:File)=>{
+    if(!file)return;
+    if(!selected||!businessId){setError('Select your business first.');return;}
+    setPosterBusy(true);setError('');
+    try{
+      const image=await imageFileToPng(file);
+      const context:LinkedPosterContext={
+        businessId:selected.id,businessName:selected.name,category:selected.category||'',
+        city:selected.city||'',address:selected.address||'',phone:selected.phone||'',
+        website:selected.website_url||'',headline:file.name.slice(0,100),offer:'',
+        cta:'',vibe:'',language:activePreviewLanguage,
+        sample:false,source:'device_upload',format:'uploaded',
+      };
+      const id=await saveLinkedPoster(context,image);
+      selectRecentPoster({id,createdAt:Date.now(),context,image});
+      setNotice('Image attached from your device. It stays private in this browser.');
+    }catch(e){setError(e instanceof Error?e.message:'Could not attach this image.');}
+    finally{setPosterBusy(false);}
+  };
   const onBusinessChange=(id:string)=>{
     if(id===businessId)return;
     setBusinessId(id);setLinked(null);setPosterKey('');
+    setPosterPickerOpen(false);setPosterChoices([]);
     if(posterUrlRef.current)URL.revokeObjectURL(posterUrlRef.current);
     posterUrlRef.current='';setPosterUrl('');
     setMessage('');setConditions('');setCta('');setError('');setNotice('');
@@ -349,7 +426,7 @@ export default function ConnectedCaptionLab(){
     const a=document.createElement('a');a.href=posterUrl;
     a.download='slbi-linked-poster-'+linked.context.format+'.png';a.click();
   };
-  const isBusy=busy||voiceBusy||recording||saving;
+  const isBusy=busy||voiceBusy||recording||saving||posterBusy;
   const previewAccount=selected?.name||'Your Business';
 
   return <main className="mx-auto w-full max-w-[1640px] space-y-4 px-2 pb-12 text-[#111827] sm:px-4">
