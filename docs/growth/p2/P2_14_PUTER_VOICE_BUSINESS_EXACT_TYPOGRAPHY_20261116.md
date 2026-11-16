@@ -1,0 +1,27 @@
+# P2-14 — Owner-only Puter Voice → Gemini → Business Facts → Exact Unicode Poster
+Date: 2026-11-16
+Branch: feat/p2-puter-multilingual-poster-composer-20261116
+
+## Owner request / approved scope
+Owner verified normal SLBI production login, no-credit Puter SDK sample, then genuine GPT Image 2.6 Flare image output. Owner now requests the established Poster Studio workflow in the Puter lab: manually-stop voice; Gemini original-language transcription; owner-selected actual business fields; Gemini understanding; professional image art; text exact with Tamil/Sinhala/English fonts; exact chosen social format and ready-to-download PNG.
+
+**Do not switch default Pro poster provider to Puter without separate billing/product approval.** This deliverable extends only the private QA route /vendor/marketing/design/puter-lab, gated by existing verified internal QA entitlement and parent Pro auth. Existing Cloudflare-based poster flow and its 8 Growth Credit action, global image cap, protected jobs and storage remain completely unchanged.
+
+## Actual implementation
+1. GET /api/marketing/poster/puter-lab: server-side getUser + verified internal QA entitlement, owner_id-filtered businesses, owner_id-filtered optional brand kit and preparePosterBusinessFacts with bounded published fields; cache-control private/no-store. No metadata, cross-tenant access, fake business name or phone.
+2. POST same API: same-origin + owner QA + business ownership + 5–1200 char prompt/language validation + existing privileged atomic marketing_poster_voice_try_reserve quota, then Gemini createGeminiPosterBrief. Voice transcript and creative-brief preparation SHARE 12/day (each call consumes one quota attempt). No anonymous Gemini relay, no Gemini secret exposed. Gemini outputs artistic suggestions, not authoritative brand facts.
+3. Existing POST /api/marketing/poster/transcribe: same server Gemini, actual business owner, 1.5 MB audio cap, daily quota, Tamil/Sinhala/English and mixed code-switching; original-language transcript manually editable. Recording never has a 12-second cutoff; the user stops manually. Add a route-specific Permissions-Policy microphone=(self) header only on the Puter lab; global denied.
+4. Puter.js browser SDK /v2: select GPT Image 2.6 Flare (previously real-tested by owner), Gemini 3 Pro Image, FLUX.2 Pro, Qwen Image (version not verified as 2.1). Explicit browser Puter login from button click. Test-mode default returns a sample without inference. Real image call only with separate owner User-Pays acknowledgement; no automatic retries, no background requests or SLBI Growth Credit consumption.
+5. New lib/marketing/puter-poster-composer.ts: art-only prompt instructs model to draw no words/numerals/logos, leaving clean copy-safe space; browser Canvas Unicode text overlay uses the exact owner-verified business name, optional published phone/website, and explicitly approved headline/offer/CTA plus category. No AI-typed typography or invented discounts. Gemini suggested headline/CTA are editable and must be reviewed. Manual text changes do not call Puter again.
+6. PNG export at existing POSTER_FORMATS: square 1080×1080, portrait 1080×1350, story 1080×1920, landscape 1200×630. Preview and downloaded PNG use the same composed Blob. Canvas draws image at cover aspect, responsive gradient text-safe panel, grapheme-cluster wrapping (Intl.Segmenter) and auto font-size reduction. If text does not fit it refuses to export rather than silently truncate. Fonts loaded from Google Fonts stylesheets: Noto Sans Tamil, Noto Sans Sinhala, Inter. If a complex-script font cannot be loaded, export refuses rather than emitting missing glyphs. Puter model image is documented to return a base64 data image, enabling browser Canvas export. No private files/website details posted to Gemini/Puter except explicitly selected bounded facts and the user's own campaign.
+7. The lab remains private/unlinked. Image and final poster exist only in browser memory and download; no Supabase poster job, no private storage, no social posting. The owner can download locally; converting this feature into vendor-wide paid production needs a separate legal/UX/billing and storage review.
+
+## Security & QA
+- The APIs use server-side auth and RLS ownership; no user_metadata for authorization. POST Gemini quota reserved atomically through existing privileged RPC, after authentication and ownership verification.
+- No remote external image proxy, no API token, no service role in the browser. No cross-account reads.
+- Voice recording audio and Gemini transcript not stored. User sees transcription and can correct it before requesting a new art or brief generation.
+- Do not auto-append `OFF` or fabricate an offer. Only explicit numeric percentages can be extracted as plain `30%`; vendor may edit to `30% OFF`.
+- Browser fonts/network and Puter data-URI export require owner E2E check in all scripts/languages and formats; CI only validates static contract, TS and Next build.
+- Some branded/published fields can be long. If exact approved copy cannot fit in a chosen format, exporter shows error and asks the owner to shorten or disable a contact line, rather than drop text.
+- Existing voice model/day quota and external Puter charges must remain independently visible. The assistant must NOT generate billable images during validation.
+- Run tests/p2PuterBrowserLab.test.mjs and existing poster/security CI, then check exact PR head; only claim production READY after Vercel alias and build success. Owner final visual test needed.
