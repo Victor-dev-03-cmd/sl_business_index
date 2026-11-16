@@ -33,3 +33,18 @@ test('test mode is labeled as sample rather than claiming successful model infer
 test('the production image provider is unchanged by the optional experiment',()=>{
   assert.match(provider,/const CF_MODEL='@cf\/black-forest-labs\/flux-2-klein-4b'/);
 });
+
+test('Preview password login fails closed with an explicit Turnstile config warning',()=>{
+  const login=read('app/login/page.tsx');
+  const backend=read('app/api/auth/password-login/route.ts');
+  assert.match(login,/const turnstileSiteKey = process\.env\.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY\?\.trim\(\)/);
+  assert.match(login,/turnstileSiteKey \? \(/);
+  assert.match(login,/Secure password sign-in is not configured on this Preview deployment/);
+  assert.match(login,/Cloudflare verification could not load for this website address/);
+  assert.match(login,/disabled=\{loading \|\| !turnstileSiteKey \|\| turnstileLoadFailed \|\| !turnstileToken\}/);
+  assert.match(backend,/const secret = process\.env\.CLOUDFLARE_TURNSTILE_SECRET_KEY/);
+  assert.match(backend,/if \(!secret\)/);
+  assert.match(backend,/https:\/\/challenges\.cloudflare\.com\/turnstile\/v0\/siteverify/);
+  assert.doesNotMatch(login,/turnstileSiteKey \|\| '1x00000000000000000000AA'/);
+  assert.doesNotMatch(backend,/1x0000000000000000000000000000000AA/);
+});
