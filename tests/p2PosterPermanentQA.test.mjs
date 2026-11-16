@@ -21,7 +21,7 @@ test('Only owner QA account sees Poster Test tile, while coming_soon is unchange
   assert.match(page,/isPosterInternalQAAccount\(user\.id,client\)/);
   assert.match(page,/posterQaAllowed=\{posterQaAllowed\}/);
   const card=read('app/vendor/marketing/components/MarketingAppStore.tsx');
-  assert.match(card,/posterQaAllowed&&app\.id==='poster-editor'&&launchStatus==='coming_soon'/);
+  assert.match(card,/posterQaAllowed&&\['poster-editor','caption-lab'\]\.includes\(app\.id\)&&launchStatus==='coming_soon'/);
   assert.match(card,/launched=launchStatus==='live'\|\|review\|\|qa/);
   assert.match(card,/Private QA/);
   assert.match(card,/Pro test grant · release pending/);
