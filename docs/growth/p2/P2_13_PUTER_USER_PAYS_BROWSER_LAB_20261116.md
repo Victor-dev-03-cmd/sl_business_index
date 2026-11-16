@@ -27,3 +27,16 @@
 - https://docs.puter.com/Auth/signIn/
 - https://docs.puter.com/AI/txt2img/
 - https://developer.puter.com/tutorials/puter-auth-token/
+
+## Preview login Cloudflare Turnstile — confirmed blocker 2026-11-16
+- The owner followed Vercel Preview link and received `/login?next=/vendor/marketing/design/puter-lab`; the Cloudflare checkbox did not appear and password sign-in could not proceed.
+- **Confirmed by non-decrypted Vercel env inventory:** `NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY` and `CLOUDFLARE_TURNSTILE_SECRET_KEY` are both scoped **only to Production**, whereas the Supabase public URL/anon key are available in Preview. This is not a credential/password error.
+- `app/login/page.tsx` rendered a Turnstile using an absent site key, with no message explaining why. `app/api/auth/password-login/route.ts` intentionally requires a valid token and server-side `CLOUDFLARE_TURNSTILE_SECRET_KEY`. Keep it fail-closed; do **not** disable Turnstile or use Cloudflare dummy always-pass keys on a preview that can authenticate real production Supabase users.
+- Draft PR #92 adds explicit missing-key and widget-error messages, and disables the password submit button until Turnstile verification has succeeded. Does not disable auth.
+- Cloudflare dashboard lacks a connected tool in this environment. To restore functional **real secure login**, owner must create a dedicated `SLBI Puter Lab Preview` Cloudflare Turnstile widget in Managed mode, permitting the **stable branch preview hostname**: `sl-business-index-git-feat-p-0f70a9-victor-dev-03-cmds-projects.vercel.app` (hostname only, no https, path or wildcard). Prefer this stable branch alias over hash-specific deployment URLs so future commits do not require updates. Add both new keys to Vercel project `sl-business-index` > Settings > Environment Variables, target **Preview** with **Git Branch = feat/p2-puter-browser-experiment-20261116** only:
+  - `NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY` (site key is public)
+  - `CLOUDFLARE_TURNSTILE_SECRET_KEY` (server secret; mark Sensitive)
+  Do not share keys in chat or GitHub. Do not extend the production Turnstile secret to all Preview branches. Redeploy the branch after adding env keys. Keep production environment untouched.
+- **Important:** the URL given to the user must be the STABLE preview alias above, not the immutable deployment URL; test same hostname whitelisted in the widget. The user's Supabase session on `www.slbusinessindex.com` cannot normally be reused on a separate Vercel preview domain. Separate login is expected.
+- If the widget appears but sign-in still fails, check recent Vercel preview logs; also validate token hostname server-side if updating auth in future, test Supabase preview cookies and OAuth callback allowlists. Do not claim login fully fixed until owner signs in successfully with valid Turnstile challenge.
+- All temporary test keys and bypasses are expressly forbidden in this real-data Preview auth flow. A local synthetic-credential automated test may use dummy Turnstile keys against a disposable auth backend, but not this deployment.
