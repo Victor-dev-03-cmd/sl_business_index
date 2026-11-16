@@ -6,7 +6,13 @@ import {
   type PremiumPosterStyle,
   type PremiumPosterPreset,
 } from '@/lib/marketing/poster-premium-presets';
-import type {VerifiedPosterDesign,SafeZoneLayout} from '@/lib/marketing/poster-design-blueprint';
+import {
+  DEFAULT_CONTENT_PANEL_STYLE,
+  type ContentPanelStyle,type VerifiedPosterDesign,type SafeZoneLayout,
+} from '@/lib/marketing/poster-design-blueprint';
+import {
+  paintLowerContentPanel,paintLowerCta,paintLowerOfferHighlight,
+} from '@/lib/marketing/puter-content-panel-styles';
 
 type Ctx=CanvasRenderingContext2D;
 type Role='display'|'brand'|'offer'|'body'|'button'|'footer';
@@ -182,21 +188,20 @@ function drawBackdrop(ctx:Ctx,image:HTMLImageElement,mode:'stacked'|'wide',p:Pre
 }
 function drawPill(ctx:Ctx,p:{
   text:string;x:number;y:number;w:number;h:number;scale:number;
-  language:PosterCopyLanguage;preset:PremiumPosterPreset;
+  language:PosterCopyLanguage;preset:PremiumPosterPreset;panelStyle:ContentPanelStyle;
 }){
   if(!p.text)return;
   const pal=p.preset.palette;
-  ctx.save();ctx.shadowBlur=p.preset.tokens.neonButtonBlur*p.scale;
-  ctx.shadowColor='rgba(255,94,0,.55)';
-  roundedPath(ctx,p.x,p.y,p.w,p.h,p.h/2);
-  const fill=ctx.createLinearGradient(p.x,p.y,p.x+p.w,p.y);
-  fill.addColorStop(0,pal.accent);fill.addColorStop(1,pal.glow);
-  ctx.fillStyle=fill;ctx.fill();ctx.shadowBlur=0;
+  ctx.save();
+  const buttonTextColor=paintLowerCta({
+    ctx,style:p.panelStyle,x:p.x,y:p.y,w:p.w,h:p.h,
+    scale:p.scale,colors:pal,
+  });
   const label=fit(ctx,{value:p.text,width:p.w-28*p.scale,height:p.h*.7,maxLines:1,
     start:28*p.scale,min:14*p.scale,lineHeight:1.2,role:'button',
     lang:p.language,preset:p.preset,label:'Call-to-action button'});
   renderFitted(ctx,{fit:label,x:p.x,y:p.y+(p.h-label.height)/2,
-    width:p.w,color:pal.obsidian,role:'button',language:p.language,preset:p.preset,center:true});
+    width:p.w,color:buttonTextColor,role:'button',language:p.language,preset:p.preset,center:true});
   ctx.restore();
 }
 function contactIcon(ctx:Ctx,type:'globe'|'phone'|'mail',x:number,y:number,s:number,color:string){
@@ -252,7 +257,7 @@ function drawContacts(ctx:Ctx,p:{
       color:p.preset.palette.muted,role:'footer',language:scriptOf(item.text,p.lang),preset:p.preset});
   });
 }
-function renderStacked(ctx:Ctx,copy:ExactPosterCopy,p:PremiumPosterPreset,format:PosterFormat,layoutMode:SafeZoneLayout='top_center_hero'){
+function renderStacked(ctx:Ctx,copy:ExactPosterCopy,p:PremiumPosterPreset,format:PosterFormat,layoutMode:SafeZoneLayout='top_center_hero',panelStyle:ContentPanelStyle=DEFAULT_CONTENT_PANEL_STYLE){
   const w=ctx.canvas.width,h=ctx.canvas.height;
   const scale=h/1920;
   const side=Math.round(w*.047);
@@ -301,14 +306,24 @@ function renderStacked(ctx:Ctx,copy:ExactPosterCopy,p:PremiumPosterPreset,format
     brandHeight:brand.height,offerHeight:offer?.height||0,
     serviceHeight:service?.height||0,hasCta:Boolean(copy.cta.trim()),contactRows,
   });
-  glassPanel(ctx,side,layout.top,panelW,layout.height,p,scale);
+  if(panelStyle==='frosted_glass_modern')
+    glassPanel(ctx,side,layout.top,panelW,layout.height,p,scale);
+  else paintLowerContentPanel({
+    ctx,style:panelStyle,x:side,y:layout.top,w:panelW,h:layout.height,
+    scale,colors:p.palette,radius:p.tokens.glassRadius,
+    blur:p.tokens.glassBlur,borderWidth:p.tokens.glassBorderWidth,
+  });
   const centerText=layoutMode==='top_center_hero';
   renderFitted(ctx,{fit:brand,x:inner,y:layout.brandY,width:insideWidth,
     color:p.palette.glow,role:'brand',language:brandLanguage,preset:p,center:centerText});
-  if(offer&&layout.offerY!==null)
+  if(offer&&layout.offerY!==null){
+    paintLowerOfferHighlight({ctx,style:panelStyle,x:inner-7*scale,
+      y:layout.offerY-5*scale,w:insideWidth+14*scale,h:offer.height+10*scale,
+      scale,colors:p.palette});
     renderFitted(ctx,{fit:offer,x:inner,y:layout.offerY,width:insideWidth,
       color:p.palette.accent,role:'offer',language:offerLanguage,preset:p,center:centerText,
       glow:p.tokens.neonTextBlur*scale,glowColor:'rgba(255,94,0,.6)'});
+  }
   if(service&&layout.serviceY!==null)
     renderFitted(ctx,{fit:service,x:inner,y:layout.serviceY,width:insideWidth,
       color:p.palette.white,role:'body',language:serviceLanguage,preset:p,center:centerText});
@@ -316,7 +331,7 @@ function renderStacked(ctx:Ctx,copy:ExactPosterCopy,p:PremiumPosterPreset,format
     const buttonW=Math.min(panelW*.6,490*scale);
     drawPill(ctx,{text:copy.cta,
       x:centerText?side+(panelW-buttonW)/2:inner,y:layout.ctaY,w:buttonW,
-      h:layout.ctaHeight,scale,language:scriptOf(copy.cta,copy.language),preset:p});
+      h:layout.ctaHeight,scale,language:scriptOf(copy.cta,copy.language),preset:p,panelStyle});
   }
   if(contactRows&&layout.contactsY!==null&&layout.dividerY!==null){
     ctx.save();
@@ -328,11 +343,17 @@ function renderStacked(ctx:Ctx,copy:ExactPosterCopy,p:PremiumPosterPreset,format
       height:layout.contactsHeight,scale,preset:p,lang:copy.language});
   }
 }
-function renderWide(ctx:Ctx,copy:ExactPosterCopy,p:PremiumPosterPreset){
+function renderWide(ctx:Ctx,copy:ExactPosterCopy,p:PremiumPosterPreset,panelStyle:ContentPanelStyle){
   const w=ctx.canvas.width,h=ctx.canvas.height;
   const headlineLanguage=scriptOf(copy.headline,copy.language);
   const x=w*.035,y=h*.045,pw=w*.57,ph=h*.91;
-  glassPanel(ctx,x,y,pw,ph,p,.78);
+  if(panelStyle==='frosted_glass_modern')
+    glassPanel(ctx,x,y,pw,ph,p,.78);
+  else paintLowerContentPanel({
+    ctx,style:panelStyle,x,y,w:pw,h:ph,scale:.78,colors:p.palette,
+    radius:p.tokens.glassRadius,blur:p.tokens.glassBlur,
+    borderWidth:p.tokens.glassBorderWidth,
+  });
   const inner=x+32,innerWidth=pw-64;
   let row=y+19;
   const brand=fit(ctx,{value:copy.businessName,width:innerWidth,height:35,maxLines:1,
@@ -350,6 +371,10 @@ function renderWide(ctx:Ctx,copy:ExactPosterCopy,p:PremiumPosterPreset){
   if(copy.offer){
     const offer=fit(ctx,{value:copy.offer,width:innerWidth,height:104,maxLines:2,
       start:58,min:26,lineHeight:1.05,role:'offer',lang:scriptOf(copy.offer,copy.language),preset:p,label:'Approved offer'});
+    paintLowerOfferHighlight({
+      ctx,style:panelStyle,x:inner-6,y:row-3,w:innerWidth+12,h:offer.height+6,
+      scale:.78,colors:p.palette,
+    });
     row=renderFitted(ctx,{fit:offer,x:inner,y:row,width:innerWidth,
       color:p.palette.accent,role:'offer',language:scriptOf(copy.offer,copy.language),preset:p,
       glow:16,glowColor:'rgba(255,94,0,.55)'});
@@ -364,7 +389,7 @@ function renderWide(ctx:Ctx,copy:ExactPosterCopy,p:PremiumPosterPreset){
     throw Error('Copy is too long for the landscape CTA. Shorten the headline or offer.');
   if(copy.cta)drawPill(ctx,{text:copy.cta,x:inner,y:buttonY,
     w:Math.min(260,innerWidth),h:51,scale:.7,
-    language:scriptOf(copy.cta,copy.language),preset:p});
+    language:scriptOf(copy.cta,copy.language),preset:p,panelStyle});
   const contacts=Number(Boolean(copy.website))+Number(Boolean(copy.phone))+Number(Boolean(copy.email));
   if(contacts>3)throw Error('Too many contact lines.');
   const contactsY=y+ph-79;
@@ -381,6 +406,7 @@ export function renderPremiumPoster(input:{
     input.design,input.language);
   const mode=input.format==='landscape'?'wide':'stacked';
   drawBackdrop(input.ctx,input.image,mode,preset);
-  if(mode==='wide')renderWide(input.ctx,input.copy,preset);
-  else renderStacked(input.ctx,input.copy,preset,input.format,input.design?.layout);
+  const panelStyle=input.design?.contentPanelStyle||DEFAULT_CONTENT_PANEL_STYLE;
+  if(mode==='wide')renderWide(input.ctx,input.copy,preset,panelStyle);
+  else renderStacked(input.ctx,input.copy,preset,input.format,input.design?.layout,panelStyle);
 }
