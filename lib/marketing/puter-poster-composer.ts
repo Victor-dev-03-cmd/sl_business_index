@@ -1,4 +1,6 @@
 import {POSTER_FORMATS,type PosterFormat} from '@/lib/marketing/poster-design';
+import {renderPremiumPoster} from '@/lib/marketing/puter-premium-poster-renderer';
+import type {PremiumPosterStyle} from '@/lib/marketing/poster-premium-presets';
 
 export type PosterCopyLanguage='ta'|'si'|'en';
 export type ExactPosterCopy={
@@ -9,6 +11,7 @@ export type ExactPosterCopy={
   cta:string;
   phone:string;
   website:string;
+  email?:string;
   language:PosterCopyLanguage;
   accentColor:string;
 };
@@ -34,32 +37,36 @@ export function extractExplicitPercentage(text:string):string{
   return amount>0&&amount<=100?match[1]+'%':'';
 }
 export function buildArtOnlyPrompt(input:{
-  request:string;creativeDirection?:string;businessCategory:string;
+  request:string;creativeDirection?:string;styleDirection?:string;businessCategory:string;
   city:string;brandColor:string;format:PosterFormat;
 }):string{
   const short=(v:string,max:number)=>v.replace(/[\u0000-\u001f\u007f]/g,' ').trim().slice(0,max);
   const dimensions=POSTER_FORMATS[input.format];
+  // Explicit user instructions outrank chosen reference and optional Gemini brief.
+  // A phrase like "neon podium with no pumpkins" must not silently turn into
+  // an unrelated pumpkin illustration simply because Halloween was selected.
   return [
-    'Generate ONE original premium commercial marketing BACKGROUND ARTWORK ONLY.',
-    'IMPORTANT: NO TEXT, NO WORDS, NO LETTERS, NO DIGITS, NO LOGOS, NO PRICES, NO WATERMARKS, NO FAKE GLYPHS, NO UI LABELS.',
-    'A separate trusted typography renderer will overlay exact copy later. Do not render any typography in the image.',
-    'Creative concept from the owner: '+short(input.creativeDirection||input.request,850),
-    'Original vendor concept: '+short(input.request,650),
-    'Real business sector: '+short(input.businessCategory,110),
-    input.city?'City context: '+short(input.city,70):'',
-    input.brandColor?'Suggested accent palette: '+short(input.brandColor,12):'',
-    'Target canvas ratio: '+dimensions.width+':'+dimensions.height+'.',
+    'CREATE ONE PREMIUM COMMERCIAL BACKGROUND ARTWORK ONLY. The user is the art director.',
+    'HIGHEST PRIORITY — USER REQUIREMENTS. Obey the concrete objects, subject, materials, colors, camera, composition and exclusions stated here. Do not replace their subject with a generic festive scene:',
+    short(input.request,1200),
+    'SECOND PRIORITY — OUTPUT COMPOSITION. Final frame ratio '+dimensions.width+':'+dimensions.height+'. The SLBI image is rendered behind separately typeset business text.',
     input.format==='landscape'?
-      'Visual hero on RIGHT side. Preserve a clean darker zone on LEFT for exact copy overlay.':
-      'Keep strong premium hero imagery in UPPER HALF and a visually quiet, darker BOTTOM HALF for exact copy overlay.',
-    'Photographic or polished cinematic illustrative quality. Strong focal subject, tasteful lighting, professional design, no generic empty gradient.',
-    'Never invent or visually show labels, fake characters, numbers, fake contact details, marks, business names or products unrelated to the stated sector.',
-  ].filter(Boolean).join('\n').slice(0,2500);
+      'Keep hero on RIGHT and a usable dark, uncluttered content area on LEFT.':
+      'Reserve clean visual space in the UPPER 30% for huge display typography. Put the main requested hero through MIDDLE 30–58%. Reserve the LOWER 59–94% for a frosted-glass information card, CTA and contact details. Do NOT bake that text or card lettering into AI pixels.',
+    'THIRD PRIORITY — STYLE INSPIRATION ONLY (ignore any conflicting subjects/objects): '+short(input.styleDirection||'',700),
+    'FOURTH PRIORITY — OPTIONAL GEMINI CREATIVE SUGGESTION (only if it does not conflict): '+short(input.creativeDirection||'',420),
+    'ACTUAL VERIFIED BUSINESS SECTOR: '+short(input.businessCategory,120),
+    input.city?'Location context: '+short(input.city,75):'',
+    input.brandColor?'Brand accent palette hint: '+short(input.brandColor,14):'',
+    'Polished premium editorial graphic design, sharp commercial studio lighting, high-end realistic 3D depth, clean layout, uncluttered typography-safe spaces.',
+    'STRICT: no AI-generated words, letters, numerals, prices, slogans, watermarks, logos, pseudo-glyphs, fake UI labels, invented brand names, contact details or offer percentages. They will be composited exactly by the web typography engine.',
+    'When a seasonal reference and the user request disagree, ALWAYS honor the user request. No extra pumpkins, moons, trees, fireworks, people or objects unless requested.',
+  ].filter(Boolean).join('\n').slice(0,3900);
 }
 
 const clean=(v:string,max:number)=>v.replace(/[\u0000-\u001f\u007f]/g,' ').trim().slice(0,max);
 const hex=(v:string)=>/^#[\da-f]{6}$/i.test(v)?v:'#F7B45C';
-async function ensureFonts(language:PosterCopyLanguage){
+async function ensureFonts(language:PosterCopyLanguage,style?:PremiumPosterStyle){
   if(typeof document==='undefined')throw Error('Poster typography needs a browser.');
   const name=language==='ta'?'Noto Sans Tamil':language==='si'?'Noto Sans Sinhala':'Inter';
   const sample=language==='ta'?'தமிழ்':language==='si'?'සිංහල':'Poster';
@@ -68,6 +75,25 @@ async function ensureFonts(language:PosterCopyLanguage){
   const loaded=await document.fonts.load('700 48px "'+name+'"',sample);
   if(loaded.length===0&&language!=='en')
     throw Error('The '+name+' font was not loaded. Check network access and retry PNG export.');
+  if(style){
+    const requires=language==='en'?[
+      ['400 190px "Anton"','HEADLINE'],
+      ['600 36px "Space Grotesk"','Brand'],
+      ['800 84px "Plus Jakarta Sans"','OFF'],
+      ['500 32px "Inter"','Service'],
+      ['700 28px "Plus Jakarta Sans"','CONTACT'],
+      ['400 24px "JetBrains Mono"','example.com'],
+    ]:[
+      ['700 190px "'+(language==='ta'?'Noto Sans Tamil':'Noto Sans Sinhala')+'"',sample],
+      ['800 84px "'+(language==='ta'?'Noto Sans Tamil':'Noto Sans Sinhala')+'"',sample],
+      ['500 32px "'+(language==='ta'?'Noto Sans Tamil':'Noto Sans Sinhala')+'"',sample],
+    ];
+    for(const [spec,sampleText] of requires){
+      const ready=await document.fonts.load(spec,sampleText);
+      if(!ready.length)
+        throw Error('Premium font '+spec+' failed to load. Check connectivity and retry export.');
+    }
+  }
   await document.fonts.ready;
 }
 function graphemes(text:string,language:PosterCopyLanguage):string[]{
@@ -138,15 +164,18 @@ async function decodedImage(src:string):Promise<HTMLImageElement>{
 }
 
 export async function composeExactPoster(input:{
-  backgroundSrc:string;format:PosterFormat;copy:ExactPosterCopy;
+  backgroundSrc:string;format:PosterFormat;copy:ExactPosterCopy;style?:PremiumPosterStyle;
 }):Promise<Blob>{
-  await ensureFonts(input.copy.language);
+  await ensureFonts(input.copy.language,input.style);
   const img=await decodedImage(input.backgroundSrc);
   const d=POSTER_FORMATS[input.format];
   const canvas=document.createElement('canvas');
   canvas.width=d.width;canvas.height=d.height;
   const ctx=canvas.getContext('2d');
   if(!ctx)throw Error('Canvas image composition is not available.');
+  if(input.style){
+    renderPremiumPoster({ctx,image:img,format:input.format,copy:input.copy,style:input.style});
+  }else{
   const w=d.width,h=d.height,landscape=input.format==='landscape';
   ctx.fillStyle='#102039';ctx.fillRect(0,0,w,h);
   paintBackground(ctx,img);
@@ -212,6 +241,7 @@ export async function composeExactPoster(input:{
     textBlock(ctx,{text:contact,x:left,y:footY,width:maxWidth,maxLines:2,
       font:landscape?19:27,minFont:14,lineHeight:1.3,weight:600,color:'#E3E9F4',
       language:copy.language,label:'Published contact',maxHeight:h-footY-padding/2});
+  }
   }
   try{
     const blob=await new Promise<Blob>((resolve,reject)=>{
