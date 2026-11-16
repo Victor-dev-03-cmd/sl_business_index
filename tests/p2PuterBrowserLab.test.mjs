@@ -248,7 +248,8 @@ test('owner-provided Halloween font, effects and exact color tokens are preserve
 test('premium Canvas renderer draws fonts, glass, CTA, and icon contact rows into exported PNG',()=>{
   const premium=read('lib/marketing/puter-premium-poster-renderer.ts');
   assert.match(premium,/export function renderPremiumPoster/);
-  assert.match(compose,/renderPremiumPoster\(\{ctx,image:img,format:input\.format,copy:input\.copy,style:input\.style\}\)/);
+  assert.match(compose,/renderPremiumPoster\(\{ctx,image:img,format:input\.format,copy:input\.copy,/);
+  assert.match(compose,/style:input\.style,design:input\.design,language:input\.copy\.language/);
   assert.match(premium,/ctx\.filter='blur\('/);
   assert.match(premium,/rgba\(255,94,0,\.55\)/);
   assert.match(premium,/role:'display'/);
