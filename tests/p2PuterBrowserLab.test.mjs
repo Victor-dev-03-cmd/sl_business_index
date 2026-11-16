@@ -575,7 +575,7 @@ test('v2.1 lower content-panel variants preserve selected architecture and top h
   assert.match(renderer,/paintLowerContentPanel/);
   assert.match(renderer,/paintLowerCta/);
   assert.match(renderer,/paintLowerOfferHighlight/);
-  assert.match(renderer,/const panelStyle=input\.design\?\.contentPanelStyle\|\|DEFAULT_CONTENT_PANEL_STYLE/);
+  assert.match(renderer,/const panelStyle=input\.contentPanelStyle\|\|input\.design\?\.contentPanelStyle\|\|DEFAULT_CONTENT_PANEL_STYLE/);
   assert.match(renderer,/if\(panelStyle==='frosted_glass_modern'\)/);
   assert.match(lab,/contentPanelStyle:currentBlueprint\.layoutStyling\?\.contentPanelStyle/);
   assert.doesNotMatch(module,/puter\.ai|Gemini|fetch\(|storage\.from|credit/);
@@ -627,4 +627,38 @@ test('lower-only Canvas style variants do not shift the verified headline or ada
   assert.match(card,/rounded\(ctx,x,y,w,h,args\.radius\*s\);ctx\.clip\(\)/);
   assert.match(layout,/const top=bottom-cardHeight/);
   assert.doesNotMatch(card,/renderFitted|posterCopy\.|brandY|offerY|ctaY/);
+});
+
+
+test('legacy Creative AI URL opens current production Studio for verified owner only',()=>{
+  const old=read('app/vendor/marketing/design/page.tsx');
+  const access=read('app/api/marketing/poster/puter-lab/route.ts');
+  const gate=read('app/vendor/marketing/design/puter-lab/layout.tsx');
+  assert.match(old,/fetch\('\/api\/marketing\/poster\/puter-lab',\{/);
+  assert.match(old,/response\.ok&&!controller\.signal\.aborted/);
+  assert.match(old,/window\.location\.replace\('\/vendor\/marketing\/design\/puter-lab'\)/);
+  assert.match(old,/credentials:'same-origin',cache:'no-store'/);
+  assert.match(old,/Legacy Studio remains available if access check fails/);
+  assert.match(access,/isPosterInternalQAAccount\(user\.id,client\)/);
+  assert.match(access,/if\(!userId\)return reply\(403/);
+  assert.match(gate,/isPosterInternalQAAccount\(user\.id,client\)/);
+  assert.match(gate,/notFound\(\)/);
+});
+test('bottom-card styling is visibly selectable and recomposes PNG without provider call',()=>{
+  const renderer=read('lib/marketing/puter-premium-poster-renderer.ts');
+  const local=read('lib/marketing/puter-content-panel-styles.ts');
+  assert.match(lab,/id="puter-panel-style"/);
+  assert.match(lab,/CONTENT_PANEL_STYLES\.map\(style=>/);
+  assert.match(lab,/value=\{panelStyleOverride\|\|'auto'\}/);
+  assert.match(lab,/setPanelStyleOverride\(value==='auto'\?null:value as ContentPanelStyle\)/);
+  assert.match(lab,/const selectedPanelStyle=panelStyleOverride\|\|/);
+  assert.match(lab,/style:selectedPremiumStyle,design:activeDesign,contentPanelStyle:selectedPanelStyle/);
+  assert.match(compose,/contentPanelStyle\?:ContentPanelStyle/);
+  assert.match(compose,/contentPanelStyle:input\.contentPanelStyle/);
+  assert.match(renderer,/const panelStyle=input\.contentPanelStyle\|\|input\.design\?\.contentPanelStyle\|\|DEFAULT_CONTENT_PANEL_STYLE/);
+  assert.match(renderer,/paintLowerContentPanel/);
+  assert.match(local,/paintLowerCta/);
+  assert.match(lab,/Existing artwork is re-composed locally without a new Puter request/);
+  assert.match(lab,/setPanelStyleOverride\(null\)/); // fresh Gemini = Auto
+  assert.doesNotMatch(local,/puter\.ai|GEMINI_API_KEY|fetch\(/);
 });
