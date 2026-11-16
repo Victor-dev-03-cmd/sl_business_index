@@ -75,6 +75,14 @@ const nextConfig: NextConfig = {
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(self), geolocation=(self)' },
         ],
       },
+      // Caption Lab uses the same authenticated Voice → Gemini transcription
+      // endpoint, so browser prompts must be allowed on its exact page too.
+      {
+        source: '/vendor/marketing/captions',
+        headers: [
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(self), geolocation=(self)' },
+        ],
+      },
     ];
   },
 };
