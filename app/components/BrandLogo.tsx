@@ -28,11 +28,11 @@ export default function BrandLogo({
         unoptimized
       />
       <span className="flex min-w-0 flex-col justify-center font-sans">
-        <span className={`block whitespace-nowrap text-[15px] font-extrabold leading-[1.17] tracking-[-0.065em] sm:text-[18px] ${inverse ? "text-[#F9F7EF]" : "text-[#1B3430]"}`}>
+        <span className={`block whitespace-nowrap text-[15px] font-extrabold leading-[1.17] tracking-[-0.04em] sm:text-[18px] ${inverse ? "text-[#F9F7EF]" : "text-[#1B3430]"}`}>
           SL Business
         </span>
         <span className="mt-[5px] flex items-center gap-2">
-          <span className={`text-[10px] font-extrabold leading-none tracking-[0.28em] sm:text-[11px] ${inverse ? "text-[#EAC48E]" : "text-[#A47C46]"}`}>
+          <span className={`text-[10px] font-extrabold leading-none tracking-[0.2em] sm:text-[11px] ${inverse ? "text-[#EAC48E]" : "text-[#A47C46]"}`}>
             INDEX
           </span>
           <span aria-hidden="true" className={`h-px w-6 sm:w-9 ${inverse ? "bg-[#D4BD90]/50" : "bg-[#C6B69B]/75"}`} />
