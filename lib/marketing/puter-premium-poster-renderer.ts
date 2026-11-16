@@ -8,6 +8,14 @@ import {
 
 type Ctx=CanvasRenderingContext2D;
 type Role='display'|'brand'|'offer'|'body'|'button'|'footer';
+function scriptOf(value:string,preferred:PosterCopyLanguage):PosterCopyLanguage{
+  // A Tamil-selected UI can print an English headline in Anton while keeping
+  // actual Tamil/Sinhala copy in properly shaped Unicode fonts.
+  if(/[\u0B80-\u0BFF]/u.test(value))return 'ta';
+  if(/[\u0D80-\u0DFF]/u.test(value))return 'si';
+  if(/[A-Za-z]/.test(value))return 'en';
+  return preferred;
+}
 const unicodeFace:Record<PosterCopyLanguage,string>={
   ta:'"Noto Sans Tamil",sans-serif',
   si:'"Noto Sans Sinhala",sans-serif',
@@ -216,30 +224,34 @@ function drawContacts(ctx:Ctx,p:{
     const line=fit(ctx,{
       value:item.text,width:p.width-(tx-p.x),height:gap,maxLines:1,
       start:size,min:Math.max(11,size*.69),lineHeight:1.2,
-      role:'footer',lang:p.lang,preset:p.preset,label:'Verified '+item.kind,
+      role:'footer',lang:scriptOf(item.text,p.lang),preset:p.preset,label:'Verified '+item.kind,
     });
     renderFitted(ctx,{fit:line,x:tx,y:y,width:p.width-(tx-p.x),
-      color:p.preset.palette.muted,role:'footer',language:p.lang,preset:p.preset});
+      color:p.preset.palette.muted,role:'footer',language:scriptOf(item.text,p.lang),preset:p.preset});
   });
 }
 function renderStacked(ctx:Ctx,copy:ExactPosterCopy,p:PremiumPosterPreset,format:PosterFormat){
   const w=ctx.canvas.width,h=ctx.canvas.height;
   const scale=h/1920;
   const side=Math.round(w*.047),inner=side+35*scale;
-  const title=copy.language==='en'?copy.headline.toUpperCase():copy.headline;
+  const displayLanguage=scriptOf(copy.headline,copy.language);
+  const brandLanguage=scriptOf(copy.businessName,copy.language);
+  const offerLanguage=scriptOf(copy.offer,copy.language);
+  const serviceLanguage=scriptOf(copy.service,copy.language);
+  const title=displayLanguage==='en'?copy.headline.toUpperCase():copy.headline;
   const titleMax=h*(format==='square'?.41:.40);
   const titleFit=fit(ctx,{
     value:title,width:w-2*side,height:titleMax-40*scale,maxLines:3,
     start:p.tokens.storyDisplaySize[1]*scale,
     min:Math.max(35,82*scale),lineHeight:p.tokens.displayLineHeight,
-    role:'display',lang:copy.language,preset:p,label:'Display headline',
+    role:'display',lang:displayLanguage,preset:p,label:'Display headline',
   });
   // LARGE DISPLAY is rendered in the top third. AI hero is composited in
   // the photo below; keep this text at a professional readable contrast.
   renderFitted(ctx,{fit:titleFit,x:side,y:55*scale,width:w-2*side,
-    color:p.palette.white,role:'display',language:copy.language,preset:p,
+    color:p.palette.white,role:'display',language:displayLanguage,preset:p,
     center:true,glow:18*scale,glowColor:'rgba(0,0,0,.82)',
-    emphasizeFinalLine:copy.language==='en'&&titleFit.lines.length>1,
+    emphasizeFinalLine:displayLanguage==='en'&&titleFit.lines.length>1,
   });
   const panelY=h*(format==='square'?.53:format==='portrait'?.57:.575);
   const panelBottom=h*.938;
@@ -249,28 +261,28 @@ function renderStacked(ctx:Ctx,copy:ExactPosterCopy,p:PremiumPosterPreset,format
   const insideWidth=panelW-70*scale;
   const brand=fit(ctx,{value:copy.businessName,width:insideWidth,height:53*scale,maxLines:1,
     start:p.tokens.storyBrandSize*scale,min:22*scale,lineHeight:1.2,
-    role:'brand',lang:copy.language,preset:p,label:'Business name'});
+    role:'brand',lang:brandLanguage,preset:p,label:'Business name'});
   y=renderFitted(ctx,{fit:brand,x:side+35*scale,y,width:insideWidth,
-    color:p.palette.glow,role:'brand',language:copy.language,preset:p,center:true});
+    color:p.palette.glow,role:'brand',language:brandLanguage,preset:p,center:true});
   y+=14*scale;
   if(copy.offer.trim()){
     const available=Math.min(170*scale,panelY+panelH*.43-y);
     const offer=fit(ctx,{
       value:copy.offer,width:insideWidth,height:available,maxLines:2,
       start:p.tokens.storyOfferSize*scale,min:28*scale,lineHeight:1.12,
-      role:'offer',lang:copy.language,preset:p,label:'Approved offer',
+      role:'offer',lang:offerLanguage,preset:p,label:'Approved offer',
     });
     y=renderFitted(ctx,{fit:offer,x:side+35*scale,y,width:insideWidth,
-      color:p.palette.accent,role:'offer',language:copy.language,preset:p,center:true,
+      color:p.palette.accent,role:'offer',language:offerLanguage,preset:p,center:true,
       glow:p.tokens.neonTextBlur*scale,glowColor:'rgba(255,94,0,.6)'});
     y+=13*scale;
   }
   const service=fit(ctx,{value:copy.service,width:insideWidth,
     height:86*scale,maxLines:2,
     start:p.tokens.storyServiceSize*scale,min:18*scale,
-    lineHeight:1.32,role:'body',lang:copy.language,preset:p,label:'Service line'});
+    lineHeight:1.32,role:'body',lang:serviceLanguage,preset:p,label:'Service line'});
   y=renderFitted(ctx,{fit:service,x:side+35*scale,y,width:insideWidth,
-    color:p.palette.white,role:'body',language:copy.language,preset:p,center:true});
+    color:p.palette.white,role:'body',language:serviceLanguage,preset:p,center:true});
   const contactRows=Number(Boolean(copy.website))+Number(Boolean(copy.phone))+Number(Boolean(copy.email));
   const contactArea=Math.max(80*scale,contactRows*42*scale);
   const contactTop=panelY+panelH-contactArea-23*scale;
@@ -281,7 +293,7 @@ function renderStacked(ctx:Ctx,copy:ExactPosterCopy,p:PremiumPosterPreset,format
   if(copy.cta.trim()){
     const buttonW=Math.min(panelW*.6,490*scale);
     drawPill(ctx,{text:copy.cta,x:midX-buttonW/2,y:buttonTop,
-      w:buttonW,h:buttonH,scale,language:copy.language,preset:p});
+      w:buttonW,h:buttonH,scale,language:scriptOf(copy.cta,copy.language),preset:p});
   }
   if(contactRows){
     ctx.save();ctx.lineWidth=Math.max(1,scale);
@@ -294,44 +306,45 @@ function renderStacked(ctx:Ctx,copy:ExactPosterCopy,p:PremiumPosterPreset,format
 }
 function renderWide(ctx:Ctx,copy:ExactPosterCopy,p:PremiumPosterPreset){
   const w=ctx.canvas.width,h=ctx.canvas.height;
+  const headlineLanguage=scriptOf(copy.headline,copy.language);
   const x=w*.035,y=h*.045,pw=w*.57,ph=h*.91;
   glassPanel(ctx,x,y,pw,ph,p,.78);
   const inner=x+32,innerWidth=pw-64;
   let row=y+19;
   const brand=fit(ctx,{value:copy.businessName,width:innerWidth,height:35,maxLines:1,
-    start:25,min:17,lineHeight:1.15,role:'brand',lang:copy.language,preset:p,label:'Business name'});
+    start:25,min:17,lineHeight:1.15,role:'brand',lang:scriptOf(copy.businessName,copy.language),preset:p,label:'Business name'});
   row=renderFitted(ctx,{fit:brand,x:inner,y:row,width:innerWidth,
-    color:p.palette.glow,role:'brand',language:copy.language,preset:p});
+    color:p.palette.glow,role:'brand',language:scriptOf(copy.businessName,copy.language),preset:p});
   row+=9;
-  const headline=fit(ctx,{value:copy.language==='en'?copy.headline.toUpperCase():copy.headline,
+  const headline=fit(ctx,{value:headlineLanguage==='en'?copy.headline.toUpperCase():copy.headline,
     width:innerWidth,height:125,maxLines:3,start:59,min:28,lineHeight:.95,
-    role:'display',lang:copy.language,preset:p,label:'Headline'});
+    role:'display',lang:headlineLanguage,preset:p,label:'Headline'});
   row=renderFitted(ctx,{fit:headline,x:inner,y:row,width:innerWidth,
-    color:p.palette.white,role:'display',language:copy.language,preset:p});
+    color:p.palette.white,role:'display',language:headlineLanguage,preset:p});
   row+=9;
   if(copy.offer){
     const offer=fit(ctx,{value:copy.offer,width:innerWidth,height:104,maxLines:2,
-      start:58,min:26,lineHeight:1.05,role:'offer',lang:copy.language,preset:p,label:'Approved offer'});
+      start:58,min:26,lineHeight:1.05,role:'offer',lang:scriptOf(copy.offer,copy.language),preset:p,label:'Approved offer'});
     row=renderFitted(ctx,{fit:offer,x:inner,y:row,width:innerWidth,
-      color:p.palette.accent,role:'offer',language:copy.language,preset:p,
+      color:p.palette.accent,role:'offer',language:scriptOf(copy.offer,copy.language),preset:p,
       glow:16,glowColor:'rgba(255,94,0,.55)'});
     row+=6;
   }
   const service=fit(ctx,{value:copy.service,width:innerWidth,height:44,maxLines:2,
-    start:22,min:16,lineHeight:1.15,role:'body',lang:copy.language,preset:p,label:'Service'});
+    start:22,min:16,lineHeight:1.15,role:'body',lang:scriptOf(copy.service,copy.language),preset:p,label:'Service'});
   row=renderFitted(ctx,{fit:service,x:inner,y:row,width:innerWidth,
-    color:p.palette.white,role:'body',language:copy.language,preset:p});
+    color:p.palette.white,role:'body',language:scriptOf(copy.service,copy.language),preset:p});
   const buttonY=Math.max(row+10,y+ph-147);
   if(copy.cta&&buttonY>y+ph-122)
     throw Error('Copy is too long for the landscape CTA. Shorten the headline or offer.');
   if(copy.cta)drawPill(ctx,{text:copy.cta,x:inner,y:buttonY,
     w:Math.min(260,innerWidth),h:51,scale:.7,
-    language:copy.language,preset:p});
+    language:scriptOf(copy.cta,copy.language),preset:p});
   const contacts=Number(Boolean(copy.website))+Number(Boolean(copy.phone))+Number(Boolean(copy.email));
   if(contacts>3)throw Error('Too many contact lines.');
-  const contactsY=y+ph-78;
+  const contactsY=y+ph-79;
   if(contacts)drawContacts(ctx,{copy,x:inner,y:contactsY,width:innerWidth,
-    height:74,scale:.65,preset:p,lang:copy.language});
+    height:76,scale:.55,preset:p,lang:copy.language});
 }
 
 export function renderPremiumPoster(input:{
