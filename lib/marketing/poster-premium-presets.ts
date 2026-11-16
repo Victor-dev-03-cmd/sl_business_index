@@ -18,7 +18,7 @@ export type PremiumPosterPreset={
     offer:'Plus Jakarta Sans';body:'Inter';footer:'JetBrains Mono';
   };
   tokens:{
-    storyDisplaySize:[180,220];storyBrandSize:36;storyOfferSize:84;
+    storyDisplaySize:readonly [180,220];storyBrandSize:36;storyOfferSize:84;
     storyServiceSize:32;storyButtonSize:28;storyFooterSize:24;
     displayTracking:-0.02;displayLineHeight:0.9;
     glassBlur:24;glassRadius:32;glassBorderWidth:1.5;
