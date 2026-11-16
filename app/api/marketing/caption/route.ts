@@ -3,6 +3,9 @@ import {createClient} from '@/lib/supabase/server';
 import {isSameOrigin} from '@/lib/growth/ingestion-contract';
 import {GEMINI_POSTER_MODEL} from '@/lib/marketing/poster-gemini-intelligence';
 import {parseThreeAngles} from '@/lib/marketing/caption-workspace';
+import {
+  captionGeminiResponseSchema,parseGeminiCaptionOutput,serializeGeminiCaptionOutput,
+} from '@/lib/marketing/caption-gemini-output';
 import {getMarketingAccessForUser,rejectMarketingAccess} from '@/lib/marketing/pro-access-server';
 import {isPosterInternalQAAccount} from '@/lib/marketing/poster-review-access-server';
 import {
@@ -183,7 +186,11 @@ export async function POST(request:Request){
         body:JSON.stringify({
           systemInstruction:{parts:[{text:messages[0].content}]},
           contents:[{role:'user',parts:[{text:messages[1].content}]}],
-          generationConfig:{temperature:0.3,maxOutputTokens:2200},
+          generationConfig:{
+            temperature:0.55,maxOutputTokens:3000,
+            responseMimeType:'application/json',
+            responseSchema:captionGeminiResponseSchema(brief.language),
+          },
         }),
       });
       if(!upstream.ok)throw Error('Gemini provider HTTP '+upstream.status);
@@ -216,7 +223,14 @@ export async function POST(request:Request){
       inputTokens=result.usage?.prompt_tokens||0;
       outputTokens=result.usage?.completion_tokens||0;
     }
-    const caption=sanitizeModelCaption(rawCaption);
+    // Gemini returns strictly schema-constrained JSON, validated again on
+    // our server. Only the backward-compatible plain text is ever persisted.
+    const structured=useGemini?parseGeminiCaptionOutput(rawCaption,brief.language):null;
+    if(useGemini&&!structured)
+      throw Error('Gemini returned invalid copy or hashtag structure');
+    const persisted=useGemini&&structured?
+      serializeGeminiCaptionOutput(structured,brief.language):rawCaption;
+    const caption=sanitizeModelCaption(persisted);
     if(!caption)throw Error('Provider returned an unusable caption');
     if(useGemini){
       const triple=parseThreeAngles(caption);
