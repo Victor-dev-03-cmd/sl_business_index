@@ -13,6 +13,7 @@ export const runtime='nodejs';
 export const dynamic='force-dynamic';
 export const maxDuration=40;
 const uuid=/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
+const QA_GEMINI_SHARED_DAILY_LIMIT=24;
 const reply=(status:number,body:unknown)=>Response.json(body,{
   status,headers:{'Cache-Control':'private, no-store, max-age=0','X-Content-Type-Options':'nosniff'},
 });
@@ -29,14 +30,31 @@ async function owner(){
   return {client,userId:await isPosterInternalQAAccount(user.id,client)?user.id:''};
 }
 
-export async function GET(){
+async function sharedGeminiQuota(userId:string){
+  const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key=process.env.SUPABASE_SERVICE_ROLE_KEY||process.env.SUPABASE_SECRET_KEY;
+  if(!url||!key)return null;
+  const dayUtc=new Date().toISOString().slice(0,10);
+  const admin=createAdminClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
+  const {data,error}=await admin.from('marketing_poster_voice_quotas')
+    .select('attempts').eq('user_id',userId).eq('day_utc',dayUtc).maybeSingle();
+  if(error)return null;
+  const used=Math.max(0,Math.min(QA_GEMINI_SHARED_DAILY_LIMIT,data?.attempts||0));
+  return {used,limit:QA_GEMINI_SHARED_DAILY_LIMIT,
+    remaining:Math.max(0,QA_GEMINI_SHARED_DAILY_LIMIT-used),dayUtc};
+}
+
+export async function GET(request:Request){
   const {client,userId}=await owner();
   if(!userId)return reply(403,{error:'This image lab is available only to the internal QA owner.'});
+  const quota=await sharedGeminiQuota(userId);
+  if(new URL(request.url).searchParams.get('quota')==='1')
+    return quota?reply(200,{quota}):reply(503,{error:'Gemini daily allowance is temporarily unavailable.'});
   const {data:owned,error}=await client.from('businesses')
     .select('id,name,category,description,phone,email,address,detailed_address,city,website_url')
     .eq('owner_id',userId).order('name').limit(75);
   if(error)return reply(503,{error:'Owner business details are temporarily unavailable.'});
-  if(!owned?.length)return reply(200,{businesses:[]});
+  if(!owned?.length)return reply(200,{businesses:[],quota});
   const {data:brands,error:brandError}=await client.from('social_brand_profiles')
     .select('business_id,brand_name,slogan,primary_color,accent_color,tone')
     .eq('owner_id',userId).in('business_id',owned.map(b=>b.id)).limit(75);
@@ -45,7 +63,7 @@ export async function GET(){
   const businesses=owned.map(b=>({
     id:b.id,name:b.name,facts:preparePosterBusinessFacts(b,byId.get(b.id)||null),
   }));
-  return reply(200,{businesses});
+  return reply(200,{businesses,quota});
 }
 
 /**
@@ -100,7 +118,7 @@ export async function POST(request:Request){
   const {data:approved,error:quotaError}=await admin.rpc('marketing_poster_voice_try_reserve',{p_user_id:userId});
   if(quotaError)return reply(503,{error:'Gemini usage cannot be verified.'});
   if(approved!==true)
-    return reply(429,{error:'Shared daily Gemini voice/brief quota reached. You can still type and compose without Gemini.'});
+    return reply(429,{error:'Daily shared Gemini voice/brief allowance reached. More requests become available after 00:00 UTC. You can still type and compose.',code:'SHARED_GEMINI_QUOTA_REACHED'});
   try{
     const facts=preparePosterBusinessFacts(business,brand);
     if(wantsBlueprint){
