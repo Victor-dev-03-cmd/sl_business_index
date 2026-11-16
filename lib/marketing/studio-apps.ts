@@ -36,11 +36,11 @@ export const MARKETING_STUDIO_APPS:readonly MarketingStudioApp[]=[
     keywords:'ai poster editor creative typography artwork image designs',
   },
   {
-    id:'caption-lab',title:'AI Caption Lab',subtitle:'Three languages',
-    description:'Prepare business-aware Tamil, Sinhala and English caption drafts for human review.',
+    id:'caption-lab',title:'AI Caption Lab',subtitle:'Tri-lingual · Linked Posts',
+    description:'Continue from AI Poster Studio into a live Facebook, Instagram and WhatsApp caption workspace in Tamil, Sinhala and English.',
     href:'/vendor/marketing/captions',category:'Content',icon:'message-text',
-    tone:'blue',pro:true,availability:'foundation',note:'AI usage not enabled',
-    keywords:'captions ai tamil sinhala english copywriting post',
+    tone:'orange',pro:true,availability:'foundation',note:'Live preview · AI credits gated',
+    keywords:'captions ai tamil sinhala english copywriting poster linked campaign social simulator',
   },
   {
     id:'brand-kit',title:'Business Brand Kit',subtitle:'Your visual identity',
