@@ -13,7 +13,7 @@ import {supabase} from '@/lib/supabaseClient';
 import type {CaptionLanguage} from '@/lib/marketing/caption-contract';
 import {
   ANGLES,GOALS,LANGUAGES,PLATFORMS,angleLabels,emptyCaptions,goalLabel,
-  goalObjective,hashtagsFrom,languageBundle,labels,normalizedTag,
+  goalObjective,hashtagsFrom,extractSavedCaptionHashtags,languageBundle,labels,normalizedTag,
   parseThreeAngles,previewFold,promptChips,removeHashtags,safeLocalPolish,
   toneLabels,withHashtags,
   type CaptionAngle,type CaptionSet,type CampaignGoal,
@@ -96,6 +96,7 @@ export default function ConnectedCaptionLab(){
   const [cta,setCta]=useState('');
   const [captions,setCaptions]=useState<CaptionSet>(()=>emptyCaptions());
   const [drafts,setDrafts]=useState<StoredDraft[]>([]);
+  const [generatedTags,setGeneratedTags]=useState<Record<CaptionLanguage,string[]>>({ta:[],si:[],en:[]});
   const [customTags,setCustomTags]=useState<Record<string,string[]>>({});
   const [removedTags,setRemovedTags]=useState<Record<string,string[]>>({});
   const [tagInput,setTagInput]=useState('');
@@ -148,8 +149,12 @@ export default function ConnectedCaptionLab(){
   },[languageSelections,previewLanguage,chosenLanguages]);
   const hasAI=chosenLanguages.some(lang=>Boolean(captions[lang][angle]?.trim()));
   const activeText=captions[activePreviewLanguage]?.[angle]?.trim()||'';
-  const suggestedTags=useMemo(()=>hashtagsFrom(
-    languageBundle(captions,angle,chosenLanguages)),[captions,angle,chosenLanguages]);
+  const suggestedTags=useMemo(()=>{
+    const langs=previewLanguage==='all'?chosenLanguages:[activePreviewLanguage];
+    const generated=langs.flatMap(lang=>generatedTags[lang]);
+    const fromCopy=hashtagsFrom(languageBundle(captions,angle,langs));
+    return Array.from(new Set([...generated,...fromCopy])).slice(0,12);
+  },[generatedTags,captions,angle,chosenLanguages,previewLanguage,activePreviewLanguage]);
   const visibleTags=useMemo(()=>Array.from(new Set([
     ...suggestedTags,...(customTags[businessId]||[]),
   ])).filter(tag=>!(removedTags[businessId]||[]).includes(tag)).slice(0,12),
@@ -218,7 +223,10 @@ export default function ConnectedCaptionLab(){
     streamRef.current?.getTracks().forEach(track=>track.stop());},[]);
 
   const loadDrafts=useCallback(async(signal?:AbortSignal)=>{
-    if(!businessId){setDrafts([]);setCaptions(emptyCaptions());return;}
+    if(!businessId){
+      setDrafts([]);setCaptions(emptyCaptions());
+      setGeneratedTags({ta:[],si:[],en:[]});return;
+    }
     try{
       const res=await fetch('/api/marketing/caption?businessId='+encodeURIComponent(businessId),{
         credentials:'same-origin',cache:'no-store',signal,
@@ -229,11 +237,15 @@ export default function ConnectedCaptionLab(){
       const list=Array.isArray(data.drafts)?data.drafts:[];
       setDrafts(list);
       const next=emptyCaptions();
+      const nextTags:Record<CaptionLanguage,string[]>={ta:[],si:[],en:[]};
       for(const lang of LANGUAGES){
         const draft=newDraftLanguage(list,lang);
-        if(draft)next[lang]=parseThreeAngles(draft.caption);
+        if(draft){
+          next[lang]=parseThreeAngles(draft.caption);
+          nextTags[lang]=extractSavedCaptionHashtags(draft.caption);
+        }
       }
-      setCaptions(next);
+      setCaptions(next);setGeneratedTags(nextTags);
       setGeneratedLanguages(LANGUAGES.filter(lang=>Boolean(newDraftLanguage(list,lang))));
     }catch(e){if(!signal?.aborted)setNotice(e instanceof Error?e.message:'Existing drafts unavailable.');}
   },[businessId]);
@@ -308,7 +320,6 @@ export default function ConnectedCaptionLab(){
       for(const language of chosenLanguages){
         const prompt=[message.trim(),
           'Campaign angle: '+goalLabel[goal],
-          hasLinked?'Poster theme: '+linked?.context.vibe:'',
         ].filter(Boolean).join('\n').slice(0,600);
         const response=await fetch('/api/marketing/caption',{
           method:'POST',credentials:'same-origin',cache:'no-store',
@@ -316,6 +327,9 @@ export default function ConnectedCaptionLab(){
           body:JSON.stringify({
             businessId:businessId,requestKey:crypto.randomUUID(),
             objective:goalObjective[goal],language,
+            campaignGoal:goal,
+            posterHeadline:hasLinked?(linked?.context.headline||''):'',
+            posterOffer:hasLinked?(linked?.context.offer||''):'',
             mode:'three_angles',
             tone:(['friendly','professional','urgent'] as const)[tone],
             message:prompt,conditions:conditions.trim().slice(0,300),
@@ -326,7 +340,9 @@ export default function ConnectedCaptionLab(){
         if(!response.ok||!data.draft?.caption)
           throw Error(data.error||'AI Caption generation is unavailable.');
         const parsed=parseThreeAngles(data.draft.caption);
+        const hashtags=extractSavedCaptionHashtags(data.draft.caption);
         setCaptions(previous=>({...previous,[language]:parsed}));
+        setGeneratedTags(previous=>({...previous,[language]:hashtags}));
         setGeneratedLanguages(previous=>Array.from(new Set([...previous,language])));
         succeeded++;
       }
@@ -388,6 +404,7 @@ export default function ConnectedCaptionLab(){
           language:({ta:'தமிழ்',si:'සිංහල',en:'English'} as const)[first],
           objective:goalObjective[goal],format:'portrait',palette:'navy',
           captionBundle:captions,
+          captionHashtags:generatedTags,
           posterLocalKey:hasLinked?posterKey:null,
           linkedPosterSample:hasLinked?Boolean(linked?.context.sample):null,
           createdFrom:'caption_lab',
