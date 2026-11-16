@@ -5,7 +5,11 @@ import './loading-motion.css';
 import PuterReferenceGallery from './PuterReferenceGallery';
 import PuterGenerationMotion,{type PosterGenerationStage} from './PuterGenerationMotion';
 import PuterCompactFormatSelector from './PuterCompactFormatSelector';
-import {resolvePremiumPosterPreset} from '@/lib/marketing/poster-premium-presets';
+import {resolvePremiumPosterPreset,withVerifiedPosterDesign} from '@/lib/marketing/poster-premium-presets';
+import {
+  posterSuggestions,shufflePosterDesign,selectLayout,SAFE_ZONE_LAYOUTS,
+  type PosterBlueprint,type VerifiedPosterDesign,type SafeZoneLayout,
+} from '@/lib/marketing/poster-design-blueprint';
 import {
   getPosterReferenceStyle,originalReferencePng,
   type PosterReferenceStyle,type PosterStyleId,
@@ -15,7 +19,7 @@ import Link from 'next/link';
 import Script from 'next/script';
 import {
   ArrowLeft,CheckCircle2,Download,FlaskConical,
-  LoaderCircle,Mic,ShieldCheck,SquarePen,StopCircle,WandSparkles,
+  LoaderCircle,Mic,ShieldCheck,SquarePen,StopCircle,WandSparkles,Shuffle,
 } from 'lucide-react';
 import {POSTER_FORMATS,type PosterFormat} from '@/lib/marketing/poster-design';
 import {
@@ -32,7 +36,7 @@ declare global {interface Window {puter?:PuterClient;}}
 type OwnedBusiness={id:string;name:string;facts:PosterBusinessFacts};
 type ApiError={error?:string};
 type ContextResponse=ApiError&{businesses?:OwnedBusiness[]};
-type BriefResponse=ApiError&{brief?:PosterIntelligenceBrief};
+type BriefResponse=ApiError&{brief?:PosterIntelligenceBrief;blueprint?:PosterBlueprint};
 const models=[
   {id:'openai/gpt-image-2.6-flare',label:'GPT Image 2.6 Flare'},
   {id:'google/gemini-3-pro-image',label:'Gemini 3 Pro Image'},
@@ -75,6 +79,12 @@ export default function PuterMultilingualPosterLab(){
   const [showEmail,setShowEmail]=useState(true);
   const [manualHeadline,setManualHeadline]=useState(false);
   const [manualCta,setManualCta]=useState(false);
+  const [manualOffer,setManualOffer]=useState(false);
+  const [selectedSuggestionId,setSelectedSuggestionId]=useState('');
+  const [blueprint,setBlueprint]=useState<PosterBlueprint|null>(null);
+  const [blueprintKey,setBlueprintKey]=useState('');
+  const [designOverride,setDesignOverride]=useState<VerifiedPosterDesign|null>(null);
+  const [shuffleIndex,setShuffleIndex]=useState(0);
   const [brief,setBrief]=useState<PosterIntelligenceBrief|null>(null);
   const [briefKey,setBriefKey]=useState('');
   const [geminiBusy,setGeminiBusy]=useState(false);
@@ -102,7 +112,30 @@ export default function PuterMultilingualPosterLab(){
   const facts=business?.facts;
   const currentKey=businessId+'|'+language+'|'+prompt.trim();
   const currentBrief=brief&&briefKey===currentKey?brief:null;
+  const currentBlueprint=blueprint&&blueprintKey===currentKey?blueprint:null;
+  const activeDesign=useMemo<VerifiedPosterDesign|null>(()=>designOverride||
+    (currentBlueprint?{
+      styling:currentBlueprint.styling,
+      layout:selectLayout(format,currentBlueprint.styling.vibe),
+    }:null),[designOverride,currentBlueprint,format]);
+  const displayedPreset=withVerifiedPosterDesign(typographyPreset,activeDesign,language);
+  const suggestedCampaigns=useMemo(()=>posterSuggestions(new Date(),facts?.category||'',7),
+    [facts?.category]);
   const dimensions=POSTER_FORMATS[format];
+
+  // Dual execution: once the owner reviews a JSON blueprint, warm the chosen
+  // licensed fonts independently of the next image-model request.
+  // Never fetch a model or use Puter allowance from this effect.
+  useEffect(()=>{
+    if(!activeDesign||typeof document==='undefined')return;
+    const selected=activeDesign.styling;
+    const sample=language==='ta'?'தமிழ் பொங்கல்':language==='si'?'සිංහල අලුත් අවුරුද්ද':'PREMIUM SALE';
+    const displayWeight=['Anton','Bebas Neue','Kavivanar'].includes(selected.headlineFont)?400:700;
+    void Promise.all([
+      document.fonts.load(displayWeight+' 140px "'+selected.headlineFont+'"',sample),
+      document.fonts.load('500 40px "'+selected.bodyFont+'"',sample),
+    ]).catch(()=>{ /* Canvas export reports any missing font explicitly. */ });
+  },[activeDesign,language]);
 
   // The provider has no progress callbacks. This is deliberately displayed
   // as an ESTIMATE, capped below 100 until a real PNG Blob is composed.
@@ -112,6 +145,17 @@ export default function PuterMultilingualPosterLab(){
     return()=>clearInterval(timer);
   },[generationStage]);
 
+  const chooseSuggestion=(suggestion:{id:string;label:string;prompt:string})=>{
+    // Chips stage the owner's idea only; NEVER invoke Gemini or paid Puter.
+    setSelectedSuggestionId(suggestion.id);
+    setPrompt(previous=>previous===samplePrompt||!previous.trim()?suggestion.prompt:
+      (previous+'\n'+suggestion.prompt).slice(0,1200));
+    setBlueprint(null);setBlueprintKey('');setBrief(null);setBriefKey('');
+    setDesignOverride(null);setShuffleIndex(0);
+    const matching=getPosterReferenceStyle(suggestion.id as PosterStyleId);
+    if(matching){setSelectedReferenceId(matching.id);setSendReferenceImage(false);}
+    setStatus(suggestion.label+' staged as an editable suggestion. Review before Prepare with Gemini.');
+  };
   const chooseReference=(reference:PosterReferenceStyle)=>{
     setSelectedReferenceId(reference.id);
     setSendReferenceImage(false);
@@ -167,7 +211,8 @@ export default function PuterMultilingualPosterLab(){
     let cancelled=false;
     setComposing(true);setGenerationStage('typography');setEstimatedProgress(94);setError('');
     const timeout=setTimeout(()=>{
-      void composeExactPoster({backgroundSrc:artworkSrc,format,copy:exactCopy,style:selectedPremiumStyle})
+      void composeExactPoster({backgroundSrc:artworkSrc,format,copy:exactCopy,
+        style:selectedPremiumStyle,design:activeDesign})
         .then(blob=>{
           if(cancelled)return;
           const url=URL.createObjectURL(blob);
@@ -182,7 +227,7 @@ export default function PuterMultilingualPosterLab(){
         .finally(()=>{if(!cancelled)setComposing(false);});
     },220);
     return()=>{cancelled=true;clearTimeout(timeout);};
-  },[artworkSrc,imageRevision,format,exactCopy,selectedPremiumStyle,isRealOutput,dimensions.width,dimensions.height]);
+  },[artworkSrc,imageRevision,format,exactCopy,selectedPremiumStyle,activeDesign,isRealOutput,dimensions.width,dimensions.height]);
 
   const transcribe=async(blob:Blob)=>{
     setTranscribing(true);setError('');setStatus('Gemini is transcribing your original-language voice. Please review the text.');
@@ -256,18 +301,33 @@ export default function PuterMultilingualPosterLab(){
     try{
       const res=await fetch('/api/marketing/poster/puter-lab',{
         method:'POST',...reqOptions,headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({businessId,prompt:prompt.trim(),language}),
+        body:JSON.stringify({
+          businessId,prompt:prompt.trim(),language,
+          format,mode:'blueprint',campaignStyle:selectedSuggestionId,
+        }),
       });
       const data=await res.json() as BriefResponse;
-      if(!res.ok||!data.brief)throw Error(data.error||'Gemini could not prepare this creative brief.');
+      if(!res.ok)throw Error(data.error||'Gemini could not prepare this design blueprint.');
       if(forKey!==businessId+'|'+language+'|'+prompt.trim())return;
-      setBrief(data.brief);setBriefKey(forKey);
-      if(!manualHeadline&&data.brief.suggestedHeadline)
-        setHeadline(data.brief.suggestedHeadline);
-      if(!manualCta&&data.brief.suggestedCallToAction)
-        setCta(data.brief.suggestedCallToAction);
-      setOffer(prev=>prev||extractExplicitPercentage(prompt));
-      setStatus('Gemini brief ready. Review exact headline, offer and CTA before using Puter.');
+      if(data.blueprint){
+        // Dual-output: creative art direction + reviewed typography JSON.
+        // Business contacts always remain from the selected verified listing.
+        setBlueprint(data.blueprint);setBlueprintKey(forKey);
+        setDesignOverride(null);setShuffleIndex(0);
+        if(!manualHeadline)setHeadline(data.blueprint.posterCopy.headline);
+        if(!manualCta)setCta(data.blueprint.posterCopy.ctaText);
+        if(!manualOffer)setOffer(data.blueprint.posterCopy.offerText);
+        setStatus('Gemini design blueprint ready. Review the headline, exact offer and CTA before any Puter generation.');
+      }else if(data.brief){
+        // Backward compatibility for an older brief response.
+        setBrief(data.brief);setBriefKey(forKey);
+        if(!manualHeadline&&data.brief.suggestedHeadline)
+          setHeadline(data.brief.suggestedHeadline);
+        if(!manualCta&&data.brief.suggestedCallToAction)
+          setCta(data.brief.suggestedCallToAction);
+        setOffer(prev=>prev||extractExplicitPercentage(prompt));
+        setStatus('Gemini brief ready. Review the text before using Puter.');
+      }else throw Error('Gemini returned no valid design blueprint.');
     }catch(e){setError(errorMessage(e));}
     finally{setGeminiBusy(false);}
   };
@@ -289,7 +349,7 @@ export default function PuterMultilingualPosterLab(){
       if(!puter.auth.isSignedIn())await puter.auth.signIn();
       setGenerationStage('artwork');setEstimatedProgress(18);
       const styleDirection=selectedReference?.artDirection||typographyPreset.artDirective;
-      const briefDirection=currentBrief?.creativeDirectionEnglish;
+      const briefDirection=currentBlueprint?.imagePrompt||currentBrief?.creativeDirectionEnglish;
       const creative=buildArtOnlyPrompt({
         request:prompt.trim(),styleDirection,creativeDirection:briefDirection,
         businessCategory:facts.category,city:facts.city,
@@ -369,6 +429,7 @@ export default function PuterMultilingualPosterLab(){
                 setBusinessId(e.target.value);setBrief(null);setBriefKey('');
                 setArtworkSrc('');setFinalBlob(null);setFinalUrl('');
                 setHeadline('');setOffer('');setManualHeadline(false);
+                setBlueprint(null);setBlueprintKey('');setDesignOverride(null);setShuffleIndex(0);
               }} className="w-full rounded-xl border border-[#E4DDDA] bg-[#FDFBF9] px-3 py-2.5 text-[12px] font-semibold">
               {!businesses.length&&<option value="">No owned business available</option>}
               {businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}
@@ -398,9 +459,28 @@ export default function PuterMultilingualPosterLab(){
           <div>
             <label htmlFor="puter-prompt" className="mb-1.5 block text-[11px] font-bold">Describe your poster / Gemini voice transcript</label>
             <textarea id="puter-prompt" value={prompt} disabled={locked} rows={5} maxLength={1200}
-              onChange={e=>{setPrompt(e.target.value);setBrief(null);setBriefKey('');}}
+              onChange={e=>{setPrompt(e.target.value);setBrief(null);setBriefKey('');
+                setBlueprint(null);setBlueprintKey('');}}
               placeholder="தமிழ் · සිංහල · English · Tanglish — describe your campaign."
               className="max-h-[190px] min-h-[110px] w-full resize-none rounded-xl border border-[#E4DDDA] bg-[#FDFBF9] p-3 text-[12px] leading-5 outline-none focus:border-[#EC9D68]"/>
+          </div>
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-[10px] font-bold text-[#6B5E55]">Quick campaign ideas</p>
+              <span className="text-[9px] text-[#988A81]">Click to edit · no AI call</span>
+            </div>
+            <div className="flex flex-wrap gap-1.5" aria-label="Seasonal and category-aware campaign suggestions">
+              {suggestedCampaigns.map(suggestion=><button key={suggestion.id} type="button"
+                disabled={locked} aria-pressed={selectedSuggestionId===suggestion.id}
+                title={suggestion.prompt}
+                onClick={()=>chooseSuggestion(suggestion)}
+                className={'rounded-full border px-2.5 py-1.5 text-[10px] font-semibold transition-colors disabled:opacity-50 '+
+                  (selectedSuggestionId===suggestion.id?
+                    'border-[#F08C42] bg-[#FFF0E1] text-[#9C4C16]':
+                    'border-[#E7DEDA] bg-white text-[#75685F] hover:border-[#E0AB83]')}>
+                {suggestion.label}
+              </button>)}
+            </div>
           </div>
           <div className="flex flex-wrap gap-2">
             <button type="button" disabled={generating||geminiBusy||transcribing||!businessId}
@@ -417,9 +497,9 @@ export default function PuterMultilingualPosterLab(){
               Prepare with Gemini
             </button>
           </div>
-          {currentBrief&&<div className="flex items-start gap-1.5 rounded-xl border border-[#DDE8DC] bg-[#F5FAF5] p-2 text-[11px] leading-4 text-[#4C6951]">
+          {(currentBrief||currentBlueprint)&&<div className="flex items-start gap-1.5 rounded-xl border border-[#DDE8DC] bg-[#F5FAF5] p-2 text-[11px] leading-4 text-[#4C6951]">
             <CheckCircle2 size={13} className="mt-0.5 shrink-0"/>
-            Gemini brief prepared. Review exact headline, offer and CTA in the right panel.
+            Gemini {currentBlueprint?'art direction + typography blueprint':'brief'} prepared. Review exact headline, offer and CTA in the right panel.
           </div>}
           <p className="text-[10px] leading-4 text-[#958681]">
             Voice stops manually. Gemini transcript stays editable; audio limit 1.5 MB.
@@ -528,15 +608,44 @@ export default function PuterMultilingualPosterLab(){
               <span className="text-[10px] font-semibold text-[#98633A]">{typographyPreset.label}</span>
             </div>
             <p className="text-[10px] leading-4 text-[#7F7471]">
-              {language==='en'?'Anton display · Space Grotesk brand · Plus Jakarta offer · Inter text':
+              {activeDesign?activeDesign.styling.headlineFont+' display · '+activeDesign.styling.bodyFont+' body':
+                language==='en'?'Anton display · Space Grotesk brand · Plus Jakarta offer · Inter text':
                 'Noto '+(language==='ta'?'Tamil':'Sinhala')+' display + body · Unicode-safe'}
             </p>
             <div className="flex items-center gap-1.5" aria-label="Selected poster palette">
-              {[typographyPreset.palette.obsidian,typographyPreset.palette.ambient,
-                typographyPreset.palette.accent,typographyPreset.palette.glow,typographyPreset.palette.violet]
+              {[displayedPreset.palette.obsidian,displayedPreset.palette.ambient,
+                displayedPreset.palette.accent,displayedPreset.palette.glow,displayedPreset.palette.violet]
                 .map((color,index)=><span key={index} title={color}
                   className="h-4 w-6 rounded-md border border-black/10"
                   style={{backgroundColor:color}}/>)}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button type="button" onClick={()=>{
+                const next=shuffleIndex+1;
+                setDesignOverride(shufflePosterDesign(activeDesign,language,next,format));
+                setShuffleIndex(next);
+                setStatus('Font, palette and safe-zone layout changed locally. No Puter credit was used.');
+              }} disabled={locked}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-[#292328] px-2.5 py-1.5 text-[10px] font-bold text-white disabled:opacity-50">
+                <Shuffle size={13}/> Shuffle font & colors
+              </button>
+              <span className="text-[9px] text-[#8C7E77]">No image regeneration</span>
+            </div>
+            <div>
+              <label htmlFor="puter-safe-layout" className="mb-1 block text-[10px] font-bold text-[#6C5F58]">
+                Safe-zone layout
+              </label>
+              <select id="puter-safe-layout" value={activeDesign?.layout||'top_center_hero'}
+                disabled={locked} onChange={e=>{
+                  const layout=e.target.value as SafeZoneLayout;
+                  if(!SAFE_ZONE_LAYOUTS.includes(layout))return;
+                  const starting=activeDesign||shufflePosterDesign(null,language,0,format);
+                  setDesignOverride({...starting,layout});
+                }} className="w-full rounded-lg border border-[#E5D9D0] bg-white px-2 py-2 text-[11px]">
+                <option value="top_center_hero">Top-Center Hero</option>
+                <option value="bottom_left_editorial">Bottom-Left Editorial</option>
+                <option value="split_card">Split Card</option>
+              </select>
             </div>
           </div>
           <div className="space-y-2.5 border-t border-[#EEE8E5] pt-3">
@@ -556,7 +665,7 @@ export default function PuterMultilingualPosterLab(){
             <div>
               <label htmlFor="puter-offer" className="mb-1 block text-[11px] font-semibold">Exact offer</label>
               <input id="puter-offer" value={offer} maxLength={60} disabled={generating}
-                onChange={e=>setOffer(e.target.value)}
+                onChange={e=>{setOffer(e.target.value);setManualOffer(true);}}
                 placeholder="e.g. 30% OFF"
                 className="w-full rounded-lg border border-[#E4DDDA] px-3 py-2.5 text-[12px] focus:border-[#EC9D68] focus:outline-none"/>
             </div>

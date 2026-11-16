@@ -1,4 +1,5 @@
 import 'server-only';
+import {createGeminiPosterDesignBlueprint} from '@/lib/marketing/poster-gemini-design-blueprint';
 import {createClient as createAdminClient} from '@supabase/supabase-js';
 import {createClient} from '@/lib/supabase/server';
 import {isSameOrigin} from '@/lib/growth/ingestion-contract';
@@ -70,9 +71,13 @@ export async function POST(request:Request){
   const id=body.businessId;
   const prompt=body.prompt;
   const language=body.language;
+  const wantsBlueprint=body.mode==='blueprint';
+  const format=body.format;
   if(typeof id!=='string'||!uuid.test(id)||typeof prompt!=='string'||
       prompt.trim().length<5||prompt.length>1200||!['ta','si','en'].includes(String(language)))
     return reply(400,{error:'Select your business, language and a 5–1,200 character description.'});
+  if(wantsBlueprint&&!['square','portrait','story','landscape'].includes(String(format)))
+    return reply(400,{error:'Choose a supported exact poster export format.'});
 
   const {client,userId}=await owner();
   if(!userId)return reply(403,{error:'Internal QA ownership is required.'});
@@ -98,6 +103,14 @@ export async function POST(request:Request){
     return reply(429,{error:'Shared daily Gemini voice/brief quota reached. You can still type and compose without Gemini.'});
   try{
     const facts=preparePosterBusinessFacts(business,brand);
+    if(wantsBlueprint){
+      const blueprint=await createGeminiPosterDesignBlueprint({
+        userRequest:prompt.trim(),facts,preferredLanguage:language as 'ta'|'si'|'en',
+        format:format as 'square'|'portrait'|'story'|'landscape',
+        campaignStyle:typeof body.campaignStyle==='string'?body.campaignStyle.slice(0,80):'',
+      });
+      return reply(200,{blueprint,reviewBeforeGenerating:true});
+    }
     const brief=await createGeminiPosterBrief({
       userRequest:prompt.trim(),facts,preferredLanguage:language as 'ta'|'si'|'en',isEdit:false,
     });
@@ -105,6 +118,6 @@ export async function POST(request:Request){
   }catch(e){
     if(e instanceof PosterIntelligenceError&&e.kind==='quota')
       return reply(429,{error:'Gemini quota exhausted. Use your original prompt to generate the background.'});
-    return reply(503,{error:'Gemini could not prepare the brief. Your editable original text has been preserved.'});
+    return reply(503,{error:'Gemini could not prepare a valid design blueprint. Your original prompt and approved copy remain editable.'});
   }
 }

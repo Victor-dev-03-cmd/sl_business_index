@@ -82,7 +82,8 @@ test('canvas composes all four exact sizes with Unicode font shaping',()=>{
   assert.match(compose,/canvas\.toBlob/);
   assert.match(compose,/image\.crossOrigin='anonymous'/);
   assert.match(compose,/exact words were NOT truncated or changed/);
-  assert.match(lab,/composeExactPoster\(\{backgroundSrc:artworkSrc,format,copy:exactCopy,style:selectedPremiumStyle\}\)/);
+  assert.match(lab,/composeExactPoster\(\{backgroundSrc:artworkSrc,format,copy:exactCopy,/);
+  assert.match(lab,/style:selectedPremiumStyle,design:activeDesign/);
   assert.match(lab,/anchor\.download=/);
   assert.match(lab,/finalBlob/);
   assert.doesNotMatch(compose,/format==='story'.*1024x/);
@@ -247,7 +248,8 @@ test('owner-provided Halloween font, effects and exact color tokens are preserve
 test('premium Canvas renderer draws fonts, glass, CTA, and icon contact rows into exported PNG',()=>{
   const premium=read('lib/marketing/puter-premium-poster-renderer.ts');
   assert.match(premium,/export function renderPremiumPoster/);
-  assert.match(compose,/renderPremiumPoster\(\{ctx,image:img,format:input\.format,copy:input\.copy,style:input\.style\}\)/);
+  assert.match(compose,/renderPremiumPoster\(\{ctx,image:img,format:input\.format,copy:input\.copy,/);
+  assert.match(compose,/style:input\.style,design:input\.design,language:input\.copy\.language/);
   assert.match(premium,/ctx\.filter='blur\('/);
   assert.match(premium,/rgba\(255,94,0,\.55\)/);
   assert.match(premium,/role:'display'/);
@@ -346,4 +348,99 @@ test('premium art prompt protects upper high-quality hero composition and adapts
   assert.match(preset,/HERO SUBJECT in the MIDDLE 31%-67%/);
   assert.match(preset,/LOWER 68%-95% calm for a COMPACT dynamically sized glass card/);
   assert.doesNotMatch(preset,/LOWER 59%-93%/);
+});
+
+
+test('v2 core architecture: owner-verified quota-gated JSON design blueprint is review-only',()=>{
+  const brain=read('lib/marketing/poster-gemini-design-blueprint.ts');
+  const schema=read('lib/marketing/poster-design-blueprint.ts');
+  assert.match(api,/const wantsBlueprint=body\.mode==='blueprint'/);
+  assert.match(api,/if\(wantsBlueprint\)\{/);
+  assert.match(api,/createGeminiPosterDesignBlueprint\(\{/);
+  assert.ok(api.indexOf("admin.rpc('marketing_poster_voice_try_reserve'")<
+    api.indexOf('createGeminiPosterDesignBlueprint({'));
+  assert.match(api,/reviewBeforeGenerating:true/);
+  assert.match(brain,/GEMINI_POSTER_MODEL/);
+  assert.match(brain,/responseMimeType:'application\/json'/);
+  assert.match(brain,/POSTER_BLUEPRINT_JSON_SCHEMA/);
+  assert.match(brain,/validatePosterBlueprint\(JSON\.parse\(raw\)/);
+  assert.match(brain,/Do not invent prices, discounts, percentages/);
+  assert.match(schema,/export type PosterBlueprint/);
+  assert.match(schema,/posterCopy:\{headline:string;offerText:string;ctaText:string\}/);
+  assert.match(schema,/imagePrompt:string/);
+  assert.match(schema,/export function validatePosterBlueprint/);
+  assert.match(lab,/mode:'blueprint',campaignStyle:selectedSuggestionId/);
+  assert.match(lab,/setBlueprint\(data\.blueprint\)/);
+  assert.match(lab,/Review the headline, exact offer and CTA/);
+  assert.doesNotMatch(brain,/marketing_poster_reserve|growth_credits|localStorage/);
+});
+test('v2 approved Tamil Sinhala English font pairs are safe and actually printed in output PNG',()=>{
+  const schema=read('lib/marketing/poster-design-blueprint.ts');
+  const presets=read('lib/marketing/poster-premium-presets.ts');
+  const renderer=read('lib/marketing/puter-premium-poster-renderer.ts');
+  const css=read('app/vendor/marketing/design/puter-lab/typography.css');
+  for(const font of ['Noto Sans Tamil','Hind Madurai','Noto Serif Tamil','Mukta Malar','Kavivanar',
+    'Noto Sans Sinhala','Gemunu Libre','Abhaya Libre','Anton','Bebas Neue',
+    'Montserrat','Poppins','Playfair Display','Plus Jakarta Sans']){
+    assert.ok(schema.includes(font),'font allowlist '+font);
+    assert.ok(css.includes(font.replaceAll(' ','+')),'Google CSS loaded '+font);
+  }
+  assert.match(presets,/withVerifiedPosterDesign/);
+  assert.match(presets,/POSTER_FONT_PAIRS\[language\]\.some/);
+  assert.match(renderer,/p\.font\.scriptHeadline/);
+  assert.match(renderer,/p\.font\.scriptBody/);
+  assert.match(renderer,/layoutMode:SafeZoneLayout/);
+  assert.match(renderer,/p\.overlayGradient==='subtle_vignette'/);
+  assert.match(compose,/design\?:VerifiedPosterDesign\|null/);
+  assert.match(compose,/style:input\.style,design:input\.design,language:input\.copy\.language/);
+  assert.match(lab,/style:selectedPremiumStyle,design:activeDesign/);
+});
+test('seasonal business action chips never call billable models or start background Gemini requests',()=>{
+  const module=read('lib/marketing/poster-design-blueprint.ts');
+  assert.match(module,/id:'pongal',label:'Thai Pongal Special'/);
+  assert.match(module,/id:'avurudu',label:'Avurudu Offer'/);
+  assert.match(module,/id:'vesak',label:'Vesak Campaign'/);
+  assert.match(module,/id:'ramadan',label:'Ramadan Greetings'/);
+  assert.match(module,/id:'admissions',label:'Admissions Open'/);
+  assert.match(module,/id:'christmas',label:'Christmas Offer'/);
+  assert.match(module,/id:'blackfriday',label:'Black Friday'/);
+  assert.match(module,/id:'delivery',label:'Free Delivery'/);
+  assert.match(module,/timeZone:'Asia\/Colombo'/);
+  assert.match(lab,/const chooseSuggestion=\(suggestion:/);
+  assert.match(lab,/onClick=\{\(\)=>chooseSuggestion\(suggestion\)\}/);
+  assert.match(lab,/setSelectedSuggestionId\(suggestion\.id\)/);
+  assert.match(lab,/setBlueprint\(null\);setBlueprintKey\(''\)/);
+  assert.doesNotMatch(module,/puter\.ai\.txt2img|GEMINI_API_KEY/);
+});
+test('shuffle and safe-zone positions alter local Canvas only, not user-pay or provider',()=>{
+  const module=read('lib/marketing/poster-design-blueprint.ts');
+  const renderer=read('lib/marketing/puter-premium-poster-renderer.ts');
+  assert.match(module,/export const SAFE_ZONE_LAYOUTS=\['top_center_hero','bottom_left_editorial','split_card'\]/);
+  assert.match(module,/export function shufflePosterDesign/);
+  assert.match(lab,/Shuffle font & colors/);
+  assert.match(lab,/shufflePosterDesign\(activeDesign,language,next,format\)/);
+  assert.match(lab,/onChange=\{e=>\{\s*const layout=e\.target\.value as SafeZoneLayout/);
+  assert.match(lab,/No image regeneration/);
+  assert.match(renderer,/const panelW=layoutMode==='top_center_hero'/);
+  assert.match(renderer,/center:layoutMode!=='bottom_left_editorial'/);
+  assert.match(lab,/Editing headline, offer, CTA, contact visibility or size rebuilds the PNG locally/);
+});
+test('Gemini may not hallucinate a vendor percentage or contact and cannot select unknown font URLs',async()=>{
+  const {validatePosterBlueprint}=await import('../lib/marketing/poster-design-blueprint.ts');
+  const valid={
+    posterCopy:{headline:'பொங்கல் ஸ்பெஷல்',offerText:'25% தள்ளுபடி',ctaText:'இன்றே தொடர்பு கொள்ளவும்'},
+    styling:{vibe:'festive',headlineFont:'Noto Serif Tamil',bodyFont:'Mukta Malar',
+      primaryColor:'#1c2a2a',accentColor:'#FF8000',textColor:'#FFFFFF',overlayGradient:'dark_bottom_top'},
+    imagePrompt:'Premium Sri Lankan Thai Pongal harvest photography with an authentic clay pot, rice stalks, gold sunrise and luxurious studio lighting. Leave clean space in the top and lower section for verified text. Preserve authentic local cultural details and a harmonious richly lit hero composition. NO text, NO letters, NO numbers, NO signs, NO logos, pure background artwork only.',
+  };
+  const request='எங்க கடைக்கு பொங்கல் ஸ்பெஷல் 25% ஆஃபர்';
+  const result=validatePosterBlueprint(valid,{language:'ta',vendorPrompt:request});
+  assert.equal(result.posterCopy.offerText,'25% தள்ளுபடி');
+  assert.equal(result.styling.primaryColor,'#1C2A2A');
+  assert.throws(()=>validatePosterBlueprint({...valid,posterCopy:{...valid.posterCopy,offerText:'50% தள்ளுபடி'}},
+    {language:'ta',vendorPrompt:request}),/invented or changed a percentage/);
+  assert.throws(()=>validatePosterBlueprint({...valid,posterCopy:{...valid.posterCopy,ctaText:'Call 0771234567'}},
+    {language:'ta',vendorPrompt:request}),/contact information/);
+  assert.throws(()=>validatePosterBlueprint({...valid,styling:{...valid.styling,headlineFont:'https://untrusted.example/evil.woff'}},
+    {language:'ta',vendorPrompt:request}),/font not approved/);
 });

@@ -2,10 +2,11 @@ import type {PosterFormat} from '@/lib/marketing/poster-design';
 import {planStackedCard} from '@/lib/marketing/puter-adaptive-card-layout';
 import type {ExactPosterCopy,PosterCopyLanguage} from '@/lib/marketing/puter-poster-composer';
 import {
-  resolvePremiumPosterPreset,
+  resolvePremiumPosterPreset,withVerifiedPosterDesign,
   type PremiumPosterStyle,
   type PremiumPosterPreset,
 } from '@/lib/marketing/poster-premium-presets';
+import type {VerifiedPosterDesign,SafeZoneLayout} from '@/lib/marketing/poster-design-blueprint';
 
 type Ctx=CanvasRenderingContext2D;
 type Role='display'|'brand'|'offer'|'body'|'button'|'footer';
@@ -23,7 +24,13 @@ const unicodeFace:Record<PosterCopyLanguage,string>={
   en:'"Inter",Arial,sans-serif',
 };
 function family(language:PosterCopyLanguage,role:Role,p:PremiumPosterPreset):string{
-  if(language!=='en')return unicodeFace[language];
+  if(language!=='en'){
+    if(role==='display'&&p.font.scriptHeadline)
+      return '"'+p.font.scriptHeadline+'",'+unicodeFace[language];
+    if((role==='body'||role==='offer'||role==='button'||role==='brand')&&p.font.scriptBody)
+      return '"'+p.font.scriptBody+'",'+unicodeFace[language];
+    return unicodeFace[language];
+  }
   const key=role==='display'?'display':role==='button'?'offer':role==='footer'?'footer':
     role==='brand'?'brand':role;
   return '"'+p.font[key]+'",Arial,sans-serif';
@@ -34,7 +41,13 @@ function weight(language:PosterCopyLanguage,role:Role):number{
 }
 function setFont(ctx:Ctx,size:number,role:Role,language:PosterCopyLanguage,p:PremiumPosterPreset){
   const value=Math.max(12,Math.round(size));
-  ctx.font=weight(language,role)+' '+value+'px '+family(language,role,p);
+  const selectedFamily=role==='display'?
+    (language==='en'?p.font.display:p.font.scriptHeadline):
+    (language==='en'&&role==='body'?p.font.body:
+      language!=='en'?p.font.scriptBody:'');
+  const resolvedWeight=selectedFamily==='Kavivanar'||selectedFamily==='Anton'||
+    selectedFamily==='Bebas Neue'?400:weight(language,role);
+  ctx.font=resolvedWeight+' '+value+'px '+family(language,role,p);
   const tracked=ctx as Ctx & {letterSpacing?:string};
   tracked.letterSpacing=role==='display'&&language==='en'?
     Math.round(-0.02*value)+'px':'0px';
@@ -151,11 +164,19 @@ function drawBackdrop(ctx:Ctx,image:HTMLImageElement,mode:'stacked'|'wide',p:Pre
     shade.addColorStop(0,'rgba(7,7,12,.93)');shade.addColorStop(.56,'rgba(7,7,12,.72)');
     shade.addColorStop(1,'rgba(7,7,12,.10)');
   }else{
-    shade.addColorStop(0,'rgba(7,7,12,.78)');
-    shade.addColorStop(.26,'rgba(7,7,12,.26)');
-    shade.addColorStop(.52,'rgba(7,7,12,.05)');
-    shade.addColorStop(.68,'rgba(7,7,12,.53)');
-    shade.addColorStop(1,'rgba(7,7,12,.88)');
+    if(p.overlayGradient==='subtle_vignette'){
+      shade.addColorStop(0,'rgba(7,7,12,.54)');
+      shade.addColorStop(.26,'rgba(7,7,12,.10)');
+      shade.addColorStop(.52,'rgba(7,7,12,.04)');
+      shade.addColorStop(.68,'rgba(7,7,12,.28)');
+      shade.addColorStop(1,'rgba(7,7,12,.72)');
+    }else{
+      shade.addColorStop(0,'rgba(7,7,12,.78)');
+      shade.addColorStop(.26,'rgba(7,7,12,.26)');
+      shade.addColorStop(.52,'rgba(7,7,12,.05)');
+      shade.addColorStop(.68,'rgba(7,7,12,.53)');
+      shade.addColorStop(1,'rgba(7,7,12,.88)');
+    }
   }
   ctx.fillStyle=shade;ctx.fillRect(0,0,w,h);
 }
@@ -231,7 +252,7 @@ function drawContacts(ctx:Ctx,p:{
       color:p.preset.palette.muted,role:'footer',language:scriptOf(item.text,p.lang),preset:p.preset});
   });
 }
-function renderStacked(ctx:Ctx,copy:ExactPosterCopy,p:PremiumPosterPreset,format:PosterFormat){
+function renderStacked(ctx:Ctx,copy:ExactPosterCopy,p:PremiumPosterPreset,format:PosterFormat,layoutMode:SafeZoneLayout='top_center_hero'){
   const w=ctx.canvas.width,h=ctx.canvas.height;
   const scale=h/1920;
   const side=Math.round(w*.047);
@@ -246,19 +267,22 @@ function renderStacked(ctx:Ctx,copy:ExactPosterCopy,p:PremiumPosterPreset,format
   const titleFit=fit(ctx,{
     value:title,width:w-2*side,height:titleMax-40*scale,maxLines:3,
     start:p.tokens.storyDisplaySize[1]*scale,
-    min:Math.max(35,82*scale),lineHeight:p.tokens.displayLineHeight,
+    min:Math.max(35,82*scale),
+    lineHeight:displayLanguage==='en'?p.tokens.displayLineHeight:1.3,
     role:'display',lang:displayLanguage,preset:p,label:'Display headline',
   });
-  renderFitted(ctx,{fit:titleFit,x:side,y:55*scale,width:w-2*side,
+  renderFitted(ctx,{fit:titleFit,x:side,
+    y:layoutMode==='bottom_left_editorial'?110*scale:55*scale,width:w-2*side,
     color:p.palette.white,role:'display',language:displayLanguage,preset:p,
-    center:true,glow:18*scale,glowColor:'rgba(0,0,0,.82)',
+    center:layoutMode!=='bottom_left_editorial',glow:18*scale,glowColor:'rgba(0,0,0,.82)',
     emphasizeFinalLine:displayLanguage==='en'&&titleFit.lines.length>1,
   });
 
   // Measure approved text BEFORE painting the glass. The card fits its actual
   // content, rather than spanning a fixed 59%-94% region and pinning the CTA
   // far from the offer. Short copy => a compact card and more visible hero.
-  const panelW=w-2*side;
+  const panelW=layoutMode==='top_center_hero'?w-2*side:
+    w*(format==='square'?.82:.84);
   const insideWidth=panelW-2*inset;
   const brand=fit(ctx,{value:copy.businessName,width:insideWidth,height:60*scale,maxLines:1,
     start:p.tokens.storyBrandSize*scale,min:22*scale,lineHeight:1.2,
@@ -278,19 +302,20 @@ function renderStacked(ctx:Ctx,copy:ExactPosterCopy,p:PremiumPosterPreset,format
     serviceHeight:service?.height||0,hasCta:Boolean(copy.cta.trim()),contactRows,
   });
   glassPanel(ctx,side,layout.top,panelW,layout.height,p,scale);
+  const centerText=layoutMode==='top_center_hero';
   renderFitted(ctx,{fit:brand,x:inner,y:layout.brandY,width:insideWidth,
-    color:p.palette.glow,role:'brand',language:brandLanguage,preset:p,center:true});
+    color:p.palette.glow,role:'brand',language:brandLanguage,preset:p,center:centerText});
   if(offer&&layout.offerY!==null)
     renderFitted(ctx,{fit:offer,x:inner,y:layout.offerY,width:insideWidth,
-      color:p.palette.accent,role:'offer',language:offerLanguage,preset:p,center:true,
+      color:p.palette.accent,role:'offer',language:offerLanguage,preset:p,center:centerText,
       glow:p.tokens.neonTextBlur*scale,glowColor:'rgba(255,94,0,.6)'});
   if(service&&layout.serviceY!==null)
     renderFitted(ctx,{fit:service,x:inner,y:layout.serviceY,width:insideWidth,
-      color:p.palette.white,role:'body',language:serviceLanguage,preset:p,center:true});
+      color:p.palette.white,role:'body',language:serviceLanguage,preset:p,center:centerText});
   if(copy.cta.trim()&&layout.ctaY!==null){
     const buttonW=Math.min(panelW*.6,490*scale);
     drawPill(ctx,{text:copy.cta,
-      x:side+(panelW-buttonW)/2,y:layout.ctaY,w:buttonW,
+      x:centerText?side+(panelW-buttonW)/2:inner,y:layout.ctaY,w:buttonW,
       h:layout.ctaHeight,scale,language:scriptOf(copy.cta,copy.language),preset:p});
   }
   if(contactRows&&layout.contactsY!==null&&layout.dividerY!==null){
@@ -316,7 +341,8 @@ function renderWide(ctx:Ctx,copy:ExactPosterCopy,p:PremiumPosterPreset){
     color:p.palette.glow,role:'brand',language:scriptOf(copy.businessName,copy.language),preset:p});
   row+=9;
   const headline=fit(ctx,{value:headlineLanguage==='en'?copy.headline.toUpperCase():copy.headline,
-    width:innerWidth,height:125,maxLines:3,start:59,min:28,lineHeight:.95,
+    width:innerWidth,height:125,maxLines:3,start:59,min:28,
+    lineHeight:headlineLanguage==='en'?.95:1.3,
     role:'display',lang:headlineLanguage,preset:p,label:'Headline'});
   row=renderFitted(ctx,{fit:headline,x:inner,y:row,width:innerWidth,
     color:p.palette.white,role:'display',language:headlineLanguage,preset:p});
@@ -349,10 +375,12 @@ function renderWide(ctx:Ctx,copy:ExactPosterCopy,p:PremiumPosterPreset){
 export function renderPremiumPoster(input:{
   ctx:Ctx;image:HTMLImageElement;copy:ExactPosterCopy;
   format:PosterFormat;style?:PremiumPosterStyle|null;
+  design?:VerifiedPosterDesign|null;language:PosterCopyLanguage;
 }):void{
-  const preset=resolvePremiumPosterPreset(input.style);
+  const preset=withVerifiedPosterDesign(resolvePremiumPosterPreset(input.style),
+    input.design,input.language);
   const mode=input.format==='landscape'?'wide':'stacked';
   drawBackdrop(input.ctx,input.image,mode,preset);
   if(mode==='wide')renderWide(input.ctx,input.copy,preset);
-  else renderStacked(input.ctx,input.copy,preset,input.format);
+  else renderStacked(input.ctx,input.copy,preset,input.format,input.design?.layout);
 }
