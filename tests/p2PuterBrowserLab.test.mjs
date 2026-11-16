@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {existsSync,readFileSync} from 'node:fs';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const lab=read('app/vendor/marketing/design/puter-lab/page.tsx');
 const compose=read('lib/marketing/puter-poster-composer.ts');
@@ -626,23 +626,25 @@ test('lower-only Canvas style variants do not shift the verified headline or ada
   assert.match(card,/All styles render inside the existing, content-measured glass-card bounds/);
   assert.match(card,/rounded\(ctx,x,y,w,h,args\.radius\*s\);ctx\.clip\(\)/);
   assert.match(layout,/const top=bottom-cardHeight/);
-  assert.doesNotMatch(card,/renderFitted|posterCopy\.|brandY|offerY|ctaY/);
-});
+  assert.doesNotMatch(card,/renderFitted|posterCopy\.|brandY|offerY|ctatest('legacy Creative AI page is fully deleted and URL server-redirects without UI flash',()=>{
 
-
-test('legacy Creative AI URL opens current production Studio for verified owner only',()=>{
-  const old=read('app/vendor/marketing/design/page.tsx');
-  const access=read('app/api/marketing/poster/puter-lab/route.ts');
+  const config=read('next.config.ts');
+  const catalog=read('lib/marketing/studio-apps.ts');
   const gate=read('app/vendor/marketing/design/puter-lab/layout.tsx');
-  assert.match(old,/fetch\('\/api\/marketing\/poster\/puter-lab',\{/);
-  assert.match(old,/response\.ok&&!controller\.signal\.aborted/);
-  assert.match(old,/window\.location\.replace\('\/vendor\/marketing\/design\/puter-lab'\)/);
-  assert.match(old,/credentials:'same-origin',cache:'no-store'/);
-  assert.match(old,/Legacy Studio remains available if access check fails/);
-  assert.match(access,/isPosterInternalQAAccount\(user\.id,client\)/);
-  assert.match(access,/if\(!userId\)return reply\(403/);
+  const access=read('app/api/marketing/poster/puter-lab/route.ts');
+  assert.equal(existsSync(new URL('../app/vendor/marketing/design/page.tsx',import.meta.url)),false);
+  assert.match(config,/async redirects\(\)/);
+  assert.match(config,/source: '\/vendor\/marketing\/design'/);
+  assert.match(config,/destination: '\/vendor\/marketing\/design\/puter-lab'/);
+  assert.match(catalog,/href:'\/vendor\/marketing\/design\/puter-lab'/);
+  assert.match(lab,/<Link href="\/vendor\/marketing"/);
+  assert.doesNotMatch(lab,/<Link href="\/vendor\/marketing\/design"/);
   assert.match(gate,/isPosterInternalQAAccount\(user\.id,client\)/);
   assert.match(gate,/notFound\(\)/);
+  assert.match(access,/isPosterInternalQAAccount\(user\.id,client\)/);
+  assert.match(access,/if\(!userId\)return reply\(403/);
+});
+\(\)/);
 });
 test('bottom-card styling is visibly selectable and recomposes PNG without provider call',()=>{
   const renderer=read('lib/marketing/puter-premium-poster-renderer.ts');
