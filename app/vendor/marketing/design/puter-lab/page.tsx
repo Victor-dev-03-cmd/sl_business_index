@@ -273,7 +273,7 @@ export default function PuterMultilingualPosterLab(){
     document.body.appendChild(anchor);anchor.click();anchor.remove();
   };
   const locked=generating||geminiBusy||transcribing||recording;
-  return <main className="mx-auto flex w-full max-w-[1620px] flex-col gap-3 px-3 py-3 text-[#292327] sm:px-5 xl:h-[calc(100dvh-8.5rem)] xl:min-h-0 xl:overflow-hidden xl:py-2">
+  return <main className="mx-auto flex w-full max-w-[1620px] flex-col gap-3 px-3 py-3 text-[#292327] sm:px-5 xl:h-[calc(100dvh-9.5rem)] xl:min-h-0 xl:overflow-hidden xl:py-2">
     <Script src="https://js.puter.com/v2/" strategy="afterInteractive"
       onReady={()=>setSdkReady(true)}
       onError={()=>setError('Unable to load Puter.js. Check network restrictions.')}/>
