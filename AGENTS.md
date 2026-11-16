@@ -1,5 +1,10 @@
 # SLBusinessIndex — repository handoff for coding agents
 
+## 2026-11-16 — P2-21: Bottom content-panel styles, preview-only
+- [P2-21 bottom-card style variants](docs/growth/p2/P2_21_BOTTOM_CONTENT_PANEL_STYLES_PREVIEW_20261116.md). Owner specifically ordered **only** lower information card styling variations, with top headline/hero, 3-column workspace, safe-zone geometry, verified exact copy, voice, Puter User-Pays, Gemini schema and full-resolution PNG behavior retained.
+- Adds optional validated `layoutStyling.contentPanelStyle` to Gemini JSON, eight curated lower-surface styles, and independent Canvas painter `puter-content-panel-styles.ts`. Purely visual changes to existing measured lower card bounds and CTA surface, no upper composition changes. Legacy JSON defaults safely to black marble.
+- **REVIEW GATE: PR + Vercel Preview only. Do NOT merge main or deploy Production before owner tests/approves preview.** All latest-head Next.js build/TS/security/QA CI must be green. Do not trigger paid Puter requests as part of development.
+
 ## 2026-11-16 — P2-20: Exact selected-language copy and production Studio polish
 - [P2-20 language/copy/production UI QA](docs/growth/p2/P2_20_MULTILINGUAL_COPY_AND_PRODUCTION_UI_POLISH_20261116.md). Owner's real Christmas poster: selected Tamil but English `CHRISTMAS SPECIAL` headline and `30% Offer for price`, while CTA alone Tamil. Required all three fields in selected output language, natural Sri Lankan marketing discount examples, no oversized owner sandbox banner.
 - `poster-language-copy.ts` validates Tamil/Sinhala/English Unicode script for headline/offer/CTA (not verified business/contacts); Gemini system few-shot examples + authoritative server validation reject mismatched copy and awkward English offers, preserve only numeric discounts grounded in vendor request or explicitly edited approved offer. Stale manual English fields cannot override an explicitly prepared Tamil/Sinhala blueprint or export mixed-language PNG.
