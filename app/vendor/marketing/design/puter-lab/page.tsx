@@ -5,6 +5,7 @@ import './loading-motion.css';
 import PuterReferenceGallery from './PuterReferenceGallery';
 import PuterGenerationMotion,{type PosterGenerationStage} from './PuterGenerationMotion';
 import PuterCompactFormatSelector from './PuterCompactFormatSelector';
+import {resolvePremiumPosterPreset} from '@/lib/marketing/poster-premium-presets';
 import {
   getPosterReferenceStyle,originalReferencePng,
   type PosterReferenceStyle,type PosterStyleId,
@@ -24,7 +25,7 @@ import {
 import type {PosterBusinessFacts,PosterIntelligenceBrief} from '@/lib/marketing/poster-gemini-intelligence';
 
 type PuterClient={
-  auth:{signIn:()=>Promise<unknown>};
+  auth:{signIn:()=>Promise<unknown>;isSignedIn:()=>boolean};
   ai:{txt2img:(prompt:string,options:{model:string;test_mode:boolean;ratio?:{w:number;h:number};input_images?:Blob[]})=>Promise<HTMLImageElement>};
 };
 declare global {interface Window {puter?:PuterClient;}}
@@ -71,6 +72,7 @@ export default function PuterMultilingualPosterLab(){
   const [cta,setCta]=useState('Contact us for details');
   const [showPhone,setShowPhone]=useState(true);
   const [showWebsite,setShowWebsite]=useState(true);
+  const [showEmail,setShowEmail]=useState(true);
   const [manualHeadline,setManualHeadline]=useState(false);
   const [manualCta,setManualCta]=useState(false);
   const [brief,setBrief]=useState<PosterIntelligenceBrief|null>(null);
@@ -94,6 +96,8 @@ export default function PuterMultilingualPosterLab(){
   const clockRef=useRef<ReturnType<typeof setInterval>|null>(null);
   const finalUrlRef=useRef('');
   const selectedReference=getPosterReferenceStyle(selectedReferenceId);
+  const selectedPremiumStyle=selectedReference?.id||'modern';
+  const typographyPreset=resolvePremiumPosterPreset(selectedPremiumStyle);
   const business=businesses.find(b=>b.id===businessId);
   const facts=business?.facts;
   const currentKey=businessId+'|'+language+'|'+prompt.trim();
@@ -151,9 +155,10 @@ export default function PuterMultilingualPosterLab(){
     cta:cta.trim(),
     phone:showPhone?facts.phone:'',
     website:showWebsite?facts.website:'',
+    email:showEmail?facts.email:'',
     accentColor:facts.primaryColor||'#F7B45C',
     language,
-  }:null,[facts,headline,offer,cta,showPhone,showWebsite,language]);
+  }:null,[facts,headline,offer,cta,showPhone,showWebsite,showEmail,language]);
 
   // Recompose typography at the exact selected PNG dimensions. Changing text,
   // format or contact options never triggers a new billable Puter request.
@@ -162,7 +167,7 @@ export default function PuterMultilingualPosterLab(){
     let cancelled=false;
     setComposing(true);setGenerationStage('typography');setEstimatedProgress(94);setError('');
     const timeout=setTimeout(()=>{
-      void composeExactPoster({backgroundSrc:artworkSrc,format,copy:exactCopy})
+      void composeExactPoster({backgroundSrc:artworkSrc,format,copy:exactCopy,style:selectedPremiumStyle})
         .then(blob=>{
           if(cancelled)return;
           const url=URL.createObjectURL(blob);
@@ -177,7 +182,7 @@ export default function PuterMultilingualPosterLab(){
         .finally(()=>{if(!cancelled)setComposing(false);});
     },220);
     return()=>{cancelled=true;clearTimeout(timeout);};
-  },[artworkSrc,imageRevision,format,exactCopy,isRealOutput,dimensions.width,dimensions.height]);
+  },[artworkSrc,imageRevision,format,exactCopy,selectedPremiumStyle,isRealOutput,dimensions.width,dimensions.height]);
 
   const transcribe=async(blob:Blob)=>{
     setTranscribing(true);setError('');setStatus('Gemini is transcribing your original-language voice. Please review the text.');
@@ -279,12 +284,14 @@ export default function PuterMultilingualPosterLab(){
     setStatus('Signing in to Puter and generating text-free artwork…');
     try{
       const puter=window.puter;
-      await puter.auth.signIn();
+      // Official Puter browser SDK persists its own session. Do not reopen the
+      // auth popup for every generation while the session is still valid.
+      if(!puter.auth.isSignedIn())await puter.auth.signIn();
       setGenerationStage('artwork');setEstimatedProgress(18);
-      const styleDirection=selectedReference?.artDirection;
+      const styleDirection=selectedReference?.artDirection||typographyPreset.artDirective;
       const briefDirection=currentBrief?.creativeDirectionEnglish;
       const creative=buildArtOnlyPrompt({
-        request:prompt.trim(),creativeDirection:[styleDirection,briefDirection].filter(Boolean).join('\n')||undefined,
+        request:prompt.trim(),styleDirection,creativeDirection:briefDirection,
         businessCategory:facts.category,city:facts.city,
         brandColor:facts.primaryColor||'#F7B45C',format,
       });
@@ -515,6 +522,23 @@ export default function PuterMultilingualPosterLab(){
                 Otherwise use its hidden style directions only.</span>
             </label>}
           </div>
+          <div className="space-y-2 rounded-xl border border-[#F0E4DC] bg-[#FBF8F5] px-3 py-2.5">
+            <div className="flex flex-wrap items-center justify-between gap-1">
+              <p className="text-[11px] font-bold text-[#352B2D]">Premium typography preset</p>
+              <span className="text-[10px] font-semibold text-[#98633A]">{typographyPreset.label}</span>
+            </div>
+            <p className="text-[10px] leading-4 text-[#7F7471]">
+              {language==='en'?'Anton display · Space Grotesk brand · Plus Jakarta offer · Inter text':
+                'Noto '+(language==='ta'?'Tamil':'Sinhala')+' display + body · Unicode-safe'}
+            </p>
+            <div className="flex items-center gap-1.5" aria-label="Selected poster palette">
+              {[typographyPreset.palette.obsidian,typographyPreset.palette.ambient,
+                typographyPreset.palette.accent,typographyPreset.palette.glow,typographyPreset.palette.violet]
+                .map((color,index)=><span key={index} title={color}
+                  className="h-4 w-6 rounded-md border border-black/10"
+                  style={{backgroundColor:color}}/>)}
+            </div>
+          </div>
           <div className="space-y-2.5 border-t border-[#EEE8E5] pt-3">
             <div className="flex items-center gap-2">
               <SquarePen size={15} className="text-[#B46730]"/>
@@ -557,8 +581,13 @@ export default function PuterMultilingualPosterLab(){
                 <input type="checkbox" checked={showWebsite} disabled={generating||!facts?.website}
                   onChange={e=>setShowWebsite(e.target.checked)}/> Website
               </label>
+              <label className="col-span-2 flex items-center gap-1.5 rounded-lg bg-[#F8F6F4] px-2 py-2">
+                <input type="checkbox" checked={showEmail} disabled={generating||!facts?.email}
+                  onChange={e=>setShowEmail(e.target.checked)}/> Verified business email
+              </label>
             </div>
             {facts?.website&&<p className="break-all text-[10px] leading-4 text-[#91847E]">{facts.website}</p>}
+            {facts?.email&&<p className="break-all text-[10px] leading-4 text-[#91847E]">{facts.email}</p>}
           </div>
           <p className="text-[10px] leading-4 text-[#958781]">
             Editing headline, offer, CTA, contact visibility or size rebuilds the PNG locally without another Puter image call.
