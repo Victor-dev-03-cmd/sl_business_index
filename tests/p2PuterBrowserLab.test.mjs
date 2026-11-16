@@ -112,7 +112,7 @@ test('production Cloudflare provider and Turnstile login remain unchanged',()=>{
 
 test('desktop layout uses the agreed LEFT controls, CENTER poster and RIGHT settings',()=>{
   assert.match(lab,/xl:grid-cols-\[minmax\(0,0\.91fr\)_minmax\(0,1\.36fr\)_minmax\(0,0\.9fr\)\]/);
-  assert.match(lab,/xl:h-\[calc\(100dvh-8\.5rem\)\]/);
+  assert.match(lab,/xl:h-\[calc\(100dvh-9\.5rem\)\]/);
   assert.match(lab,/xl:overflow-hidden/);
   const left=lab.indexOf('aria-label="Poster creation controls"');
   const center=lab.indexOf('aria-label="Exact AI poster preview"');
