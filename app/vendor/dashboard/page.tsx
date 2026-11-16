@@ -236,7 +236,7 @@ export default function VendorDashboard() {
                 <p className="text-[10px] font-extrabold uppercase tracking-[.19em] text-[#9C9CA1]">SLBI / Owner intelligence</p>
                 <span className="rounded-[5px] border border-[#F5D5BD] bg-[#FFF6EF] px-2.5 py-1 text-[10px] font-semibold text-[#BC5E0B]">{plan} plan</span>
               </div>
-              <h1 className="mt-4 text-[34px] font-extrabold leading-[1.12] tracking-[-.055em] text-[#171719] sm:text-[42px]">Your business. <span className="text-[#FF7900]">In focus.</span></h1>
+              <h1 className="slbi-display-title mt-4 text-[34px] text-[#171719] sm:text-[42px]">Your business. <span className="text-[#FF7900]">In focus.</span></h1>
               <p className="mt-3 max-w-[650px] text-[13px] leading-6 text-[#808087]">Manage listings, customer enquiries and recorded business activity from one clear workspace.</p>
               <div className="mt-6 flex flex-wrap items-center gap-2">
                 <button type="button" onClick={exportCsv} disabled={loading||!businesses.length} className={neo.button + " inline-flex h-10 items-center gap-2 px-4 text-[11px] font-semibold text-[#343439] hover:border-[#FFBA82] hover:bg-[#FFF8F2] disabled:opacity-50"}><IconsaxIcon name="document-download" size={16}/> Export report</button>
