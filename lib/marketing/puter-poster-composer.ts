@@ -52,13 +52,13 @@ export function buildArtOnlyPrompt(input:{
     'SECOND PRIORITY — OUTPUT COMPOSITION. Final frame ratio '+dimensions.width+':'+dimensions.height+'. The SLBI image is rendered behind separately typeset business text.',
     input.format==='landscape'?
       'Keep hero on RIGHT and a usable dark, uncluttered content area on LEFT.':
-      'Reserve clean visual space in the UPPER 30% for huge display typography. Put the main requested hero through MIDDLE 30–58%. Reserve the LOWER 59–94% for a frosted-glass information card, CTA and contact details. Do NOT bake that text or card lettering into AI pixels.',
+      'Premium editorial poster composition: reserve a clean, deep-contrast UPPER 0–31% for large exact display lettering. Make the USER-REQUESTED hero powerful, sharply lit and finely detailed through the MIDDLE 31–67% with foreground depth and intentional lighting; avoid dull generic illustrations and keep the subject clearly visible. Preserve a visually calm LOWER 68–95% for a COMPACT glass content card whose height is determined by the real business copy. Do NOT paint words, fake typography, a giant empty card, contact details or CTA text into the artwork.',
     'THIRD PRIORITY — STYLE INSPIRATION ONLY (ignore any conflicting subjects/objects): '+short(input.styleDirection||'',700),
     'FOURTH PRIORITY — OPTIONAL GEMINI CREATIVE SUGGESTION (only if it does not conflict): '+short(input.creativeDirection||'',420),
     'ACTUAL VERIFIED BUSINESS SECTOR: '+short(input.businessCategory,120),
     input.city?'Location context: '+short(input.city,75):'',
     input.brandColor?'Brand accent palette hint: '+short(input.brandColor,14):'',
-    'Polished premium editorial graphic design, sharp commercial studio lighting, high-end realistic 3D depth, clean layout, uncluttered typography-safe spaces.',
+    'Art-direct the actual owner idea like a premium 2026 commercial creative director: professional coherent color grading, strong primary visual focal point, crisp depth of field, high-fidelity materials, premium gloss where appropriate, studio-quality key and rim lighting, carefully balanced scene density and intentionally clear spaces for readable UI-composited type. No stock-template appearance or randomly invented filler.',
     'STRICT: NO TEXT of any kind in the AI artwork: no AI-generated words, letters, numerals, prices, slogans, watermarks, logos, pseudo-glyphs, fake UI labels, invented brand names, contact details or offer percentages. They will be composited exactly by the web typography engine.',
     'When a seasonal reference and the user request disagree, ALWAYS honor the user request. No extra pumpkins, moons, trees, fireworks, people or objects unless requested.',
   ].filter(Boolean).join('\n').slice(0,3900);
