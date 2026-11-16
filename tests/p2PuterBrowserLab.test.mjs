@@ -626,17 +626,22 @@ test('lower-only Canvas style variants do not shift the verified headline or ada
   assert.match(card,/All styles render inside the existing, content-measured glass-card bounds/);
   assert.match(card,/rounded\(ctx,x,y,w,h,args\.radius\*s\);ctx\.clip\(\)/);
   assert.match(layout,/const top=bottom-cardHeight/);
-  assert.doesNotMatch(card,/renderFitted|posterCopy\.|brandY|offerY|ctatest('legacy Creative AI page is fully deleted and URL server-redirects without UI flash',()=>{
+  assert.doesNotMatch(card,/renderFitted|posterCopy\.|brandY|offerY|ctaY/);
+});
 
+
+test('legacy Creative AI page is physically removed; old URL immediately server redirects',()=>{
   const config=read('next.config.ts');
   const catalog=read('lib/marketing/studio-apps.ts');
   const gate=read('app/vendor/marketing/design/puter-lab/layout.tsx');
   const access=read('app/api/marketing/poster/puter-lab/route.ts');
   assert.equal(existsSync(new URL('../app/vendor/marketing/design/page.tsx',import.meta.url)),false);
+  assert.equal(existsSync(new URL('../app/vendor/marketing/design/loading.tsx',import.meta.url)),false);
   assert.match(config,/async redirects\(\)/);
   assert.match(config,/source: '\/vendor\/marketing\/design'/);
   assert.match(config,/destination: '\/vendor\/marketing\/design\/puter-lab'/);
   assert.match(catalog,/href:'\/vendor\/marketing\/design\/puter-lab'/);
+  assert.doesNotMatch(catalog,/href:'\/vendor\/marketing\/design',/);
   assert.match(lab,/<Link href="\/vendor\/marketing"/);
   assert.doesNotMatch(lab,/<Link href="\/vendor\/marketing\/design"/);
   assert.match(gate,/isPosterInternalQAAccount\(user\.id,client\)/);
@@ -644,8 +649,7 @@ test('lower-only Canvas style variants do not shift the verified headline or ada
   assert.match(access,/isPosterInternalQAAccount\(user\.id,client\)/);
   assert.match(access,/if\(!userId\)return reply\(403/);
 });
-\(\)/);
-});
+
 test('bottom-card styling is visibly selectable and recomposes PNG without provider call',()=>{
   const renderer=read('lib/marketing/puter-premium-poster-renderer.ts');
   const local=read('lib/marketing/puter-content-panel-styles.ts');
