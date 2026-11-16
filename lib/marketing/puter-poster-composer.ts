@@ -1,7 +1,7 @@
 import {POSTER_FORMATS,type PosterFormat} from '@/lib/marketing/poster-design';
 import {renderPremiumPoster} from '@/lib/marketing/puter-premium-poster-renderer';
 import type {PremiumPosterStyle} from '@/lib/marketing/poster-premium-presets';
-import type {VerifiedPosterDesign} from '@/lib/marketing/poster-design-blueprint';
+import type {VerifiedPosterDesign,ContentPanelStyle} from '@/lib/marketing/poster-design-blueprint';
 
 export type PosterCopyLanguage='ta'|'si'|'en';
 export type ExactPosterCopy={
@@ -181,7 +181,7 @@ async function decodedImage(src:string):Promise<HTMLImageElement>{
 
 export async function composeExactPoster(input:{
   backgroundSrc:string;format:PosterFormat;copy:ExactPosterCopy;style?:PremiumPosterStyle;
-  design?:VerifiedPosterDesign|null;
+  design?:VerifiedPosterDesign|null;contentPanelStyle?:ContentPanelStyle;
 }):Promise<Blob>{
   await ensureFonts(input.copy.language,input.style,input.copy,input.design);
   const img=await decodedImage(input.backgroundSrc);
@@ -192,7 +192,8 @@ export async function composeExactPoster(input:{
   if(!ctx)throw Error('Canvas image composition is not available.');
   if(input.style){
     renderPremiumPoster({ctx,image:img,format:input.format,copy:input.copy,
-      style:input.style,design:input.design,language:input.copy.language});
+      style:input.style,design:input.design,language:input.copy.language,
+      contentPanelStyle:input.contentPanelStyle});
   }else{
   const w=d.width,h=d.height,landscape=input.format==='landscape';
   ctx.fillStyle='#102039';ctx.fillRect(0,0,w,h);
