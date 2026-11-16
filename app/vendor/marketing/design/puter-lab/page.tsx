@@ -13,7 +13,7 @@ import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import Link from 'next/link';
 import Script from 'next/script';
 import {
-  ArrowLeft,CheckCircle2,Download,FlaskConical,Image as ImageIcon,
+  ArrowLeft,CheckCircle2,Download,FlaskConical,
   LoaderCircle,Mic,ShieldCheck,SquarePen,StopCircle,WandSparkles,
 } from 'lucide-react';
 import {POSTER_FORMATS,type PosterFormat} from '@/lib/marketing/poster-design';
@@ -160,7 +160,7 @@ export default function PuterMultilingualPosterLab(){
   useEffect(()=>{
     if(!artworkSrc||!exactCopy)return;
     let cancelled=false;
-    setComposing(true);setError('');
+    setComposing(true);setGenerationStage('typography');setEstimatedProgress(94);setError('');
     const timeout=setTimeout(()=>{
       void composeExactPoster({backgroundSrc:artworkSrc,format,copy:exactCopy})
         .then(blob=>{
