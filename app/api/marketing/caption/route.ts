@@ -4,6 +4,7 @@ import {isSameOrigin} from '@/lib/growth/ingestion-contract';
 import {GEMINI_POSTER_MODEL} from '@/lib/marketing/poster-gemini-intelligence';
 import {parseThreeAngles} from '@/lib/marketing/caption-workspace';
 import {getMarketingAccessForUser,rejectMarketingAccess} from '@/lib/marketing/pro-access-server';
+import {isPosterInternalQAAccount} from '@/lib/marketing/poster-review-access-server';
 import {
   buildCaptionMessages,CAPTION_MODEL,MAX_OUTPUT_TOKENS,
   sanitizeModelCaption,validateCaptionInput,
@@ -93,6 +94,10 @@ export async function POST(request:Request){
   if(authError||!user)return response(401,{error:'Sign in to create an AI caption.'});
   const proDenied=rejectMarketingAccess(await getMarketingAccessForUser(user.id,client));
   if(proDenied)return proDenied;
+  // Owner-only QA: never open provider-backed captions to all Pro subscribers
+  // merely because the temporary server flag and credit action are enabled.
+  if(!await isPosterInternalQAAccount(user.id,client))
+    return response(403,{error:'AI Caption Lab generation is currently limited to internal QA.'});
   let parsed:unknown;
   try{
     const raw=await request.text();
