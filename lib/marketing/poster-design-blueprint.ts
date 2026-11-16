@@ -6,7 +6,7 @@
  */
 import type {PosterFormat} from '@/lib/marketing/poster-design';
 import type {PosterCopyLanguage} from '@/lib/marketing/puter-poster-composer';
-import {isPosterCopyInLanguage,isNaturalEnglishOffer} from '@/lib/marketing/poster-language-copy';
+import {isPosterCopyInLanguage,isNaturalEnglishOffer} from './poster-language-copy.ts';
 
 export const POSTER_VIBES=['festive','modern_tech','luxury','bold_sale','warm_retail'] as const;
 export type PosterVibe=typeof POSTER_VIBES[number];
