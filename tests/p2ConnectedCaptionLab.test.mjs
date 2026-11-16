@@ -94,7 +94,8 @@ test('three angles are genuinely parsed from the existing authenticated AI provi
       tone:'friendly',guidelines:'',
     },valid.value);
     assert.match(messages[0].content,/exactly THREE distinct reviewed drafts/);
-    assert.match(messages[0].content,/\[\[HOOK\]\]/);
+    assert.match(messages[0].content,/Return JSON ONLY/);
+    assert.match(messages[0].content,/first 110 characters/);
     assert.match(messages[0].content,/Do not use false urgency/);
     assert.match(messages[1].content,/requestedTone/);
   }
