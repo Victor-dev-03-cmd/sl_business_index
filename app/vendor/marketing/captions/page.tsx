@@ -209,7 +209,7 @@ export default function ConnectedCaptionLab(){
       setGoal(record.context.offer?'flash_sale':'festival');
       setTone(record.context.vibe.includes('bold')?2:record.context.vibe.includes('luxury')?1:0);
       setGeneratedLanguages([]);
-      setNotice('Linked from Poster Studio. Your exact approved poster and business details are ready. Review, then generate captions.');
+      setNotice('Poster linked from Studio. Your campaign is ready to refine.');
     }).catch(()=>{if(!cancelled)setNotice('This browser could not open the linked PNG. Continue without a poster.');});
     return()=>{cancelled=true;};
   },[loading,businesses]);
@@ -398,7 +398,7 @@ export default function ConnectedCaptionLab(){
         .select('id').maybeSingle();
       if(saved.error||!saved.data)throw Error(saved.error?.message||'Campaign Planner could not save this draft.');
       setSavedCampaignId(saved.data.id);
-      setNotice('Caption bundle saved in Campaign Planner. Linked PNG remains stored in this browser only; cloud poster sync is not enabled.');
+      setNotice('Caption saved to Campaign Planner. Your attached poster remains on this device.');
     }catch(e){setError(e instanceof Error?e.message:'Save to Campaign Planner failed.');}
     finally{setSaving(false);}
   };
@@ -622,7 +622,7 @@ export default function ConnectedCaptionLab(){
             <div className="absolute right-0 top-6 z-30 w-64 rounded-xl border border-[#E5E7EB] bg-white p-3 text-[11px] leading-5 text-[#374151] shadow-xl">
               <p>One provider request and applicable credit reservation per selected language; never auto-charged on page open.</p>
               <p className="mt-2">Linked PNG remains on this device for up to two hours; saving to Campaign Planner stores captions, not a cloud copy of your image.</p>
-              <p className="mt-2">Social previews are visual estimates. Nothing is automatically published.</p>
+              <p className="mt-2">Social previews are visual estimates. Character goals are editorial targets, not social platform limits. Nothing is automatically published.</p>
             </div>
           </details>
         </div>
