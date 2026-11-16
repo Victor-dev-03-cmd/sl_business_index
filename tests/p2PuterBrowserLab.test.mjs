@@ -284,3 +284,66 @@ test('reuse Puter login in active SDK session rather than presenting popup every
   assert.match(lab,/auth:\{signIn:\(\)=>Promise<unknown>;isSignedIn:\(\)=>boolean\}/);
   assert.match(lab,/if\(!puter\.auth\.isSignedIn\(\)\)await puter\.auth\.signIn\(\)/);
 });
+
+
+test('adaptive premium glass card removes the large offer-to-CTA dead zone',async()=>{
+  const source=read('lib/marketing/puter-adaptive-card-layout.ts');
+  const renderer=read('lib/marketing/puter-premium-poster-renderer.ts');
+  assert.match(source,/export function planStackedCard/);
+  assert.match(source,/const cardHeight=cursor\+bottomPad/);
+  assert.match(source,/const top=bottom-cardHeight/);
+  assert.match(source,/ctaOffset=cursor;cursor\+=ctaHeight/);
+  assert.match(source,/contactsOffset=cursor;cursor\+=contactsHeight/);
+  assert.match(renderer,/const layout=planStackedCard/);
+  assert.match(renderer,/y:layout\.ctaY/);
+  assert.match(renderer,/y:layout\.contactsY/);
+  assert.match(renderer,/glassPanel\(ctx,side,layout\.top,panelW,layout\.height,p,scale\)/);
+  assert.doesNotMatch(renderer,/const buttonTop=Math\.max\(y\+22\*scale,contactTop-93\*scale\)/);
+  const {planStackedCard}=await import('../lib/marketing/puter-adaptive-card-layout.ts');
+  const story=planStackedCard({
+    format:'story',canvasHeight:1920,scale:1,brandHeight:43,
+    offerHeight:94,serviceHeight:43,hasCta:true,contactRows:3,
+  });
+  assert.ok(story.top>1920*.65,'short offer card must reveal more of the hero image');
+  assert.ok(story.ctaY!==null&&story.serviceY!==null);
+  assert.ok(story.contactsY!==null);
+  assert.ok(story.ctaY-(story.serviceY+43)<=25,'button follows service rather than bottom pinning');
+  assert.ok(story.contactsY-(story.ctaY+story.ctaHeight)<=27,'contacts follow CTA, not separated by a blank panel');
+  assert.ok(story.maxContentGap<=26,'no gratuitous internal blank vertical region');
+  assert.ok(story.contactsY+story.contactsHeight+25<=story.bottom);
+});
+test('adaptive card responds to all 3 vertical output sizes, amount of approved text and contacts',async()=>{
+  const {planStackedCard}=await import('../lib/marketing/puter-adaptive-card-layout.ts');
+  for(const [format,height] of [['story',1920],['portrait',1350],['square',1080]]){
+    const scale=height/1920;
+    const small=planStackedCard({
+      format,canvasHeight:height,scale,brandHeight:40*scale,
+      offerHeight:0,serviceHeight:39*scale,hasCta:true,contactRows:1,
+    });
+    const large=planStackedCard({
+      format,canvasHeight:height,scale,brandHeight:40*scale,
+      offerHeight:130*scale,serviceHeight:65*scale,hasCta:true,contactRows:3,
+    });
+    assert.ok(small.top>large.top,format+' shorter content needs a shorter card');
+    assert.ok(small.height<large.height);
+    assert.ok(small.bottom<=height*.95&&large.bottom<=height*.95);
+    assert.ok(small.ctaY>small.serviceY&&large.ctaY>large.serviceY);
+    assert.ok(small.contactsY>small.ctaY&&large.contactsY>large.ctaY);
+  }
+  assert.throws(()=>planStackedCard({
+    format:'square',canvasHeight:1080,scale:1080/1920,
+    brandHeight:400,offerHeight:400,serviceHeight:300,hasCta:true,contactRows:3,
+  }),/Shorten the offer or CTA/);
+});
+test('premium art prompt protects upper high-quality hero composition and adapts lower panel',()=>{
+  assert.match(compose,/USER REQUIREMENTS/);
+  assert.match(compose,/MIDDLE 31–67%/);
+  assert.match(compose,/COMPACT glass content card/);
+  assert.match(compose,/high-fidelity materials/);
+  assert.match(compose,/NO TEXT of any kind/);
+  assert.match(compose,/No extra pumpkins, moons, trees/);
+  const preset=read('lib/marketing/poster-premium-presets.ts');
+  assert.match(preset,/HERO SUBJECT in the MIDDLE 31%-67%/);
+  assert.match(preset,/LOWER 68%-95% calm for a COMPACT dynamically sized glass card/);
+  assert.doesNotMatch(preset,/LOWER 59%-93%/);
+});
