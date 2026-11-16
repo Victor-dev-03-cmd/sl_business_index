@@ -83,7 +83,7 @@
 .vendor-kicker {
   color:#59946b;
   text-transform:uppercase;
-  font-size:10px;
+  font-size:11px;
   font-weight:650;
   letter-spacing:.15em;
 }
@@ -94,14 +94,14 @@
   border-radius:6px;
   background:#fbfdf9;
   padding:10px 13px;
-  font-size:13px;
+  font-size:14px;
   color:#213e2e;
 }
 .vendor-field:disabled {opacity:.7;cursor:not-allowed;}
 .vendor-label {
   display:block;
   margin-bottom:7px;
-  font-size:11px;
+  font-size:12px;
   font-weight:600;
   color:#526d58;
 }
@@ -112,7 +112,7 @@
   border-radius:6px;
   background:#205a3a;
   padding:9px 16px;
-  font-size:12px;font-weight:600;
+  font-size:13px;font-weight:600;
   color:#fff;
   box-shadow:0 5px 14px rgba(27,88,52,.13);
 }
@@ -124,7 +124,7 @@
   border-radius:6px;
   background:#fff;
   padding:9px 15px;
-  font-size:12px;font-weight:700;
+  font-size:13px;font-weight:600;
   color:#326548;
 }
 .vendor-outline-button:hover{background:#f2f8f1;}
@@ -174,7 +174,7 @@
   --vendor-lime:#D5EEA8;
   color:var(--vendor-ink);
   font-family:var(--font-inter),var(--font-tamil),var(--font-sinhala),ui-sans-serif,system-ui,sans-serif;
-  font-size:13px;
+  font-size:14px;
   letter-spacing:-.008em;
 }
 .vendor-workspace .vendor-sidebar {
@@ -232,7 +232,7 @@
   --vendor-slate:#797981;
   color:#202124;
   font-family:var(--font-inter),var(--font-tamil),var(--font-sinhala),ui-sans-serif,system-ui,sans-serif;
-  font-size:13px;
+  font-size:14px;
 }
 .vendor-workspace-v6 .vendor-content {
   background:#FFFFFF;
