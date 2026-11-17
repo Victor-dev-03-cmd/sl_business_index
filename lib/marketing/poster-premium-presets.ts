@@ -79,11 +79,11 @@ const halloween:PremiumPosterPreset={
     'black (#07070C) with violet (#8A2BE2) and pumpkin-orange (#FF5E00)',
     'glows. Floating glassmorphism technology symbols, sophisticated metallic',
     'materials, rich ambient purple (#18082E), crisp studio lighting.',
-    'Leave the UPPER 30% intentionally dark/quiet for extremely large bold',
+    'Leave only the UPPER 25% clean for a compact bold two-line',
     'condensed display text composited later (NOT inside AI pixels).',
-    'Position the HERO SUBJECT in the MIDDLE 31%-67% without obscuring',
+    'Position the HERO SUBJECT across MIDDLE 27%-77% without obscuring',
     'the upper headline zone; preserve the artistically lit subject clearly.',
-    'Leave the LOWER 68%-95% calm for a COMPACT dynamically sized glass card',
+    'Leave LOWER 71%-95% suitable for a COMPACT dynamically sized glass card',
     'with the approved offer, immediately adjacent CTA and verified contacts.',
     'DO NOT place text, fake icons with glyphs, invented discounts, letters,',
     'numerals or decorative slogans in the background itself.',
@@ -110,7 +110,7 @@ export const PREMIUM_POSTER_PRESETS:Readonly<Record<PremiumPosterStyle,PremiumPo
   luxury:variant('luxury','Minimal Luxury','#E2BA7D','#1D1722','#AB86A3',
     'Minimal editorial luxury design. Charcoal, gold, subdued champagne and soft spotlight. Architectural negative space, sophisticated materials, clean header and glass card.'),
   modern:variant('modern','Modern Editorial','#FF8A00','#15233A','#607CBC',
-    'Contemporary premium editorial commercial graphic design with a sophisticated large typography-safe header, polished 3D hero and glass info card, restrained colors and generous spacing.'),
+    'Contemporary premium editorial commercial design with compact two-line typography, prominent central 3D hero and tightly composed glass info card, restrained color and no unnecessary dead space.'),
 };
 export function resolvePremiumPosterPreset(id:PremiumPosterStyle|null|undefined):PremiumPosterPreset{
   return PREMIUM_POSTER_PRESETS[id||'modern']||PREMIUM_POSTER_PRESETS.modern;

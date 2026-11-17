@@ -124,6 +124,7 @@ export default function PuterMultilingualPosterLab(){
   const [isRealOutput,setIsRealOutput]=useState(false);
   const [error,setError]=useState('');
   const [status,setStatus]=useState('');
+  const [designAdvisory,setDesignAdvisory]=useState('');
   const recorderRef=useRef<MediaRecorder|null>(null);
   const streamRef=useRef<MediaStream|null>(null);
   const clockRef=useRef<ReturnType<typeof setInterval>|null>(null);
@@ -164,10 +165,11 @@ export default function PuterMultilingualPosterLab(){
     if(!activeDesign||typeof document==='undefined')return;
     const selected=activeDesign.styling;
     const sample=language==='ta'?'தமிழ் பொங்கல்':language==='si'?'සිංහල අලුත් අවුරුද්ද':'PREMIUM SALE';
-    const displayWeight=['Anton','Bebas Neue','Kavivanar'].includes(selected.headlineFont)?400:700;
+    const heading=language==='ta'?'Pavanam':language==='si'?'Gemunu Libre':selected.headlineFont;
+    const body=language==='ta'?'Pavanam':language==='si'?'Maname':selected.bodyFont;
     void Promise.all([
-      document.fonts.load(displayWeight+' 140px "'+selected.headlineFont+'"',sample),
-      document.fonts.load('500 40px "'+selected.bodyFont+'"',sample),
+      document.fonts.load((heading==='Pavanam'?400:700)+' 140px "'+heading+'"',sample),
+      document.fonts.load((body==='Pavanam'||body==='Maname'?400:500)+' 40px "'+body+'"',sample),
     ]).catch(()=>{ /* Canvas export reports any missing font explicitly. */ });
   },[activeDesign,language]);
 
@@ -336,11 +338,9 @@ export default function PuterMultilingualPosterLab(){
     },220);
     return()=>{cancelled=true;clearTimeout(timeout);};
   },[artworkSrc,imageRevision,format,exactCopy,copyLanguageConsistent,selectedPremiumStyle,activeDesign,selectedPanelStyle,isRealOutput,dimensions.width,dimensions.height]);
-  useEffect(()=>{
-    if(copyLanguageConsistent||!finalUrlRef.current)return;
-    URL.revokeObjectURL(finalUrlRef.current);finalUrlRef.current='';
-    setFinalUrl('');setFinalBlob(null);
-  },[copyLanguageConsistent]);
+  // Preserve the last successful preview visually during copy/language edits.
+  // Export and handoff remain blocked until the updated copy is valid.
+  // The next successful compose revokes the old object URL atomically.
 
   const transcribe=async(blob:Blob)=>{
     setTranscribing(true);setError('');setStatus('Gemini is transcribing your original-language voice. Please review the text.');
@@ -446,7 +446,8 @@ export default function PuterMultilingualPosterLab(){
   const prepareWithGemini=async()=>{
     if(!businessId||prompt.trim().length<5){setError('Choose a business and enter a prompt.');return;}
     if(geminiBusy||recording||transcribing||generating||referenceBusy)return;
-    setGeminiBusy(true);setError('');setStatus('Gemini is understanding your campaign and verified business facts…');
+    setGeminiBusy(true);setError('');setDesignAdvisory('');
+    setStatus('Gemini is understanding your voice brief and verified business facts…');
     const forKey=currentKey;
     try{
       const res=await fetch('/api/marketing/poster/puter-lab',{
@@ -457,10 +458,18 @@ export default function PuterMultilingualPosterLab(){
           approvedOffer:manualOffer?offer.trim():'',
         }),
       });
-      const data=await res.json() as BriefResponse;
-      if(!res.ok)throw Error(data.error||'Gemini could not prepare this design blueprint.');
+      const data=await res.json() as BriefResponse&{code?:string};
+      if(!res.ok){
+        if(data.code==='GEMINI_BLUEPRINT_INVALID'||data.code==='GEMINI_BLUEPRINT_UNAVAILABLE'){
+          setStatus('');
+          setDesignAdvisory('Your voice transcript is ready and editable. Gemini could not prepare the design this time. Review the headline, offer and CTA, or tap Gemini to retry.');
+          return;
+        }
+        throw Error(data.error||'Gemini could not prepare this design blueprint.');
+      }
       if(forKey!==businessId+'|'+language+'|'+prompt.trim()+'|'+referenceSummary)return;
       if(data.blueprint){
+        setDesignAdvisory('');
         // Dual-output: creative art direction + reviewed typography JSON.
         // Business contacts always remain from the selected verified listing.
         setBlueprint(data.blueprint);setBlueprintKey(forKey);
@@ -489,7 +498,7 @@ export default function PuterMultilingualPosterLab(){
         setOffer(prev=>prev||extractExplicitPercentage(prompt));
         setStatus('Gemini brief ready. Review the text before using Puter.');
       }else throw Error('Gemini returned no valid design blueprint.');
-    }catch(e){setError(errorMessage(e));}
+    }catch(e){setError(errorMessage(e));setStatus('');}
     finally{setGeminiBusy(false);void refreshGeminiQuota();}
   };
   const generate=async()=>{
@@ -545,7 +554,7 @@ export default function PuterMultilingualPosterLab(){
     finally{setGenerating(false);}
   };
   const download=()=>{
-    if(!finalBlob||!finalUrl||composing)return;
+    if(!finalBlob||!finalUrl||composing||!copyLanguageConsistent)return;
     const anchor=document.createElement('a');
     const safeName=(facts?.name||'business').toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,32);
     anchor.href=finalUrl;
@@ -554,7 +563,7 @@ export default function PuterMultilingualPosterLab(){
     document.body.appendChild(anchor);anchor.click();anchor.remove();
   };
   const continueToCaption=async()=>{
-    if(!finalBlob||!facts||!businessId||composing||linkingCaption)return;
+    if(!finalBlob||!facts||!businessId||composing||linkingCaption||!copyLanguageConsistent)return;
     setLinkingCaption(true);setError('');
     try{
       const id=await saveLinkedPoster({
@@ -588,10 +597,12 @@ export default function PuterMultilingualPosterLab(){
         <ArrowLeft size={13}/> Marketing Studio
       </Link>
     </header>
-    {(error||status)&&<div role={error?'alert':'status'} aria-live="polite"
+    {(error||status||designAdvisory)&&<div role={error?'alert':'status'} aria-live="polite"
       className={'shrink-0 rounded-xl border px-3 py-2 text-[11px] leading-5 '+
-      (error?'border-red-200 bg-red-50 text-red-800':'border-emerald-200 bg-emerald-50 text-emerald-800')}>
-      {error||status}
+      (error?'border-red-200 bg-red-50 text-red-800':
+       designAdvisory?'border-amber-200 bg-amber-50 text-amber-900':
+       'border-emerald-200 bg-emerald-50 text-emerald-800')}>
+      {error||designAdvisory||status}
     </div>}
     <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] xl:grid-cols-[minmax(0,0.91fr)_minmax(0,1.36fr)_minmax(0,0.9fr)]">
       {/* LEFT: Prompt and generation, with an independently scrollable panel on desktop. */}
@@ -613,7 +624,7 @@ export default function PuterMultilingualPosterLab(){
                 setCta(STARTER_COPY[language].cta);
                 setManualHeadline(false);setManualOffer(false);setManualCta(false);
                 setBlueprint(null);setBlueprintKey('');setDesignOverride(null);setShuffleIndex(0);
-              }} className="w-full rounded-xl border border-[#E4DDDA] bg-[#FDFBF9] px-3 py-2.5 text-[12px] font-semibold">
+              }} className="slbi-poster-select w-full rounded-xl border border-[#E4DDDA] bg-[#FDFBF9] px-3 py-2.5 text-[12px] font-semibold">
               {!businesses.length&&<option value="">No owned business available</option>}
               {businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}
             </select>
@@ -640,7 +651,7 @@ export default function PuterMultilingualPosterLab(){
                   setStatus('Poster language set to '+posterLanguageName(next)+
                     '. Review all copy or click Prepare with Gemini to localize it.');
                 }}
-                className="w-full rounded-xl border border-[#E4DDDA] bg-[#FDFBF9] px-2 py-2.5 text-[11px]">
+                className="slbi-poster-select w-full rounded-xl border border-[#E4DDDA] bg-[#FDFBF9] px-2 py-2.5 text-[11px]">
                 {(Object.entries(languageLabels) as Array<[PosterCopyLanguage,string]>)
                   .map(([key,val])=><option key={key} value={key}>{val}</option>)}
               </select>
@@ -648,7 +659,7 @@ export default function PuterMultilingualPosterLab(){
             <div>
               <label htmlFor="puter-model" className="mb-1.5 block text-[11px] font-bold">Artwork model</label>
               <select id="puter-model" value={model} disabled={locked} onChange={e=>setModel(e.target.value as ModelId)}
-                className="w-full rounded-xl border border-[#E4DDDA] bg-[#FDFBF9] px-2 py-2.5 text-[11px]">
+                className="slbi-poster-select w-full rounded-xl border border-[#E4DDDA] bg-[#FDFBF9] px-2 py-2.5 text-[11px]">
                 {models.map(m=><option key={m.id} value={m.id}>{m.label}</option>)}
               </select>
             </div>
@@ -852,12 +863,12 @@ export default function PuterMultilingualPosterLab(){
               'No automatic publishing or SLBI storage'}
           </p>
           <div className="flex flex-wrap items-center gap-2">
-            <button type="button" onClick={download} disabled={!finalBlob||composing||generating}
+            <button type="button" onClick={download} disabled={!finalBlob||composing||generating||!copyLanguageConsistent}
               className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[#E6DED8] bg-white px-3 py-2.5 text-[11px] font-bold text-[#292327] disabled:opacity-40">
               <Download size={14}/> Download PNG
             </button>
             <button type="button" onClick={()=>void continueToCaption()}
-              disabled={!finalBlob||composing||generating||linkingCaption||!businessId}
+              disabled={!finalBlob||composing||generating||linkingCaption||!businessId||!copyLanguageConsistent}
               className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-[#262126] px-3 py-2.5 text-[11px] font-bold text-white disabled:opacity-40">
               <WandSparkles size={14} className="text-[#FDBA74]"/>
               {linkingCaption?'Linking poster…':'Write Caption for this Poster'}
@@ -909,9 +920,10 @@ export default function PuterMultilingualPosterLab(){
               <span className="text-[10px] font-semibold text-[#98633A]">{typographyPreset.label}</span>
             </div>
             <p className="text-[10px] leading-4 text-[#7F7471]">
-              {activeDesign?activeDesign.styling.headlineFont+' display · '+activeDesign.styling.bodyFont+' body':
+              {activeDesign&&language==='en'?activeDesign.styling.headlineFont+' display · '+activeDesign.styling.bodyFont+' body':
                 language==='en'?'Anton display · Space Grotesk brand · Plus Jakarta offer · Inter text':
-                'Noto '+(language==='ta'?'Tamil':'Sinhala')+' display + body · Unicode-safe'}
+                language==='ta'?'Pavanam display + body · enhanced heading weight':
+                  'Gemunu Libre heading · Maname body'}
             </p>
             <div className="flex items-center gap-1.5" aria-label="Selected poster palette">
               {[displayedPreset.palette.obsidian,displayedPreset.palette.ambient,
@@ -947,7 +959,7 @@ export default function PuterMultilingualPosterLab(){
                     'Bottom panel is using Gemini-selected styling (or the default).':
                     'Bottom panel changed to '+value.replaceAll('_',' ')+'. Existing artwork is re-composed locally without a new Puter request.');
                 }}
-                className="w-full rounded-lg border border-[#E5D9D0] bg-white px-2 py-2 text-[11px]">
+                className="slbi-poster-select w-full rounded-lg border border-[#E5D9D0] bg-white px-2 py-2 text-[11px]">
                 <option value="auto">Gemini Auto ({selectedPanelStyle.replaceAll('_',' ')})</option>
                 {CONTENT_PANEL_STYLES.map(style=>
                   <option key={style} value={style}>
@@ -969,7 +981,7 @@ export default function PuterMultilingualPosterLab(){
                   if(!SAFE_ZONE_LAYOUTS.includes(layout))return;
                   const starting=activeDesign||shufflePosterDesign(null,language,0,format);
                   setDesignOverride({...starting,layout});
-                }} className="w-full rounded-lg border border-[#E5D9D0] bg-white px-2 py-2 text-[11px]">
+                }} className="slbi-poster-select w-full rounded-lg border border-[#E5D9D0] bg-white px-2 py-2 text-[11px]">
                 <option value="top_center_hero">Top-Center Hero</option>
                 <option value="bottom_left_editorial">Bottom-Left Editorial</option>
                 <option value="split_card">Split Card</option>

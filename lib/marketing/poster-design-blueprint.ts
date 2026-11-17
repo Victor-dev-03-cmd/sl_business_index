@@ -35,13 +35,10 @@ export const DEFAULT_CONTENT_PANEL_STYLE:ContentPanelStyle='black_marble_luxury'
 /** All families are served with SIL OFL fonts by Google Fonts, on demand. */
 export const POSTER_FONT_PAIRS={
   ta:[
-    {label:'Tamil modern',headlineFont:'Noto Sans Tamil',bodyFont:'Hind Madurai'},
-    {label:'Tamil festive',headlineFont:'Noto Serif Tamil',bodyFont:'Mukta Malar'},
-    {label:'Tamil hand-lettered',headlineFont:'Kavivanar',bodyFont:'Mukta Malar'},
+    {label:'Tamil Pavanam',headlineFont:'Pavanam',bodyFont:'Pavanam'},
   ],
   si:[
-    {label:'Sinhala modern',headlineFont:'Gemunu Libre',bodyFont:'Noto Sans Sinhala'},
-    {label:'Sinhala classic',headlineFont:'Abhaya Libre',bodyFont:'Noto Sans Sinhala'},
+    {label:'Sinhala Gemunu & Maname',headlineFont:'Gemunu Libre',bodyFont:'Maname'},
   ],
   en:[
     {label:'Impact sale',headlineFont:'Anton',bodyFont:'Montserrat'},
@@ -51,8 +48,10 @@ export const POSTER_FONT_PAIRS={
   ],
 } as const;
 const enumFonts={
-  ta:['Noto Sans Tamil','Noto Serif Tamil','Kavivanar','Hind Madurai','Mukta Malar'],
-  si:['Gemunu Libre','Abhaya Libre','Noto Sans Sinhala'],
+  // Old provider selections are recognized for migration, but always normalized
+  // to the new owner-approved display/body pairing before any Canvas rendering.
+  ta:['Pavanam','Noto Sans Tamil','Noto Serif Tamil','Kavivanar','Hind Madurai','Mukta Malar'],
+  si:['Gemunu Libre','Maname','Abhaya Libre','Noto Sans Sinhala'],
   en:['Anton','Bebas Neue','Montserrat','Poppins','Playfair Display','Plus Jakarta Sans','Inter'],
 } as const;
 const globalFonts=Object.values(enumFonts).flat();
