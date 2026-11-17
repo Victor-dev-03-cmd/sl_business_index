@@ -1,5 +1,12 @@
 # SLBI Marketing Engine | LIVE IMPLEMENTATION STATUS
 
+## 2026-11-17 — P2-28 Caption Lab Generate CTA / Gemini connection verification (CODE STAGED)
+- **Detailed handoff:** [P2-28 Caption Generate Spacing & Gemini Readiness](P2_28_CAPTION_GENERATE_SPACING_GEMINI_READINESS_20261117.md).
+- **UI fix:** primary Generate gets 16px top margin + accessible focus, caption credits/Info gets a separate 12px-spaced wrap-safe neutral inset surface, Quick brief suggestions gets independent 12px margin and padding, terms padding adjusted. Explicit "Gemini AI · languages · 3 variations each · Credits on Generate" label, clear QA and billing Info.
+- **Verified backend configuration (read-only):** Production Vercel `SLBI_MARKETING_AI_ENABLED=true`; sensitive `GEMINI_API_KEY` exists; Supabase `ai_social_draft` enabled at 2 Growth Credits per language. Real API `mode:'three_angles'` already calls Gemini JSON schema, reserves/settles/refunds per language with owner/Pro/internal QA gates. No settings, payment or credit limits were changed. **No live billable Gemini inference tested.**
+- **Branch:** `fix/p2-caption-cta-spacing-gemini-readiness-20261117`. Release not verified at this note. PR head CI/merge/Vercel READY to be recorded later; real signed-in browser caption quality and financial settle/refund QA open. No third-party image search or ChatGPT/FLUX API connected.
+
+
 ## 2026-11-17 — P2-27 Caption Lab Voice + UI Arrows + Connected Creative Handoff (PRODUCTION READY)
 - **Handoff:** [P2-27 Caption Lab Voice Parity and Handoff](P2_27_CAPTION_VOICE_PARITY_AND_HANDOFF_20261117.md), owner requested same voice/transcript experience as the accepted business-specific Poster Studio.
 - **Code:** `app/vendor/marketing/captions/page.tsx`, `caption-fonts.css`: microphone permission diagnosis, real waveform with pause/resume + recording clock, explicit Send + Cancel, live transcription spinner, protected owner-review of full transcript over existing 600-character brief budget, shared Gemini daily voice/brief quota display, properly inset business dropdown and collapsible chevrons. Initial and recent local poster handoffs retain the verified service focus.

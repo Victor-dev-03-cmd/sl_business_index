@@ -873,24 +873,30 @@ export default function ConnectedCaptionLab(){
             <p className="mt-1">If no microphone prompt appears, check your operating system's microphone privacy settings.</p>
           </div>}
         <button type="button" onClick={()=>void generate()}
+          aria-label="Generate Caption Variations with Gemini AI"
           disabled={!businessId||message.trim().length<5||isBusy||Boolean(voiceReviewDraft)}
-          className="group flex w-full items-center justify-center gap-2 rounded-xl border border-[#111827] bg-[#111827] px-3 py-3 text-[12px] font-bold text-white shadow-sm transition-colors hover:bg-[#292F3D] disabled:cursor-not-allowed disabled:border-[#E5E7EB] disabled:bg-[#F3F4F6] disabled:text-[#9CA3AF] disabled:shadow-none">
+          className="group mt-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#111827] bg-[#111827] px-3 py-3 text-[12px] font-bold text-white shadow-sm transition-colors hover:bg-[#292F3D] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F97316] disabled:cursor-not-allowed disabled:border-[#E5E7EB] disabled:bg-[#F3F4F6] disabled:text-[#9CA3AF] disabled:shadow-none">
           {busy?<LoaderCircle size={17} className="animate-spin"/>:<WandSparkles size={17} className="text-[#FDBA74] group-disabled:text-[#9CA3AF]"/>}
           {busy?'Generating drafts…':'Generate Caption Variations'} <ArrowRight size={14}/>
         </button>
-        <div className="flex items-center justify-between gap-2 text-[10px] text-[#6B7280]">
-          <span>{chosenLanguages.length} {chosenLanguages.length===1?'language':'languages'} selected · Credits apply on Generate</span>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-xl border border-[#F3F4F6] bg-[#F9FAFB] px-3 py-2.5 text-[10px] leading-4 text-[#6B7280]"
+          aria-label="Gemini generation and credit information">
+          <span className="inline-flex items-center gap-1.5">
+            <Sparkles size={13} className="shrink-0 text-[#F97316]"/>
+            Gemini AI · {chosenLanguages.length} {chosenLanguages.length===1?'language':'languages'} · 3 variations each · Credits on Generate
+          </span>
           <details className="slbi-caption-disclosure group relative">
             <summary className="flex cursor-pointer list-none items-center gap-1 font-semibold text-[#C2410C]"><Info size={13}/> Info <ChevronDown size={13} className="slbi-caption-chevron ml-0.5"/></summary>
             <div className="absolute right-0 top-6 z-30 w-64 rounded-xl border border-[#E5E7EB] bg-white p-3 text-[11px] leading-5 text-[#374151] shadow-xl">
-              <p>One provider request and applicable credit reservation per selected language; never auto-charged on page open. Gemini voice transcription uses its own shared daily voice/brief allowance only after you tap Send.</p>
+              <p>Real Gemini generates three original caption angles per selected language. One provider request and applicable credit reservation per selected language; never auto-charged on page open. A verified Pro/internal QA account, Brand Profile language, remaining credits and provider quota are required.</p>
+              <p className="mt-2">Gemini voice transcription uses its separate shared daily voice/brief allowance only after you tap Send.</p>
               <p className="mt-2">Linked PNG remains on this device for up to two hours; saving to Campaign Planner stores captions, not a cloud copy of your image.</p>
               <p className="mt-2">Social previews are visual estimates. Character goals are editorial targets, not social platform limits. Nothing is automatically published.</p>
             </div>
           </details>
         </div>
 
-          <details className="slbi-caption-disclosure mt-2 rounded-lg border border-[#E5E7EB] p-2">
+          <details className="slbi-caption-disclosure mt-3 rounded-xl border border-[#E5E7EB] bg-white p-3">
             <summary className="flex cursor-pointer items-center justify-between gap-2 text-[11px] font-semibold text-[#6B7280]">Quick brief suggestions <ChevronDown size={14} className="slbi-caption-chevron"/></summary>
             <div className="mt-2 flex flex-wrap gap-1.5">
             {promptChips.map(chip=><button key={chip.label} type="button"
@@ -901,7 +907,7 @@ export default function ConnectedCaptionLab(){
             </div>
           </details>
         </div>
-        <details className="slbi-caption-disclosure rounded-xl border border-[#E5E7EB] p-2.5">
+        <details className="slbi-caption-disclosure rounded-xl border border-[#E5E7EB] p-3">
           <summary className="flex cursor-pointer items-center justify-between gap-2 text-[11px] font-bold">
             <span>Offer terms & CTA <span className="font-normal text-[#9CA3AF]">(optional)</span></span>
             <ChevronDown size={14} className="slbi-caption-chevron"/>
