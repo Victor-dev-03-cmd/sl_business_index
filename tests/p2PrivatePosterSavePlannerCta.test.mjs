@@ -133,7 +133,7 @@ test('Owner-only planner grants and automatic image persistence cannot bypass RL
   assert.match(poster,/!copyLanguageConsistent\|\|!serviceFocusApproved/);
   assert.match(poster,/savedPosterAssetId:backedUpId\|\|undefined/);
   assert.match(page,/setCloudAssetId\(record.context.savedPosterAssetId\|\|''\)/);
-  assert.match(page,/\.update\(patch\)/);
+  assert.match(page,/\.update\(editablePatch\)/);
   assert.match(route,/if\(linked\?\.length\)return json\(409/);
   assert.doesNotMatch(route,/public:true|getPublicUrl|createSignedUrl/);
 });
