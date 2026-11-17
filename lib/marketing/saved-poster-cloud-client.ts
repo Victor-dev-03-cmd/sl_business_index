@@ -4,7 +4,7 @@ export type SavedPosterAsset={id:string;createdAt:string|null};
 const UUID=/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i;
 const endpoint='/api/marketing/poster/saved';
 const decode=async(response:Response)=>{
-  try{return await response.json() as {error?:string;assetId?:string;assets?:SavedPosterAsset[]};}
+  try{return await response.json() as {error?:string;assetId?:string;assets?:SavedPosterAsset[];deleted?:boolean};}
   catch{return {error:'Private poster service returned an unreadable response.'};}
 };
 export function privatePosterUrl(businessId:string,assetId:string){
@@ -45,4 +45,18 @@ export async function readSavedPoster(businessId:string,assetId:string):Promise<
   if(blob.type!=='image/png'||!blob.size||blob.size>12_000_000)
     throw Error('The saved poster is not a valid private PNG.');
   return blob;
+}
+
+/** Deliberate user action only; the server verifies RLS ownership and refuses
+ * removal of images still linked to Campaign Planner drafts. */
+export async function deleteSavedPoster(businessId:string,assetId:string):Promise<void>{
+  if(!UUID.test(businessId)||!UUID.test(assetId))
+    throw Error('Invalid private poster reference.');
+  const res=await fetch(endpoint,{method:'DELETE',credentials:'same-origin',
+    cache:'no-store',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({businessId,assetId}),
+  });
+  const data=await decode(res);
+  if(!res.ok||data.deleted!==true)
+    throw Error(data.error||'Private poster could not be deleted.');
 }
