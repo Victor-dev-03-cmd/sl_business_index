@@ -53,7 +53,7 @@ export function buildArtOnlyPrompt(input:{
     'SECOND PRIORITY — OUTPUT COMPOSITION. Final frame ratio '+dimensions.width+':'+dimensions.height+'. The SLBI image is rendered behind separately typeset business text.',
     input.format==='landscape'?
       'Keep hero on RIGHT and a usable dark, uncluttered content area on LEFT.':
-      'Premium editorial poster composition: reserve a clean, deep-contrast UPPER 0–31% for large exact display lettering. Make the USER-REQUESTED hero powerful, sharply lit and finely detailed through the MIDDLE 31–67% with foreground depth and intentional lighting; avoid dull generic illustrations and keep the subject clearly visible. Preserve a visually calm LOWER 68–95% for a COMPACT glass content card whose height is determined by the real business copy. Do NOT paint words, fake typography, a giant empty card, contact details or CTA text into the artwork.',
+      'Premium editorial poster: reserve UPPER 0–25% for a COMPACT two-line title. The OWNER-REQUESTED hero must be large, expressive and clearly visible across the CENTRAL 27–77%, with engaging texture and lighting—not a large empty middle. Reserve LOWER 71–95% for an adaptive COMPACT card whose height is determined by real approved business copy. Make the hero visually connect title and card. No AI-rendered words, fake typography, giant blank sky, contact text or fake CTA.',
     'THIRD PRIORITY — STYLE INSPIRATION ONLY (ignore any conflicting subjects/objects): '+short(input.styleDirection||'',700),
     'FOURTH PRIORITY — OPTIONAL GEMINI CREATIVE SUGGESTION (only if it does not conflict): '+short(input.creativeDirection||'',420),
     'ACTUAL VERIFIED BUSINESS SECTOR: '+short(input.businessCategory,120),
