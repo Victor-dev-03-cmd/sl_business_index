@@ -187,7 +187,7 @@ test('Campaign Planner saves DB-valid seven-key brief and persists owner-private
   assert.match(page,/status:'drafted'/);
   assert.match(page,/href="\/vendor\/marketing\/campaigns\?source=caption-lab"/);
   assert.match(planner,/createdFrom==='caption_lab'/);
-  assert.match(planner,/LinkedCaptionPoster localKey=\{c\.brief\.posterLocalKey\}/);
+  assert.match(planner,/LinkedCaptionPoster localKey=\{c\.brief\?\.posterLocalKey\}/);
   assert.match(planner,/get\('source'\)==='caption-lab'/);
   assert.match(linked,/loadLinkedPoster\(localKey\)/);
   assert.match(linked,/found\.context\.businessId!==businessId/);
