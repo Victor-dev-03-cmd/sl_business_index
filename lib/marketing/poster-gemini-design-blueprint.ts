@@ -54,12 +54,17 @@ export async function createGeminiPosterDesignBlueprint(input:{
     'Interpret Tamil, Sinhala, English, Tanglish and Singlish naturally and preserve cultural meaning.',
     'CRITICAL FOR VOICE: vendorRequest is the owner-approved original voice TRANSCRIPT (or typed message), not sample text. Read its complete meaning, campaign intent, product focus, any explicit exclusions and language before preparing design. Do NOT replace it with a generic festival idea. Treat attached reference notes only as style inspiration.',
     'Produce ONE strict JSON object with posterCopy, styling, imagePrompt and layoutStyling.contentPanelStyle. The new field controls ONLY the visual treatment of the lower information panel.',
+    'MANDATORY BUSINESS RELEVANCE: A marketing poster must clearly name the ACTUAL promoted service/product from the owner brief or selected business description, not just repeat the festival, category or discount. Category Professional Services alone is not a meaningful promoted service.',
+    'Return posterCopy.serviceFocus as a concise 2–7 word product/service phrase in the selected language. E.g. Tamil வலைத்தள மற்றும் செயலி உருவாக்கம்; Sinhala වෙබ් අඩවි සහ යෙදුම් සංවර්ධනය; English Website & App Development. Use these ONLY if the source specifically offers development services.',
+    'Return posterCopy.focusEvidence as an EXACT contiguous quote from vendorRequest or selectedBusiness.description/category (minimum five characters) proving the service/product. The source quote may be in a different language; only serviceFocus needs translation. Do not use style references as evidence. When source does not name a specific product/service, set BOTH strings empty; the owner must manually identify the promoted item.',
+    'For festival offers, festival is the secondary CAMPAIGN THEME. The foreground content must convey which owner-verified product/service the offer applies to and display a percentage ONLY when explicitly supplied. For software development, combine real software workflow cues with respectful festival aesthetics when that service is supported; never return only unrelated generic festival decorations.',
+    'Never infer or invent product specialties from a vague business category. Vendor-approved copy remains editable and must be reviewed before generating a poster.',
     'You must obey the owner-authored request, explicit exclusions, product/service and subject. A seasonal template must NEVER override specific hero objects, composition or camera directions.',
     'The actual business and all verified contacts are server-owned and rendered separately, not from your output.',
     'Do not invent prices, discounts, percentages, dates, certifications, products, addresses, phone numbers or websites.',
     'Never change or translate an explicit numeric percentage. When the vendor supplied NO real offer, leave posterCopy.offerText empty.',
     'CRITICAL: untrustedReferenceStyle is ONLY for palette, composition, subject and artistic mood. Any discounts, numerical claims, prices, contact details or promotional terms in that reference are NOT owner-approved facts. Never transfer them into posterCopy, and do not treat them as vendorRequest or vendorReviewedOffer.',
-    'HARD REQUIREMENT — STRICTLY output posterCopy.headline, posterCopy.offerText and posterCopy.ctaText in the SELECTED outputCopyLanguage, regardless of whether the input is English, Tamil, Sinhala, Tanglish or mixed. The imagePrompt must remain in ENGLISH. Never default to English for a Tamil or Sinhala selection.',
+    'HARD REQUIREMENT — STRICTLY output posterCopy.headline, posterCopy.offerText, posterCopy.ctaText and nonempty posterCopy.serviceFocus in the SELECTED outputCopyLanguage, regardless of whether the input is English, Tamil, Sinhala, Tanglish or mixed. The imagePrompt must remain in ENGLISH. Never default to English for a Tamil or Sinhala selection.',
     'If outputCopyLanguage is ta: write ALL three nonempty poster-copy values with Tamil-script words only; avoid untranslated Latin English words, even Christmas/Sale/Offer. Use natural Sri Lankan Tamil wording, not word-by-word translation.',
     'If outputCopyLanguage is si: write ALL three nonempty poster-copy values with Sinhala-script words only; avoid untranslated Latin English words. Use natural Sri Lankan Sinhala ad copy.',
     'If outputCopyLanguage is en: write all nonempty poster-copy values in idiomatic English; no Tamil/Sinhala script.',
@@ -78,7 +83,7 @@ export async function createGeminiPosterDesignBlueprint(input:{
     'BOTTOM INFORMATION PANEL ONLY: choose layoutStyling.contentPanelStyle from black_marble_luxury, frosted_glass_modern, neon_glow_card, minimal_editorial_strip, split_info_panel, premium_gradient_plate, soft_dark_blur_panel, bold_sale_badge_layout.',
     'CONTENT FIRST HIERARCHY: the real business offer, service, CTA and verified contact details in the LOWER Canvas panel must be the poster\'s primary readable information; the upper festival greeting is intentionally smaller. You can choose panel visual STYLE only; numeric text sizing, actual safe-zone positions and contact ordering are enforced deterministically by SLBI Canvas, never by model-generated artwork.',
     'Choose a suitable LOWER PANEL visual treatment based on the business and campaign: hiring and corporate -> frosted_glass_modern or minimal_editorial_strip; festive/luxury -> black_marble_luxury or premium_gradient_plate; technology/youth -> neon_glow_card or soft_dark_blur_panel; price promotion -> bold_sale_badge_layout; information-heavy -> split_info_panel.',
-    'Choose rich, high-contrast lower-card styling that supports LARGE readable verified business name, the visually prominent approved offer, clear category, generously sized CTA, and contact chips. If website+phone+email exist, website and phone share the first contact row, email occupies the second. If website is absent, phone and email share ONE row. Never invent or omit business contacts. Exact layout and fonts remain owned by Canvas; only choose the panel look.',
+    'Choose rich, high-contrast lower-card styling that supports LARGE readable verified business name, PROMOTED PRODUCT/SERVICE FOCUS, the approved offer (when real), clear category, generously sized CTA, and contact chips. If website+phone+email exist, website and phone share the first contact row, email occupies the second. If website is absent, phone and email share ONE row. Never invent or omit business contacts. Exact layout and fonts remain owned by Canvas; only choose the panel look.',
     'Do not add marble or CTA text to the AI background imagePrompt. The Canvas renderer itself paints the panel; only return one allowed style ID. Avoid repeating a generic dark glass card for every campaign.',
     'Generate a vivid 70-90 word English art direction in imagePrompt: premium editorial photography or 3D, precise OWNER-REQUESTED product/festival hero occupying the CENTRAL ~19%-58%. Keep UPPER ~0%-18% suitable for a relatively SMALL two-line greeting and keep LOWER ~56%-93% visually calm enough for a LARGE high-contrast branded content card. This is a CONTENT-FIRST campaign poster: lower card carries the most readable text, not the decorative greeting. Do not draw any text or fake cards in the background. Avoid a blank central void or a tiny distant subject. A specific owner-requested composition takes precedence.',
     'DO NOT ask the image model to render business text, prices, CTA, fonts, icons with letters or numbers. End imagePrompt with: NO text, NO letters, NO numbers, NO signs, NO logos, pure background artwork only.',
@@ -102,7 +107,8 @@ export async function createGeminiPosterDesignBlueprint(input:{
             properties:{
               posterCopy:{type:'object',properties:{
                 headline:{type:'string'},offerText:{type:'string'},ctaText:{type:'string'},
-              },required:['headline','offerText','ctaText']},
+                serviceFocus:{type:'string'},focusEvidence:{type:'string'},
+              },required:['headline','offerText','ctaText','serviceFocus','focusEvidence']},
               styling:{type:'object',properties:{
                 vibe:{type:'string'},headlineFont:{type:'string'},bodyFont:{type:'string'},
                 primaryColor:{type:'string'},accentColor:{type:'string'},
@@ -138,6 +144,7 @@ export async function createGeminiPosterDesignBlueprint(input:{
   if(!raw||raw.length>10500)throw new PosterIntelligenceError('invalid-output');
   try{return validatePosterBlueprint(JSON.parse(raw),{
     language:input.preferredLanguage,vendorPrompt:request,approvedOffer,
+    verifiedDescription:input.facts.description,verifiedCategory:input.facts.category,
   });}
   catch(e){
     console.warn('P2 blueprint validation',e instanceof Error?e.name:'unknown');
