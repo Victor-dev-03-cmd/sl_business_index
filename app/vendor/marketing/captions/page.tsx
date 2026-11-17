@@ -27,6 +27,7 @@ import {
 type Business={id:string;name:string;city:string|null;category:string;phone:string|null;website_url:string|null;address:string|null};
 type StoredDraft={id:string;business_id?:string;caption:string;language:CaptionLanguage;review_status:string;created_at?:string};
 type ApiBody={error?:string;draft?:StoredDraft;drafts?:StoredDraft[];chargedCredits?:number};
+type GeminiQuota={used:number;limit:number;remaining:number;dayUtc:string};
 const uuid=/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i;
 const field='w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-3 text-[12px] text-[#1F2937] outline-none transition focus:border-[#FB923C] focus:ring-2 focus:ring-[#F97316]/10';
 const panel='min-w-0 rounded-2xl border border-[#E5E7EB] bg-white shadow-[0_7px_24px_rgba(17,24,39,.035)]';
@@ -112,6 +113,7 @@ export default function ConnectedCaptionLab(){
   const [voiceSeconds,setVoiceSeconds]=useState(0);
   const [voiceLevels,setVoiceLevels]=useState<number[]>(()=>Array.from({length:35},()=>5));
   const [voiceReviewDraft,setVoiceReviewDraft]=useState('');
+  const [voiceQuota,setVoiceQuota]=useState<GeminiQuota|null>(null);
   const [error,setError]=useState('');
   const [notice,setNotice]=useState('');
   const [generatedLanguages,setGeneratedLanguages]=useState<CaptionLanguage[]>([]);
@@ -194,6 +196,19 @@ export default function ConnectedCaptionLab(){
   const hookCount=countCharacters(captions[activePreviewLanguage].hook.trim()||(!hasAI?message.trim():''));
   const hookStatus=!hookCount?'Add a hook':hookCount<=125?'Hook on target':'Try a shorter hook';
 
+  const refreshVoiceQuota=useCallback(async()=>{
+    // This is GET metadata, never a provider call or credit reservation.
+    // Only owner-QA accounts receive this shared Poster/Caption Gemini budget.
+    try{
+      const response=await fetch('/api/marketing/poster/puter-lab?quota=1',{
+        credentials:'same-origin',cache:'no-store',
+      });
+      if(!response.ok)return;
+      const data=await response.json() as {quota?:GeminiQuota};
+      if(data.quota)setVoiceQuota(data.quota);
+    }catch{/* Quota is display-only: the authenticated server RPC is authoritative. */}
+  },[]);
+  useEffect(()=>{void refreshVoiceQuota();},[refreshVoiceQuota]);
   const loadBusinesses=useCallback(async()=>{
     setLoading(true);setError('');
     try{
@@ -321,7 +336,7 @@ export default function ConnectedCaptionLab(){
     }catch(e){
       setError(e instanceof Error?e.message:'Voice transcription is unavailable.');
       setNotice('Your typed campaign message is unchanged. You can retry Voice or continue typing.');
-    }finally{setVoiceBusy(false);}
+    }finally{setVoiceBusy(false);void refreshVoiceQuota();}
   };
   const startVoice=async()=>{
     if(voiceBusy||recording||requestingMic||saving||busy)return;
@@ -803,6 +818,12 @@ export default function ConnectedCaptionLab(){
               className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#F97316] text-white hover:bg-[#EA580C]">
               <Send size={16}/>
             </button>
+          </div>}
+          {voiceQuota&&<div role="status" aria-label="Shared Gemini daily voice quota"
+            className="mt-2 flex flex-wrap items-center justify-between gap-1 rounded-lg border border-[#F3E3D5] bg-[#FFF9F3] px-2.5 py-2 text-[10px] text-[#7C4B28]">
+            <span className="font-semibold">Gemini voice + Poster Studio briefs</span>
+            <span className="font-bold tabular-nums">{voiceQuota.remaining} / {voiceQuota.limit} left (UTC)</span>
+            <span className="w-full text-[#8C7662]">Shared across both tools · resets at 00:00 UTC · recording alone does not use Gemini</span>
           </div>}
           {voiceReviewDraft&&<div className="mt-2 space-y-2 rounded-xl border border-[#FED7AA] bg-[#FFFBF5] p-2.5"
             aria-label="Voice transcript review">
