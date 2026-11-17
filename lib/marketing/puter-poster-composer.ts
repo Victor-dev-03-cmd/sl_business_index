@@ -23,8 +23,8 @@ export type ExactPosterCopy={
  * numerals, website domains, offer percentages or selected-business facts.
  */
 const fonts:Record<PosterCopyLanguage,string>={
-  ta:'"Noto Sans Tamil", "Nirmala UI", sans-serif',
-  si:'"Noto Sans Sinhala", "Nirmala UI", sans-serif',
+  ta:'"Pavanam", "Nirmala UI", sans-serif',
+  si:'"Maname", "Nirmala UI", sans-serif',
   en:'"Inter", "Segoe UI", Arial, sans-serif',
 };
 const locale:Record<PosterCopyLanguage,string>={ta:'ta-LK',si:'si-LK',en:'en-LK'};
@@ -69,11 +69,13 @@ const clean=(v:string,max:number)=>v.replace(/[\u0000-\u001f\u007f]/g,' ').trim(
 const hex=(v:string)=>/^#[\da-f]{6}$/i.test(v)?v:'#F7B45C';
 async function ensureFonts(language:PosterCopyLanguage,style?:PremiumPosterStyle,copy?:ExactPosterCopy,design?:VerifiedPosterDesign|null){
   if(typeof document==='undefined')throw Error('Poster typography needs a browser.');
-  const name=language==='ta'?'Noto Sans Tamil':language==='si'?'Noto Sans Sinhala':'Inter';
+  const name=language==='ta'?'Pavanam':language==='si'?'Maname':'Inter';
   const sample=language==='ta'?'தமிழ்':language==='si'?'සිංහල':'Poster';
   // These fonts are loaded through typography.css. Reject instead of exporting
   // tofu glyphs when complex-script web fonts cannot be loaded.
-  const loaded=await document.fonts.load('700 48px "'+name+'"',sample);
+  // Pavanam / Maname are single-regular families. Load the real glyphs
+  // at 400; display emphasis is later synthesized by our Canvas renderer.
+  const loaded=await document.fonts.load((language==='en'?700:400)+' 48px "'+name+'"',sample);
   if(loaded.length===0&&language!=='en')
     throw Error('The '+name+' font was not loaded. Check network access and retry PNG export.');
   if(style){
@@ -90,19 +92,21 @@ async function ensureFonts(language:PosterCopyLanguage,style?:PremiumPosterStyle
     const allText=copy?Object.values(copy).filter(v=>typeof v==='string').join(' '):'';
     const needsTamil=language==='ta'||/[\u0B80-\u0BFF]/u.test(allText);
     const needsSinhala=language==='si'||/[\u0D80-\u0DFF]/u.test(allText);
-    for(const [required,scriptSample] of [
-      ...(needsTamil?[['Noto Sans Tamil','தமிழ்']]:[]),
-      ...(needsSinhala?[['Noto Sans Sinhala','සිංහල']]:[]),
-    ] as string[][]){
-      for(const size of [500,700,800])
-        requires.push([size+' 84px "'+required+'"',scriptSample]);
+    if(needsTamil)requires.push(['400 84px "Pavanam"','தமிழ்']);
+    if(needsSinhala){
+      requires.push(['700 84px "Gemunu Libre"','සිංහල']);
+      requires.push(['400 40px "Maname"','සිංහල']);
     }
     if(design){
       const specialSample=language==='ta'?'தமிழ் பொங்கல்':language==='si'?'සිංහල අලුත් අවුරුද්ද':'HALLOWEEN SALE';
-      const headlineWeight=design.styling.headlineFont==='Anton'||design.styling.headlineFont==='Bebas Neue'||
-        design.styling.headlineFont==='Kavivanar'?400:700;
-      requires.push([headlineWeight+' 140px "'+design.styling.headlineFont+'"',specialSample]);
-      requires.push(['500 40px "'+design.styling.bodyFont+'"',specialSample]);
+      const headingName=language==='ta'?'Pavanam':
+        language==='si'?'Gemunu Libre':design.styling.headlineFont;
+      const bodyName=language==='ta'?'Pavanam':
+        language==='si'?'Maname':design.styling.bodyFont;
+      const headlineWeight=headingName==='Pavanam'||headingName==='Anton'||
+        headingName==='Bebas Neue'?400:700;
+      requires.push([headlineWeight+' 140px "'+headingName+'"',specialSample]);
+      requires.push([(bodyName==='Pavanam'||bodyName==='Maname'?400:500)+' 40px "'+bodyName+'"',specialSample]);
     }
     for(const [spec,sampleText] of requires){
       const ready=await document.fonts.load(spec,sampleText);
