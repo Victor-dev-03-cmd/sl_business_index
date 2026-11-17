@@ -340,7 +340,7 @@ test('adaptive card responds to all 3 vertical output sizes, amount of approved 
 test('premium art prompt protects upper high-quality hero composition and adapts lower panel',()=>{
   assert.match(compose,/USER REQUIREMENTS/);
   assert.match(compose,/CENTRAL 27–77%/);
-  assert.match(compose,/COMPACT glass content card/);
+  assert.match(compose,/adaptive COMPACT card/);
   assert.match(compose,/high-fidelity materials/);
   assert.match(compose,/NO TEXT of any kind/);
   assert.match(compose,/No extra pumpkins, moons, trees/);
@@ -542,7 +542,8 @@ test('stale English fields can no longer be silently exported on Tamil or Sinhal
   assert.match(lab,/copyLanguageConsistent=isPosterCopyInLanguage/);
   assert.match(lab,/if\(!artworkSrc\|\|!exactCopy\|\|!copyLanguageConsistent\)return/);
   assert.match(lab,/if\(!copyLanguageConsistent\)\{/);
-  assert.match(lab,/setFinalUrl\(''\);setFinalBlob\(null\)/);
+  assert.match(lab,/Preserve the last successful preview visually during copy\/language edits/);
+  assert.match(lab,/!finalBlob\|\|!finalUrl\|\|composing\|\|!copyLanguageConsistent/);
   assert.match(lab,/if\(!manualHeadline\|\|!isPosterTextInLanguage\(headline,language\)\)/);
   assert.match(lab,/if\(!manualCta\|\|!isPosterTextInLanguage\(cta,language\)\)/);
   assert.match(lab,/if\(!manualOffer\|\|!isPosterTextInLanguage\(offer,language\)\|\|/);
