@@ -16,7 +16,7 @@ test('Tamil heading AND body must both use Pavanam; heading has real heavier Can
   assert.deepEqual(POSTER_FONT_PAIRS.ta.map(({headlineFont,bodyFont})=>[headlineFont,bodyFont]),
     [['Pavanam','Pavanam']]);
   assert.match(css,/family=Pavanam/);
-  assert.match(renderer,/if\(language==='ta'\)return '"Pavanam"'/);
+  assert.match(renderer,/if\(language==='ta'\)return '"Pavanam",'/);
   assert.match(renderer,/ctx\.strokeText\(line,x,y\)/);
   assert.match(renderer,/p\.language==='ta'&&p\.role==='display'/);
   assert.match(composer,/ta:'"Pavanam"/);
