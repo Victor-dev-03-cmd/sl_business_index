@@ -73,7 +73,7 @@ export async function GET(request:Request){
     sortBy:{column:'created_at',order:'desc'},
   });
   if(error)return json(503,{error:'Saved poster library cannot be listed right now.'});
-  const assets=(data||[]).filter(file=>UUID.test(file.name.replace(/\\.png$/i,''))&&
+  const assets=(data||[]).filter(file=>UUID.test(file.name.replace(/\.png$/i,''))&&
     file.name.toLowerCase().endsWith('.png')).map(file=>({
       id:file.name.slice(0,-4),createdAt:file.created_at||null,
     }));
