@@ -2,7 +2,7 @@
 
 **Date:** 2026-11-17 · **Repository:** `Victor-dev-03-cmd/sl_business_index`  
 **Branch:** `feat/p2-caption-voice-waveform-dropdown-handoff-20261117`  
-**Pull request:** [#115](https://github.com/Victor-dev-03-cmd/sl_business_index/pull/115) · **Feature status:** implementation + automated CI in progress; record final tested SHA, merge and Vercel production receipt only after verification.
+**Pull request:** [#115](https://github.com/Victor-dev-03-cmd/sl_business_index/pull/115) · **Feature status:** MERGED and PRODUCTION READY (code/CI verified; live authenticated browser voice-model QA pending).
 
 ## Owner request and established baseline
 
@@ -44,9 +44,9 @@ No new DB migration, provider login/authorization, cross-device poster storage, 
 
 ## Release / acceptance checklist
 
-**CI:** Exact PR-head Node contracts (including new voice/arrow tests), TypeScript, Next.js production build, marketing tenant RLS, credit ledger/budget, OAuth and billing release gates. Do not assert complete until CI success is observed.
+**CI verified:** Exact PR-head SHA `975be42a73573575a879c32be80bebf9b9b43ab2` passed all **5 workflow families**: Next.js production build/TypeScript/smoke, P2 contract + Docker owner RLS + credits + poster image budget + OAuth, P1 integrated, Billing V2 SQL and independent Postgres billing. No provider inference was run by tests.
 
-**Production:** After owner-authorized release, merge to `main` with SHA guard, verify **matching** Vercel production commit `READY` and `www.slbusinessindex.com` alias. Record evidence in canonical/live status ledgers and this handoff if release is confirmed.
+**Production verified:** PR #115 squash-merged with head guard into `main` commit `422b90e65095df1277337ee979178726f0fecd14`. Vercel production deployment `dpl_DNHjm9fYVxLtRPTGKtAFKknaXiRU` returned state **READY**, the exact same GitHub commit, and alias `www.slbusinessindex.com`. This verifies build and routing, NOT the outcome of signed-in real speech/transcription.
 
 **Human authenticated browser QA still required:** Chrome native mic Allow prompt or site-permission guidance, waveform responsive to real speech, pause timer, resume, Cancel sends nothing, Send shows spinner/transcript, Tamil/Sinhala/English original script preserved, full overflowing transcript editable, quota count decrements only after actual Gemini reservation, one inbox brief containing poster's promoted service and true offer, dropdown arrows clear of border, mobile responsive dark strip, caption Generate credit and draft flags, Caption → Planner same-device PNG handoff.
 
