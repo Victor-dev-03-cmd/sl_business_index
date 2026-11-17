@@ -4,10 +4,10 @@ import './caption-fonts.css';
 import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import Link from 'next/link';
 import {
-  ArrowLeft,ArrowRight,Check,CheckCircle2,Copy,
+  ArrowLeft,ArrowRight,Check,CheckCircle2,ChevronDown,Copy,
   Download,Facebook,Instagram,Image as ImageIcon,Info,LoaderCircle,Mic,
-  Plus,RefreshCcw,Send,SlidersHorizontal,Sparkles,
-  StopCircle,Volume2,WandSparkles,
+  Pause,Play,Plus,RefreshCcw,Send,SlidersHorizontal,Sparkles,
+  Volume2,WandSparkles,X,
 } from 'lucide-react';
 import {supabase} from '@/lib/supabaseClient';
 import type {CaptionLanguage} from '@/lib/marketing/caption-contract';
@@ -108,16 +108,34 @@ export default function ConnectedCaptionLab(){
   const [requestingMic,setRequestingMic]=useState(false);
   const [voicePermissionHelp,setVoicePermissionHelp]=useState(false);
   const [voiceBusy,setVoiceBusy]=useState(false);
+  const [voicePaused,setVoicePaused]=useState(false);
+  const [voiceSeconds,setVoiceSeconds]=useState(0);
+  const [voiceLevels,setVoiceLevels]=useState<number[]>(()=>Array.from({length:35},()=>5));
+  const [voiceReviewDraft,setVoiceReviewDraft]=useState('');
   const [error,setError]=useState('');
   const [notice,setNotice]=useState('');
   const [generatedLanguages,setGeneratedLanguages]=useState<CaptionLanguage[]>([]);
   const [savedCampaignId,setSavedCampaignId]=useState('');
   const recorderRef=useRef<MediaRecorder|null>(null);
   const streamRef=useRef<MediaStream|null>(null);
+  const voiceClockRef=useRef<ReturnType<typeof setInterval>|null>(null);
+  const voiceFrameRef=useRef<number|null>(null);
+  const voiceAudioRef=useRef<AudioContext|null>(null);
+  const discardVoiceRef=useRef(false);
   const importingRef=useRef('');
   const posterUrlRef=useRef('');
   const posterInputRef=useRef<HTMLInputElement|null>(null);
   const posterDialogRef=useRef<HTMLDivElement|null>(null);
+  const releaseVoiceMedia=useCallback(()=>{
+    if(voiceClockRef.current!==null){clearInterval(voiceClockRef.current);voiceClockRef.current=null;}
+    if(voiceFrameRef.current!==null){cancelAnimationFrame(voiceFrameRef.current);voiceFrameRef.current=null;}
+    if(voiceAudioRef.current){
+      void voiceAudioRef.current.close().catch(()=>{});
+      voiceAudioRef.current=null;
+    }
+    streamRef.current?.getTracks().forEach(track=>track.stop());
+    streamRef.current=null;
+  },[]);
   useEffect(()=>{
     const urls:Record<string,string>={};
     for(const record of posterChoices)urls[record.id]=URL.createObjectURL(record.image);
@@ -220,9 +238,14 @@ export default function ConnectedCaptionLab(){
     }).catch(()=>{if(!cancelled)setNotice('This browser could not open the linked PNG. Continue without a poster.');});
     return()=>{cancelled=true;};
   },[loading,businesses]);
-  useEffect(()=>()=>{if(posterUrlRef.current)URL.revokeObjectURL(posterUrlRef.current);
-    recorderRef.current?.state==='recording'&&recorderRef.current.stop();
-    streamRef.current?.getTracks().forEach(track=>track.stop());},[]);
+  useEffect(()=>()=>{
+    // Unmounting must never submit a recording or spend one Gemini quota unit.
+    discardVoiceRef.current=true;
+    const recorder=recorderRef.current;
+    if(recorder&&recorder.state!=='inactive')recorder.stop();
+    releaseVoiceMedia();
+    if(posterUrlRef.current)URL.revokeObjectURL(posterUrlRef.current);
+  },[releaseVoiceMedia]);
 
   const loadDrafts=useCallback(async(signal?:AbortSignal)=>{
     if(!businessId){
@@ -356,8 +379,33 @@ export default function ConnectedCaptionLab(){
       setNotice('');
     }finally{setRequestingMic(false);}
   };
-  const stopVoice=()=>{
-    if(recorderRef.current?.state==='recording')recorderRef.current.stop();
+  const sendVoice=()=>{
+    const recorder=recorderRef.current;
+    if(recorder&&(recorder.state==='recording'||recorder.state==='paused'))recorder.stop();
+  };
+  const pauseVoice=()=>{
+    const recorder=recorderRef.current;
+    if(recorder?.state==='recording'){
+      recorder.pause();setVoicePaused(true);
+      setNotice('Recording paused. Resume or Send to transcribe.');
+    }else if(recorder?.state==='paused'){
+      recorder.resume();setVoicePaused(false);
+      setNotice('Recording resumed. Tap Send when you finish.');
+    }
+  };
+  const cancelVoice=()=>{
+    discardVoiceRef.current=true;sendVoice();
+    setNotice('Voice recording discarded. Your typed campaign brief is unchanged.');
+  };
+  const applyReviewedTranscript=()=>{
+    const combined=[message.trim(),voiceReviewDraft.trim()].filter(Boolean).join(' ').trim();
+    if(!voiceReviewDraft.trim()){setError('Review the transcript before adding it.');return;}
+    if(combined.length>600){
+      setError('Campaign brief supports 600 characters. Shorten your voice transcript before applying it; nothing has been discarded.');
+      return;
+    }
+    setMessage(combined);setVoiceReviewDraft('');setError('');
+    setNotice('Reviewed transcript added. Verify your service, discount and campaign facts before Generate.');
   };
 
   const generate=async()=>{
@@ -368,9 +416,9 @@ export default function ConnectedCaptionLab(){
       // Existing credit-reserved provider route bills per language, never
       // before the explicit Generate click. Hard-off flag remains respected.
       for(const language of chosenLanguages){
-        const prompt=[message.trim(),
-          'Campaign angle: '+goalLabel[goal],
-        ].filter(Boolean).join('\n').slice(0,600);
+        // Goal is supplied as a separate validated field. Never silently cut
+        // off the last words of a reviewed voice brief to append UI metadata.
+        const prompt=message.trim();
         const response=await fetch('/api/marketing/caption',{
           method:'POST',credentials:'same-origin',cache:'no-store',
           headers:{'Content-Type':'application/json'},
@@ -484,7 +532,8 @@ export default function ConnectedCaptionLab(){
     posterUrlRef.current=url;setPosterUrl(url);
     setLinked(record);setPosterKey(record.id);setPosterPickerOpen(false);
     setMessage(previous=>previous.trim()?previous:
-      [record.context.headline,record.context.offer].filter(Boolean).join('. ').slice(0,600));
+      [record.context.headline,record.context.serviceFocus,record.context.offer]
+        .filter(Boolean).join('. ').slice(0,600));
     setCta(previous=>previous.trim()?previous:record.context.cta.slice(0,180));
     setNotice('Poster attached. Review your campaign brief, then generate captions.');
   };
