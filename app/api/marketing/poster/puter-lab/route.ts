@@ -138,7 +138,11 @@ export async function POST(request:Request){
     return reply(200,{brief,reviewBeforeGenerating:true});
   }catch(e){
     if(e instanceof PosterIntelligenceError&&e.kind==='quota')
-      return reply(429,{error:'Gemini quota exhausted. Use your original prompt to generate the background.'});
-    return reply(503,{error:'Gemini could not prepare a valid design blueprint. Your original prompt and approved copy remain editable.'});
+      return reply(429,{error:'Gemini quota exhausted. Your voice transcript is safe and editable.'});
+    if(e instanceof PosterIntelligenceError&&e.kind==='invalid-output')
+      return reply(422,{code:'GEMINI_BLUEPRINT_INVALID',
+        error:'Gemini could not validate the draft design. The transcript and original approved copy remain editable; review them or retry.'});
+    return reply(503,{code:'GEMINI_BLUEPRINT_UNAVAILABLE',
+      error:'Gemini design preparation is temporarily unavailable. The transcript and approved copy remain editable.'});
   }
 }
