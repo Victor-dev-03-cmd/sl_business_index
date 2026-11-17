@@ -37,10 +37,8 @@ test('Caption Lab Save to Planner specifies only permitted insert fields and exa
 });
 
 test('Planner and saved PNG controls stay owner-scoped and do not grant client DELETE',()=>{
-  for(const token of [
-    "status:schedule?'scheduled':'drafted'",
-    "set is_archived", // SQL tested on synthetic account below
-  ])assert.ok(planner.includes(token)||sqlTest.includes(token),token);
+  assert.match(planner,/status:schedule\?'scheduled':'drafted'/);
+  assert.match(sqlTest,/SET is_archived=true/);
   assert.match(planner,/\.update\(patch\)/);
   assert.match(planner,/\.update\(\{is_archived:!c\.is_archived\}\)/);
   assert.match(planner,/\.eq\('id',editingId\)\.eq\('business_id',selectedId\)/);
