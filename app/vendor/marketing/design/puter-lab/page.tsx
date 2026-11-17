@@ -20,8 +20,8 @@ import Link from 'next/link';
 import Script from 'next/script';
 import {
   ArrowLeft,ArrowRight,CheckCircle2,Download,FlaskConical,
-  FileText,Image as ImageIcon,Info,LoaderCircle,Mic,Pause,Play,Plus,
-  Send,SquarePen,StopCircle,WandSparkles,Shuffle,X,
+  FileText,Image as ImageIcon,LoaderCircle,Mic,Pause,Play,Plus,
+  Send,SquarePen,WandSparkles,Shuffle,X,
 } from 'lucide-react';
 import {POSTER_FORMATS,type PosterFormat} from '@/lib/marketing/poster-design';
 import {
@@ -779,21 +779,6 @@ export default function PuterMultilingualPosterLab(){
               </button>)}
             </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" disabled={generating||geminiBusy||transcribing||!businessId}
-              onClick={()=>void startVoice()}
-              className={'inline-flex items-center justify-center gap-1.5 rounded-xl border px-3 py-2 text-[11px] font-bold disabled:opacity-40 '+
-                (recording?'border-red-300 bg-red-50 text-red-700':'border-[#E6DED9] bg-white')}>
-              {recording?<StopCircle size={15}/>:<Mic size={15}/>}
-              {recording?'Stop ('+recordingSeconds+'s)':'Voice message'}
-            </button>
-            <button type="button" disabled={locked||!businessId||prompt.trim().length<5}
-              onClick={()=>void prepareWithGemini()}
-              className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#292328] px-3 py-2 text-[11px] font-bold text-white disabled:opacity-40">
-              {geminiBusy?<LoaderCircle size={15} className="animate-spin"/>:<WandSparkles size={15}/>}
-              Prepare with Gemini
-            </button>
-          </div>
           {(currentBrief||currentBlueprint)&&<div className="flex items-start gap-1.5 rounded-xl border border-[#DDE8DC] bg-[#F5FAF5] p-2 text-[11px] leading-4 text-[#4C6951]">
             <CheckCircle2 size={13} className="mt-0.5 shrink-0"/>
             Gemini {currentBlueprint?'art direction + typography blueprint':'brief'} prepared. Review exact headline, offer and CTA in the right panel.
@@ -810,20 +795,20 @@ export default function PuterMultilingualPosterLab(){
             </p>
           </div>}
           <p className="text-[10px] leading-4 text-[#958681]">
-            Voice stops manually. Gemini transcript stays editable; audio limit 1.5 MB.
-            It never automatically triggers a paid image call.
+            Tap the mic to record, pause/resume, then Send to transcribe. Your transcript stays editable.
+            Audio limit: 1.5 MB. Recording never triggers image generation.
           </p>
         </div>
         <div className="shrink-0 space-y-2 border-t border-[#EEE8E5] bg-[#FDFBF9] p-3">
           <label className="flex items-center gap-2 text-[11px] font-bold">
             <input type="checkbox" checked={realMode} disabled={locked}
               onChange={e=>{setRealMode(e.target.checked);setConsent(false);}}/>
-            Use real Puter image generation
+            Use SLBI Image Generator
           </label>
           {realMode?<label className="flex items-start gap-2 text-[10px] font-semibold leading-4 text-[#A45C23]">
             <input type="checkbox" checked={consent} disabled={locked}
               onChange={e=>setConsent(e.target.checked)}/>
-            I understand this uses my Puter AI balance and may create a charge.
+            I understand SLBI currently renders real images through my connected Puter account, which may charge its own AI balance.
           </label>:<p className="text-[10px] leading-4 text-[#8C7F79]">
             Default is a no-credit sample, not a real AI quality test.
           </p>}
@@ -831,7 +816,7 @@ export default function PuterMultilingualPosterLab(){
             disabled={locked||!sdkReady||!facts||prompt.trim().length<5||!headline.trim()||(realMode&&!consent)}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#262126] px-3 py-3 text-[11px] font-bold text-white disabled:opacity-40">
             {generating?<LoaderCircle size={16} className="animate-spin"/>:<FlaskConical size={16}/>}
-            {generating?'Generating artwork…':realMode?'Generate real poster with Puter':'Generate no-credit poster sample'}
+            {generating?'Generating artwork…':realMode?'Generate with SLBI Image Generator':'Preview poster sample'}
           </button>
         </div>
       </section>
