@@ -17,6 +17,7 @@ export type LinkedPosterContext={
   website:string;
   headline:string;
   offer:string;
+  serviceFocus?:string;
   cta:string;
   vibe:string;
   language:'ta'|'si'|'en';
@@ -76,7 +77,7 @@ export async function saveLinkedPoster(context:LinkedPosterContext,image:Blob):P
     category:clean(context.category,100),city:clean(context.city,80),
     address:clean(context.address,180),phone:clean(context.phone,45),
     website:clean(context.website,180),headline:clean(context.headline,180),
-    offer:clean(context.offer,180),cta:clean(context.cta,180),
+    offer:clean(context.offer,180),serviceFocus:clean(context.serviceFocus,85),cta:clean(context.cta,180),
     vibe:clean(context.vibe,80),language:context.language,
     sample:Boolean(context.sample),
     source:context.source==='device_upload'?'device_upload':'poster_studio',
