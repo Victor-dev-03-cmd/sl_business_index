@@ -51,6 +51,7 @@ export function buildArtOnlyPrompt(input:{
   // an unrelated pumpkin illustration simply because Halloween was selected.
   return [
     'CREATE ONE PREMIUM COMMERCIAL BACKGROUND ARTWORK ONLY. The user is the art director.',
+    'MANDATORY: Generate ART ONLY—no letters, numbers, prices, signs, brand logos or CTA glyphs. SLBI Canvas draws all verified copy. This restriction overrides any conflicting style suggestion.',
     'HIGHEST PRIORITY — USER REQUIREMENTS. Obey the concrete objects, subject, materials, colors, camera, composition and exclusions stated here. Do not replace their subject with a generic festive scene:',
     short(input.request,1200),
     'OWNER-VERIFIED BUSINESS OFFERING CONTEXT — preserve category, actual service and product focus from owner source only:',
