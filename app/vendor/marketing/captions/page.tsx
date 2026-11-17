@@ -250,7 +250,8 @@ export default function ConnectedCaptionLab(){
       if(posterUrlRef.current)URL.revokeObjectURL(posterUrlRef.current);
       const src=URL.createObjectURL(record.image);
       posterUrlRef.current=src;setPosterUrl(src);
-      setPosterKey(key);setLinked(record);setBusinessId(record.context.businessId);setCloudAssetId('');
+      setPosterKey(key);setLinked(record);setBusinessId(record.context.businessId);
+      setCloudAssetId(record.context.savedPosterAssetId||'');
       setMessage([record.context.headline,record.context.serviceFocus,record.context.offer].filter(Boolean).join('. ').slice(0,600));
       setCta(record.context.cta.slice(0,180));
       setGoal(record.context.offer?'flash_sale':'festival');
@@ -589,8 +590,11 @@ export default function ConnectedCaptionLab(){
         brief,
         poster_asset_id:posterAssetId||null,
       };
-      const saved=await supabase.from('marketing_campaigns').insert(patch)
-        .select('id').maybeSingle();
+      const saved=savedCampaignId?
+        await supabase.from('marketing_campaigns').update(patch)
+          .eq('id',savedCampaignId).eq('business_id',businessId).select('id').maybeSingle():
+        await supabase.from('marketing_campaigns').insert(patch)
+          .select('id').maybeSingle();
       if(saved.error||!saved.data)throw Error(saved.error?.message||'Campaign Planner could not save this draft.');
       setSavedCampaignId(saved.data.id);
       setNotice('Campaign Planner draft saved'+(posterAssetId?' with a durable PRIVATE poster image.':'.')+' No social publishing was triggered.');
