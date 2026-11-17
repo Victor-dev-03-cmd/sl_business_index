@@ -452,7 +452,7 @@ export default function PuterMultilingualPosterLab(){
       const res=await fetch('/api/marketing/poster/puter-lab',{
         method:'POST',...reqOptions,headers:{'Content-Type':'application/json'},
         body:JSON.stringify({
-          businessId,prompt:withPosterReferenceSummary(prompt,referenceSummary),language,
+          businessId,prompt:prompt.trim(),referenceContext:referenceSummary,language,
           format,mode:'blueprint',campaignStyle:selectedSuggestionId,
           approvedOffer:manualOffer?offer.trim():'',
         }),
