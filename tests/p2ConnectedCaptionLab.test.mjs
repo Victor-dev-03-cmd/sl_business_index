@@ -206,7 +206,7 @@ test('Enterprise polish keeps credit and preview truth in Info while removing de
   assert.match(page,/<summary[^>]*>.*?<Info size=\{13\}\/> Info <ChevronDown size=\{13\}/s);
   assert.match(page,/One provider request and applicable credit reservation per selected language/);
   assert.match(page,/Nothing is automatically published/);
-  assert.match(page,/Linked PNG remains on this device/);
+  assert.match(page,/Save to Planner stores an attached PNG privately in SLBI/);
 });
 test('Primary CTA appears ahead of secondary brief tools and has accessible disabled contrast',()=>{
   const cta=page.indexOf('Generate Caption Variations');
