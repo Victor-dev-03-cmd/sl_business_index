@@ -1,5 +1,12 @@
 # SLBusinessIndex — MASTER IMPLEMENTATION & CHAT HANDOFF
 
+## 2026-11-17 — P2-29: Private Poster Save + Caption Planner Constraint + CTA verified phone (STAGED)
+- **Read first:** [P2-29 private poster library & campaign save handoff](p2/P2_29_PRIVATE_POSTER_SAVE_CAPTION_PLANNER_CTA_20261117.md). Owner reported reproducible `marketing_campaign_brief_shape_v2` Save-to-Planner error, intermittent Gemini failures after adding CTA phone, and inability to preserve generated poster PNGs.
+- **Verified cause:** Production Supabase constraint allows exactly seven fields in `marketing_campaigns.brief`; Caption Lab sent extra `captionBundle`, `posterLocalKey` and other fields. Fixed via strict helper; no constraint weakening. Storage bucket `slbi-poster-ai-private` already exists, private/locked; new server-only authenticated owner-scoped upload/list/download, explicit Save Poster in Poster Studio and Save image / saved gallery in Caption Lab, new nullable Planner `poster_asset_id` migration.
+- **CTA:** Business-verified contact must match CTA phone before AI credit reservation. Prompt passes verified phone to Gemini; distinct safe errors for invalid output vs upstream provider failure. Read-only production jobs show 4 refunded, 1 completed recently, but do **not** prove phone caused prior provider failures. No AI inference in test/development.
+- **Branch:** `fix/p2-poster-cloud-save-caption-planner-cta-20261117`. Status here is STAGED pending complete CI, single additive production migration, merged release and Vercel READY; real signed-in CTA Gemini and cross-device image QA are owner follow-ups.
+
+
 ## 2026-11-17 — P2-28 Caption Generate CTA spacing & Gemini readiness (PRODUCTION READY)
 - **Read first:** [P2-28 Caption CTA layout / actual Gemini + Growth Credits handoff](p2/P2_28_CAPTION_GENERATE_SPACING_GEMINI_READINESS_20261117.md). User approved Caption voice, requested more breathing room below Generate and genuine Gemini integration verification.
 - Code branch `fix/p2-caption-cta-spacing-gemini-readiness-20261117`. Adds explicit margins, credit-info surface, accessible CTA focus, quick-brief disclosure padding and descriptive Gemini/credit billing copy. No backend payment/provider/model switch and no extra API provider call. Preserve linked private poster design workflow.
