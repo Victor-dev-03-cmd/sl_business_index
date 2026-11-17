@@ -21,7 +21,7 @@ import Script from 'next/script';
 import {
   ArrowLeft,ArrowRight,CheckCircle2,Download,FlaskConical,
   FileText,Image as ImageIcon,LoaderCircle,Mic,Pause,Play,Plus,
-  Send,SquarePen,WandSparkles,Shuffle,X,
+  Send,SquarePen,WandSparkles,Shuffle,Trash2,X,
 } from 'lucide-react';
 import {POSTER_FORMATS,type PosterFormat} from '@/lib/marketing/poster-design';
 import {
@@ -30,7 +30,7 @@ import {
 } from '@/lib/marketing/puter-poster-composer';
 import type {PosterBusinessFacts,PosterIntelligenceBrief} from '@/lib/marketing/poster-gemini-intelligence';
 import {saveLinkedPoster} from '@/lib/marketing/caption-poster-handoff';
-import {listSavedPosters,privatePosterUrl,uploadSavedPoster,type SavedPosterAsset}
+import {deleteSavedPoster,listSavedPosters,privatePosterUrl,uploadSavedPoster,type SavedPosterAsset}
   from '@/lib/marketing/saved-poster-cloud-client';
 import {describePuterImageError} from '@/lib/marketing/puter-image-errors';
 import {
@@ -129,6 +129,8 @@ export default function PuterMultilingualPosterLab(){
   const [finalBlob,setFinalBlob]=useState<Blob|null>(null);
   const [linkingCaption,setLinkingCaption]=useState(false);
   const [savingPoster,setSavingPoster]=useState(false);
+  const [autoSaveNotice,setAutoSaveNotice]=useState('');
+  const [deletingPosterId,setDeletingPosterId]=useState('');
   const [savedPosterId,setSavedPosterId]=useState('');
   const [savedAssets,setSavedAssets]=useState<SavedPosterAsset[]>([]);
   const [savedPickerOpen,setSavedPickerOpen]=useState(false);
@@ -144,6 +146,9 @@ export default function PuterMultilingualPosterLab(){
   const voiceAudioRef=useRef<AudioContext|null>(null);
   const voiceFrameRef=useRef<number|null>(null);
   const finalUrlRef=useRef('');
+  const uploadsRef=useRef(new WeakMap<Blob,Promise<string>>());
+  const activeBusinessRef=useRef('');
+  const activeBlobRef=useRef<Blob|null>(null);
   // Local reference preview is browser-only, never sent to paid image provider.
   const sampleArtworkUrlRef=useRef('');
   const selectedReference=getPosterReferenceStyle(selectedReferenceId);
@@ -168,6 +173,8 @@ export default function PuterMultilingualPosterLab(){
     [facts?.category]);
   const dimensions=POSTER_FORMATS[format];
   useEffect(()=>{setSavedPosterId('');},[finalBlob]);
+  useEffect(()=>{activeBusinessRef.current=businessId;},[businessId]);
+  useEffect(()=>{activeBlobRef.current=finalBlob;},[finalBlob]);
   useEffect(()=>{
     if(!businessId){setSavedAssets([]);return;}
     let active=true;
@@ -179,6 +186,45 @@ export default function PuterMultilingualPosterLab(){
   const copyLanguageConsistent=isPosterCopyInLanguage(
     {headline,offerText:offer,ctaText:cta},language,
   )&&isPosterTextInLanguage(serviceFocus,language);
+
+  // A single in-flight promise per composed PNG prevents duplicate uploads
+  // when the vendor immediately continues into Caption Lab.
+  const savePosterBlob=useCallback((blob:Blob,ownerBusinessId:string)=>{
+    const existing=uploadsRef.current.get(blob);
+    if(existing)return existing;
+    const promise=uploadSavedPoster(ownerBusinessId,blob);
+    uploadsRef.current.set(blob,promise);
+    void promise.catch(()=>{uploadsRef.current.delete(blob);});
+    return promise;
+  },[]);
+  // Final artwork, including a newly recomposed caption/typography, is saved
+  // automatically after a short quiet period. Only fully composed PNGs enter
+  // cloud storage; provider failures and unfinished in-memory frames do not.
+  useEffect(()=>{
+    if(!finalBlob||!businessId||composing||generating||generationStage!=='ready'||
+       !copyLanguageConsistent||!serviceFocusApproved)return;
+    if(uploadsRef.current.has(finalBlob))return;
+    const blob=finalBlob;
+    const timer=setTimeout(()=>{
+      if(uploadsRef.current.has(blob))return;
+      setSavingPoster(true);setAutoSaveNotice('Saving your generated PNG privately…');
+      void savePosterBlob(blob,businessId).then(async id=>{
+        if(activeBusinessRef.current!==businessId)return;
+        if(activeBlobRef.current===blob){
+          setSavedPosterId(id);setAutoSaveNotice('Auto-saved to your private poster library.');
+        }
+        const assets=await listSavedPosters(businessId).catch(()=>null);
+        if(assets&&activeBusinessRef.current===businessId)setSavedAssets(assets);
+      }).catch(e=>{
+        if(activeBusinessRef.current===businessId&&activeBlobRef.current===blob){
+          setAutoSaveNotice('Automatic save failed. Keep this tab open and check storage access.');
+          setError('Automatic poster save failed: '+errorMessage(e));
+        }
+      }).finally(()=>setSavingPoster(false));
+    },900);
+    return()=>clearTimeout(timer);
+  },[finalBlob,businessId,composing,generating,generationStage,
+     copyLanguageConsistent,serviceFocusApproved,savePosterBlob]);
 
   // Dual execution: once the owner reviews a JSON blueprint, warm the chosen
   // licensed fonts independently of the next image-model request.
@@ -639,18 +685,21 @@ export default function PuterMultilingualPosterLab(){
       }
     }finally{setGenerating(false);}
   };
-  const savePosterToCloud=async()=>{
-    if(!businessId||!finalBlob||composing||generating||savingPoster||
-       !copyLanguageConsistent||!serviceFocusApproved)return;
-    setSavingPoster(true);setError('');
+  const deletePoster=async(asset:SavedPosterAsset)=>{
+    if(!businessId||deletingPosterId)return;
+    if(!window.confirm('Permanently delete this private saved poster? This cannot be undone.'))return;
+    setDeletingPosterId(asset.id);setError('');
     try{
-      const id=savedPosterId||await uploadSavedPoster(businessId,finalBlob);
-      setSavedPosterId(id);
-      setSavedAssets(await listSavedPosters(businessId));
-      setStatus((isRealOutput?'AI image':'Sample poster')+
-        ' saved in your private SLBI poster library. You can reuse it in Caption Lab on another signed-in device.');
-    }catch(e){setError(e instanceof Error?e.message:'Poster could not be saved privately.');}
-    finally{setSavingPoster(false);}
+      await deleteSavedPoster(businessId,asset.id);
+      setSavedAssets(previous=>previous.filter(item=>item.id!==asset.id));
+      if(savedPosterId===asset.id){
+        setSavedPosterId('');
+        if(finalBlob)uploadsRef.current.delete(finalBlob);
+        setAutoSaveNotice('Current image was removed from the library.');
+      }
+      setStatus('Unused private poster deleted. Your remaining images are unchanged.');
+    }catch(e){setError(errorMessage(e));}
+    finally{setDeletingPosterId('');}
   };
   const download=()=>{
     if(!finalBlob||!finalUrl||composing||!copyLanguageConsistent||!serviceFocusApproved)return;
@@ -665,6 +714,11 @@ export default function PuterMultilingualPosterLab(){
     if(!finalBlob||!facts||!businessId||composing||linkingCaption||!copyLanguageConsistent||!serviceFocusApproved)return;
     setLinkingCaption(true);setError('');
     try{
+      // Complete the cloud backup before navigating when possible. A transient
+      // storage failure still permits the safe browser-local handoff.
+      const backedUpId=savedPosterId||await savePosterBlob(finalBlob,businessId)
+        .catch(()=> '');
+      if(backedUpId)setSavedPosterId(backedUpId);
       const id=await saveLinkedPoster({
         businessId,businessName:facts.name,category:facts.category,
         city:facts.city,address:facts.address,
@@ -672,6 +726,7 @@ export default function PuterMultilingualPosterLab(){
         headline:headline.trim(),offer:offer.trim(),serviceFocus:serviceFocus.trim(),cta:cta.trim(),
         vibe:currentBlueprint?.styling.vibe||selectedPremiumStyle,
         language,source:'poster_studio',sample:!isRealOutput,format,
+        savedPosterAssetId:backedUpId||undefined,
       },finalBlob);
       // This is a user-initiated navigation only. No paid caption
       // model is called without the Caption Lab Generate action.
@@ -722,9 +777,16 @@ export default function PuterMultilingualPosterLab(){
               className="rounded-lg bg-[#111827] px-2.5 py-2 text-center text-[11px] font-semibold text-white">
               Download PNG
             </a>
+            <button type="button" onClick={()=>void deletePoster(asset)}
+              disabled={Boolean(deletingPosterId)||savingPoster}
+              aria-label={'Delete private poster '+asset.id}
+              className="inline-flex items-center justify-center gap-1 rounded-lg border border-red-200 bg-white px-2 py-2 text-[11px] font-bold text-red-700 disabled:opacity-50">
+              {deletingPosterId===asset.id?<LoaderCircle size={13} className="animate-spin"/>:<Trash2 size={13}/>}
+              Delete
+            </button>
           </div>)}
         </div>:<p className="rounded-lg bg-[#F9FAFB] p-5 text-center text-xs text-[#6B7280]">
-          No saved posters yet. Generate a poster and tap Save Poster.
+          No saved posters yet. Every completed generated PNG is automatically stored here.
         </p>}
       </section>
     </div>}
@@ -992,20 +1054,14 @@ export default function PuterMultilingualPosterLab(){
         </div>
         <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-[#E7E1DE] pt-2.5">
           <p className="min-w-0 flex-1 text-[10px] leading-4 text-[#81736E]">
-            {finalBlob?(isRealOutput?'Real artwork · exact browser text':'No-credit SAMPLE · exact text'):
-              'No automatic publishing or SLBI storage'}
+            {savingPoster?'Auto-saving image…':autoSaveNotice||
+              (finalBlob?'Completed images are auto-saved privately':'No automatic social publishing')}
           </p>
           <div className="flex flex-wrap items-center gap-2">
             <button type="button" onClick={()=>setSavedPickerOpen(true)}
               disabled={!businessId}
               className="inline-flex items-center gap-1.5 rounded-lg border border-[#E6DED8] bg-white px-3 py-2.5 text-[11px] font-bold text-[#292327] disabled:opacity-40">
               <ImageIcon size={14}/> Saved ({savedAssets.length})
-            </button>
-            <button type="button" onClick={()=>void savePosterToCloud()}
-              disabled={!finalBlob||composing||generating||savingPoster||!copyLanguageConsistent||!serviceFocusApproved}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-[#E6DED8] bg-white px-3 py-2.5 text-[11px] font-bold text-[#14532D] disabled:opacity-40">
-              {savingPoster?<LoaderCircle size={14} className="animate-spin"/>:<CheckCircle2 size={14}/>}
-              {savedPosterId?'Saved privately':isRealOutput?'Save Poster':'Save Sample'}
             </button>
             <button type="button" onClick={download} disabled={!finalBlob||composing||generating||!copyLanguageConsistent||!serviceFocusApproved}
               className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[#E6DED8] bg-white px-3 py-2.5 text-[11px] font-bold text-[#292327] disabled:opacity-40">
