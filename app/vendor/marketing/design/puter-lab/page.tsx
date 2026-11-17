@@ -20,7 +20,8 @@ import Link from 'next/link';
 import Script from 'next/script';
 import {
   ArrowLeft,ArrowRight,CheckCircle2,Download,FlaskConical,
-  LoaderCircle,Mic,SquarePen,StopCircle,WandSparkles,Shuffle,
+  FileText,Image as ImageIcon,Info,LoaderCircle,Mic,Pause,Play,Plus,
+  Send,SquarePen,StopCircle,WandSparkles,Shuffle,X,
 } from 'lucide-react';
 import {POSTER_FORMATS,type PosterFormat} from '@/lib/marketing/poster-design';
 import {
@@ -29,6 +30,10 @@ import {
 } from '@/lib/marketing/puter-poster-composer';
 import type {PosterBusinessFacts,PosterIntelligenceBrief} from '@/lib/marketing/poster-gemini-intelligence';
 import {saveLinkedPoster} from '@/lib/marketing/caption-poster-handoff';
+import {
+  isPosterReferenceImage,posterReferenceFormData,preparePosterReferencePng,
+  validatePosterReferences,withPosterReferenceSummary,
+} from '@/lib/marketing/poster-composer-attachments';
 import {
   STARTER_COPY,isPosterCopyInLanguage,isPosterTextInLanguage,isNaturalEnglishOffer,
   starterHeadline,localizedPercentOffer,posterLanguageName,
@@ -99,7 +104,13 @@ export default function PuterMultilingualPosterLab(){
   const [brief,setBrief]=useState<PosterIntelligenceBrief|null>(null);
   const [briefKey,setBriefKey]=useState('');
   const [geminiBusy,setGeminiBusy]=useState(false);
+  const [referenceFiles,setReferenceFiles]=useState<File[]>([]);
+  const [referenceSummary,setReferenceSummary]=useState('');
+  const [referenceBusy,setReferenceBusy]=useState(false);
+  const [useAttachedImage,setUseAttachedImage]=useState(false);
   const [recording,setRecording]=useState(false);
+  const [voicePaused,setVoicePaused]=useState(false);
+  const [voiceLevels,setVoiceLevels]=useState<number[]>(()=>Array.from({length:35},()=>5));
   const [recordingSeconds,setRecordingSeconds]=useState(0);
   const [transcribing,setTranscribing]=useState(false);
   const [realMode,setRealMode]=useState(false);
@@ -116,13 +127,19 @@ export default function PuterMultilingualPosterLab(){
   const recorderRef=useRef<MediaRecorder|null>(null);
   const streamRef=useRef<MediaStream|null>(null);
   const clockRef=useRef<ReturnType<typeof setInterval>|null>(null);
+  const attachInputRef=useRef<HTMLInputElement|null>(null);
+  const discardVoiceRef=useRef(false);
+  const voiceAudioRef=useRef<AudioContext|null>(null);
+  const voiceFrameRef=useRef<number|null>(null);
   const finalUrlRef=useRef('');
   const selectedReference=getPosterReferenceStyle(selectedReferenceId);
   const selectedPremiumStyle=selectedReference?.id||'modern';
   const typographyPreset=resolvePremiumPosterPreset(selectedPremiumStyle);
   const business=businesses.find(b=>b.id===businessId);
   const facts=business?.facts;
-  const currentKey=businessId+'|'+language+'|'+prompt.trim();
+  const currentKey=businessId+'|'+language+'|'+prompt.trim()+'|'+referenceSummary;
+  const attachedImage=referenceFiles.find(isPosterReferenceImage)||null;
+  const composerLocked=generating||geminiBusy||transcribing||recording||referenceBusy;
   const currentBrief=brief&&briefKey===currentKey?brief:null;
   const currentBlueprint=blueprint&&blueprintKey===currentKey?blueprint:null;
   const activeDesign=useMemo<VerifiedPosterDesign|null>(()=>designOverride||
@@ -163,6 +180,41 @@ export default function PuterMultilingualPosterLab(){
     return()=>clearInterval(timer);
   },[generationStage]);
 
+  const clearReferenceSummary=()=>{
+    setReferenceSummary('');
+    setBlueprint(null);setBlueprintKey('');setBrief(null);setBriefKey('');
+  };
+  const attachReferences=(incoming:FileList|null)=>{
+    if(!incoming?.length)return;
+    const result=validatePosterReferences(referenceFiles,Array.from(incoming));
+    if(!result.ok){setError(result.error);return;}
+    setReferenceFiles(result.files);clearReferenceSummary();setError('');
+    setStatus(result.files.length+' reference attachment(s) ready. Select Analyze references to include their context in Gemini.');
+  };
+  const removeReference=(index:number)=>{
+    setReferenceFiles(previous=>previous.filter((_,i)=>i!==index));
+    setUseAttachedImage(false);clearReferenceSummary();
+  };
+  const analyzeReferences=async()=>{
+    if(referenceBusy||!businessId||!referenceFiles.length)return;
+    const validation=validatePosterReferences([],referenceFiles);
+    if(!validation.ok){setError(validation.error);return;}
+    setReferenceBusy(true);setError('');
+    setStatus('Gemini is analyzing attached image and document references…');
+    try{
+      const res=await fetch('/api/marketing/poster/references/analyze',{
+        method:'POST',...reqOptions,
+        body:posterReferenceFormData(businessId,referenceFiles),
+      });
+      const data=await res.json() as ApiError&{summary?:string;referenceOnly?:boolean};
+      if(!res.ok||!data.summary||data.referenceOnly!==true)
+        throw Error(data.error||'Could not analyze attached references.');
+      setReferenceSummary(data.summary.slice(0,850));
+      setBrief(null);setBriefKey('');setBlueprint(null);setBlueprintKey('');
+      setStatus('Reference summary ready. Your documents and images were not stored in SLBI cloud storage.');
+    }catch(e){setError(errorMessage(e));setStatus('Reference analysis was not applied. You can still use your original prompt.');}
+    finally{setReferenceBusy(false);void refreshGeminiQuota();}
+  };
   const chooseSuggestion=(suggestion:{id:string;label:string;prompt:string})=>{
     // Chips stage the owner's idea only; NEVER invoke Gemini or paid Puter.
     setSelectedSuggestionId(suggestion.id);
