@@ -45,7 +45,8 @@ test('Planner and saved PNG controls stay owner-scoped and do not grant client D
   assert.match(planner,/\.eq\('id',c\.id\)\.eq\('business_id',c\.business_id\)/);
   assert.match(planner,/poster_asset_id/);
   assert.match(history,/privatePosterUrl\(businessId,assetId\)/);
-  assert.match(studio,/Save Poster/);
+  assert.match(studio,/Auto-saved to your private poster library/);
+  assert.doesNotMatch(studio,/savePosterToCloud/);
   assert.match(privateRoute,/\.eq\('id',businessId\)\.eq\('owner_id',user\.id\)/);
   assert.match(privateRoute,/const BUCKET='slbi-poster-ai-private'/);
   assert.doesNotMatch(privateRoute,/getPublicUrl/);
