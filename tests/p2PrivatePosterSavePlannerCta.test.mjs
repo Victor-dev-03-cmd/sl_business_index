@@ -126,10 +126,9 @@ test('Provider failure maintains quota/refund boundary; no extra Gemini or image
 });
 
 test('Owner-only planner grants and automatic image persistence cannot bypass RLS',()=>{
-  const grants=read('supabase/migrations/20261118003000_p2_30_campaign_planner_authenticated_owner_grants.sql');
-  assert.match(grants,/GRANT SELECT, INSERT, UPDATE ON TABLE public.marketing_campaigns TO authenticated/);
-  assert.match(grants,/REVOKE ALL ON TABLE public.marketing_campaigns FROM anon/);
-  assert.doesNotMatch(grants,/DISABLE ROW LEVEL SECURITY|TO anon;.*INSERT/i);
+  const grants=read('supabase/migrations/20261118003000_p2_campaign_asset_insert_column_grant.sql');
+  assert.match(grants,/GRANT INSERT \\(poster_asset_id\\) ON TABLE public\\.marketing_campaigns TO authenticated/);
+  assert.doesNotMatch(grants,/GRANT ALL|DISABLE ROW LEVEL SECURITY|TO anon;/i);
   assert.match(poster,/generationStage!=='ready'/);
   assert.match(poster,/!copyLanguageConsistent\|\|!serviceFocusApproved/);
   assert.match(poster,/savedPosterAssetId:backedUpId\|\|undefined/);
