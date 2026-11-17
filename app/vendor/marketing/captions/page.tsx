@@ -211,7 +211,7 @@ export default function ConnectedCaptionLab(){
       const src=URL.createObjectURL(record.image);
       posterUrlRef.current=src;setPosterUrl(src);
       setPosterKey(key);setLinked(record);setBusinessId(record.context.businessId);
-      setMessage([record.context.headline,record.context.offer].filter(Boolean).join('. ').slice(0,600));
+      setMessage([record.context.headline,record.context.serviceFocus,record.context.offer].filter(Boolean).join('. ').slice(0,600));
       setCta(record.context.cta.slice(0,180));
       setGoal(record.context.offer?'flash_sale':'festival');
       setTone(record.context.vibe.includes('bold')?2:record.context.vibe.includes('luxury')?1:0);
