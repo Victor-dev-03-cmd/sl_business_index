@@ -256,12 +256,14 @@ test('premium Canvas renderer draws fonts, glass, CTA, and icon contact rows int
   assert.match(premium,/role:'offer'/);
   assert.match(premium,/drawPill/);
   assert.match(premium,/contactIcon/);
-  assert.match(premium,/kind:'mail'/);
-  assert.match(premium,/kind:'phone'/);
-  assert.match(premium,/kind:'globe'/);
+  const contacts=read('lib/marketing/puter-adaptive-card-layout.ts');
+  assert.match(premium,/planPosterContactRows\(p\.copy\)/);
+  assert.match(contacts,/kind:'mail'/);
+  assert.match(contacts,/kind:'phone'/);
+  assert.match(contacts,/kind:'globe'/);
   assert.match(premium,/ctx\.fillText/);
   assert.match(premium,/ctx\.canvas\.width/);
-  assert.match(premium,/copy\.email\?\.trim\(\)/);
+  assert.match(contacts,/copy\.email\?\.trim\(\)/);
   assert.match(premium,/spelling and content were not changed/);
   assert.match(lab,/email:showEmail\?facts\.email:''/);
   assert.match(lab,/Verified business email/);
