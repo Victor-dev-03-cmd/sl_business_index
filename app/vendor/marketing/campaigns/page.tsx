@@ -20,7 +20,7 @@ type CampaignBrief={
 type Campaign={
   id:string;business_id:string|null;banner_text:string;banner_color:string;
   platforms:string[]|null;status:string|null;scheduled_at:string|null;created_at:string|null;
-  brief:CampaignBrief|null;is_archived:boolean;
+  brief:CampaignBrief|null;is_archived:boolean;poster_asset_id?:string|null;
 };
 type Section='overview'|'social'|'calendar'|'library';
 const channels=['Facebook','Instagram','WhatsApp','LinkedIn'] as const;
@@ -97,7 +97,7 @@ export default function CampaignPlanner(){
       setBusinesses(owned);setSelectedId(prev=>owned.some(b=>b.id===prev)?prev:(owned[0]?.id||''));
       if(!owned.length){setCampaigns([]);return;}
       const rows=await supabase.from('marketing_campaigns')
-        .select('id,business_id,banner_text,banner_color,platforms,status,scheduled_at,created_at,brief,is_archived')
+        .select('id,business_id,banner_text,banner_color,platforms,status,scheduled_at,created_at,brief,is_archived,poster_asset_id')
         .in('business_id',owned.map(b=>b.id)).order('created_at',{ascending:false}).limit(200);
       if(rows.error)throw rows.error;
       setCampaigns((rows.data||[]) as Campaign[]);
@@ -404,24 +404,25 @@ export default function CampaignPlanner(){
                 </span>
                 <span className="text-[11px] font-bold text-[#373037]">{businesses.find(b=>b.id===c.business_id)?.name||copy.business}</span>
               </div>
-              {c.brief?.createdFrom==='caption_lab'&&
+              {(c.banner_color==='caption-lab-connected-v1'||c.brief?.createdFrom==='caption_lab')&&
                 <span className="mt-2 inline-block rounded-full bg-[#FFF1E6] px-2 py-1 text-[10px] font-bold text-[#9A3412]">
                   AI Caption Lab · Connected campaign
                 </span>}
               <p className="mt-3 line-clamp-3 whitespace-pre-line break-words text-[12px] leading-6 text-[#5E5961]">{c.banner_text}</p>
-              {c.brief?.createdFrom==='caption_lab'&&
-                <LinkedCaptionPoster localKey={c.brief.posterLocalKey} businessId={c.business_id}/>}
+              {(c.poster_asset_id||c.brief?.posterLocalKey)&&
+                <LinkedCaptionPoster localKey={c.brief?.posterLocalKey}
+                  businessId={c.business_id} assetId={c.poster_asset_id}/>}
               <p className="mt-3 text-[10px] text-[#979097]">{copy.created} {formatDate(c.created_at)} · {c.platforms?.join(', ')||'—'} {c.scheduled_at?' · '+formatDate(c.scheduled_at):''}</p>
             </div>
             <div className="flex flex-wrap items-start gap-2 sm:max-w-[265px]">
               {!c.is_archived&&c.status!=='posted'&&
-                (c.brief?.createdFrom==='caption_lab'?
+                ((c.banner_color==='caption-lab-connected-v1'||c.brief?.createdFrom==='caption_lab')?
                   <Link href="/vendor/marketing/captions"
                     className={button+' border border-[#F1C49C] bg-[#FFF5ED] text-[#B45B16]'}>Open Caption Lab</Link>:
                   <button type="button" onClick={()=>openCampaign(c)}
                     className={button+' border border-[#F1C49C] bg-[#FFF5ED] text-[#B45B16]'}>{copy.edit}</button>)}
-              {!c.is_archived&&c.brief?.createdFrom!=='caption_lab'&&<button type="button" onClick={()=>openCampaign(c,true)} className={button+' border border-[#E8E3E3]'}>{copy.duplicate}</button>}
-              {!c.is_archived&&c.brief?.createdFrom!=='caption_lab'&&<button type="button" onClick={()=>openCampaign(c)} className={button+' border border-[#E8E3E3]'}>{copy.posterFromLibrary}</button>}
+              {!c.is_archived&&c.banner_color!=='caption-lab-connected-v1'&&c.brief?.createdFrom!=='caption_lab'&&<button type="button" onClick={()=>openCampaign(c,true)} className={button+' border border-[#E8E3E3]'}>{copy.duplicate}</button>}
+              {!c.is_archived&&c.banner_color!=='caption-lab-connected-v1'&&c.brief?.createdFrom!=='caption_lab'&&<button type="button" onClick={()=>openCampaign(c)} className={button+' border border-[#E8E3E3]'}>{copy.posterFromLibrary}</button>}
               <button type="button" onClick={()=>exportText('slbi-campaign-'+c.id.slice(0,8)+'.txt',c.banner_text)} className={button+' border border-[#E8E3E3]'}>{copy.export}</button>
               {c.status!=='posted'&&<button type="button" disabled={saving} onClick={()=>void changeArchive(c)}
                 className={button+' border border-[#E8E3E3] text-[#817780]'}>{c.is_archived?copy.restore:copy.archive}</button>}

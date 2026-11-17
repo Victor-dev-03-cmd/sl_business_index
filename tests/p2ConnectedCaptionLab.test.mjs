@@ -177,22 +177,23 @@ test('AI calls occur only on explicit generate, respect existing global hard-off
   assert.doesNotMatch(poster.slice(link,end),/puter\.ai|generate\(\)|caption\/route/);
 });
 
-test('Campaign Planner saves tri-language caption bundle and displays same-device original PNG',()=>{
+test('Campaign Planner saves DB-valid seven-key brief and persists owner-private poster PNG',()=>{
   const linked=read('app/vendor/marketing/campaigns/LinkedCaptionPoster.tsx');
   assert.match(page,/supabase\.from\('marketing_campaigns'\)\.insert\(patch\)/);
   assert.match(page,/\.eq\('id',businessId\)\.eq\('owner_id',user\.id\)/);
-  assert.match(page,/captionBundle:captions/);
-  assert.match(page,/posterLocalKey:hasLinked\?posterKey:null/);
+  assert.match(page,/plannerBriefFromCaption\(/);
+  assert.match(page,/poster_asset_id:posterAssetId\|\|null/);
+  assert.match(page,/uploadSavedPoster\(businessId,linked\.image\)/);
   assert.match(page,/status:'drafted'/);
   assert.match(page,/href="\/vendor\/marketing\/campaigns\?source=caption-lab"/);
   assert.match(planner,/createdFrom==='caption_lab'/);
-  assert.match(planner,/LinkedCaptionPoster localKey=\{c\.brief\.posterLocalKey\}/);
+  assert.match(planner,/LinkedCaptionPoster localKey=\{c\.brief\?\.posterLocalKey\}/);
   assert.match(planner,/get\('source'\)==='caption-lab'/);
   assert.match(linked,/loadLinkedPoster\(localKey\)/);
   assert.match(linked,/found\.context\.businessId!==businessId/);
-  assert.match(linked,/on this device/);
+  assert.match(linked,/saved in your SLBI private library/);
   assert.doesNotMatch(linked,/supabase\.storage|storage\.from/);
-  assert.match(page,/Linked PNG remains on this device/);
+  assert.match(page,/Save to Planner stores an attached PNG privately in SLBI/);
 });
 
 test('Enterprise polish keeps credit and preview truth in Info while removing developer banners',()=>{
@@ -205,7 +206,7 @@ test('Enterprise polish keeps credit and preview truth in Info while removing de
   assert.match(page,/<summary[^>]*>.*?<Info size=\{13\}\/> Info <ChevronDown size=\{13\}/s);
   assert.match(page,/One provider request and applicable credit reservation per selected language/);
   assert.match(page,/Nothing is automatically published/);
-  assert.match(page,/Linked PNG remains on this device/);
+  assert.match(page,/Save to Planner stores an attached PNG privately in SLBI/);
 });
 test('Primary CTA appears ahead of secondary brief tools and has accessible disabled contrast',()=>{
   const cta=page.indexOf('Generate Caption Variations');

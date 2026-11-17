@@ -3,6 +3,7 @@ import {createClient} from '@/lib/supabase/server';
 import {isSameOrigin} from '@/lib/growth/ingestion-contract';
 import {GEMINI_POSTER_MODEL} from '@/lib/marketing/poster-gemini-intelligence';
 import {parseThreeAngles} from '@/lib/marketing/caption-workspace';
+import {unverifiedCtaPhone} from '@/lib/marketing/caption-cta-phone';
 import {
   captionGeminiResponseSchema,parseGeminiCaptionOutput,serializeGeminiCaptionOutput,
 } from '@/lib/marketing/caption-gemini-output';
@@ -20,7 +21,6 @@ const response=(status:number,body:Record<string,unknown>)=>
   Response.json(body,{status,headers:{'Cache-Control':'private, no-store'}});
 const uuid=/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i;
 const missingSchema=(code?:string)=>code==='42P01'||code==='PGRST205'||code==='42883'||code==='PGRST202';
-
 const safeAdmin=()=>{
   const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key=process.env.SUPABASE_SERVICE_ROLE_KEY||process.env.SUPABASE_SECRET_KEY;
@@ -120,10 +120,16 @@ export async function POST(request:Request){
   // Tenant ownership is verified on an authenticated SSR client first,
   // and *again* inside the privileged transactional reservation function.
   const {data:business,error:businessError}=await client.from('businesses')
-    .select('id,name,category,city')
+    .select('id,name,category,city,phone')
     .eq('id',brief.businessId).eq('owner_id',user.id).maybeSingle();
   if(businessError)return response(503,{error:'Unable to verify business ownership.'});
   if(!business)return response(404,{error:'Business not found for this account.'});
+  // Validate owner-provided contact numbers BEFORE reserving billable credits.
+  // A business phone is read from the owned business record, never invented or
+  // trusted solely because the user inserted digits in a creative CTA field.
+  if(unverifiedCtaPhone(brief.cta,business.phone||''))
+    return response(400,{code:'CTA_PHONE_NOT_VERIFIED',
+      error:'The phone in your CTA does not match this business\'s verified phone. Update My Business contact details or use its saved number, then Generate.'});
   const {data:brand,error:brandError}=await client.from('social_brand_profiles')
     .select('brand_name,slogan,audience,tone,guidelines,languages')
     .eq('business_id',brief.businessId).eq('owner_id',user.id).maybeSingle();
@@ -162,7 +168,7 @@ export async function POST(request:Request){
   const messages=buildCaptionMessages({
     businessName:business.name,
     category:business.category||'',
-    city:business.city||'',
+    city:business.city||'',verifiedPhone:business.phone||'',
     brandName:brand.brand_name,
     slogan:brand.slogan||'',
     audience:brand.audience||'',
@@ -170,6 +176,7 @@ export async function POST(request:Request){
     guidelines:brand.guidelines||'',
   },brief);
 
+  let failureKind:'provider'|'output'|'save'='provider';
   try{
     let rawCaption:unknown;
     let inputTokens=0,outputTokens=0;
@@ -226,16 +233,19 @@ export async function POST(request:Request){
     // Gemini returns strictly schema-constrained JSON, validated again on
     // our server. Only the backward-compatible plain text is ever persisted.
     const structured=useGemini?parseGeminiCaptionOutput(rawCaption,brief.language,business.city||''):null;
-    if(useGemini&&!structured)
+    if(useGemini&&!structured){
+      failureKind='output';
       throw Error('Gemini returned invalid copy or hashtag structure');
+    }
     const persisted=useGemini&&structured?
       serializeGeminiCaptionOutput(structured,brief.language):rawCaption;
     const caption=sanitizeModelCaption(persisted);
-    if(!caption)throw Error('Provider returned an unusable caption');
+    if(!caption){failureKind='output';throw Error('Provider returned an unusable caption');}
     if(useGemini){
       const triple=parseThreeAngles(caption);
-      if(!triple.hook||!triple.story||!triple.short)
-        throw Error('Gemini did not return all three complete caption angles');
+      if(!triple.hook||!triple.story||!triple.short){
+        failureKind='output';throw Error('Gemini did not return all three complete caption angles');
+      }
     }
     const actualModel=useGemini?GEMINI_POSTER_MODEL:CAPTION_MODEL;
     const {data:draftId,error:finalError}=await admin.rpc('marketing_complete_ai_draft',{
@@ -244,7 +254,7 @@ export async function POST(request:Request){
       p_input_tokens:inputTokens,
       p_output_tokens:outputTokens,
     });
-    if(finalError||!draftId)throw new Error('Unable to settle or save completed AI draft');
+    if(finalError||!draftId){failureKind='save';throw new Error('Unable to settle or save completed AI draft');}
     return response(201,{
       draft:{id:draftId,caption,language:brief.language,review_status:'pending_review'},
       cached:false,
@@ -259,6 +269,13 @@ export async function POST(request:Request){
       if(refundError)console.error('Marketing AI refund requires reconciliation',refundError.code);
     }catch{console.error('Marketing AI refund requires reconciliation');}
     console.warn('AI provider request failed',e instanceof Error?e.name:'unknown');
-    return response(503,{error:'AI caption could not be generated; reserved credits are eligible for refund. Please retry later.'});
+    const messages={
+      provider:'Gemini could not complete this request. Your CTA is still editable; check your business contact and retry. Failed job credits were sent for refund.',
+      output:'Gemini returned an invalid caption format. Your CTA and campaign brief are safe; review wording and retry. Failed job credits were sent for refund.',
+      save:'Gemini draft could not be saved. Your brief is safe; please retry. Failed job credits were sent for refund.',
+    };
+    return response(503,{code:failureKind==='provider'?'GEMINI_PROVIDER_FAILED':
+      failureKind==='output'?'GEMINI_CAPTION_INVALID':'CAPTION_DRAFT_SAVE_FAILED',
+      error:messages[failureKind]});
   }
 }
