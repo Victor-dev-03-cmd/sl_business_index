@@ -1,5 +1,11 @@
 # SLBI Marketing Engine | LIVE IMPLEMENTATION STATUS
 
+## 2026-11-18 — P2-30 Caption Lab Planner permission hotfix (DB APPLIED; RELEASE TESTS PENDING)
+- **Detailed handoff:** [P2-30 Campaign Planner Column GRANT Audit](P2_30_CAMPAIGN_PLANNER_COLUMN_GRANT_AUDIT_20261118.md).
+- **Production cause/fix verified:** `marketing_campaigns.poster_asset_id` needed column-level authenticated **INSERT**, missing after P2-29; applied one-column migration `20261118003000_p2_campaign_asset_insert_column_grant.sql`, `can_insert_asset=true`, broad INSERT/DELETE/TRUNCATE=false, anon SELECT=false, owner RLS=true. Authenticated `EXPLAIN INSERT` with exact Caption fields passed without production write.
+- **All related controls audited in source/privilege matrix:** Caption Lab Save, manual Planner new/edit/schedule/archive/restore/list, revisions, private PNG reference. Synthetic two-tenant Docker SQL regression staged; no paid model or live account writes. CI/merge and owner browser E2E outstanding.
+
+
 ## 2026-11-17 — P2-29 Poster Save / Caption Planner / CTA Verification (PRODUCTION READY)
 - **Detailed handoff:** [P2-29 Private Poster Save + Planner Constraint + CTA](P2_29_PRIVATE_POSTER_SAVE_CAPTION_PLANNER_CTA_20261117.md). `marketing_campaign_brief_shape_v2` checked in live Supabase; it rejects Caption Lab's extra JSON keys. New seven-key Planner brief helper fixes that without dropping check/RLS, while linked poster image is persisted by UUID in additive `poster_asset_id`.
 - Existing `slbi-poster-ai-private` private 12 MB PNG bucket stays non-public and protected. New server-only owner+business+internal QA route handles PNG upload/list/download, UUID scoped to user and business. Studio Save Poster/Saved Posters and Caption Lab Save image/saved gallery are explicitly user initiated; no automatic credits or social publishing.

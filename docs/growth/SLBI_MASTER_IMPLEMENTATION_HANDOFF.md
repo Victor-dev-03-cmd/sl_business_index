@@ -1,5 +1,12 @@
 # SLBusinessIndex — MASTER IMPLEMENTATION & CHAT HANDOFF
 
+## 2026-11-18 — P2-30 Caption Lab Save to Planner column-GRANT fix (DB HOTFIX APPLIED; CI/RELEASE PENDING)
+- **Read first:** [P2-30 Caption Planner permission repair and control audit](p2/P2_30_CAMPAIGN_PLANNER_COLUMN_GRANT_AUDIT_20261118.md). Owner reproduced `permission denied for table marketing_campaigns` on Save to Planner after P2-29.
+- **Exact cause:** Secure P2-05 column-level INSERT grants did not include the new P2-29 `poster_asset_id` column. Caption Lab inserts this column even with null; other columns were already allowed. Existing owner RLS was intact.
+- **Database fix applied and read-verified on production:** `GRANT INSERT (poster_asset_id) ON public.marketing_campaigns TO authenticated` only; no broad table write, anon or DELETE, no asset UPDATE, RLS intact. Real authenticated-role non-writing SQL `EXPLAIN INSERT` passed, anon refused.
+- **Branch:** `fix/p2-campaign-planner-column-grant-20261118`. Adds synthetic owner A/B Docker SQL for Save, edit, schedule, archive, restore, audit history, forged column denial, and hardening regression; no paid AI requests. CI, merge and production documentation receipt pending at this stage; signed-in browser QA still required.
+
+
 ## 2026-11-17 — P2-29: Private Poster Save + Caption Planner Constraint + CTA verified phone (PRODUCTION READY)
 - **Read first:** [P2-29 private poster library & campaign save handoff](p2/P2_29_PRIVATE_POSTER_SAVE_CAPTION_PLANNER_CTA_20261117.md). Owner reported reproducible `marketing_campaign_brief_shape_v2` Save-to-Planner error, intermittent Gemini failures after adding CTA phone, and inability to preserve generated poster PNGs.
 - **Verified cause:** Production Supabase constraint allows exactly seven fields in `marketing_campaigns.brief`; Caption Lab sent extra `captionBundle`, `posterLocalKey` and other fields. Fixed via strict helper; no constraint weakening. Storage bucket `slbi-poster-ai-private` already exists, private/locked; new server-only authenticated owner-scoped upload/list/download, explicit Save Poster in Poster Studio and Save image / saved gallery in Caption Lab, new nullable Planner `poster_asset_id` migration.

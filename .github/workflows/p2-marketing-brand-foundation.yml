@@ -41,6 +41,9 @@ on:
       - 'tests/p2CaptionVoiceStudioParityAndHandoff.test.mjs'
       - 'tests/p2CaptionGenerateCtaSpacing.test.mjs'
       - 'tests/p2PrivatePosterSavePlannerCta.test.mjs'
+      - 'tests/p2CampaignPlannerColumnGrant.test.mjs'
+      - 'supabase/migrations/20261118003000_p2_campaign_asset_insert_column_grant.sql'
+      - 'tests/p2-campaign/poster-asset-grants-verify.sql'
       - 'supabase/migrations/20261117210000_p2_caption_planner_private_poster_asset_ref.sql'
       - 'tests/p2PosterGenerateErrorRecovery.test.mjs'
       - 'tests/p2PosterStaffReviewRelease.test.mjs'
@@ -71,6 +74,9 @@ on:
       - 'tests/p2CaptionVoiceStudioParityAndHandoff.test.mjs'
       - 'tests/p2CaptionGenerateCtaSpacing.test.mjs'
       - 'tests/p2PrivatePosterSavePlannerCta.test.mjs'
+      - 'tests/p2CampaignPlannerColumnGrant.test.mjs'
+      - 'supabase/migrations/20261118003000_p2_campaign_asset_insert_column_grant.sql'
+      - 'tests/p2-campaign/poster-asset-grants-verify.sql'
       - 'supabase/migrations/20261117210000_p2_caption_planner_private_poster_asset_ref.sql'
       - 'tests/p2PosterGenerateErrorRecovery.test.mjs'
       - 'tests/p2PosterStaffReviewRelease.test.mjs'
@@ -107,7 +113,7 @@ jobs:
       - name: Brand validation, page/API contract and existing Marketing Studio tests
         run: |
           node --test tests/p2BrandProfile.test.mjs tests/p2AiCaption.test.mjs tests/p2PosterDesign.test.mjs tests/p2PosterCreativeEngine.test.mjs tests/p2PosterImageAPI.test.mjs tests/p2PosterGeminiIntelligence.test.mjs tests/p2PosterStudioWorkspace.test.mjs tests/p2PuterBrowserLab.test.mjs tests/p2PosterComposerAttachmentsVoice.test.mjs tests/p2PosterStaffReviewRelease.test.mjs tests/p2PosterPermanentQA.test.mjs tests/p2MarketingEngineShell.test.mjs tests/marketingStudioAppStore.test.mjs tests/p2GlobalMarketingLaunch.test.mjs tests/p2MarketingLoadingAndConnect.test.mjs tests/p2OAuthConnectors.test.mjs tests/p2OAuthFlow.test.mjs tests/p2OAuthDisconnect.test.mjs tests/p2OAuthCallbackRace.test.mjs tests/vendorNeutralUi.test.mjs
-          node --test tests/p2ConnectedCaptionLab.test.mjs tests/p2CaptionGeminiJson.test.mjs tests/p2PosterGeminiQuotaMicFix.test.mjs tests/p2CaptionVoicePermission.test.mjs tests/p2CaptionVoiceStudioParityAndHandoff.test.mjs tests/p2CaptionGenerateCtaSpacing.test.mjs tests/p2PrivatePosterSavePlannerCta.test.mjs tests/p2PosterPavanamVoiceLayout.test.mjs tests/p2PosterContentFirstLayout.test.mjs tests/p2PosterBusinessServiceFocus.test.mjs tests/p2PosterGenerateErrorRecovery.test.mjs
+          node --test tests/p2ConnectedCaptionLab.test.mjs tests/p2CaptionGeminiJson.test.mjs tests/p2PosterGeminiQuotaMicFix.test.mjs tests/p2CaptionVoicePermission.test.mjs tests/p2CaptionVoiceStudioParityAndHandoff.test.mjs tests/p2CaptionGenerateCtaSpacing.test.mjs tests/p2PrivatePosterSavePlannerCta.test.mjs tests/p2CampaignPlannerColumnGrant.test.mjs tests/p2PosterPavanamVoiceLayout.test.mjs tests/p2PosterContentFirstLayout.test.mjs tests/p2PosterBusinessServiceFocus.test.mjs tests/p2PosterGenerateErrorRecovery.test.mjs
           node --test tests/vendorSettingsQrMarketing2026.test.mjs tests/vendorPortalRelease.test.mjs
           node --test tests/p2CampaignReleaseCandidate.test.mjs
           node --test tests/p2CampaignV2.test.mjs
@@ -221,6 +227,12 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f docs/growth/p2/P2_CAMPAIGN_PLANNER_V2_EDITABLE_BRIEF.sql
       - name: Verify edit, archive, restore, revisions and cross-owner isolation
         run: psql -v ON_ERROR_STOP=1 -f tests/p2-campaign/v2-edit-verify.sql
+      - name: Apply private poster association and the least-privilege column grant
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261117210000_p2_caption_planner_private_poster_asset_ref.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261118003000_p2_campaign_asset_insert_column_grant.sql
+      - name: Test Caption Lab Save, Planner edit/schedule/archive/restore and owner isolation
+        run: psql -v ON_ERROR_STOP=1 -f tests/p2-campaign/poster-asset-grants-verify.sql
 
   docker-oauth-connector-security:
     runs-on: ubuntu-latest
