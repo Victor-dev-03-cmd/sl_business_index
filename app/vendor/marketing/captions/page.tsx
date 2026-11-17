@@ -688,8 +688,8 @@ export default function ConnectedCaptionLab(){
           <span className="ml-auto text-[10px] text-[#9CA3AF]">Input</span>
         </div>
         <label className="block text-[11px] font-bold text-[#374151]">Selected Business
-          <select value={businessId} onChange={e=>onBusinessChange(e.target.value)}
-            disabled={loading||isBusy} className={field+' mt-1.5'}>
+          <select value={businessId} aria-label="Selected business" onChange={e=>onBusinessChange(e.target.value)}
+            disabled={loading||isBusy} className={field+' slbi-caption-select mt-1.5'}>
             {!businesses.length&&<option value="">No owned businesses</option>}
             {businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}
           </select>
@@ -748,32 +748,96 @@ export default function ConnectedCaptionLab(){
         <div>
           <div className="mb-2 flex items-center justify-between gap-2">
             <label htmlFor="caption-brief" className="text-[11px] font-bold text-[#374151]">Campaign Message</label>
-            <div className="flex items-center gap-1">
-              <button type="button"
-                disabled={(!recording&&isBusy)||!businessId}
-                onClick={()=>recording?stopVoice():void startVoice()}
-                aria-label={recording?'Stop voice recording':'Record voice campaign brief'}
-                aria-pressed={recording}
-                className={'inline-flex items-center gap-1 rounded-lg border px-2 py-1.5 text-[10px] font-bold disabled:cursor-not-allowed disabled:border-[#E5E7EB] disabled:bg-[#F3F4F6] disabled:text-[#9CA3AF] '+
-                  (recording?'border-red-200 bg-red-50 text-red-700':'border-[#E5E7EB] text-[#374151] hover:border-[#F97316]')}>
-                {recording?<StopCircle size={13}/>:requestingMic||voiceBusy?
-                  <LoaderCircle size={13} className="animate-spin"/>:<Mic size={13}/>}
-                {recording?'Stop':requestingMic?'Allow microphone':voiceBusy?'Transcribing':'Voice'}
-              </button>
+            <div className="flex items-center gap-2">
+              {requestingMic&&<span role="status" className="text-[10px] font-semibold text-[#9A3412]">
+                Allow microphone…
+              </span>}
+              {!recording&&<button type="button"
+                disabled={isBusy||!businessId}
+                onClick={()=>void startVoice()}
+                aria-label="Record voice campaign brief" title="Record voice message"
+                className="inline-flex size-8 items-center justify-center rounded-full border border-[#E5E7EB] bg-white text-[#374151] hover:border-[#F97316] hover:text-[#C2410C] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#F97316] disabled:border-[#E5E7EB] disabled:bg-[#F3F4F6] disabled:text-[#9CA3AF]">
+                {requestingMic?<LoaderCircle size={16} className="animate-spin"/>:<Mic size={17}/>}
+              </button>}
+              {voiceBusy&&<span role="status" aria-live="polite"
+                className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-[#9A3412]">
+                <LoaderCircle size={14} className="animate-spin"/> Transcribing…
+              </span>}
             </div>
           </div>
           <textarea id="caption-brief" rows={3} maxLength={600} value={message}
+            disabled={recording||voiceBusy}
             onChange={e=>setMessage(e.target.value)}
-            className={field+' resize-y leading-6'}
+            className={field+' resize-y leading-6 disabled:bg-[#F9FAFB] disabled:text-[#6B7280]'}
             placeholder="Tell us your real offer, product or campaign in தமிழ், සිංහල, English or Tanglish."/>
           <p className="mt-1 text-[10px] text-[#6B7280]">Add your offer, key details or record a voice brief.</p>
+          {recording&&<div className="mt-2 flex min-w-0 items-center gap-2 rounded-xl border border-[#3C3540] bg-[#18181B] px-2.5 py-2 text-white shadow-[0_8px_20px_rgba(17,24,39,.17)]"
+            role="group" aria-label="Active voice recording">
+            <button type="button" onClick={cancelVoice} title="Discard voice recording"
+              aria-label="Cancel and discard voice recording"
+              className="flex size-8 shrink-0 items-center justify-center rounded-full border border-white/20 text-white hover:bg-white/15">
+              <X size={16}/>
+            </button>
+            <div className="min-w-0 flex-1 space-y-1" role="status" aria-live="off">
+              <div className="flex h-9 items-center gap-[2px]" aria-hidden="true">
+                {voiceLevels.map((level,index)=><span key={index}
+                  className={'w-[3px] min-w-[2px] flex-1 rounded-full transition-[height] duration-75 '+
+                    (voicePaused?'bg-white/40':'bg-[#FDBA74]')}
+                  style={{height:voicePaused?5:level}}/>)}
+              </div>
+              <p className="text-center text-[10px] tabular-nums text-[#E9D9CE]">
+                {voicePaused?'Paused':'Recording'} · {Math.floor(voiceSeconds/60).toString().padStart(2,'0')}:
+                {(voiceSeconds%60).toString().padStart(2,'0')}
+              </p>
+            </div>
+            <button type="button" onClick={pauseVoice} title={voicePaused?'Resume recording':'Pause recording'}
+              aria-label={voicePaused?'Resume voice recording':'Pause voice recording'}
+              className="flex size-8 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white hover:bg-white/20">
+              {voicePaused?<Play size={16}/>:<Pause size={16}/>}
+            </button>
+            <button type="button" onClick={sendVoice} title="Send recording to Gemini transcript"
+              aria-label="Send voice recording to transcript"
+              className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#F97316] text-white hover:bg-[#EA580C]">
+              <Send size={16}/>
+            </button>
+          </div>}
+          {voiceReviewDraft&&<div className="mt-2 space-y-2 rounded-xl border border-[#FED7AA] bg-[#FFFBF5] p-2.5"
+            aria-label="Voice transcript review">
+            <label htmlFor="caption-voice-review" className="block text-[11px] font-bold text-[#92400E]">
+              Full transcript · review before adding
+            </label>
+            <textarea id="caption-voice-review" value={voiceReviewDraft} rows={4} maxLength={1200}
+              onChange={e=>setVoiceReviewDraft(e.target.value)}
+              className={field+' resize-y leading-6'}
+              aria-describedby="caption-voice-review-help"/>
+            <p id="caption-voice-review-help" className="text-[10px] leading-4 text-[#854D0E]">
+              The Campaign Message allows 600 characters including existing text.
+              Shorten this complete transcript yourself; no promotional wording or terms were automatically removed.
+            </p>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[10px] tabular-nums text-[#854D0E]">
+                {[message.trim(),voiceReviewDraft.trim()].filter(Boolean).join(' ').length} / 600 characters
+              </span>
+              <div className="flex gap-2">
+                <button type="button" onClick={()=>setVoiceReviewDraft('')}
+                  className="rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[10px] font-semibold text-[#374151]">
+                  Discard transcript
+                </button>
+                <button type="button" onClick={applyReviewedTranscript}
+                  disabled={!voiceReviewDraft.trim()||[message.trim(),voiceReviewDraft.trim()].filter(Boolean).join(' ').length>600}
+                  className="rounded-lg bg-[#111827] px-3 py-2 text-[10px] font-semibold text-white disabled:bg-[#F3F4F6] disabled:text-[#9CA3AF]">
+                  Apply reviewed transcript
+                </button>
+              </div>
+            </div>
+          </div>}
           {voicePermissionHelp&&<div role="status" className="mt-2 rounded-lg border border-[#FED7AA] bg-[#FFF7ED] px-3 py-2.5 text-[11px] leading-5 text-[#7C2D12]">
             <p className="font-semibold">Enable microphone for Caption Lab</p>
             <p>In Chrome, click the site controls icon beside the address bar, open Site settings, set Microphone to Allow, and reload this page. Then tap Voice again.</p>
             <p className="mt-1">If no microphone prompt appears, check your operating system's microphone privacy settings.</p>
           </div>}
-                <button type="button" onClick={()=>void generate()}
-          disabled={!businessId||message.trim().length<5||isBusy}
+        <button type="button" onClick={()=>void generate()}
+          disabled={!businessId||message.trim().length<5||isBusy||Boolean(voiceReviewDraft)}
           className="group flex w-full items-center justify-center gap-2 rounded-xl border border-[#111827] bg-[#111827] px-3 py-3 text-[12px] font-bold text-white shadow-sm transition-colors hover:bg-[#292F3D] disabled:cursor-not-allowed disabled:border-[#E5E7EB] disabled:bg-[#F3F4F6] disabled:text-[#9CA3AF] disabled:shadow-none">
           {busy?<LoaderCircle size={17} className="animate-spin"/>:<WandSparkles size={17} className="text-[#FDBA74] group-disabled:text-[#9CA3AF]"/>}
           {busy?'Generating drafts…':'Generate Caption Variations'} <ArrowRight size={14}/>
@@ -783,7 +847,7 @@ export default function ConnectedCaptionLab(){
           <details className="group relative">
             <summary className="flex cursor-pointer list-none items-center gap-1 font-semibold text-[#C2410C]"><Info size={13}/> Info</summary>
             <div className="absolute right-0 top-6 z-30 w-64 rounded-xl border border-[#E5E7EB] bg-white p-3 text-[11px] leading-5 text-[#374151] shadow-xl">
-              <p>One provider request and applicable credit reservation per selected language; never auto-charged on page open.</p>
+              <p>One provider request and applicable credit reservation per selected language; never auto-charged on page open. Gemini voice transcription uses its own shared daily voice/brief allowance only after you tap Send.</p>
               <p className="mt-2">Linked PNG remains on this device for up to two hours; saving to Campaign Planner stores captions, not a cloud copy of your image.</p>
               <p className="mt-2">Social previews are visual estimates. Character goals are editorial targets, not social platform limits. Nothing is automatically published.</p>
             </div>
