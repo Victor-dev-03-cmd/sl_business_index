@@ -83,12 +83,18 @@ test('Save Poster uses server-owned PRIVATE PNG bucket with per-user+business pa
   assert.match(client,/credentials:'same-origin'/);
   assert.match(client,/readSavedPoster/);
   assert.match(client,/uploadSavedPoster/);
+  assert.match(client,/deleteSavedPoster/);
+  assert.match(route,/export async function DELETE\(request:Request\)/);
+  assert.match(route,/\.eq\('poster_asset_id',assetId\)/);
+  assert.match(route,/\.remove\(\[path\(ctx\.uid!,businessId,assetId\)\]\)/);
 });
 
 test('Two studios can save/reopen images and Planner displays owned permanent PNG',()=>{
-  assert.match(poster,/const savePosterToCloud=async\(\)=>/);
-  assert.match(poster,/uploadSavedPoster\(businessId,finalBlob\)/);
-  assert.match(poster,/onClick=\{\(\)=>void savePosterToCloud\(\)\}/);
+  assert.match(poster,/const savePosterBlob=useCallback\(/);
+  assert.match(poster,/savePosterBlob\(blob,businessId\)/);
+  assert.match(poster,/Auto-saved to your private poster library/);
+  assert.match(poster,/onClick=\{\(\)=>void deletePoster\(asset\)\}/);
+  assert.doesNotMatch(poster,/savePosterToCloud/);
   assert.match(poster,/Saved \(\{savedAssets.length\}\)/);
   assert.match(poster,/Private Saved Posters/);
   assert.match(poster,/privatePosterUrl\(businessId,asset.id\)/);
@@ -110,10 +116,25 @@ test('Provider failure maintains quota/refund boundary; no extra Gemini or image
   const save=page.slice(page.indexOf('  const savePlanner=async()=>{'),page.indexOf('  const pickPoster=async()=>{'));
   assert.match(save,/uploadSavedPoster/);
   assert.doesNotMatch(save,/\/api\/marketing\/caption|puter\.ai\.txt2img|marketing_reserve_ai_draft/);
-  const studioSave=poster.slice(poster.indexOf('  const savePosterToCloud=async()=>{'),
-    poster.indexOf('  const download=()=>{'));
-  assert.doesNotMatch(studioSave,/puter\.ai\.txt2img|Gemini|api\/marketing\/caption/);
+  const studioSave=poster.slice(poster.indexOf('  // Final artwork, including'),
+    poster.indexOf('  // Dual execution:'));
+  assert.match(studioSave,/uploadSavedPoster|savePosterBlob/);
+  assert.doesNotMatch(studioSave,/puter\.ai\.txt2img|api\/marketing\/caption/);
   assert.match(captionApi,/marketing_complete_ai_draft/);
   assert.match(captionApi,/marketing_refund_ai_draft/);
   assert.match(captionApi,/code:failureKind==='provider'/);
+});
+
+test('Owner-only planner grants and automatic image persistence cannot bypass RLS',()=>{
+  const grants=read('supabase/migrations/20261118003000_p2_30_campaign_planner_authenticated_owner_grants.sql');
+  assert.match(grants,/GRANT SELECT, INSERT, UPDATE ON TABLE public.marketing_campaigns TO authenticated/);
+  assert.match(grants,/REVOKE ALL ON TABLE public.marketing_campaigns FROM anon/);
+  assert.doesNotMatch(grants,/DISABLE ROW LEVEL SECURITY|TO anon;.*INSERT/i);
+  assert.match(poster,/generationStage!=='ready'/);
+  assert.match(poster,/!copyLanguageConsistent\|\|!serviceFocusApproved/);
+  assert.match(poster,/savedPosterAssetId:backedUpId\|\|undefined/);
+  assert.match(page,/setCloudAssetId\(record.context.savedPosterAssetId\|\|''\)/);
+  assert.match(page,/\.update\(patch\)/);
+  assert.match(route,/if\(linked\?\.length\)return json\(409/);
+  assert.doesNotMatch(route,/public:true|getPublicUrl|createSignedUrl/);
 });
