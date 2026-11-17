@@ -153,7 +153,7 @@ export function validatePosterBlueprint(value:unknown,input:{
   // quote a contiguous source phrase from the owner's brief or the verified
   // business description/category. Never treat uploaded references as proof.
   const normalized=(v:string)=>v.normalize('NFC').toLocaleLowerCase()
-    .replace(/\\s+/gu,' ').trim();
+    .replace(/\s+/gu,' ').trim();
   const groundedSources=[
     input.vendorPrompt,input.verifiedDescription||'',input.verifiedCategory||'',
   ].map(normalized).filter(Boolean);
@@ -161,8 +161,8 @@ export function validatePosterBlueprint(value:unknown,input:{
   const grounded=Boolean(proposedService)&&evidence.length>=5&&
     groundedSources.some(source=>source.includes(evidence))&&
     isPosterTextInLanguage(proposedService,input.language)&&
-    !/\\d/.test(proposedService)&&
-    !/(?:https?:\\/\\/|www\\.|@[\\w.-]+\\.[a-z]{2,})/i.test(proposedService);
+    !/\d/.test(proposedService)&&
+    !/(?:https?:\/\/|www\.|@[\w.-]+\.[a-z]{2,})/i.test(proposedService);
   // If grounding fails, keep the rest of the valid design and ask the owner to
   // enter/confirm a concrete service rather than silently trusting invention.
   const serviceFocus=grounded?proposedService:'';
