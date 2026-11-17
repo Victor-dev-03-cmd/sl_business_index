@@ -325,7 +325,10 @@ export default function ConnectedCaptionLab(){
   };
   const startVoice=async()=>{
     if(voiceBusy||recording||requestingMic||saving||busy)return;
-    setError('');setVoicePermissionHelp(false);setVoiceReviewDraft('');
+    if(voiceReviewDraft){
+      setError('Apply or discard the full reviewed transcript before starting a new voice recording.');return;
+    }
+    setError('');setVoicePermissionHelp(false);
     if(typeof window==='undefined'||!window.isSecureContext||
       !navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined'){
       setError('Voice recording requires HTTPS and a browser with microphone support.');
@@ -844,8 +847,8 @@ export default function ConnectedCaptionLab(){
         </button>
         <div className="flex items-center justify-between gap-2 text-[10px] text-[#6B7280]">
           <span>{chosenLanguages.length} {chosenLanguages.length===1?'language':'languages'} selected · Credits apply on Generate</span>
-          <details className="group relative">
-            <summary className="flex cursor-pointer list-none items-center gap-1 font-semibold text-[#C2410C]"><Info size={13}/> Info</summary>
+          <details className="slbi-caption-disclosure group relative">
+            <summary className="flex cursor-pointer list-none items-center gap-1 font-semibold text-[#C2410C]"><Info size={13}/> Info <ChevronDown size={13} className="slbi-caption-chevron ml-0.5"/></summary>
             <div className="absolute right-0 top-6 z-30 w-64 rounded-xl border border-[#E5E7EB] bg-white p-3 text-[11px] leading-5 text-[#374151] shadow-xl">
               <p>One provider request and applicable credit reservation per selected language; never auto-charged on page open. Gemini voice transcription uses its own shared daily voice/brief allowance only after you tap Send.</p>
               <p className="mt-2">Linked PNG remains on this device for up to two hours; saving to Campaign Planner stores captions, not a cloud copy of your image.</p>
@@ -854,8 +857,8 @@ export default function ConnectedCaptionLab(){
           </details>
         </div>
 
-          <details className="mt-2 rounded-lg border border-[#E5E7EB] p-2">
-            <summary className="cursor-pointer text-[11px] font-semibold text-[#6B7280]">Quick brief suggestions</summary>
+          <details className="slbi-caption-disclosure mt-2 rounded-lg border border-[#E5E7EB] p-2">
+            <summary className="flex cursor-pointer items-center justify-between gap-2 text-[11px] font-semibold text-[#6B7280]">Quick brief suggestions <ChevronDown size={14} className="slbi-caption-chevron"/></summary>
             <div className="mt-2 flex flex-wrap gap-1.5">
             {promptChips.map(chip=><button key={chip.label} type="button"
               onClick={()=>setMessage(previous=>[previous,chip.text].filter(Boolean).join(' ').slice(0,600))}
@@ -865,8 +868,11 @@ export default function ConnectedCaptionLab(){
             </div>
           </details>
         </div>
-        <details className="rounded-xl border border-[#E5E7EB] p-2.5">
-          <summary className="cursor-pointer text-[11px] font-bold">Offer terms & CTA <span className="font-normal text-[#9CA3AF]">(optional)</span></summary>
+        <details className="slbi-caption-disclosure rounded-xl border border-[#E5E7EB] p-2.5">
+          <summary className="flex cursor-pointer items-center justify-between gap-2 text-[11px] font-bold">
+            <span>Offer terms & CTA <span className="font-normal text-[#9CA3AF]">(optional)</span></span>
+            <ChevronDown size={14} className="slbi-caption-chevron"/>
+          </summary>
           <textarea rows={2} maxLength={300} value={conditions} onChange={e=>setConditions(e.target.value)}
             placeholder="Only genuine terms or valid dates" className={field+' mt-3'}/>
           <input maxLength={180} value={cta} onChange={e=>setCta(e.target.value)}
