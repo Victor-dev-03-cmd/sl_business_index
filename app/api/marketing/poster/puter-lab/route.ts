@@ -126,6 +126,7 @@ export async function POST(request:Request){
         userRequest:prompt.trim(),facts,preferredLanguage:language as 'ta'|'si'|'en',
         format:format as 'square'|'portrait'|'story'|'landscape',
         campaignStyle:typeof body.campaignStyle==='string'?body.campaignStyle.slice(0,80):'',
+        referenceContext:typeof body.referenceContext==='string'?body.referenceContext.slice(0,850):'',
         // Only a vendor-reviewed field may justify this numeric offer.
         approvedOffer:typeof body.approvedOffer==='string'?body.approvedOffer.slice(0,60):'',
       });

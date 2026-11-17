@@ -20,7 +20,8 @@ import Link from 'next/link';
 import Script from 'next/script';
 import {
   ArrowLeft,ArrowRight,CheckCircle2,Download,FlaskConical,
-  LoaderCircle,Mic,SquarePen,StopCircle,WandSparkles,Shuffle,
+  FileText,Image as ImageIcon,LoaderCircle,Mic,Pause,Play,Plus,
+  Send,SquarePen,WandSparkles,Shuffle,X,
 } from 'lucide-react';
 import {POSTER_FORMATS,type PosterFormat} from '@/lib/marketing/poster-design';
 import {
@@ -29,6 +30,10 @@ import {
 } from '@/lib/marketing/puter-poster-composer';
 import type {PosterBusinessFacts,PosterIntelligenceBrief} from '@/lib/marketing/poster-gemini-intelligence';
 import {saveLinkedPoster} from '@/lib/marketing/caption-poster-handoff';
+import {
+  isPosterReferenceImage,posterReferenceFormData,preparePosterReferencePng,
+  validatePosterReferences,withPosterReferenceSummary,
+} from '@/lib/marketing/poster-composer-attachments';
 import {
   STARTER_COPY,isPosterCopyInLanguage,isPosterTextInLanguage,isNaturalEnglishOffer,
   starterHeadline,localizedPercentOffer,posterLanguageName,
@@ -99,7 +104,13 @@ export default function PuterMultilingualPosterLab(){
   const [brief,setBrief]=useState<PosterIntelligenceBrief|null>(null);
   const [briefKey,setBriefKey]=useState('');
   const [geminiBusy,setGeminiBusy]=useState(false);
+  const [referenceFiles,setReferenceFiles]=useState<File[]>([]);
+  const [referenceSummary,setReferenceSummary]=useState('');
+  const [referenceBusy,setReferenceBusy]=useState(false);
+  const [useAttachedImage,setUseAttachedImage]=useState(false);
   const [recording,setRecording]=useState(false);
+  const [voicePaused,setVoicePaused]=useState(false);
+  const [voiceLevels,setVoiceLevels]=useState<number[]>(()=>Array.from({length:35},()=>5));
   const [recordingSeconds,setRecordingSeconds]=useState(0);
   const [transcribing,setTranscribing]=useState(false);
   const [realMode,setRealMode]=useState(false);
@@ -116,13 +127,18 @@ export default function PuterMultilingualPosterLab(){
   const recorderRef=useRef<MediaRecorder|null>(null);
   const streamRef=useRef<MediaStream|null>(null);
   const clockRef=useRef<ReturnType<typeof setInterval>|null>(null);
+  const attachInputRef=useRef<HTMLInputElement|null>(null);
+  const discardVoiceRef=useRef(false);
+  const voiceAudioRef=useRef<AudioContext|null>(null);
+  const voiceFrameRef=useRef<number|null>(null);
   const finalUrlRef=useRef('');
   const selectedReference=getPosterReferenceStyle(selectedReferenceId);
   const selectedPremiumStyle=selectedReference?.id||'modern';
   const typographyPreset=resolvePremiumPosterPreset(selectedPremiumStyle);
   const business=businesses.find(b=>b.id===businessId);
   const facts=business?.facts;
-  const currentKey=businessId+'|'+language+'|'+prompt.trim();
+  const currentKey=businessId+'|'+language+'|'+prompt.trim()+'|'+referenceSummary;
+  const attachedImage=referenceFiles.find(isPosterReferenceImage)||null;
   const currentBrief=brief&&briefKey===currentKey?brief:null;
   const currentBlueprint=blueprint&&blueprintKey===currentKey?blueprint:null;
   const activeDesign=useMemo<VerifiedPosterDesign|null>(()=>designOverride||
@@ -163,6 +179,41 @@ export default function PuterMultilingualPosterLab(){
     return()=>clearInterval(timer);
   },[generationStage]);
 
+  const clearReferenceSummary=()=>{
+    setReferenceSummary('');
+    setBlueprint(null);setBlueprintKey('');setBrief(null);setBriefKey('');
+  };
+  const attachReferences=(incoming:FileList|null)=>{
+    if(!incoming?.length)return;
+    const result=validatePosterReferences(referenceFiles,Array.from(incoming));
+    if(!result.ok){setError(result.error);return;}
+    setReferenceFiles(result.files);clearReferenceSummary();setError('');
+    setStatus(result.files.length+' reference attachment(s) ready. Select Analyze references to include their context in Gemini.');
+  };
+  const removeReference=(index:number)=>{
+    setReferenceFiles(previous=>previous.filter((_,i)=>i!==index));
+    setUseAttachedImage(false);clearReferenceSummary();
+  };
+  const analyzeReferences=async()=>{
+    if(referenceBusy||!businessId||!referenceFiles.length)return;
+    const validation=validatePosterReferences([],referenceFiles);
+    if(!validation.ok){setError(validation.error);return;}
+    setReferenceBusy(true);setError('');
+    setStatus('Gemini is analyzing attached image and document references…');
+    try{
+      const res=await fetch('/api/marketing/poster/references/analyze',{
+        method:'POST',...reqOptions,
+        body:posterReferenceFormData(businessId,referenceFiles),
+      });
+      const data=await res.json() as ApiError&{summary?:string;referenceOnly?:boolean};
+      if(!res.ok||!data.summary||data.referenceOnly!==true)
+        throw Error(data.error||'Could not analyze attached references.');
+      setReferenceSummary(data.summary.slice(0,850));
+      setBrief(null);setBriefKey('');setBlueprint(null);setBlueprintKey('');
+      setStatus('Reference summary ready. Your documents and images were not stored in SLBI cloud storage.');
+    }catch(e){setError(errorMessage(e));setStatus('Reference analysis was not applied. You can still use your original prompt.');}
+    finally{setReferenceBusy(false);void refreshGeminiQuota();}
+  };
   const chooseSuggestion=(suggestion:{id:string;label:string;prompt:string})=>{
     // Chips stage the owner's idea only; NEVER invoke Gemini or paid Puter.
     setSelectedSuggestionId(suggestion.id);
@@ -189,13 +240,36 @@ export default function PuterMultilingualPosterLab(){
     setStatus(reference.name+' selected. The look is applied on your NEXT Generate; no paid AI call happened.');
   };
 
+  const cleanVoiceMeter=useCallback(()=>{
+    if(voiceFrameRef.current!==null)cancelAnimationFrame(voiceFrameRef.current);
+    voiceFrameRef.current=null;
+    if(voiceAudioRef.current){
+      void voiceAudioRef.current.close().catch(()=>{});
+      voiceAudioRef.current=null;
+    }
+  },[]);
   const stopVoice=useCallback(()=>{
     if(clockRef.current){clearInterval(clockRef.current);clockRef.current=null;}
-    if(recorderRef.current?.state==='recording')recorderRef.current.stop();
+    const recorder=recorderRef.current;
+    if(recorder&&(recorder.state==='recording'||recorder.state==='paused'))recorder.stop();
     streamRef.current?.getTracks().forEach(track=>track.stop());
-    streamRef.current=null;setRecording(false);
-  },[]);
-
+    streamRef.current=null;setRecording(false);setVoicePaused(false);
+    cleanVoiceMeter();
+  },[cleanVoiceMeter]);
+  const cancelVoice=()=>{
+    discardVoiceRef.current=true;stopVoice();
+    setStatus('Voice recording discarded. Your original campaign brief is unchanged.');
+  };
+  const pauseVoice=()=>{
+    const rec=recorderRef.current;
+    if(rec?.state==='recording'){
+      rec.pause();setVoicePaused(true);
+      setStatus('Recording paused. Resume or send to transcribe.');
+    }else if(rec?.state==='paused'){
+      rec.resume();setVoicePaused(false);
+      setStatus('Recording resumed. Tap Send when you are done.');
+    }
+  };
   const refreshGeminiQuota=useCallback(async()=>{
     try{
       const res=await fetch('/api/marketing/poster/puter-lab?quota=1',reqOptions);
@@ -220,7 +294,10 @@ export default function PuterMultilingualPosterLab(){
       .finally(()=>{if(!controller.signal.aborted)setLoadingBusiness(false);});
     return()=>controller.abort();
   },[]);
-  useEffect(()=>()=>{stopVoice();if(finalUrlRef.current)URL.revokeObjectURL(finalUrlRef.current);},[stopVoice]);
+  useEffect(()=>()=>{
+    discardVoiceRef.current=true;stopVoice();
+    if(finalUrlRef.current)URL.revokeObjectURL(finalUrlRef.current);
+  },[stopVoice]);
 
   const exactCopy=useMemo<ExactPosterCopy|null>(()=>facts?{
     businessName:facts.name,
@@ -282,7 +359,7 @@ export default function PuterMultilingualPosterLab(){
       const data=await res.json() as ApiError&{transcript?:string};
       if(!res.ok||!data.transcript)throw Error(data.error||'Gemini could not transcribe the recording.');
       const heard=data.transcript.trim();
-      setPrompt(prev=>[prev,heard].filter(Boolean).join(' ').slice(0,1200));
+      setPrompt(prev=>[prev===samplePrompt?'':prev,heard].filter(Boolean).join(' ').slice(0,1200));
       const explicit=extractExplicitPercentage(heard);
       if(explicit&&!manualOffer)setOffer(localizedPercentOffer(explicit,language));
       setBrief(null);setBriefKey('');
@@ -291,8 +368,7 @@ export default function PuterMultilingualPosterLab(){
     finally{setTranscribing(false);void refreshGeminiQuota();}
   };
   const startVoice=async()=>{
-    if(recording){stopVoice();return;}
-    if(generating||geminiBusy||transcribing)return;
+    if(recording||generating||geminiBusy||transcribing||referenceBusy)return;
     if(!window.isSecureContext||!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined'){
       setError('Voice requires a supported browser and HTTPS. You can type your prompt instead.');return;
     }
@@ -302,51 +378,88 @@ export default function PuterMultilingualPosterLab(){
     };
     const allowed=policy.permissionsPolicy?.allowsFeature('microphone') ??
       policy.featurePolicy?.allowsFeature('microphone');
-    if(allowed===false){setError('Microphone blocked by Permissions-Policy. Reload and retry.');return;}
+    if(allowed===false){
+      setError('Microphone is blocked by this page. Reload and enable it in browser site settings.');return;
+    }
     try{
       setError('');
+      // Browser permission is requested only on a direct user click.
       const stream=await navigator.mediaDevices.getUserMedia({audio:true});
       const mime=['audio/webm;codecs=opus','audio/webm','audio/mp4']
         .find(v=>MediaRecorder.isTypeSupported(v));
       const rec=new MediaRecorder(stream,mime?{mimeType:mime}:undefined);
-      streamRef.current=stream;recorderRef.current=rec;
+      streamRef.current=stream;recorderRef.current=rec;discardVoiceRef.current=false;
       const chunks:BlobPart[]=[];
       rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
       rec.onstop=()=>{
         stream.getTracks().forEach(t=>t.stop());
         streamRef.current=null;recorderRef.current=null;
-        if(clockRef.current)clearInterval(clockRef.current);
-        setRecording(false);
-        if(chunks.length)void transcribe(new Blob(chunks,{type:rec.mimeType}));
+        if(clockRef.current){clearInterval(clockRef.current);clockRef.current=null;}
+        cleanVoiceMeter();setRecording(false);setVoicePaused(false);
+        if(discardVoiceRef.current)return;
+        const blob=new Blob(chunks,{type:rec.mimeType||'audio/webm'});
+        if(blob.size<800){setError('No usable audio. Speak for a few seconds and tap Send.');return;}
+        void transcribe(blob);
       };
-      rec.onerror=()=>{setError('Microphone failed. Please type your message.');stopVoice();};
-      rec.start(250);setRecordingSeconds(0);setRecording(true);
-      clockRef.current=setInterval(()=>setRecordingSeconds(n=>n+1),1000);
-      setStatus('Listening. Stop recording when you finish; the 1.5 MB Gemini audio limit still applies.');
+      rec.onerror=()=>{
+        discardVoiceRef.current=true;
+        setError('Microphone failed. Check your device, then try again.');
+        stopVoice();
+      };
+      rec.start(250);setRecordingSeconds(0);setVoicePaused(false);setRecording(true);
+      clockRef.current=setInterval(()=>{
+        if(rec.state==='recording')setRecordingSeconds(n=>n+1);
+      },1000);
+      // Real microphone amplitude, not a misleading synthetic audio animation.
+      // Metering stays entirely in the browser and is stopped after recording.
+      try{
+        const audio=new AudioContext();
+        voiceAudioRef.current=audio;
+        const analyser=audio.createAnalyser();analyser.fftSize=128;
+        const source=audio.createMediaStreamSource(stream);source.connect(analyser);
+        const bins=new Uint8Array(analyser.frequencyBinCount);
+        let lastUpdate=0;
+        const tick=(now:number)=>{
+          if(rec.state==='recording'&&now-lastUpdate>=90){
+            lastUpdate=now;
+            analyser.getByteFrequencyData(bins);
+            setVoiceLevels(Array.from({length:35},(_,i)=>{
+              const bin=bins[Math.min(bins.length-1,Math.floor(i*bins.length/35))];
+              return Math.max(5,Math.min(37,Math.round(5+bin/255*32)));
+            }));
+          }
+          if(rec.state!=='inactive')voiceFrameRef.current=requestAnimationFrame(tick);
+        };
+        voiceFrameRef.current=requestAnimationFrame(tick);
+      }catch{/* Recording stays usable even if live audio metering is unavailable. */}
+      setStatus('Recording. Pause or tap Send to transcribe in your original language.');
     }catch(e){
+      streamRef.current?.getTracks().forEach(t=>t.stop());
+      streamRef.current=null;recorderRef.current=null;cleanVoiceMeter();
       const name=e instanceof Error?e.name:'';
       setError(name==='NotAllowedError'||name==='SecurityError'?
         'Microphone permission denied. Chrome site controls → Microphone → Allow, then retry.':
+        name==='NotFoundError'?'No microphone detected. Check your recording device.':
         'Unable to open microphone. Check your recording device or type instead.');
     }
   };
   const prepareWithGemini=async()=>{
     if(!businessId||prompt.trim().length<5){setError('Choose a business and enter a prompt.');return;}
-    if(geminiBusy||recording||transcribing||generating)return;
+    if(geminiBusy||recording||transcribing||generating||referenceBusy)return;
     setGeminiBusy(true);setError('');setStatus('Gemini is understanding your campaign and verified business facts…');
     const forKey=currentKey;
     try{
       const res=await fetch('/api/marketing/poster/puter-lab',{
         method:'POST',...reqOptions,headers:{'Content-Type':'application/json'},
         body:JSON.stringify({
-          businessId,prompt:prompt.trim(),language,
+          businessId,prompt:prompt.trim(),referenceContext:referenceSummary,language,
           format,mode:'blueprint',campaignStyle:selectedSuggestionId,
           approvedOffer:manualOffer?offer.trim():'',
         }),
       });
       const data=await res.json() as BriefResponse;
       if(!res.ok)throw Error(data.error||'Gemini could not prepare this design blueprint.');
-      if(forKey!==businessId+'|'+language+'|'+prompt.trim())return;
+      if(forKey!==businessId+'|'+language+'|'+prompt.trim()+'|'+referenceSummary)return;
       if(data.blueprint){
         // Dual-output: creative art direction + reviewed typography JSON.
         // Business contacts always remain from the selected verified listing.
@@ -382,7 +495,7 @@ export default function PuterMultilingualPosterLab(){
   const generate=async()=>{
     if(!sdkReady||!window.puter){setError('Puter.js is not ready. Reload and retry.');return;}
     if(!facts||!businessId){setError('Choose a verified owned business first.');return;}
-    if(recording||transcribing||geminiBusy||generating)return;
+    if(recording||transcribing||geminiBusy||generating||referenceBusy)return;
     if(prompt.trim().length<5||!headline.trim()){
       setError('Enter your campaign idea and an exact headline for the poster.');return;
     }
@@ -394,7 +507,7 @@ export default function PuterMultilingualPosterLab(){
     if(realMode&&!consent){setError('Please explicitly confirm possible Puter charges.');return;}
     setGenerating(true);setComposing(false);setError('');
     setGenerationStage('connecting');setEstimatedProgress(7);
-    setStatus('Signing in to Puter and generating text-free artwork…');
+    setStatus('SLBI Image Generator is preparing your poster artwork…');
     try{
       const puter=window.puter;
       // Official Puter browser SDK persists its own session. Do not reopen the
@@ -404,7 +517,7 @@ export default function PuterMultilingualPosterLab(){
       const styleDirection=selectedReference?.artDirection||typographyPreset.artDirective;
       const briefDirection=currentBlueprint?.imagePrompt||currentBrief?.creativeDirectionEnglish;
       const creative=buildArtOnlyPrompt({
-        request:prompt.trim(),styleDirection,creativeDirection:briefDirection,
+        request:withPosterReferenceSummary(prompt,referenceSummary),styleDirection,creativeDirection:briefDirection,
         businessCategory:facts.category,city:facts.city,
         brandColor:facts.primaryColor||'#F7B45C',format,
       });
@@ -417,15 +530,17 @@ export default function PuterMultilingualPosterLab(){
         options.ratio=ratioFor(format);
       // No reference uploads by default; the user must opt in independently.
       // Puter supports input_images for all image providers (PNG Blob).
-      if(sendReferenceImage&&selectedReference)
+      if(useAttachedImage&&attachedImage)
+        options.input_images=[await preparePosterReferencePng(attachedImage)];
+      else if(sendReferenceImage&&selectedReference)
         options.input_images=[await originalReferencePng(selectedReference.thumbnail)];
       const image=await puter.ai.txt2img(creative,options);
       if(!image?.src||typeof image.src!=='string')
         throw Error('Puter returned no image. No printable poster was prepared.');
       setArtworkSrc(image.src);setImageRevision(n=>n+1);setIsRealOutput(realMode);
       setGenerationStage('typography');setEstimatedProgress(94);setBrowseReferences(false);
-      setStatus(realMode?'Puter artwork returned. Composing exact approved copy…':
-        'Puter sample returned. Composing a sample poster at exact size…');
+      setStatus(realMode?'SLBI artwork ready. Applying your exact approved copy…':
+        'Sample artwork ready. Composing a sample poster at exact size…');
     }catch(e){setGenerationStage('error');setError(errorMessage(e));setStatus('Generation failed; previous poster remains available.');}
     finally{setGenerating(false);}
   };
@@ -455,7 +570,7 @@ export default function PuterMultilingualPosterLab(){
       window.location.assign('/vendor/marketing/captions?handoff='+encodeURIComponent(id));
     }catch(e){setError(errorMessage(e));setLinkingCaption(false);}
   };
-  const locked=generating||geminiBusy||transcribing||recording;
+  const locked=generating||geminiBusy||transcribing||recording||referenceBusy;
   return <main className="mx-auto flex w-full max-w-[1620px] flex-col gap-3 px-3 py-3 text-[#292327] sm:px-5 xl:h-[calc(100dvh-9.5rem)] xl:min-h-0 xl:overflow-hidden xl:py-2">
     <Script src="https://js.puter.com/v2/" strategy="afterInteractive"
       onReady={()=>setSdkReady(true)}
@@ -492,6 +607,7 @@ export default function PuterMultilingualPosterLab(){
             <select id="puter-business" value={businessId} disabled={locked||loadingBusiness}
               onChange={e=>{
                 setBusinessId(e.target.value);setBrief(null);setBriefKey('');
+                setReferenceFiles([]);setReferenceSummary('');setUseAttachedImage(false);
                 setArtworkSrc('');setFinalBlob(null);setFinalUrl('');
                 setHeadline(starterHeadline(language,selectedReferenceId));setOffer('');
                 setCta(STARTER_COPY[language].cta);
@@ -537,13 +653,112 @@ export default function PuterMultilingualPosterLab(){
               </select>
             </div>
           </div>
+          {/* Attached media, prompt and dictation share one compact composer. */}
           <div>
-            <label htmlFor="puter-prompt" className="mb-1.5 block text-[11px] font-bold">Describe your poster / Gemini voice transcript</label>
-            <textarea id="puter-prompt" value={prompt} disabled={locked} rows={5} maxLength={1200}
-              onChange={e=>{setPrompt(e.target.value);setBrief(null);setBriefKey('');
-                setBlueprint(null);setBlueprintKey('');}}
-              placeholder="தமிழ் · සිංහල · English · Tanglish — describe your campaign."
-              className="max-h-[190px] min-h-[110px] w-full resize-none rounded-xl border border-[#E4DDDA] bg-[#FDFBF9] p-3 text-[12px] leading-5 outline-none focus:border-[#EC9D68]"/>
+            <label htmlFor="puter-prompt" className="mb-1.5 block text-[11px] font-bold">
+              Describe your poster / voice transcript
+            </label>
+            <div className="overflow-hidden rounded-2xl border border-[#E5DDD7] bg-[#FDFBF9] transition-colors focus-within:border-[#F3A56D] focus-within:ring-2 focus-within:ring-[#F97316]/10">
+              <textarea id="puter-prompt" value={prompt} disabled={locked} rows={5} maxLength={1200}
+                onChange={e=>{setPrompt(e.target.value);setBrief(null);setBriefKey('');
+                  setBlueprint(null);setBlueprintKey('');}}
+                placeholder="தமிழ் · සිංහල · English · Tanglish — describe your campaign."
+                className="max-h-[190px] min-h-[110px] w-full resize-none border-0 bg-transparent px-3.5 pt-3.5 pb-1 text-[12px] leading-5 outline-none disabled:opacity-60"/>
+              {referenceFiles.length>0&&<div className="flex flex-wrap gap-1.5 px-3 pb-2"
+                aria-label="Attached reference files">
+                {referenceFiles.map((file,index)=><div key={file.name+'-'+index}
+                  className="inline-flex max-w-full items-center gap-1.5 rounded-lg border border-[#E8DDD4] bg-white px-2 py-1.5 text-[10px] font-semibold text-[#584A45]">
+                  {isPosterReferenceImage(file)?<ImageIcon size={13} className="shrink-0 text-[#AD6B38]"/>:
+                    <FileText size={13} className="shrink-0 text-[#AD6B38]"/>}
+                  <span className="max-w-[125px] truncate" title={file.name}>{file.name}</span>
+                  <button type="button" aria-label={'Remove '+file.name}
+                    disabled={locked} onClick={()=>removeReference(index)}
+                    className="rounded p-0.5 text-[#897770] hover:bg-[#F4EDE7] disabled:opacity-40">
+                    <X size={12}/>
+                  </button>
+                </div>)}
+              </div>}
+              {referenceSummary&&<details className="mx-3 mb-2 rounded-lg border border-[#DCEBDD] bg-[#F4FBF4] px-2.5 py-2 text-[10px] text-[#3D6546]">
+                <summary className="cursor-pointer font-semibold">References analyzed · View creative context</summary>
+                <p className="mt-1.5 whitespace-pre-wrap leading-4">{referenceSummary}</p>
+              </details>}
+              {recording?<div role="status" aria-label="Recording voice message"
+                className="mx-2.5 mb-2.5 flex min-w-0 items-center gap-2 rounded-xl bg-[#242124] px-2.5 py-2.5 text-white">
+                <button type="button" onClick={cancelVoice} aria-label="Discard voice recording" title="Discard recording"
+                  className="flex size-8 shrink-0 items-center justify-center rounded-full border border-white/20 hover:bg-white/10">
+                  <X size={17}/>
+                </button>
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                  <div className="flex h-9 items-center justify-between gap-[2px] overflow-hidden"
+                    aria-label="Live microphone waveform">
+                    {voiceLevels.map((level,i)=><span key={i}
+                      className={'w-[3px] min-w-[2px] flex-1 rounded-full transition-[height] duration-75 '+
+                        (voicePaused?'bg-white/40':'bg-[#FDBA74]')}
+                      style={{height:voicePaused?5:level}}/>)}
+                  </div>
+                  <p className="text-center text-[9px] tabular-nums text-[#E9D9CE]">
+                    {voicePaused?'Paused':'Recording'} · {Math.floor(recordingSeconds/60).toString().padStart(2,'0')}:
+                    {(recordingSeconds%60).toString().padStart(2,'0')}
+                  </p>
+                </div>
+                <button type="button" onClick={pauseVoice} title={voicePaused?'Resume recording':'Pause recording'}
+                  aria-label={voicePaused?'Resume voice recording':'Pause voice recording'}
+                  className="flex size-8 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 hover:bg-white/20">
+                  {voicePaused?<Play size={15}/>:<Pause size={15}/>}
+                </button>
+                <button type="button" onClick={()=>stopVoice()} aria-label="Send recording to transcript"
+                  title="Send to Gemini transcription"
+                  className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#F97316] text-white hover:bg-[#EA580C]">
+                  <Send size={16}/>
+                </button>
+              </div>:<div className="flex items-center justify-between gap-2 border-t border-[#EEE5DE] px-2.5 py-2">
+                <div className="flex min-w-0 items-center gap-1.5">
+                  <input ref={attachInputRef} type="file"
+                    accept="image/png,image/jpeg,image/webp,application/pdf,text/plain,text/markdown,.png,.jpg,.jpeg,.webp,.pdf,.txt,.md"
+                    multiple className="sr-only" aria-label="Attach images or documents"
+                    onChange={e=>{attachReferences(e.currentTarget.files);e.currentTarget.value='';}}/>
+                  <button type="button" onClick={()=>attachInputRef.current?.click()}
+                    disabled={locked||referenceFiles.length>=4||!businessId}
+                    aria-label="Attach images or documents" title="Attach images, PDF or text documents"
+                    className="flex size-8 items-center justify-center rounded-full border border-[#E8DDD3] bg-white text-[#594D47] transition-colors hover:border-[#F3A56D] hover:text-[#C65C19] disabled:opacity-40">
+                    <Plus size={17}/>
+                  </button>
+                  {referenceFiles.length>0&&<button type="button" onClick={()=>void analyzeReferences()}
+                    disabled={locked||!businessId} title="Analyze image / document references with Gemini (uses shared allowance)"
+                    aria-label="Analyze attached references with Gemini"
+                    className="inline-flex items-center gap-1 rounded-lg border border-[#E8DDD3] bg-white px-2 py-1.5 text-[10px] font-semibold text-[#A95B28] disabled:opacity-40">
+                    {referenceBusy?<LoaderCircle size={13} className="animate-spin"/>:<FileText size={13}/>}
+                    Analyze {referenceFiles.length}
+                  </button>}
+                </div>
+                <div className="flex shrink-0 items-center gap-1.5">
+                  {transcribing?<span role="status" aria-live="polite"
+                    className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-[#AC5F2A]">
+                    <LoaderCircle size={14} className="animate-spin"/> Transcribing…
+                  </span>:<button type="button" onClick={()=>void startVoice()} disabled={locked||!businessId}
+                    aria-label="Record voice message" title="Record voice message"
+                    className="flex size-8 items-center justify-center rounded-full border border-[#E8DDD3] bg-white text-[#594D47] hover:border-[#F3A56D] hover:text-[#C65C19] disabled:opacity-40">
+                    <Mic size={17}/>
+                  </button>}
+                  <button type="button" onClick={()=>void prepareWithGemini()}
+                    disabled={locked||!businessId||prompt.trim().length<5}
+                    aria-label="Prepare poster with Gemini" title="Prepare art direction and typography with Gemini"
+                    className="flex size-8 items-center justify-center rounded-full bg-[#262126] text-white hover:bg-[#493B3E] disabled:bg-[#E7E1DD] disabled:text-[#AAA19B]">
+                    {geminiBusy?<LoaderCircle size={16} className="animate-spin"/>:
+                      <WandSparkles size={16}/>}
+                  </button>
+                </div>
+              </div>}
+            </div>
+            {attachedImage&&<label className="mt-2 flex items-start gap-2 rounded-lg bg-[#F8F4F0] p-2 text-[10px] leading-4 text-[#75655B]">
+              <input type="checkbox" checked={useAttachedImage} disabled={locked}
+                onChange={e=>setUseAttachedImage(e.target.checked)} className="mt-0.5 accent-[#F97316]"/>
+              <span>Use the first attached image as an artwork reference on Generate.
+                Off by default; documents are never sent to the image model.</span>
+            </label>}
+            {referenceFiles.length>0&&!referenceSummary&&<p className="mt-1.5 text-[10px] leading-4 text-[#8C7E75]">
+              Files stay on this device until you select Analyze. Analysis uses one Gemini voice/brief request.
+            </p>}
           </div>
           <div className="space-y-1.5">
             <div className="flex items-center justify-between gap-2">
@@ -563,21 +778,6 @@ export default function PuterMultilingualPosterLab(){
               </button>)}
             </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" disabled={generating||geminiBusy||transcribing||!businessId}
-              onClick={()=>void startVoice()}
-              className={'inline-flex items-center justify-center gap-1.5 rounded-xl border px-3 py-2 text-[11px] font-bold disabled:opacity-40 '+
-                (recording?'border-red-300 bg-red-50 text-red-700':'border-[#E6DED9] bg-white')}>
-              {recording?<StopCircle size={15}/>:<Mic size={15}/>}
-              {recording?'Stop ('+recordingSeconds+'s)':'Voice message'}
-            </button>
-            <button type="button" disabled={locked||!businessId||prompt.trim().length<5}
-              onClick={()=>void prepareWithGemini()}
-              className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#292328] px-3 py-2 text-[11px] font-bold text-white disabled:opacity-40">
-              {geminiBusy?<LoaderCircle size={15} className="animate-spin"/>:<WandSparkles size={15}/>}
-              Prepare with Gemini
-            </button>
-          </div>
           {(currentBrief||currentBlueprint)&&<div className="flex items-start gap-1.5 rounded-xl border border-[#DDE8DC] bg-[#F5FAF5] p-2 text-[11px] leading-4 text-[#4C6951]">
             <CheckCircle2 size={13} className="mt-0.5 shrink-0"/>
             Gemini {currentBlueprint?'art direction + typography blueprint':'brief'} prepared. Review exact headline, offer and CTA in the right panel.
@@ -594,20 +794,20 @@ export default function PuterMultilingualPosterLab(){
             </p>
           </div>}
           <p className="text-[10px] leading-4 text-[#958681]">
-            Voice stops manually. Gemini transcript stays editable; audio limit 1.5 MB.
-            It never automatically triggers a paid image call.
+            Tap the mic to record, pause/resume, then Send to transcribe. Your transcript stays editable.
+            Audio limit: 1.5 MB. Recording never triggers image generation.
           </p>
         </div>
         <div className="shrink-0 space-y-2 border-t border-[#EEE8E5] bg-[#FDFBF9] p-3">
           <label className="flex items-center gap-2 text-[11px] font-bold">
             <input type="checkbox" checked={realMode} disabled={locked}
               onChange={e=>{setRealMode(e.target.checked);setConsent(false);}}/>
-            Use real Puter image generation
+            Use SLBI Image Generator
           </label>
           {realMode?<label className="flex items-start gap-2 text-[10px] font-semibold leading-4 text-[#A45C23]">
             <input type="checkbox" checked={consent} disabled={locked}
               onChange={e=>setConsent(e.target.checked)}/>
-            I understand this uses my Puter AI balance and may create a charge.
+            I understand SLBI currently renders real images through my connected Puter account, which may charge its own AI balance.
           </label>:<p className="text-[10px] leading-4 text-[#8C7F79]">
             Default is a no-credit sample, not a real AI quality test.
           </p>}
@@ -615,7 +815,7 @@ export default function PuterMultilingualPosterLab(){
             disabled={locked||!sdkReady||!facts||prompt.trim().length<5||!headline.trim()||(realMode&&!consent)}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#262126] px-3 py-3 text-[11px] font-bold text-white disabled:opacity-40">
             {generating?<LoaderCircle size={16} className="animate-spin"/>:<FlaskConical size={16}/>}
-            {generating?'Generating artwork…':realMode?'Generate real poster with Puter':'Generate no-credit poster sample'}
+            {generating?'Generating artwork…':realMode?'Generate with SLBI Image Generator':'Preview poster sample'}
           </button>
         </div>
       </section>

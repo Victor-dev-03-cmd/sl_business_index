@@ -81,7 +81,7 @@ test('approved poster image is never fictional and final PNG remains local and p
   assert.match(ui,/review.*headline/i);
   assert.match(ui,/finalBlob/);
   assert.match(ui,/anchor\.download/);
-  assert.match(ui,/Generate no-credit poster sample/);
+  assert.match(ui,/Preview poster sample/);
   assert.match(composer,/canvas\.width=d\.width;canvas\.height=d\.height/);
   assert.match(composer,/canvas\.toBlob/);
   assert.doesNotMatch(ui,/drawPoster\(|EditableTextLayer|Your manual poster editor/);

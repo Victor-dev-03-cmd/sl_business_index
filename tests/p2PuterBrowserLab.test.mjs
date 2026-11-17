@@ -29,10 +29,10 @@ test('Gemini voice transcription is human-review only, with scoped mic policy',(
   assert.match(lab,/navigator\.mediaDevices\.getUserMedia\(\{audio:true\}\)/);
   assert.match(lab,/rec\.start\(250\)/);
   assert.match(lab,/stopVoice\(\)/);
-  assert.match(lab,/transcribe\(new Blob\(chunks/);
+  assert.match(lab,/void transcribe\(blob\)/);
   assert.match(lab,/\/api\/marketing\/poster\/transcribe/);
   assert.match(lab,/x-slbi-business-id/);
-  assert.match(lab,/setPrompt\(prev=>\[prev,heard\]/);
+  assert.match(lab,/setPrompt\(prev=>\[prev===samplePrompt\?'':prev,heard\]/);
   assert.match(lab,/const maxAudio=1_500_000/);
   assert.match(voice,/reviewBeforeGenerating:true/);
   assert.match(voice,/GEMINI_POSTER_MODEL/);
@@ -63,8 +63,8 @@ test('Puter User-Pays action remains explicit, no API token, no SLBI credits',()
   assert.match(lab,/realMode&&!consent/);
   assert.match(lab,/setRealMode\(e\.target\.checked\);setConsent\(false\)/);
   assert.match(lab,/onClick=\{\(\)=>void generate\(\)\}/);
-  assert.match(lab,/Generate no-credit poster sample/);
-  assert.match(lab,/may create a charge/);
+  assert.match(lab,/Preview poster sample/);
+  assert.match(lab,/may charge its own AI balance/);
   assert.doesNotMatch(lab,/storage\.from|marketing_poster_reserve|growth_credits|localStorage/);
 });
 test('canvas composes all four exact sizes with Unicode font shaping',()=>{
@@ -191,7 +191,7 @@ test('reference images are transferred only with explicit user opt-in as PNG Blo
   assert.match(lab,/puter\.ai\.txt2img\(creative,options\)/);
   assert.match(lab,/setSendReferenceImage\(false\)/);
   assert.match(lab,/getPosterReferenceStyle\(selectedReferenceId\)/);
-  assert.match(lab,/request:prompt\.trim\(\),styleDirection,creativeDirection:briefDirection/);
+  assert.match(lab,/request:withPosterReferenceSummary\(prompt,referenceSummary\),styleDirection,creativeDirection:briefDirection/);
   assert.doesNotMatch(lab,/NEXT_PUBLIC_UNSPLASH_KEY|PEXELS_API_KEY|google\.com\/search/);
 });
 
@@ -279,7 +279,7 @@ test('user requirements win over season and Gemini style, with no model-drawn fa
   assert.match(compose,/No extra pumpkins, moons, trees, fireworks/);
   assert.match(p,/If the owner requested a specific hero/);
   assert.match(compose,/no AI-generated words, letters, numerals/);
-  assert.match(lab,/request:prompt\.trim\(\),styleDirection,creativeDirection:briefDirection/);
+  assert.match(lab,/request:withPosterReferenceSummary\(prompt,referenceSummary\),styleDirection,creativeDirection:briefDirection/);
   assert.match(lab,/setBrief\(null\);setBriefKey\(''\)/);
 });
 test('reuse Puter login in active SDK session rather than presenting popup every generation',()=>{
@@ -537,7 +537,7 @@ test('production polish removes only sandbox UI, never owner-only authorization 
   assert.match(api,/isPosterInternalQAAccount/);
   assert.match(api,/only to the internal QA owner/);
   assert.match(lab,/realMode&&!consent/);
-  assert.match(lab,/I understand this uses my Puter AI balance and may create a charge/);
+  assert.match(lab,/connected Puter account, which may charge its own AI balance/);
 });
 test('stale English fields can no longer be silently exported on Tamil or Sinhala selection',()=>{
   assert.match(lab,/copyLanguageConsistent=isPosterCopyInLanguage/);
