@@ -4,10 +4,10 @@ import './caption-fonts.css';
 import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import Link from 'next/link';
 import {
-  ArrowLeft,ArrowRight,Check,CheckCircle2,Copy,
+  ArrowLeft,ArrowRight,Check,CheckCircle2,ChevronDown,Copy,
   Download,Facebook,Instagram,Image as ImageIcon,Info,LoaderCircle,Mic,
-  Plus,RefreshCcw,Send,SlidersHorizontal,Sparkles,
-  StopCircle,Volume2,WandSparkles,
+  Pause,Play,Plus,RefreshCcw,Send,SlidersHorizontal,Sparkles,
+  Volume2,WandSparkles,X,
 } from 'lucide-react';
 import {supabase} from '@/lib/supabaseClient';
 import type {CaptionLanguage} from '@/lib/marketing/caption-contract';
@@ -27,6 +27,7 @@ import {
 type Business={id:string;name:string;city:string|null;category:string;phone:string|null;website_url:string|null;address:string|null};
 type StoredDraft={id:string;business_id?:string;caption:string;language:CaptionLanguage;review_status:string;created_at?:string};
 type ApiBody={error?:string;draft?:StoredDraft;drafts?:StoredDraft[];chargedCredits?:number};
+type GeminiQuota={used:number;limit:number;remaining:number;dayUtc:string};
 const uuid=/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i;
 const field='w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-3 text-[12px] text-[#1F2937] outline-none transition focus:border-[#FB923C] focus:ring-2 focus:ring-[#F97316]/10';
 const panel='min-w-0 rounded-2xl border border-[#E5E7EB] bg-white shadow-[0_7px_24px_rgba(17,24,39,.035)]';
@@ -108,16 +109,36 @@ export default function ConnectedCaptionLab(){
   const [requestingMic,setRequestingMic]=useState(false);
   const [voicePermissionHelp,setVoicePermissionHelp]=useState(false);
   const [voiceBusy,setVoiceBusy]=useState(false);
+  const [voicePaused,setVoicePaused]=useState(false);
+  const [voiceSeconds,setVoiceSeconds]=useState(0);
+  const [voiceLevels,setVoiceLevels]=useState<number[]>(()=>Array.from({length:35},()=>5));
+  const [voiceReviewDraft,setVoiceReviewDraft]=useState('');
+  const [voiceQuota,setVoiceQuota]=useState<GeminiQuota|null>(null);
   const [error,setError]=useState('');
   const [notice,setNotice]=useState('');
   const [generatedLanguages,setGeneratedLanguages]=useState<CaptionLanguage[]>([]);
   const [savedCampaignId,setSavedCampaignId]=useState('');
   const recorderRef=useRef<MediaRecorder|null>(null);
   const streamRef=useRef<MediaStream|null>(null);
+  const voiceClockRef=useRef<ReturnType<typeof setInterval>|null>(null);
+  const voiceFrameRef=useRef<number|null>(null);
+  const voiceAudioRef=useRef<AudioContext|null>(null);
+  const discardVoiceRef=useRef(false);
+  const voiceMountedRef=useRef(true);
   const importingRef=useRef('');
   const posterUrlRef=useRef('');
   const posterInputRef=useRef<HTMLInputElement|null>(null);
   const posterDialogRef=useRef<HTMLDivElement|null>(null);
+  const releaseVoiceMedia=useCallback(()=>{
+    if(voiceClockRef.current!==null){clearInterval(voiceClockRef.current);voiceClockRef.current=null;}
+    if(voiceFrameRef.current!==null){cancelAnimationFrame(voiceFrameRef.current);voiceFrameRef.current=null;}
+    if(voiceAudioRef.current){
+      void voiceAudioRef.current.close().catch(()=>{});
+      voiceAudioRef.current=null;
+    }
+    streamRef.current?.getTracks().forEach(track=>track.stop());
+    streamRef.current=null;
+  },[]);
   useEffect(()=>{
     const urls:Record<string,string>={};
     for(const record of posterChoices)urls[record.id]=URL.createObjectURL(record.image);
@@ -176,6 +197,19 @@ export default function ConnectedCaptionLab(){
   const hookCount=countCharacters(captions[activePreviewLanguage].hook.trim()||(!hasAI?message.trim():''));
   const hookStatus=!hookCount?'Add a hook':hookCount<=125?'Hook on target':'Try a shorter hook';
 
+  const refreshVoiceQuota=useCallback(async()=>{
+    // This is GET metadata, never a provider call or credit reservation.
+    // Only owner-QA accounts receive this shared Poster/Caption Gemini budget.
+    try{
+      const response=await fetch('/api/marketing/poster/puter-lab?quota=1',{
+        credentials:'same-origin',cache:'no-store',
+      });
+      if(!response.ok)return;
+      const data=await response.json() as {quota?:GeminiQuota};
+      if(data.quota)setVoiceQuota(data.quota);
+    }catch{/* Quota is display-only: the authenticated server RPC is authoritative. */}
+  },[]);
+  useEffect(()=>{void refreshVoiceQuota();},[refreshVoiceQuota]);
   const loadBusinesses=useCallback(async()=>{
     setLoading(true);setError('');
     try{
@@ -220,9 +254,18 @@ export default function ConnectedCaptionLab(){
     }).catch(()=>{if(!cancelled)setNotice('This browser could not open the linked PNG. Continue without a poster.');});
     return()=>{cancelled=true;};
   },[loading,businesses]);
-  useEffect(()=>()=>{if(posterUrlRef.current)URL.revokeObjectURL(posterUrlRef.current);
-    recorderRef.current?.state==='recording'&&recorderRef.current.stop();
-    streamRef.current?.getTracks().forEach(track=>track.stop());},[]);
+  useEffect(()=>{
+    voiceMountedRef.current=true;
+    return()=>{
+    // Unmounting must never submit a recording or spend one Gemini quota unit.
+    voiceMountedRef.current=false;
+    discardVoiceRef.current=true;
+    const recorder=recorderRef.current;
+    if(recorder&&recorder.state!=='inactive')recorder.stop();
+    releaseVoiceMedia();
+    if(posterUrlRef.current)URL.revokeObjectURL(posterUrlRef.current);
+    };
+  },[releaseVoiceMedia]);
 
   const loadDrafts=useCallback(async(signal?:AbortSignal)=>{
     if(!businessId){
@@ -265,11 +308,13 @@ export default function ConnectedCaptionLab(){
   const updateAngle=(lang:CaptionLanguage,value:string)=>{
     setCaptions(previous=>({...previous,[lang]:{...previous[lang],[angle]:value.slice(0,1100)}}));
   };
+  // Same browser-initiated record → pause/resume → Send → Gemini transcript
+  // workflow as Poster Studio. Only the explicit Send action uses voice quota.
   const transcribe=async(blob:Blob)=>{
     if(!businessId||blob.size<800||blob.size>1_500_000){
       setError('Choose a business and record a shorter voice message (1.5 MB maximum).');return;
     }
-    setVoiceBusy(true);setError('');
+    setVoiceBusy(true);setError('');setNotice('Gemini is transcribing your recording in its original language…');
     try{
       const response=await fetch('/api/marketing/poster/transcribe',{
         method:'POST',credentials:'same-origin',cache:'no-store',body:blob,
@@ -281,23 +326,34 @@ export default function ConnectedCaptionLab(){
       });
       const data=await response.json() as {error?:string;transcript?:string};
       if(!response.ok||!data.transcript)throw Error(data.error||'Unable to transcribe audio.');
-      setMessage(previous=>[previous,data.transcript].filter(Boolean).join(' ').slice(0,600));
-      setNotice('Voice transcript added. Review and correct the facts before generating.');
-    }catch(e){setError(e instanceof Error?e.message:'Microphone transcription unavailable.');}
-    finally{setVoiceBusy(false);}
+      const transcript=data.transcript.trim();
+      const combined=[message.trim(),transcript].filter(Boolean).join(' ');
+      if(combined.length>600){
+        // Preserve EVERY word; no silent slicing of promotional terms or
+        // percentage scopes. The owner can shorten the draft before applying.
+        setVoiceReviewDraft(transcript);
+        setNotice('Transcript ready. Your existing brief plus transcript exceeds 600 characters; review the complete transcript below before adding it. No words were discarded.');
+      }else{
+        setMessage(combined);
+        setVoiceReviewDraft('');
+        setNotice('Voice transcript added. Review your service, offer, dates and contact facts before generating.');
+      }
+    }catch(e){
+      setError(e instanceof Error?e.message:'Voice transcription is unavailable.');
+      setNotice('Your typed campaign message is unchanged. You can retry Voice or continue typing.');
+    }finally{setVoiceBusy(false);void refreshVoiceQuota();}
   };
   const startVoice=async()=>{
     if(voiceBusy||recording||requestingMic||saving||busy)return;
+    if(voiceReviewDraft){
+      setError('Apply or discard the full reviewed transcript before starting a new voice recording.');return;
+    }
     setError('');setVoicePermissionHelp(false);
     if(typeof window==='undefined'||!window.isSecureContext||
       !navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined'){
       setError('Voice recording requires HTTPS and a browser with microphone support.');
-      setVoicePermissionHelp(true);
-      return;
+      setVoicePermissionHelp(true);return;
     }
-    // A policy restriction prevents the browser from showing a prompt at all.
-    // Keep this test as a friendly diagnostic; getUserMedia is still the
-    // real permission request, triggered directly by the vendor's click.
     const policy=document as Document&{
       permissionsPolicy?:{allowsFeature:(name:string)=>boolean};
       featurePolicy?:{allowsFeature:(name:string)=>boolean};
@@ -305,42 +361,77 @@ export default function ConnectedCaptionLab(){
     const allowed=policy.permissionsPolicy?.allowsFeature('microphone') ??
       policy.featurePolicy?.allowsFeature('microphone');
     if(allowed===false){
-      setError('Microphone access is blocked for this page. Reload the latest Caption Lab and try again.');
-      setVoicePermissionHelp(true);
-      return;
+      setError('Microphone is blocked by the site permission policy. Open the production Caption Lab directly and retry.');
+      setVoicePermissionHelp(true);return;
     }
     setRequestingMic(true);
-    setNotice('Allow microphone access in your browser to record a voice brief.');
+    setNotice('Allow microphone access in your browser to record your brief.');
     try{
+      // A real user click triggers the native browser permission prompt.
       const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+      // The user may navigate away while the browser's native Allow popup is
+      // still open. Never resurrect a recorder after leaving Caption Lab.
+      if(!voiceMountedRef.current){
+        stream.getTracks().forEach(track=>track.stop());return;
+      }
       streamRef.current=stream;
       const preferred=['audio/webm;codecs=opus','audio/webm','audio/mp4'];
       const mime=preferred.find(t=>MediaRecorder.isTypeSupported(t));
       const recorder=new MediaRecorder(stream,mime?{mimeType:mime}:undefined);
+      recorderRef.current=recorder;discardVoiceRef.current=false;
       const chunks:Blob[]=[];
       let failed=false;
       recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
       recorder.onerror=()=>{
-        failed=true;
+        failed=true;discardVoiceRef.current=true;
         setError('Microphone recording interrupted. Check your device and try again.');
-        if(recorder.state==='recording')recorder.stop();
+        if(recorder.state!=='inactive')recorder.stop();
       };
       recorder.onstop=()=>{
-        setRecording(false);recorderRef.current=null;
-        stream.getTracks().forEach(track=>track.stop());streamRef.current=null;
-        if(failed)return;
+        const discarded=discardVoiceRef.current;
+        releaseVoiceMedia();
+        recorderRef.current=null;
+        if(!voiceMountedRef.current)return;
+        setRecording(false);setVoicePaused(false);
+        setVoiceLevels(Array.from({length:35},()=>5));
+        if(failed||discarded)return;
         const blob=new Blob(chunks,{type:recorder.mimeType||'audio/webm'});
         if(blob.size<800){
-          setError('No audio captured. Speak for a few seconds before selecting Stop.');
-          return;
+          setError('No audio captured. Speak for a few seconds, then tap Send.');return;
         }
         void transcribe(blob);
       };
-      recorder.start(250);recorderRef.current=recorder;setRecording(true);
-      setNotice('Recording voice brief. Speak clearly, then tap Stop to transcribe.');
+      recorder.start(250);
+      setRecording(true);setVoicePaused(false);setVoiceSeconds(0);
+      voiceClockRef.current=setInterval(()=>{
+        if(recorder.state==='recording')setVoiceSeconds(n=>n+1);
+      },1000);
+      // Meter actual microphone audio (not a decorative synthetic waveform).
+      // Only the browser has these samples; audio is never persisted.
+      try{
+        const audio=new AudioContext();
+        voiceAudioRef.current=audio;
+        const analyser=audio.createAnalyser();analyser.fftSize=128;
+        const source=audio.createMediaStreamSource(stream);
+        source.connect(analyser);
+        const bins=new Uint8Array(analyser.frequencyBinCount);
+        let lastFrame=0;
+        const tick=(now:number)=>{
+          if(recorder.state==='recording'&&now-lastFrame>=90){
+            lastFrame=now;
+            analyser.getByteFrequencyData(bins);
+            setVoiceLevels(Array.from({length:35},(_,i)=>{
+              const bin=bins[Math.min(bins.length-1,Math.floor(i*bins.length/35))];
+              return Math.max(5,Math.min(37,Math.round(5+bin/255*32)));
+            }));
+          }
+          if(recorder.state!=='inactive')voiceFrameRef.current=requestAnimationFrame(tick);
+        };
+        voiceFrameRef.current=requestAnimationFrame(tick);
+      }catch{/* Recording works without a WebAudio amplitude meter. */}
+      setNotice('Recording. Pause, resume, cancel or tap Send to transcribe.');
     }catch(e){
-      streamRef.current?.getTracks().forEach(track=>track.stop());
-      streamRef.current=null;recorderRef.current=null;
+      releaseVoiceMedia();recorderRef.current=null;
       const name=e instanceof Error?e.name:'';
       if(name==='NotAllowedError'||name==='PermissionDeniedError'||name==='SecurityError'){
         setError('Microphone blocked. Allow access in your browser site settings, then retry.');
@@ -356,8 +447,33 @@ export default function ConnectedCaptionLab(){
       setNotice('');
     }finally{setRequestingMic(false);}
   };
-  const stopVoice=()=>{
-    if(recorderRef.current?.state==='recording')recorderRef.current.stop();
+  const sendVoice=()=>{
+    const recorder=recorderRef.current;
+    if(recorder&&(recorder.state==='recording'||recorder.state==='paused'))recorder.stop();
+  };
+  const pauseVoice=()=>{
+    const recorder=recorderRef.current;
+    if(recorder?.state==='recording'){
+      recorder.pause();setVoicePaused(true);
+      setNotice('Recording paused. Resume or Send to transcribe.');
+    }else if(recorder?.state==='paused'){
+      recorder.resume();setVoicePaused(false);
+      setNotice('Recording resumed. Tap Send when you finish.');
+    }
+  };
+  const cancelVoice=()=>{
+    discardVoiceRef.current=true;sendVoice();
+    setNotice('Voice recording discarded. Your typed campaign brief is unchanged.');
+  };
+  const applyReviewedTranscript=()=>{
+    const combined=[message.trim(),voiceReviewDraft.trim()].filter(Boolean).join(' ').trim();
+    if(!voiceReviewDraft.trim()){setError('Review the transcript before adding it.');return;}
+    if(combined.length>600){
+      setError('Campaign brief supports 600 characters. Shorten your voice transcript before applying it; nothing has been discarded.');
+      return;
+    }
+    setMessage(combined);setVoiceReviewDraft('');setError('');
+    setNotice('Reviewed transcript added. Verify your service, discount and campaign facts before Generate.');
   };
 
   const generate=async()=>{
@@ -368,9 +484,9 @@ export default function ConnectedCaptionLab(){
       // Existing credit-reserved provider route bills per language, never
       // before the explicit Generate click. Hard-off flag remains respected.
       for(const language of chosenLanguages){
-        const prompt=[message.trim(),
-          'Campaign angle: '+goalLabel[goal],
-        ].filter(Boolean).join('\n').slice(0,600);
+        // Goal is supplied as a separate validated field. Never silently cut
+        // off the last words of a reviewed voice brief to append UI metadata.
+        const prompt=message.trim();
         const response=await fetch('/api/marketing/caption',{
           method:'POST',credentials:'same-origin',cache:'no-store',
           headers:{'Content-Type':'application/json'},
@@ -484,7 +600,8 @@ export default function ConnectedCaptionLab(){
     posterUrlRef.current=url;setPosterUrl(url);
     setLinked(record);setPosterKey(record.id);setPosterPickerOpen(false);
     setMessage(previous=>previous.trim()?previous:
-      [record.context.headline,record.context.offer].filter(Boolean).join('. ').slice(0,600));
+      [record.context.headline,record.context.serviceFocus,record.context.offer]
+        .filter(Boolean).join('. ').slice(0,600));
     setCta(previous=>previous.trim()?previous:record.context.cta.slice(0,180));
     setNotice('Poster attached. Review your campaign brief, then generate captions.');
   };
@@ -513,7 +630,7 @@ export default function ConnectedCaptionLab(){
     setPosterPickerOpen(false);setPosterChoices([]);
     if(posterUrlRef.current)URL.revokeObjectURL(posterUrlRef.current);
     posterUrlRef.current='';setPosterUrl('');
-    setMessage('');setConditions('');setCta('');setError('');setNotice('');
+    setMessage('');setConditions('');setCta('');setVoiceReviewDraft('');setError('');setNotice('');
     setCustomTags({});setRemovedTags({});setSavedCampaignId('');
   };
   const downloadPoster=()=>{
@@ -601,8 +718,8 @@ export default function ConnectedCaptionLab(){
           <span className="ml-auto text-[10px] text-[#9CA3AF]">Input</span>
         </div>
         <label className="block text-[11px] font-bold text-[#374151]">Selected Business
-          <select value={businessId} onChange={e=>onBusinessChange(e.target.value)}
-            disabled={loading||isBusy} className={field+' mt-1.5'}>
+          <select value={businessId} aria-label="Selected business" onChange={e=>onBusinessChange(e.target.value)}
+            disabled={loading||isBusy} className={field+' slbi-caption-select mt-1.5'}>
             {!businesses.length&&<option value="">No owned businesses</option>}
             {businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}
           </select>
@@ -661,50 +778,120 @@ export default function ConnectedCaptionLab(){
         <div>
           <div className="mb-2 flex items-center justify-between gap-2">
             <label htmlFor="caption-brief" className="text-[11px] font-bold text-[#374151]">Campaign Message</label>
-            <div className="flex items-center gap-1">
-              <button type="button"
-                disabled={(!recording&&isBusy)||!businessId}
-                onClick={()=>recording?stopVoice():void startVoice()}
-                aria-label={recording?'Stop voice recording':'Record voice campaign brief'}
-                aria-pressed={recording}
-                className={'inline-flex items-center gap-1 rounded-lg border px-2 py-1.5 text-[10px] font-bold disabled:cursor-not-allowed disabled:border-[#E5E7EB] disabled:bg-[#F3F4F6] disabled:text-[#9CA3AF] '+
-                  (recording?'border-red-200 bg-red-50 text-red-700':'border-[#E5E7EB] text-[#374151] hover:border-[#F97316]')}>
-                {recording?<StopCircle size={13}/>:requestingMic||voiceBusy?
-                  <LoaderCircle size={13} className="animate-spin"/>:<Mic size={13}/>}
-                {recording?'Stop':requestingMic?'Allow microphone':voiceBusy?'Transcribing':'Voice'}
-              </button>
+            <div className="flex items-center gap-2">
+              {requestingMic&&<span role="status" className="text-[10px] font-semibold text-[#9A3412]">
+                Allow microphone…
+              </span>}
+              {!recording&&<button type="button"
+                disabled={isBusy||!businessId}
+                onClick={()=>void startVoice()}
+                aria-label="Record voice campaign brief" title="Record voice message"
+                className="inline-flex size-8 items-center justify-center rounded-full border border-[#E5E7EB] bg-white text-[#374151] hover:border-[#F97316] hover:text-[#C2410C] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#F97316] disabled:border-[#E5E7EB] disabled:bg-[#F3F4F6] disabled:text-[#9CA3AF]">
+                {requestingMic?<LoaderCircle size={16} className="animate-spin"/>:<Mic size={17}/>}
+              </button>}
+              {voiceBusy&&<span role="status" aria-live="polite"
+                className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-[#9A3412]">
+                <LoaderCircle size={14} className="animate-spin"/> Transcribing…
+              </span>}
             </div>
           </div>
           <textarea id="caption-brief" rows={3} maxLength={600} value={message}
+            disabled={recording||voiceBusy}
             onChange={e=>setMessage(e.target.value)}
-            className={field+' resize-y leading-6'}
+            className={field+' resize-y leading-6 disabled:bg-[#F9FAFB] disabled:text-[#6B7280]'}
             placeholder="Tell us your real offer, product or campaign in தமிழ், සිංහල, English or Tanglish."/>
           <p className="mt-1 text-[10px] text-[#6B7280]">Add your offer, key details or record a voice brief.</p>
+          {recording&&<div className="mt-2 flex min-w-0 items-center gap-2 rounded-xl border border-[#3C3540] bg-[#18181B] px-2.5 py-2 text-white shadow-[0_8px_20px_rgba(17,24,39,.17)]"
+            role="group" aria-label="Active voice recording">
+            <button type="button" onClick={cancelVoice} title="Discard voice recording"
+              aria-label="Cancel and discard voice recording"
+              className="flex size-8 shrink-0 items-center justify-center rounded-full border border-white/20 text-white hover:bg-white/15">
+              <X size={16}/>
+            </button>
+            <div className="min-w-0 flex-1 space-y-1" role="status" aria-live="off">
+              <div className="flex h-9 items-center gap-[2px]" aria-hidden="true">
+                {voiceLevels.map((level,index)=><span key={index}
+                  className={'w-[3px] min-w-[2px] flex-1 rounded-full transition-[height] duration-75 '+
+                    (voicePaused?'bg-white/40':'bg-[#FDBA74]')}
+                  style={{height:voicePaused?5:level}}/>)}
+              </div>
+              <p className="text-center text-[10px] tabular-nums text-[#E9D9CE]">
+                {voicePaused?'Paused':'Recording'} · {Math.floor(voiceSeconds/60).toString().padStart(2,'0')}:
+                {(voiceSeconds%60).toString().padStart(2,'0')}
+              </p>
+            </div>
+            <button type="button" onClick={pauseVoice} title={voicePaused?'Resume recording':'Pause recording'}
+              aria-label={voicePaused?'Resume voice recording':'Pause voice recording'}
+              className="flex size-8 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white hover:bg-white/20">
+              {voicePaused?<Play size={16}/>:<Pause size={16}/>}
+            </button>
+            <button type="button" onClick={sendVoice} title="Send recording to Gemini transcript"
+              aria-label="Send voice recording to transcript"
+              className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#F97316] text-white hover:bg-[#EA580C]">
+              <Send size={16}/>
+            </button>
+          </div>}
+          {voiceQuota&&<div role="status" aria-label="Shared Gemini daily voice quota"
+            className="mt-2 flex flex-wrap items-center justify-between gap-1 rounded-lg border border-[#F3E3D5] bg-[#FFF9F3] px-2.5 py-2 text-[10px] text-[#7C4B28]">
+            <span className="font-semibold">Gemini voice + Poster Studio briefs</span>
+            <span className="font-bold tabular-nums">{voiceQuota.remaining} / {voiceQuota.limit} left (UTC)</span>
+            <span className="w-full text-[#8C7662]">Shared across both tools · resets at 00:00 UTC · recording alone does not use Gemini</span>
+          </div>}
+          {voiceReviewDraft&&<div className="mt-2 space-y-2 rounded-xl border border-[#FED7AA] bg-[#FFFBF5] p-2.5"
+            aria-label="Voice transcript review">
+            <label htmlFor="caption-voice-review" className="block text-[11px] font-bold text-[#92400E]">
+              Full transcript · review before adding
+            </label>
+            <textarea id="caption-voice-review" value={voiceReviewDraft} rows={4} maxLength={1200}
+              onChange={e=>setVoiceReviewDraft(e.target.value)}
+              className={field+' resize-y leading-6'}
+              aria-describedby="caption-voice-review-help"/>
+            <p id="caption-voice-review-help" className="text-[10px] leading-4 text-[#854D0E]">
+              The Campaign Message allows 600 characters including existing text.
+              Shorten this complete transcript yourself; no promotional wording or terms were automatically removed.
+            </p>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[10px] tabular-nums text-[#854D0E]">
+                {[message.trim(),voiceReviewDraft.trim()].filter(Boolean).join(' ').length} / 600 characters
+              </span>
+              <div className="flex gap-2">
+                <button type="button" onClick={()=>setVoiceReviewDraft('')}
+                  className="rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[10px] font-semibold text-[#374151]">
+                  Discard transcript
+                </button>
+                <button type="button" onClick={applyReviewedTranscript}
+                  disabled={!voiceReviewDraft.trim()||[message.trim(),voiceReviewDraft.trim()].filter(Boolean).join(' ').length>600}
+                  className="rounded-lg bg-[#111827] px-3 py-2 text-[10px] font-semibold text-white disabled:bg-[#F3F4F6] disabled:text-[#9CA3AF]">
+                  Apply reviewed transcript
+                </button>
+              </div>
+            </div>
+          </div>}
           {voicePermissionHelp&&<div role="status" className="mt-2 rounded-lg border border-[#FED7AA] bg-[#FFF7ED] px-3 py-2.5 text-[11px] leading-5 text-[#7C2D12]">
             <p className="font-semibold">Enable microphone for Caption Lab</p>
             <p>In Chrome, click the site controls icon beside the address bar, open Site settings, set Microphone to Allow, and reload this page. Then tap Voice again.</p>
             <p className="mt-1">If no microphone prompt appears, check your operating system's microphone privacy settings.</p>
           </div>}
-                <button type="button" onClick={()=>void generate()}
-          disabled={!businessId||message.trim().length<5||isBusy}
+        <button type="button" onClick={()=>void generate()}
+          disabled={!businessId||message.trim().length<5||isBusy||Boolean(voiceReviewDraft)}
           className="group flex w-full items-center justify-center gap-2 rounded-xl border border-[#111827] bg-[#111827] px-3 py-3 text-[12px] font-bold text-white shadow-sm transition-colors hover:bg-[#292F3D] disabled:cursor-not-allowed disabled:border-[#E5E7EB] disabled:bg-[#F3F4F6] disabled:text-[#9CA3AF] disabled:shadow-none">
           {busy?<LoaderCircle size={17} className="animate-spin"/>:<WandSparkles size={17} className="text-[#FDBA74] group-disabled:text-[#9CA3AF]"/>}
           {busy?'Generating drafts…':'Generate Caption Variations'} <ArrowRight size={14}/>
         </button>
         <div className="flex items-center justify-between gap-2 text-[10px] text-[#6B7280]">
           <span>{chosenLanguages.length} {chosenLanguages.length===1?'language':'languages'} selected · Credits apply on Generate</span>
-          <details className="group relative">
-            <summary className="flex cursor-pointer list-none items-center gap-1 font-semibold text-[#C2410C]"><Info size={13}/> Info</summary>
+          <details className="slbi-caption-disclosure group relative">
+            <summary className="flex cursor-pointer list-none items-center gap-1 font-semibold text-[#C2410C]"><Info size={13}/> Info <ChevronDown size={13} className="slbi-caption-chevron ml-0.5"/></summary>
             <div className="absolute right-0 top-6 z-30 w-64 rounded-xl border border-[#E5E7EB] bg-white p-3 text-[11px] leading-5 text-[#374151] shadow-xl">
-              <p>One provider request and applicable credit reservation per selected language; never auto-charged on page open.</p>
+              <p>One provider request and applicable credit reservation per selected language; never auto-charged on page open. Gemini voice transcription uses its own shared daily voice/brief allowance only after you tap Send.</p>
               <p className="mt-2">Linked PNG remains on this device for up to two hours; saving to Campaign Planner stores captions, not a cloud copy of your image.</p>
               <p className="mt-2">Social previews are visual estimates. Character goals are editorial targets, not social platform limits. Nothing is automatically published.</p>
             </div>
           </details>
         </div>
 
-          <details className="mt-2 rounded-lg border border-[#E5E7EB] p-2">
-            <summary className="cursor-pointer text-[11px] font-semibold text-[#6B7280]">Quick brief suggestions</summary>
+          <details className="slbi-caption-disclosure mt-2 rounded-lg border border-[#E5E7EB] p-2">
+            <summary className="flex cursor-pointer items-center justify-between gap-2 text-[11px] font-semibold text-[#6B7280]">Quick brief suggestions <ChevronDown size={14} className="slbi-caption-chevron"/></summary>
             <div className="mt-2 flex flex-wrap gap-1.5">
             {promptChips.map(chip=><button key={chip.label} type="button"
               onClick={()=>setMessage(previous=>[previous,chip.text].filter(Boolean).join(' ').slice(0,600))}
@@ -714,8 +901,11 @@ export default function ConnectedCaptionLab(){
             </div>
           </details>
         </div>
-        <details className="rounded-xl border border-[#E5E7EB] p-2.5">
-          <summary className="cursor-pointer text-[11px] font-bold">Offer terms & CTA <span className="font-normal text-[#9CA3AF]">(optional)</span></summary>
+        <details className="slbi-caption-disclosure rounded-xl border border-[#E5E7EB] p-2.5">
+          <summary className="flex cursor-pointer items-center justify-between gap-2 text-[11px] font-bold">
+            <span>Offer terms & CTA <span className="font-normal text-[#9CA3AF]">(optional)</span></span>
+            <ChevronDown size={14} className="slbi-caption-chevron"/>
+          </summary>
           <textarea rows={2} maxLength={300} value={conditions} onChange={e=>setConditions(e.target.value)}
             placeholder="Only genuine terms or valid dates" className={field+' mt-3'}/>
           <input maxLength={180} value={cta} onChange={e=>setCta(e.target.value)}

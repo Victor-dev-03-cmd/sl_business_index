@@ -15,3 +15,22 @@
   line-height: 1.6;
   overflow-wrap: anywhere;
 }
+
+/* Consistent inset dropdown indicator, aligned with Poster Studio.
+ * Restricted to Caption Lab's own native selects; no global UA changes. */
+.slbi-caption-select {
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 2.65rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2375655D' stroke-width='2.3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 15px 15px;
+}
+.slbi-caption-select:disabled { opacity: .55; cursor: not-allowed; }
+/* Consistent explicit chevrons on <details>, rather than browser-dependent
+ * triangles tight against the border. The chevron is a normal React icon. */
+.slbi-caption-disclosure > summary { list-style: none; }
+.slbi-caption-disclosure > summary::-webkit-details-marker { display:none; }
+.slbi-caption-disclosure[open] .slbi-caption-chevron { transform: rotate(180deg); }
+.slbi-caption-chevron { transition: transform .18s ease; flex-shrink: 0; }

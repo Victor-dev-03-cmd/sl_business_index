@@ -1,5 +1,13 @@
 # SLBI Marketing Engine | LIVE IMPLEMENTATION STATUS
 
+## 2026-11-17 — P2-27 Caption Lab Voice + UI Arrows + Connected Creative Handoff (CODE STAGED)
+- **Handoff:** [P2-27 Caption Lab Voice Parity and Handoff](P2_27_CAPTION_VOICE_PARITY_AND_HANDOFF_20261117.md), owner requested same voice/transcript experience as the accepted business-specific Poster Studio.
+- **Code:** `app/vendor/marketing/captions/page.tsx`, `caption-fonts.css`: microphone permission diagnosis, real waveform with pause/resume + recording clock, explicit Send + Cancel, live transcription spinner, protected owner-review of full transcript over existing 600-character brief budget, shared Gemini daily voice/brief quota display, properly inset business dropdown and collapsible chevrons. Initial and recent local poster handoffs retain the verified service focus.
+- **Safety:** No backend quota changes, no new provider credential, no automatic billable Generate, no global microphone permission change, no cross-tenant poster access, no cloud poster asset or social publishing claim. Server retains atomic owner-scoped voice quota and caption AI ledger. 2-hour IndexedDB PNG local key remains.
+- **PR:** [#115](https://github.com/Victor-dev-03-cmd/sl_business_index/pull/115). **Source branch:** `feat/p2-caption-voice-waveform-dropdown-handoff-20261117`. **Feature release unverified at staging:** require exact PR-head tests/Next build and Vercel production READY/alias before declaring deployed. Real signed-in microphone and multilingual transcript QA still pending.
+- **Next:** Run owner browser QA for native Allow, pause/resume, Send + transcript review, Tamil/Sinhala/English copy, no clipped offer details, arrows and poster-to-caption-to-planner; record findings and verified release commit.
+
+
 ## 2026-11-15 — LATEST P2-10: microphone permission + Generate QA unblock
 - **Read first:** [P2-10 Poster microphone and QA quota handoff](docs/growth/p2/P2_10_POSTER_MIC_PERMISSION_QUOTA_FIX_20261115.md). User found native mic Allow popup was absent and Generate disabled on live Pro Studio.
 - Confirmed site policy bug: `next.config.ts` globally had `microphone=()`; specific poster route now overrides it with `microphone=(self)`, while global pages and camera remain denied. If Chrome has persistently blocked mic, no code can force prompt: new UI explains browser Site settings → Mic Allow → Reload → Retry. Gemini voice transcription is still manual review before image Generate.
