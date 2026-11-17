@@ -76,8 +76,8 @@ test('canvas composes all four exact sizes with Unicode font shaping',()=>{
   assert.match(compose,/canvas\.width=d\.width;canvas\.height=d\.height/);
   assert.match(compose,/ctx\.fillText\(line,params\.x,params\.y\+i\*lineH\)/);
   assert.match(compose,/new Intl\.Segmenter/);
-  assert.match(compose,/Noto Sans Tamil/);
-  assert.match(compose,/Noto Sans Sinhala/);
+  assert.match(compose,/Pavanam/);
+  assert.match(compose,/Maname/);
   assert.match(compose,/text-free|NO TEXT/i);
   assert.match(compose,/canvas\.toBlob/);
   assert.match(compose,/image\.crossOrigin='anonymous'/);
@@ -339,13 +339,13 @@ test('adaptive card responds to all 3 vertical output sizes, amount of approved 
 });
 test('premium art prompt protects upper high-quality hero composition and adapts lower panel',()=>{
   assert.match(compose,/USER REQUIREMENTS/);
-  assert.match(compose,/MIDDLE 31–67%/);
+  assert.match(compose,/CENTRAL 27–77%/);
   assert.match(compose,/COMPACT glass content card/);
   assert.match(compose,/high-fidelity materials/);
   assert.match(compose,/NO TEXT of any kind/);
   assert.match(compose,/No extra pumpkins, moons, trees/);
   const preset=read('lib/marketing/poster-premium-presets.ts');
-  assert.match(preset,/HERO SUBJECT in the MIDDLE 31%-67%/);
+  assert.match(preset,/HERO SUBJECT across MIDDLE 27%-77%/);
   assert.match(preset,/LOWER 68%-95% calm for a COMPACT dynamically sized glass card/);
   assert.doesNotMatch(preset,/LOWER 59%-93%/);
 });
@@ -379,8 +379,7 @@ test('v2 approved Tamil Sinhala English font pairs are safe and actually printed
   const presets=read('lib/marketing/poster-premium-presets.ts');
   const renderer=read('lib/marketing/puter-premium-poster-renderer.ts');
   const css=read('app/vendor/marketing/design/puter-lab/typography.css');
-  for(const font of ['Noto Sans Tamil','Hind Madurai','Noto Serif Tamil','Mukta Malar','Kavivanar',
-    'Noto Sans Sinhala','Gemunu Libre','Abhaya Libre','Anton','Bebas Neue',
+  for(const font of ['Pavanam','Maname','Gemunu Libre','Anton','Bebas Neue',
     'Montserrat','Poppins','Playfair Display','Plus Jakarta Sans']){
     assert.ok(schema.includes(font),'font allowlist '+font);
     assert.ok(css.includes(font.replaceAll(' ','+')),'Google CSS loaded '+font);
