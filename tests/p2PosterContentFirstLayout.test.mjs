@@ -74,7 +74,7 @@ test('Canvas renderer keeps existing typography, makes lower text larger, and dr
   assert.match(renderer,/contactIcon\(ctx,item\.kind/);
   assert.match(renderer,/label:'Verified '\+item\.kind/);
   assert.match(renderer,/const titleMax=h\*\(format==='square'\?\.26:\.27\)/);
-  assert.match(renderer,/displayLanguage==='ta'\?121/);
+  assert.match(renderer,/displayLanguage==='ta'\?96/);
   assert.match(renderer,/start:110\*scale/);
   assert.match(renderer,/start:52\*scale/);
   assert.match(renderer,/start:44\*scale/);
