@@ -1,5 +1,12 @@
 # SLBI Marketing Engine | LIVE IMPLEMENTATION STATUS
 
+## 2026-11-17 — P2-29 Poster Save / Caption Planner / CTA Verification (STAGED)
+- **Detailed handoff:** [P2-29 Private Poster Save + Planner Constraint + CTA](P2_29_PRIVATE_POSTER_SAVE_CAPTION_PLANNER_CTA_20261117.md). `marketing_campaign_brief_shape_v2` checked in live Supabase; it rejects Caption Lab's extra JSON keys. New seven-key Planner brief helper fixes that without dropping check/RLS, while linked poster image is persisted by UUID in additive `poster_asset_id`.
+- Existing `slbi-poster-ai-private` private 12 MB PNG bucket stays non-public and protected. New server-only owner+business+internal QA route handles PNG upload/list/download, UUID scoped to user and business. Studio Save Poster/Saved Posters and Caption Lab Save image/saved gallery are explicitly user initiated; no automatic credits or social publishing.
+- CTA with verified contact is validated before AI credits are reserved; unverified numbers receive actionable error. Gemini receives verified phone context; distinct output/provider error categories. Historical refund job counts cannot prove exact prior failure root cause.
+- **Branch:** `fix/p2-poster-cloud-save-caption-planner-cta-20261117`. **Not yet production READY** at this staged entry; require regression tests, migration apply/verify, PR merge, exact Vercel READY. Browser signed-in Gemini CTA and persistent image QA still pending.
+
+
 ## 2026-11-17 — P2-28 Caption Lab Generate CTA / Gemini connection verification (PRODUCTION READY)
 - **Detailed handoff:** [P2-28 Caption Generate Spacing & Gemini Readiness](P2_28_CAPTION_GENERATE_SPACING_GEMINI_READINESS_20261117.md).
 - **UI fix:** primary Generate gets 16px top margin + accessible focus, caption credits/Info gets a separate 12px-spaced wrap-safe neutral inset surface, Quick brief suggestions gets independent 12px margin and padding, terms padding adjusted. Explicit "Gemini AI · languages · 3 variations each · Credits on Generate" label, clear QA and billing Info.
