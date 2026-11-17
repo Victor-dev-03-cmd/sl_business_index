@@ -241,13 +241,36 @@ export default function PuterMultilingualPosterLab(){
     setStatus(reference.name+' selected. The look is applied on your NEXT Generate; no paid AI call happened.');
   };
 
+  const cleanVoiceMeter=useCallback(()=>{
+    if(voiceFrameRef.current!==null)cancelAnimationFrame(voiceFrameRef.current);
+    voiceFrameRef.current=null;
+    if(voiceAudioRef.current){
+      void voiceAudioRef.current.close().catch(()=>{});
+      voiceAudioRef.current=null;
+    }
+  },[]);
   const stopVoice=useCallback(()=>{
     if(clockRef.current){clearInterval(clockRef.current);clockRef.current=null;}
-    if(recorderRef.current?.state==='recording')recorderRef.current.stop();
+    const recorder=recorderRef.current;
+    if(recorder&&(recorder.state==='recording'||recorder.state==='paused'))recorder.stop();
     streamRef.current?.getTracks().forEach(track=>track.stop());
-    streamRef.current=null;setRecording(false);
-  },[]);
-
+    streamRef.current=null;setRecording(false);setVoicePaused(false);
+    cleanVoiceMeter();
+  },[cleanVoiceMeter]);
+  const cancelVoice=()=>{
+    discardVoiceRef.current=true;stopVoice();
+    setStatus('Voice recording discarded. Your original campaign brief is unchanged.');
+  };
+  const pauseVoice=()=>{
+    const rec=recorderRef.current;
+    if(rec?.state==='recording'){
+      rec.pause();setVoicePaused(true);
+      setStatus('Recording paused. Resume or send to transcribe.');
+    }else if(rec?.state==='paused'){
+      rec.resume();setVoicePaused(false);
+      setStatus('Recording resumed. Tap Send when you are done.');
+    }
+  };
   const refreshGeminiQuota=useCallback(async()=>{
     try{
       const res=await fetch('/api/marketing/poster/puter-lab?quota=1',reqOptions);
@@ -272,7 +295,10 @@ export default function PuterMultilingualPosterLab(){
       .finally(()=>{if(!controller.signal.aborted)setLoadingBusiness(false);});
     return()=>controller.abort();
   },[]);
-  useEffect(()=>()=>{stopVoice();if(finalUrlRef.current)URL.revokeObjectURL(finalUrlRef.current);},[stopVoice]);
+  useEffect(()=>()=>{
+    discardVoiceRef.current=true;stopVoice();
+    if(finalUrlRef.current)URL.revokeObjectURL(finalUrlRef.current);
+  },[stopVoice]);
 
   const exactCopy=useMemo<ExactPosterCopy|null>(()=>facts?{
     businessName:facts.name,
@@ -343,8 +369,7 @@ export default function PuterMultilingualPosterLab(){
     finally{setTranscribing(false);void refreshGeminiQuota();}
   };
   const startVoice=async()=>{
-    if(recording){stopVoice();return;}
-    if(generating||geminiBusy||transcribing)return;
+    if(recording||generating||geminiBusy||transcribing||referenceBusy)return;
     if(!window.isSecureContext||!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined'){
       setError('Voice requires a supported browser and HTTPS. You can type your prompt instead.');return;
     }
@@ -354,31 +379,68 @@ export default function PuterMultilingualPosterLab(){
     };
     const allowed=policy.permissionsPolicy?.allowsFeature('microphone') ??
       policy.featurePolicy?.allowsFeature('microphone');
-    if(allowed===false){setError('Microphone blocked by Permissions-Policy. Reload and retry.');return;}
+    if(allowed===false){
+      setError('Microphone is blocked by this page. Reload and enable it in browser site settings.');return;
+    }
     try{
       setError('');
+      // Browser permission is requested only on a direct user click.
       const stream=await navigator.mediaDevices.getUserMedia({audio:true});
       const mime=['audio/webm;codecs=opus','audio/webm','audio/mp4']
         .find(v=>MediaRecorder.isTypeSupported(v));
       const rec=new MediaRecorder(stream,mime?{mimeType:mime}:undefined);
-      streamRef.current=stream;recorderRef.current=rec;
+      streamRef.current=stream;recorderRef.current=rec;discardVoiceRef.current=false;
       const chunks:BlobPart[]=[];
       rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
       rec.onstop=()=>{
         stream.getTracks().forEach(t=>t.stop());
         streamRef.current=null;recorderRef.current=null;
-        if(clockRef.current)clearInterval(clockRef.current);
-        setRecording(false);
-        if(chunks.length)void transcribe(new Blob(chunks,{type:rec.mimeType}));
+        if(clockRef.current){clearInterval(clockRef.current);clockRef.current=null;}
+        cleanVoiceMeter();setRecording(false);setVoicePaused(false);
+        if(discardVoiceRef.current)return;
+        const blob=new Blob(chunks,{type:rec.mimeType||'audio/webm'});
+        if(blob.size<800){setError('No usable audio. Speak for a few seconds and tap Send.');return;}
+        void transcribe(blob);
       };
-      rec.onerror=()=>{setError('Microphone failed. Please type your message.');stopVoice();};
-      rec.start(250);setRecordingSeconds(0);setRecording(true);
-      clockRef.current=setInterval(()=>setRecordingSeconds(n=>n+1),1000);
-      setStatus('Listening. Stop recording when you finish; the 1.5 MB Gemini audio limit still applies.');
+      rec.onerror=()=>{
+        discardVoiceRef.current=true;
+        setError('Microphone failed. Check your device, then try again.');
+        stopVoice();
+      };
+      rec.start(250);setRecordingSeconds(0);setVoicePaused(false);setRecording(true);
+      clockRef.current=setInterval(()=>{
+        if(rec.state==='recording')setRecordingSeconds(n=>n+1);
+      },1000);
+      // Real microphone amplitude, not a misleading synthetic audio animation.
+      // Metering stays entirely in the browser and is stopped after recording.
+      try{
+        const audio=new AudioContext();
+        voiceAudioRef.current=audio;
+        const analyser=audio.createAnalyser();analyser.fftSize=128;
+        const source=audio.createMediaStreamSource(stream);source.connect(analyser);
+        const bins=new Uint8Array(analyser.frequencyBinCount);
+        let lastUpdate=0;
+        const tick=(now:number)=>{
+          if(rec.state==='recording'&&now-lastUpdate>=90){
+            lastUpdate=now;
+            analyser.getByteFrequencyData(bins);
+            setVoiceLevels(Array.from({length:35},(_,i)=>{
+              const bin=bins[Math.min(bins.length-1,Math.floor(i*bins.length/35))];
+              return Math.max(5,Math.min(37,Math.round(5+bin/255*32)));
+            }));
+          }
+          if(rec.state!=='inactive')voiceFrameRef.current=requestAnimationFrame(tick);
+        };
+        voiceFrameRef.current=requestAnimationFrame(tick);
+      }catch{/* Recording stays usable even if live audio metering is unavailable. */}
+      setStatus('Recording. Pause or tap Send to transcribe in your original language.');
     }catch(e){
+      streamRef.current?.getTracks().forEach(t=>t.stop());
+      streamRef.current=null;recorderRef.current=null;cleanVoiceMeter();
       const name=e instanceof Error?e.name:'';
       setError(name==='NotAllowedError'||name==='SecurityError'?
         'Microphone permission denied. Chrome site controls → Microphone → Allow, then retry.':
+        name==='NotFoundError'?'No microphone detected. Check your recording device.':
         'Unable to open microphone. Check your recording device or type instead.');
     }
   };
