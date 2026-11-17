@@ -1,7 +1,7 @@
 # P2-29 — Caption CTA Verification, Planner Save & Private Poster Library
 
 **Date:** 2026-11-17 · **Branch:** `fix/p2-poster-cloud-save-caption-planner-cta-20261117`  
-**Release:** staged; exact CI, DB migration verification and production Vercel READY must be recorded before marking complete.
+**Release:** PRODUCTION READY · [PR #117](https://github.com/Victor-dev-03-cmd/sl_business_index/pull/117). Exact tested head `38358dec0d7b6539aa62ff497244ebce811184c3` passed **all 6 GitHub workflow families**. Squash-merged to `main` `f6e7d1e3ead93346738483986e85650b0fd52cd6`. Vercel production deployment `dpl_FZEA8RHr8MYKbxJ26V1sDDdgDGYz` returned READY and alias `www.slbusinessindex.com`. Signed-in owner browser end-to-end tests remain pending.
 
 ## Reported browser failures and verified causes
 
@@ -38,8 +38,8 @@ Owner supplied the Caption Lab screenshot `image(20261117-181626).png` and repor
 
 ## Security and QA (release gate)
 - Run `tests/p2PrivatePosterSavePlannerCta.test.mjs` plus legacy Caption/Poster/Planner tests, Next production build/TS, P2 tenant RLS, billing, OAuth, and private storage checks. Source contains no public-URL creation or credit/model calls on Save.
-- Apply the **single additive migration** to the authorized production Supabase project after CI and before the new frontend reaches production. Verify `poster_asset_id` exists and original check constraint definition remains unchanged.
-- Verify Vercel production READY and domain alias on exact merged commit.
+- **Production Supabase migration applied and verified before merge.** Read-only verification returned `poster_asset_id_added=true`, `seven_key_check_kept=true`, `campaign_policy_count=3`, `bucket_public=false`. Constraint and RLS not dropped.
+- **Verified:** Vercel `dpl_FZEA8RHr8MYKbxJ26V1sDDdgDGYz` READY on exact merged code SHA `f6e7d1e3ead93346738483986e85650b0fd52cd6` with `www.slbusinessindex.com` alias.
 - Owner to test: existing signed-in Laxsan Dev CTA with verified phone, Generate (credits only when explicitly clicked), Save to Planner without CHECK error, Campaign Planner library displayed PNG, reload and cross-device image retrieval, Poster Studio Save Poster/Saved gallery, wrong-business reads denied. No live AI provider request or user account credit was consumed during development.
 
 ## Ongoing handoff

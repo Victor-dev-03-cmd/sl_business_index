@@ -1,10 +1,10 @@
 # SLBI Marketing Engine | LIVE IMPLEMENTATION STATUS
 
-## 2026-11-17 — P2-29 Poster Save / Caption Planner / CTA Verification (STAGED)
+## 2026-11-17 — P2-29 Poster Save / Caption Planner / CTA Verification (PRODUCTION READY)
 - **Detailed handoff:** [P2-29 Private Poster Save + Planner Constraint + CTA](P2_29_PRIVATE_POSTER_SAVE_CAPTION_PLANNER_CTA_20261117.md). `marketing_campaign_brief_shape_v2` checked in live Supabase; it rejects Caption Lab's extra JSON keys. New seven-key Planner brief helper fixes that without dropping check/RLS, while linked poster image is persisted by UUID in additive `poster_asset_id`.
 - Existing `slbi-poster-ai-private` private 12 MB PNG bucket stays non-public and protected. New server-only owner+business+internal QA route handles PNG upload/list/download, UUID scoped to user and business. Studio Save Poster/Saved Posters and Caption Lab Save image/saved gallery are explicitly user initiated; no automatic credits or social publishing.
 - CTA with verified contact is validated before AI credits are reserved; unverified numbers receive actionable error. Gemini receives verified phone context; distinct output/provider error categories. Historical refund job counts cannot prove exact prior failure root cause.
-- **Branch:** `fix/p2-poster-cloud-save-caption-planner-cta-20261117`. **Not yet production READY** at this staged entry; require regression tests, migration apply/verify, PR merge, exact Vercel READY. Browser signed-in Gemini CTA and persistent image QA still pending.
+- **Release verified:** [PR #117](https://github.com/Victor-dev-03-cmd/sl_business_index/pull/117), tested head `38358dec0d7b6539aa62ff497244ebce811184c3` passed 6/6 CI workflows. Supabase migration applied: UUID column added, seven-key brief CHECK remains, 3 Campaign RLS policies retained, private bucket unchanged. Squash main commit `f6e7d1e3ead93346738483986e85650b0fd52cd6`, Vercel `dpl_FZEA8RHr8MYKbxJ26V1sDDdgDGYz` READY with `www.slbusinessindex.com` alias. **Owner authenticated UI/CTA Gemini and cross-device PNG test remain pending.**
 
 
 ## 2026-11-17 — P2-28 Caption Lab Generate CTA / Gemini connection verification (PRODUCTION READY)

@@ -1,10 +1,10 @@
 # SLBusinessIndex — MASTER IMPLEMENTATION & CHAT HANDOFF
 
-## 2026-11-17 — P2-29: Private Poster Save + Caption Planner Constraint + CTA verified phone (STAGED)
+## 2026-11-17 — P2-29: Private Poster Save + Caption Planner Constraint + CTA verified phone (PRODUCTION READY)
 - **Read first:** [P2-29 private poster library & campaign save handoff](p2/P2_29_PRIVATE_POSTER_SAVE_CAPTION_PLANNER_CTA_20261117.md). Owner reported reproducible `marketing_campaign_brief_shape_v2` Save-to-Planner error, intermittent Gemini failures after adding CTA phone, and inability to preserve generated poster PNGs.
 - **Verified cause:** Production Supabase constraint allows exactly seven fields in `marketing_campaigns.brief`; Caption Lab sent extra `captionBundle`, `posterLocalKey` and other fields. Fixed via strict helper; no constraint weakening. Storage bucket `slbi-poster-ai-private` already exists, private/locked; new server-only authenticated owner-scoped upload/list/download, explicit Save Poster in Poster Studio and Save image / saved gallery in Caption Lab, new nullable Planner `poster_asset_id` migration.
 - **CTA:** Business-verified contact must match CTA phone before AI credit reservation. Prompt passes verified phone to Gemini; distinct safe errors for invalid output vs upstream provider failure. Read-only production jobs show 4 refunded, 1 completed recently, but do **not** prove phone caused prior provider failures. No AI inference in test/development.
-- **Branch:** `fix/p2-poster-cloud-save-caption-planner-cta-20261117`. Status here is STAGED pending complete CI, single additive production migration, merged release and Vercel READY; real signed-in CTA Gemini and cross-device image QA are owner follow-ups.
+- **Release receipt:** [PR #117](https://github.com/Victor-dev-03-cmd/sl_business_index/pull/117), head `38358dec0d7b6539aa62ff497244ebce811184c3` passed all 6 CI families including TS/Next, owner RLS, credits/OAuth and billing. Production migration applied: `poster_asset_id` exists, strict brief CHECK intact, 3 Campaign RLS policies unchanged, bucket private. Merged main SHA `f6e7d1e3ead93346738483986e85650b0fd52cd6`. Vercel `dpl_FZEA8RHr8MYKbxJ26V1sDDdgDGYz` READY at `www.slbusinessindex.com`. Authenticated owner browser Save/CTA/image cross-device QA remains open; no live billable Gemini request was made in automated tests.
 
 
 ## 2026-11-17 — P2-28 Caption Generate CTA spacing & Gemini readiness (PRODUCTION READY)
