@@ -61,7 +61,7 @@ test('Transcript status is explicit, full overlong text is reviewable, no silent
   assert.match(captions,/setMessage\(combined\)/);
   assert.doesNotMatch(captions,/setMessage\(previous=>\[previous,data\.transcript\][\s\S]*?slice\(0,600\)/);
   assert.match(captions,/const prompt=message\.trim\(\)/);
-  assert.match(captions,/voiceReviewDraft\)return/);
+  assert.match(captions,/if\(voiceReviewDraft\)\{/);
   assert.match(captions,/if\(blob\.size<800\)/);
   assert.match(captions,/No audio captured/);
 });
