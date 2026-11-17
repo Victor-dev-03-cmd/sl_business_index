@@ -151,11 +151,12 @@ export function validatePosterBlueprint(value:unknown,input:{
   const requestedPercent=new Set(percentages(input.vendorPrompt+' '+(input.approvedOffer||'')));
   // Gemini may translate an explicitly mentioned product/service but must
   // quote a contiguous source phrase from the owner's brief or the verified
-  // business description/category. Never treat uploaded references as proof.
+  // business description. A generic category alone is NOT evidence of a specific
+  // promoted service. Never treat uploaded references as proof.
   const normalized=(v:string)=>v.normalize('NFC').toLocaleLowerCase()
     .replace(/\s+/gu,' ').trim();
   const groundedSources=[
-    input.vendorPrompt,input.verifiedDescription||'',input.verifiedCategory||'',
+    input.vendorPrompt,input.verifiedDescription||'',
   ].map(normalized).filter(Boolean);
   const evidence=normalized(proposedEvidence);
   const grounded=Boolean(proposedService)&&evidence.length>=5&&
