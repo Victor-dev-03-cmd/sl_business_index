@@ -177,7 +177,7 @@ test('AI calls occur only on explicit generate, respect existing global hard-off
   assert.doesNotMatch(poster.slice(link,end),/puter\.ai|generate\(\)|caption\/route/);
 });
 
-test('Campaign Planner saves tri-language caption bundle and displays same-device original PNG',()=>{
+test('Campaign Planner saves DB-valid seven-key brief and persists owner-private poster PNG',()=>{
   const linked=read('app/vendor/marketing/campaigns/LinkedCaptionPoster.tsx');
   assert.match(page,/supabase\.from\('marketing_campaigns'\)\.insert\(patch\)/);
   assert.match(page,/\.eq\('id',businessId\)\.eq\('owner_id',user\.id\)/);
