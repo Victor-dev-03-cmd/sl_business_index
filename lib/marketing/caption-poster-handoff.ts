@@ -24,6 +24,7 @@ export type LinkedPosterContext={
   sample:boolean;
   source:'poster_studio'|'device_upload';
   format:string;
+  savedPosterAssetId?:string; // Private owner-owned cloud UUID; never a public URL.
 };
 export type LinkedPosterRecord={
   id:string;createdAt:number;context:LinkedPosterContext;image:Blob;
@@ -82,6 +83,7 @@ export async function saveLinkedPoster(context:LinkedPosterContext,image:Blob):P
     sample:Boolean(context.sample),
     source:context.source==='device_upload'?'device_upload':'poster_studio',
     format:clean(context.format,20),
+    savedPosterAssetId:validHandoffId(context.savedPosterAssetId)?context.savedPosterAssetId:undefined,
   };
   await operation<void>('readwrite',(store,done)=>{
     // Remove old short-lived private poster assets. Limit retained records
