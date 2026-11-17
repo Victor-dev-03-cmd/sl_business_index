@@ -1,5 +1,13 @@
 # SLBusinessIndex — MASTER IMPLEMENTATION & CHAT HANDOFF
 
+## 2026-11-17 — CURRENT P2-27: Caption Lab Poster-matched Voice UX + GitHub handoff (review/release in progress)
+- **Read first:** [P2-27 Caption Lab voice, arrow and handoff guide](p2/P2_27_CAPTION_VOICE_PARITY_AND_HANDOFF_20261117.md). Owner accepted P2-26 business-specific Poster Studio and explicitly requested identical voice/permission/transcript experience in **AI Caption Lab**, consistent select/disclosure arrows, and living GitHub handoff updates.
+- Feature branch `feat/p2-caption-voice-waveform-dropdown-handoff-20261117`. Client changes: icon-only mic, real WebAudio waveform, pause/resume and timer, **Cancel** with zero transcription, explicit **Send → original-language Gemini transcript → editable factual brief**, full transcript review when appending exceeds the existing 600-char caption limit, shared Poster/Caption Gemini voice quota visibility, 14px inset arrows, service-specific recent-poster handoff. Does NOT invoke paid image or caption AI on voice recording; one explicit caption Generate remains separate and credit-reserved. Owner business and Pro gates remain.
+- **Baseline before P2-27:** Poster business/service-specific PR #114 merged `7df63b58ebaff015012f3b51fab8e4207db2573a` and deployed READY on production; this source/provenance is not invented from the old historical sections below.
+- **Release status when this note was staged:** P2-27 source/docs added; exact-head CI, protected merge and matching Vercel READY must be observed **before** claiming this new Caption UI is production live. No live transcription/model credits consumed for development. Browser microphone E2E and Tamil/Sinhala transcript quality remain owner QA.
+- **Continuations:** Refer to both this master and `docs/growth/p2/IMPLEMENTATION_STATUS_LIVE.md`. Append actual PR numbers, SHAs, CI results, deployment IDs and browser QA findings. Older 2026-11-15 sections are historical snapshots, not current feature truth.
+
+
 ## 2026-11-15 — LATEST P2-10: microphone permission + Generate QA unblock
 - **Read first:** [P2-10 Poster microphone and QA quota handoff](docs/growth/p2/P2_10_POSTER_MIC_PERMISSION_QUOTA_FIX_20261115.md). User found native mic Allow popup was absent and Generate disabled on live Pro Studio.
 - Confirmed site policy bug: `next.config.ts` globally had `microphone=()`; specific poster route now overrides it with `microphone=(self)`, while global pages and camera remain denied. If Chrome has persistently blocked mic, no code can force prompt: new UI explains browser Site settings → Mic Allow → Reload → Retry. Gemini voice transcription is still manual review before image Generate.
