@@ -256,12 +256,14 @@ test('premium Canvas renderer draws fonts, glass, CTA, and icon contact rows int
   assert.match(premium,/role:'offer'/);
   assert.match(premium,/drawPill/);
   assert.match(premium,/contactIcon/);
-  assert.match(premium,/kind:'mail'/);
-  assert.match(premium,/kind:'phone'/);
-  assert.match(premium,/kind:'globe'/);
+  const contacts=read('lib/marketing/puter-adaptive-card-layout.ts');
+  assert.match(premium,/planPosterContactRows\(p\.copy\)/);
+  assert.match(contacts,/kind:'mail'/);
+  assert.match(contacts,/kind:'phone'/);
+  assert.match(contacts,/kind:'globe'/);
   assert.match(premium,/ctx\.fillText/);
   assert.match(premium,/ctx\.canvas\.width/);
-  assert.match(premium,/copy\.email\?\.trim\(\)/);
+  assert.match(contacts,/copy\.email\?\.trim\(\)/);
   assert.match(premium,/spelling and content were not changed/);
   assert.match(lab,/email:showEmail\?facts\.email:''/);
   assert.match(lab,/Verified business email/);
@@ -339,14 +341,14 @@ test('adaptive card responds to all 3 vertical output sizes, amount of approved 
 });
 test('premium art prompt protects upper high-quality hero composition and adapts lower panel',()=>{
   assert.match(compose,/USER REQUIREMENTS/);
-  assert.match(compose,/CENTRAL 27–77%/);
+  assert.match(compose,/CENTRAL 19–58%/);
   assert.match(compose,/adaptive COMPACT card/);
   assert.match(compose,/high-fidelity materials/);
   assert.match(compose,/NO TEXT of any kind/);
   assert.match(compose,/No extra pumpkins, moons, trees/);
   const preset=read('lib/marketing/poster-premium-presets.ts');
-  assert.match(preset,/HERO SUBJECT across MIDDLE 27%-77%/);
-  assert.match(preset,/LOWER 71%-95% suitable for a COMPACT dynamically sized glass card/);
+  assert.match(preset,/HERO SUBJECT across MIDDLE 19%-58%/);
+  assert.match(preset,/LOWER 56%-93% suitable for a LARGE content-first adaptive glass card/);
   assert.doesNotMatch(preset,/LOWER 59%-93%/);
 });
 

@@ -79,8 +79,8 @@ test('poster headline is compact and hero consumes visual middle; prior successf
   assert.match(renderer,/maxLines:2/);
   assert.match(renderer,/const titleMax=h\*\(format==='square'\?\.26:\.27\)/);
   assert.match(renderer,/displayLanguage==='ta'\?1\.18/);
-  assert.match(composer,/CENTRAL 27–77%/);
-  assert.match(layout,/HERO SUBJECT across MIDDLE 27%-77%/);
+  assert.match(composer,/CENTRAL 19–58%/);
+  assert.match(layout,/HERO SUBJECT across MIDDLE 19%-58%/);
   assert.match(ui,/Preserve the last successful preview visually during copy\/language edits/);
   assert.match(ui,/!finalBlob\|\|!finalUrl\|\|composing\|\|!copyLanguageConsistent/);
   assert.match(ui,/!finalBlob\|\|composing\|\|generating\|\|!copyLanguageConsistent/);
