@@ -110,7 +110,11 @@ test('Reference analysis text cannot replace vendor instructions; image bytes re
   assert.ok(combined.length<=1200);
   assert.ok(withPosterReferenceSummary('a'.repeat(1199),summary).length<=1200);
   assert.match(studio,/request:withPosterReferenceSummary\(prompt,referenceSummary\)/);
-  assert.match(studio,/prompt:withPosterReferenceSummary\(prompt,referenceSummary\)/);
+  assert.match(studio,/prompt:prompt\.trim\(\),referenceContext:referenceSummary/);
+  const brain=read('lib/marketing/poster-gemini-design-blueprint.ts');
+  assert.match(brain,/untrustedReferenceStyle/);
+  assert.match(brain,/vendorPrompt:request,approvedOffer/);
+  assert.match(brain,/NEVER owner-approved facts|NOT owner-approved facts/);
   assert.match(studio,/if\(useAttachedImage&&attachedImage\)/);
   assert.match(studio,/preparePosterReferencePng\(attachedImage\)/);
   assert.match(studio,/else if\(sendReferenceImage&&selectedReference\)/);
