@@ -30,6 +30,7 @@ import {
 } from '@/lib/marketing/puter-poster-composer';
 import type {PosterBusinessFacts,PosterIntelligenceBrief} from '@/lib/marketing/poster-gemini-intelligence';
 import {saveLinkedPoster} from '@/lib/marketing/caption-poster-handoff';
+import {describePuterImageError} from '@/lib/marketing/puter-image-errors';
 import {
   isPosterReferenceImage,posterReferenceFormData,preparePosterReferencePng,
   validatePosterReferences,withPosterReferenceSummary,
@@ -133,6 +134,8 @@ export default function PuterMultilingualPosterLab(){
   const voiceAudioRef=useRef<AudioContext|null>(null);
   const voiceFrameRef=useRef<number|null>(null);
   const finalUrlRef=useRef('');
+  // Local reference preview is browser-only, never sent to paid image provider.
+  const sampleArtworkUrlRef=useRef('');
   const selectedReference=getPosterReferenceStyle(selectedReferenceId);
   const selectedPremiumStyle=selectedReference?.id||'modern';
   const typographyPreset=resolvePremiumPosterPreset(selectedPremiumStyle);
@@ -299,6 +302,7 @@ export default function PuterMultilingualPosterLab(){
   useEffect(()=>()=>{
     discardVoiceRef.current=true;stopVoice();
     if(finalUrlRef.current)URL.revokeObjectURL(finalUrlRef.current);
+    if(sampleArtworkUrlRef.current)URL.revokeObjectURL(sampleArtworkUrlRef.current);
   },[stopVoice]);
 
   const exactCopy=useMemo<ExactPosterCopy|null>(()=>facts?{
@@ -501,8 +505,32 @@ export default function PuterMultilingualPosterLab(){
     }catch(e){setError(errorMessage(e));setStatus('');}
     finally{setGeminiBusy(false);void refreshGeminiQuota();}
   };
+  // Zero-credit visual continuity when Puter sample mode is unavailable or
+  // no separate Puter account is signed in. This is an ORIGINAL local SLBI
+  // reference, labeled as such (never presented as generated model artwork).
+  const loadLocalPosterSample=async(reason:string)=>{
+    const fallback=getPosterReferenceStyle('tech');
+    const thumbnail=selectedReference?.thumbnail||fallback?.thumbnail;
+    if(!thumbnail)throw Error('The local sample reference is unavailable.');
+    const previewPng=await originalReferencePng(thumbnail);
+    const url=URL.createObjectURL(previewPng);
+    const previous=sampleArtworkUrlRef.current;
+    sampleArtworkUrlRef.current=url;
+    setArtworkSrc(url);
+    setImageRevision(n=>n+1);
+    setIsRealOutput(false);setGenerationStage('typography');setEstimatedProgress(94);
+    setBrowseReferences(false);
+    setError('');
+    setStatus('SLBI reference SAMPLE ready for exact-copy layout preview. It is not AI-generated artwork.');
+    setDesignAdvisory(reason);
+    // The last composed poster is held separately as its own PNG blob.
+    if(previous)URL.revokeObjectURL(previous);
+  };
   const generate=async()=>{
-    if(!sdkReady||!window.puter){setError('Puter.js is not ready. Reload and retry.');return;}
+    if(realMode&&(!sdkReady||!window.puter)){
+      setError('SLBI Image Generator cannot connect to Puter.js. Check the network and refresh this page.');
+      return;
+    }
     if(!facts||!businessId){setError('Choose a verified owned business first.');return;}
     if(recording||transcribing||geminiBusy||generating||referenceBusy)return;
     if(prompt.trim().length<5||!headline.trim()){
@@ -514,14 +542,22 @@ export default function PuterMultilingualPosterLab(){
       return;
     }
     if(realMode&&!consent){setError('Please explicitly confirm possible Puter charges.');return;}
-    setGenerating(true);setComposing(false);setError('');
+    setGenerating(true);setComposing(false);setError('');setDesignAdvisory('');
     setGenerationStage('connecting');setEstimatedProgress(7);
     setStatus('SLBI Image Generator is preparing your poster artwork…');
+    let phase:'sign_in'|'image_request'='sign_in';
     try{
       const puter=window.puter;
-      // Official Puter browser SDK persists its own session. Do not reopen the
-      // auth popup for every generation while the session is still valid.
+      // The no-credit sample is a reliable local SLBI mock when the SDK has
+      // not loaded or would otherwise need a popup just to render a sample.
+      if(!realMode&&(!sdkReady||!puter||!puter.auth.isSignedIn())){
+        await loadLocalPosterSample('No separate Puter sign-in is needed for this local sample. Enable real generation and approve Puter charges for AI artwork.');
+        return;
+      }
+      if(!puter)throw Error('Puter.js is not connected.');
+      // Real Puter sign-in is initiated ONLY from this explicit click.
       if(!puter.auth.isSignedIn())await puter.auth.signIn();
+      phase='image_request';
       setGenerationStage('artwork');setEstimatedProgress(18);
       const styleDirection=selectedReference?.artDirection||typographyPreset.artDirective;
       const briefDirection=currentBlueprint?.imagePrompt||currentBrief?.creativeDirectionEnglish;
@@ -533,25 +569,40 @@ export default function PuterMultilingualPosterLab(){
       const options:{model:string;test_mode:boolean;ratio?:{w:number;h:number};input_images?:Blob[]}={
         model,test_mode:!realMode,
       };
-      // The ratio option is documented for Gemini and GPT; the other providers
-      // use their default sizes and get safely cropped into exact final ratios.
       if(model.startsWith('openai/')||model.startsWith('google/'))
         options.ratio=ratioFor(format);
-      // No reference uploads by default; the user must opt in independently.
-      // Puter supports input_images for all image providers (PNG Blob).
+      // Reference assets are optional and never forwarded automatically.
       if(useAttachedImage&&attachedImage)
         options.input_images=[await preparePosterReferencePng(attachedImage)];
       else if(sendReferenceImage&&selectedReference)
         options.input_images=[await originalReferencePng(selectedReference.thumbnail)];
+      // Single explicit user action; never silently retry using another paid model.
       const image=await puter.ai.txt2img(creative,options);
       if(!image?.src||typeof image.src!=='string')
-        throw Error('Puter returned no image. No printable poster was prepared.');
+        throw {code:'upstream_failed',message:'Image provider returned no printable image'};
       setArtworkSrc(image.src);setImageRevision(n=>n+1);setIsRealOutput(realMode);
       setGenerationStage('typography');setEstimatedProgress(94);setBrowseReferences(false);
       setStatus(realMode?'SLBI artwork ready. Applying your exact approved copy…':
-        'Sample artwork ready. Composing a sample poster at exact size…');
-    }catch(e){setGenerationStage('error');setError(errorMessage(e));setStatus('Generation failed; previous poster remains available.');}
-    finally{setGenerating(false);}
+        'Puter SAMPLE returned. Composing exact preview text…');
+    }catch(e){
+      const detail=describePuterImageError(e,phase);
+      if(!realMode){
+        try{
+          await loadLocalPosterSample('Puter sample unavailable ('+detail.code+
+            '). Showing an original SLBI reference for layout testing without AI credits.');
+          return;
+        }catch(sampleError){
+          setGenerationStage('error');
+          setError('Sample preview could not be prepared. '+(
+            sampleError instanceof Error?sampleError.message:
+              'Please refresh and check local reference assets.'));
+        }
+      }else{
+        setGenerationStage('error');setError(detail.message+
+          (detail.code!=='unknown_provider_error'?' (Code: '+detail.code+')':''));
+        setStatus('No automatic paid retry was made. Your previous poster and campaign brief remain available.');
+      }
+    }finally{setGenerating(false);}
   };
   const download=()=>{
     if(!finalBlob||!finalUrl||composing||!copyLanguageConsistent)return;
@@ -823,7 +874,7 @@ export default function PuterMultilingualPosterLab(){
             Default is a no-credit sample, not a real AI quality test.
           </p>}
           <button type="button" onClick={()=>void generate()}
-            disabled={locked||!sdkReady||!facts||prompt.trim().length<5||!headline.trim()||(realMode&&!consent)}
+            disabled={locked||(realMode&&!sdkReady)||!facts||prompt.trim().length<5||!headline.trim()||(realMode&&!consent)}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#262126] px-3 py-3 text-[11px] font-bold text-white disabled:opacity-40">
             {generating?<LoaderCircle size={16} className="animate-spin"/>:<FlaskConical size={16}/>}
             {generating?'Generating artwork…':realMode?'Generate with SLBI Image Generator':'Preview poster sample'}
