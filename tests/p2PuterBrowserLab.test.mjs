@@ -29,7 +29,7 @@ test('Gemini voice transcription is human-review only, with scoped mic policy',(
   assert.match(lab,/navigator\.mediaDevices\.getUserMedia\(\{audio:true\}\)/);
   assert.match(lab,/rec\.start\(250\)/);
   assert.match(lab,/stopVoice\(\)/);
-  assert.match(lab,/transcribe\(new Blob\(chunks/);
+  assert.match(lab,/void transcribe\(blob\)/);
   assert.match(lab,/\/api\/marketing\/poster\/transcribe/);
   assert.match(lab,/x-slbi-business-id/);
   assert.match(lab,/setPrompt\(prev=>\[prev,heard\]/);
@@ -63,8 +63,8 @@ test('Puter User-Pays action remains explicit, no API token, no SLBI credits',()
   assert.match(lab,/realMode&&!consent/);
   assert.match(lab,/setRealMode\(e\.target\.checked\);setConsent\(false\)/);
   assert.match(lab,/onClick=\{\(\)=>void generate\(\)\}/);
-  assert.match(lab,/Generate no-credit poster sample/);
-  assert.match(lab,/may create a charge/);
+  assert.match(lab,/Preview poster sample/);
+  assert.match(lab,/may charge its own AI balance/);
   assert.doesNotMatch(lab,/storage\.from|marketing_poster_reserve|growth_credits|localStorage/);
 });
 test('canvas composes all four exact sizes with Unicode font shaping',()=>{
