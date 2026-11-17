@@ -304,7 +304,7 @@ function renderStacked(ctx:Ctx,copy:ExactPosterCopy,p:PremiumPosterPreset,format
   const titleMax=h*(format==='square'?.26:.27);
   const titleFit=fit(ctx,{
     value:title,width:w-2*side,height:titleMax-16*scale,maxLines:2,
-    start:(displayLanguage==='ta'?121:displayLanguage==='si'?136:149)*scale,
+    start:(displayLanguage==='ta'?96:displayLanguage==='si'?104:115)*scale,
     min:Math.max(30,(displayLanguage==='ta'?61:displayLanguage==='si'?70:74)*scale),
     lineHeight:displayLanguage==='en'?.98:displayLanguage==='ta'?1.18:1.19,
     role:'display',lang:displayLanguage,preset:p,label:'Display headline',
