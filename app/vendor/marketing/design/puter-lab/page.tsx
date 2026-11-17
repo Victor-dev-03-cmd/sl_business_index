@@ -139,7 +139,6 @@ export default function PuterMultilingualPosterLab(){
   const facts=business?.facts;
   const currentKey=businessId+'|'+language+'|'+prompt.trim()+'|'+referenceSummary;
   const attachedImage=referenceFiles.find(isPosterReferenceImage)||null;
-  const composerLocked=generating||geminiBusy||transcribing||recording||referenceBusy;
   const currentBrief=brief&&briefKey===currentKey?brief:null;
   const currentBlueprint=blueprint&&blueprintKey===currentKey?blueprint:null;
   const activeDesign=useMemo<VerifiedPosterDesign|null>(()=>designOverride||
