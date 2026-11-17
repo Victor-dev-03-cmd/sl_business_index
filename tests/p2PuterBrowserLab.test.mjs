@@ -32,7 +32,7 @@ test('Gemini voice transcription is human-review only, with scoped mic policy',(
   assert.match(lab,/void transcribe\(blob\)/);
   assert.match(lab,/\/api\/marketing\/poster\/transcribe/);
   assert.match(lab,/x-slbi-business-id/);
-  assert.match(lab,/setPrompt\(prev=>\[prev,heard\]/);
+  assert.match(lab,/setPrompt\(prev=>\[prev===samplePrompt\?'':prev,heard\]/);
   assert.match(lab,/const maxAudio=1_500_000/);
   assert.match(voice,/reviewBeforeGenerating:true/);
   assert.match(voice,/GEMINI_POSTER_MODEL/);
