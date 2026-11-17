@@ -124,6 +124,7 @@ export default function ConnectedCaptionLab(){
   const voiceFrameRef=useRef<number|null>(null);
   const voiceAudioRef=useRef<AudioContext|null>(null);
   const discardVoiceRef=useRef(false);
+  const voiceMountedRef=useRef(true);
   const importingRef=useRef('');
   const posterUrlRef=useRef('');
   const posterInputRef=useRef<HTMLInputElement|null>(null);
@@ -253,13 +254,17 @@ export default function ConnectedCaptionLab(){
     }).catch(()=>{if(!cancelled)setNotice('This browser could not open the linked PNG. Continue without a poster.');});
     return()=>{cancelled=true;};
   },[loading,businesses]);
-  useEffect(()=>()=>{
+  useEffect(()=>{
+    voiceMountedRef.current=true;
+    return()=>{
     // Unmounting must never submit a recording or spend one Gemini quota unit.
+    voiceMountedRef.current=false;
     discardVoiceRef.current=true;
     const recorder=recorderRef.current;
     if(recorder&&recorder.state!=='inactive')recorder.stop();
     releaseVoiceMedia();
     if(posterUrlRef.current)URL.revokeObjectURL(posterUrlRef.current);
+    };
   },[releaseVoiceMedia]);
 
   const loadDrafts=useCallback(async(signal?:AbortSignal)=>{
@@ -364,6 +369,11 @@ export default function ConnectedCaptionLab(){
     try{
       // A real user click triggers the native browser permission prompt.
       const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+      // The user may navigate away while the browser's native Allow popup is
+      // still open. Never resurrect a recorder after leaving Caption Lab.
+      if(!voiceMountedRef.current){
+        stream.getTracks().forEach(track=>track.stop());return;
+      }
       streamRef.current=stream;
       const preferred=['audio/webm;codecs=opus','audio/webm','audio/mp4'];
       const mime=preferred.find(t=>MediaRecorder.isTypeSupported(t));
@@ -380,7 +390,9 @@ export default function ConnectedCaptionLab(){
       recorder.onstop=()=>{
         const discarded=discardVoiceRef.current;
         releaseVoiceMedia();
-        recorderRef.current=null;setRecording(false);setVoicePaused(false);
+        recorderRef.current=null;
+        if(!voiceMountedRef.current)return;
+        setRecording(false);setVoicePaused(false);
         setVoiceLevels(Array.from({length:35},()=>5));
         if(failed||discarded)return;
         const blob=new Blob(chunks,{type:recorder.mimeType||'audio/webm'});
