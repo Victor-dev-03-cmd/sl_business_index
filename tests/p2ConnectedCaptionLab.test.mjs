@@ -202,7 +202,7 @@ test('Enterprise polish keeps credit and preview truth in Info while removing de
     'Real AI requires the enabled, credit-reserved Caption service.',
     'Linked PNG remains on this device until secure cloud asset storage is configured',
   ])assert.equal(page.includes(text),false,text);
-  assert.match(page,/<summary[^>]*>.*?<Info size=\{13\}\/?> Info<\/summary>/s);
+  assert.match(page,/<summary[^>]*>.*?<Info size=\{13\}\/> Info <ChevronDown size=\{13\}/s);
   assert.match(page,/One provider request and applicable credit reservation per selected language/);
   assert.match(page,/Nothing is automatically published/);
   assert.match(page,/Linked PNG remains on this device/);
