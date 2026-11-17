@@ -118,3 +118,33 @@ export async function POST(request:Request){
   if(error)return json(503,{error:'Private poster upload failed. Please retry; your local PNG is unchanged.'});
   return json(201,{assetId,saved:true});
 }
+
+/** Explicit deletion only. Never delete a poster still linked to a Planner
+ * campaign, because that would silently break existing published drafts. */
+export async function DELETE(request:Request){
+  if(!isSameOrigin(request.url,request.headers.get('origin')))
+    return json(403,{error:'Cross-origin private poster deletion is blocked.'});
+  if(!request.headers.get('content-type')?.toLowerCase().startsWith('application/json'))
+    return json(415,{error:'Expected a JSON image deletion request.'});
+  let input:unknown;
+  try{input=await request.json();}catch{return json(400,{error:'Invalid image deletion request.'});}
+  if(!input||typeof input!=='object'||Array.isArray(input))
+    return json(400,{error:'Invalid image deletion request.'});
+  const {businessId,assetId}=input as Record<string,unknown>;
+  if(typeof businessId!=='string'||typeof assetId!=='string'||
+     !UUID.test(businessId)||!UUID.test(assetId))
+    return json(400,{error:'Choose a valid private poster.'});
+  const ctx=await scope(businessId);
+  if(ctx.denied)return ctx.denied;
+  const admin=ctx.admin!;
+  // Server-verified business ownership is enforced above. Do not silently
+  // break posters that Caption Lab already attached to a Planner campaign.
+  const {data:linked,error:linkError}=await admin.from('marketing_campaigns')
+    .select('id').eq('business_id',businessId).eq('poster_asset_id',assetId).limit(1);
+  if(linkError)return json(503,{error:'Could not check campaign image references. Nothing was deleted.'});
+  if(linked?.length)return json(409,{error:'This image is linked to a saved Campaign Planner draft. Keep the image until that campaign no longer uses it.'});
+  const {error}=await admin.storage.from(BUCKET)
+    .remove([path(ctx.uid!,businessId,assetId)]);
+  if(error)return json(503,{error:'Private image deletion failed. Please try again.'});
+  return json(200,{deleted:true,assetId});
+}
