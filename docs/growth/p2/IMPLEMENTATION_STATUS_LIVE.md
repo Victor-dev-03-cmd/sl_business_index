@@ -1,10 +1,10 @@
 # SLBI Marketing Engine | LIVE IMPLEMENTATION STATUS
 
-## 2026-11-17 — P2-27 Caption Lab Voice + UI Arrows + Connected Creative Handoff (CODE STAGED)
+## 2026-11-17 — P2-27 Caption Lab Voice + UI Arrows + Connected Creative Handoff (PRODUCTION READY)
 - **Handoff:** [P2-27 Caption Lab Voice Parity and Handoff](P2_27_CAPTION_VOICE_PARITY_AND_HANDOFF_20261117.md), owner requested same voice/transcript experience as the accepted business-specific Poster Studio.
 - **Code:** `app/vendor/marketing/captions/page.tsx`, `caption-fonts.css`: microphone permission diagnosis, real waveform with pause/resume + recording clock, explicit Send + Cancel, live transcription spinner, protected owner-review of full transcript over existing 600-character brief budget, shared Gemini daily voice/brief quota display, properly inset business dropdown and collapsible chevrons. Initial and recent local poster handoffs retain the verified service focus.
 - **Safety:** No backend quota changes, no new provider credential, no automatic billable Generate, no global microphone permission change, no cross-tenant poster access, no cloud poster asset or social publishing claim. Server retains atomic owner-scoped voice quota and caption AI ledger. 2-hour IndexedDB PNG local key remains.
-- **PR:** [#115](https://github.com/Victor-dev-03-cmd/sl_business_index/pull/115). **Source branch:** `feat/p2-caption-voice-waveform-dropdown-handoff-20261117`. **Feature release unverified at staging:** require exact PR-head tests/Next build and Vercel production READY/alias before declaring deployed. Real signed-in microphone and multilingual transcript QA still pending.
+- **Release receipt:** [PR #115](https://github.com/Victor-dev-03-cmd/sl_business_index/pull/115), head `975be42a73573575a879c32be80bebf9b9b43ab2` PASSED 5/5 workflow families (Next/TS, P1, P2 Docker RLS/credit/OAuth, billing V2 and independent Postgres). Merged as `main` SHA `422b90e65095df1277337ee979178726f0fecd14`; Vercel `dpl_DNHjm9fYVxLtRPTGKtAFKknaXiRU` returned READY, alias `www.slbusinessindex.com`. **Real signed-in mic and multilingual provider E2E QA still pending**; CI cannot verify live Gemini speech quality.
 - **Next:** Run owner browser QA for native Allow, pause/resume, Send + transcript review, Tamil/Sinhala/English copy, no clipped offer details, arrows and poster-to-caption-to-planner; record findings and verified release commit.
 
 
