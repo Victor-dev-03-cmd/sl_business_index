@@ -57,7 +57,7 @@ test('private image download cannot disclose cross-tenant artwork',()=>{
 test('current Studio uses explicit Puter User-Pays consent, while retired Cloudflare API stays independently guarded',()=>{
   assert.match(editor,/realMode&&!consent/);
   assert.match(editor,/test_mode:!realMode/);
-  assert.match(editor,/I understand this uses my Puter AI balance and may create a charge/);
+  assert.match(editor,/connected Puter account, which may charge its own AI balance/);
   assert.match(editor,/puter\.ai\.txt2img\(creative,options\)/);
   assert.match(editor,/finalBlob/);
   assert.match(editor,/URL\.createObjectURL/);
