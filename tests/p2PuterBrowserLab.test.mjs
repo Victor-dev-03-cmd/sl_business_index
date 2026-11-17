@@ -339,14 +339,14 @@ test('adaptive card responds to all 3 vertical output sizes, amount of approved 
 });
 test('premium art prompt protects upper high-quality hero composition and adapts lower panel',()=>{
   assert.match(compose,/USER REQUIREMENTS/);
-  assert.match(compose,/CENTRAL 27–77%/);
+  assert.match(compose,/CENTRAL 19–58%/);
   assert.match(compose,/adaptive COMPACT card/);
   assert.match(compose,/high-fidelity materials/);
   assert.match(compose,/NO TEXT of any kind/);
   assert.match(compose,/No extra pumpkins, moons, trees/);
   const preset=read('lib/marketing/poster-premium-presets.ts');
-  assert.match(preset,/HERO SUBJECT across MIDDLE 27%-77%/);
-  assert.match(preset,/LOWER 71%-95% suitable for a COMPACT dynamically sized glass card/);
+  assert.match(preset,/HERO SUBJECT across MIDDLE 19%-58%/);
+  assert.match(preset,/LOWER 56%-93% suitable for a LARGE content-first adaptive glass card/);
   assert.doesNotMatch(preset,/LOWER 59%-93%/);
 });
 
