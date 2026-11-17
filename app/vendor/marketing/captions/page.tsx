@@ -888,7 +888,7 @@ export default function ConnectedCaptionLab(){
           <details className="slbi-caption-disclosure group relative">
             <summary className="flex cursor-pointer list-none items-center gap-1 font-semibold text-[#C2410C]"><Info size={13}/> Info <ChevronDown size={13} className="slbi-caption-chevron ml-0.5"/></summary>
             <div className="absolute right-0 top-6 z-30 w-64 rounded-xl border border-[#E5E7EB] bg-white p-3 text-[11px] leading-5 text-[#374151] shadow-xl">
-              <p>Real Gemini generates three original caption angles per selected language. One provider request and applicable credit reservation per language; never auto-charged on page open. A verified Pro/internal QA account, Brand Profile language, remaining credits and provider quota are required.</p>
+              <p>Real Gemini generates three original caption angles per selected language. One provider request and applicable credit reservation per selected language; never auto-charged on page open. A verified Pro/internal QA account, Brand Profile language, remaining credits and provider quota are required.</p>
               <p className="mt-2">Gemini voice transcription uses its separate shared daily voice/brief allowance only after you tap Send.</p>
               <p className="mt-2">Linked PNG remains on this device for up to two hours; saving to Campaign Planner stores captions, not a cloud copy of your image.</p>
               <p className="mt-2">Social previews are visual estimates. Character goals are editorial targets, not social platform limits. Nothing is automatically published.</p>
