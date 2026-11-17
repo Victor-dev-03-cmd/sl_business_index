@@ -2,7 +2,7 @@
 
 **Date:** 2026-11-17 (Asia/Colombo).  
 **Feature branch:** `fix/p2-caption-cta-spacing-gemini-readiness-20261117`.  
-**Status at code authoring:** source and tests staged; verify exact GitHub CI, PR merge and Vercel READY before marking release.
+**Production release verified:** [PR #116](https://github.com/Victor-dev-03-cmd/sl_business_index/pull/116), tested head `115964168204019cfefc68ecf77333a1ede66163` (5/5 CI workflow families pass), merged into main `5e254afe3ba1e53238cdef4738bd465e584a81e8`. Vercel deployment `dpl_B7xg4UayY6box4D9gGCrxT46AX6C` state READY, alias `www.slbusinessindex.com`. Real authenticated Gemini request/output and debit/refund E2E remain owner QA.
 
 ## User request
 

@@ -1,10 +1,10 @@
 # SLBusinessIndex — MASTER IMPLEMENTATION & CHAT HANDOFF
 
-## 2026-11-17 — P2-28 Caption Generate CTA spacing & Gemini readiness (SOURCE / CI CHECKPOINT)
+## 2026-11-17 — P2-28 Caption Generate CTA spacing & Gemini readiness (PRODUCTION READY)
 - **Read first:** [P2-28 Caption CTA layout / actual Gemini + Growth Credits handoff](p2/P2_28_CAPTION_GENERATE_SPACING_GEMINI_READINESS_20261117.md). User approved Caption voice, requested more breathing room below Generate and genuine Gemini integration verification.
 - Code branch `fix/p2-caption-cta-spacing-gemini-readiness-20261117`. Adds explicit margins, credit-info surface, accessible CTA focus, quick-brief disclosure padding and descriptive Gemini/credit billing copy. No backend payment/provider/model switch and no extra API provider call. Preserve linked private poster design workflow.
 - **Live capability verified (read-only):** `SLBI_MARKETING_AI_ENABLED=true` in Vercel Production, server-side `GEMINI_API_KEY` Sensitive credential configured, `growth_credit_actions.ai_social_draft` is enabled and currently costs **2 Growth Credits/language**. Existing `three_angles` server mode sends strict JSON Gemini text and settlement/refund, with verified Pro + internal QA + Brand Profile language + owned business checks. These facts do not prove live caption output; no paid live inference was run.
-- **Release status:** Source and regression tests prepared. Wait for exact-head PR CI, merge SHA and matching Vercel READY before labeling P2-28 production. Browser QA (3 angles per language, credits and offer accuracy) is pending. No new ChatGPT/FLUX image provider or search license purchased.
+- **Release receipt:** PR #116 tested head `115964168204019cfefc68ecf77333a1ede66163` passed 5/5 workflow families including TypeScript/Next production, P2 RLS/credits/OAuth, P1, billing SQL/Postgres. Squash-merged into main `5e254afe3ba1e53238cdef4738bd465e584a81e8`; production Vercel `dpl_B7xg4UayY6box4D9gGCrxT46AX6C` READY, domain `www.slbusinessindex.com`. Real signed-in Gemini caption output, 3 angles per language and exact debit/refund browser QA still pending; no new ChatGPT/FLUX image provider purchased.
 
 
 ## 2026-11-17 — CURRENT P2-27: Caption Lab Voice UX + GitHub handoff (PRODUCTION READY)

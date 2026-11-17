@@ -1,10 +1,10 @@
 # SLBI Marketing Engine | LIVE IMPLEMENTATION STATUS
 
-## 2026-11-17 — P2-28 Caption Lab Generate CTA / Gemini connection verification (CODE STAGED)
+## 2026-11-17 — P2-28 Caption Lab Generate CTA / Gemini connection verification (PRODUCTION READY)
 - **Detailed handoff:** [P2-28 Caption Generate Spacing & Gemini Readiness](P2_28_CAPTION_GENERATE_SPACING_GEMINI_READINESS_20261117.md).
 - **UI fix:** primary Generate gets 16px top margin + accessible focus, caption credits/Info gets a separate 12px-spaced wrap-safe neutral inset surface, Quick brief suggestions gets independent 12px margin and padding, terms padding adjusted. Explicit "Gemini AI · languages · 3 variations each · Credits on Generate" label, clear QA and billing Info.
 - **Verified backend configuration (read-only):** Production Vercel `SLBI_MARKETING_AI_ENABLED=true`; sensitive `GEMINI_API_KEY` exists; Supabase `ai_social_draft` enabled at 2 Growth Credits per language. Real API `mode:'three_angles'` already calls Gemini JSON schema, reserves/settles/refunds per language with owner/Pro/internal QA gates. No settings, payment or credit limits were changed. **No live billable Gemini inference tested.**
-- **Branch:** `fix/p2-caption-cta-spacing-gemini-readiness-20261117`. Release not verified at this note. PR head CI/merge/Vercel READY to be recorded later; real signed-in browser caption quality and financial settle/refund QA open. No third-party image search or ChatGPT/FLUX API connected.
+- **Release receipt:** [PR #116](https://github.com/Victor-dev-03-cmd/sl_business_index/pull/116), head `115964168204019cfefc68ecf77333a1ede66163` passed all 5/5 CI families. Merged main `5e254afe3ba1e53238cdef4738bd465e584a81e8`. Vercel production `dpl_B7xg4UayY6box4D9gGCrxT46AX6C` READY, aliased to `www.slbusinessindex.com`. Signed-in live Gemini output and debit/refund tests remain open; no third-party image search or ChatGPT/FLUX API added.
 
 
 ## 2026-11-17 — P2-27 Caption Lab Voice + UI Arrows + Connected Creative Handoff (PRODUCTION READY)
