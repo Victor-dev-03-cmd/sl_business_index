@@ -87,6 +87,10 @@ export default function PuterMultilingualPosterLab(){
   const [prompt,setPrompt]=useState(samplePrompt);
   const [headline,setHeadline]=useState(STARTER_COPY.ta.headline);
   const [offer,setOffer]=useState('');
+  const [serviceFocus,setServiceFocus]=useState('');
+  const [serviceEvidence,setServiceEvidence]=useState('');
+  const [serviceFocusApproved,setServiceFocusApproved]=useState(false);
+  const [manualFocus,setManualFocus]=useState(false);
   const [cta,setCta]=useState(STARTER_COPY.ta.cta);
   const [showPhone,setShowPhone]=useState(true);
   const [showWebsite,setShowWebsite]=useState(true);
@@ -159,7 +163,7 @@ export default function PuterMultilingualPosterLab(){
   const dimensions=POSTER_FORMATS[format];
   const copyLanguageConsistent=isPosterCopyInLanguage(
     {headline,offerText:offer,ctaText:cta},language,
-  );
+  )&&isPosterTextInLanguage(serviceFocus,language);
 
   // Dual execution: once the owner reviews a JSON blueprint, warm the chosen
   // licensed fonts independently of the next image-model request.
@@ -222,6 +226,7 @@ export default function PuterMultilingualPosterLab(){
   const chooseSuggestion=(suggestion:{id:string;label:string;prompt:string})=>{
     // Chips stage the owner's idea only; NEVER invoke Gemini or paid Puter.
     setSelectedSuggestionId(suggestion.id);
+    setServiceFocusApproved(false);
     setPrompt(previous=>previous===samplePrompt||!previous.trim()?suggestion.prompt:
       (previous+'\n'+suggestion.prompt).slice(0,1200));
     setBlueprint(null);setBlueprintKey('');setBrief(null);setBriefKey('');
@@ -238,6 +243,7 @@ export default function PuterMultilingualPosterLab(){
     setSendReferenceImage(false);
     if(prompt===samplePrompt||!prompt.trim()){
       setPrompt('Create a premium '+reference.name+' visual campaign for my selected business. Modern, tasteful, professional quality.');
+      setServiceFocusApproved(false);
       setBrief(null);setBriefKey('');
     }
     if(!manualHeadline)
@@ -309,14 +315,15 @@ export default function PuterMultilingualPosterLab(){
     businessName:facts.name,
     headline:headline.trim(),
     offer:offer.trim(),
-    service:facts.category,
+    focus:serviceFocus.trim(),
+    service:facts.category.trim().toLocaleLowerCase()===serviceFocus.trim().toLocaleLowerCase()?'':facts.category,
     cta:cta.trim(),
     phone:showPhone?facts.phone:'',
     website:showWebsite?facts.website:'',
     email:showEmail?facts.email:'',
     accentColor:facts.primaryColor||'#F7B45C',
     language,
-  }:null,[facts,headline,offer,cta,showPhone,showWebsite,showEmail,language]);
+  }:null,[facts,headline,offer,serviceFocus,cta,showPhone,showWebsite,showEmail,language]);
 
   // Recompose typography at the exact selected PNG dimensions. Changing text,
   // format or contact options never triggers a new billable Puter request.
@@ -364,6 +371,7 @@ export default function PuterMultilingualPosterLab(){
       if(!res.ok||!data.transcript)throw Error(data.error||'Gemini could not transcribe the recording.');
       const heard=data.transcript.trim();
       setPrompt(prev=>[prev===samplePrompt?'':prev,heard].filter(Boolean).join(' ').slice(0,1200));
+      setServiceFocusApproved(false);
       const explicit=extractExplicitPercentage(heard);
       if(explicit&&!manualOffer)setOffer(localizedPercentOffer(explicit,language));
       setBrief(null);setBriefKey('');
@@ -491,7 +499,12 @@ export default function PuterMultilingualPosterLab(){
            (language==='en'&&!isNaturalEnglishOffer(offer))){
           setOffer(data.blueprint.posterCopy.offerText);setManualOffer(false);
         }
-        setStatus('Gemini design blueprint ready. Review the headline, exact offer and CTA before any Puter generation.');
+        if(!manualFocus||!isPosterTextInLanguage(serviceFocus,language)){
+          setServiceFocus(data.blueprint.posterCopy.serviceFocus||'');
+          setServiceEvidence(data.blueprint.posterCopy.focusEvidence||'');
+          setManualFocus(false);setServiceFocusApproved(false);
+        }
+        setStatus('Gemini blueprint ready. Confirm the actual promoted product/service, headline, offer and CTA before generating.');
       }else if(data.brief){
         // Backward compatibility for an older brief response.
         setBrief(data.brief);setBriefKey(forKey);
@@ -541,6 +554,12 @@ export default function PuterMultilingualPosterLab(){
         '. Edit the exact fields or use Prepare with Gemini before generating.');
       return;
     }
+    if(!serviceFocus.trim()){
+      setError('Enter the specific product or service being promoted. A generic business category or festival greeting is not enough.');return;
+    }
+    if(!serviceFocusApproved){
+      setError('Review and confirm that this product or service is actually offered by the selected business before generating.');return;
+    }
     if(realMode&&!consent){setError('Please explicitly confirm possible Puter charges.');return;}
     setGenerating(true);setComposing(false);setError('');setDesignAdvisory('');
     setGenerationStage('connecting');setEstimatedProgress(7);
@@ -564,6 +583,7 @@ export default function PuterMultilingualPosterLab(){
       const creative=buildArtOnlyPrompt({
         request:withPosterReferenceSummary(prompt,referenceSummary),styleDirection,creativeDirection:briefDirection,
         businessCategory:facts.category,city:facts.city,
+        businessDescription:facts.description,serviceFocus:serviceFocusApproved?serviceFocus.trim():'',
         brandColor:facts.primaryColor||'#F7B45C',format,
       });
       const options:{model:string;test_mode:boolean;ratio?:{w:number;h:number};input_images?:Blob[]}={
@@ -672,6 +692,7 @@ export default function PuterMultilingualPosterLab(){
                 setReferenceFiles([]);setReferenceSummary('');setUseAttachedImage(false);
                 setArtworkSrc('');setFinalBlob(null);setFinalUrl('');
                 setHeadline(starterHeadline(language,selectedReferenceId));setOffer('');
+                setServiceFocus('');setServiceEvidence('');setServiceFocusApproved(false);setManualFocus(false);
                 setCta(STARTER_COPY[language].cta);
                 setManualHeadline(false);setManualOffer(false);setManualCta(false);
                 setBlueprint(null);setBlueprintKey('');setDesignOverride(null);setShuffleIndex(0);
@@ -696,6 +717,7 @@ export default function PuterMultilingualPosterLab(){
                   if(!manualHeadline)setHeadline(starterHeadline(next,selectedReferenceId));
                   if(!manualCta)setCta(STARTER_COPY[next].cta);
                   if(!manualOffer)setOffer('');
+                  setServiceFocus('');setServiceEvidence('');setServiceFocusApproved(false);setManualFocus(false);
                   setBrief(null);setBriefKey('');
                   setBlueprint(null);setBlueprintKey('');
                   setDesignOverride(null);setShuffleIndex(0);
@@ -723,7 +745,7 @@ export default function PuterMultilingualPosterLab(){
             <div className="overflow-hidden rounded-2xl border border-[#E5DDD7] bg-[#FDFBF9] transition-colors focus-within:border-[#F3A56D] focus-within:ring-2 focus-within:ring-[#F97316]/10">
               <textarea id="puter-prompt" value={prompt} disabled={locked} rows={5} maxLength={1200}
                 onChange={e=>{setPrompt(e.target.value);setBrief(null);setBriefKey('');
-                  setBlueprint(null);setBlueprintKey('');}}
+                  setBlueprint(null);setBlueprintKey('');setServiceFocusApproved(false);}}
                 placeholder="தமிழ் · සිංහල · English · Tanglish — describe your campaign."
                 className="max-h-[190px] min-h-[110px] w-full resize-none border-0 bg-transparent px-3.5 pt-3.5 pb-1 text-[12px] leading-5 outline-none disabled:opacity-60"/>
               {referenceFiles.length>0&&<div className="flex flex-wrap gap-1.5 px-3 pb-2"
@@ -1045,11 +1067,11 @@ export default function PuterMultilingualPosterLab(){
               <h3 className="text-[12px] font-extrabold">Exact poster copy</h3>
             </div>
             <p className="text-[10px] leading-4 text-[#907D75]">
-              Your approved text is drawn with Unicode fonts, not spelled by the image model.
+              Review the actual business product/service and offer. Exact approved text is drawn with Unicode fonts, not spelled by the image model.
             </p>
             {!copyLanguageConsistent&&<p role="alert"
               className="rounded-lg border border-amber-200 bg-amber-50 p-2 text-[10px] leading-4 text-amber-900">
-              Selected language: {posterLanguageName(language)}. Headline, offer and CTA must all use
+              Selected language: {posterLanguageName(language)}. Headline, product/service, offer and CTA must all use
               this language. Edit any unmatched text or use Prepare with Gemini before Generate.
               Your business name, website, phone and email are kept exactly as verified.
             </p>}
@@ -1058,6 +1080,31 @@ export default function PuterMultilingualPosterLab(){
               <input id="puter-headline" value={headline} maxLength={120} disabled={generating}
                 onChange={e=>{setHeadline(e.target.value);setManualHeadline(true);}}
                 className="w-full rounded-lg border border-[#E4DDDA] px-3 py-2.5 text-[12px] focus:border-[#EC9D68] focus:outline-none"/>
+            </div>
+            <div className="space-y-1.5 rounded-xl border border-[#F4D7C0] bg-[#FFF9F3] p-2.5">
+              <label htmlFor="puter-service-focus" className="block text-[11px] font-bold text-[#7A411A]">
+                Promoted product or service <span className="text-[#C2410C]">*</span>
+              </label>
+              <input id="puter-service-focus" value={serviceFocus} maxLength={85} disabled={generating}
+                onChange={e=>{setServiceFocus(e.target.value);setServiceFocusApproved(false);
+                  setManualFocus(true);setServiceEvidence('');}}
+                placeholder={language==='ta'?'எ.கா. வலைத்தள மற்றும் செயலி உருவாக்கம்':
+                  language==='si'?'උදා. වෙබ් අඩවි සහ යෙදුම් සංවර්ධනය':
+                    'e.g. Website & App Development'}
+                className="w-full rounded-lg border border-[#E4C9B5] bg-white px-3 py-2.5 text-[12px] focus:border-[#EC9D68] focus:outline-none"/>
+              {serviceEvidence&&<p className="text-[10px] leading-4 text-[#836D5B]">
+                Gemini source excerpt: <span className="font-medium">{serviceEvidence}</span>
+              </p>}
+              <p className="text-[10px] leading-4 text-[#836D5B]">
+                The specific offering appears prominently in the poster. Gemini suggestions need your confirmation; a generic business category is not enough.
+              </p>
+              <label className="flex items-start gap-2 text-[10px] font-semibold leading-4 text-[#69492F]">
+                <input type="checkbox" checked={serviceFocusApproved}
+                  disabled={generating||!serviceFocus.trim()||!isPosterTextInLanguage(serviceFocus,language)}
+                  onChange={e=>setServiceFocusApproved(e.target.checked)}
+                  className="mt-0.5 accent-[#F97316]"/>
+                I confirm this is a real product/service offered by the selected business.
+              </label>
             </div>
             <div>
               <label htmlFor="puter-offer" className="mb-1 block text-[11px] font-semibold">Exact offer</label>
