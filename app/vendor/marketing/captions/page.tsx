@@ -10,6 +10,8 @@ import {
   Volume2,WandSparkles,X,
 } from 'lucide-react';
 import {supabase} from '@/lib/supabaseClient';
+import {plannerBriefFromCaption} from '@/lib/marketing/caption-planner-brief';
+import {listSavedPosters,privatePosterUrl,readSavedPoster,uploadSavedPoster,type SavedPosterAsset} from '@/lib/marketing/saved-poster-cloud-client';
 import type {CaptionLanguage} from '@/lib/marketing/caption-contract';
 import {
   ANGLES,GOALS,LANGUAGES,PLATFORMS,angleLabels,emptyCaptions,goalLabel,
@@ -86,6 +88,10 @@ export default function ConnectedCaptionLab(){
   const [posterChoices,setPosterChoices]=useState<LinkedPosterRecord[]>([]);
   const [posterThumbnails,setPosterThumbnails]=useState<Record<string,string>>({});
   const [posterBusy,setPosterBusy]=useState(false);
+  const [cloudAssetId,setCloudAssetId]=useState('');
+  const [cloudChoices,setCloudChoices]=useState<SavedPosterAsset[]>([]);
+  const [cloudError,setCloudError]=useState('');
+  const [cloudSaving,setCloudSaving]=useState(false);
   const [goal,setGoal]=useState<CampaignGoal>('flash_sale');
   const [languageSelections,setLanguageSelections]=useState<CaptionLanguage[]>(['ta','si','en']);
   const [previewLanguage,setPreviewLanguage]=useState<CaptionLanguage|'all'>('all');
@@ -244,7 +250,7 @@ export default function ConnectedCaptionLab(){
       if(posterUrlRef.current)URL.revokeObjectURL(posterUrlRef.current);
       const src=URL.createObjectURL(record.image);
       posterUrlRef.current=src;setPosterUrl(src);
-      setPosterKey(key);setLinked(record);setBusinessId(record.context.businessId);
+      setPosterKey(key);setLinked(record);setBusinessId(record.context.businessId);setCloudAssetId('');
       setMessage([record.context.headline,record.context.serviceFocus,record.context.offer].filter(Boolean).join('. ').slice(0,600));
       setCta(record.context.cta.slice(0,180));
       setGoal(record.context.offer?'flash_sale':'festival');
@@ -556,8 +562,23 @@ export default function ConnectedCaptionLab(){
       const ownership=await supabase.from('businesses').select('id')
         .eq('id',businessId).eq('owner_id',user.id).maybeSingle();
       if(ownership.error||!ownership.data)throw Error('Business ownership could not be verified.');
-      const combined=currentCaption.trim().slice(0,3000);
+      const combined=(includeTags?withHashtags(currentCaption.trim(),visibleTags):
+        removeHashtags(currentCaption.trim())).slice(0,3000);
       const first=previewLanguage==='all'?chosenLanguages[0]:previewLanguage;
+      // marketing_campaign_brief_shape_v2 permits exactly seven fields.
+      // The complete selected copy stays in banner_text, while other angles
+      // persist separately in the user's marketing_ai_drafts records.
+      const brief=plannerBriefFromCaption({
+        caption:combined,cta,terms:conditions,language:first,
+        objective:goalObjective[goal],
+      });
+      // Store the linked poster first, never claim it was saved when the
+      // original is still just a two-hour browser-local handoff.
+      let posterAssetId=cloudAssetId;
+      if(hasLinked&&linked?.image&&!posterAssetId){
+        posterAssetId=await uploadSavedPoster(businessId,linked.image);
+        setCloudAssetId(posterAssetId);
+      }
       const patch={
         business_id:businessId,
         banner_text:combined,
@@ -565,31 +586,29 @@ export default function ConnectedCaptionLab(){
         platforms:[platform],
         scheduled_at:null,
         status:'drafted',
-        brief:{
-          offer:short(combined,240),cta:short(cta,130),terms:short(conditions,220),
-          language:({ta:'தமிழ்',si:'සිංහල',en:'English'} as const)[first],
-          objective:goalObjective[goal],format:'portrait',palette:'navy',
-          captionBundle:captions,
-          captionHashtags:generatedTags,
-          posterLocalKey:hasLinked?posterKey:null,
-          linkedPosterSample:hasLinked?Boolean(linked?.context.sample):null,
-          createdFrom:'caption_lab',
-          selectedAngle:angle,
-        },
+        brief,
+        poster_asset_id:posterAssetId||null,
       };
       const saved=await supabase.from('marketing_campaigns').insert(patch)
         .select('id').maybeSingle();
       if(saved.error||!saved.data)throw Error(saved.error?.message||'Campaign Planner could not save this draft.');
       setSavedCampaignId(saved.data.id);
-      setNotice('Caption saved to Campaign Planner. Your attached poster remains on this device.');
+      setNotice('Campaign Planner draft saved'+(posterAssetId?' with a durable PRIVATE poster image.':'.')+' No social publishing was triggered.');
     }catch(e){setError(e instanceof Error?e.message:'Save to Campaign Planner failed.');}
     finally{setSaving(false);}
   };
   const pickPoster=async()=>{
     if(!businessId||!selected){setError('Select your business before attaching a poster.');return;}
     setPosterPickerOpen(true);setError('');
-    try{setPosterChoices(await listLinkedPosters(businessId));}
-    catch{setPosterChoices([]);setNotice('Recent Studio posters are not available in this browser. You can upload an image.');}
+    const [local,cloud]=await Promise.allSettled([
+      listLinkedPosters(businessId),listSavedPosters(businessId),
+    ]);
+    setPosterChoices(local.status==='fulfilled'?local.value:[]);
+    setCloudChoices(cloud.status==='fulfilled'?cloud.value:[]);
+    setCloudError(cloud.status==='rejected'?
+      (cloud.reason instanceof Error?cloud.reason.message:'Private library unavailable.'):'');
+    if(local.status==='rejected'&&cloud.status==='rejected')
+      setNotice('Poster libraries unavailable. You can still upload an image from your device.');
   };
   const selectRecentPoster=(record:LinkedPosterRecord)=>{
     if(!businesses.some(b=>b.id===record.context.businessId)||record.context.businessId!==businessId){
@@ -598,12 +617,42 @@ export default function ConnectedCaptionLab(){
     if(posterUrlRef.current)URL.revokeObjectURL(posterUrlRef.current);
     const url=URL.createObjectURL(record.image);
     posterUrlRef.current=url;setPosterUrl(url);
-    setLinked(record);setPosterKey(record.id);setPosterPickerOpen(false);
+    setLinked(record);setPosterKey(record.id);setPosterPickerOpen(false);setCloudAssetId('');
     setMessage(previous=>previous.trim()?previous:
       [record.context.headline,record.context.serviceFocus,record.context.offer]
         .filter(Boolean).join('. ').slice(0,600));
     setCta(previous=>previous.trim()?previous:record.context.cta.slice(0,180));
     setNotice('Poster attached. Review your campaign brief, then generate captions.');
+  };
+  const saveCaptionImage=async()=>{
+    if(!businessId||!hasLinked||!linked?.image||cloudSaving)return;
+    setCloudSaving(true);setError('');
+    try{
+      const id=cloudAssetId||await uploadSavedPoster(businessId,linked.image);
+      setCloudAssetId(id);
+      setNotice('Image saved privately to SLBI. It is available across your signed-in devices.');
+      setCloudChoices(await listSavedPosters(businessId));
+    }catch(e){setError(e instanceof Error?e.message:'Unable to save the PNG privately.');}
+    finally{setCloudSaving(false);}
+  };
+  const selectCloudPoster=async(asset:SavedPosterAsset)=>{
+    if(!selected||!businessId||posterBusy)return;
+    setPosterBusy(true);setError('');
+    try{
+      const image=await readSavedPoster(businessId,asset.id);
+      const context:LinkedPosterContext={
+        businessId:selected.id,businessName:selected.name,category:selected.category||'',
+        city:selected.city||'',address:selected.address||'',phone:selected.phone||'',
+        website:selected.website_url||'',headline:'',offer:'',cta:'',
+        vibe:'',language:activePreviewLanguage,sample:false,
+        source:'device_upload',format:'uploaded',
+      };
+      const id=await saveLinkedPoster(context,image);
+      selectRecentPoster({id,createdAt:Date.now(),context,image});
+      setCloudAssetId(asset.id);
+      setNotice('Private saved PNG attached. It will stay linked when you Save to Planner.');
+    }catch(e){setError(e instanceof Error?e.message:'Saved image could not be loaded.');}
+    finally{setPosterBusy(false);}
   };
   const uploadDevicePoster=async(file?:File)=>{
     if(!file)return;
@@ -626,7 +675,7 @@ export default function ConnectedCaptionLab(){
   };
   const onBusinessChange=(id:string)=>{
     if(id===businessId)return;
-    setBusinessId(id);setLinked(null);setPosterKey('');
+    setBusinessId(id);setLinked(null);setPosterKey('');setCloudAssetId('');setCloudChoices([]);
     setPosterPickerOpen(false);setPosterChoices([]);
     if(posterUrlRef.current)URL.revokeObjectURL(posterUrlRef.current);
     posterUrlRef.current='';setPosterUrl('');
@@ -638,7 +687,7 @@ export default function ConnectedCaptionLab(){
     const a=document.createElement('a');a.href=posterUrl;
     a.download='slbi-linked-poster-'+linked.context.format+'.png';a.click();
   };
-  const isBusy=busy||voiceBusy||requestingMic||recording||saving||posterBusy;
+  const isBusy=busy||voiceBusy||requestingMic||recording||saving||posterBusy||cloudSaving;
   const previewAccount=selected?.name||'Your Business';
 
   return <main className="mx-auto w-full max-w-[1640px] space-y-4 px-2 pb-12 text-[#111827] sm:px-4">
