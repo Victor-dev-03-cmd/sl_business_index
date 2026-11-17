@@ -75,9 +75,9 @@ test('Canvas renderer keeps existing typography, makes lower text larger, and dr
   assert.match(renderer,/label:'Verified '\+item\.kind/);
   assert.match(renderer,/const titleMax=h\*\(format==='square'\?\.26:\.27\)/);
   assert.match(renderer,/displayLanguage==='ta'\?96/);
-  assert.match(renderer,/start:110\*scale/);
+  assert.match(renderer,/start:\(focus\?83:110\)\*scale/);
   assert.match(renderer,/start:52\*scale/);
-  assert.match(renderer,/start:44\*scale/);
+  assert.match(renderer,/start:\(focus\?35:44\)\*scale/);
   assert.match(renderer,/const buttonW=Math\.min\(panelW\*\.84,800\*scale\)/);
   assert.match(renderer,/start:40\*p\.scale/);
   assert.match(renderer,/p\.language==='ta'&&p\.role==='offer'/);
