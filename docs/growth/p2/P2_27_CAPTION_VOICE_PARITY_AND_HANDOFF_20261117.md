@@ -2,7 +2,7 @@
 
 **Date:** 2026-11-17 · **Repository:** `Victor-dev-03-cmd/sl_business_index`  
 **Branch:** `feat/p2-caption-voice-waveform-dropdown-handoff-20261117`  
-**Feature status:** implementation + automated CI in progress; record final PR/merge, exact CI SHA and Vercel production receipt only after verification.
+**Pull request:** [#115](https://github.com/Victor-dev-03-cmd/sl_business_index/pull/115) · **Feature status:** implementation + automated CI in progress; record final tested SHA, merge and Vercel production receipt only after verification.
 
 ## Owner request and established baseline
 
