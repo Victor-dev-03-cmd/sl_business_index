@@ -603,7 +603,7 @@ export default function ConnectedCaptionLab(){
     setPosterPickerOpen(false);setPosterChoices([]);
     if(posterUrlRef.current)URL.revokeObjectURL(posterUrlRef.current);
     posterUrlRef.current='';setPosterUrl('');
-    setMessage('');setConditions('');setCta('');setError('');setNotice('');
+    setMessage('');setConditions('');setCta('');setVoiceReviewDraft('');setError('');setNotice('');
     setCustomTags({});setRemovedTags({});setSavedCampaignId('');
   };
   const downloadPoster=()=>{
