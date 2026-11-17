@@ -116,6 +116,7 @@ export default function PuterMultilingualPosterLab(){
   const [referenceBusy,setReferenceBusy]=useState(false);
   const [useAttachedImage,setUseAttachedImage]=useState(false);
   const [recording,setRecording]=useState(false);
+  const [pendingTranscript,setPendingTranscript]=useState('');
   const [voicePaused,setVoicePaused]=useState(false);
   const [voiceLevels,setVoiceLevels]=useState<number[]>(()=>Array.from({length:35},()=>5));
   const [recordingSeconds,setRecordingSeconds]=useState(0);
@@ -143,6 +144,7 @@ export default function PuterMultilingualPosterLab(){
   const clockRef=useRef<ReturnType<typeof setInterval>|null>(null);
   const attachInputRef=useRef<HTMLInputElement|null>(null);
   const discardVoiceRef=useRef(false);
+  const failedVoiceRef=useRef<Blob|null>(null);
   const voiceAudioRef=useRef<AudioContext|null>(null);
   const voiceFrameRef=useRef<number|null>(null);
   const finalUrlRef=useRef('');
@@ -286,10 +288,14 @@ export default function PuterMultilingualPosterLab(){
   };
   const chooseSuggestion=(suggestion:{id:string;label:string;prompt:string})=>{
     // Chips stage the owner's idea only; NEVER invoke Gemini or paid Puter.
-    setSelectedSuggestionId(suggestion.id);
+    const combined=prompt===samplePrompt||!prompt.trim()?suggestion.prompt:
+      prompt+'\n'+suggestion.prompt;
+    if(combined.length>1200){
+      setError('Your prompt is full (1,200 characters). Review it before adding another chip.');
+      return;
+    }
+    setError('');setPrompt(combined);setSelectedSuggestionId(suggestion.id);
     setServiceFocusApproved(false);
-    setPrompt(previous=>previous===samplePrompt||!previous.trim()?suggestion.prompt:
-      (previous+'\n'+suggestion.prompt).slice(0,1200));
     setBlueprint(null);setBlueprintKey('');setBrief(null);setBriefKey('');
     setDesignOverride(null);setShuffleIndex(0);
     const matching=getPosterReferenceStyle(suggestion.id as PosterStyleId);
@@ -297,7 +303,7 @@ export default function PuterMultilingualPosterLab(){
       setSelectedReferenceId(matching.id);setSendReferenceImage(false);
       if(!manualHeadline)setHeadline(starterHeadline(language,matching.id));
     }
-    setStatus(suggestion.label+' staged as an editable suggestion. Review before Prepare with Gemini.');
+    setStatus(suggestion.label+' added to your existing voice/text prompt. Tap Prepare with Gemini when ready; selecting a chip does not spend AI quota.');
   };
   const chooseReference=(reference:PosterReferenceStyle)=>{
     setSelectedReferenceId(reference.id);
@@ -415,6 +421,7 @@ export default function PuterMultilingualPosterLab(){
   // The next successful compose revokes the old object URL atomically.
 
   const transcribe=async(blob:Blob)=>{
+    failedVoiceRef.current=blob;
     setTranscribing(true);setError('');setStatus('Gemini is transcribing your original-language voice. Please review the text.');
     try{
       if(!businessId)throw Error('Choose your owned business before speaking.');
@@ -428,17 +435,41 @@ export default function PuterMultilingualPosterLab(){
           'x-slbi-language':'auto',
         },body:blob,
       });
-      const data=await res.json() as ApiError&{transcript?:string};
-      if(!res.ok||!data.transcript)throw Error(data.error||'Gemini could not transcribe the recording.');
+      const data=await res.json() as ApiError&{code?:string;transcript?:string};
+      if(!res.ok||!data.transcript)
+        throw Error((data.error||'Voice transcription failed.')+(data.code?' ('+data.code+')':''));
       const heard=data.transcript.trim();
-      setPrompt(prev=>[prev===samplePrompt?'':prev,heard].filter(Boolean).join(' ').slice(0,1200));
+      failedVoiceRef.current=null;
+      const combined=[prompt===samplePrompt?'':prompt,heard].filter(Boolean).join(' ').trim();
+      if(combined.length>1200){
+        setPendingTranscript(heard);
+        setStatus('Full transcript captured. Review and shorten the text below before applying; no spoken words were discarded.');
+        return;
+      }
+      setPrompt(combined);
       setServiceFocusApproved(false);
       const explicit=extractExplicitPercentage(heard);
       if(explicit&&!manualOffer)setOffer(localizedPercentOffer(explicit,language));
       setBrief(null);setBriefKey('');
       setStatus('Gemini transcript added. Check the words, campaign offer and business details before continuing.');
-    }catch(e){setError(errorMessage(e));}
+    }catch(e){
+      setError(errorMessage(e));
+      setStatus('Your prompt is unchanged. The previous recording is retained in this tab for Retry transcription.');
+    }
     finally{setTranscribing(false);void refreshGeminiQuota();}
+  };
+  const retryVoice=()=>{if(failedVoiceRef.current&&!transcribing)void transcribe(failedVoiceRef.current);};
+  const applyPendingTranscript=()=>{
+    const next=[prompt===samplePrompt?'':prompt,pendingTranscript.trim()]
+      .filter(Boolean).join(' ').trim();
+    if(next.length>1200){
+      setError('Shorten your reviewed transcript until the combined prompt fits 1,200 characters.');
+      return;
+    }
+    setPrompt(next);setPendingTranscript('');setError('');
+    setBrief(null);setBriefKey('');setBlueprint(null);setBlueprintKey('');
+    setServiceFocusApproved(false);
+    setStatus('Reviewed transcript added safely. Tap Prepare with Gemini to build the design.');
   };
   const startVoice=async()=>{
     if(recording||generating||geminiBusy||transcribing||referenceBusy)return;
@@ -810,6 +841,7 @@ export default function PuterMultilingualPosterLab(){
             <label htmlFor="puter-business" className="mb-1.5 block text-[11px] font-bold">Selected business</label>
             <select id="puter-business" value={businessId} disabled={locked||loadingBusiness}
               onChange={e=>{
+                failedVoiceRef.current=null;setPendingTranscript('');
                 setBusinessId(e.target.value);setBrief(null);setBriefKey('');
                 setReferenceFiles([]);setReferenceSummary('');setUseAttachedImage(false);
                 setArtworkSrc('');setFinalBlob(null);setFinalUrl('');
@@ -870,6 +902,25 @@ export default function PuterMultilingualPosterLab(){
                   setBlueprint(null);setBlueprintKey('');setServiceFocusApproved(false);}}
                 placeholder="தமிழ் · සිංහල · English · Tanglish — describe your campaign."
                 className="max-h-[190px] min-h-[110px] w-full resize-none border-0 bg-transparent px-3.5 pt-3.5 pb-1 text-[12px] leading-5 outline-none disabled:opacity-60"/>
+              {failedVoiceRef.current&&!transcribing&&!recording&&<button type="button"
+                onClick={retryVoice} disabled={locked} aria-label="Retry previous voice transcription"
+                className="mx-3 mb-2 inline-flex items-center gap-1.5 rounded-lg border border-[#F3A56D] bg-white px-3 py-2 text-[11px] font-bold text-[#A95B28] disabled:opacity-40">
+                <WandSparkles size={13}/> Retry transcription · recording retained
+              </button>}
+              {pendingTranscript&&<div className="mx-3 mb-3 space-y-2 rounded-xl border border-amber-200 bg-amber-50 p-2.5">
+                <label htmlFor="poster-transcript-review" className="block text-[11px] font-bold text-amber-900">
+                  Full voice transcript · review before adding
+                </label>
+                <textarea id="poster-transcript-review" value={pendingTranscript} rows={3}
+                  maxLength={1200} onChange={e=>setPendingTranscript(e.target.value)}
+                  className="w-full rounded-lg border border-amber-300 bg-white p-2 text-[11px] leading-5"/>
+                <div className="flex items-center justify-end gap-2">
+                  <button type="button" onClick={()=>setPendingTranscript('')}
+                    className="rounded-lg border bg-white px-3 py-2 text-[10px] font-semibold">Discard transcript</button>
+                  <button type="button" onClick={applyPendingTranscript}
+                    className="rounded-lg bg-[#292328] px-3 py-2 text-[10px] font-bold text-white">Apply reviewed transcript</button>
+                </div>
+              </div>}
               {referenceFiles.length>0&&<div className="flex flex-wrap gap-1.5 px-3 pb-2"
                 aria-label="Attached reference files">
                 {referenceFiles.map((file,index)=><div key={file.name+'-'+index}

@@ -60,7 +60,7 @@ test('all native dropdowns share an inset arrow unaffected by native browser pad
 });
 
 test('voice transcript remains same vendor brief for Gemini and artwork, and errors are scoped to blueprint status',()=>{
-  assert.match(ui,/setPrompt\(prev=>\[prev===samplePrompt\?'':prev,heard\]/);
+  assert.match(ui,/setPrompt\(combined\)/);
   assert.match(ui,/businessId,prompt:prompt\.trim\(\),referenceContext:referenceSummary,language/);
   assert.match(ui,/request:withPosterReferenceSummary\(prompt,referenceSummary\)/);
   assert.match(ui,/designAdvisory\?'border-amber-200 bg-amber-50/);

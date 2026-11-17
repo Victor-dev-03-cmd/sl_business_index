@@ -56,21 +56,23 @@ export async function POST(request:Request){
     if(bytes.length<800||bytes.length>MAX_AUDIO_BYTES)
       return reply(413,{error:'Recording is too large (1.5 MB maximum). Please shorten it or type the remaining details.'});
   }catch{return reply(400,{error:'Invalid microphone recording.'});}
+  // Validate provider configuration before reserving a vendor's voice allowance.
+  const key=process.env.GEMINI_API_KEY?.trim();
+  if(!key)return reply(503,{code:'VOICE_NOT_CONFIGURED',
+    error:'Voice service needs administrator configuration. Your text remains unchanged.'});
   // The server alone may reserve usage; errors always deny further Gemini calls.
   const admin=createAdminClient(url,secret,{auth:{persistSession:false,autoRefreshToken:false}});
   const {data:approved,error:quotaError}=await admin.rpc('marketing_poster_voice_try_reserve',{p_user_id:user.id});
   if(quotaError)return reply(503,{error:'Voice usage limit cannot be verified.'});
-  if(approved!==true)return reply(429,{error:'Daily voice transcription limit reached. Type your message instead.'});
-
-  const key=process.env.GEMINI_API_KEY?.trim();
-  if(!key)return reply(503,{error:'Gemini text service is not configured.'});
+  if(approved!==true)return reply(429,{code:'VOICE_DAILY_LIMIT',
+    error:'Daily voice allowance reached. Retry after 00:00 UTC; your existing text is safe.'});
   const languageHint=request.headers.get('x-slbi-language');
   const language=['ta','si','en'].includes(languageHint||'')?languageHint:'auto';
   try{
     const provider=await fetch(
       'https://generativelanguage.googleapis.com/v1beta/models/'+
       GEMINI_POSTER_MODEL+':generateContent',{
-        method:'POST',cache:'no-store',redirect:'error',signal:AbortSignal.timeout(18000),
+        method:'POST',cache:'no-store',redirect:'error',signal:AbortSignal.timeout(27000),
         headers:{'x-goog-api-key':key,'Content-Type':'application/json'},
         body:JSON.stringify({
           systemInstruction:{parts:[{text:
@@ -85,17 +87,36 @@ export async function POST(request:Request){
           generationConfig:{temperature:0,maxOutputTokens:1800},
         }),
       });
-    if(provider.status===429)return reply(429,{error:'Gemini free quota reached. Type your message instead.'});
-    if(!provider.ok)return reply(503,{error:'Voice service cannot transcribe this recording right now.'});
+    if(provider.status===429)return reply(429,{code:'VOICE_PROVIDER_QUOTA',
+      error:'Gemini is at its voice limit. Keep your recording and retry later.'});
+    if(provider.status===400||provider.status===415)return reply(422,{code:'VOICE_AUDIO_REJECTED',
+      error:'The voice provider could not read this recording format. Try another browser recording.'});
+    if(provider.status===401||provider.status===403)return reply(503,{code:'VOICE_PROVIDER_AUTH',
+      error:'Voice service configuration needs an administrator check. Keep your recorded audio.'});
+    if(!provider.ok){
+      console.warn('SLBI voice upstream HTTP status',provider.status);
+      return reply(503,{code:'VOICE_PROVIDER_UNAVAILABLE',
+        error:'Voice transcription is busy. Retry the same recording without speaking again.'});
+    }
     const raw=await provider.text();
-    if(raw.length>16000)return reply(503,{error:'Voice service returned an oversized response.'});
-    const data=JSON.parse(raw) as {
-      candidates?:Array<{content?:{parts?:Array<{text?:string}>}}>;
-    };
+    if(raw.length>16000)return reply(502,{code:'VOICE_BAD_RESPONSE',
+      error:'The transcription response was invalid. Retry your saved recording.'});
+    let data:{candidates?:Array<{content?:{parts?:Array<{text?:string}>}}>};
+    try{data=JSON.parse(raw) as typeof data;}
+    catch{return reply(502,{code:'VOICE_BAD_RESPONSE',
+      error:'The transcription response could not be read. Retry your saved recording.'});}
     const transcript=(data.candidates?.[0]?.content?.parts||[])
       .map(p=>p.text||'').join(' ').trim();
-    if(transcript.length<2||transcript.length>1200)
-      return reply(422,{error:'Your transcription exceeds the 1,200-character poster brief limit. Please shorten it or type the essential details.'});
+    if(transcript.length<2)return reply(422,{code:'VOICE_EMPTY_RESULT',
+      error:'No clear speech was detected. Try speaking closer to your microphone.'});
+    if(transcript.length>1200)return reply(422,{code:'VOICE_TRANSCRIPT_TOO_LONG',
+      error:'The transcript is longer than the supported brief. Record a shorter message.'});
     return reply(200,{transcript,languageHint:language,reviewBeforeGenerating:true});
-  }catch{return reply(503,{error:'Microphone transcription temporarily unavailable. Type instead.'});}
+  }catch(e){
+    const timedOut=e instanceof Error&&(e.name==='TimeoutError'||e.name==='AbortError');
+    console.warn('SLBI voice upstream transport',timedOut?'timeout':'network_or_parse');
+    return reply(timedOut?504:503,{code:timedOut?'VOICE_TIMEOUT':'VOICE_NETWORK',
+      error:timedOut?'Voice transcription took too long. Tap Retry transcription.':
+        'Voice connection was interrupted. Tap Retry transcription without recording again.'});
+  }
 }
