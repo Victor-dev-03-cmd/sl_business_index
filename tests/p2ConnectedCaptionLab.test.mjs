@@ -181,8 +181,9 @@ test('Campaign Planner saves DB-valid seven-key brief and persists owner-private
   const linked=read('app/vendor/marketing/campaigns/LinkedCaptionPoster.tsx');
   assert.match(page,/supabase\.from\('marketing_campaigns'\)\.insert\(patch\)/);
   assert.match(page,/\.eq\('id',businessId\)\.eq\('owner_id',user\.id\)/);
-  assert.match(page,/captionBundle:captions/);
-  assert.match(page,/posterLocalKey:hasLinked\?posterKey:null/);
+  assert.match(page,/plannerBriefFromCaption\(/);
+  assert.match(page,/poster_asset_id:posterAssetId\|\|null/);
+  assert.match(page,/uploadSavedPoster\(businessId,linked\.image\)/);
   assert.match(page,/status:'drafted'/);
   assert.match(page,/href="\/vendor\/marketing\/campaigns\?source=caption-lab"/);
   assert.match(planner,/createdFrom==='caption_lab'/);
