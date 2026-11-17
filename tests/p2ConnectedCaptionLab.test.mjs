@@ -191,7 +191,7 @@ test('Campaign Planner saves DB-valid seven-key brief and persists owner-private
   assert.match(planner,/get\('source'\)==='caption-lab'/);
   assert.match(linked,/loadLinkedPoster\(localKey\)/);
   assert.match(linked,/found\.context\.businessId!==businessId/);
-  assert.match(linked,/on this device/);
+  assert.match(linked,/saved in your SLBI private library/);
   assert.doesNotMatch(linked,/supabase\.storage|storage\.from/);
   assert.match(page,/Linked PNG remains on this device/);
 });
