@@ -14,6 +14,7 @@ export type StackedCardInput={
   canvasHeight:number;
   scale:number;
   brandHeight:number;
+  focusHeight?:number;
   offerHeight:number;
   serviceHeight:number;
   hasCta:boolean;
@@ -26,6 +27,7 @@ export type StackedCardPlan={
   bottom:number;
   height:number;
   brandY:number;
+  focusY:number|null;
   offerY:number|null;
   serviceY:number|null;
   ctaY:number|null;
@@ -38,27 +40,34 @@ export type StackedCardPlan={
 export function planStackedCard(input:StackedCardInput):StackedCardPlan{
   const {canvasHeight:h,format,scale:s}=input;
   if(!(h>0&&s>0)||input.contactRows<0||input.contactRows>3||
-     [input.brandHeight,input.offerHeight,input.serviceHeight].some(v=>!Number.isFinite(v)||v<0))
+     [input.brandHeight,input.focusHeight||0,input.offerHeight,input.serviceHeight].some(v=>!Number.isFinite(v)||v<0))
     throw Error('Invalid premium poster layout dimensions.');
   const topPad=(input.contentFocus?32:36)*s,bottomPad=(input.contentFocus?31:27)*s;
   const ctaHeight=input.hasCta?(input.contentFocus?94:74)*s:0;
   const footerSize=Math.max(13,Math.round((input.contentFocus?34:24)*s));
   const contactsHeight=input.contactRows*footerSize*(input.contentFocus?1.80:1.65);
   const brandGap=(input.contentFocus?13:14)*s;
+  const focusGap=12*s;
   const offerGap=(input.contentFocus?12:14)*s;
   const buttonGap=(input.contentFocus?17:22)*s;
   const contactsGap=(input.contentFocus?23:24)*s;
   let cursor=topPad;
   const brandOffset=cursor;
   cursor+=input.brandHeight;
+  let focusOffset:number|null=null;
   let offerOffset:number|null=null;
   let serviceOffset:number|null=null;
   let ctaOffset:number|null=null;
   let dividerOffset:number|null=null;
   let contactsOffset:number|null=null;
   let maxContentGap=0;
+  if((input.focusHeight||0)>0){
+    cursor+=focusGap;maxContentGap=Math.max(maxContentGap,focusGap);
+    focusOffset=cursor;cursor+=input.focusHeight||0;
+  }
   if(input.offerHeight>0){
-    cursor+=brandGap;maxContentGap=Math.max(maxContentGap,brandGap);
+    cursor+=(focusOffset!==null?offerGap:brandGap);
+    maxContentGap=Math.max(maxContentGap,focusOffset!==null?offerGap:brandGap);
     offerOffset=cursor;cursor+=input.offerHeight;
   }
   if(input.serviceHeight>0){
@@ -89,6 +98,7 @@ export function planStackedCard(input:StackedCardInput):StackedCardPlan{
   return {
     top,bottom,height:cardHeight,
     brandY:top+brandOffset,
+    focusY:absolute(focusOffset),
     offerY:absolute(offerOffset),
     serviceY:absolute(serviceOffset),
     ctaY:absolute(ctaOffset),

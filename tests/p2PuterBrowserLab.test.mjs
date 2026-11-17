@@ -368,12 +368,12 @@ test('v2 core architecture: owner-verified quota-gated JSON design blueprint is 
   assert.match(brain,/validatePosterBlueprint\(JSON\.parse\(raw\)/);
   assert.match(brain,/Do not invent prices, discounts, percentages/);
   assert.match(schema,/export type PosterBlueprint/);
-  assert.match(schema,/posterCopy:\{headline:string;offerText:string;ctaText:string\}/);
+  assert.match(schema,/posterCopy:\{headline:string;offerText:string;ctaText:string;serviceFocus\?:string;focusEvidence\?:string\}/);
   assert.match(schema,/imagePrompt:string/);
   assert.match(schema,/export function validatePosterBlueprint/);
   assert.match(lab,/mode:'blueprint',campaignStyle:selectedSuggestionId/);
   assert.match(lab,/setBlueprint\(data\.blueprint\)/);
-  assert.match(lab,/Review the headline, exact offer and CTA/);
+  assert.match(lab,/Confirm the actual promoted product\/service, headline, offer and CTA/);
   assert.doesNotMatch(brain,/marketing_poster_reserve|growth_credits|localStorage/);
 });
 test('v2 approved Tamil Sinhala English font pairs are safe and actually printed in output PNG',()=>{
@@ -453,7 +453,7 @@ test('poster copy language is an enforced content contract, not merely the dropd
   const brain=read('lib/marketing/poster-gemini-design-blueprint.ts');
   assert.match(blueprint,/isPosterCopyInLanguage\(\{headline,offerText,ctaText\},input.language\)/);
   assert.match(blueprint,/does not match the selected language/);
-  assert.match(brain,/HARD REQUIREMENT — STRICTLY output posterCopy.headline, posterCopy.offerText and posterCopy.ctaText/);
+  assert.match(brain,/HARD REQUIREMENT — STRICTLY output posterCopy.headline, posterCopy.offerText, posterCopy.ctaText and nonempty posterCopy.serviceFocus/);
   assert.match(brain,/If outputCopyLanguage is ta:/);
   assert.match(brain,/If outputCopyLanguage is si:/);
   assert.match(brain,/If outputCopyLanguage is en:/);

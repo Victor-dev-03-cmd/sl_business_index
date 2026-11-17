@@ -9,6 +9,8 @@ export type ExactPosterCopy={
   headline:string;
   offer:string;
   service:string;
+  /** Owner-approved, campaign-specific product or service; separate from category. */
+  focus?:string;
   cta:string;
   phone:string;
   website:string;
@@ -40,6 +42,7 @@ export function extractExplicitPercentage(text:string):string{
 export function buildArtOnlyPrompt(input:{
   request:string;creativeDirection?:string;styleDirection?:string;businessCategory:string;
   city:string;brandColor:string;format:PosterFormat;
+  businessDescription?:string;serviceFocus?:string;
 }):string{
   const short=(v:string,max:number)=>v.replace(/[\u0000-\u001f\u007f]/g,' ').trim().slice(0,max);
   const dimensions=POSTER_FORMATS[input.format];
@@ -48,8 +51,14 @@ export function buildArtOnlyPrompt(input:{
   // an unrelated pumpkin illustration simply because Halloween was selected.
   return [
     'CREATE ONE PREMIUM COMMERCIAL BACKGROUND ARTWORK ONLY. The user is the art director.',
+    'MANDATORY: Generate ART ONLY—no letters, numbers, prices, signs, brand logos or CTA glyphs. SLBI Canvas draws all verified copy. This restriction overrides any conflicting style suggestion.',
     'HIGHEST PRIORITY — USER REQUIREMENTS. Obey the concrete objects, subject, materials, colors, camera, composition and exclusions stated here. Do not replace their subject with a generic festive scene:',
     short(input.request,1200),
+    'OWNER-VERIFIED BUSINESS OFFERING CONTEXT — preserve category, actual service and product focus from owner source only:',
+    'Selected business category: '+short(input.businessCategory,100),
+    input.businessDescription?'Verified public business description: '+short(input.businessDescription,380):'',
+    input.serviceFocus?'OWNER-REVIEWED PROMOTED PRODUCT/SERVICE: '+short(input.serviceFocus,85):'',
+    'VISUAL RELEVANCE IS MANDATORY: Depict credible objects/workflows that convey the expressly offered product/service alongside the requested seasonal theme; make the business subject central, not a generic celebration photo. A development-service promotion can show a modern software design/code workspace WITH festive accents only when the owner source actually mentions development; never invent an unrelated product or service. Do not paint text or logos on screens.',
     'SECOND PRIORITY — OUTPUT COMPOSITION. Final frame ratio '+dimensions.width+':'+dimensions.height+'. The SLBI image is rendered behind separately typeset business text.',
     input.format==='landscape'?
       'Keep hero on RIGHT and a usable dark, uncluttered content area on LEFT.':

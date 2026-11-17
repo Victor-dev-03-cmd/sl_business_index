@@ -6,7 +6,7 @@
  */
 import type {PosterFormat} from '@/lib/marketing/poster-design';
 import type {PosterCopyLanguage} from '@/lib/marketing/puter-poster-composer';
-import {isPosterCopyInLanguage,isNaturalEnglishOffer} from './poster-language-copy.ts';
+import {isPosterCopyInLanguage,isPosterTextInLanguage,isNaturalEnglishOffer} from './poster-language-copy.ts';
 
 export const POSTER_VIBES=['festive','modern_tech','luxury','bold_sale','warm_retail'] as const;
 export type PosterVibe=typeof POSTER_VIBES[number];
@@ -56,7 +56,7 @@ const enumFonts={
 } as const;
 const globalFonts=Object.values(enumFonts).flat();
 export type PosterBlueprint={
-  posterCopy:{headline:string;offerText:string;ctaText:string};
+  posterCopy:{headline:string;offerText:string;ctaText:string;serviceFocus?:string;focusEvidence?:string};
   styling:{
     vibe:PosterVibe;headlineFont:string;bodyFont:string;
     primaryColor:string;accentColor:string;textColor:string;
@@ -78,6 +78,7 @@ export const POSTER_BLUEPRINT_JSON_SCHEMA={
     posterCopy:{
       type:'object',properties:{
         headline:{type:'string'},offerText:{type:'string'},ctaText:{type:'string'},
+        serviceFocus:{type:'string'},focusEvidence:{type:'string'},
       },required:['headline','offerText','ctaText'],additionalProperties:false,
     },
     styling:{
@@ -117,6 +118,7 @@ const percentages=(text:string)=>Array.from(
 );
 export function validatePosterBlueprint(value:unknown,input:{
   language:PosterCopyLanguage;vendorPrompt:string;approvedOffer?:string;
+  verifiedDescription?:string;verifiedCategory?:string;
 }):PosterBlueprint{
   const obj=record(value),copy=record(obj.posterCopy),style=record(obj.styling);
   const panel=record(obj.layoutStyling);
@@ -128,6 +130,8 @@ export function validatePosterBlueprint(value:unknown,input:{
   const headline=clean(copy.headline,120);
   const offerText=clean(copy.offerText,60);
   const ctaText=clean(copy.ctaText,105);
+  const proposedService=clean(copy.serviceFocus,85);
+  const proposedEvidence=clean(copy.focusEvidence,115);
   const imagePrompt=clean(obj.imagePrompt,2300);
   if(!headline||!ctaText||imagePrompt.length<80)
     throw Error('Gemini blueprint is incomplete. Keep your edited original prompt.');
@@ -145,6 +149,24 @@ export function validatePosterBlueprint(value:unknown,input:{
     approvedPairs.find(pair=>pair.headlineFont===style.headlineFont)||
     approvedPairs[0];
   const requestedPercent=new Set(percentages(input.vendorPrompt+' '+(input.approvedOffer||'')));
+  // Gemini may translate an explicitly mentioned product/service but must
+  // quote a contiguous source phrase from the owner's brief or the verified
+  // business description. A generic category alone is NOT evidence of a specific
+  // promoted service. Never treat uploaded references as proof.
+  const normalized=(v:string)=>v.normalize('NFC').toLocaleLowerCase()
+    .replace(/\s+/gu,' ').trim();
+  const groundedSources=[
+    input.vendorPrompt,input.verifiedDescription||'',
+  ].map(normalized).filter(Boolean);
+  const evidence=normalized(proposedEvidence);
+  const grounded=Boolean(proposedService)&&evidence.length>=5&&
+    groundedSources.some(source=>source.includes(evidence))&&
+    isPosterTextInLanguage(proposedService,input.language)&&
+    !/\d/.test(proposedService)&&
+    !/(?:https?:\/\/|www\.|@[\w.-]+\.[a-z]{2,})/i.test(proposedService);
+  // If grounding fails, keep the rest of the valid design and ask the owner to
+  // enter/confirm a concrete service rather than silently trusting invention.
+  const serviceFocus=grounded?proposedService:'';
   for(const found of percentages([headline,offerText,ctaText].join(' '))){
     if(!requestedPercent.has(found))
       throw Error('Gemini invented or changed a percentage. Keep the approved vendor offer.');
@@ -159,7 +181,7 @@ export function validatePosterBlueprint(value:unknown,input:{
   if(input.language==='en'&&!isNaturalEnglishOffer(offerText))
     throw Error('Gemini returned unnatural English offer copy. Please retry.');
   return {
-    posterCopy:{headline,offerText,ctaText},
+    posterCopy:{headline,offerText,ctaText,serviceFocus,focusEvidence:grounded?proposedEvidence:''},
     styling:{
       vibe:style.vibe,headlineFont:pairing.headlineFont,bodyFont:pairing.bodyFont,
       primaryColor:hex(style.primaryColor),accentColor:hex(style.accentColor),
