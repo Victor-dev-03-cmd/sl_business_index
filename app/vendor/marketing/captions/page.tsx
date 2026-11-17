@@ -124,6 +124,7 @@ export default function ConnectedCaptionLab(){
   const [notice,setNotice]=useState('');
   const [generatedLanguages,setGeneratedLanguages]=useState<CaptionLanguage[]>([]);
   const [savedCampaignId,setSavedCampaignId]=useState('');
+  const [savedCampaignPosterId,setSavedCampaignPosterId]=useState('');
   const recorderRef=useRef<MediaRecorder|null>(null);
   const streamRef=useRef<MediaStream|null>(null);
   const voiceClockRef=useRef<ReturnType<typeof setInterval>|null>(null);
@@ -590,13 +591,20 @@ export default function ConnectedCaptionLab(){
         brief,
         poster_asset_id:posterAssetId||null,
       };
-      const saved=savedCampaignId?
-        await supabase.from('marketing_campaigns').update(patch)
+      // RLS allows editing existing owner drafts, but business_id and
+      // poster_asset_id are intentionally INSERT-only column grants.
+      // If the poster changed, create a new draft instead of trying to mutate
+      // its protected image reference.
+      const {business_id:_immutableBusiness,poster_asset_id:_immutablePoster,...editablePatch}=patch;
+      const updateExisting=Boolean(savedCampaignId)&&savedCampaignPosterId===(posterAssetId||'');
+      const saved=updateExisting?
+        await supabase.from('marketing_campaigns').update(editablePatch)
           .eq('id',savedCampaignId).eq('business_id',businessId).select('id').maybeSingle():
         await supabase.from('marketing_campaigns').insert(patch)
           .select('id').maybeSingle();
       if(saved.error||!saved.data)throw Error(saved.error?.message||'Campaign Planner could not save this draft.');
       setSavedCampaignId(saved.data.id);
+      setSavedCampaignPosterId(posterAssetId||'');
       setNotice('Campaign Planner draft saved'+(posterAssetId?' with a durable PRIVATE poster image.':'.')+' No social publishing was triggered.');
     }catch(e){setError(e instanceof Error?e.message:'Save to Campaign Planner failed.');}
     finally{setSaving(false);}
@@ -684,7 +692,7 @@ export default function ConnectedCaptionLab(){
     if(posterUrlRef.current)URL.revokeObjectURL(posterUrlRef.current);
     posterUrlRef.current='';setPosterUrl('');
     setMessage('');setConditions('');setCta('');setVoiceReviewDraft('');setError('');setNotice('');
-    setCustomTags({});setRemovedTags({});setSavedCampaignId('');
+    setCustomTags({});setRemovedTags({});setSavedCampaignId('');setSavedCampaignPosterId('');
   };
   const downloadPoster=()=>{
     if(!posterUrl||!linked)return;
