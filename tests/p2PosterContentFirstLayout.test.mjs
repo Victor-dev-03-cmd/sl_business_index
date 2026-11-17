@@ -45,7 +45,7 @@ test('WITHOUT website, phone and email use the SAME horizontal row',()=>{
 test('the main business card grows, rises and keeps contacts inside the poster safe area',()=>{
   const example={format:'story',canvasHeight:1920,scale:1,
     brandHeight:61,offerHeight:221,serviceHeight:57,
-    hasCta:true,contactRows:2} as const;
+    hasCta:true,contactRows:2};
   const normal=planStackedCard(example);
   const focus=planStackedCard({...example,contentFocus:true});
   assert.ok(focus.top<normal.top,'elevated card starts earlier');
@@ -55,7 +55,7 @@ test('the main business card grows, rises and keeps contacts inside the poster s
   assert.ok(focus.ctaHeight>normal.ctaHeight);
   assert.ok(focus.contactsY!==null&&focus.contactsY+focus.contactsHeight<=focus.bottom);
   assert.ok(focus.ctaY!==null&&focus.offerY!==null&&focus.ctaY>focus.offerY);
-  for(const [format,height] of [['square',1080],['portrait',1350],['story',1920]] as const){
+  for(const [format,height] of [['square',1080],['portrait',1350],['story',1920]]){
     const scale=height/1920;
     const rows=planPosterContactRows({phone:'0771000000',email:'owner@shop.lk'}).length;
     const plan=planStackedCard({format,canvasHeight:height,scale,
