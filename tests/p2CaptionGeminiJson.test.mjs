@@ -129,5 +129,5 @@ test('Gemini route uses same Poster model, JSON constraint and existing credit f
   assert.match(page,/posterOffer:hasLinked/);
   assert.match(page,/setGeneratedTags\(nextTags\)/);
   assert.match(page,/extractSavedCaptionHashtags\(data.draft.caption\)/);
-  assert.match(page,/captionHashtags:generatedTags/);
+  assert.match(page,/const brief=plannerBriefFromCaption\(/);
 });
