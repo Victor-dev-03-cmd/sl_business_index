@@ -288,11 +288,13 @@ export default function ConnectedCaptionLab(){
   const updateAngle=(lang:CaptionLanguage,value:string)=>{
     setCaptions(previous=>({...previous,[lang]:{...previous[lang],[angle]:value.slice(0,1100)}}));
   };
+  // Same browser-initiated record → pause/resume → Send → Gemini transcript
+  // workflow as Poster Studio. Only the explicit Send action uses voice quota.
   const transcribe=async(blob:Blob)=>{
     if(!businessId||blob.size<800||blob.size>1_500_000){
       setError('Choose a business and record a shorter voice message (1.5 MB maximum).');return;
     }
-    setVoiceBusy(true);setError('');
+    setVoiceBusy(true);setError('');setNotice('Gemini is transcribing your recording in its original language…');
     try{
       const response=await fetch('/api/marketing/poster/transcribe',{
         method:'POST',credentials:'same-origin',cache:'no-store',body:blob,
@@ -304,23 +306,31 @@ export default function ConnectedCaptionLab(){
       });
       const data=await response.json() as {error?:string;transcript?:string};
       if(!response.ok||!data.transcript)throw Error(data.error||'Unable to transcribe audio.');
-      setMessage(previous=>[previous,data.transcript].filter(Boolean).join(' ').slice(0,600));
-      setNotice('Voice transcript added. Review and correct the facts before generating.');
-    }catch(e){setError(e instanceof Error?e.message:'Microphone transcription unavailable.');}
-    finally{setVoiceBusy(false);}
+      const transcript=data.transcript.trim();
+      const combined=[message.trim(),transcript].filter(Boolean).join(' ');
+      if(combined.length>600){
+        // Preserve EVERY word; no silent slicing of promotional terms or
+        // percentage scopes. The owner can shorten the draft before applying.
+        setVoiceReviewDraft(transcript);
+        setNotice('Transcript ready. Your existing brief plus transcript exceeds 600 characters; review the complete transcript below before adding it. No words were discarded.');
+      }else{
+        setMessage(combined);
+        setVoiceReviewDraft('');
+        setNotice('Voice transcript added. Review your service, offer, dates and contact facts before generating.');
+      }
+    }catch(e){
+      setError(e instanceof Error?e.message:'Voice transcription is unavailable.');
+      setNotice('Your typed campaign message is unchanged. You can retry Voice or continue typing.');
+    }finally{setVoiceBusy(false);}
   };
   const startVoice=async()=>{
     if(voiceBusy||recording||requestingMic||saving||busy)return;
-    setError('');setVoicePermissionHelp(false);
+    setError('');setVoicePermissionHelp(false);setVoiceReviewDraft('');
     if(typeof window==='undefined'||!window.isSecureContext||
       !navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined'){
       setError('Voice recording requires HTTPS and a browser with microphone support.');
-      setVoicePermissionHelp(true);
-      return;
+      setVoicePermissionHelp(true);return;
     }
-    // A policy restriction prevents the browser from showing a prompt at all.
-    // Keep this test as a friendly diagnostic; getUserMedia is still the
-    // real permission request, triggered directly by the vendor's click.
     const policy=document as Document&{
       permissionsPolicy?:{allowsFeature:(name:string)=>boolean};
       featurePolicy?:{allowsFeature:(name:string)=>boolean};
@@ -328,42 +338,70 @@ export default function ConnectedCaptionLab(){
     const allowed=policy.permissionsPolicy?.allowsFeature('microphone') ??
       policy.featurePolicy?.allowsFeature('microphone');
     if(allowed===false){
-      setError('Microphone access is blocked for this page. Reload the latest Caption Lab and try again.');
-      setVoicePermissionHelp(true);
-      return;
+      setError('Microphone is blocked by the site permission policy. Open the production Caption Lab directly and retry.');
+      setVoicePermissionHelp(true);return;
     }
     setRequestingMic(true);
-    setNotice('Allow microphone access in your browser to record a voice brief.');
+    setNotice('Allow microphone access in your browser to record your brief.');
     try{
+      // A real user click triggers the native browser permission prompt.
       const stream=await navigator.mediaDevices.getUserMedia({audio:true});
       streamRef.current=stream;
       const preferred=['audio/webm;codecs=opus','audio/webm','audio/mp4'];
       const mime=preferred.find(t=>MediaRecorder.isTypeSupported(t));
       const recorder=new MediaRecorder(stream,mime?{mimeType:mime}:undefined);
+      recorderRef.current=recorder;discardVoiceRef.current=false;
       const chunks:Blob[]=[];
       let failed=false;
       recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
       recorder.onerror=()=>{
-        failed=true;
+        failed=true;discardVoiceRef.current=true;
         setError('Microphone recording interrupted. Check your device and try again.');
-        if(recorder.state==='recording')recorder.stop();
+        if(recorder.state!=='inactive')recorder.stop();
       };
       recorder.onstop=()=>{
-        setRecording(false);recorderRef.current=null;
-        stream.getTracks().forEach(track=>track.stop());streamRef.current=null;
-        if(failed)return;
+        const discarded=discardVoiceRef.current;
+        releaseVoiceMedia();
+        recorderRef.current=null;setRecording(false);setVoicePaused(false);
+        setVoiceLevels(Array.from({length:35},()=>5));
+        if(failed||discarded)return;
         const blob=new Blob(chunks,{type:recorder.mimeType||'audio/webm'});
         if(blob.size<800){
-          setError('No audio captured. Speak for a few seconds before selecting Stop.');
-          return;
+          setError('No audio captured. Speak for a few seconds, then tap Send.');return;
         }
         void transcribe(blob);
       };
-      recorder.start(250);recorderRef.current=recorder;setRecording(true);
-      setNotice('Recording voice brief. Speak clearly, then tap Stop to transcribe.');
+      recorder.start(250);
+      setRecording(true);setVoicePaused(false);setVoiceSeconds(0);
+      voiceClockRef.current=setInterval(()=>{
+        if(recorder.state==='recording')setVoiceSeconds(n=>n+1);
+      },1000);
+      // Meter actual microphone audio (not a decorative synthetic waveform).
+      // Only the browser has these samples; audio is never persisted.
+      try{
+        const audio=new AudioContext();
+        voiceAudioRef.current=audio;
+        const analyser=audio.createAnalyser();analyser.fftSize=128;
+        const source=audio.createMediaStreamSource(stream);
+        source.connect(analyser);
+        const bins=new Uint8Array(analyser.frequencyBinCount);
+        let lastFrame=0;
+        const tick=(now:number)=>{
+          if(recorder.state==='recording'&&now-lastFrame>=90){
+            lastFrame=now;
+            analyser.getByteFrequencyData(bins);
+            setVoiceLevels(Array.from({length:35},(_,i)=>{
+              const bin=bins[Math.min(bins.length-1,Math.floor(i*bins.length/35))];
+              return Math.max(5,Math.min(37,Math.round(5+bin/255*32)));
+            }));
+          }
+          if(recorder.state!=='inactive')voiceFrameRef.current=requestAnimationFrame(tick);
+        };
+        voiceFrameRef.current=requestAnimationFrame(tick);
+      }catch{/* Recording works without a WebAudio amplitude meter. */}
+      setNotice('Recording. Pause, resume, cancel or tap Send to transcribe.');
     }catch(e){
-      streamRef.current?.getTracks().forEach(track=>track.stop());
-      streamRef.current=null;recorderRef.current=null;
+      releaseVoiceMedia();recorderRef.current=null;
       const name=e instanceof Error?e.name:'';
       if(name==='NotAllowedError'||name==='PermissionDeniedError'||name==='SecurityError'){
         setError('Microphone blocked. Allow access in your browser site settings, then retry.');
