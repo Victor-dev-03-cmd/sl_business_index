@@ -395,6 +395,9 @@ export default function ConnectedCaptionLab(){
     const lang:CaptionLanguage=item.brief?.language==='தமிழ்'?'ta':
       item.brief?.language==='සිංහල'?'si':'en';
     setCaptions({...emptyCaptions(),[lang]:{hook:item.banner_text,story:'',short:''}});
+    setGeneratedTags({ta:[],si:[],en:[]});
+    setGoal(item.brief?.objective==='promotion'?'flash_sale':
+      item.brief?.objective==='announcement'?'new_arrival':'festival');
     setLanguageSelections([lang]);setPreviewLanguage(lang);setAngle('hook');
     setMessage('');setConditions(item.brief?.terms||'');setCta(item.brief?.cta||'');
     const p=item.platforms?.[0];
@@ -1142,7 +1145,14 @@ export default function ConnectedCaptionLab(){
             <summary className="flex cursor-pointer items-center justify-between gap-2 text-[11px] font-semibold text-[#6B7280]">Quick brief suggestions <ChevronDown size={14} className="slbi-caption-chevron"/></summary>
             <div className="mt-2 flex flex-wrap gap-1.5">
             {promptChips.map(chip=><button key={chip.label} type="button"
-              onClick={()=>setMessage(previous=>[previous,chip.text].filter(Boolean).join(' ').slice(0,600))}
+              onClick={()=>{
+                const next=[message,chip.text].filter(Boolean).join(' ');
+                if(next.length>600){
+                  setNotice('Your brief is full. Review the existing text before adding another suggestion.');
+                  return;
+                }
+                setMessage(next);
+              }}
               disabled={isBusy}
               className="rounded-full border border-[#E5E7EB] px-2.5 py-1.5 text-[10px] font-semibold text-[#6B7280] hover:bg-[#FFF7ED]">
               + {chip.label}</button>)}
@@ -1158,6 +1168,10 @@ export default function ConnectedCaptionLab(){
             placeholder="Only genuine terms or valid dates" className={field+' mt-3'}/>
           <input maxLength={180} value={cta} onChange={e=>setCta(e.target.value)}
             placeholder="Contact us for more details" className={field+' mt-2'}/>
+          {selected?.phone&&<button type="button" onClick={()=>setCta('Contact us: '+selected.phone)}
+            className="mt-2 rounded-lg border border-[#FCD9B5] bg-[#FFF7ED] px-3 py-2 text-[10px] font-bold text-[#9A3412]">
+            Use verified business phone · {selected.phone}
+          </button>}
         </details>
       </section>
 
@@ -1389,7 +1403,7 @@ export default function ConnectedCaptionLab(){
                 {draft?<button type="button" onClick={()=>resumeAiDraft(draft)} disabled={isBusy}
                   className="rounded-lg border border-[#E5E7EB] bg-white px-2 py-1 font-bold text-[#374151] hover:border-[#F97316] disabled:opacity-40">
                   Open · {draft.review_status.replaceAll('_',' ')}
-                </button>:<span className="text-[#9CA3AF]">No saved draft</span>
+                </button>:<span className="text-[#9CA3AF]">No saved draft</span>}
               </div>;
             })}
           </div>

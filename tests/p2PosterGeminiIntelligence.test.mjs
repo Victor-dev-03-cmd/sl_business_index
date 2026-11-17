@@ -88,7 +88,7 @@ test('voice endpoint is private, origin-gated, owner-bound and transcript-only',
   assert.match(transcribe,/maxOutputTokens:1800/);
   assert.match(transcribe,/marketing_poster_voice_try_reserve/);
   assert.match(transcribe,/inlineData:\{mimeType:mime/);
-  assert.match(transcribe,/Gemini free quota reached/);
+  assert.match(transcribe,/VOICE_PROVIDER_QUOTA/);
   assert.match(transcribe,/reviewBeforeGenerating:true/);
   assert.doesNotMatch(transcribe,/marketing_poster_complete|marketing_poster_claim|generatePosterProviderImage/);
   assert.doesNotMatch(transcribe,/storage\.from\(|console\.log|NEXT_PUBLIC_GEMINI/);
