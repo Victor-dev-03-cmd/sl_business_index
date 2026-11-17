@@ -625,7 +625,7 @@ export default function PuterMultilingualPosterLab(){
     }finally{setGenerating(false);}
   };
   const download=()=>{
-    if(!finalBlob||!finalUrl||composing||!copyLanguageConsistent)return;
+    if(!finalBlob||!finalUrl||composing||!copyLanguageConsistent||!serviceFocusApproved)return;
     const anchor=document.createElement('a');
     const safeName=(facts?.name||'business').toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,32);
     anchor.href=finalUrl;
@@ -634,14 +634,14 @@ export default function PuterMultilingualPosterLab(){
     document.body.appendChild(anchor);anchor.click();anchor.remove();
   };
   const continueToCaption=async()=>{
-    if(!finalBlob||!facts||!businessId||composing||linkingCaption||!copyLanguageConsistent)return;
+    if(!finalBlob||!facts||!businessId||composing||linkingCaption||!copyLanguageConsistent||!serviceFocusApproved)return;
     setLinkingCaption(true);setError('');
     try{
       const id=await saveLinkedPoster({
         businessId,businessName:facts.name,category:facts.category,
         city:facts.city,address:facts.address,
         phone:facts.phone,website:facts.website,
-        headline:headline.trim(),offer:offer.trim(),cta:cta.trim(),
+        headline:headline.trim(),offer:offer.trim(),serviceFocus:serviceFocus.trim(),cta:cta.trim(),
         vibe:currentBlueprint?.styling.vibe||selectedPremiumStyle,
         language,source:'poster_studio',sample:!isRealOutput,format,
       },finalBlob);
@@ -864,7 +864,7 @@ export default function PuterMultilingualPosterLab(){
           </div>
           {(currentBrief||currentBlueprint)&&<div className="flex items-start gap-1.5 rounded-xl border border-[#DDE8DC] bg-[#F5FAF5] p-2 text-[11px] leading-4 text-[#4C6951]">
             <CheckCircle2 size={13} className="mt-0.5 shrink-0"/>
-            Gemini {currentBlueprint?'art direction + typography blueprint':'brief'} prepared. Review exact headline, offer and CTA in the right panel.
+            Gemini {currentBlueprint?'art direction + typography blueprint':'brief'} prepared. Confirm the promoted service/product and review the exact offer and CTA in the right panel.
           </div>}
           {geminiQuota&&<div role="status" aria-label="Shared Gemini daily quota"
             className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[#E8DFD8] bg-[#FFF9F3] px-2.5 py-2 text-[10px]">
@@ -936,12 +936,12 @@ export default function PuterMultilingualPosterLab(){
               'No automatic publishing or SLBI storage'}
           </p>
           <div className="flex flex-wrap items-center gap-2">
-            <button type="button" onClick={download} disabled={!finalBlob||composing||generating||!copyLanguageConsistent}
+            <button type="button" onClick={download} disabled={!finalBlob||composing||generating||!copyLanguageConsistent||!serviceFocusApproved}
               className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[#E6DED8] bg-white px-3 py-2.5 text-[11px] font-bold text-[#292327] disabled:opacity-40">
               <Download size={14}/> Download PNG
             </button>
             <button type="button" onClick={()=>void continueToCaption()}
-              disabled={!finalBlob||composing||generating||linkingCaption||!businessId||!copyLanguageConsistent}
+              disabled={!finalBlob||composing||generating||linkingCaption||!businessId||!copyLanguageConsistent||!serviceFocusApproved}
               className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-[#262126] px-3 py-2.5 text-[11px] font-bold text-white disabled:opacity-40">
               <WandSparkles size={14} className="text-[#FDBA74]"/>
               {linkingCaption?'Linking poster…':'Write Caption for this Poster'}
