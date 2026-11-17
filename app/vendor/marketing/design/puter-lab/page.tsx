@@ -446,21 +446,21 @@ export default function PuterMultilingualPosterLab(){
   };
   const prepareWithGemini=async()=>{
     if(!businessId||prompt.trim().length<5){setError('Choose a business and enter a prompt.');return;}
-    if(geminiBusy||recording||transcribing||generating)return;
+    if(geminiBusy||recording||transcribing||generating||referenceBusy)return;
     setGeminiBusy(true);setError('');setStatus('Gemini is understanding your campaign and verified business facts…');
     const forKey=currentKey;
     try{
       const res=await fetch('/api/marketing/poster/puter-lab',{
         method:'POST',...reqOptions,headers:{'Content-Type':'application/json'},
         body:JSON.stringify({
-          businessId,prompt:prompt.trim(),language,
+          businessId,prompt:withPosterReferenceSummary(prompt,referenceSummary),language,
           format,mode:'blueprint',campaignStyle:selectedSuggestionId,
           approvedOffer:manualOffer?offer.trim():'',
         }),
       });
       const data=await res.json() as BriefResponse;
       if(!res.ok)throw Error(data.error||'Gemini could not prepare this design blueprint.');
-      if(forKey!==businessId+'|'+language+'|'+prompt.trim())return;
+      if(forKey!==businessId+'|'+language+'|'+prompt.trim()+'|'+referenceSummary)return;
       if(data.blueprint){
         // Dual-output: creative art direction + reviewed typography JSON.
         // Business contacts always remain from the selected verified listing.
@@ -496,7 +496,7 @@ export default function PuterMultilingualPosterLab(){
   const generate=async()=>{
     if(!sdkReady||!window.puter){setError('Puter.js is not ready. Reload and retry.');return;}
     if(!facts||!businessId){setError('Choose a verified owned business first.');return;}
-    if(recording||transcribing||geminiBusy||generating)return;
+    if(recording||transcribing||geminiBusy||generating||referenceBusy)return;
     if(prompt.trim().length<5||!headline.trim()){
       setError('Enter your campaign idea and an exact headline for the poster.');return;
     }
@@ -508,7 +508,7 @@ export default function PuterMultilingualPosterLab(){
     if(realMode&&!consent){setError('Please explicitly confirm possible Puter charges.');return;}
     setGenerating(true);setComposing(false);setError('');
     setGenerationStage('connecting');setEstimatedProgress(7);
-    setStatus('Signing in to Puter and generating text-free artwork…');
+    setStatus('SLBI Image Generator is preparing your poster artwork…');
     try{
       const puter=window.puter;
       // Official Puter browser SDK persists its own session. Do not reopen the
@@ -518,7 +518,7 @@ export default function PuterMultilingualPosterLab(){
       const styleDirection=selectedReference?.artDirection||typographyPreset.artDirective;
       const briefDirection=currentBlueprint?.imagePrompt||currentBrief?.creativeDirectionEnglish;
       const creative=buildArtOnlyPrompt({
-        request:prompt.trim(),styleDirection,creativeDirection:briefDirection,
+        request:withPosterReferenceSummary(prompt,referenceSummary),styleDirection,creativeDirection:briefDirection,
         businessCategory:facts.category,city:facts.city,
         brandColor:facts.primaryColor||'#F7B45C',format,
       });
@@ -531,15 +531,17 @@ export default function PuterMultilingualPosterLab(){
         options.ratio=ratioFor(format);
       // No reference uploads by default; the user must opt in independently.
       // Puter supports input_images for all image providers (PNG Blob).
-      if(sendReferenceImage&&selectedReference)
+      if(useAttachedImage&&attachedImage)
+        options.input_images=[await preparePosterReferencePng(attachedImage)];
+      else if(sendReferenceImage&&selectedReference)
         options.input_images=[await originalReferencePng(selectedReference.thumbnail)];
       const image=await puter.ai.txt2img(creative,options);
       if(!image?.src||typeof image.src!=='string')
         throw Error('Puter returned no image. No printable poster was prepared.');
       setArtworkSrc(image.src);setImageRevision(n=>n+1);setIsRealOutput(realMode);
       setGenerationStage('typography');setEstimatedProgress(94);setBrowseReferences(false);
-      setStatus(realMode?'Puter artwork returned. Composing exact approved copy…':
-        'Puter sample returned. Composing a sample poster at exact size…');
+      setStatus(realMode?'SLBI artwork ready. Applying your exact approved copy…':
+        'Sample artwork ready. Composing a sample poster at exact size…');
     }catch(e){setGenerationStage('error');setError(errorMessage(e));setStatus('Generation failed; previous poster remains available.');}
     finally{setGenerating(false);}
   };
@@ -569,7 +571,7 @@ export default function PuterMultilingualPosterLab(){
       window.location.assign('/vendor/marketing/captions?handoff='+encodeURIComponent(id));
     }catch(e){setError(errorMessage(e));setLinkingCaption(false);}
   };
-  const locked=generating||geminiBusy||transcribing||recording;
+  const locked=generating||geminiBusy||transcribing||recording||referenceBusy;
   return <main className="mx-auto flex w-full max-w-[1620px] flex-col gap-3 px-3 py-3 text-[#292327] sm:px-5 xl:h-[calc(100dvh-9.5rem)] xl:min-h-0 xl:overflow-hidden xl:py-2">
     <Script src="https://js.puter.com/v2/" strategy="afterInteractive"
       onReady={()=>setSdkReady(true)}
@@ -606,6 +608,7 @@ export default function PuterMultilingualPosterLab(){
             <select id="puter-business" value={businessId} disabled={locked||loadingBusiness}
               onChange={e=>{
                 setBusinessId(e.target.value);setBrief(null);setBriefKey('');
+                setReferenceFiles([]);setReferenceSummary('');setUseAttachedImage(false);
                 setArtworkSrc('');setFinalBlob(null);setFinalUrl('');
                 setHeadline(starterHeadline(language,selectedReferenceId));setOffer('');
                 setCta(STARTER_COPY[language].cta);
@@ -652,7 +655,7 @@ export default function PuterMultilingualPosterLab(){
             </div>
           </div>
           <div>
-            <label htmlFor="puter-prompt" className="mb-1.5 block text-[11px] font-bold">Describe your poster / Gemini voice transcript</label>
+            <label htmlFor="puter-prompt" className="mb-1.5 block text-[11px] font-bold">Describe your poster / voice transcript</label>
             <textarea id="puter-prompt" value={prompt} disabled={locked} rows={5} maxLength={1200}
               onChange={e=>{setPrompt(e.target.value);setBrief(null);setBriefKey('');
                 setBlueprint(null);setBlueprintKey('');}}
