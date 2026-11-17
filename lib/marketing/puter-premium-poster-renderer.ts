@@ -296,6 +296,7 @@ function renderStacked(ctx:Ctx,copy:ExactPosterCopy,p:PremiumPosterPreset,format
   const inner=side+inset;
   const displayLanguage=scriptOf(copy.headline,copy.language);
   const brandLanguage=scriptOf(copy.businessName,copy.language);
+  const focusLanguage=scriptOf(copy.focus||'',copy.language);
   const offerLanguage=scriptOf(copy.offer,copy.language);
   const serviceLanguage=scriptOf(copy.service,copy.language);
   const title=displayLanguage==='en'?copy.headline.toUpperCase():copy.headline;
@@ -325,20 +326,27 @@ function renderStacked(ctx:Ctx,copy:ExactPosterCopy,p:PremiumPosterPreset,format
   const brand=fit(ctx,{value:copy.businessName,width:insideWidth,height:76*scale,maxLines:1,
     start:52*scale,min:22*scale,lineHeight:1.17,
     role:'brand',lang:brandLanguage,preset:p,label:'Business name'});
+  // The product/service itself is the primary proposition, not the festival
+  // or generic business category. The focus is explicitly owner-reviewed.
+  const focus=copy.focus?.trim()?fit(ctx,{
+    value:copy.focus,width:insideWidth,height:202*scale,maxLines:2,
+    start:91*scale,min:29*scale,lineHeight:1.13,
+    role:'offer',lang:focusLanguage,preset:p,label:'Promoted product or service'}):null;
   const offer=copy.offer.trim()?fit(ctx,{
     value:copy.offer,width:insideWidth,height:252*scale,maxLines:2,
-    start:110*scale,min:32*scale,lineHeight:1.10,
+    start:(focus?83:110)*scale,min:29*scale,lineHeight:1.10,
     role:'offer',lang:offerLanguage,preset:p,label:'Approved offer'}):null;
   const service=copy.service.trim()?fit(ctx,{
     value:copy.service,width:insideWidth,height:104*scale,maxLines:2,
-    start:44*scale,min:18*scale,lineHeight:1.26,
+    start:(focus?35:44)*scale,min:18*scale,lineHeight:1.26,
     role:'body',lang:serviceLanguage,preset:p,label:'Service line'}):null;
   // Website + phone share the first row; email occupies the second. If the
   // website is missing, phone and email automatically occupy one row.
   const contactRows=planPosterContactRows(copy).length;
   const layout=planStackedCard({
     format:format as 'square'|'portrait'|'story',canvasHeight:h,scale,
-    brandHeight:brand.height,offerHeight:offer?.height||0,
+    brandHeight:brand.height,focusHeight:focus?.height||0,
+    offerHeight:offer?.height||0,
     serviceHeight:service?.height||0,hasCta:Boolean(copy.cta.trim()),contactRows,
     contentFocus:true,
   });
@@ -352,6 +360,10 @@ function renderStacked(ctx:Ctx,copy:ExactPosterCopy,p:PremiumPosterPreset,format
   const centerText=layoutMode==='top_center_hero';
   renderFitted(ctx,{fit:brand,x:inner,y:layout.brandY,width:insideWidth,
     color:p.palette.glow,role:'brand',language:brandLanguage,preset:p,center:centerText});
+  if(focus&&layout.focusY!==null)
+    renderFitted(ctx,{fit:focus,x:inner,y:layout.focusY,width:insideWidth,
+      color:p.palette.white,role:'offer',language:focusLanguage,preset:p,
+      center:centerText,glow:10*scale,glowColor:'rgba(0,0,0,.68)'});
   if(offer&&layout.offerY!==null){
     paintLowerOfferHighlight({ctx,style:panelStyle,x:inner-7*scale,
       y:layout.offerY-5*scale,w:insideWidth+14*scale,h:offer.height+10*scale,
@@ -404,6 +416,15 @@ function renderWide(ctx:Ctx,copy:ExactPosterCopy,p:PremiumPosterPreset,panelStyl
   row=renderFitted(ctx,{fit:headline,x:inner,y:row,width:innerWidth,
     color:p.palette.white,role:'display',language:headlineLanguage,preset:p});
   row+=9;
+  if(copy.focus?.trim()){
+    const focusLanguage=scriptOf(copy.focus,copy.language);
+    const focus=fit(ctx,{value:copy.focus,width:innerWidth,height:82,maxLines:2,
+      start:42,min:23,lineHeight:1.12,role:'offer',lang:focusLanguage,
+      preset:p,label:'Promoted product or service'});
+    row=renderFitted(ctx,{fit:focus,x:inner,y:row,width:innerWidth,
+      color:p.palette.white,role:'offer',language:focusLanguage,preset:p});
+    row+=7;
+  }
   if(copy.offer){
     const offer=fit(ctx,{value:copy.offer,width:innerWidth,height:104,maxLines:2,
       start:58,min:26,lineHeight:1.05,role:'offer',lang:scriptOf(copy.offer,copy.language),preset:p,label:'Approved offer'});
