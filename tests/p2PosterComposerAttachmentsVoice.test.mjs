@@ -116,7 +116,8 @@ test('Reference analysis text cannot replace vendor instructions; image bytes re
   assert.match(studio,/else if\(sendReferenceImage&&selectedReference\)/);
   assert.match(studio,/Use the first attached image as an artwork reference on Generate/);
   assert.match(studio,/Off by default; documents are never sent to the image model/);
-  assert.match(studio,/return blob;/);
+  const helper=read('lib/marketing/poster-composer-attachments.ts');
+  assert.match(helper,/return blob;/);
   assert.doesNotMatch(studio,/supabase\.storage\.from|localStorage\.setItem/);
   assert.match(poster,/createGeminiPosterDesignBlueprint/);
 });
