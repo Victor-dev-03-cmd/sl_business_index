@@ -359,7 +359,7 @@ export default function PuterMultilingualPosterLab(){
       const data=await res.json() as ApiError&{transcript?:string};
       if(!res.ok||!data.transcript)throw Error(data.error||'Gemini could not transcribe the recording.');
       const heard=data.transcript.trim();
-      setPrompt(prev=>[prev,heard].filter(Boolean).join(' ').slice(0,1200));
+      setPrompt(prev=>[prev===samplePrompt?'':prev,heard].filter(Boolean).join(' ').slice(0,1200));
       const explicit=extractExplicitPercentage(heard);
       if(explicit&&!manualOffer)setOffer(localizedPercentOffer(explicit,language));
       setBrief(null);setBriefKey('');
