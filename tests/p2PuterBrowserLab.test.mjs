@@ -346,7 +346,7 @@ test('premium art prompt protects upper high-quality hero composition and adapts
   assert.match(compose,/No extra pumpkins, moons, trees/);
   const preset=read('lib/marketing/poster-premium-presets.ts');
   assert.match(preset,/HERO SUBJECT across MIDDLE 27%-77%/);
-  assert.match(preset,/LOWER 68%-95% calm for a COMPACT dynamically sized glass card/);
+  assert.match(preset,/LOWER 71%-95% suitable for a COMPACT dynamically sized glass card/);
   assert.doesNotMatch(preset,/LOWER 59%-93%/);
 });
 
