@@ -1,5 +1,5 @@
 import type {PosterFormat} from '@/lib/marketing/poster-design';
-import {planStackedCard} from '@/lib/marketing/puter-adaptive-card-layout';
+import {planPosterContactRows,planStackedCard} from '@/lib/marketing/puter-adaptive-card-layout';
 import type {ExactPosterCopy,PosterCopyLanguage} from '@/lib/marketing/puter-poster-composer';
 import {
   resolvePremiumPosterPreset,withVerifiedPosterDesign,
@@ -116,10 +116,10 @@ function renderFitted(ctx:Ctx,p:{
   p.fit.lines.forEach((line,i)=>{
     ctx.fillStyle=p.emphasizeFinalLine&&i===p.fit.lines.length-1?p.preset.palette.glow:p.color;
     const x=p.center?p.x+p.width/2:p.x,y=p.y+i*p.fit.step;
-    if(p.language==='ta'&&p.role==='display'){
+    if((p.language==='ta'&&p.role==='display')||(p.language==='ta'&&p.role==='offer')){
       // Pavanam has a real Regular face only. A subtle same-family outline
-      // creates strong display weight WITHOUT substituting another Tamil font.
-      ctx.lineJoin='round';ctx.lineWidth=Math.min(2.8,Math.max(.9,p.fit.size*.012));
+      // creates strong display and OFFER emphasis WITHOUT substituting a font.
+      ctx.lineJoin='round';ctx.lineWidth=Math.min(3.2,Math.max(.9,p.fit.size*.014));
       ctx.strokeStyle=ctx.fillStyle;ctx.strokeText(line,x,y);
     }
     ctx.fillText(line,x,y);
@@ -205,8 +205,8 @@ function drawPill(ctx:Ctx,p:{
     ctx,style:p.panelStyle,x:p.x,y:p.y,w:p.w,h:p.h,
     scale:p.scale,colors:pal,
   });
-  const label=fit(ctx,{value:p.text,width:p.w-28*p.scale,height:p.h*.7,maxLines:1,
-    start:28*p.scale,min:14*p.scale,lineHeight:1.2,role:'button',
+  const label=fit(ctx,{value:p.text,width:p.w-30*p.scale,height:p.h*.70,maxLines:1,
+    start:40*p.scale,min:17*p.scale,lineHeight:1.2,role:'button',
     lang:p.language,preset:p.preset,label:'Call-to-action button'});
   renderFitted(ctx,{fit:label,x:p.x,y:p.y+(p.h-label.height)/2,
     width:p.w,color:buttonTextColor,role:'button',language:p.language,preset:p.preset,center:true});
@@ -240,29 +240,52 @@ function drawContacts(ctx:Ctx,p:{
   copy:ExactPosterCopy;x:number;y:number;width:number;height:number;
   scale:number;preset:PremiumPosterPreset;lang:PosterCopyLanguage;
 }){
-  const contacts=[
-    {kind:'globe' as const,text:p.copy.website.trim()},
-    {kind:'phone' as const,text:p.copy.phone.trim()},
-    {kind:'mail' as const,text:p.copy.email?.trim()||''},
-  ].filter(item=>item.text);
-  if(!contacts.length)return;
-  // Do not clip or silently truncate long verified URLs: fit or warn.
-  const size=Math.max(13,Math.round(p.preset.tokens.storyFooterSize*p.scale));
-  const gap=size*1.65;
-  if(contacts.length*gap>p.height+4)
-    throw Error('All selected contacts cannot fit this poster. Disable one contact option.');
-  contacts.forEach((item,i)=>{
-    const y=p.y+i*gap;
-    const iconSize=size*.95;
-    contactIcon(ctx,item.kind,p.x,y+2,iconSize,p.preset.palette.glow);
-    const tx=p.x+iconSize+size*.55;
-    const line=fit(ctx,{
-      value:item.text,width:p.width-(tx-p.x),height:gap,maxLines:1,
-      start:size,min:Math.max(11,size*.69),lineHeight:1.2,
-      role:'footer',lang:scriptOf(item.text,p.lang),preset:p.preset,label:'Verified '+item.kind,
+  const rows=planPosterContactRows(p.copy);
+  if(!rows.length)return;
+  const s=p.scale, rowGap=10*s;
+  const rowHeight=(p.height-rowGap*(rows.length-1))/rows.length;
+  const minRowHeight=Math.max(19,rowHeight);
+  if(rowHeight<minRowHeight-1)throw Error('Not enough space to draw all published contacts.');
+  const gap=13*s, color=p.preset.palette.white;
+  const slotH=Math.max(20,rowHeight-4*s);
+  rows.forEach((row,r)=>{
+    const y=p.y+r*(rowHeight+rowGap);
+    let left=p.x;
+    const freeWidth=p.width-gap*(row.length-1);
+    row.forEach((item,index)=>{
+      const width=index===row.length-1?p.x+p.width-left:freeWidth*item.share;
+      const size=Math.min(36*s,slotH*.53);
+      const innerGap=11*s,padding=Math.max(10,15*s);
+      ctx.save();
+      roundedPath(ctx,left,y,width,slotH,Math.min(17*s,slotH*.28));
+      ctx.fillStyle='rgba(8,10,20,.43)';ctx.fill();
+      ctx.strokeStyle=p.preset.palette.glow;ctx.lineWidth=Math.max(.85,1.4*s);
+      ctx.shadowColor=p.preset.palette.glow;ctx.shadowBlur=7*s;ctx.stroke();
+      ctx.restore();
+      const available=width-padding*2-size-innerGap;
+      if(available<25)throw Error('A contact detail needs more width in this format.');
+      const font=Math.max(16,Math.round(33*s));
+      const fitContact=fit(ctx,{
+        value:item.text,width:available,height:slotH*.84,maxLines:1,
+        start:font,min:Math.max(11,Math.round(16*s)),lineHeight:1.17,
+        role:'footer',lang:scriptOf(item.text,p.lang),preset:p.preset,
+        label:'Verified '+item.kind,
+      });
+      // Single full-width footer cells (typically email) are centered together
+      // as one icon + text group, not pinned to an arbitrary left edge.
+      setFont(ctx,fitContact.size,'footer',scriptOf(item.text,p.lang),p.preset);
+      const textWidth=ctx.measureText(item.text).width;
+      const groupWidth=size+innerGap+textWidth;
+      const contentX=row.length===1?left+Math.max(padding,(width-groupWidth)/2):left+padding;
+      const contentY=y+(slotH-Math.max(size,fitContact.height))/2;
+      contactIcon(ctx,item.kind,contentX,contentY+Math.max(0,(fitContact.height-size)/2),
+        size,p.preset.palette.glow);
+      renderFitted(ctx,{fit:fitContact,x:contentX+size+innerGap,
+        y:contentY+Math.max(0,(size-fitContact.height)/2),
+        width:available,color,role:'footer',
+        language:scriptOf(item.text,p.lang),preset:p.preset});
+      left+=width+gap;
     });
-    renderFitted(ctx,{fit:line,x:tx,y:y,width:p.width-(tx-p.x),
-      color:p.preset.palette.muted,role:'footer',language:scriptOf(item.text,p.lang),preset:p.preset});
   });
 }
 function renderStacked(ctx:Ctx,copy:ExactPosterCopy,p:PremiumPosterPreset,format:PosterFormat,layoutMode:SafeZoneLayout='top_center_hero',panelStyle:ContentPanelStyle=DEFAULT_CONTENT_PANEL_STYLE){
@@ -281,7 +304,7 @@ function renderStacked(ctx:Ctx,copy:ExactPosterCopy,p:PremiumPosterPreset,format
   const titleMax=h*(format==='square'?.26:.27);
   const titleFit=fit(ctx,{
     value:title,width:w-2*side,height:titleMax-16*scale,maxLines:2,
-    start:(displayLanguage==='ta'?150:displayLanguage==='si'?167:190)*scale,
+    start:(displayLanguage==='ta'?121:displayLanguage==='si'?136:149)*scale,
     min:Math.max(30,(displayLanguage==='ta'?61:displayLanguage==='si'?70:74)*scale),
     lineHeight:displayLanguage==='en'?.98:displayLanguage==='ta'?1.18:1.19,
     role:'display',lang:displayLanguage,preset:p,label:'Display headline',
@@ -299,22 +322,25 @@ function renderStacked(ctx:Ctx,copy:ExactPosterCopy,p:PremiumPosterPreset,format
   const panelW=layoutMode==='top_center_hero'?w-2*side:
     w*(format==='square'?.82:.84);
   const insideWidth=panelW-2*inset;
-  const brand=fit(ctx,{value:copy.businessName,width:insideWidth,height:60*scale,maxLines:1,
-    start:p.tokens.storyBrandSize*scale,min:22*scale,lineHeight:1.2,
+  const brand=fit(ctx,{value:copy.businessName,width:insideWidth,height:76*scale,maxLines:1,
+    start:52*scale,min:22*scale,lineHeight:1.17,
     role:'brand',lang:brandLanguage,preset:p,label:'Business name'});
   const offer=copy.offer.trim()?fit(ctx,{
-    value:copy.offer,width:insideWidth,height:172*scale,maxLines:2,
-    start:p.tokens.storyOfferSize*scale,min:28*scale,lineHeight:1.12,
+    value:copy.offer,width:insideWidth,height:252*scale,maxLines:2,
+    start:110*scale,min:32*scale,lineHeight:1.10,
     role:'offer',lang:offerLanguage,preset:p,label:'Approved offer'}):null;
   const service=copy.service.trim()?fit(ctx,{
-    value:copy.service,width:insideWidth,height:88*scale,maxLines:2,
-    start:p.tokens.storyServiceSize*scale,min:18*scale,lineHeight:1.32,
+    value:copy.service,width:insideWidth,height:104*scale,maxLines:2,
+    start:44*scale,min:18*scale,lineHeight:1.26,
     role:'body',lang:serviceLanguage,preset:p,label:'Service line'}):null;
-  const contactRows=Number(Boolean(copy.website))+Number(Boolean(copy.phone))+Number(Boolean(copy.email));
+  // Website + phone share the first row; email occupies the second. If the
+  // website is missing, phone and email automatically occupy one row.
+  const contactRows=planPosterContactRows(copy).length;
   const layout=planStackedCard({
     format:format as 'square'|'portrait'|'story',canvasHeight:h,scale,
     brandHeight:brand.height,offerHeight:offer?.height||0,
     serviceHeight:service?.height||0,hasCta:Boolean(copy.cta.trim()),contactRows,
+    contentFocus:true,
   });
   if(panelStyle==='frosted_glass_modern')
     glassPanel(ctx,side,layout.top,panelW,layout.height,p,scale);
@@ -338,7 +364,7 @@ function renderStacked(ctx:Ctx,copy:ExactPosterCopy,p:PremiumPosterPreset,format
     renderFitted(ctx,{fit:service,x:inner,y:layout.serviceY,width:insideWidth,
       color:p.palette.white,role:'body',language:serviceLanguage,preset:p,center:centerText});
   if(copy.cta.trim()&&layout.ctaY!==null){
-    const buttonW=Math.min(panelW*.6,490*scale);
+    const buttonW=Math.min(panelW*.84,800*scale);
     drawPill(ctx,{text:copy.cta,
       x:centerText?side+(panelW-buttonW)/2:inner,y:layout.ctaY,w:buttonW,
       h:layout.ctaHeight,scale,language:scriptOf(copy.cta,copy.language),preset:p,panelStyle});
@@ -400,7 +426,7 @@ function renderWide(ctx:Ctx,copy:ExactPosterCopy,p:PremiumPosterPreset,panelStyl
   if(copy.cta)drawPill(ctx,{text:copy.cta,x:inner,y:buttonY,
     w:Math.min(260,innerWidth),h:51,scale:.7,
     language:scriptOf(copy.cta,copy.language),preset:p,panelStyle});
-  const contacts=Number(Boolean(copy.website))+Number(Boolean(copy.phone))+Number(Boolean(copy.email));
+  const contacts=planPosterContactRows(copy).length;
   if(contacts>3)throw Error('Too many contact lines.');
   const contactsY=y+ph-79;
   if(contacts)drawContacts(ctx,{copy,x:inner,y:contactsY,width:innerWidth,
