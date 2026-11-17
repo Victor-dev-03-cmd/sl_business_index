@@ -193,7 +193,7 @@ test('Campaign Planner saves DB-valid seven-key brief and persists owner-private
   assert.match(linked,/found\.context\.businessId!==businessId/);
   assert.match(linked,/saved in your SLBI private library/);
   assert.doesNotMatch(linked,/supabase\.storage|storage\.from/);
-  assert.match(page,/Linked PNG remains on this device/);
+  assert.match(page,/Save to Planner stores an attached PNG privately in SLBI/);
 });
 
 test('Enterprise polish keeps credit and preview truth in Info while removing developer banners',()=>{
