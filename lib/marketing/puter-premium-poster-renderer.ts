@@ -25,18 +25,17 @@ function scriptOf(value:string,preferred:PosterCopyLanguage):PosterCopyLanguage{
   return preferred;
 }
 const unicodeFace:Record<PosterCopyLanguage,string>={
-  ta:'"Noto Sans Tamil",sans-serif',
-  si:'"Noto Sans Sinhala",sans-serif',
+  ta:'"Pavanam",sans-serif',
+  si:'"Maname",sans-serif',
   en:'"Inter",Arial,sans-serif',
 };
 function family(language:PosterCopyLanguage,role:Role,p:PremiumPosterPreset):string{
-  if(language!=='en'){
-    if(role==='display'&&p.font.scriptHeadline)
-      return '"'+p.font.scriptHeadline+'",'+unicodeFace[language];
-    if((role==='body'||role==='offer'||role==='button'||role==='brand')&&p.font.scriptBody)
-      return '"'+p.font.scriptBody+'",'+unicodeFace[language];
-    return unicodeFace[language];
-  }
+  // Owner-selected typography is invariant even when Gemini suggests a
+  // legacy valid font. Tamil intentionally uses the SAME Pavanam face for all
+  // script text; Sinhala uses Gemunu Libre display and Maname supporting text.
+  if(language==='ta')return '"Pavanam",'+unicodeFace.ta;
+  if(language==='si')return role==='display'?
+    '"Gemunu Libre",'+unicodeFace.si:'"Maname",'+unicodeFace.si;
   const key=role==='display'?'display':role==='button'?'offer':role==='footer'?'footer':
     role==='brand'?'brand':role;
   return '"'+p.font[key]+'",Arial,sans-serif';
@@ -51,7 +50,9 @@ function setFont(ctx:Ctx,size:number,role:Role,language:PosterCopyLanguage,p:Pre
     (language==='en'?p.font.display:p.font.scriptHeadline):
     (language==='en'&&role==='body'?p.font.body:
       language!=='en'?p.font.scriptBody:'');
-  const resolvedWeight=selectedFamily==='Kavivanar'||selectedFamily==='Anton'||
+  const resolvedWeight=language==='ta'?400:
+    (language==='si'&&role!=='display')?400:
+    selectedFamily==='Kavivanar'||selectedFamily==='Anton'||
     selectedFamily==='Bebas Neue'?400:weight(language,role);
   ctx.font=resolvedWeight+' '+value+'px '+family(language,role,p);
   const tracked=ctx as Ctx & {letterSpacing?:string};
@@ -114,7 +115,14 @@ function renderFitted(ctx:Ctx,p:{
   ctx.shadowColor=p.glowColor||p.color;ctx.shadowBlur=p.glow||0;
   p.fit.lines.forEach((line,i)=>{
     ctx.fillStyle=p.emphasizeFinalLine&&i===p.fit.lines.length-1?p.preset.palette.glow:p.color;
-    ctx.fillText(line,p.center?p.x+p.width/2:p.x,p.y+i*p.fit.step);
+    const x=p.center?p.x+p.width/2:p.x,y=p.y+i*p.fit.step;
+    if(p.language==='ta'&&p.role==='display'){
+      // Pavanam has a real Regular face only. A subtle same-family outline
+      // creates strong display weight WITHOUT substituting another Tamil font.
+      ctx.lineJoin='round';ctx.lineWidth=Math.min(2.8,Math.max(.9,p.fit.size*.012));
+      ctx.strokeStyle=ctx.fillStyle;ctx.strokeText(line,x,y);
+    }
+    ctx.fillText(line,x,y);
   });
   ctx.restore();
   return p.y+p.fit.height;
@@ -268,16 +276,18 @@ function renderStacked(ctx:Ctx,copy:ExactPosterCopy,p:PremiumPosterPreset,format
   const offerLanguage=scriptOf(copy.offer,copy.language);
   const serviceLanguage=scriptOf(copy.service,copy.language);
   const title=displayLanguage==='en'?copy.headline.toUpperCase():copy.headline;
-  const titleMax=h*(format==='square'?.41:.40);
+  // Language-specific headline budget: compact 2-line display leaves a
+  // continuous visual hero instead of a huge 3-line glyph wall.
+  const titleMax=h*(format==='square'?.26:.27);
   const titleFit=fit(ctx,{
-    value:title,width:w-2*side,height:titleMax-40*scale,maxLines:3,
-    start:p.tokens.storyDisplaySize[1]*scale,
-    min:Math.max(35,82*scale),
-    lineHeight:displayLanguage==='en'?p.tokens.displayLineHeight:1.3,
+    value:title,width:w-2*side,height:titleMax-16*scale,maxLines:2,
+    start:(displayLanguage==='ta'?150:displayLanguage==='si'?167:190)*scale,
+    min:Math.max(30,(displayLanguage==='ta'?61:displayLanguage==='si'?70:74)*scale),
+    lineHeight:displayLanguage==='en'?.98:displayLanguage==='ta'?1.18:1.19,
     role:'display',lang:displayLanguage,preset:p,label:'Display headline',
   });
   renderFitted(ctx,{fit:titleFit,x:side,
-    y:layoutMode==='bottom_left_editorial'?110*scale:55*scale,width:w-2*side,
+    y:layoutMode==='bottom_left_editorial'?73*scale:45*scale,width:w-2*side,
     color:p.palette.white,role:'display',language:displayLanguage,preset:p,
     center:layoutMode!=='bottom_left_editorial',glow:18*scale,glowColor:'rgba(0,0,0,.82)',
     emphasizeFinalLine:displayLanguage==='en'&&titleFit.lines.length>1,
