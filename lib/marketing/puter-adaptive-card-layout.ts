@@ -18,6 +18,8 @@ export type StackedCardInput={
   serviceHeight:number;
   hasCta:boolean;
   contactRows:number;
+  /** Default preserves historical layout; Studio opts into content-led sizing. */
+  contentFocus?:boolean;
 };
 export type StackedCardPlan={
   top:number;
@@ -38,11 +40,14 @@ export function planStackedCard(input:StackedCardInput):StackedCardPlan{
   if(!(h>0&&s>0)||input.contactRows<0||input.contactRows>3||
      [input.brandHeight,input.offerHeight,input.serviceHeight].some(v=>!Number.isFinite(v)||v<0))
     throw Error('Invalid premium poster layout dimensions.');
-  const topPad=36*s,bottomPad=27*s;
-  const ctaHeight=input.hasCta?74*s:0;
-  const footerSize=Math.max(13,Math.round(24*s));
-  const contactsHeight=input.contactRows*footerSize*1.65;
-  const brandGap=14*s,offerGap=14*s,buttonGap=22*s,contactsGap=24*s;
+  const topPad=(input.contentFocus?32:36)*s,bottomPad=(input.contentFocus?31:27)*s;
+  const ctaHeight=input.hasCta?(input.contentFocus?94:74)*s:0;
+  const footerSize=Math.max(13,Math.round((input.contentFocus?34:24)*s));
+  const contactsHeight=input.contactRows*footerSize*(input.contentFocus?1.80:1.65);
+  const brandGap=(input.contentFocus?13:14)*s;
+  const offerGap=(input.contentFocus?12:14)*s;
+  const buttonGap=(input.contentFocus?17:22)*s;
+  const contactsGap=(input.contentFocus?23:24)*s;
   let cursor=topPad;
   const brandOffset=cursor;
   cursor+=input.brandHeight;
@@ -71,9 +76,13 @@ export function planStackedCard(input:StackedCardInput):StackedCardPlan{
     contactsOffset=cursor;cursor+=contactsHeight;
   }
   const cardHeight=cursor+bottomPad;
-  const bottom=h*.948;
+  // Higher footer and a taller content card shift visual priority from the
+  // greeting to the actual business offer (without covering the hero).
+  const bottom=h*(input.contentFocus?.922:.948);
   const top=bottom-cardHeight;
-  const minTop=h*(format==='story'?.47:format==='portrait'?.44:.42);
+  const minTop=h*(input.contentFocus?
+    (format==='story'?.43:format==='portrait'?.37:.32):
+    (format==='story'?.47:format==='portrait'?.44:.42));
   if(top<minTop)
     throw Error('Approved copy needs a taller glass card than this format allows. Shorten the offer or CTA, hide an optional contact, or choose a taller poster size.');
   const absolute=(offset:number|null)=>offset===null?null:top+offset;
@@ -86,4 +95,28 @@ export function planStackedCard(input:StackedCardInput):StackedCardPlan{
     ctaHeight,dividerY:absolute(dividerOffset),
     contactsY:absolute(contactsOffset),contactsHeight,maxContentGap,
   };
+}
+
+/** Responsive, facts-only contact cells; no invented placeholders or truncation.
+ * Same order for Tamil, Sinhala and English. The full-width second-row email
+ * visually matches the owner's 9:16 festival poster reference.
+ */
+export type PosterContactKind='globe'|'phone'|'mail';
+export type PosterContactCell={kind:PosterContactKind;text:string;share:number};
+export type PosterContactRow=PosterContactCell[];
+export function planPosterContactRows(copy:{website?:string;phone?:string;email?:string}):PosterContactRow[]{
+  const website=copy.website?.trim()||'';
+  const phone=copy.phone?.trim()||'';
+  const email=copy.email?.trim()||'';
+  const web=website?{kind:'globe' as const,text:website,share:.63}:null;
+  const tel=phone?{kind:'phone' as const,text:phone,share:.37}:null;
+  const mail=email?{kind:'mail' as const,text:email,share:1}:null;
+  if(web&&tel&&mail)return [[web,tel],[mail]];
+  if(web&&tel)return [[web,tel]];
+  if(tel&&mail)return [[{...tel,share:.41},{...mail,share:.59}]];
+  if(web&&mail)return [[{...web,share:.61},{...mail,share:.39}]];
+  if(web)return [[{...web,share:1}]];
+  if(tel)return [[{...tel,share:1}]];
+  if(mail)return [[mail]];
+  return [];
 }
