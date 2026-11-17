@@ -745,6 +745,29 @@ export default function ConnectedCaptionLab(){
             </button>)}
           </div>
         </div>}
+        {cloudChoices.length>0&&<div>
+          <p className="mb-2 text-[11px] font-bold text-[#374151]">
+            Private saved posters · available on your signed-in devices
+          </p>
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+            {cloudChoices.map(asset=><button key={asset.id} type="button"
+              onClick={()=>void selectCloudPoster(asset)}
+              disabled={posterBusy||cloudSaving}
+              title="Attach saved private poster"
+              className="flex min-w-0 flex-col items-center gap-1 rounded-lg border border-[#E5E7EB] p-1.5 hover:border-[#F97316] disabled:opacity-50">
+              <span className="flex h-16 w-full items-center justify-center overflow-hidden rounded bg-[#F9FAFB]">
+                <img src={privatePosterUrl(businessId,asset.id)} alt="Private saved poster"
+                  className="h-full w-full object-cover" loading="lazy"/>
+              </span>
+              <span className="max-w-full truncate text-[10px] text-[#374151]">
+                {asset.createdAt?new Date(asset.createdAt).toLocaleDateString():'Saved PNG'}
+              </span>
+            </button>)}
+          </div>
+        </div>}
+        {cloudError&&<p role="status" className="text-[10px] text-[#92400E]">
+          Private saved posters unavailable: {cloudError}
+        </p>}
         <div className="grid grid-cols-2 gap-2">
           <button type="button" onClick={()=>posterInputRef.current?.click()} disabled={posterBusy}
             className="flex items-center justify-center gap-1.5 rounded-xl border border-[#111827] bg-[#111827] px-3 py-3 text-[12px] font-semibold text-white hover:bg-[#293241] disabled:border-[#E5E7EB] disabled:bg-[#F3F4F6] disabled:text-[#9CA3AF]">
@@ -755,7 +778,7 @@ export default function ConnectedCaptionLab(){
             Open Poster Studio <ArrowRight size={13}/>
           </Link>
         </div>
-        <p className="text-[10px] leading-4 text-[#6B7280]">PNG, JPG or WebP · Up to 12 MB · Recent Studio designs are available on this device for two hours.</p>
+        <p className="text-[10px] leading-4 text-[#6B7280]">PNG, JPG or WebP · Up to 12 MB · Recent Studio designs stay on this browser for 2 hours. Saved private posters persist in your authenticated SLBI library.</p>
       </div>
     </div>}
     <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,30fr)_minmax(0,42fr)_minmax(0,28fr)]">
@@ -787,6 +810,15 @@ export default function ConnectedCaptionLab(){
             {hasLinked&&<button type="button" onClick={downloadPoster}
               title="Download attached PNG" aria-label="Download attached PNG"
               className="rounded-lg p-1.5 text-[#6B7280] hover:bg-white hover:text-[#111827]"><Download size={14}/></button>}
+            {hasLinked&&<button type="button" disabled={cloudSaving||isBusy}
+              title="Save attached image privately across devices"
+              aria-label="Save attached image to private library"
+              onClick={()=>void saveCaptionImage()}
+              className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-semibold text-[#14532D] hover:bg-[#DCFCE7] disabled:opacity-40">
+              {cloudSaving?<LoaderCircle size={13} className="animate-spin"/>:
+                <CheckCircle2 size={13}/>}
+              {cloudAssetId?'Saved':'Save image'}
+            </button>}
             <button type="button" disabled={posterBusy||!businessId} onClick={()=>void pickPoster()}
               className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-semibold text-[#C2410C] hover:bg-[#FFEDD5] disabled:opacity-45">
               <Plus size={13}/>{hasLinked?'Change':'Attach'}
