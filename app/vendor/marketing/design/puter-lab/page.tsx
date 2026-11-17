@@ -654,13 +654,112 @@ export default function PuterMultilingualPosterLab(){
               </select>
             </div>
           </div>
+          {/* Attached media, prompt and dictation share one compact composer. */}
           <div>
-            <label htmlFor="puter-prompt" className="mb-1.5 block text-[11px] font-bold">Describe your poster / voice transcript</label>
-            <textarea id="puter-prompt" value={prompt} disabled={locked} rows={5} maxLength={1200}
-              onChange={e=>{setPrompt(e.target.value);setBrief(null);setBriefKey('');
-                setBlueprint(null);setBlueprintKey('');}}
-              placeholder="தமிழ் · සිංහල · English · Tanglish — describe your campaign."
-              className="max-h-[190px] min-h-[110px] w-full resize-none rounded-xl border border-[#E4DDDA] bg-[#FDFBF9] p-3 text-[12px] leading-5 outline-none focus:border-[#EC9D68]"/>
+            <label htmlFor="puter-prompt" className="mb-1.5 block text-[11px] font-bold">
+              Describe your poster / voice transcript
+            </label>
+            <div className="overflow-hidden rounded-2xl border border-[#E5DDD7] bg-[#FDFBF9] transition-colors focus-within:border-[#F3A56D] focus-within:ring-2 focus-within:ring-[#F97316]/10">
+              <textarea id="puter-prompt" value={prompt} disabled={locked} rows={5} maxLength={1200}
+                onChange={e=>{setPrompt(e.target.value);setBrief(null);setBriefKey('');
+                  setBlueprint(null);setBlueprintKey('');}}
+                placeholder="தமிழ் · සිංහල · English · Tanglish — describe your campaign."
+                className="max-h-[190px] min-h-[110px] w-full resize-none border-0 bg-transparent px-3.5 pt-3.5 pb-1 text-[12px] leading-5 outline-none disabled:opacity-60"/>
+              {referenceFiles.length>0&&<div className="flex flex-wrap gap-1.5 px-3 pb-2"
+                aria-label="Attached reference files">
+                {referenceFiles.map((file,index)=><div key={file.name+'-'+index}
+                  className="inline-flex max-w-full items-center gap-1.5 rounded-lg border border-[#E8DDD4] bg-white px-2 py-1.5 text-[10px] font-semibold text-[#584A45]">
+                  {isPosterReferenceImage(file)?<ImageIcon size={13} className="shrink-0 text-[#AD6B38]"/>:
+                    <FileText size={13} className="shrink-0 text-[#AD6B38]"/>}
+                  <span className="max-w-[125px] truncate" title={file.name}>{file.name}</span>
+                  <button type="button" aria-label={'Remove '+file.name}
+                    disabled={locked} onClick={()=>removeReference(index)}
+                    className="rounded p-0.5 text-[#897770] hover:bg-[#F4EDE7] disabled:opacity-40">
+                    <X size={12}/>
+                  </button>
+                </div>)}
+              </div>}
+              {referenceSummary&&<details className="mx-3 mb-2 rounded-lg border border-[#DCEBDD] bg-[#F4FBF4] px-2.5 py-2 text-[10px] text-[#3D6546]">
+                <summary className="cursor-pointer font-semibold">References analyzed · View creative context</summary>
+                <p className="mt-1.5 whitespace-pre-wrap leading-4">{referenceSummary}</p>
+              </details>}
+              {recording?<div role="status" aria-label="Recording voice message"
+                className="mx-2.5 mb-2.5 flex min-w-0 items-center gap-2 rounded-xl bg-[#242124] px-2.5 py-2.5 text-white">
+                <button type="button" onClick={cancelVoice} aria-label="Discard voice recording" title="Discard recording"
+                  className="flex size-8 shrink-0 items-center justify-center rounded-full border border-white/20 hover:bg-white/10">
+                  <X size={17}/>
+                </button>
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                  <div className="flex h-9 items-center justify-between gap-[2px] overflow-hidden"
+                    aria-label="Live microphone waveform">
+                    {voiceLevels.map((level,i)=><span key={i}
+                      className={'w-[3px] min-w-[2px] flex-1 rounded-full transition-[height] duration-75 '+
+                        (voicePaused?'bg-white/40':'bg-[#FDBA74]')}
+                      style={{height:voicePaused?5:level}}/>)}
+                  </div>
+                  <p className="text-center text-[9px] tabular-nums text-[#E9D9CE]">
+                    {voicePaused?'Paused':'Recording'} · {Math.floor(recordingSeconds/60).toString().padStart(2,'0')}:
+                    {(recordingSeconds%60).toString().padStart(2,'0')}
+                  </p>
+                </div>
+                <button type="button" onClick={pauseVoice} title={voicePaused?'Resume recording':'Pause recording'}
+                  aria-label={voicePaused?'Resume voice recording':'Pause voice recording'}
+                  className="flex size-8 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 hover:bg-white/20">
+                  {voicePaused?<Play size={15}/>:<Pause size={15}/>}
+                </button>
+                <button type="button" onClick={()=>stopVoice()} aria-label="Send recording to transcript"
+                  title="Send to Gemini transcription"
+                  className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#F97316] text-white hover:bg-[#EA580C]">
+                  <Send size={16}/>
+                </button>
+              </div>:<div className="flex items-center justify-between gap-2 border-t border-[#EEE5DE] px-2.5 py-2">
+                <div className="flex min-w-0 items-center gap-1.5">
+                  <input ref={attachInputRef} type="file"
+                    accept="image/png,image/jpeg,image/webp,application/pdf,text/plain,text/markdown,.png,.jpg,.jpeg,.webp,.pdf,.txt,.md"
+                    multiple className="sr-only" aria-label="Attach images or documents"
+                    onChange={e=>{attachReferences(e.currentTarget.files);e.currentTarget.value='';}}/>
+                  <button type="button" onClick={()=>attachInputRef.current?.click()}
+                    disabled={locked||referenceFiles.length>=4||!businessId}
+                    aria-label="Attach images or documents" title="Attach images, PDF or text documents"
+                    className="flex size-8 items-center justify-center rounded-full border border-[#E8DDD3] bg-white text-[#594D47] transition-colors hover:border-[#F3A56D] hover:text-[#C65C19] disabled:opacity-40">
+                    <Plus size={17}/>
+                  </button>
+                  {referenceFiles.length>0&&<button type="button" onClick={()=>void analyzeReferences()}
+                    disabled={locked||!businessId} title="Analyze image / document references with Gemini (uses shared allowance)"
+                    aria-label="Analyze attached references with Gemini"
+                    className="inline-flex items-center gap-1 rounded-lg border border-[#E8DDD3] bg-white px-2 py-1.5 text-[10px] font-semibold text-[#A95B28] disabled:opacity-40">
+                    {referenceBusy?<LoaderCircle size={13} className="animate-spin"/>:<FileText size={13}/>}
+                    Analyze {referenceFiles.length}
+                  </button>}
+                </div>
+                <div className="flex shrink-0 items-center gap-1.5">
+                  {transcribing?<span role="status" aria-live="polite"
+                    className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-[#AC5F2A]">
+                    <LoaderCircle size={14} className="animate-spin"/> Transcribing…
+                  </span>:<button type="button" onClick={()=>void startVoice()} disabled={locked||!businessId}
+                    aria-label="Record voice message" title="Record voice message"
+                    className="flex size-8 items-center justify-center rounded-full border border-[#E8DDD3] bg-white text-[#594D47] hover:border-[#F3A56D] hover:text-[#C65C19] disabled:opacity-40">
+                    <Mic size={17}/>
+                  </button>}
+                  <button type="button" onClick={()=>void prepareWithGemini()}
+                    disabled={locked||!businessId||prompt.trim().length<5}
+                    aria-label="Prepare poster with Gemini" title="Prepare art direction and typography with Gemini"
+                    className="flex size-8 items-center justify-center rounded-full bg-[#262126] text-white hover:bg-[#493B3E] disabled:bg-[#E7E1DD] disabled:text-[#AAA19B]">
+                    {geminiBusy?<LoaderCircle size={16} className="animate-spin"/>:
+                      <WandSparkles size={16}/>}
+                  </button>
+                </div>
+              </div>}
+            </div>
+            {attachedImage&&<label className="mt-2 flex items-start gap-2 rounded-lg bg-[#F8F4F0] p-2 text-[10px] leading-4 text-[#75655B]">
+              <input type="checkbox" checked={useAttachedImage} disabled={locked}
+                onChange={e=>setUseAttachedImage(e.target.checked)} className="mt-0.5 accent-[#F97316]"/>
+              <span>Use the first attached image as an artwork reference on Generate.
+                Off by default; documents are never sent to the image model.</span>
+            </label>}
+            {referenceFiles.length>0&&!referenceSummary&&<p className="mt-1.5 text-[10px] leading-4 text-[#8C7E75]">
+              Files stay on this device until you select Analyze. Analysis uses one Gemini voice/brief request.
+            </p>}
           </div>
           <div className="space-y-1.5">
             <div className="flex items-center justify-between gap-2">
