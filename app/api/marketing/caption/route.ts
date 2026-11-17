@@ -3,6 +3,7 @@ import {createClient} from '@/lib/supabase/server';
 import {isSameOrigin} from '@/lib/growth/ingestion-contract';
 import {GEMINI_POSTER_MODEL} from '@/lib/marketing/poster-gemini-intelligence';
 import {parseThreeAngles} from '@/lib/marketing/caption-workspace';
+import {unverifiedCtaPhone} from '@/lib/marketing/caption-cta-phone';
 import {
   captionGeminiResponseSchema,parseGeminiCaptionOutput,serializeGeminiCaptionOutput,
 } from '@/lib/marketing/caption-gemini-output';
@@ -20,19 +21,6 @@ const response=(status:number,body:Record<string,unknown>)=>
   Response.json(body,{status,headers:{'Cache-Control':'private, no-store'}});
 const uuid=/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i;
 const missingSchema=(code?:string)=>code==='42P01'||code==='PGRST205'||code==='42883'||code==='PGRST202';
-const phoneDigits=(value:string)=>{
-  const digits=value.replace(/\D/g,'');
-  return /^94\d{9}$/.test(digits)?'0'+digits.slice(2):digits;
-};
-function unverifiedCtaPhone(cta:string,verifiedPhone:string):boolean{
-  const numbers=cta.match(/\+?\d[\d\s().-]{5,}\d/g)||[];
-  const expected=phoneDigits(verifiedPhone);
-  return numbers.some(value=>{
-    const digits=phoneDigits(value);
-    return digits.length>=7&&(expected.length<7||digits!==expected);
-  });
-}
-
 const safeAdmin=()=>{
   const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key=process.env.SUPABASE_SERVICE_ROLE_KEY||process.env.SUPABASE_SECRET_KEY;
