@@ -127,7 +127,11 @@ test('Gemini route uses same Poster model, JSON constraint and existing credit f
   assert.match(page,/campaignGoal:goal/);
   assert.match(page,/posterHeadline:hasLinked/);
   assert.match(page,/posterOffer:hasLinked/);
-  assert.match(page,/setGeneratedTags\(nextTags\)/);
+  // Historical draft reload must not overwrite current caption editor.
+  assert.match(page,/setDrafts\(list\)/);
+  const libraryLoad=page.slice(page.indexOf('  const loadDrafts=useCallback('),
+    page.indexOf('  const loadPlannerDrafts=useCallback('));
+  assert.doesNotMatch(libraryLoad,/setGeneratedTags\(nextTags\)|setCaptions\(next\)/);
   assert.match(page,/extractSavedCaptionHashtags\(data.draft.caption\)/);
   assert.match(page,/const brief=plannerBriefFromCaption\(/);
 });
