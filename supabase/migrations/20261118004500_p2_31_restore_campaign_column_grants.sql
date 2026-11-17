@@ -2,6 +2,12 @@
 -- All owner access stays under marketing_campaign_owner_* RLS policies.
 BEGIN;
 REVOKE INSERT, UPDATE ON TABLE public.marketing_campaigns FROM authenticated;
+-- Explicitly reapply the existing column allowlist: table REVOKE also
+-- clears column grants. This makes the migration atomic and replay-safe.
+GRANT INSERT (business_id,banner_text,banner_color,platforms,scheduled_at,status,brief,poster_asset_id)
+  ON TABLE public.marketing_campaigns TO authenticated;
+GRANT UPDATE (banner_text,banner_color,platforms,scheduled_at,status,brief,is_archived)
+  ON TABLE public.marketing_campaigns TO authenticated;
 DO $verify$
 BEGIN
   IF has_table_privilege('authenticated','public.marketing_campaigns','INSERT')
