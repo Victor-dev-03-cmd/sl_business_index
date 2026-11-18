@@ -6,6 +6,8 @@ const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const config=read('next.config.ts');
 const captions=read('app/vendor/marketing/captions/page.tsx');
 const transcription=read('app/api/marketing/poster/transcribe/route.ts');
+const engine=read('lib/marketing/voice/slbi-voice-engine.ts');
+const voiceProvider=read('lib/marketing/voice/slbi-gemini-transcription.ts');
 
 test('Caption Lab may prompt for microphone only on its own HTTPS same-origin page',()=>{
   assert.match(config,/source: '\/\(\.\*\)'[\s\S]*?microphone=\(\)/);
@@ -20,9 +22,10 @@ test('Caption Lab may prompt for microphone only on its own HTTPS same-origin pa
 test('Explicit mic icon click invokes native getUserMedia and shows actionable permission help',()=>{
   assert.match(captions,/onClick=\{\(\)=>void startVoice\(\)\}/);
   assert.match(captions,/aria-label="Record voice campaign brief"/);
-  assert.match(captions,/navigator\.mediaDevices\.getUserMedia\(\{audio:true\}\)/);
-  assert.match(captions,/window\.isSecureContext/);
-  assert.match(captions,/permissionsPolicy\?\.allowsFeature\('microphone'\)/);
+  assert.match(engine,/navigator\.mediaDevices\.getUserMedia\(\{/);
+  assert.match(captions,/new SlbiVoiceRecorder\(/);
+  assert.match(engine,/window\.isSecureContext/);
+  assert.match(engine,/slbiVoiceAudioConstraints/);
   assert.match(captions,/name==='NotAllowedError'/);
   assert.match(captions,/setVoicePermissionHelp\(true\)/);
   assert.match(captions,/role="status"[\s\S]*?Enable microphone for Caption Lab/);
@@ -31,22 +34,22 @@ test('Explicit mic icon click invokes native getUserMedia and shows actionable p
 
 test('Poster-matched voice bar offers real measured waveform, pause/resume, Send and cancel',()=>{
   assert.match(captions,/role="group" aria-label="Active voice recording"/);
-  assert.match(captions,/new AudioContext\(\)/);
-  assert.match(captions,/audio\.createAnalyser\(\)/);
-  assert.match(captions,/analyser\.getByteFrequencyData\(bins\)/);
+  assert.match(engine,/new AudioContext\(\)/);
+  assert.match(engine,/audio\.createAnalyser\(\)/);
+  assert.match(engine,/analyser\.getByteFrequencyData\(samples\)/);
   assert.match(captions,/voiceLevels\.map\(\(level,index\)=>/);
-  assert.match(captions,/recorder\.pause\(\);setVoicePaused\(true\)/);
-  assert.match(captions,/recorder\.resume\(\);setVoicePaused\(false\)/);
-  assert.match(captions,/recorder\.state==='recording'\|\|recorder\.state==='paused'/);
+  assert.match(engine,/recorder\.pause\(\)/);
+  assert.match(engine,/recorder\.resume\(\)/);
+  assert.match(engine,/pauseOrResume\(\):SlbiVoiceState/);
   assert.match(captions,/aria-label="Send voice recording to transcript"/);
   assert.match(captions,/aria-label="Cancel and discard voice recording"/);
-  assert.match(captions,/discardVoiceRef\.current=true;sendVoice\(\)/);
-  assert.match(captions,/if\(failed\|\|discarded\)return/);
-  assert.match(captions,/recorder\.start\(250\)/);
-  assert.match(captions,/if\(recorder\.state==='recording'\)setVoiceSeconds/);
+  assert.match(captions,/voiceCaptureRef\.current\?\.cancel\(\)/);
+  assert.match(engine,/if\(discard\)return/);
+  assert.match(engine,/recorder\.start\(250\)/);
+  assert.match(engine,/this\.callbacks\.onSeconds\?\.\(seconds\)/);
   assert.match(captions,/releaseVoiceMedia\(\)/);
-  assert.match(captions,/voiceAudioRef\.current\.close\(\)\.catch/);
-  assert.match(captions,/streamRef\.current\?\.getTracks\(\)\.forEach\(track=>track\.stop\(\)\)/);
+  assert.match(engine,/this\.audio\.close\(\)\.catch/);
+  assert.match(engine,/this\.stream\?\.getTracks\(\)\.forEach\(track=>track\.stop\(\)\)/);
 });
 
 test('Transcript status is explicit, full overlong text is reviewable, no silent clipping',()=>{
@@ -74,6 +77,6 @@ test('Transcription route retains Pro auth, owner isolation, quota and server-on
   assert.match(transcription,/marketing_poster_voice_try_reserve/);
   assert.match(transcription,/process\.env\.GEMINI_API_KEY/);
   assert.match(transcription,/MAX_AUDIO_BYTES=1_500_000/);
-  assert.match(transcription,/Output only the transcript/);
+  assert.match(voiceProvider,/Output ONLY the transcript text/);
   assert.doesNotMatch(captions,/await\s+generate\(\)|void\s+generate\(\)[\s\S]*?transcribe/);
 });
