@@ -10,6 +10,9 @@ import {
   Volume2,WandSparkles,X,
 } from 'lucide-react';
 import {supabase} from '@/lib/supabaseClient';
+import {vendorFeedback} from '@/lib/ui/vendor-feedback';
+import {captionIssueMessage,failedCaptionLanguages,type CaptionIssue}
+  from '@/lib/marketing/caption-generation-feedback';
 import {
   SlbiVoiceRecorder,requestSlbiVoiceTranscript,SLBI_VOICE_MAX_BYTES,
 } from '@/lib/marketing/voice/slbi-voice-engine';
@@ -19,7 +22,7 @@ import type {CaptionLanguage} from '@/lib/marketing/caption-contract';
 import {
   ANGLES,GOALS,LANGUAGES,PLATFORMS,angleLabels,emptyCaptions,goalLabel,
   goalObjective,hashtagsFrom,extractSavedCaptionHashtags,languageBundle,labels,normalizedTag,
-  parseThreeAngles,previewFold,promptChips,removeHashtags,safeLocalPolish,
+  parseThreeAngles,previewFold,promptChips,removeHashtags,polishCaptionSelections,
   toneLabels,withHashtags,
   type CaptionAngle,type CaptionSet,type CampaignGoal,
   type SocialPlatform,type TonePosition,
@@ -31,7 +34,7 @@ import {
 
 type Business={id:string;name:string;city:string|null;category:string;phone:string|null;website_url:string|null;address:string|null};
 type StoredDraft={id:string;business_id?:string;caption:string;language:CaptionLanguage;review_status:string;created_at?:string};
-type ApiBody={error?:string;draft?:StoredDraft;drafts?:StoredDraft[];chargedCredits?:number};
+type ApiBody={error?:string;code?:string;draft?:StoredDraft;drafts?:StoredDraft[];chargedCredits?:number};
 type GeminiQuota={used:number;limit:number;remaining:number;dayUtc:string};
 type PlannerDraft={
   id:string;business_id:string;banner_text:string;platforms:string[]|null;
@@ -118,6 +121,10 @@ export default function ConnectedCaptionLab(){
   const [plannerDrafts,setPlannerDrafts]=useState<PlannerDraft[]>([]);
   const [plannerLoading,setPlannerLoading]=useState(false);
   const [workspaceKey,setWorkspaceKey]=useState('');
+  const [workspaceEpoch,setWorkspaceEpoch]=useState(0);
+  const [failedGenerations,setFailedGenerations]=useState<{
+    signature:string;languages:CaptionLanguage[];
+  }|null>(null);
   const [lastSavedCampaignId,setLastSavedCampaignId]=useState('');
   const [generatedTags,setGeneratedTags]=useState<Record<CaptionLanguage,string[]>>({ta:[],si:[],en:[]});
   const [customTags,setCustomTags]=useState<Record<string,string[]>>({});
@@ -144,10 +151,18 @@ export default function ConnectedCaptionLab(){
   const voiceCaptureRef=useRef<SlbiVoiceRecorder|null>(null);
   const voiceMountedRef=useRef(true);
   const importingRef=useRef('');
+  const skipWorkspaceRecoveryRef=useRef(false);
   const failedVoiceRef=useRef<Blob|null>(null);
   const posterUrlRef=useRef('');
   const posterInputRef=useRef<HTMLInputElement|null>(null);
   const posterDialogRef=useRef<HTMLDivElement|null>(null);
+  // Compact, auto-dismissable feedback uses the already-mounted vendor toaster.
+  useEffect(()=>{if(error)vendorFeedback.error(error);},[error]);
+  useEffect(()=>{
+    if(!notice||/^(Allow microphone access|Gemini is transcribing|Recording\.|Recording captured\.|Recording safely stopped)/.test(notice))
+      return;
+    vendorFeedback.info(notice);
+  },[notice]);
   const releaseVoiceMedia=useCallback(()=>{
     voiceCaptureRef.current?.dispose();
     voiceCaptureRef.current=null;
@@ -179,12 +194,20 @@ export default function ConnectedCaptionLab(){
   const hasLinked=Boolean(linked&&linked.context.businessId===businessId);
   const chosenLanguages:CaptionLanguage[]=languageSelections.length?languageSelections:['ta'];
   const activePreviewLanguage:CaptionLanguage=previewLanguage==='all'?chosenLanguages[0]:previewLanguage;
+  const generationSignature=JSON.stringify({
+    businessId,goal,tone,message,conditions,cta,posterKey,languages:chosenLanguages,
+  });
+  const canRetryLanguages=Boolean(failedGenerations&&
+    failedGenerations.signature===generationSignature&&failedGenerations.languages.length);
   useEffect(()=>{
     if(previewLanguage!=='all'&&!chosenLanguages.includes(previewLanguage))
       setPreviewLanguage(chosenLanguages[0]);
   },[languageSelections,previewLanguage,chosenLanguages]);
   const hasAI=chosenLanguages.some(lang=>Boolean(captions[lang][angle]?.trim()));
   const activeText=captions[activePreviewLanguage]?.[angle]?.trim()||'';
+  const canPolish=previewLanguage==='all'?
+    chosenLanguages.some(lang=>Boolean(captions[lang][angle]?.trim())):
+    Boolean(activeText);
   const suggestedTags=useMemo(()=>{
     const langs=previewLanguage==='all'?chosenLanguages:[activePreviewLanguage];
     const generated=langs.flatMap(lang=>generatedTags[lang]);
@@ -326,20 +349,30 @@ export default function ConnectedCaptionLab(){
   },[businessId]);
   useEffect(()=>{void loadPlannerDrafts();},[loadPlannerDrafts]);
 
-  // The session key includes the specific Poster Studio handoff. A fresh
-  // poster is isolated from previous campaigns; a reload of the SAME poster
-  // can recover unsaved text without auto-opening old server drafts.
+  // v3 never imports obsolete v2 browser snapshots. Saving to Planner
+  // synchronously removes recovery data, tombstones the consumed handoff
+  // and starts a fresh editor epoch without rehydrating a completed draft.
   useEffect(()=>{
     if(!businessId||typeof window==='undefined')return;
     const handoff=new URLSearchParams(window.location.search).get('handoff');
-    const key='slbi-caption-unsaved-v2:'+businessId+':'+
-      (validHandoffId(handoff)?handoff:'direct');
+    let valid=validHandoffId(handoff);
+    try{
+      if(valid&&sessionStorage.getItem('slbi-caption-completed-handoff:'+handoff)==='1')
+        valid=false;
+    }catch{/* Browser storage is best-effort. */}
+    const key='slbi-caption-unsaved-v3:'+businessId+':'+
+      (valid?handoff:'direct');
+    const skip=skipWorkspaceRecoveryRef.current;
+    skipWorkspaceRecoveryRef.current=false;
     setWorkspaceKey('');
     let saved:WorkspaceSnapshot|null=null;
     try{
-      const raw=sessionStorage.getItem(key);
-      if(raw&&raw.length<25000)saved=JSON.parse(raw) as WorkspaceSnapshot;
-    }catch{/* Session storage is only a best-effort recovery mechanism. */}
+      if(skip)sessionStorage.removeItem(key);
+      else{
+        const raw=sessionStorage.getItem(key);
+        if(raw&&raw.length<25000)saved=JSON.parse(raw) as WorkspaceSnapshot;
+      }
+    }catch{/* Session storage cannot block new campaign editing. */}
     if(saved){
       if(typeof saved.message==='string')setMessage(saved.message.slice(0,600));
       if(typeof saved.cta==='string')setCta(saved.cta.slice(0,180));
@@ -354,7 +387,7 @@ export default function ConnectedCaptionLab(){
         setPreviewLanguage(saved.previewLanguage);
     }
     setWorkspaceKey(key);
-  },[businessId]);
+  },[businessId,workspaceEpoch]);
   useEffect(()=>{
     if(!workspaceKey||typeof window==='undefined')return;
     const filled=Boolean(message.trim()||cta.trim()||conditions.trim()||
@@ -527,46 +560,66 @@ export default function ConnectedCaptionLab(){
     setNotice('Reviewed transcript added. Verify your service, discount and campaign facts before Generate.');
   };
 
-  const generate=async()=>{
+  const generate=async(retryFailedOnly=false)=>{
     if(busy||!selected||message.trim().length<5)return;
+    const targets=retryFailedOnly&&canRetryLanguages&&failedGenerations?
+      failedGenerations.languages:chosenLanguages;
     setBusy(true);setError('');setNotice('');
-    let succeeded=0;
+    const completed:CaptionLanguage[]=[];
+    const failures:CaptionIssue[]=[];
     try{
-      // Existing credit-reserved provider route bills per language, never
-      // before the explicit Generate click. Hard-off flag remains respected.
-      for(const language of chosenLanguages){
-        // Goal is supplied as a separate validated field. Never silently cut
-        // off the last words of a reviewed voice brief to append UI metadata.
-        const prompt=message.trim();
-        const response=await fetch('/api/marketing/caption',{
-          method:'POST',credentials:'same-origin',cache:'no-store',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({
-            businessId:businessId,requestKey:crypto.randomUUID(),
-            objective:goalObjective[goal],language,
-            campaignGoal:goal,
-            posterHeadline:hasLinked?(linked?.context.headline||''):'',
-            posterOffer:hasLinked?(linked?.context.offer||''):'',
-            mode:'three_angles',
-            tone:(['friendly','professional','urgent'] as const)[tone],
-            message:prompt,conditions:conditions.trim().slice(0,300),
-            cta:cta.trim().slice(0,180),
-          }),
-        });
-        const data=await decode(response);
-        if(!response.ok||!data.draft?.caption)
-          throw Error(data.error||'AI Caption generation is unavailable.');
-        const parsed=parseThreeAngles(data.draft.caption);
-        const hashtags=extractSavedCaptionHashtags(data.draft.caption);
-        setCaptions(previous=>({...previous,[language]:parsed}));
-        setGeneratedTags(previous=>({...previous,[language]:hashtags}));
-        setGeneratedLanguages(previous=>Array.from(new Set([...previous,language])));
-        succeeded++;
+      // Per-language isolation: a failed model call never blocks another
+      // selected language and never deletes a successful saved draft.
+      for(const language of targets){
+        try{
+          const response=await fetch('/api/marketing/caption',{
+            method:'POST',credentials:'same-origin',cache:'no-store',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({
+              businessId,requestKey:crypto.randomUUID(),
+              objective:goalObjective[goal],language,campaignGoal:goal,
+              posterHeadline:hasLinked?(linked?.context.headline||''):'',
+              posterOffer:hasLinked?(linked?.context.offer||''):'',
+              mode:'three_angles',
+              tone:(['friendly','professional','urgent'] as const)[tone],
+              message:message.trim(),conditions:conditions.trim().slice(0,300),
+              cta:cta.trim().slice(0,180),
+            }),
+          });
+          const data=await decode(response);
+          if(!response.ok||!data.draft?.caption){
+            failures.push({
+              language,status:response.status,code:data.code||'',
+              detail:data.error||'Caption generation is unavailable.',
+            });
+            continue;
+          }
+          setCaptions(previous=>({...previous,[language]:parseThreeAngles(data.draft!.caption)}));
+          setGeneratedTags(previous=>({...previous,[language]:
+            extractSavedCaptionHashtags(data.draft!.caption)}));
+          setGeneratedLanguages(previous=>Array.from(new Set([...previous,language])));
+          completed.push(language);
+        }catch{
+          failures.push({language,status:0,code:'NETWORK',
+            detail:'Network connection interrupted.'});
+        }
       }
-      setNotice('AI drafts saved for '+succeeded+' language(s). Review every fact and offer before copying or planning.');
+      setFailedGenerations(failures.length?{
+        signature:generationSignature,languages:failedCaptionLanguages(failures),
+      }:null);
+      if(completed.length&&failures.length){
+        // Put the successful result in BOTH preview and refine column.
+        setPreviewLanguage(completed[0]);setExpanded(false);
+      }
       await loadDrafts();
-    }catch(e){setError((e instanceof Error?e.message:'Caption generation failed.')+
-      (succeeded?' '+succeeded+' language(s) completed and saved.':' No credits were requested for languages not processed.'));
+      if(failures.length){
+        // One compact warning: identify ONLY the unavailable language(s).
+        // Results in all successful languages stay visible and editable.
+        vendorFeedback.warning(failures.map(captionIssueMessage).join(' '));
+      }else if(completed.length){
+        setNotice(completed.map(lang=>labels[lang]).join(' + ')+
+          ' captions ready. Review the facts before saving.');
+      }
     }finally{setBusy(false);}
   };
   const editTags=(tag:string,action:'add'|'remove')=>{
@@ -588,30 +641,58 @@ export default function ConnectedCaptionLab(){
     catch{setError('Clipboard access is blocked. Copy the caption text from the editor.');}
   };
   const polish=(kind:'shorten'|'urgency'|'emojis'|'contact')=>{
-    if(previewLanguage==='all'){
-      setError('Select a single language before applying a local quick polish.');return;
+    const result=polishCaptionSelections({
+      captions,selectedLanguages:chosenLanguages,previewLanguage,angle,kind,
+      contact:{phone:selected?.phone||'',city:selected?.city||'',
+        website:selected?.website_url||''},
+    });
+    if(!result.changed.length){
+      setNotice(kind==='contact'?
+        'No saved business contact details available. Update My Business first.':
+        kind==='shorten'?'This caption is already short. Nothing changed.':
+        'Nothing to polish yet. Generate or write a caption first.');
+      return;
     }
-    updateAngle(previewLanguage,safeLocalPolish(
-      captions[previewLanguage][angle],kind,previewLanguage,
-      {phone:selected?.phone||'',city:selected?.city||'',website:selected?.website_url||''},
-    ));
-    setNotice('Quick polish applied locally. No AI credits used. Review the exact words.');
+    setCaptions(result.captions);
+    setNotice('Quick Polish updated '+result.changed.map(lang=>labels[lang]).join(' + ')+
+      '. No AI credits used.');
   };
   const clearEditorAfterSave=()=>{
+    // Cancel the pending autosave before any state transitions, then remove
+    // v2/v3 snapshots immediately so fast navigation cannot resurrect them.
+    skipWorkspaceRecoveryRef.current=true;
+    setWorkspaceKey('');
+    try{
+      const url=new URL(window.location.href);
+      const handoff=url.searchParams.get('handoff');
+      for(const version of ['v2','v3']){
+        const prefix='slbi-caption-unsaved-'+version+':'+businessId+':';
+        sessionStorage.removeItem(prefix+'direct');
+        if(validHandoffId(handoff))sessionStorage.removeItem(prefix+handoff);
+      }
+      if(workspaceKey)sessionStorage.removeItem(workspaceKey);
+      if(validHandoffId(handoff))
+        sessionStorage.setItem('slbi-caption-completed-handoff:'+handoff,'1');
+      // A saved handoff is a consumed one-shot link, not a future draft.
+      if(url.searchParams.has('handoff')){
+        url.searchParams.delete('handoff');
+        window.history.replaceState(window.history.state,'',
+          url.pathname+url.search+url.hash);
+      }
+    }catch{/* Browser storage failure must not block a completed save. */}
     failedVoiceRef.current=null;
     setMessage('');setConditions('');setCta('');
     setCaptions(emptyCaptions());setGeneratedTags({ta:[],si:[],en:[]});
+    setGeneratedLanguages([]);setFailedGenerations(null);
+    setCustomTags(previous=>({...previous,[businessId]:[]}));
+    setRemovedTags(previous=>({...previous,[businessId]:[]}));
+    setTagInput('');setAngle('hook');setPreviewLanguage('all');
+    setExpanded(false);setVoiceReviewDraft('');
     setLinked(null);setPosterKey('');setCloudAssetId('');
     setSavedCampaignId('');setSavedCampaignPosterId('');
-    setVoiceReviewDraft('');
     if(posterUrlRef.current)URL.revokeObjectURL(posterUrlRef.current);
     posterUrlRef.current='';setPosterUrl('');
-    try{
-      if(workspaceKey)sessionStorage.removeItem(workspaceKey);
-      const key=new URLSearchParams(window.location.search).get('handoff');
-      if(validHandoffId(key))
-        sessionStorage.setItem('slbi-caption-completed-handoff:'+key,'1');
-    }catch{}
+    setWorkspaceEpoch(epoch=>epoch+1);
   };
   const savePlanner=async()=>{
     if(saving||!selected||!currentCaption.trim())return;
@@ -761,6 +842,7 @@ export default function ConnectedCaptionLab(){
     setCustomTags({});setRemovedTags({});setSavedCampaignId('');setSavedCampaignPosterId('');
     setLastSavedCampaignId('');setCaptions(emptyCaptions());
     setGeneratedTags({ta:[],si:[],en:[]});setWorkspaceKey('');
+    setFailedGenerations(null);setPreviewLanguage('all');setAngle('hook');setExpanded(false);
   };
   const downloadPoster=()=>{
     if(!posterUrl||!linked)return;
@@ -791,8 +873,7 @@ export default function ConnectedCaptionLab(){
         </Link>
       </div>
     </header>
-    {error&&<div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-800">{error}</div>}
-    {notice&&<div role="status" className="flex items-center gap-2 rounded-lg border border-[#FED7AA] bg-[#FFF7ED] px-3 py-2 text-[11px] font-medium text-[#92400E]"><CheckCircle2 size={14} className="shrink-0"/>{notice}</div>}
+    {/* Compact top-right Vendor Toast replaces wide blocking banners. */}
     <input ref={posterInputRef} type="file" accept="image/png,image/jpeg,image/webp"
       tabIndex={-1} className="sr-only" aria-label="Upload a local poster image"
       onChange={e=>{void uploadDevicePoster(e.currentTarget.files?.[0]);e.currentTarget.value='';}}/>
@@ -1045,6 +1126,12 @@ export default function ConnectedCaptionLab(){
           {busy?<LoaderCircle size={17} className="animate-spin"/>:<WandSparkles size={17} className="text-[#FDBA74] group-disabled:text-[#9CA3AF]"/>}
           {busy?'Generating drafts…':'Generate Caption Variations'} <ArrowRight size={14}/>
         </button>
+        {canRetryLanguages&&<button type="button" disabled={isBusy}
+          onClick={()=>void generate(true)}
+          aria-label="Retry only unavailable caption languages"
+          className="mt-2 w-full rounded-xl border border-[#FED7AA] bg-white px-3 py-2.5 text-[11px] font-semibold text-[#9A3412] hover:bg-[#FFF7ED] disabled:opacity-50">
+          Retry {failedGenerations?.languages.map(lang=>labels[lang]).join(' + ')} only · Keep completed drafts
+        </button>}
         <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-xl border border-[#F3F4F6] bg-[#F9FAFB] px-3 py-2.5 text-[10px] leading-4 text-[#6B7280]"
           aria-label="Gemini generation and credit information">
           <span className="inline-flex items-center gap-1.5">
@@ -1118,7 +1205,7 @@ export default function ConnectedCaptionLab(){
             {labels[l]}</button>)}
           {chosenLanguages.length>1&&<button type="button" onClick={()=>{setPreviewLanguage('all');setExpanded(false);}}
             className={'rounded-full border px-3 py-1.5 text-[10px] font-bold '+
-              (previewLanguage==='all'?'border-[#FDBA74] bg-[#FFF7ED] text-[#C2410C]':'border-[#E5E7EB] text-[#6B7280]')}>All 3 Combined</button>}
+              (previewLanguage==='all'?'border-[#FDBA74] bg-[#FFF7ED] text-[#C2410C]':'border-[#E5E7EB] text-[#6B7280]')}>All {chosenLanguages.length} Combined</button>}
         </div>
         <div className="mx-auto w-full max-w-[520px] overflow-hidden rounded-2xl border border-[#E5E7EB] bg-white shadow-[0_14px_38px_rgba(17,24,39,.08)]">
           <div className="flex items-center gap-2.5 border-b border-[#F3F4F6] p-3.5">
@@ -1271,13 +1358,13 @@ export default function ConnectedCaptionLab(){
         <div className="border-t border-[#F3F4F6] pt-3">
           <h3 className="slbi-section-title mb-2 text-[12px]">Quick Polish <span className="font-normal text-[#9CA3AF]">· No new AI credits</span></h3>
           <div className="grid grid-cols-2 gap-2">
-            <button type="button" onClick={()=>polish('shorten')} disabled={!activeText}
+            <button type="button" onClick={()=>polish('shorten')} disabled={!canPolish}
               className="rounded-lg border border-[#E5E7EB] px-2 py-2.5 text-[10px] font-bold disabled:opacity-40">✨ Make it shorter</button>
-            <button type="button" onClick={()=>polish('urgency')} disabled={!activeText}
+            <button type="button" onClick={()=>polish('urgency')} disabled={!canPolish}
               className="rounded-lg border border-[#E5E7EB] px-2 py-2.5 text-[10px] font-bold disabled:opacity-40">🔥 Add urgency</button>
-            <button type="button" onClick={()=>polish('emojis')} disabled={!activeText}
+            <button type="button" onClick={()=>polish('emojis')} disabled={!canPolish}
               className="rounded-lg border border-[#E5E7EB] px-2 py-2.5 text-[10px] font-bold disabled:opacity-40">😊 Add emojis</button>
-            <button type="button" onClick={()=>polish('contact')} disabled={!activeText}
+            <button type="button" onClick={()=>polish('contact')} disabled={!canPolish}
               className="rounded-lg border border-[#E5E7EB] px-2 py-2.5 text-[10px] font-bold disabled:opacity-40">📞 Include contacts</button>
           </div>
         </div>

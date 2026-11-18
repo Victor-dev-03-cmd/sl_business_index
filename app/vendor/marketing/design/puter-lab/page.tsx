@@ -30,6 +30,7 @@ import {
 } from '@/lib/marketing/puter-poster-composer';
 import type {PosterBusinessFacts,PosterIntelligenceBrief} from '@/lib/marketing/poster-gemini-intelligence';
 import {saveLinkedPoster} from '@/lib/marketing/caption-poster-handoff';
+import {vendorFeedback} from '@/lib/ui/vendor-feedback';
 import {
   SlbiVoiceRecorder,requestSlbiVoiceTranscript,SLBI_VOICE_MAX_BYTES,
 } from '@/lib/marketing/voice/slbi-voice-engine';
@@ -141,6 +142,12 @@ export default function PuterMultilingualPosterLab(){
   const [isRealOutput,setIsRealOutput]=useState(false);
   const [error,setError]=useState('');
   const [status,setStatus]=useState('');
+  useEffect(()=>{if(error)vendorFeedback.error(error);},[error]);
+  useEffect(()=>{
+    if(!status||/^(Recording\.|Gemini is |SLBI Image Generator is |Voice recording captured|Recording safely stopped)/.test(status))
+      return;
+    vendorFeedback.info(status);
+  },[status]);
   const [designAdvisory,setDesignAdvisory]=useState('');
   const voiceCaptureRef=useRef<SlbiVoiceRecorder|null>(null);
   const attachInputRef=useRef<HTMLInputElement|null>(null);
@@ -769,13 +776,10 @@ export default function PuterMultilingualPosterLab(){
         </p>}
       </section>
     </div>}
-    {(error||status||designAdvisory)&&<div role={error?'alert':'status'} aria-live="polite"
-      className={'shrink-0 rounded-xl border px-3 py-2 text-[11px] leading-5 '+
-      (error?'border-red-200 bg-red-50 text-red-800':
-       designAdvisory?'border-amber-200 bg-amber-50 text-amber-900':
-       'border-emerald-200 bg-emerald-50 text-emerald-800')}>
-      {error||designAdvisory||status}
-    </div>}
+    {designAdvisory&&<p role="status"
+      className="shrink-0 rounded-lg border border-[#FDE68A] bg-[#FFFBEB] px-3 py-2 text-[11px] text-[#92400E]">
+      {designAdvisory}
+    </p>}
     <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] xl:grid-cols-[minmax(0,0.91fr)_minmax(0,1.36fr)_minmax(0,0.9fr)]">
       {/* LEFT: Prompt and generation, with an independently scrollable panel on desktop. */}
       <section aria-label="Poster creation controls"

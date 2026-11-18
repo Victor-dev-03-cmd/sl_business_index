@@ -92,6 +92,31 @@ export function safeLocalPolish(
     contact.phone.trim(),contact.website.trim()].filter(Boolean);
   return verified.length?(base+'\n\n'+verified.join(' · ')).slice(0,3000):base;
 }
+/**
+ * Apply a local (no-AI-credit) edit to the selected language, or every
+ * populated language in the All Combined preview. Never overwrite a blank
+ * language or claim success when a polish operation made no change.
+ */
+export function polishCaptionSelections(input:{
+  captions:CaptionSet;selectedLanguages:readonly CaptionLanguage[];
+  previewLanguage:CaptionLanguage|'all';angle:CaptionAngle;
+  kind:'shorten'|'urgency'|'emojis'|'contact';
+  contact:{phone:string;city:string;website:string};
+}):{captions:CaptionSet;changed:CaptionLanguage[]}{
+  const targets=input.previewLanguage==='all'?
+    input.selectedLanguages:[input.previewLanguage];
+  const updated:CaptionSet={...input.captions};
+  const changed:CaptionLanguage[]=[];
+  for(const lang of targets){
+    const current=input.captions[lang][input.angle];
+    if(!current.trim())continue;
+    const result=safeLocalPolish(current,input.kind,lang,input.contact);
+    if(result===current)continue;
+    updated[lang]={...input.captions[lang],[input.angle]:result};
+    changed.push(lang);
+  }
+  return {captions:updated,changed};
+}
 export function previewFold(text:string,expanded:boolean):{visible:string;folded:boolean}{
   if(expanded||text.length<=180)return {visible:text,folded:false};
   // Approximation only: social networks control their own fold mechanics.
