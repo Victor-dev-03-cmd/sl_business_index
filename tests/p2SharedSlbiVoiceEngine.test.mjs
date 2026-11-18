@@ -56,6 +56,7 @@ test('Shared Gemini prompt is contextual, multilingual, non-hallucinating, and o
   assert.match(route,/marketing_poster_voice_try_reserve/);
   assert.equal((route.match(/marketing_poster_voice_try_reserve/g)||[]).length,1);
   assert.match(route,/transcribeSlbiVendorAudio\(/);
+  assert.match(route,/mime:mime==='audio\/mp4'\?'audio\/m4a':mime/);
   assert.doesNotMatch(server,/marketing_poster_voice_try_reserve|createAdminClient/);
   assert.doesNotMatch(server,/console\.log\(|storage\.from\(/);
 });

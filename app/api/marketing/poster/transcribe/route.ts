@@ -76,7 +76,10 @@ export async function POST(request:Request){
     // The Gemini provider has ONE shared Sri Lankan multilingual prompt,
     // ONE quota reservation above and one bounded retry for transient failures.
     const transcript=await transcribeSlbiVendorAudio({
-      key,bytes,mime,language,
+      key,bytes,language,
+      // Safari MediaRecorder emits audio-only MP4/AAC; Gemini documents
+      // audio/m4a, not audio/mp4, as its supported MIME for that container.
+      mime:mime==='audio/mp4'?'audio/m4a':mime,
       business:{name:business.name,category:business.category,city:business.city},
     });
     return reply(200,{transcript,languageHint:language,reviewBeforeGenerating:true});
