@@ -44,7 +44,8 @@ export class SlbiVoiceRecorder{
   private discarded=false;
   private disposed=false;
   private reason:SlbiVoiceStopReason='sent';
-  constructor(private readonly callbacks:SlbiVoiceCaptureCallbacks){}
+  private readonly callbacks:SlbiVoiceCaptureCallbacks;
+  constructor(callbacks:SlbiVoiceCaptureCallbacks){this.callbacks=callbacks;}
 
   async start():Promise<void>{
     if(this.disposed)throw Error('The recording session is closed.');
@@ -192,8 +193,11 @@ export class SlbiVoiceRecorder{
 
 export type SlbiTranscriptResult={transcript:string;languageHint:string;reviewBeforeGenerating:boolean};
 export class SlbiVoiceRequestError extends Error{
-  constructor(message:string,readonly code:string,readonly status:number){
+  readonly code:string;
+  readonly status:number;
+  constructor(message:string,code:string,status:number){
     super(message);this.name='SlbiVoiceRequestError';
+    this.code=code;this.status=status;
   }
 }
 
