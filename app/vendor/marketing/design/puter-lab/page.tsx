@@ -30,6 +30,9 @@ import {
 } from '@/lib/marketing/puter-poster-composer';
 import type {PosterBusinessFacts,PosterIntelligenceBrief} from '@/lib/marketing/poster-gemini-intelligence';
 import {saveLinkedPoster} from '@/lib/marketing/caption-poster-handoff';
+import {
+  SlbiVoiceRecorder,requestSlbiVoiceTranscript,SLBI_VOICE_MAX_BYTES,
+} from '@/lib/marketing/voice/slbi-voice-engine';
 import {deleteSavedPoster,listSavedPosters,privatePosterUrl,uploadSavedPoster,type SavedPosterAsset}
   from '@/lib/marketing/saved-poster-cloud-client';
 import {describePuterImageError} from '@/lib/marketing/puter-image-errors';
@@ -62,7 +65,7 @@ type ModelId=typeof models[number]['id'];
 const formats:PosterFormat[]=['story','portrait','square','landscape'];
 const samplePrompt='Create a premium Deepavali artwork for a software development business. Navy and gold technology theme, glowing diyas, elegant festive lighting and modern software visuals.';
 const languageLabels:Record<PosterCopyLanguage,string>={ta:'தமிழ்',si:'සිංහල',en:'English'};
-const maxAudio=1_500_000;
+const maxAudio=SLBI_VOICE_MAX_BYTES;
 const reqOptions={cache:'no-store' as const,credentials:'same-origin' as const};
 function errorMessage(e:unknown):string{return e instanceof Error?e.message:'The requested action failed.';}
 function ratioFor(format:PosterFormat):{w:number;h:number}{
@@ -139,14 +142,10 @@ export default function PuterMultilingualPosterLab(){
   const [error,setError]=useState('');
   const [status,setStatus]=useState('');
   const [designAdvisory,setDesignAdvisory]=useState('');
-  const recorderRef=useRef<MediaRecorder|null>(null);
-  const streamRef=useRef<MediaStream|null>(null);
-  const clockRef=useRef<ReturnType<typeof setInterval>|null>(null);
+  const voiceCaptureRef=useRef<SlbiVoiceRecorder|null>(null);
   const attachInputRef=useRef<HTMLInputElement|null>(null);
-  const discardVoiceRef=useRef(false);
   const failedVoiceRef=useRef<Blob|null>(null);
-  const voiceAudioRef=useRef<AudioContext|null>(null);
-  const voiceFrameRef=useRef<number|null>(null);
+  const voiceMountedRef=useRef(true);
   const finalUrlRef=useRef('');
   const uploadsRef=useRef(new WeakMap<Blob,Promise<string>>());
   const activeBusinessRef=useRef('');
@@ -318,35 +317,22 @@ export default function PuterMultilingualPosterLab(){
     setStatus(reference.name+' selected. The look is applied on your NEXT Generate; no paid AI call happened.');
   };
 
-  const cleanVoiceMeter=useCallback(()=>{
-    if(voiceFrameRef.current!==null)cancelAnimationFrame(voiceFrameRef.current);
-    voiceFrameRef.current=null;
-    if(voiceAudioRef.current){
-      void voiceAudioRef.current.close().catch(()=>{});
-      voiceAudioRef.current=null;
-    }
+  const disposeVoice=useCallback(()=>{
+    voiceCaptureRef.current?.dispose();
+    voiceCaptureRef.current=null;
   },[]);
   const stopVoice=useCallback(()=>{
-    if(clockRef.current){clearInterval(clockRef.current);clockRef.current=null;}
-    const recorder=recorderRef.current;
-    if(recorder&&(recorder.state==='recording'||recorder.state==='paused'))recorder.stop();
-    streamRef.current?.getTracks().forEach(track=>track.stop());
-    streamRef.current=null;setRecording(false);setVoicePaused(false);
-    cleanVoiceMeter();
-  },[cleanVoiceMeter]);
+    voiceCaptureRef.current?.stop('sent');
+  },[]);
   const cancelVoice=()=>{
-    discardVoiceRef.current=true;stopVoice();
-    setStatus('Voice recording discarded. Your original campaign brief is unchanged.');
+    voiceCaptureRef.current?.cancel();
+    voiceCaptureRef.current=null;
+    setStatus('Voice recording discarded. Your campaign brief is unchanged.');
   };
   const pauseVoice=()=>{
-    const rec=recorderRef.current;
-    if(rec?.state==='recording'){
-      rec.pause();setVoicePaused(true);
-      setStatus('Recording paused. Resume or send to transcribe.');
-    }else if(rec?.state==='paused'){
-      rec.resume();setVoicePaused(false);
-      setStatus('Recording resumed. Tap Send when you are done.');
-    }
+    const state=voiceCaptureRef.current?.pauseOrResume();
+    setStatus(state==='paused'?'Recording paused. Resume or send to transcribe.':
+      state==='recording'?'Recording resumed. Tap Send when ready.':'');
   };
   const refreshGeminiQuota=useCallback(async()=>{
     try{
@@ -372,11 +358,14 @@ export default function PuterMultilingualPosterLab(){
       .finally(()=>{if(!controller.signal.aborted)setLoadingBusiness(false);});
     return()=>controller.abort();
   },[]);
-  useEffect(()=>()=>{
-    discardVoiceRef.current=true;stopVoice();
-    if(finalUrlRef.current)URL.revokeObjectURL(finalUrlRef.current);
-    if(sampleArtworkUrlRef.current)URL.revokeObjectURL(sampleArtworkUrlRef.current);
-  },[stopVoice]);
+  useEffect(()=>{
+    voiceMountedRef.current=true;
+    return()=>{
+      voiceMountedRef.current=false;disposeVoice();
+      if(finalUrlRef.current)URL.revokeObjectURL(finalUrlRef.current);
+      if(sampleArtworkUrlRef.current)URL.revokeObjectURL(sampleArtworkUrlRef.current);
+    };
+  },[disposeVoice]);
 
   const exactCopy=useMemo<ExactPosterCopy|null>(()=>facts?{
     businessName:facts.name,
@@ -427,17 +416,9 @@ export default function PuterMultilingualPosterLab(){
       if(!businessId)throw Error('Choose your owned business before speaking.');
       if(blob.size<800||blob.size>maxAudio)
         throw Error('The voice clip exceeds 1.5 MB. Record a shorter clip or type the remaining details.');
-      const res=await fetch('/api/marketing/poster/transcribe',{
-        method:'POST',...reqOptions,
-        headers:{
-          'Content-Type':blob.type||'audio/webm',
-          'x-slbi-business-id':businessId,
-          'x-slbi-language':'auto',
-        },body:blob,
+      const data=await requestSlbiVoiceTranscript({
+        audio:blob,businessId,language:'auto',
       });
-      const data=await res.json() as ApiError&{code?:string;transcript?:string};
-      if(!res.ok||!data.transcript)
-        throw Error((data.error||'Voice transcription failed.')+(data.code?' ('+data.code+')':''));
       const heard=data.transcript.trim();
       failedVoiceRef.current=null;
       const combined=[prompt===samplePrompt?'':prompt,heard].filter(Boolean).join(' ').trim();
@@ -473,78 +454,45 @@ export default function PuterMultilingualPosterLab(){
   };
   const startVoice=async()=>{
     if(recording||generating||geminiBusy||transcribing||referenceBusy)return;
-    if(!window.isSecureContext||!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined'){
-      setError('Voice requires a supported browser and HTTPS. You can type your prompt instead.');return;
+    if(pendingTranscript){
+      setError('Apply or discard your reviewed transcript before another recording.');
+      return;
     }
-    const policy=document as Document&{
-      permissionsPolicy?:{allowsFeature:(v:string)=>boolean};
-      featurePolicy?:{allowsFeature:(v:string)=>boolean};
-    };
-    const allowed=policy.permissionsPolicy?.allowsFeature('microphone') ??
-      policy.featurePolicy?.allowsFeature('microphone');
-    if(allowed===false){
-      setError('Microphone is blocked by this page. Reload and enable it in browser site settings.');return;
-    }
+    setError('');
     try{
-      setError('');
-      // Browser permission is requested only on a direct user click.
-      const stream=await navigator.mediaDevices.getUserMedia({audio:true});
-      const mime=['audio/webm;codecs=opus','audio/webm','audio/mp4']
-        .find(v=>MediaRecorder.isTypeSupported(v));
-      const rec=new MediaRecorder(stream,mime?{mimeType:mime}:undefined);
-      streamRef.current=stream;recorderRef.current=rec;discardVoiceRef.current=false;
-      const chunks:BlobPart[]=[];
-      rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
-      rec.onstop=()=>{
-        stream.getTracks().forEach(t=>t.stop());
-        streamRef.current=null;recorderRef.current=null;
-        if(clockRef.current){clearInterval(clockRef.current);clockRef.current=null;}
-        cleanVoiceMeter();setRecording(false);setVoicePaused(false);
-        if(discardVoiceRef.current)return;
-        const blob=new Blob(chunks,{type:rec.mimeType||'audio/webm'});
-        if(blob.size<800){setError('No usable audio. Speak for a few seconds and tap Send.');return;}
-        void transcribe(blob);
-      };
-      rec.onerror=()=>{
-        discardVoiceRef.current=true;
-        setError('Microphone failed. Check your device, then try again.');
-        stopVoice();
-      };
-      rec.start(250);setRecordingSeconds(0);setVoicePaused(false);setRecording(true);
-      clockRef.current=setInterval(()=>{
-        if(rec.state==='recording')setRecordingSeconds(n=>n+1);
-      },1000);
-      // Real microphone amplitude, not a misleading synthetic audio animation.
-      // Metering stays entirely in the browser and is stopped after recording.
-      try{
-        const audio=new AudioContext();
-        voiceAudioRef.current=audio;
-        const analyser=audio.createAnalyser();analyser.fftSize=128;
-        const source=audio.createMediaStreamSource(stream);source.connect(analyser);
-        const bins=new Uint8Array(analyser.frequencyBinCount);
-        let lastUpdate=0;
-        const tick=(now:number)=>{
-          if(rec.state==='recording'&&now-lastUpdate>=90){
-            lastUpdate=now;
-            analyser.getByteFrequencyData(bins);
-            setVoiceLevels(Array.from({length:35},(_,i)=>{
-              const bin=bins[Math.min(bins.length-1,Math.floor(i*bins.length/35))];
-              return Math.max(5,Math.min(37,Math.round(5+bin/255*32)));
-            }));
-          }
-          if(rec.state!=='inactive')voiceFrameRef.current=requestAnimationFrame(tick);
-        };
-        voiceFrameRef.current=requestAnimationFrame(tick);
-      }catch{/* Recording stays usable even if live audio metering is unavailable. */}
-      setStatus('Recording. Pause or tap Send to transcribe in your original language.');
+      const capture=new SlbiVoiceRecorder({
+        onState:state=>{
+          if(!voiceMountedRef.current)return;
+          setRecording(state!=='idle');setVoicePaused(state==='paused');
+        },
+        onSeconds:seconds=>{if(voiceMountedRef.current)setRecordingSeconds(seconds);},
+        onLevels:levels=>{if(voiceMountedRef.current)setVoiceLevels(levels);},
+        onError:err=>{if(voiceMountedRef.current){setError(err.message);setRecording(false);}},
+        onComplete:(blob,reason)=>{
+          voiceCaptureRef.current=null;
+          if(!voiceMountedRef.current)return;
+          setVoiceLevels(Array.from({length:35},()=>5));
+          setStatus(reason==='sent'?'Recording captured. Transcribing…':
+            'Recording safely stopped at '+(reason==='duration'?'3 minutes':'1.4 MB')+
+            '. Transcribing the captured audio now.');
+          void transcribe(blob);
+        },
+      });
+      disposeVoice();
+      voiceCaptureRef.current=capture;
+      // This is called directly from the microphone button click. Browser
+      // permissions stay native; no automatic recording or background uploads.
+      await capture.start();
+      if(voiceMountedRef.current)
+        setStatus('Recording. Pause/resume or Send. Maximum 3 minutes / 1.4 MB.');
     }catch(e){
-      streamRef.current?.getTracks().forEach(t=>t.stop());
-      streamRef.current=null;recorderRef.current=null;cleanVoiceMeter();
+      disposeVoice();
       const name=e instanceof Error?e.name:'';
       setError(name==='NotAllowedError'||name==='SecurityError'?
-        'Microphone permission denied. Chrome site controls → Microphone → Allow, then retry.':
-        name==='NotFoundError'?'No microphone detected. Check your recording device.':
-        'Unable to open microphone. Check your recording device or type instead.');
+        'Microphone permission denied. Browser site controls → Microphone → Allow.':
+        name==='NotFoundError'?'No microphone detected. Check your device.':
+        name==='NotReadableError'?'Microphone is in use. Close the other app and retry.':
+        e instanceof Error?e.message:'Microphone is unavailable in this browser.');
     }
   };
   const prepareWithGemini=async()=>{
@@ -841,7 +789,7 @@ export default function PuterMultilingualPosterLab(){
             <label htmlFor="puter-business" className="mb-1.5 block text-[11px] font-bold">Selected business</label>
             <select id="puter-business" value={businessId} disabled={locked||loadingBusiness}
               onChange={e=>{
-                failedVoiceRef.current=null;setPendingTranscript('');
+                failedVoiceRef.current=null;setPendingTranscript('');disposeVoice();
                 setBusinessId(e.target.value);setBrief(null);setBriefKey('');
                 setReferenceFiles([]);setReferenceSummary('');setUseAttachedImage(false);
                 setArtworkSrc('');setFinalBlob(null);setFinalUrl('');
@@ -912,7 +860,7 @@ export default function PuterMultilingualPosterLab(){
                   Full voice transcript · review before adding
                 </label>
                 <textarea id="poster-transcript-review" value={pendingTranscript} rows={3}
-                  maxLength={1200} onChange={e=>setPendingTranscript(e.target.value)}
+                  maxLength={12000} onChange={e=>setPendingTranscript(e.target.value)}
                   className="w-full rounded-lg border border-amber-300 bg-white p-2 text-[11px] leading-5"/>
                 <div className="flex items-center justify-end gap-2">
                   <button type="button" onClick={()=>setPendingTranscript('')}

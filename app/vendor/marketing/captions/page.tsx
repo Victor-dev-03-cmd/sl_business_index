@@ -10,6 +10,9 @@ import {
   Volume2,WandSparkles,X,
 } from 'lucide-react';
 import {supabase} from '@/lib/supabaseClient';
+import {
+  SlbiVoiceRecorder,requestSlbiVoiceTranscript,SLBI_VOICE_MAX_BYTES,
+} from '@/lib/marketing/voice/slbi-voice-engine';
 import {plannerBriefFromCaption} from '@/lib/marketing/caption-planner-brief';
 import {listSavedPosters,privatePosterUrl,readSavedPoster,uploadSavedPoster,type SavedPosterAsset} from '@/lib/marketing/saved-poster-cloud-client';
 import type {CaptionLanguage} from '@/lib/marketing/caption-contract';
@@ -138,12 +141,7 @@ export default function ConnectedCaptionLab(){
   const [generatedLanguages,setGeneratedLanguages]=useState<CaptionLanguage[]>([]);
   const [savedCampaignId,setSavedCampaignId]=useState('');
   const [savedCampaignPosterId,setSavedCampaignPosterId]=useState('');
-  const recorderRef=useRef<MediaRecorder|null>(null);
-  const streamRef=useRef<MediaStream|null>(null);
-  const voiceClockRef=useRef<ReturnType<typeof setInterval>|null>(null);
-  const voiceFrameRef=useRef<number|null>(null);
-  const voiceAudioRef=useRef<AudioContext|null>(null);
-  const discardVoiceRef=useRef(false);
+  const voiceCaptureRef=useRef<SlbiVoiceRecorder|null>(null);
   const voiceMountedRef=useRef(true);
   const importingRef=useRef('');
   const failedVoiceRef=useRef<Blob|null>(null);
@@ -151,14 +149,8 @@ export default function ConnectedCaptionLab(){
   const posterInputRef=useRef<HTMLInputElement|null>(null);
   const posterDialogRef=useRef<HTMLDivElement|null>(null);
   const releaseVoiceMedia=useCallback(()=>{
-    if(voiceClockRef.current!==null){clearInterval(voiceClockRef.current);voiceClockRef.current=null;}
-    if(voiceFrameRef.current!==null){cancelAnimationFrame(voiceFrameRef.current);voiceFrameRef.current=null;}
-    if(voiceAudioRef.current){
-      void voiceAudioRef.current.close().catch(()=>{});
-      voiceAudioRef.current=null;
-    }
-    streamRef.current?.getTracks().forEach(track=>track.stop());
-    streamRef.current=null;
+    voiceCaptureRef.current?.dispose();
+    voiceCaptureRef.current=null;
   },[]);
   useEffect(()=>{
     const urls:Record<string,string>={};
@@ -290,9 +282,6 @@ export default function ConnectedCaptionLab(){
     return()=>{
     // Unmounting must never submit a recording or spend one Gemini quota unit.
     voiceMountedRef.current=false;
-    discardVoiceRef.current=true;
-    const recorder=recorderRef.current;
-    if(recorder&&recorder.state!=='inactive')recorder.stop();
     releaseVoiceMedia();
     if(posterUrlRef.current)URL.revokeObjectURL(posterUrlRef.current);
     };
@@ -437,24 +426,15 @@ export default function ConnectedCaptionLab(){
   // Same browser-initiated record → pause/resume → Send → Gemini transcript
   // workflow as Poster Studio. Only the explicit Send action uses voice quota.
   const transcribe=async(blob:Blob)=>{
-    if(!businessId||blob.size<800||blob.size>1_500_000){
+    if(!businessId||blob.size<800||blob.size>SLBI_VOICE_MAX_BYTES){
       setError('Choose a business and record a shorter voice message (1.5 MB maximum).');return;
     }
     failedVoiceRef.current=blob;
     setVoiceBusy(true);setError('');setNotice('Gemini is transcribing your recording in its original language…');
     try{
-      const response=await fetch('/api/marketing/poster/transcribe',{
-        method:'POST',credentials:'same-origin',cache:'no-store',body:blob,
-        headers:{
-          'Content-Type':blob.type||'audio/webm',
-          'x-slbi-business-id':businessId,
-          'x-slbi-language':'auto',
-        },
+      const data=await requestSlbiVoiceTranscript({
+        audio:blob,businessId,language:'auto',
       });
-      const data=await response.json() as {error?:string;code?:string;transcript?:string};
-      if(!response.ok||!data.transcript)
-        throw Error((data.error||'Voice transcription did not complete.')+
-          (data.code?' ('+data.code+')':''));
       const transcript=data.transcript.trim();
       failedVoiceRef.current=null;
       const combined=[message.trim(),transcript].filter(Boolean).join(' ');
@@ -477,124 +457,64 @@ export default function ConnectedCaptionLab(){
   const startVoice=async()=>{
     if(voiceBusy||recording||requestingMic||saving||busy)return;
     if(voiceReviewDraft){
-      setError('Apply or discard the full reviewed transcript before starting a new voice recording.');return;
+      setError('Apply or discard the full reviewed transcript before starting a recording.');return;
     }
     setError('');setVoicePermissionHelp(false);
-    if(typeof window==='undefined'||!window.isSecureContext||
-      !navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined'){
-      setError('Voice recording requires HTTPS and a browser with microphone support.');
-      setVoicePermissionHelp(true);return;
-    }
-    const policy=document as Document&{
-      permissionsPolicy?:{allowsFeature:(name:string)=>boolean};
-      featurePolicy?:{allowsFeature:(name:string)=>boolean};
-    };
-    const allowed=policy.permissionsPolicy?.allowsFeature('microphone') ??
-      policy.featurePolicy?.allowsFeature('microphone');
-    if(allowed===false){
-      setError('Microphone is blocked by the site permission policy. Open the production Caption Lab directly and retry.');
-      setVoicePermissionHelp(true);return;
-    }
     setRequestingMic(true);
     setNotice('Allow microphone access in your browser to record your brief.');
     try{
-      // A real user click triggers the native browser permission prompt.
-      const stream=await navigator.mediaDevices.getUserMedia({audio:true});
-      // The user may navigate away while the browser's native Allow popup is
-      // still open. Never resurrect a recorder after leaving Caption Lab.
-      if(!voiceMountedRef.current){
-        stream.getTracks().forEach(track=>track.stop());return;
-      }
-      streamRef.current=stream;
-      const preferred=['audio/webm;codecs=opus','audio/webm','audio/mp4'];
-      const mime=preferred.find(t=>MediaRecorder.isTypeSupported(t));
-      const recorder=new MediaRecorder(stream,mime?{mimeType:mime}:undefined);
-      recorderRef.current=recorder;discardVoiceRef.current=false;
-      const chunks:Blob[]=[];
-      let failed=false;
-      recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
-      recorder.onerror=()=>{
-        failed=true;discardVoiceRef.current=true;
-        setError('Microphone recording interrupted. Check your device and try again.');
-        if(recorder.state!=='inactive')recorder.stop();
-      };
-      recorder.onstop=()=>{
-        const discarded=discardVoiceRef.current;
-        releaseVoiceMedia();
-        recorderRef.current=null;
-        if(!voiceMountedRef.current)return;
-        setRecording(false);setVoicePaused(false);
-        setVoiceLevels(Array.from({length:35},()=>5));
-        if(failed||discarded)return;
-        const blob=new Blob(chunks,{type:recorder.mimeType||'audio/webm'});
-        if(blob.size<800){
-          setError('No audio captured. Speak for a few seconds, then tap Send.');return;
-        }
-        void transcribe(blob);
-      };
-      recorder.start(250);
-      setRecording(true);setVoicePaused(false);setVoiceSeconds(0);
-      voiceClockRef.current=setInterval(()=>{
-        if(recorder.state==='recording')setVoiceSeconds(n=>n+1);
-      },1000);
-      // Meter actual microphone audio (not a decorative synthetic waveform).
-      // Only the browser has these samples; audio is never persisted.
-      try{
-        const audio=new AudioContext();
-        voiceAudioRef.current=audio;
-        const analyser=audio.createAnalyser();analyser.fftSize=128;
-        const source=audio.createMediaStreamSource(stream);
-        source.connect(analyser);
-        const bins=new Uint8Array(analyser.frequencyBinCount);
-        let lastFrame=0;
-        const tick=(now:number)=>{
-          if(recorder.state==='recording'&&now-lastFrame>=90){
-            lastFrame=now;
-            analyser.getByteFrequencyData(bins);
-            setVoiceLevels(Array.from({length:35},(_,i)=>{
-              const bin=bins[Math.min(bins.length-1,Math.floor(i*bins.length/35))];
-              return Math.max(5,Math.min(37,Math.round(5+bin/255*32)));
-            }));
-          }
-          if(recorder.state!=='inactive')voiceFrameRef.current=requestAnimationFrame(tick);
-        };
-        voiceFrameRef.current=requestAnimationFrame(tick);
-      }catch{/* Recording works without a WebAudio amplitude meter. */}
-      setNotice('Recording. Pause, resume, cancel or tap Send to transcribe.');
+      const capture=new SlbiVoiceRecorder({
+        onState:state=>{
+          if(!voiceMountedRef.current)return;
+          setRecording(state!=='idle');setVoicePaused(state==='paused');
+        },
+        onSeconds:seconds=>{if(voiceMountedRef.current)setVoiceSeconds(seconds);},
+        onLevels:levels=>{if(voiceMountedRef.current)setVoiceLevels(levels);},
+        onError:err=>{
+          if(voiceMountedRef.current){setError(err.message);setRecording(false);}
+        },
+        onComplete:(blob,reason)=>{
+          voiceCaptureRef.current=null;
+          if(!voiceMountedRef.current)return;
+          setVoiceLevels(Array.from({length:35},()=>5));
+          setNotice(reason==='sent'?'Recording captured. Transcribing…':
+            'Recording safely stopped at the '+(reason==='duration'?'3-minute':'1.4 MB')+
+            ' limit. Sending captured speech for transcription.');
+          void transcribe(blob);
+        },
+      });
+      voiceCaptureRef.current?.dispose();
+      voiceCaptureRef.current=capture;
+      await capture.start();
+      if(voiceMountedRef.current)setNotice(
+        'Recording. Pause, resume, cancel or tap Send. Max 3 min / 1.4 MB.');
     }catch(e){
-      releaseVoiceMedia();recorderRef.current=null;
+      voiceCaptureRef.current?.dispose();
+      voiceCaptureRef.current=null;
       const name=e instanceof Error?e.name:'';
       if(name==='NotAllowedError'||name==='PermissionDeniedError'||name==='SecurityError'){
-        setError('Microphone blocked. Allow access in your browser site settings, then retry.');
+        setError('Microphone blocked. Allow it in your browser site settings and retry.');
         setVoicePermissionHelp(true);
       }else if(name==='NotFoundError'||name==='DevicesNotFoundError'){
-        setError('No microphone detected. Connect a recording device and try again.');
+        setError('No microphone detected. Connect an audio device.');
       }else if(name==='NotReadableError'||name==='TrackStartError'){
-        setError('Your microphone is in use by another application. Close it and retry.');
+        setError('Microphone is already in use by another application.');
       }else{
-        setError('Unable to open the microphone. Check browser permissions and audio input.');
+        setError(e instanceof Error?e.message:'Unable to access the microphone.');
         setVoicePermissionHelp(true);
       }
       setNotice('');
     }finally{setRequestingMic(false);}
   };
-  const sendVoice=()=>{
-    const recorder=recorderRef.current;
-    if(recorder&&(recorder.state==='recording'||recorder.state==='paused'))recorder.stop();
-  };
+  const sendVoice=()=>{voiceCaptureRef.current?.stop('sent');};
   const pauseVoice=()=>{
-    const recorder=recorderRef.current;
-    if(recorder?.state==='recording'){
-      recorder.pause();setVoicePaused(true);
-      setNotice('Recording paused. Resume or Send to transcribe.');
-    }else if(recorder?.state==='paused'){
-      recorder.resume();setVoicePaused(false);
-      setNotice('Recording resumed. Tap Send when you finish.');
-    }
+    const state=voiceCaptureRef.current?.pauseOrResume();
+    setNotice(state==='paused'?'Recording paused. Resume or Send to transcribe.':
+      state==='recording'?'Recording resumed. Tap Send when ready.':'');
   };
   const cancelVoice=()=>{
-    discardVoiceRef.current=true;sendVoice();
-    setNotice('Voice recording discarded. Your typed campaign brief is unchanged.');
+    voiceCaptureRef.current?.cancel();voiceCaptureRef.current=null;
+    setNotice('Recording discarded. Your typed campaign brief remains unchanged.');
   };
   const applyReviewedTranscript=()=>{
     const combined=[message.trim(),voiceReviewDraft.trim()].filter(Boolean).join(' ').trim();
@@ -831,6 +751,7 @@ export default function ConnectedCaptionLab(){
   };
   const onBusinessChange=(id:string)=>{
     if(id===businessId)return;
+    releaseVoiceMedia();
     setBusinessId(id);setLinked(null);setPosterKey('');setCloudAssetId('');setCloudChoices([]);
     setPosterPickerOpen(false);setPosterChoices([]);
     if(posterUrlRef.current)URL.revokeObjectURL(posterUrlRef.current);
@@ -1087,7 +1008,7 @@ export default function ConnectedCaptionLab(){
             <label htmlFor="caption-voice-review" className="block text-[11px] font-bold text-[#92400E]">
               Full transcript · review before adding
             </label>
-            <textarea id="caption-voice-review" value={voiceReviewDraft} rows={4} maxLength={1200}
+            <textarea id="caption-voice-review" value={voiceReviewDraft} rows={4} maxLength={12000}
               onChange={e=>setVoiceReviewDraft(e.target.value)}
               className={field+' resize-y leading-6'}
               aria-describedby="caption-voice-review-help"/>
