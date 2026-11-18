@@ -6,6 +6,7 @@ const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const brain=read('lib/marketing/poster-gemini-intelligence.ts');
 const generate=read('app/api/marketing/poster/generate/route.ts');
 const transcribe=read('app/api/marketing/poster/transcribe/route.ts');
+const voiceProvider=read('lib/marketing/voice/slbi-gemini-transcription.ts');
 const voiceSql=read('supabase/migrations/20261115094500_p2_poster_gemini_voice_quota.sql');
 
 test('Gemini engine uses server-only key, structured output, current Flash-Lite model',()=>{
@@ -84,11 +85,11 @@ test('voice endpoint is private, origin-gated, owner-bound and transcript-only',
   assert.match(transcribe,/\.eq\('owner_id',user\.id\)/);
   assert.match(transcribe,/MIME_TYPES\.has\(mime\)/);
   assert.match(transcribe,/MAX_AUDIO_BYTES=1_500_000/);
-  assert.match(transcribe,/transcript\.length>1200/);
-  assert.match(transcribe,/maxOutputTokens:1800/);
+  assert.match(voiceProvider,/SLBI_TRANSCRIPT_MAX_CHARS=12_000/);
+  assert.match(voiceProvider,/maxOutputTokens:4096/);
   assert.match(transcribe,/marketing_poster_voice_try_reserve/);
-  assert.match(transcribe,/inlineData:\{mimeType:mime/);
-  assert.match(transcribe,/Gemini free quota reached/);
+  assert.match(voiceProvider,/inlineData:\{mimeType:input.mime/);
+  assert.match(voiceProvider,/VOICE_PROVIDER_QUOTA/);
   assert.match(transcribe,/reviewBeforeGenerating:true/);
   assert.doesNotMatch(transcribe,/marketing_poster_complete|marketing_poster_claim|generatePosterProviderImage/);
   assert.doesNotMatch(transcribe,/storage\.from\(|console\.log|NEXT_PUBLIC_GEMINI/);

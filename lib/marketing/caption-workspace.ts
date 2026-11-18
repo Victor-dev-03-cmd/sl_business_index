@@ -85,12 +85,42 @@ export function safeLocalPolish(
     // guaranteed price or sales pressure is not.
     const cta=language==='ta'?'மேலும் அறிய இன்றே தொடர்புகொள்ளுங்கள்.':
       language==='si'?'වැඩි විස්තර සඳහා අදම අමතන්න.':'Contact us today to learn more.';
-    return (base+'\n\n'+cta).slice(0,3000);
+    if(base.includes(cta)||base.length+cta.length+2>3000)return base;
+    return base+'\n\n'+cta;
   }
-  if(kind==='emojis')return ('✨ '+base).slice(0,3000);
-  const verified=[contact.city.trim(),
-    contact.phone.trim(),contact.website.trim()].filter(Boolean);
-  return verified.length?(base+'\n\n'+verified.join(' · ')).slice(0,3000):base;
+  if(kind==='emojis')return base.startsWith('✨ ')||base.length+2>3000?
+    base:'✨ '+base;
+  // A city alone is not a verified phone or website contact channel.
+  const verifiedContact=[contact.phone.trim(),contact.website.trim()].filter(Boolean);
+  if(!verifiedContact.length)return base;
+  const verified=[contact.city.trim(),...verifiedContact].filter(Boolean).join(' · ');
+  if(base.includes(verified)||base.length+verified.length+2>3000)return base;
+  return base+'\n\n'+verified;
+}
+/**
+ * Apply a local (no-AI-credit) edit to the selected language, or every
+ * populated language in the All Combined preview. Never overwrite a blank
+ * language or claim success when a polish operation made no change.
+ */
+export function polishCaptionSelections(input:{
+  captions:CaptionSet;selectedLanguages:readonly CaptionLanguage[];
+  previewLanguage:CaptionLanguage|'all';angle:CaptionAngle;
+  kind:'shorten'|'urgency'|'emojis'|'contact';
+  contact:{phone:string;city:string;website:string};
+}):{captions:CaptionSet;changed:CaptionLanguage[]}{
+  const targets=input.previewLanguage==='all'?
+    input.selectedLanguages:[input.previewLanguage];
+  const updated:CaptionSet={...input.captions};
+  const changed:CaptionLanguage[]=[];
+  for(const lang of targets){
+    const current=input.captions[lang][input.angle];
+    if(!current.trim())continue;
+    const result=safeLocalPolish(current,input.kind,lang,input.contact);
+    if(result===current)continue;
+    updated[lang]={...input.captions[lang],[input.angle]:result};
+    changed.push(lang);
+  }
+  return {captions:updated,changed};
 }
 export function previewFold(text:string,expanded:boolean):{visible:string;folded:boolean}{
   if(expanded||text.length<=180)return {visible:text,folded:false};

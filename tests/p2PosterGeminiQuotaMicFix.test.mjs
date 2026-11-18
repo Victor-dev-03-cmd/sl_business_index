@@ -5,6 +5,7 @@ const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 const config=read('next.config.ts');
 const poster=read('app/vendor/marketing/design/puter-lab/page.tsx');
 const caption=read('app/vendor/marketing/captions/page.tsx');
+const engine=read('lib/marketing/voice/slbi-voice-engine.ts');
 const api=read('app/api/marketing/poster/puter-lab/route.ts');
 const transcription=read('app/api/marketing/poster/transcribe/route.ts');
 const sql=read('docs/growth/p2/P2_26_POSTER_QA_GEMINI_SHARED_QUOTA_20261117.sql');
@@ -16,10 +17,10 @@ test('microphone remains default-deny outside the two owner-authorized creative 
   assert.match(config,/source: '\/vendor\/marketing\/captions'/);
   const captionHeader=config.slice(config.indexOf("source: '/vendor/marketing/captions'"));
   assert.match(captionHeader,/microphone=\(self\)/);
-  assert.match(caption,/navigator\.mediaDevices\.getUserMedia\(\{audio:true\}\)/);
+  assert.match(engine,/navigator\.mediaDevices\.getUserMedia\(\{/);
   assert.match(caption,/voicePermissionHelp&&/);
   assert.match(caption,/Site settings, set Microphone to Allow/);
-  assert.match(caption,/permissionsPolicy\?\.allowsFeature\('microphone'\)/);
+  assert.match(engine,/window\.isSecureContext/);
 });
 
 test('only verified internal owner QA gets bounded additional Gemini voice+brief allowance',()=>{

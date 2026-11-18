@@ -9,6 +9,7 @@ const poster=read('app/vendor/marketing/design/puter-lab/page.tsx');
 const store=read('lib/marketing/caption-poster-handoff.ts');
 const api=read('app/api/marketing/caption/route.ts');
 const voiceApi=read('app/api/marketing/poster/transcribe/route.ts');
+const engine=read('lib/marketing/voice/slbi-voice-engine.ts');
 
 test('Caption business dropdown has same inset native arrow geometry as Poster Studio',()=>{
   assert.match(lab,/select value=\{businessId\} aria-label="Selected business"/);
@@ -50,17 +51,19 @@ test('Voice transcript and poster handoff keep product/service/offer in ONE edit
 });
 
 test('No transcribe or caption charging happens on record, pause, login or poster handoff',()=>{
-  const recording=lab.slice(lab.indexOf('  const startVoice=async()=>{'),lab.indexOf('  const generate=async()=>{'));
-  assert.match(recording,/navigator\.mediaDevices\.getUserMedia\(\{audio:true\}\)/);
+  const recording=lab.slice(lab.indexOf('  const startVoice=async()=>{'),lab.indexOf('  const generate=async('));
+  assert.match(engine,/navigator\.mediaDevices\.getUserMedia\(\{/);
+  assert.match(recording,/new SlbiVoiceRecorder\(/);
   assert.match(recording,/void transcribe\(blob\)/);
   assert.doesNotMatch(recording,/marketing_reserve_ai_draft|\/api\/marketing\/caption|puter\.ai\.txt2img/);
   const transcribe=lab.slice(lab.indexOf('  const transcribe=async(blob:Blob)=>{'),lab.indexOf('  const startVoice=async()=>{'));
-  assert.match(transcribe,/\/api\/marketing\/poster\/transcribe/);
+  assert.match(transcribe,/requestSlbiVoiceTranscript\(/);
+  assert.match(engine,/\/api\/marketing\/poster\/transcribe/);
   assert.doesNotMatch(transcribe,/\/api\/marketing\/caption/);
-  const generate=lab.slice(lab.indexOf('  const generate=async()=>{'),lab.indexOf('  const editTags='));
+  const generate=lab.slice(lab.indexOf('  const generate=async('),lab.indexOf('  const editTags='));
   assert.match(generate,/\/api\/marketing\/caption/);
   assert.match(generate,/requestKey:crypto\.randomUUID\(\)/);
-  assert.match(generate,/const prompt=message\.trim\(\)/);
+  assert.match(generate,/message:message\.trim\(\)/);
   assert.match(api,/process\.env\.SLBI_MARKETING_AI_ENABLED!=='true'/);
   assert.match(api,/marketing_reserve_ai_draft/);
   assert.match(voiceApi,/marketing_poster_voice_try_reserve/);

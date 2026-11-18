@@ -25,17 +25,20 @@ test('Puter lab remains strictly server-authorized for existing owner QA grant',
 });
 test('Gemini voice transcription is human-review only, with scoped mic policy',()=>{
   const voice=read('app/api/marketing/poster/transcribe/route.ts');
+  const engine=read('lib/marketing/voice/slbi-voice-engine.ts');
+  const provider=read('lib/marketing/voice/slbi-gemini-transcription.ts');
   const next=read('next.config.ts');
-  assert.match(lab,/navigator\.mediaDevices\.getUserMedia\(\{audio:true\}\)/);
-  assert.match(lab,/rec\.start\(250\)/);
+  assert.match(engine,/navigator\.mediaDevices\.getUserMedia\(\{/);
+  assert.match(engine,/recorder\.start\(250\)/);
   assert.match(lab,/stopVoice\(\)/);
   assert.match(lab,/void transcribe\(blob\)/);
-  assert.match(lab,/\/api\/marketing\/poster\/transcribe/);
-  assert.match(lab,/x-slbi-business-id/);
-  assert.match(lab,/setPrompt\(prev=>\[prev===samplePrompt\?'':prev,heard\]/);
-  assert.match(lab,/const maxAudio=1_500_000/);
+  assert.match(lab,/requestSlbiVoiceTranscript\(/);
+  assert.match(engine,/\/api\/marketing\/poster\/transcribe/);
+  assert.match(engine,/x-slbi-business-id/);
+  assert.match(lab,/setPrompt\(combined\)/);
+  assert.match(lab,/const maxAudio=SLBI_VOICE_MAX_BYTES/);
   assert.match(voice,/reviewBeforeGenerating:true/);
-  assert.match(voice,/GEMINI_POSTER_MODEL/);
+  assert.match(provider,/SLBI_GEMINI_VOICE_MODEL='gemini-2.5-flash'/);
   assert.match(next,/source: '\/vendor\/marketing\/design\/puter-lab'/);
   assert.match(next,/value: 'camera=\(\), microphone=\(self\), geolocation=\(self\)'/);
   assert.match(next,/value: 'camera=\(\), microphone=\(\), geolocation=\(self\)'/);

@@ -53,7 +53,7 @@ test('tri-lingual previews support Facebook Instagram WhatsApp, read more and hu
   assert.equal(GOALS.length,5);
   assert.equal(page.includes('Live social preview · Not published'),true);
   assert.match(page,/chosenLanguages\.map/);
-  assert.match(page,/All 3 Combined/);
+  assert.match(page,/All \{chosenLanguages.length\} Combined/);
   assert.match(page,/previewFold\(previewText,expanded\)/);
   assert.match(page,/setExpanded\(true\)/);
   assert.match(page,/updateAngle\(activePreviewLanguage,e\.target\.value\)/);
@@ -165,7 +165,7 @@ test('AI calls occur only on explicit generate, respect existing global hard-off
   assert.match(api,/admin\.rpc\('marketing_complete_ai_draft'/);
   assert.match(api,/admin\.rpc\('marketing_refund_ai_draft'/);
   assert.match(contracts,/mode\?:CaptionMode/);
-  assert.match(page,/const generate=async\(\)=>/);
+  assert.match(page,/const generate=async\(retryFailedOnly=false\)=>/);
   assert.match(page,/onClick=\{\(\)=>void generate\(\)\}/);
   assert.match(page,/requestKey:crypto\.randomUUID\(\)/);
   assert.match(page,/mode:'three_angles'/);

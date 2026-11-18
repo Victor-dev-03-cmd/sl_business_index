@@ -10,13 +10,19 @@ import {
   Volume2,WandSparkles,X,
 } from 'lucide-react';
 import {supabase} from '@/lib/supabaseClient';
+import {vendorFeedback} from '@/lib/ui/vendor-feedback';
+import {captionIssueMessage,failedCaptionLanguages,type CaptionIssue}
+  from '@/lib/marketing/caption-generation-feedback';
+import {
+  SlbiVoiceRecorder,requestSlbiVoiceTranscript,SLBI_VOICE_MAX_BYTES,
+} from '@/lib/marketing/voice/slbi-voice-engine';
 import {plannerBriefFromCaption} from '@/lib/marketing/caption-planner-brief';
 import {listSavedPosters,privatePosterUrl,readSavedPoster,uploadSavedPoster,type SavedPosterAsset} from '@/lib/marketing/saved-poster-cloud-client';
 import type {CaptionLanguage} from '@/lib/marketing/caption-contract';
 import {
   ANGLES,GOALS,LANGUAGES,PLATFORMS,angleLabels,emptyCaptions,goalLabel,
   goalObjective,hashtagsFrom,extractSavedCaptionHashtags,languageBundle,labels,normalizedTag,
-  parseThreeAngles,previewFold,promptChips,removeHashtags,safeLocalPolish,
+  parseThreeAngles,previewFold,promptChips,removeHashtags,polishCaptionSelections,
   toneLabels,withHashtags,
   type CaptionAngle,type CaptionSet,type CampaignGoal,
   type SocialPlatform,type TonePosition,
@@ -28,8 +34,17 @@ import {
 
 type Business={id:string;name:string;city:string|null;category:string;phone:string|null;website_url:string|null;address:string|null};
 type StoredDraft={id:string;business_id?:string;caption:string;language:CaptionLanguage;review_status:string;created_at?:string};
-type ApiBody={error?:string;draft?:StoredDraft;drafts?:StoredDraft[];chargedCredits?:number};
+type ApiBody={error?:string;code?:string;draft?:StoredDraft;drafts?:StoredDraft[];chargedCredits?:number};
 type GeminiQuota={used:number;limit:number;remaining:number;dayUtc:string};
+type PlannerDraft={
+  id:string;business_id:string;banner_text:string;platforms:string[]|null;
+  created_at:string|null;poster_asset_id:string|null;
+  brief:{cta?:string;terms?:string;language?:string;objective?:string}|null;
+};
+type WorkspaceSnapshot={
+  message:string;cta:string;conditions:string;captions:CaptionSet;
+  platform:SocialPlatform;angle:CaptionAngle;previewLanguage:CaptionLanguage|'all';
+};
 const uuid=/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i;
 const field='w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-3 text-[12px] text-[#1F2937] outline-none transition focus:border-[#FB923C] focus:ring-2 focus:ring-[#F97316]/10';
 const panel='min-w-0 rounded-2xl border border-[#E5E7EB] bg-white shadow-[0_7px_24px_rgba(17,24,39,.035)]';
@@ -103,6 +118,14 @@ export default function ConnectedCaptionLab(){
   const [cta,setCta]=useState('');
   const [captions,setCaptions]=useState<CaptionSet>(()=>emptyCaptions());
   const [drafts,setDrafts]=useState<StoredDraft[]>([]);
+  const [plannerDrafts,setPlannerDrafts]=useState<PlannerDraft[]>([]);
+  const [plannerLoading,setPlannerLoading]=useState(false);
+  const [workspaceKey,setWorkspaceKey]=useState('');
+  const [workspaceEpoch,setWorkspaceEpoch]=useState(0);
+  const [failedGenerations,setFailedGenerations]=useState<{
+    signature:string;languages:CaptionLanguage[];
+  }|null>(null);
+  const [lastSavedCampaignId,setLastSavedCampaignId]=useState('');
   const [generatedTags,setGeneratedTags]=useState<Record<CaptionLanguage,string[]>>({ta:[],si:[],en:[]});
   const [customTags,setCustomTags]=useState<Record<string,string[]>>({});
   const [removedTags,setRemovedTags]=useState<Record<string,string[]>>({});
@@ -125,26 +148,24 @@ export default function ConnectedCaptionLab(){
   const [generatedLanguages,setGeneratedLanguages]=useState<CaptionLanguage[]>([]);
   const [savedCampaignId,setSavedCampaignId]=useState('');
   const [savedCampaignPosterId,setSavedCampaignPosterId]=useState('');
-  const recorderRef=useRef<MediaRecorder|null>(null);
-  const streamRef=useRef<MediaStream|null>(null);
-  const voiceClockRef=useRef<ReturnType<typeof setInterval>|null>(null);
-  const voiceFrameRef=useRef<number|null>(null);
-  const voiceAudioRef=useRef<AudioContext|null>(null);
-  const discardVoiceRef=useRef(false);
+  const voiceCaptureRef=useRef<SlbiVoiceRecorder|null>(null);
   const voiceMountedRef=useRef(true);
   const importingRef=useRef('');
+  const skipWorkspaceRecoveryRef=useRef(false);
+  const failedVoiceRef=useRef<Blob|null>(null);
   const posterUrlRef=useRef('');
   const posterInputRef=useRef<HTMLInputElement|null>(null);
   const posterDialogRef=useRef<HTMLDivElement|null>(null);
+  // Compact, auto-dismissable feedback uses the already-mounted vendor toaster.
+  useEffect(()=>{if(error)vendorFeedback.error(error);},[error]);
+  useEffect(()=>{
+    if(!notice||/^(Allow microphone access|Gemini is transcribing|Recording\.|Recording captured\.|Recording safely stopped)/.test(notice))
+      return;
+    vendorFeedback.info(notice);
+  },[notice]);
   const releaseVoiceMedia=useCallback(()=>{
-    if(voiceClockRef.current!==null){clearInterval(voiceClockRef.current);voiceClockRef.current=null;}
-    if(voiceFrameRef.current!==null){cancelAnimationFrame(voiceFrameRef.current);voiceFrameRef.current=null;}
-    if(voiceAudioRef.current){
-      void voiceAudioRef.current.close().catch(()=>{});
-      voiceAudioRef.current=null;
-    }
-    streamRef.current?.getTracks().forEach(track=>track.stop());
-    streamRef.current=null;
+    voiceCaptureRef.current?.dispose();
+    voiceCaptureRef.current=null;
   },[]);
   useEffect(()=>{
     const urls:Record<string,string>={};
@@ -172,13 +193,23 @@ export default function ConnectedCaptionLab(){
   const selected=useMemo(()=>businesses.find(b=>b.id===businessId),[businesses,businessId]);
   const hasLinked=Boolean(linked&&linked.context.businessId===businessId);
   const chosenLanguages:CaptionLanguage[]=languageSelections.length?languageSelections:['ta'];
-  const activePreviewLanguage:CaptionLanguage=previewLanguage==='all'?chosenLanguages[0]:previewLanguage;
+  const activePreviewLanguage:CaptionLanguage=previewLanguage==='all'?
+    (chosenLanguages.find(lang=>Boolean(captions[lang][angle]?.trim()))||chosenLanguages[0]):
+    previewLanguage;
+  const generationSignature=JSON.stringify({
+    businessId,goal,tone,message,conditions,cta,posterKey,languages:chosenLanguages,
+  });
+  const canRetryLanguages=Boolean(failedGenerations&&
+    failedGenerations.signature===generationSignature&&failedGenerations.languages.length);
   useEffect(()=>{
     if(previewLanguage!=='all'&&!chosenLanguages.includes(previewLanguage))
       setPreviewLanguage(chosenLanguages[0]);
   },[languageSelections,previewLanguage,chosenLanguages]);
   const hasAI=chosenLanguages.some(lang=>Boolean(captions[lang][angle]?.trim()));
   const activeText=captions[activePreviewLanguage]?.[angle]?.trim()||'';
+  const canPolish=previewLanguage==='all'?
+    chosenLanguages.some(lang=>Boolean(captions[lang][angle]?.trim())):
+    Boolean(activeText);
   const suggestedTags=useMemo(()=>{
     const langs=previewLanguage==='all'?chosenLanguages:[activePreviewLanguage];
     const generated=langs.flatMap(lang=>generatedTags[lang]);
@@ -240,6 +271,9 @@ export default function ConnectedCaptionLab(){
     if(loading||!businesses.length||typeof window==='undefined')return;
     const key=new URLSearchParams(window.location.search).get('handoff')||'';
     if(!validHandoffId(key)||importingRef.current===key)return;
+    // A completed handoff must not recreate a saved campaign on reload.
+    try{if(sessionStorage.getItem('slbi-caption-completed-handoff:'+key)==='1')return;}
+    catch{/* Browser session storage may be blocked. */}
     importingRef.current=key;
     let cancelled=false;
     void loadLinkedPoster(key).then(record=>{
@@ -253,8 +287,14 @@ export default function ConnectedCaptionLab(){
       posterUrlRef.current=src;setPosterUrl(src);
       setPosterKey(key);setLinked(record);setBusinessId(record.context.businessId);
       setCloudAssetId(record.context.savedPosterAssetId||'');
-      setMessage([record.context.headline,record.context.serviceFocus,record.context.offer].filter(Boolean).join('. ').slice(0,600));
-      setCta(record.context.cta.slice(0,180));
+      const recoveryKey='slbi-caption-unsaved-v3:'+record.context.businessId+':'+key;
+      let recovering=false;
+      try{recovering=Boolean(sessionStorage.getItem(recoveryKey));}catch{}
+      if(!recovering){
+        setMessage([record.context.headline,record.context.serviceFocus,record.context.offer]
+          .filter(Boolean).join('. ').slice(0,600));
+        setCta(record.context.cta.slice(0,180));
+      }
       setGoal(record.context.offer?'flash_sale':'festival');
       setTone(record.context.vibe.includes('bold')?2:record.context.vibe.includes('luxury')?1:0);
       setGeneratedLanguages([]);
@@ -267,19 +307,13 @@ export default function ConnectedCaptionLab(){
     return()=>{
     // Unmounting must never submit a recording or spend one Gemini quota unit.
     voiceMountedRef.current=false;
-    discardVoiceRef.current=true;
-    const recorder=recorderRef.current;
-    if(recorder&&recorder.state!=='inactive')recorder.stop();
     releaseVoiceMedia();
     if(posterUrlRef.current)URL.revokeObjectURL(posterUrlRef.current);
     };
   },[releaseVoiceMedia]);
 
   const loadDrafts=useCallback(async(signal?:AbortSignal)=>{
-    if(!businessId){
-      setDrafts([]);setCaptions(emptyCaptions());
-      setGeneratedTags({ta:[],si:[],en:[]});return;
-    }
+    if(!businessId){setDrafts([]);setGeneratedLanguages([]);return;}
     try{
       const res=await fetch('/api/marketing/caption?businessId='+encodeURIComponent(businessId),{
         credentials:'same-origin',cache:'no-store',signal,
@@ -288,17 +322,9 @@ export default function ConnectedCaptionLab(){
       if(!res.ok)throw Error(data.error||'Unable to read saved captions.');
       if(signal?.aborted)return;
       const list=Array.isArray(data.drafts)?data.drafts:[];
+      // A network refresh updates ONLY the library, not the active editor.
+      // This prevents stale Gemini drafts overriding a new Poster Studio handoff.
       setDrafts(list);
-      const next=emptyCaptions();
-      const nextTags:Record<CaptionLanguage,string[]>={ta:[],si:[],en:[]};
-      for(const lang of LANGUAGES){
-        const draft=newDraftLanguage(list,lang);
-        if(draft){
-          next[lang]=parseThreeAngles(draft.caption);
-          nextTags[lang]=extractSavedCaptionHashtags(draft.caption);
-        }
-      }
-      setCaptions(next);setGeneratedTags(nextTags);
       setGeneratedLanguages(LANGUAGES.filter(lang=>Boolean(newDraftLanguage(list,lang))));
     }catch(e){if(!signal?.aborted)setNotice(e instanceof Error?e.message:'Existing drafts unavailable.');}
   },[businessId]);
@@ -308,33 +334,144 @@ export default function ConnectedCaptionLab(){
     return()=>controller.abort();
   },[loadDrafts]);
 
+  const loadPlannerDrafts=useCallback(async()=>{
+    if(!businessId){setPlannerDrafts([]);return;}
+    setPlannerLoading(true);
+    try{
+      const result=await supabase.from('marketing_campaigns')
+        .select('id,business_id,banner_text,platforms,created_at,poster_asset_id,brief')
+        .eq('business_id',businessId).eq('banner_color','caption-lab-connected-v1')
+        .eq('status','drafted').eq('is_archived',false)
+        .order('created_at',{ascending:false}).limit(300);
+      if(result.error)throw result.error;
+      setPlannerDrafts((result.data||[]) as PlannerDraft[]);
+    }catch(e){setNotice('Saved Planner drafts could not be listed: '+
+      (e instanceof Error?e.message:'Please retry.'));}
+    finally{setPlannerLoading(false);}
+  },[businessId]);
+  useEffect(()=>{void loadPlannerDrafts();},[loadPlannerDrafts]);
+
+  // v3 never imports obsolete v2 browser snapshots. Saving to Planner
+  // synchronously removes recovery data, tombstones the consumed handoff
+  // and starts a fresh editor epoch without rehydrating a completed draft.
+  useEffect(()=>{
+    if(!businessId||typeof window==='undefined')return;
+    const handoff=new URLSearchParams(window.location.search).get('handoff');
+    let valid=validHandoffId(handoff);
+    try{
+      if(valid&&sessionStorage.getItem('slbi-caption-completed-handoff:'+handoff)==='1')
+        valid=false;
+    }catch{/* Browser storage is best-effort. */}
+    const key='slbi-caption-unsaved-v3:'+businessId+':'+
+      (valid?handoff:'direct');
+    const skip=skipWorkspaceRecoveryRef.current;
+    skipWorkspaceRecoveryRef.current=false;
+    setWorkspaceKey('');
+    let saved:WorkspaceSnapshot|null=null;
+    try{
+      if(skip)sessionStorage.removeItem(key);
+      else{
+        const raw=sessionStorage.getItem(key);
+        if(raw&&raw.length<25000)saved=JSON.parse(raw) as WorkspaceSnapshot;
+      }
+    }catch{/* Session storage cannot block new campaign editing. */}
+    if(saved){
+      if(typeof saved.message==='string')setMessage(saved.message.slice(0,600));
+      if(typeof saved.cta==='string')setCta(saved.cta.slice(0,180));
+      if(typeof saved.conditions==='string')setConditions(saved.conditions.slice(0,300));
+      if(saved.captions&&typeof saved.captions==='object'&&
+        LANGUAGES.every(lang=>ANGLES.every(angle=>
+          typeof saved.captions?.[lang]?.[angle]==='string')))
+        setCaptions(saved.captions);
+      if(PLATFORMS.includes(saved.platform))setPlatform(saved.platform);
+      if(ANGLES.includes(saved.angle))setAngle(saved.angle);
+      if(saved.previewLanguage==='all'||LANGUAGES.includes(saved.previewLanguage))
+        setPreviewLanguage(saved.previewLanguage);
+    }
+    setWorkspaceKey(key);
+  },[businessId,workspaceEpoch]);
+  useEffect(()=>{
+    if(!workspaceKey||typeof window==='undefined')return;
+    const filled=Boolean(message.trim()||cta.trim()||conditions.trim()||
+      LANGUAGES.some(lang=>ANGLES.some(item=>captions[lang][item]?.trim())));
+    const timer=setTimeout(()=>{
+      try{
+        if(filled){
+          const snapshot:WorkspaceSnapshot={message,cta,conditions,captions,platform,
+            angle,previewLanguage};
+          sessionStorage.setItem(workspaceKey,JSON.stringify(snapshot));
+        }else sessionStorage.removeItem(workspaceKey);
+      }catch{/* Session storage errors never block editing. */}
+    },350);
+    return()=>clearTimeout(timer);
+  },[workspaceKey,message,cta,conditions,captions,platform,angle,previewLanguage]);
+
+  const resumeAiDraft=(record:StoredDraft)=>{
+    setCaptions(previous=>({...previous,[record.language]:parseThreeAngles(record.caption)}));
+    setGeneratedTags(previous=>({...previous,[record.language]:
+      extractSavedCaptionHashtags(record.caption)}));
+    setPreviewLanguage(record.language);
+    setNotice('Saved AI draft opened for review. Your other drafts remain unchanged.');
+    setLastSavedCampaignId('');
+  };
+  const resumePlannerDraft=async(item:PlannerDraft)=>{
+    if(item.business_id!==businessId)return;
+    const lang:CaptionLanguage=item.brief?.language==='தமிழ்'?'ta':
+      item.brief?.language==='සිංහල'?'si':'en';
+    setCaptions({...emptyCaptions(),[lang]:{hook:item.banner_text,story:'',short:''}});
+    setGeneratedTags({ta:[],si:[],en:[]});
+    setGoal(item.brief?.objective==='promotion'?'flash_sale':
+      item.brief?.objective==='announcement'?'new_arrival':'festival');
+    setLanguageSelections([lang]);setPreviewLanguage(lang);setAngle('hook');
+    setMessage('');setConditions(item.brief?.terms||'');setCta(item.brief?.cta||'');
+    const p=item.platforms?.[0];
+    setPlatform(p==='instagram'||p==='whatsapp'?p:'facebook');
+    setSavedCampaignId(item.id);setSavedCampaignPosterId(item.poster_asset_id||'');
+    setCloudAssetId(item.poster_asset_id||'');setLastSavedCampaignId('');
+    setLinked(null);setPosterKey('');
+    if(posterUrlRef.current)URL.revokeObjectURL(posterUrlRef.current);
+    posterUrlRef.current='';setPosterUrl('');
+    if(item.poster_asset_id){
+      try{
+        const image=await readSavedPoster(businessId,item.poster_asset_id);
+        const record:LinkedPosterRecord={
+          id:crypto.randomUUID(),createdAt:Date.now(),image,
+          context:{
+            businessId,businessName:selected?.name||'',category:selected?.category||'',
+            city:selected?.city||'',address:selected?.address||'',phone:selected?.phone||'',
+            website:selected?.website_url||'',headline:'',offer:'',cta:'',vibe:'',
+            language:lang,sample:false,source:'device_upload',format:'uploaded',
+            savedPosterAssetId:item.poster_asset_id,
+          },
+        };
+        const url=URL.createObjectURL(image);
+        posterUrlRef.current=url;setPosterUrl(url);setLinked(record);
+      }catch{/* Campaign text remains accessible if its linked PNG is missing. */}
+    }
+    setNotice('Planner draft opened. Edit the caption and Save to Planner to update it.');
+  };
   const toggleLanguage=(lang:CaptionLanguage)=>{
     setLanguageSelections(current=>current.includes(lang)?
       (current.length===1?current:current.filter(x=>x!==lang)):
       LANGUAGES.filter(x=>x===lang||current.includes(x)));
   };
   const updateAngle=(lang:CaptionLanguage,value:string)=>{
-    setCaptions(previous=>({...previous,[lang]:{...previous[lang],[angle]:value.slice(0,1100)}}));
+    setCaptions(previous=>({...previous,[lang]:{...previous[lang],[angle]:value.slice(0,3000)}}));
   };
   // Same browser-initiated record → pause/resume → Send → Gemini transcript
   // workflow as Poster Studio. Only the explicit Send action uses voice quota.
   const transcribe=async(blob:Blob)=>{
-    if(!businessId||blob.size<800||blob.size>1_500_000){
+    if(!businessId||blob.size<800||blob.size>SLBI_VOICE_MAX_BYTES){
       setError('Choose a business and record a shorter voice message (1.5 MB maximum).');return;
     }
+    failedVoiceRef.current=blob;
     setVoiceBusy(true);setError('');setNotice('Gemini is transcribing your recording in its original language…');
     try{
-      const response=await fetch('/api/marketing/poster/transcribe',{
-        method:'POST',credentials:'same-origin',cache:'no-store',body:blob,
-        headers:{
-          'Content-Type':blob.type||'audio/webm',
-          'x-slbi-business-id':businessId,
-          'x-slbi-language':'auto',
-        },
+      const data=await requestSlbiVoiceTranscript({
+        audio:blob,businessId,language:activePreviewLanguage,
       });
-      const data=await response.json() as {error?:string;transcript?:string};
-      if(!response.ok||!data.transcript)throw Error(data.error||'Unable to transcribe audio.');
       const transcript=data.transcript.trim();
+      failedVoiceRef.current=null;
       const combined=[message.trim(),transcript].filter(Boolean).join(' ');
       if(combined.length>600){
         // Preserve EVERY word; no silent slicing of promotional terms or
@@ -348,130 +485,71 @@ export default function ConnectedCaptionLab(){
       }
     }catch(e){
       setError(e instanceof Error?e.message:'Voice transcription is unavailable.');
-      setNotice('Your typed campaign message is unchanged. You can retry Voice or continue typing.');
+      setNotice('Your typed message is unchanged. Your recording is kept in this tab: tap Retry transcription.');
     }finally{setVoiceBusy(false);void refreshVoiceQuota();}
   };
+  const retryVoice=()=>{if(failedVoiceRef.current&&!voiceBusy)void transcribe(failedVoiceRef.current);};
   const startVoice=async()=>{
     if(voiceBusy||recording||requestingMic||saving||busy)return;
     if(voiceReviewDraft){
-      setError('Apply or discard the full reviewed transcript before starting a new voice recording.');return;
+      setError('Apply or discard the full reviewed transcript before starting a recording.');return;
     }
     setError('');setVoicePermissionHelp(false);
-    if(typeof window==='undefined'||!window.isSecureContext||
-      !navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined'){
-      setError('Voice recording requires HTTPS and a browser with microphone support.');
-      setVoicePermissionHelp(true);return;
-    }
-    const policy=document as Document&{
-      permissionsPolicy?:{allowsFeature:(name:string)=>boolean};
-      featurePolicy?:{allowsFeature:(name:string)=>boolean};
-    };
-    const allowed=policy.permissionsPolicy?.allowsFeature('microphone') ??
-      policy.featurePolicy?.allowsFeature('microphone');
-    if(allowed===false){
-      setError('Microphone is blocked by the site permission policy. Open the production Caption Lab directly and retry.');
-      setVoicePermissionHelp(true);return;
-    }
     setRequestingMic(true);
     setNotice('Allow microphone access in your browser to record your brief.');
     try{
-      // A real user click triggers the native browser permission prompt.
-      const stream=await navigator.mediaDevices.getUserMedia({audio:true});
-      // The user may navigate away while the browser's native Allow popup is
-      // still open. Never resurrect a recorder after leaving Caption Lab.
-      if(!voiceMountedRef.current){
-        stream.getTracks().forEach(track=>track.stop());return;
-      }
-      streamRef.current=stream;
-      const preferred=['audio/webm;codecs=opus','audio/webm','audio/mp4'];
-      const mime=preferred.find(t=>MediaRecorder.isTypeSupported(t));
-      const recorder=new MediaRecorder(stream,mime?{mimeType:mime}:undefined);
-      recorderRef.current=recorder;discardVoiceRef.current=false;
-      const chunks:Blob[]=[];
-      let failed=false;
-      recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
-      recorder.onerror=()=>{
-        failed=true;discardVoiceRef.current=true;
-        setError('Microphone recording interrupted. Check your device and try again.');
-        if(recorder.state!=='inactive')recorder.stop();
-      };
-      recorder.onstop=()=>{
-        const discarded=discardVoiceRef.current;
-        releaseVoiceMedia();
-        recorderRef.current=null;
-        if(!voiceMountedRef.current)return;
-        setRecording(false);setVoicePaused(false);
-        setVoiceLevels(Array.from({length:35},()=>5));
-        if(failed||discarded)return;
-        const blob=new Blob(chunks,{type:recorder.mimeType||'audio/webm'});
-        if(blob.size<800){
-          setError('No audio captured. Speak for a few seconds, then tap Send.');return;
-        }
-        void transcribe(blob);
-      };
-      recorder.start(250);
-      setRecording(true);setVoicePaused(false);setVoiceSeconds(0);
-      voiceClockRef.current=setInterval(()=>{
-        if(recorder.state==='recording')setVoiceSeconds(n=>n+1);
-      },1000);
-      // Meter actual microphone audio (not a decorative synthetic waveform).
-      // Only the browser has these samples; audio is never persisted.
-      try{
-        const audio=new AudioContext();
-        voiceAudioRef.current=audio;
-        const analyser=audio.createAnalyser();analyser.fftSize=128;
-        const source=audio.createMediaStreamSource(stream);
-        source.connect(analyser);
-        const bins=new Uint8Array(analyser.frequencyBinCount);
-        let lastFrame=0;
-        const tick=(now:number)=>{
-          if(recorder.state==='recording'&&now-lastFrame>=90){
-            lastFrame=now;
-            analyser.getByteFrequencyData(bins);
-            setVoiceLevels(Array.from({length:35},(_,i)=>{
-              const bin=bins[Math.min(bins.length-1,Math.floor(i*bins.length/35))];
-              return Math.max(5,Math.min(37,Math.round(5+bin/255*32)));
-            }));
-          }
-          if(recorder.state!=='inactive')voiceFrameRef.current=requestAnimationFrame(tick);
-        };
-        voiceFrameRef.current=requestAnimationFrame(tick);
-      }catch{/* Recording works without a WebAudio amplitude meter. */}
-      setNotice('Recording. Pause, resume, cancel or tap Send to transcribe.');
+      const capture=new SlbiVoiceRecorder({
+        onState:state=>{
+          if(!voiceMountedRef.current)return;
+          setRecording(state!=='idle');setVoicePaused(state==='paused');
+        },
+        onSeconds:seconds=>{if(voiceMountedRef.current)setVoiceSeconds(seconds);},
+        onLevels:levels=>{if(voiceMountedRef.current)setVoiceLevels(levels);},
+        onError:err=>{
+          if(voiceMountedRef.current){setError(err.message);setRecording(false);}
+        },
+        onComplete:(blob,reason)=>{
+          voiceCaptureRef.current=null;
+          if(!voiceMountedRef.current)return;
+          setVoiceLevels(Array.from({length:35},()=>5));
+          setNotice(reason==='sent'?'Recording captured. Transcribing…':
+            'Recording safely stopped at the '+(reason==='duration'?'3-minute':'1.4 MB')+
+            ' limit. Sending captured speech for transcription.');
+          void transcribe(blob);
+        },
+      });
+      voiceCaptureRef.current?.dispose();
+      voiceCaptureRef.current=capture;
+      await capture.start();
+      if(voiceMountedRef.current)setNotice(
+        'Recording. Pause, resume, cancel or tap Send. Max 3 min / 1.4 MB.');
     }catch(e){
-      releaseVoiceMedia();recorderRef.current=null;
+      voiceCaptureRef.current?.dispose();
+      voiceCaptureRef.current=null;
       const name=e instanceof Error?e.name:'';
       if(name==='NotAllowedError'||name==='PermissionDeniedError'||name==='SecurityError'){
-        setError('Microphone blocked. Allow access in your browser site settings, then retry.');
+        setError('Microphone blocked. Allow it in your browser site settings and retry.');
         setVoicePermissionHelp(true);
       }else if(name==='NotFoundError'||name==='DevicesNotFoundError'){
-        setError('No microphone detected. Connect a recording device and try again.');
+        setError('No microphone detected. Connect an audio device.');
       }else if(name==='NotReadableError'||name==='TrackStartError'){
-        setError('Your microphone is in use by another application. Close it and retry.');
+        setError('Microphone is already in use by another application.');
       }else{
-        setError('Unable to open the microphone. Check browser permissions and audio input.');
+        setError(e instanceof Error?e.message:'Unable to access the microphone.');
         setVoicePermissionHelp(true);
       }
       setNotice('');
     }finally{setRequestingMic(false);}
   };
-  const sendVoice=()=>{
-    const recorder=recorderRef.current;
-    if(recorder&&(recorder.state==='recording'||recorder.state==='paused'))recorder.stop();
-  };
+  const sendVoice=()=>{voiceCaptureRef.current?.stop('sent');};
   const pauseVoice=()=>{
-    const recorder=recorderRef.current;
-    if(recorder?.state==='recording'){
-      recorder.pause();setVoicePaused(true);
-      setNotice('Recording paused. Resume or Send to transcribe.');
-    }else if(recorder?.state==='paused'){
-      recorder.resume();setVoicePaused(false);
-      setNotice('Recording resumed. Tap Send when you finish.');
-    }
+    const state=voiceCaptureRef.current?.pauseOrResume();
+    setNotice(state==='paused'?'Recording paused. Resume or Send to transcribe.':
+      state==='recording'?'Recording resumed. Tap Send when ready.':'');
   };
   const cancelVoice=()=>{
-    discardVoiceRef.current=true;sendVoice();
-    setNotice('Voice recording discarded. Your typed campaign brief is unchanged.');
+    voiceCaptureRef.current?.cancel();voiceCaptureRef.current=null;
+    setNotice('Recording discarded. Your typed campaign brief remains unchanged.');
   };
   const applyReviewedTranscript=()=>{
     const combined=[message.trim(),voiceReviewDraft.trim()].filter(Boolean).join(' ').trim();
@@ -484,46 +562,66 @@ export default function ConnectedCaptionLab(){
     setNotice('Reviewed transcript added. Verify your service, discount and campaign facts before Generate.');
   };
 
-  const generate=async()=>{
+  const generate=async(retryFailedOnly=false)=>{
     if(busy||!selected||message.trim().length<5)return;
+    const targets=retryFailedOnly&&canRetryLanguages&&failedGenerations?
+      failedGenerations.languages:chosenLanguages;
     setBusy(true);setError('');setNotice('');
-    let succeeded=0;
+    const completed:CaptionLanguage[]=[];
+    const failures:CaptionIssue[]=[];
     try{
-      // Existing credit-reserved provider route bills per language, never
-      // before the explicit Generate click. Hard-off flag remains respected.
-      for(const language of chosenLanguages){
-        // Goal is supplied as a separate validated field. Never silently cut
-        // off the last words of a reviewed voice brief to append UI metadata.
-        const prompt=message.trim();
-        const response=await fetch('/api/marketing/caption',{
-          method:'POST',credentials:'same-origin',cache:'no-store',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({
-            businessId:businessId,requestKey:crypto.randomUUID(),
-            objective:goalObjective[goal],language,
-            campaignGoal:goal,
-            posterHeadline:hasLinked?(linked?.context.headline||''):'',
-            posterOffer:hasLinked?(linked?.context.offer||''):'',
-            mode:'three_angles',
-            tone:(['friendly','professional','urgent'] as const)[tone],
-            message:prompt,conditions:conditions.trim().slice(0,300),
-            cta:cta.trim().slice(0,180),
-          }),
-        });
-        const data=await decode(response);
-        if(!response.ok||!data.draft?.caption)
-          throw Error(data.error||'AI Caption generation is unavailable.');
-        const parsed=parseThreeAngles(data.draft.caption);
-        const hashtags=extractSavedCaptionHashtags(data.draft.caption);
-        setCaptions(previous=>({...previous,[language]:parsed}));
-        setGeneratedTags(previous=>({...previous,[language]:hashtags}));
-        setGeneratedLanguages(previous=>Array.from(new Set([...previous,language])));
-        succeeded++;
+      // Per-language isolation: a failed model call never blocks another
+      // selected language and never deletes a successful saved draft.
+      for(const language of targets){
+        try{
+          const response=await fetch('/api/marketing/caption',{
+            method:'POST',credentials:'same-origin',cache:'no-store',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({
+              businessId,requestKey:crypto.randomUUID(),
+              objective:goalObjective[goal],language,campaignGoal:goal,
+              posterHeadline:hasLinked?(linked?.context.headline||''):'',
+              posterOffer:hasLinked?(linked?.context.offer||''):'',
+              mode:'three_angles',
+              tone:(['friendly','professional','urgent'] as const)[tone],
+              message:message.trim(),conditions:conditions.trim().slice(0,300),
+              cta:cta.trim().slice(0,180),
+            }),
+          });
+          const data=await decode(response);
+          if(!response.ok||!data.draft?.caption){
+            failures.push({
+              language,status:response.status,code:data.code||'',
+              detail:data.error||'Caption generation is unavailable.',
+            });
+            continue;
+          }
+          setCaptions(previous=>({...previous,[language]:parseThreeAngles(data.draft!.caption)}));
+          setGeneratedTags(previous=>({...previous,[language]:
+            extractSavedCaptionHashtags(data.draft!.caption)}));
+          setGeneratedLanguages(previous=>Array.from(new Set([...previous,language])));
+          completed.push(language);
+        }catch{
+          failures.push({language,status:0,code:'NETWORK',
+            detail:'Network connection interrupted.'});
+        }
       }
-      setNotice('AI drafts saved for '+succeeded+' language(s). Review every fact and offer before copying or planning.');
+      setFailedGenerations(failures.length?{
+        signature:generationSignature,languages:failedCaptionLanguages(failures),
+      }:null);
+      if(completed.length&&failures.length){
+        // Put the successful result in BOTH preview and refine column.
+        setPreviewLanguage(completed[0]);setExpanded(false);
+      }
       await loadDrafts();
-    }catch(e){setError((e instanceof Error?e.message:'Caption generation failed.')+
-      (succeeded?' '+succeeded+' language(s) completed and saved.':' No credits were requested for languages not processed.'));
+      if(failures.length){
+        // One compact warning: identify ONLY the unavailable language(s).
+        // Results in all successful languages stay visible and editable.
+        vendorFeedback.warning(failures.map(captionIssueMessage).join(' '));
+      }else if(completed.length){
+        setNotice(completed.map(lang=>labels[lang]).join(' + ')+
+          ' captions ready. Review the facts before saving.');
+      }
     }finally{setBusy(false);}
   };
   const editTags=(tag:string,action:'add'|'remove')=>{
@@ -545,14 +643,58 @@ export default function ConnectedCaptionLab(){
     catch{setError('Clipboard access is blocked. Copy the caption text from the editor.');}
   };
   const polish=(kind:'shorten'|'urgency'|'emojis'|'contact')=>{
-    if(previewLanguage==='all'){
-      setError('Select a single language before applying a local quick polish.');return;
+    const result=polishCaptionSelections({
+      captions,selectedLanguages:chosenLanguages,previewLanguage,angle,kind,
+      contact:{phone:selected?.phone||'',city:selected?.city||'',
+        website:selected?.website_url||''},
+    });
+    if(!result.changed.length){
+      setNotice(kind==='contact'?
+        'No saved business contact details available. Update My Business first.':
+        kind==='shorten'?'This caption is already short. Nothing changed.':
+        'Nothing to polish yet. Generate or write a caption first.');
+      return;
     }
-    updateAngle(previewLanguage,safeLocalPolish(
-      captions[previewLanguage][angle],kind,previewLanguage,
-      {phone:selected?.phone||'',city:selected?.city||'',website:selected?.website_url||''},
-    ));
-    setNotice('Quick polish applied locally. No AI credits used. Review the exact words.');
+    setCaptions(result.captions);
+    setNotice('Quick Polish updated '+result.changed.map(lang=>labels[lang]).join(' + ')+
+      '. No AI credits used.');
+  };
+  const clearEditorAfterSave=()=>{
+    // Cancel the pending autosave before any state transitions, then remove
+    // v2/v3 snapshots immediately so fast navigation cannot resurrect them.
+    skipWorkspaceRecoveryRef.current=true;
+    setWorkspaceKey('');
+    try{
+      const url=new URL(window.location.href);
+      const handoff=url.searchParams.get('handoff');
+      for(const version of ['v2','v3']){
+        const prefix='slbi-caption-unsaved-'+version+':'+businessId+':';
+        sessionStorage.removeItem(prefix+'direct');
+        if(validHandoffId(handoff))sessionStorage.removeItem(prefix+handoff);
+      }
+      if(workspaceKey)sessionStorage.removeItem(workspaceKey);
+      if(validHandoffId(handoff))
+        sessionStorage.setItem('slbi-caption-completed-handoff:'+handoff,'1');
+      // A saved handoff is a consumed one-shot link, not a future draft.
+      if(url.searchParams.has('handoff')){
+        url.searchParams.delete('handoff');
+        window.history.replaceState(window.history.state,'',
+          url.pathname+url.search+url.hash);
+      }
+    }catch{/* Browser storage failure must not block a completed save. */}
+    failedVoiceRef.current=null;
+    setMessage('');setConditions('');setCta('');
+    setCaptions(emptyCaptions());setGeneratedTags({ta:[],si:[],en:[]});
+    setGeneratedLanguages([]);setFailedGenerations(null);
+    setCustomTags(previous=>({...previous,[businessId]:[]}));
+    setRemovedTags(previous=>({...previous,[businessId]:[]}));
+    setTagInput('');setAngle('hook');setPreviewLanguage('all');
+    setExpanded(false);setVoiceReviewDraft('');
+    setLinked(null);setPosterKey('');setCloudAssetId('');
+    setSavedCampaignId('');setSavedCampaignPosterId('');
+    if(posterUrlRef.current)URL.revokeObjectURL(posterUrlRef.current);
+    posterUrlRef.current='';setPosterUrl('');
+    setWorkspaceEpoch(epoch=>epoch+1);
   };
   const savePlanner=async()=>{
     if(saving||!selected||!currentCaption.trim())return;
@@ -603,9 +745,10 @@ export default function ConnectedCaptionLab(){
         await supabase.from('marketing_campaigns').insert(patch)
           .select('id').maybeSingle();
       if(saved.error||!saved.data)throw Error(saved.error?.message||'Campaign Planner could not save this draft.');
-      setSavedCampaignId(saved.data.id);
-      setSavedCampaignPosterId(posterAssetId||'');
-      setNotice('Campaign Planner draft saved'+(posterAssetId?' with a durable PRIVATE poster image.':'.')+' No social publishing was triggered.');
+      setLastSavedCampaignId(saved.data.id);
+      clearEditorAfterSave();
+      await loadPlannerDrafts();
+      setNotice('Saved to Campaign Planner. A clean new workspace is ready. Open any prior draft from the Saved Planner Drafts list.');
     }catch(e){setError(e instanceof Error?e.message:'Save to Campaign Planner failed.');}
     finally{setSaving(false);}
   };
@@ -629,11 +772,15 @@ export default function ConnectedCaptionLab(){
     if(posterUrlRef.current)URL.revokeObjectURL(posterUrlRef.current);
     const url=URL.createObjectURL(record.image);
     posterUrlRef.current=url;setPosterUrl(url);
-    setLinked(record);setPosterKey(record.id);setPosterPickerOpen(false);setCloudAssetId('');
-    setMessage(previous=>previous.trim()?previous:
-      [record.context.headline,record.context.serviceFocus,record.context.offer]
-        .filter(Boolean).join('. ').slice(0,600));
-    setCta(previous=>previous.trim()?previous:record.context.cta.slice(0,180));
+    // Explicit poster replacement starts a clean campaign rather than reusing
+    // the previous poster's generated copy or stale planner editing ID.
+    setLinked(record);setPosterKey(record.id);setPosterPickerOpen(false);
+    setCloudAssetId(record.context.savedPosterAssetId||'');
+    setSavedCampaignId('');setSavedCampaignPosterId('');setLastSavedCampaignId('');
+    setCaptions(emptyCaptions());setGeneratedTags({ta:[],si:[],en:[]});
+    setMessage([record.context.headline,record.context.serviceFocus,record.context.offer]
+      .filter(Boolean).join('. ').slice(0,600));
+    setCta(record.context.cta.slice(0,180));
     setNotice('Poster attached. Review your campaign brief, then generate captions.');
   };
   const saveCaptionImage=async()=>{
@@ -687,12 +834,17 @@ export default function ConnectedCaptionLab(){
   };
   const onBusinessChange=(id:string)=>{
     if(id===businessId)return;
+    releaseVoiceMedia();
     setBusinessId(id);setLinked(null);setPosterKey('');setCloudAssetId('');setCloudChoices([]);
     setPosterPickerOpen(false);setPosterChoices([]);
     if(posterUrlRef.current)URL.revokeObjectURL(posterUrlRef.current);
     posterUrlRef.current='';setPosterUrl('');
     setMessage('');setConditions('');setCta('');setVoiceReviewDraft('');setError('');setNotice('');
+    failedVoiceRef.current=null;
     setCustomTags({});setRemovedTags({});setSavedCampaignId('');setSavedCampaignPosterId('');
+    setLastSavedCampaignId('');setCaptions(emptyCaptions());
+    setGeneratedTags({ta:[],si:[],en:[]});setWorkspaceKey('');
+    setFailedGenerations(null);setPreviewLanguage('all');setAngle('hook');setExpanded(false);
   };
   const downloadPoster=()=>{
     if(!posterUrl||!linked)return;
@@ -723,8 +875,7 @@ export default function ConnectedCaptionLab(){
         </Link>
       </div>
     </header>
-    {error&&<div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-800">{error}</div>}
-    {notice&&<div role="status" className="flex items-center gap-2 rounded-lg border border-[#FED7AA] bg-[#FFF7ED] px-3 py-2 text-[11px] font-medium text-[#92400E]"><CheckCircle2 size={14} className="shrink-0"/>{notice}</div>}
+    {/* Compact top-right Vendor Toast replaces wide blocking banners. */}
     <input ref={posterInputRef} type="file" accept="image/png,image/jpeg,image/webp"
       tabIndex={-1} className="sr-only" aria-label="Upload a local poster image"
       onChange={e=>{void uploadDevicePoster(e.currentTarget.files?.[0]);e.currentTarget.value='';}}/>
@@ -893,7 +1044,12 @@ export default function ConnectedCaptionLab(){
             onChange={e=>setMessage(e.target.value)}
             className={field+' resize-y leading-6 disabled:bg-[#F9FAFB] disabled:text-[#6B7280]'}
             placeholder="Tell us your real offer, product or campaign in தமிழ், සිංහල, English or Tanglish."/>
-          <p className="mt-1 text-[10px] text-[#6B7280]">Add your offer, key details or record a voice brief.</p>
+          <p className="mt-1 text-[10px] text-[#6B7280]">Add your offer, key details or record a voice brief. Unsent edits are kept for this poster in your current browser session.</p>
+          {failedVoiceRef.current&&!voiceBusy&&!recording&&<button type="button"
+            onClick={retryVoice} aria-label="Retry transcription of retained recording"
+            className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-[#FDBA74] bg-[#FFF7ED] px-3 py-2 text-[11px] font-bold text-[#9A3412]">
+            <RefreshCcw size={13}/> Retry transcription · previous recording retained
+          </button>}
           {recording&&<div className="mt-2 flex min-w-0 items-center gap-2 rounded-xl border border-[#3C3540] bg-[#18181B] px-2.5 py-2 text-white shadow-[0_8px_20px_rgba(17,24,39,.17)]"
             role="group" aria-label="Active voice recording">
             <button type="button" onClick={cancelVoice} title="Discard voice recording"
@@ -935,7 +1091,7 @@ export default function ConnectedCaptionLab(){
             <label htmlFor="caption-voice-review" className="block text-[11px] font-bold text-[#92400E]">
               Full transcript · review before adding
             </label>
-            <textarea id="caption-voice-review" value={voiceReviewDraft} rows={4} maxLength={1200}
+            <textarea id="caption-voice-review" value={voiceReviewDraft} rows={4} maxLength={12000}
               onChange={e=>setVoiceReviewDraft(e.target.value)}
               className={field+' resize-y leading-6'}
               aria-describedby="caption-voice-review-help"/>
@@ -972,6 +1128,12 @@ export default function ConnectedCaptionLab(){
           {busy?<LoaderCircle size={17} className="animate-spin"/>:<WandSparkles size={17} className="text-[#FDBA74] group-disabled:text-[#9CA3AF]"/>}
           {busy?'Generating drafts…':'Generate Caption Variations'} <ArrowRight size={14}/>
         </button>
+        {canRetryLanguages&&<button type="button" disabled={isBusy}
+          onClick={()=>void generate(true)}
+          aria-label="Retry only unavailable caption languages"
+          className="mt-2 w-full rounded-xl border border-[#FED7AA] bg-white px-3 py-2.5 text-[11px] font-semibold text-[#9A3412] hover:bg-[#FFF7ED] disabled:opacity-50">
+          Retry {failedGenerations?.languages.map(lang=>labels[lang]).join(' + ')} only · Keep completed drafts
+        </button>}
         <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-xl border border-[#F3F4F6] bg-[#F9FAFB] px-3 py-2.5 text-[10px] leading-4 text-[#6B7280]"
           aria-label="Gemini generation and credit information">
           <span className="inline-flex items-center gap-1.5">
@@ -993,7 +1155,14 @@ export default function ConnectedCaptionLab(){
             <summary className="flex cursor-pointer items-center justify-between gap-2 text-[11px] font-semibold text-[#6B7280]">Quick brief suggestions <ChevronDown size={14} className="slbi-caption-chevron"/></summary>
             <div className="mt-2 flex flex-wrap gap-1.5">
             {promptChips.map(chip=><button key={chip.label} type="button"
-              onClick={()=>setMessage(previous=>[previous,chip.text].filter(Boolean).join(' ').slice(0,600))}
+              onClick={()=>{
+                const next=[message,chip.text].filter(Boolean).join(' ');
+                if(next.length>600){
+                  setNotice('Your brief is full. Review the existing text before adding another suggestion.');
+                  return;
+                }
+                setMessage(next);
+              }}
               disabled={isBusy}
               className="rounded-full border border-[#E5E7EB] px-2.5 py-1.5 text-[10px] font-semibold text-[#6B7280] hover:bg-[#FFF7ED]">
               + {chip.label}</button>)}
@@ -1009,6 +1178,10 @@ export default function ConnectedCaptionLab(){
             placeholder="Only genuine terms or valid dates" className={field+' mt-3'}/>
           <input maxLength={180} value={cta} onChange={e=>setCta(e.target.value)}
             placeholder="Contact us for more details" className={field+' mt-2'}/>
+          {selected?.phone&&<button type="button" onClick={()=>setCta('Contact us: '+selected.phone)}
+            className="mt-2 rounded-lg border border-[#FCD9B5] bg-[#FFF7ED] px-3 py-2 text-[10px] font-bold text-[#9A3412]">
+            Use verified business phone · {selected.phone}
+          </button>}
         </details>
       </section>
 
@@ -1034,7 +1207,7 @@ export default function ConnectedCaptionLab(){
             {labels[l]}</button>)}
           {chosenLanguages.length>1&&<button type="button" onClick={()=>{setPreviewLanguage('all');setExpanded(false);}}
             className={'rounded-full border px-3 py-1.5 text-[10px] font-bold '+
-              (previewLanguage==='all'?'border-[#FDBA74] bg-[#FFF7ED] text-[#C2410C]':'border-[#E5E7EB] text-[#6B7280]')}>All 3 Combined</button>}
+              (previewLanguage==='all'?'border-[#FDBA74] bg-[#FFF7ED] text-[#C2410C]':'border-[#E5E7EB] text-[#6B7280]')}>All {chosenLanguages.length} Combined</button>}
         </div>
         <div className="mx-auto w-full max-w-[520px] overflow-hidden rounded-2xl border border-[#E5E7EB] bg-white shadow-[0_14px_38px_rgba(17,24,39,.08)]">
           <div className="flex items-center gap-2.5 border-b border-[#F3F4F6] p-3.5">
@@ -1113,7 +1286,7 @@ export default function ConnectedCaptionLab(){
             <span>Suggested hook ≤ 125</span>
           </div>
         </div>
-        {savedCampaignId&&<Link href="/vendor/marketing/campaigns?source=caption-lab"
+        {lastSavedCampaignId&&<Link href="/vendor/marketing/campaigns?source=caption-lab"
           className="inline-flex items-center gap-1.5 rounded-xl border border-[#FDBA74] bg-[#FFF7ED] px-3 py-2.5 text-[11px] font-bold text-[#9A3412]">
           <CheckCircle2 size={15}/> Open saved Campaign Planner draft <ArrowRight size={13}/>
         </Link>}
@@ -1150,7 +1323,7 @@ export default function ConnectedCaptionLab(){
           <label htmlFor="caption-edit" className="mb-1.5 block text-[11px] font-bold">
             Edit {angleLabels[angle].title} · {labels[activePreviewLanguage]}
           </label>
-          <textarea id="caption-edit" rows={5} maxLength={1100}
+          <textarea id="caption-edit" rows={5} maxLength={3000}
             value={captions[activePreviewLanguage][angle]}
             onChange={e=>updateAngle(activePreviewLanguage,e.target.value)}
             className={field+' resize-y leading-6 '+textFont(activePreviewLanguage)}
@@ -1187,15 +1360,43 @@ export default function ConnectedCaptionLab(){
         <div className="border-t border-[#F3F4F6] pt-3">
           <h3 className="slbi-section-title mb-2 text-[12px]">Quick Polish <span className="font-normal text-[#9CA3AF]">· No new AI credits</span></h3>
           <div className="grid grid-cols-2 gap-2">
-            <button type="button" onClick={()=>polish('shorten')} disabled={!activeText}
+            <button type="button" onClick={()=>polish('shorten')} disabled={!canPolish}
               className="rounded-lg border border-[#E5E7EB] px-2 py-2.5 text-[10px] font-bold disabled:opacity-40">✨ Make it shorter</button>
-            <button type="button" onClick={()=>polish('urgency')} disabled={!activeText}
+            <button type="button" onClick={()=>polish('urgency')} disabled={!canPolish}
               className="rounded-lg border border-[#E5E7EB] px-2 py-2.5 text-[10px] font-bold disabled:opacity-40">🔥 Add urgency</button>
-            <button type="button" onClick={()=>polish('emojis')} disabled={!activeText}
+            <button type="button" onClick={()=>polish('emojis')} disabled={!canPolish}
               className="rounded-lg border border-[#E5E7EB] px-2 py-2.5 text-[10px] font-bold disabled:opacity-40">😊 Add emojis</button>
-            <button type="button" onClick={()=>polish('contact')} disabled={!activeText}
+            <button type="button" onClick={()=>polish('contact')} disabled={!canPolish}
               className="rounded-lg border border-[#E5E7EB] px-2 py-2.5 text-[10px] font-bold disabled:opacity-40">📞 Include contacts</button>
           </div>
+        </div>
+        <div className="rounded-xl border border-[#FED7AA] bg-[#FFF9F3] p-3" aria-label="Saved Planner Drafts">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[12px] font-extrabold text-[#7C2D12]">Saved Planner Drafts ({plannerDrafts.length})</p>
+            <button type="button" onClick={()=>void loadPlannerDrafts()} disabled={plannerLoading||isBusy}
+              aria-label="Refresh saved Planner drafts"
+              className="rounded-lg p-1.5 text-[#9A3412] disabled:opacity-40">
+              <RefreshCcw size={14} className={plannerLoading?'animate-spin':''}/>
+            </button>
+          </div>
+          <p className="mt-1 text-[10px] leading-4 text-[#92400E]">
+            Saved campaigns stay here, not in your new poster editor. Select a draft to reopen it.
+          </p>
+          <div className="mt-2 max-h-[230px] space-y-1.5 overflow-y-auto">
+            {plannerDrafts.map(item=><button type="button" key={item.id}
+              onClick={()=>void resumePlannerDraft(item)} disabled={isBusy}
+              className="w-full rounded-lg border border-[#FED7AA] bg-white px-2.5 py-2 text-left text-[11px] transition hover:border-[#F97316] disabled:opacity-40">
+              <span className="block truncate font-semibold text-[#374151]">{item.banner_text.slice(0,96)}</span>
+              <span className="mt-0.5 block text-[10px] text-[#9A3412]">
+                {item.created_at?new Date(item.created_at).toLocaleString('en-LK'):'Saved draft'}
+                {item.poster_asset_id?' · Poster linked':''}
+              </span>
+            </button>)}
+            {!plannerDrafts.length&&<p className="py-2 text-[10px] text-[#9A3412]">No Planner drafts saved yet.</p>}
+          </div>
+          {plannerDrafts.length>=300&&<p className="mt-2 text-[10px] text-[#92400E]">
+            Showing the latest 300. Older campaigns remain accessible in Campaign Planner.
+          </p>}
         </div>
         <div className="rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-3">
           <div className="flex items-center justify-between">
@@ -1209,14 +1410,15 @@ export default function ConnectedCaptionLab(){
               const draft=newDraftLanguage(drafts,l);
               return <div key={l} className="flex items-center justify-between gap-2 text-[10px]">
                 <span>{labels[l]}</span>
-                <span className={draft?'font-bold text-[#374151]':'text-[#9CA3AF]'}>
-                  {draft?draft.review_status.replaceAll('_',' '):'No saved draft'}
-                </span>
+                {draft?<button type="button" onClick={()=>resumeAiDraft(draft)} disabled={isBusy}
+                  className="rounded-lg border border-[#E5E7EB] bg-white px-2 py-1 font-bold text-[#374151] hover:border-[#F97316] disabled:opacity-40">
+                  Open · {draft.review_status.replaceAll('_',' ')}
+                </button>:<span className="text-[#9CA3AF]">No saved draft</span>}
               </div>;
             })}
           </div>
         </div>
-        <p className="text-[10px] leading-5 text-[#6B7280]">Every edit updates your preview instantly.</p>
+        <p className="text-[10px] leading-5 text-[#6B7280]">Every edit updates your preview instantly. Saved drafts open only when you choose them.</p>
       </section>
     </div>
   </main>;

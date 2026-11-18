@@ -6,6 +6,7 @@ const read=p=>readFileSync(url(p),'utf8');
 const ui=read('app/vendor/marketing/design/puter-lab/page.tsx');
 const compose=read('lib/marketing/puter-poster-composer.ts');
 const api=read('app/api/marketing/poster/puter-lab/route.ts');
+const voiceEngine=read('lib/marketing/voice/slbi-voice-engine.ts');
 const config=read('next.config.ts');
 const direct=read('lib/marketing/poster-reference-input.ts');
 const oldGenerate=read('app/api/marketing/poster/generate/route.ts');
@@ -42,12 +43,14 @@ test('current real Poster Studio keeps the reviewed three-column desktop and res
 });
 
 test('voice record and human-reviewed Gemini blueprint remain available without automatic image request',()=>{
-  assert.match(ui,/navigator\.mediaDevices\.getUserMedia\(\{audio:true\}\)/);
-  assert.match(ui,/new MediaRecorder\(stream/);
-  assert.match(ui,/rec\.start\(250\)/);
+  assert.match(voiceEngine,/navigator\.mediaDevices\.getUserMedia\(\{/);
+  assert.match(ui,/new SlbiVoiceRecorder\(/);
+  assert.match(voiceEngine,/new MediaRecorder\(stream/);
+  assert.match(voiceEngine,/recorder\.start\(250\)/);
   assert.match(ui,/stopVoice\(\)/);
-  assert.match(ui,/\/api\/marketing\/poster\/transcribe/);
-  assert.match(ui,/x-slbi-business-id/);
+  assert.match(ui,/requestSlbiVoiceTranscript\(/);
+  assert.match(voiceEngine,/\/api\/marketing\/poster\/transcribe/);
+  assert.match(voiceEngine,/x-slbi-business-id/);
   assert.match(ui,/const prepareWithGemini=async\(\)=>/);
   assert.match(ui,/review the headline|Review the headline/);
   assert.match(ui,/setBlueprint\(data\.blueprint\)/);

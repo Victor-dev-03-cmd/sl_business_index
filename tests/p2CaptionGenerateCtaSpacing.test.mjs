@@ -31,7 +31,7 @@ test('Credits and help are contained in a balanced inset strip below Generate, n
 });
 
 test('Caption button is already wired to real Gemini with isolated internal QA gate and credit ledger',()=>{
-  assert.match(page,/const generate=async\(\)=>/);
+  assert.match(page,/const generate=async\(retryFailedOnly=false\)=>/);
   assert.match(page,/fetch\('\/api\/marketing\/caption'/);
   assert.match(page,/mode:'three_angles'/);
   assert.match(page,/requestKey:crypto\.randomUUID\(\)/);

@@ -175,8 +175,8 @@ export default function VendorLayout({children}:{children:React.ReactNode}){
       id="vendor-portal"
       position="top-right"
       offset={90}
-      duration={4500}
-      visibleToasts={3}
+      duration={4300}
+      visibleToasts={2}
       closeButton
       icons={{
         success: <CircleCheck size={19} className="text-[#f57807]" aria-hidden="true"/>,
@@ -189,13 +189,14 @@ export default function VendorLayout({children}:{children:React.ReactNode}){
           color: '#202024',
           border: '1px solid #e8e8ec',
           borderLeft: '3px solid #FF7900',
-          borderRadius: '16px',
-          padding: '16px',
+          borderRadius: '12px',
+          padding: '10px 12px',
+          maxWidth: 'min(340px, calc(100vw - 24px))',
           boxShadow: '0 16px 38px rgba(30, 30, 34, .14)',
         },
         classNames: {
-          title: '!text-[13px] !font-bold !text-[#202024]',
-          description: '!text-[12px] !leading-5 !text-[#686872]',
+          title: '!text-[12px] !font-semibold !text-[#202024]',
+          description: '!text-[11px] !leading-4 !text-[#686872]',
         },
       }}
     />

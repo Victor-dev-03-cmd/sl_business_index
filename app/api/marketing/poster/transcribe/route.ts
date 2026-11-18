@@ -3,7 +3,9 @@ import {createClient as createAdminClient} from '@supabase/supabase-js';
 import {createClient} from '@/lib/supabase/server';
 import {isSameOrigin} from '@/lib/growth/ingestion-contract';
 import {getMarketingAccessForUser,rejectMarketingAccess} from '@/lib/marketing/pro-access-server';
-import {GEMINI_POSTER_MODEL,isPosterIntelligenceEnabled} from '@/lib/marketing/poster-gemini-intelligence';
+import {isPosterIntelligenceEnabled} from '@/lib/marketing/poster-gemini-intelligence';
+import {transcribeSlbiVendorAudio,SlbiVoiceProviderError,
+  type SlbiVoiceLanguage} from '@/lib/marketing/voice/slbi-gemini-transcription';
 
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
@@ -43,7 +45,7 @@ export async function POST(request:Request){
   const denied=rejectMarketingAccess(await getMarketingAccessForUser(user.id,client));
   if(denied)return denied;
   const {data:business,error:businessError}=await client.from('businesses')
-    .select('id,name').eq('id',businessId).eq('owner_id',user.id).maybeSingle();
+    .select('id,name,category,city').eq('id',businessId).eq('owner_id',user.id).maybeSingle();
   if(businessError)return reply(503,{error:'Business ownership check unavailable.'});
   if(!business)return reply(404,{error:'The selected business is not owned by your account.'});
 
@@ -56,46 +58,37 @@ export async function POST(request:Request){
     if(bytes.length<800||bytes.length>MAX_AUDIO_BYTES)
       return reply(413,{error:'Recording is too large (1.5 MB maximum). Please shorten it or type the remaining details.'});
   }catch{return reply(400,{error:'Invalid microphone recording.'});}
+  // Validate provider configuration before reserving a vendor's voice allowance.
+  const key=process.env.GEMINI_API_KEY?.trim();
+  if(!key)return reply(503,{code:'VOICE_NOT_CONFIGURED',
+    error:'Voice service needs administrator configuration. Your text remains unchanged.'});
   // The server alone may reserve usage; errors always deny further Gemini calls.
   const admin=createAdminClient(url,secret,{auth:{persistSession:false,autoRefreshToken:false}});
   const {data:approved,error:quotaError}=await admin.rpc('marketing_poster_voice_try_reserve',{p_user_id:user.id});
   if(quotaError)return reply(503,{error:'Voice usage limit cannot be verified.'});
-  if(approved!==true)return reply(429,{error:'Daily voice transcription limit reached. Type your message instead.'});
-
-  const key=process.env.GEMINI_API_KEY?.trim();
-  if(!key)return reply(503,{error:'Gemini text service is not configured.'});
+  if(approved!==true)return reply(429,{code:'VOICE_DAILY_LIMIT',
+    error:'Daily voice allowance reached. Retry after 00:00 UTC; your existing text is safe.'});
   const languageHint=request.headers.get('x-slbi-language');
-  const language=['ta','si','en'].includes(languageHint||'')?languageHint:'auto';
+  const language:SlbiVoiceLanguage=
+    languageHint==='ta'||languageHint==='si'||languageHint==='en'?
+      languageHint:'auto';
   try{
-    const provider=await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/'+
-      GEMINI_POSTER_MODEL+':generateContent',{
-        method:'POST',cache:'no-store',redirect:'error',signal:AbortSignal.timeout(18000),
-        headers:{'x-goog-api-key':key,'Content-Type':'application/json'},
-        body:JSON.stringify({
-          systemInstruction:{parts:[{text:
-            'Transcribe exactly what the speaker says, preserving Tamil, Sinhala, English, '+
-            'Tanglish/Singlish and mixed speech. Do not translate, improve, invent words, '+
-            'add promotional claims, or answer the request. Output only the transcript.'}]},
-          contents:[{role:'user',parts:[
-            {text:'Business vocabulary hint: '+business.name.slice(0,100)+
-              '. Preferred language: '+language+'. Transcribe this short recording verbatim.'},
-            {inlineData:{mimeType:mime,data:Buffer.from(bytes).toString('base64')}},
-          ]}],
-          generationConfig:{temperature:0,maxOutputTokens:1800},
-        }),
-      });
-    if(provider.status===429)return reply(429,{error:'Gemini free quota reached. Type your message instead.'});
-    if(!provider.ok)return reply(503,{error:'Voice service cannot transcribe this recording right now.'});
-    const raw=await provider.text();
-    if(raw.length>16000)return reply(503,{error:'Voice service returned an oversized response.'});
-    const data=JSON.parse(raw) as {
-      candidates?:Array<{content?:{parts?:Array<{text?:string}>}}>;
-    };
-    const transcript=(data.candidates?.[0]?.content?.parts||[])
-      .map(p=>p.text||'').join(' ').trim();
-    if(transcript.length<2||transcript.length>1200)
-      return reply(422,{error:'Your transcription exceeds the 1,200-character poster brief limit. Please shorten it or type the essential details.'});
+    // The Gemini provider has ONE shared Sri Lankan multilingual prompt,
+    // ONE quota reservation above and one bounded retry for transient failures.
+    const transcript=await transcribeSlbiVendorAudio({
+      key,bytes,language,
+      // Safari MediaRecorder emits audio-only MP4/AAC; Gemini documents
+      // audio/m4a, not audio/mp4, as its supported MIME for that container.
+      mime:mime==='audio/mp4'?'audio/m4a':mime,
+      business:{name:business.name,category:business.category,city:business.city},
+    });
     return reply(200,{transcript,languageHint:language,reviewBeforeGenerating:true});
-  }catch{return reply(503,{error:'Microphone transcription temporarily unavailable. Type instead.'});}
+  }catch(e){
+    if(e instanceof SlbiVoiceProviderError)
+      return reply(e.status,{code:e.code,error:e.message});
+    console.warn('SLBI voice unexpected backend error',
+      e instanceof Error?e.name:'unknown');
+    return reply(503,{code:'VOICE_NETWORK',
+      error:'Voice service connection interrupted. Retry your retained recording.'});
+  }
 }
