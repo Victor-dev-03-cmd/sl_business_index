@@ -84,6 +84,7 @@ test('Planner save tombstones old handoff and removes stale draft snapshots befo
   assert.match(cleared,/setAngle\('hook'\);setPreviewLanguage\('all'\)/);
   assert.match(cleared,/setWorkspaceEpoch\(epoch=>epoch\+1\)/);
   assert.match(caption,/slbi-caption-unsaved-v3:/);
+  assert.match(caption,/const recoveryKey='slbi-caption-unsaved-v3:'/);
   assert.match(caption,/if\(skip\)sessionStorage\.removeItem\(key\)/);
   const loader=caption.slice(caption.indexOf('  const loadDrafts=useCallback('),
     caption.indexOf('  const loadPlannerDrafts=useCallback('));

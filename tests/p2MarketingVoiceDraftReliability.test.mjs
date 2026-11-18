@@ -50,8 +50,8 @@ test('Fresh poster cannot auto-load old language drafts into its live editor',()
     caption.indexOf('  const loadPlannerDrafts=useCallback('));
   assert.match(loader,/setDrafts\(list\)/);
   assert.doesNotMatch(loader,/setCaptions\(|setGeneratedTags\(/);
-  assert.match(caption,/slbi-caption-unsaved-v2:/);
-  assert.match(caption,/validHandoffId\(handoff\)\?handoff:'direct'/);
+  assert.match(caption,/slbi-caption-unsaved-v3:/);
+  assert.match(caption,/\(valid\?handoff:'direct'\)/);
   assert.match(caption,/slbi-caption-completed-handoff:/);
   assert.match(caption,/sessionStorage\.removeItem\(workspaceKey\)/);
   assert.match(caption,/const clearEditorAfterSave=\(\)=>/);

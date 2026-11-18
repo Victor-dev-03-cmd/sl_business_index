@@ -285,7 +285,7 @@ export default function ConnectedCaptionLab(){
       posterUrlRef.current=src;setPosterUrl(src);
       setPosterKey(key);setLinked(record);setBusinessId(record.context.businessId);
       setCloudAssetId(record.context.savedPosterAssetId||'');
-      const recoveryKey='slbi-caption-unsaved-v2:'+record.context.businessId+':'+key;
+      const recoveryKey='slbi-caption-unsaved-v3:'+record.context.businessId+':'+key;
       let recovering=false;
       try{recovering=Boolean(sessionStorage.getItem(recoveryKey));}catch{}
       if(!recovering){
