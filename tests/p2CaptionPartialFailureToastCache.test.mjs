@@ -57,6 +57,19 @@ test('Quick Polish applies to all generated languages and never silently loses c
   assert.equal(all.captions.si.hook,'✨ '+original.si.hook);
   assert.equal(all.captions.en.hook,'');
   assert.equal(original.ta.hook.startsWith('✨'),false);
+  const repeated=polishCaptionSelections({
+    captions:all.captions,selectedLanguages:['ta','si'],
+    previewLanguage:'all',angle:'hook',kind:'emojis',
+    contact:{phone:'',city:'',website:''},
+  });
+  assert.deepEqual(repeated.changed,[]);
+  const unverified=polishCaptionSelections({
+    captions:original,selectedLanguages:['ta','si'],
+    previewLanguage:'all',angle:'hook',kind:'contact',
+    contact:{phone:'',city:'Jaffna',website:''},
+  });
+  assert.deepEqual(unverified.changed,[]);
+
   const single=polishCaptionSelections({
     captions:original,selectedLanguages:['ta','si'],previewLanguage:'si',
     angle:'hook',kind:'urgency',contact:{phone:'',city:'',website:''},
@@ -64,6 +77,7 @@ test('Quick Polish applies to all generated languages and never silently loses c
   assert.deepEqual(single.changed,['si']);
   assert.equal(single.captions.ta.hook,original.ta.hook);
   assert.match(caption,/const canPolish=previewLanguage==='all'\?/);
+  assert.match(caption,/chosenLanguages\.find\(lang=>Boolean\(captions\[lang\]\[angle\]\?\.trim\(\)\)\)/);
   assert.match(caption,/disabled=\{!canPolish\}/);
   assert.match(caption,/All \{chosenLanguages.length\} Combined/);
 });

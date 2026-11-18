@@ -193,7 +193,9 @@ export default function ConnectedCaptionLab(){
   const selected=useMemo(()=>businesses.find(b=>b.id===businessId),[businesses,businessId]);
   const hasLinked=Boolean(linked&&linked.context.businessId===businessId);
   const chosenLanguages:CaptionLanguage[]=languageSelections.length?languageSelections:['ta'];
-  const activePreviewLanguage:CaptionLanguage=previewLanguage==='all'?chosenLanguages[0]:previewLanguage;
+  const activePreviewLanguage:CaptionLanguage=previewLanguage==='all'?
+    (chosenLanguages.find(lang=>Boolean(captions[lang][angle]?.trim()))||chosenLanguages[0]):
+    previewLanguage;
   const generationSignature=JSON.stringify({
     businessId,goal,tone,message,conditions,cta,posterKey,languages:chosenLanguages,
   });

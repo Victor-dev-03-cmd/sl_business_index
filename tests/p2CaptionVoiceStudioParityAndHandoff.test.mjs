@@ -51,7 +51,7 @@ test('Voice transcript and poster handoff keep product/service/offer in ONE edit
 });
 
 test('No transcribe or caption charging happens on record, pause, login or poster handoff',()=>{
-  const recording=lab.slice(lab.indexOf('  const startVoice=async()=>{'),lab.indexOf('  const generate=async()=>{'));
+  const recording=lab.slice(lab.indexOf('  const startVoice=async()=>{'),lab.indexOf('  const generate=async('));
   assert.match(engine,/navigator\.mediaDevices\.getUserMedia\(\{/);
   assert.match(recording,/new SlbiVoiceRecorder\(/);
   assert.match(recording,/void transcribe\(blob\)/);
@@ -60,10 +60,10 @@ test('No transcribe or caption charging happens on record, pause, login or poste
   assert.match(transcribe,/requestSlbiVoiceTranscript\(/);
   assert.match(engine,/\/api\/marketing\/poster\/transcribe/);
   assert.doesNotMatch(transcribe,/\/api\/marketing\/caption/);
-  const generate=lab.slice(lab.indexOf('  const generate=async()=>{'),lab.indexOf('  const editTags='));
+  const generate=lab.slice(lab.indexOf('  const generate=async('),lab.indexOf('  const editTags='));
   assert.match(generate,/\/api\/marketing\/caption/);
   assert.match(generate,/requestKey:crypto\.randomUUID\(\)/);
-  assert.match(generate,/const prompt=message\.trim\(\)/);
+  assert.match(generate,/message:message\.trim\(\)/);
   assert.match(api,/process\.env\.SLBI_MARKETING_AI_ENABLED!=='true'/);
   assert.match(api,/marketing_reserve_ai_draft/);
   assert.match(voiceApi,/marketing_poster_voice_try_reserve/);
