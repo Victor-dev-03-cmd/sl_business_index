@@ -113,7 +113,7 @@ jobs:
       - name: Brand validation, page/API contract and existing Marketing Studio tests
         run: |
           node --test tests/p2BrandProfile.test.mjs tests/p2AiCaption.test.mjs tests/p2PosterDesign.test.mjs tests/p2PosterCreativeEngine.test.mjs tests/p2PosterImageAPI.test.mjs tests/p2PosterGeminiIntelligence.test.mjs tests/p2PosterStudioWorkspace.test.mjs tests/p2PuterBrowserLab.test.mjs tests/p2PosterComposerAttachmentsVoice.test.mjs tests/p2PosterStaffReviewRelease.test.mjs tests/p2PosterPermanentQA.test.mjs tests/p2MarketingEngineShell.test.mjs tests/marketingStudioAppStore.test.mjs tests/p2GlobalMarketingLaunch.test.mjs tests/p2MarketingLoadingAndConnect.test.mjs tests/p2OAuthConnectors.test.mjs tests/p2OAuthFlow.test.mjs tests/p2OAuthDisconnect.test.mjs tests/p2OAuthCallbackRace.test.mjs tests/vendorNeutralUi.test.mjs
-          node --test tests/p2MarketingVoiceDraftReliability.test.mjs
+          node --test tests/p2MarketingVoiceDraftReliability.test.mjs tests/p2SharedSlbiVoiceEngine.test.mjs
           node --test tests/p2ConnectedCaptionLab.test.mjs tests/p2CaptionGeminiJson.test.mjs tests/p2PosterGeminiQuotaMicFix.test.mjs tests/p2CaptionVoicePermission.test.mjs tests/p2CaptionVoiceStudioParityAndHandoff.test.mjs tests/p2CaptionGenerateCtaSpacing.test.mjs tests/p2PrivatePosterSavePlannerCta.test.mjs tests/p2CampaignPlannerColumnGrant.test.mjs tests/p2PosterPavanamVoiceLayout.test.mjs tests/p2PosterContentFirstLayout.test.mjs tests/p2PosterBusinessServiceFocus.test.mjs tests/p2PosterGenerateErrorRecovery.test.mjs
           node --test tests/vendorSettingsQrMarketing2026.test.mjs tests/vendorPortalRelease.test.mjs
           node --test tests/p2CampaignReleaseCandidate.test.mjs

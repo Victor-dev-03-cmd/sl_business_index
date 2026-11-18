@@ -11,6 +11,7 @@ const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const studio=read('app/vendor/marketing/design/puter-lab/page.tsx');
 const reference=read('app/api/marketing/poster/references/analyze/route.ts');
 const poster=read('app/api/marketing/poster/puter-lab/route.ts');
+const engine=read('lib/marketing/voice/slbi-voice-engine.ts');
 
 function file(name,type,size=400){
   return new File([new Uint8Array(size)],name,{type});
@@ -37,22 +38,22 @@ test('Composer adds exactly the requested icon-only plus / voice / Gemini tool p
 });
 
 test('Multilingual voice recorder shows real metered waveform, pause/resume, cancel, send and transcription loading',()=>{
-  assert.match(studio,/getUserMedia\(\{audio:true\}\)/);
-  assert.match(studio,/const audio=new AudioContext\(\)/);
-  assert.match(studio,/audio\.createAnalyser\(\)/);
-  assert.match(studio,/analyser\.getByteFrequencyData\(bins\)/);
+  assert.match(engine,/navigator\.mediaDevices\.getUserMedia\(\{/);
+  assert.match(engine,/const audio=new AudioContext\(\)/);
+  assert.match(engine,/audio\.createAnalyser\(\)/);
+  assert.match(engine,/analyser\.getByteFrequencyData\(samples\)/);
   assert.match(studio,/voiceLevels\.map\(\(level,i\)=>/);
   assert.match(studio,/aria-label="Live microphone waveform"/);
-  assert.match(studio,/rec\.pause\(\)/);
-  assert.match(studio,/rec\.resume\(\)/);
+  assert.match(engine,/recorder\.pause\(\)/);
+  assert.match(engine,/recorder\.resume\(\)/);
   assert.match(studio,/const cancelVoice=\(\)=>/);
   assert.match(studio,/aria-label="Discard voice recording"/);
   assert.match(studio,/aria-label="Send recording to transcript"/);
   assert.match(studio,/void transcribe\(blob\)/);
   assert.match(studio,/Transcribing…/);
-  assert.match(studio,/discardVoiceRef\.current=true;stopVoice\(\)/);
-  assert.match(studio,/if\(discardVoiceRef\.current\)return/);
-  assert.match(studio,/cleanVoiceMeter\(\)/);
+  assert.match(studio,/voiceCaptureRef\.current\?\.cancel\(\)/);
+  assert.match(engine,/if\(discard\)return/);
+  assert.match(studio,/disposeVoice\(\)/);
   assert.match(studio,/Audio limit: 1\.5 MB/);
 });
 

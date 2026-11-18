@@ -58,10 +58,17 @@ export class SlbiVoiceRecorder{
     this.stream=stream;
     try{
       const mime=slbiVoiceMimeType();
-      const recorder=new MediaRecorder(stream,{
-        ...(mime?{mimeType:mime}:{}),
-        audioBitsPerSecond:SLBI_VOICE_AUDIO_BITRATE,
-      });
+      let recorder:MediaRecorder;
+      try{
+        recorder=new MediaRecorder(stream,{
+          ...(mime?{mimeType:mime}:{}),
+          audioBitsPerSecond:SLBI_VOICE_AUDIO_BITRATE,
+        });
+      }catch{
+        // Some Safari/older browsers do not honor bitrate options; keep
+        // recording with a supported codec and enforce actual measured bytes.
+        recorder=new MediaRecorder(stream,mime?{mimeType:mime}:undefined);
+      }
       this.recorder=recorder;
       this.parts=[];this.totalBytes=0;this.elapsedMs=0;
       this.discarded=false;this.reason='sent';
@@ -83,7 +90,7 @@ export class SlbiVoiceRecorder{
         const reason=this.reason;
         this.releaseMedia();
         this.recorder=null;
-        this.callbacks.onState?.('idle');
+        if(!this.disposed)this.callbacks.onState?.('idle');
         if(discard)return;
         if(blob.size<800){
           this.callbacks.onError(Error('No usable speech captured. Speak for a few seconds and tap Send.'));

@@ -62,8 +62,8 @@ test('Transcript status is explicit, full overlong text is reviewable, no silent
   assert.doesNotMatch(captions,/setMessage\(previous=>\[previous,data\.transcript\][\s\S]*?slice\(0,600\)/);
   assert.match(captions,/const prompt=message\.trim\(\)/);
   assert.match(captions,/if\(voiceReviewDraft\)\{/);
-  assert.match(captions,/if\(blob\.size<800\)/);
-  assert.match(captions,/No audio captured/);
+  assert.match(engine,/if\(blob\.size<800\)/);
+  assert.match(engine,/No usable speech captured/);
 });
 
 test('Transcription route retains Pro auth, owner isolation, quota and server-only Gemini',()=>{

@@ -7,16 +7,20 @@ const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const caption=read('app/vendor/marketing/captions/page.tsx');
 const poster=read('app/vendor/marketing/design/puter-lab/page.tsx');
 const voice=read('app/api/marketing/poster/transcribe/route.ts');
+const engine=read('lib/marketing/voice/slbi-voice-engine.ts');
+const provider=read('lib/marketing/voice/slbi-gemini-transcription.ts');
 
 test('Transcription has typed failure codes, bounded upstream calls and preserves cost boundary',()=>{
   for(const code of ['VOICE_PROVIDER_QUOTA','VOICE_DAILY_LIMIT','VOICE_TIMEOUT',
     'VOICE_NETWORK','VOICE_AUDIO_REJECTED','VOICE_BAD_RESPONSE','VOICE_EMPTY_RESULT'])
-    assert.ok(voice.includes(code),code);
+    assert.ok((voice+provider).includes(code),code);
   assert.ok(voice.indexOf("const key=process.env.GEMINI_API_KEY?.trim()") <
     voice.indexOf("admin.rpc('marketing_poster_voice_try_reserve'"));
-  assert.match(voice,/AbortSignal.timeout\(27000\)/);
-  assert.match(voice,/console.warn\('SLBI voice upstream HTTP status',provider.status\)/);
-  assert.doesNotMatch(voice,/console\.warn\([^)]*(?:bytes|transcript|GEMINI_API_KEY)/);
+  assert.match(provider,/AbortSignal.timeout\(TRY_TIMEOUT_MS\)/);
+  assert.match(provider,/SLBI_GEMINI_VOICE_MODEL='gemini-2.5-flash'/);
+  assert.match(provider,/for\(let attempt=0;attempt<2;attempt\+\+\)/);
+  assert.match(provider,/console.warn\('SLBI Gemini voice upstream HTTP',provider.status\)/);
+  assert.doesNotMatch(voice+provider,/console\.warn\([^)]*(?:bytes|transcript|GEMINI_API_KEY)/);
   assert.doesNotMatch(voice,/Microphone transcription temporarily unavailable/);
 });
 
@@ -27,8 +31,12 @@ test('Both studios retain failed audio in memory and require a user retry click'
     assert.match(ui,/failedVoiceRef.current=null/);
     assert.match(ui,/const retryVoice=\(\)=>/);
     assert.match(ui,/onClick=\{retryVoice\}/);
+    assert.match(ui,/new SlbiVoiceRecorder\(/);
+    assert.match(ui,/requestSlbiVoiceTranscript\(/);
     assert.match(ui,/Retry transcription/);
   }
+  assert.match(engine,/SLBI_VOICE_SAFE_BYTES=1_400_000/);
+  assert.match(engine,/SLBI_VOICE_MAX_SECONDS=180/);
   const cb=caption.slice(caption.indexOf('  const transcribe=async(blob:Blob)=>{'),
     caption.indexOf('  const startVoice=async()=>{'));
   assert.doesNotMatch(cb,/await generate\(/);

@@ -57,7 +57,7 @@ export function sriLankaGeminiVoicePrompt(business:OwnedBusinessContext,language
 }
 
 type GeminiResult={
-  candidates?:Array<{content?:{parts?:Array<{text?:string}>}}>;
+  candidates?:Array<{content?:{parts?:Array<{text?:string}>};finishReason?:string}>;
   promptFeedback?:{blockReason?:string};
 };
 const message=(code:SlbiVoiceProviderError['code'],status:number,text:string)=>
@@ -76,7 +76,12 @@ export async function transcribeSlbiVendorAudio(input:{
       {text:instructions.task},
       {inlineData:{mimeType:input.mime,data:Buffer.from(input.bytes).toString('base64')}},
     ]}],
-    generationConfig:{temperature:0,maxOutputTokens:4096},
+    generationConfig:{
+      temperature:0,maxOutputTokens:4096,
+      // Gemini 2.5 Flash supports disabling reasoning for verbatim STT:
+      // preserve tokens and latency for the actual transcript.
+      thinkingConfig:{thinkingBudget:0},
+    },
   });
   for(let attempt=0;attempt<2;attempt++){
     let provider:Response;
@@ -120,6 +125,9 @@ export async function transcribeSlbiVendorAudio(input:{
       throw message('VOICE_BAD_RESPONSE',502,
         'The voice service returned an invalid response. Retry the retained recording.');
     }
+    if(data.candidates?.[0]?.finishReason==='MAX_TOKENS')
+      throw message('VOICE_TRANSCRIPT_TOO_LONG',422,
+        'This recording is too long to transcribe completely. Use two shorter clips; no partial text was inserted.');
     const transcript=(data.candidates?.[0]?.content?.parts||[])
       .map(part=>part.text||'').join(' ').trim()
       .replace(/^Transcript\s*:\s*/i,'').trim();
