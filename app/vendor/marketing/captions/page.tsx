@@ -433,7 +433,7 @@ export default function ConnectedCaptionLab(){
     setVoiceBusy(true);setError('');setNotice('Gemini is transcribing your recording in its original language…');
     try{
       const data=await requestSlbiVoiceTranscript({
-        audio:blob,businessId,language:'auto',
+        audio:blob,businessId,language:activePreviewLanguage,
       });
       const transcript=data.transcript.trim();
       failedVoiceRef.current=null;

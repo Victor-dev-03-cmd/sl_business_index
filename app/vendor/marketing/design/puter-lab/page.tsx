@@ -417,7 +417,7 @@ export default function PuterMultilingualPosterLab(){
       if(blob.size<800||blob.size>maxAudio)
         throw Error('The voice clip exceeds 1.5 MB. Record a shorter clip or type the remaining details.');
       const data=await requestSlbiVoiceTranscript({
-        audio:blob,businessId,language:'auto',
+        audio:blob,businessId,language,
       });
       const heard=data.transcript.trim();
       failedVoiceRef.current=null;

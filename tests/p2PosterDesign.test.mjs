@@ -61,11 +61,13 @@ test('active Poster Studio is the sole production page; no retired Creative AI D
 test('one active Studio uses Gemini, Puter, exact Canvas and multilingual review',()=>{
   const ui=read('app/vendor/marketing/design/puter-lab/page.tsx');
   const composer=read('lib/marketing/puter-poster-composer.ts');
+  const voice=read('lib/marketing/voice/slbi-voice-engine.ts');
   assert.match(ui,/SLBI AI Poster Studio/);
   assert.match(ui,/id="puter-prompt"/);
-  assert.match(ui,/getUserMedia/);
-  assert.match(ui,/MediaRecorder/);
-  assert.match(ui,/\/api\/marketing\/poster\/transcribe/);
+  assert.match(voice,/getUserMedia/);
+  assert.match(voice,/MediaRecorder/);
+  assert.match(ui,/new SlbiVoiceRecorder/);
+  assert.match(voice,/\/api\/marketing\/poster\/transcribe/);
   assert.match(ui,/Prepare with Gemini/);
   assert.match(ui,/CONTENT_PANEL_STYLES\.map/);
   assert.match(ui,/composeExactPoster/);

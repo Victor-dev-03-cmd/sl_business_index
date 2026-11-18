@@ -203,14 +203,25 @@ export async function requestSlbiVoiceTranscript(args:{
 }):Promise<SlbiTranscriptResult>{
   if(args.audio.size<800||args.audio.size>SLBI_VOICE_MAX_BYTES)
     throw new SlbiVoiceRequestError('Record a shorter, usable voice message.','VOICE_SIZE',413);
-  const response=await fetch('/api/marketing/poster/transcribe',{
-    method:'POST',credentials:'same-origin',cache:'no-store',body:args.audio,
-    headers:{
-      'Content-Type':args.audio.type||'audio/webm',
-      'x-slbi-business-id':args.businessId,
-      'x-slbi-language':args.language||'auto',
-    },
-  });
+  let response:Response;
+  try{
+    response=await fetch('/api/marketing/poster/transcribe',{
+      method:'POST',credentials:'same-origin',cache:'no-store',body:args.audio,
+      signal:AbortSignal.timeout(40_000),
+      headers:{
+        'Content-Type':args.audio.type||'audio/webm',
+        'x-slbi-business-id':args.businessId,
+        'x-slbi-language':args.language||'auto',
+      },
+    });
+  }catch(e){
+    const timeout=e instanceof Error&&
+      (e.name==='TimeoutError'||e.name==='AbortError');
+    throw new SlbiVoiceRequestError(timeout?
+      'Voice request timed out. Retry your retained recording.':
+      'Network connection interrupted. Retry the retained recording.',
+      timeout?'VOICE_CLIENT_TIMEOUT':'VOICE_CLIENT_NETWORK',timeout?504:503);
+  }
   let data:{error?:string;code?:string;transcript?:string;languageHint?:string};
   try{data=await response.json() as typeof data;}
   catch{throw new SlbiVoiceRequestError('Voice service returned an invalid response.','VOICE_RESPONSE',502);}
