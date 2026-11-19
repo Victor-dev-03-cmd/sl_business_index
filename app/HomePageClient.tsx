@@ -1,5 +1,7 @@
 "use client";
 import "./home-mobile.css";
+import "./home-native.css";
+import MobileHomeExperience from "./MobileHomeExperience";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { getBusinessDisplayAddress } from "@/lib/businessAddress";
@@ -357,11 +359,23 @@ export default function HomePageClient() {
 
   return (
     <div className="slbi-home-root min-h-[100dvh] bg-white font-normal">
+      {/* Mobile-only presentation, sharing the original data and callbacks. */}
+      <MobileHomeExperience
+        categories={categories}
+        featuredBusinesses={featuredBusinesses}
+        categoriesLoading={categoriesLoading}
+        featuredLoading={featuredLoading}
+        featuredError={featuredError}
+        userCoords={userCoords}
+        isFetchingLocation={isFetchingLocation}
+        handleUseCurrentLocation={handleUseCurrentLocation}
+        handleCategoryClick={handleCategoryClick}
+      />
 
       {/* --- PHASE 3: Split editorial hero with accessible SVG product motion --- */}
       <section
         aria-labelledby="homepage-hero-title"
-        className="slbi-home-hero relative isolate bg-[#1B3430] text-white"
+        className="slbi-home-hero relative isolate hidden bg-[#1B3430] text-white sm:block"
       >
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
           <div className="absolute inset-0">
@@ -462,7 +476,7 @@ export default function HomePageClient() {
       {/* --- BROWSE CATEGORIES: editorial, accessible, and lightweight --- */}
       <section
         aria-labelledby="browse-categories-heading"
-        className="slbi-home-categories relative isolate border-b border-[#F0F2E9] bg-[#F8F7F2] py-20 sm:py-24 lg:py-28"
+        className="slbi-home-categories relative isolate hidden border-b border-[#F0F2E9] bg-[#F8F7F2] py-20 sm:block sm:py-24 lg:py-28"
       >
         <div className="pointer-events-none absolute right-0 top-0 h-72 w-72 rounded-full bg-[#F0D9AC]/25 blur-[100px]" aria-hidden="true" />
         <div className="relative mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12">
@@ -609,34 +623,10 @@ export default function HomePageClient() {
         </div>
       </section>
 
-      {/* Mobile-only compact Nearby entry. Reuses the exact existing location handler. */}
-      <section className="slbi-mobile-nearby-entry sm:hidden" aria-label="Explore businesses near you">
-        <button
-          type="button"
-          onClick={() => handleUseCurrentLocation(true)}
-          disabled={isFetchingLocation}
-          className="slbi-mobile-nearby-banner group relative flex min-h-[82px] w-full items-center justify-between overflow-hidden rounded-[18px] border border-[#C6A870] bg-[#17392F] px-5 py-4 text-left text-[#F0D9AC] shadow-[0_6px_18px_rgba(22,48,38,.11)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#BA9768] disabled:cursor-wait disabled:opacity-70"
-        >
-          <span className="relative z-10 inline-flex items-center gap-2 text-[19px] font-semibold tracking-[-.04em]">
-            {isFetchingLocation ? "Finding location…" : "Explore Near Me"}
-            <ArrowRight size={21} strokeWidth={1.8} />
-          </span>
-          <Image
-            src="/sri-lanka-gold-outline.svg"
-            width={120}
-            height={210}
-            unoptimized
-            alt=""
-            aria-hidden="true"
-            className="pointer-events-none absolute -right-1 -top-12 h-[190px] w-[115px] opacity-40"
-          />
-        </button>
-      </section>
-
       {/* --- FEATURED LISTINGS: premium portrait business showcase --- */}
       <section
         aria-labelledby="featured-listings-title"
-        className="slbi-home-featured relative isolate overflow-hidden border-b border-[#F0F2E9] bg-white py-20 sm:py-24 lg:py-28"
+        className="slbi-home-featured relative isolate hidden overflow-hidden border-b border-[#F0F2E9] bg-white py-20 sm:block sm:py-24 lg:py-28"
       >
         <div className="pointer-events-none absolute -left-48 top-0 h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle,rgba(224,234,219,0.32)_0%,transparent_72%)]" aria-hidden="true" />
         <div className="relative mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12">
