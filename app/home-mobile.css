@@ -75,3 +75,444 @@
 @media (prefers-reduced-motion:reduce) {
   .slbi-hero-search-form,.slbi-hero-search-button {transition:none;}
 }
+
+
+/*
+ * 2026-11-19: mobile homepage presentation based on the approved native-app
+ * reference. Scope ALL overrides to phone widths, and only this public page.
+ * No changes to search, database queries, location resolution or navigation.
+ * Desktop and tablet retain their original layouts.
+ */
+@media (max-width:639px) {
+  /* Homepage only: the marketing strip stays present on desktop / other pages. */
+  body:has(.slbi-home-root) aside[aria-label="SL Business Index announcement"] {
+    display:none;
+  }
+  body:has(.slbi-home-root) header {
+    border-color:transparent;
+    background:#12382e;
+    box-shadow:none;
+  }
+  body:has(.slbi-home-root) header > div {
+    height:78px;
+    align-items:center;
+    padding:12px 19px 10px;
+  }
+  body:has(.slbi-home-root) header [aria-label="Welcome to SL Business Index"] {
+    gap:2px;
+  }
+  body:has(.slbi-home-root) header [aria-label="Welcome to SL Business Index"] span[title] {
+    color:#fcfbf5;
+    font-size:17px;
+    font-weight:600;
+  }
+  body:has(.slbi-home-root) header [aria-label="Welcome to SL Business Index"] > span:last-child {
+    color:#dfd7b6;
+    font-size:12px;
+  }
+  body:has(.slbi-home-root) header a[aria-label="View notifications"] {
+    color:#fcfbf5;
+  }
+  body:has(.slbi-home-root) header button[aria-label="Open account and navigation menu"],
+  body:has(.slbi-home-root) header button[aria-label="Close account and navigation menu"] {
+    background:#f8f8f2;
+    border-color:#dfebe1;
+    color:#15392f;
+    width:42px;
+    height:42px;
+  }
+
+  /* Dark compact search header: retain the existing HeroSearch component. */
+  .slbi-home-root {
+    background:#faf9f4;
+  }
+  .slbi-home-hero {
+    overflow:visible;
+    isolation:isolate;
+    background:#12382e;
+    border-radius:0 0 24px 24px;
+    padding-bottom:11px;
+  }
+  .slbi-home-hero > div[aria-hidden="true"],
+  .slbi-home-hero .slbi-home-mobile-map {display:none;}
+  .slbi-home-hero-grid {
+    padding:0 16px 14px;
+    min-height:0;
+    display:block;
+  }
+  .slbi-home-hero-badge,
+  .slbi-home-hero-description,
+  .slbi-home-search-hint,
+  .slbi-home-search-actions {display:none;}
+  /* Keep the original h1 available to assistive technology, not on screen. */
+  .slbi-home-hero-title {
+    position:absolute;
+    width:1px;
+    height:1px;
+    padding:0;
+    overflow:hidden;
+    clip:rect(0,0,0,0);
+    white-space:nowrap;
+    border:0;
+  }
+  .slbi-home-search-wrap {
+    margin-top:0;
+    max-width:none;
+    z-index:60;
+  }
+  .slbi-home-search-surface {
+    padding:0;
+    border:0;
+    background:transparent;
+    box-shadow:none;
+  }
+  .slbi-home-search-surface > div:first-child {display:none;}
+  .slbi-home-hero .slbi-hero-search-form {
+    border:1px solid rgba(220,226,213,.85);
+    border-radius:15px;
+    background:#fff;
+    padding:5px 6px;
+    box-shadow:0 6px 14px rgba(4,26,18,.18);
+  }
+  .slbi-home-hero .slbi-hero-search-form > div {
+    display:flex;
+    flex-direction:row;
+    align-items:center;
+    gap:0;
+  }
+  .slbi-home-hero .slbi-hero-search-form > div > div:first-child {
+    min-width:0;
+    min-height:45px;
+    flex:1 1 auto;
+    padding:3px 5px 3px 9px;
+    gap:7px;
+  }
+  .slbi-home-hero .slbi-hero-search-form label[for="hero-business-query"] {
+    position:absolute;
+    width:1px;
+    height:1px;
+    overflow:hidden;
+    clip:rect(0,0,0,0);
+    white-space:nowrap;
+  }
+  .slbi-home-hero #hero-business-query {
+    margin:0;
+    height:40px;
+    padding:0;
+    font-size:13px;
+    font-weight:450;
+    line-height:40px;
+    color:#183a30;
+  }
+  .slbi-home-hero .slbi-hero-search-form > div > div:nth-child(2) {
+    flex:none;
+    width:1px;
+    height:27px;
+    margin:0 2px;
+    background:#e9ebe5;
+  }
+  .slbi-home-hero .slbi-hero-search-form > div > div:nth-child(3) {
+    flex:0 0 42px;
+    width:42px;
+    min-width:0;
+    max-width:none;
+  }
+  .slbi-home-hero .slbi-hero-search-form button[aria-label="Choose district or town"] {
+    display:flex;
+    justify-content:center;
+    width:42px;
+    height:44px;
+    min-height:44px;
+    padding:0;
+    gap:0;
+    color:#23483c;
+  }
+  .slbi-home-hero .slbi-hero-search-form button[aria-label="Choose district or town"] > span,
+  .slbi-home-hero .slbi-hero-search-form button[aria-label="Choose district or town"] > svg:last-child {
+    display:none;
+  }
+  /* Keep town/district picker fully usable inside narrow phone viewports. */
+  .slbi-home-hero .slbi-hero-search-form > div > div:nth-child(3) > div {
+    left:auto;
+    right:-48px;
+    width:min(320px, calc(100vw - 28px));
+    min-width:0;
+    max-width:none;
+  }
+  .slbi-home-hero .slbi-hero-search-button {
+    flex:0 0 44px;
+    width:44px;
+    min-width:44px;
+    min-height:44px;
+    height:44px;
+    margin:0;
+    padding:0;
+    gap:0;
+    border-radius:11px;
+    font-size:0;
+    background:#1b4035;
+    box-shadow:none;
+  }
+  .slbi-home-hero .slbi-hero-search-button svg {
+    width:18px;
+    height:18px;
+  }
+  .slbi-home-hero #hero-search-suggestions {
+    z-index:120;
+    border-radius:14px;
+  }
+
+  /* 4-by-2 lightweight category tiles, fed by the existing category query. */
+  .slbi-home-categories {
+    background:#faf9f4;
+    border:0;
+    padding:19px 0 6px;
+  }
+  .slbi-home-categories > div.relative {
+    padding:0 16px;
+  }
+  .slbi-home-categories > div.relative > div:first-child,
+  .slbi-home-categories > div.relative > div:nth-child(2),
+  .slbi-home-categories > div.relative > div:last-child {
+    display:none;
+  }
+  .slbi-home-categories .slbi-mobile-category-grid {
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:10px;
+    overflow:visible;
+    padding:0;
+  }
+  .slbi-home-categories .slbi-mobile-category-tile {
+    display:flex;
+    min-width:0;
+    min-height:0;
+    height:98px;
+    width:100%;
+    padding:8px 3px 9px;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:4px;
+    border:1px solid rgba(220,229,216,.55);
+    border-radius:16px;
+    background:linear-gradient(140deg,#edf3ec,#e7f0e5);
+    text-align:center;
+    box-shadow:none;
+    transform:none;
+  }
+  .slbi-home-categories .slbi-mobile-category-tile:nth-child(4n+1),
+  .slbi-home-categories .slbi-mobile-category-tile:nth-child(4n+3) {
+    background:linear-gradient(135deg,#f7f2e7,#f0ebd8);
+  }
+  .slbi-home-categories .slbi-mobile-category-tile > div:first-child {
+    display:none;
+  }
+  .slbi-home-categories .slbi-mobile-category-tile > div:nth-child(2) {
+    display:flex;
+    width:auto;
+    justify-content:center;
+    align-items:center;
+    gap:0;
+  }
+  .slbi-home-categories .slbi-mobile-category-tile > div:nth-child(2) > div {
+    width:47px;
+    height:47px;
+    padding:4px;
+    border:0;
+    border-radius:12px;
+    background:transparent;
+    color:#15392f;
+  }
+  .slbi-home-categories .slbi-mobile-category-tile > div:nth-child(2) > div svg,
+  .slbi-home-categories .slbi-mobile-category-tile > div:nth-child(2) > div img {
+    max-width:34px;
+    max-height:34px;
+  }
+  .slbi-home-categories .slbi-mobile-category-tile > div:nth-child(2) > span,
+  .slbi-home-categories .slbi-mobile-category-tile > div:nth-child(3) > span {display:none;}
+  .slbi-home-categories .slbi-mobile-category-tile > div:nth-child(3) {
+    width:100%;
+    margin:0;
+  }
+  .slbi-home-categories .slbi-mobile-category-tile h3 {
+    font-size:11px;
+    line-height:1.22;
+    letter-spacing:-.025em;
+    font-weight:600;
+    color:#142f28;
+    overflow:hidden;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+  }
+  .slbi-home-categories .slbi-mobile-category-grid > div[aria-hidden="true"] {
+    min-height:98px;
+    height:98px;
+    padding:12px;
+    border-radius:16px;
+  }
+  .slbi-home-categories > div.relative > button {
+    min-height:38px;
+    margin-top:9px;
+    border:0;
+    background:transparent;
+    box-shadow:none;
+    color:#356a52;
+    font-size:11px;
+  }
+
+  /* Small map CTA between the category tiles and featured cards. */
+  .slbi-mobile-nearby-entry {
+    padding:12px 16px 17px;
+    background:#faf9f4;
+  }
+  .slbi-mobile-nearby-banner::after {
+    content:"";
+    position:absolute;
+    inset:4px;
+    border:1px solid rgba(225,193,135,.37);
+    border-radius:14px;
+    pointer-events:none;
+  }
+
+  /* Horizontal, photo-first discovery cards with their names below the image. */
+  .slbi-home-featured {
+    padding:17px 0 28px;
+    background:#faf9f4;
+    border:0;
+  }
+  .slbi-home-featured > div.relative {
+    padding:0 16px;
+  }
+  .slbi-home-featured > div.relative > div:first-child {
+    margin-bottom:11px;
+    gap:0;
+  }
+  .slbi-home-featured > div.relative > div:first-child p,
+  .slbi-home-featured > div.relative > div:first-child .max-w-\[780px\] > p,
+  .slbi-home-featured > div.relative > div:nth-child(2),
+  .slbi-home-featured > div.relative > div:last-child {
+    display:none;
+  }
+  .slbi-home-featured h2#featured-listings-title {
+    font-size:23px;
+    line-height:1.3;
+    letter-spacing:-.04em;
+    font-weight:650;
+    color:#162f28;
+  }
+  .slbi-home-featured > div.relative > div:first-child > a {
+    display:inline-flex;
+    height:40px;
+    border:0;
+    background:transparent;
+    padding:0 2px;
+    font-size:11px;
+    box-shadow:none;
+    color:#b68b4c;
+  }
+  .slbi-home-featured .slbi-home-featured-carousel {
+    gap:12px;
+    padding:0 2px 12px 0;
+    margin-right:-16px;
+    scroll-padding-left:0;
+    scroll-snap-type:x mandatory;
+  }
+  .slbi-home-featured .slbi-home-featured-card {
+    display:block;
+    flex:0 0 min(76vw,310px);
+    width:min(76vw,310px);
+    min-width:0;
+    height:auto;
+    aspect-ratio:auto;
+    content-visibility:visible;
+    overflow:hidden;
+    border:1px solid #e8e8df;
+    border-radius:17px;
+    background:#fff;
+    color:#173a30;
+    box-shadow:0 5px 15px rgba(23,49,39,.08);
+    scroll-snap-align:start;
+  }
+  .slbi-home-featured .slbi-home-featured-card > div:first-child {
+    position:relative;
+    inset:auto;
+    height:157px;
+    width:100%;
+    overflow:hidden;
+    background:#eff3ed;
+  }
+  .slbi-home-featured .slbi-home-featured-card > div:nth-child(2) {
+    display:none;
+  }
+  .slbi-home-featured .slbi-home-featured-card > div:nth-child(3) {
+    top:0;
+    bottom:auto;
+    left:0;
+    right:0;
+    z-index:2;
+    padding:9px;
+  }
+  .slbi-home-featured .slbi-home-featured-card > div:nth-child(4) {
+    position:relative;
+    inset:auto;
+    padding:10px 12px 12px;
+    color:#1b382f;
+  }
+  .slbi-home-featured .slbi-home-featured-card > div:nth-child(4) > span {
+    margin-bottom:6px;
+    max-width:100%;
+    border:0;
+    border-radius:6px;
+    background:#edf3eb;
+    padding:3px 6px;
+    font-size:10px;
+    color:#356950;
+  }
+  .slbi-home-featured .slbi-home-featured-card h3 {
+    font-size:15px;
+    line-height:1.28;
+    letter-spacing:-.025em;
+    font-weight:650;
+    color:#173a30;
+    min-height:0;
+    text-shadow:none;
+  }
+  .slbi-home-featured .slbi-home-featured-card p {
+    min-height:0;
+    margin-top:6px;
+    font-size:10px;
+    line-height:1.4;
+    color:#64776b;
+  }
+  .slbi-home-featured .slbi-home-featured-card > div:nth-child(4) > div:last-child {
+    margin-top:9px;
+    padding-top:8px;
+    border-color:#edf0e9;
+    font-size:11px;
+    color:#37624f;
+  }
+  .slbi-home-featured .slbi-home-featured-card > div:nth-child(4) > div:last-child > span:last-child {
+    height:27px;
+    width:27px;
+    background:#eef3ec;
+    border-color:#e0e9de;
+    color:#315f4b;
+  }
+  .slbi-home-featured .slbi-home-featured-carousel > div[aria-hidden="true"] {
+    width:min(76vw,310px);
+    min-height:248px;
+    aspect-ratio:auto;
+    border-radius:17px;
+  }
+  .slbi-home-featured .slbi-home-featured-carousel > div[aria-hidden="true"] > div:first-child {
+    height:157px;
+  }
+}
+@media (max-width:350px) {
+  .slbi-home-categories .slbi-mobile-category-grid {gap:7px;}
+  .slbi-home-categories .slbi-mobile-category-tile {height:91px;padding:6px 2px;}
+  .slbi-home-categories .slbi-mobile-category-tile h3 {font-size:10px;}
+  .slbi-home-hero .slbi-hero-search-form > div > div:first-child {padding-left:5px;gap:4px;}
+}
