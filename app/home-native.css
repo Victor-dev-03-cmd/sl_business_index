@@ -145,7 +145,7 @@
     align-items:center;position:relative;overflow:hidden;
     border:3px solid #102f27!important;border-radius:17px;
     background:linear-gradient(110deg,#103e2f,#052f24);
-    color:#e6cc92;font-size:21px;font-weight:650;letter-spacing:-.035em;
+    color:#e6cc92!important;font-size:21px!important;font-weight:650!important;letter-spacing:-.035em;
     padding:0 20px!important;text-align:left;
     box-shadow:0 0 0 1px #d5bb86 inset;
   }
