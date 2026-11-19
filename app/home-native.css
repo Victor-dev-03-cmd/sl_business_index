@@ -28,9 +28,26 @@
     z-index:160!important;
   }
   body:has(#slbi-native-mobile-home) header[data-home-mobile="true"] > div {
-    height:78px!important;padding:8px 18px 0!important;
+    height:102px!important;padding:7px 18px 42px!important;
   }
+  /* Existing profile-based greeting sits above the existing location picker. */
   body:has(#slbi-native-mobile-home) header[data-home-mobile="true"] [aria-label="Welcome to SL Business Index"] {
+    display:flex!important;
+    flex:1 1 auto!important;
+    min-width:0!important;
+    justify-content:center!important;
+    gap:0!important;
+  }
+  body:has(#slbi-native-mobile-home) header[data-home-mobile="true"] [aria-label="Welcome to SL Business Index"] > span:first-child {
+    display:block!important;
+    max-width:100%!important;
+    color:#1D3328!important;
+    font-size:18px!important;
+    line-height:1.2!important;
+    font-weight:500!important;
+    letter-spacing:-.035em!important;
+  }
+  body:has(#slbi-native-mobile-home) header[data-home-mobile="true"] [aria-label="Welcome to SL Business Index"] > span:nth-child(2) {
     display:none!important;
   }
   body:has(#slbi-native-mobile-home) header[data-home-mobile="true"] > div > div:last-child {
@@ -45,7 +62,7 @@
   }
 
   .slbi-native-home {
-    width:100%;min-height:100dvh;overflow-x:clip;
+    width:100%;min-height:0!important;overflow-x:clip;
     background:#fff;color:#1C2924;
     font-size:14px;line-height:1.45;font-weight:400!important;
   }
@@ -91,7 +108,7 @@
   }
   .slbi-native-home .slbi-hero-search-form > div > div:nth-child(2) {display:none!important;}
   .slbi-native-home .slbi-hero-search-form > div > div:nth-child(3) {
-    position:absolute!important;top:-68px!important;left:0!important;
+    position:absolute!important;top:-51px!important;left:0!important;
     width:min(252px,calc(100vw - 150px))!important;
     min-width:0!important;max-width:none!important;
     height:46px!important;display:block!important;
@@ -206,15 +223,15 @@
   .slbi-native-nearby-cta svg {flex-shrink:0;}
 
   /* Original portrait listing proportions and full in-card business details. */
-  .slbi-native-featured {background:#fff;padding:17px 0 40px!important;}
+  .slbi-native-featured {background:#fff;padding:17px 0 12px!important;}
   .slbi-native-featured-heading {
-    display:flex;align-items:center;justify-content:space-between;
+    display:flex;align-items:flex-end!important;justify-content:space-between;
     padding:0 16px!important;margin:0 0 13px!important;gap:12px!important;
   }
   .slbi-native-featured-heading h2 {
     margin:0!important;color:#1A2921!important;
-    font-size:19px!important;line-height:1.3!important;
-    font-weight:500!important;letter-spacing:-.02em!important;
+    font-size:clamp(34px,10vw,42px)!important;line-height:1.08!important;
+    font-weight:500!important;letter-spacing:-.05em!important;
   }
   .slbi-native-featured-heading a {
     display:inline-flex;align-items:center;gap:4px!important;
@@ -226,7 +243,7 @@
     overflow-x:auto!important;overflow-y:hidden!important;
     overscroll-behavior-x:contain;scroll-snap-type:x mandatory;
     scroll-padding-left:16px;scrollbar-width:none;
-    padding:0 16px 14px!important;
+    padding:0 16px 6px!important;
   }
   .slbi-native-listing-track::-webkit-scrollbar {display:none;}
   .slbi-native-card {
@@ -332,6 +349,12 @@
   }
   body:has(#slbi-native-mobile-home) [data-slbi-viewport-dock="true"] svg {
     width:22px;height:22px;
+  }
+
+  /* Remove compounded space between portrait listings and the next section. */
+  .slbi-home-root > section[aria-labelledby="discovery-process-heading"] {
+    padding-top:28px!important;
+    padding-bottom:48px!important;
   }
 
   .slbi-native-home :where(button,a):focus-visible {
