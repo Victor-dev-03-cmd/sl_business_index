@@ -26,7 +26,7 @@ export default function MobileGreeting({username,fullName,email}:Props){
   return <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 sm:hidden"
     aria-label="Welcome to SL Business Index">
     <span className="block truncate text-[15px] font-semibold leading-[1.3] tracking-[-.025em] text-[#172D27]"
-      title={isMobileHome ? greeting.label+', '+name : 'Hello, '+name}>
+      title={isMobileHome ? greeting.label+', '+name : <>Hello, {name}</>}>
       {isMobileHome ? greeting.label+', '+name : 'Hello, '+name}
       {isMobileHome && <span aria-hidden="true"> {greeting.emoji}</span>}
     </span>
