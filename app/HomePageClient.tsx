@@ -1,4 +1,5 @@
 "use client";
+import "./home-mobile.css";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { getBusinessDisplayAddress } from "@/lib/businessAddress";
@@ -360,7 +361,7 @@ export default function HomePageClient() {
       {/* --- PHASE 3: Split editorial hero with accessible SVG product motion --- */}
       <section
         aria-labelledby="homepage-hero-title"
-        className="relative isolate bg-[#1B3430] text-white"
+        className="slbi-home-hero relative isolate bg-[#1B3430] text-white"
       >
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
           <div className="absolute inset-0">
@@ -371,12 +372,16 @@ export default function HomePageClient() {
           <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#E7C58E]/40 to-transparent" />
         </div>
 
-        <div className="relative mx-auto grid min-h-[540px] max-w-[1500px] items-center gap-7 px-5 pb-12 pt-14 sm:px-8 sm:pb-14 sm:pt-16 lg:min-h-[620px] lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-6 lg:px-12 lg:pb-14 lg:pt-14 xl:gap-10 xl:px-16">
+        <div aria-hidden="true" className="slbi-home-mobile-map md:hidden">
+          <Image src="/sri-lanka-gold-outline.svg" width={240} height={425}
+            alt="" unoptimized className="h-auto w-full"/>
+        </div>
+        <div className="slbi-home-hero-grid relative mx-auto grid min-h-[540px] max-w-[1500px] items-center gap-7 px-5 pb-12 pt-14 sm:px-8 sm:pb-14 sm:pt-16 lg:min-h-[620px] lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-6 lg:px-12 lg:pb-14 lg:pt-14 xl:gap-10 xl:px-16">
           <div
             className="relative z-30 min-w-0 max-w-[790px] text-left"
           >
             <div
-              className="mb-5 inline-flex max-w-full items-center gap-2.5 rounded-full border border-white/15 bg-white/[0.05] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#F0D9AC] sm:text-[11px]"
+              className="slbi-home-hero-badge mb-5 inline-flex max-w-full items-center gap-2.5 rounded-full border border-white/15 bg-white/[0.05] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#F0D9AC] sm:text-[11px]"
             >
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_14px_rgba(231,197,142,0.65)]" />
               Discover Sri Lanka, differently
@@ -384,7 +389,7 @@ export default function HomePageClient() {
 
             <h1
               id="homepage-hero-title"
-              className="text-balance text-[clamp(3.3rem,5.4vw,6.35rem)] font-medium leading-[1.055] tracking-[-0.065em] text-white"
+              className="slbi-home-hero-title text-balance text-[clamp(3.3rem,5.4vw,6.35rem)] font-medium leading-[1.055] tracking-[-0.065em] text-white"
             >
               Discover <span className="bg-gradient-to-r from-[#F8F7F2] via-[#F0D9AC] to-[#E7C58E] bg-clip-text text-transparent">better.</span>
               <br />
@@ -392,17 +397,17 @@ export default function HomePageClient() {
             </h1>
 
             <p
-              className="mt-5 max-w-[600px] text-pretty text-[15px] leading-[1.65] text-[#CADDCB] sm:text-[17px]"
+              className="slbi-home-hero-description mt-5 max-w-[600px] text-pretty text-[15px] leading-[1.65] text-[#CADDCB] sm:text-[17px]"
             >
-              Discover businesses, services and people worth knowing.
-              Your connection to opportunities across Sri Lanka starts here.
+              <span className="sm:hidden">Discover businesses, services, and people worth knowing in Sri Lanka.</span>
+              <span className="hidden sm:inline">Discover businesses, services and people worth knowing. Your connection to opportunities across Sri Lanka starts here.</span>
             </p>
 
             {/* Unified search experience: one surface, clear primary and secondary actions. */}
             <div
-              className="relative z-40 mt-6 w-full max-w-[680px]"
+              className="slbi-home-search-wrap relative z-40 mt-6 w-full max-w-[680px]"
             >
-              <div className="rounded-[22px] border border-white/[0.18] bg-white/[0.075] p-2.5 shadow-[0_22px_70px_rgba(0,0,0,0.23)]  sm:p-3">
+              <div className="slbi-home-search-surface rounded-[22px] border border-white/[0.18] bg-white/[0.075] p-2.5 shadow-[0_22px_70px_rgba(0,0,0,0.23)] sm:p-3">
                 <div className="mb-2 flex items-center justify-between gap-3 px-2 sm:mb-3">
                   <span className="text-[10px] font-bold uppercase tracking-[0.17em] text-[#CADDCB]">
                     What are you looking for?
@@ -419,7 +424,7 @@ export default function HomePageClient() {
                   isFetchingLocation={isFetchingLocation}
                   handleUseCurrentLocation={handleUseCurrentLocation}
                 />
-                <div className="mt-2.5 flex flex-wrap items-center gap-2 border-t border-white/10 px-0.5 pt-2.5 sm:mt-3 sm:gap-3 sm:pt-3">
+                <div className="slbi-home-search-actions mt-2.5 flex flex-wrap items-center gap-2 border-t border-white/10 px-0.5 pt-2.5 sm:mt-3 sm:gap-3 sm:pt-3">
                   <button
                     type="button"
                     onClick={() => handleUseCurrentLocation(true)}
@@ -439,18 +444,18 @@ export default function HomePageClient() {
                   </Link>
                 </div>
               </div>
-              <p className="mt-3 pl-1 text-[12px] text-[#94BAA0] sm:text-[13px]">
+              <p className="slbi-home-search-hint mt-3 pl-1 text-[12px] text-[#94BAA0] sm:text-[13px]">
                 Try “Restaurants in Colombo” or “Electrician in Jaffna”
               </p>
             </div>
 
-            <p className="mt-5 text-[12px] font-medium tracking-wide text-[#75AB8D]">
+            <p className="mt-5 hidden text-[12px] font-medium tracking-wide text-[#75AB8D] sm:block">
               Built for discovery. Designed for connection.
             </p>
           </div>
 
           {/* Lightweight cartographic SVG; no heavy looping animations or filters. */}
-          <HeroDiscoveryGraphic />
+          <div className="hidden lg:block"><HeroDiscoveryGraphic /></div>
         </div>
       </section>
 

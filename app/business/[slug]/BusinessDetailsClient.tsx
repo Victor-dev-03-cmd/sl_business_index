@@ -38,6 +38,8 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { supabase } from "@/lib/supabaseClient";
 import VerifiedBadge from "@/app/components/VerifiedBadge";
+import BrandIcon from "@/app/components/BrandIcon";
+import {useSavedBusinesses} from "@/lib/public-saved-businesses";
 import ReportModal from "@/app/components/ReportModal";
 import { logEvent } from "@/lib/utils";
 import { toast } from "sonner";
@@ -67,6 +69,16 @@ interface Review {
 
 export default function BusinessDetailsClient({ business }: Props) {
   const [reviews, setReviews] = useState<Review[]>([]);
+  const {items:savedBusinesses,toggle:toggleSavedBusiness}=useSavedBusinesses();
+  const isSaved=savedBusinesses.some(item=>item.id===String(business.id));
+  const handleToggleSaved=()=>{
+    const added=toggleSavedBusiness({
+      id:String(business.id),slug:String(business.slug||business.id),name:business.name,
+      category:business.category||'',
+      city:business.address?.split(',').pop()?.trim()||'',
+    });
+    toast.success(added?'Business saved on this device.':'Bookmark removed from this device.');
+  };
   const [reviewsLoading, setReviewsLoading] = useState(true);
   const [reviewForm, setReviewForm] = useState({
     rating: 5,
@@ -419,6 +431,11 @@ export default function BusinessDetailsClient({ business }: Props) {
               <a href="#enquiry" className="inline-flex min-h-12 items-center gap-2 rounded-[13px] border border-white/25 px-5 text-[13px] font-semibold text-white transition-colors hover:bg-white/10">
                 Send enquiry <ArrowUpRight size={16}/>
               </a>
+              <button type="button" onClick={handleToggleSaved} aria-pressed={isSaved}
+                className="inline-flex min-h-12 items-center gap-2 rounded-[13px] border border-[#E7C28C]/45 bg-[#E7C28C]/10 px-4 text-[13px] font-semibold text-[#F8DEB0] transition-colors hover:bg-[#E7C28C]/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#E7C28C]">
+                <BrandIcon name="bookmark-2" size={18} variant={isSaved?'bold':'linear'}/>
+                {isSaved?'Saved to bookmarks':'Save business'}
+              </button>
             </div>
           </div>
           <div className="relative order-1 h-[300px] min-w-0 overflow-hidden bg-[#294941] sm:h-[380px] lg:order-2 lg:h-auto">

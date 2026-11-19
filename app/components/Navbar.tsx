@@ -364,38 +364,29 @@ export default function Navbar() {
             )}
             <div className="hidden 2xl:block"><LiveCounter /></div>
              <Link href="/search" aria-label="Search businesses" className="hidden lg:flex h-10 w-10 items-center justify-center rounded-xl text-stone-600 hover:bg-stone-100 hover:text-stone-950"><BrandIcon name="search-normal-1" size={19} /></Link>
-            {fullUserData && <NotificationBell />}
+            <div className="hidden sm:block">{fullUserData && <NotificationBell />}</div>
+            <Link href="/notifications" aria-label="View notifications"
+              className="flex h-10 w-10 items-center justify-center rounded-full text-[#244238] transition-colors hover:bg-[#EAF0E9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#B49161] sm:hidden">
+              <BrandIcon name="notification" size={21}/>
+            </Link>
             
             <div className="hidden sm:block"><AuthButton user={fullUserData} /></div>
              {showRegister && <Link href="/register-business" className="hidden xl:inline-flex h-10 items-center gap-1.5 whitespace-nowrap rounded-xl bg-[#1B3430] px-4 text-xs font-semibold text-white shadow-md transition-all hover:bg-[#26483B] hover:shadow-lg"><BrandIcon name="buildings-2" size={16} /> List Your Business <ArrowUpRight size={15} /></Link>}
 
-            {/* ── Modern two-line toggle ── */}
-            <button
-              onClick={() => setMobileMenuOpen((v) => !v)}
-              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+            {/* Mobile reference: profile-shaped menu control instead of a hamburger.
+                The existing complete menu drawer stays accessible on tap. */}
+            <button type="button"
+              onClick={() => setMobileMenuOpen(value => !value)}
+              aria-label={mobileMenuOpen ? "Close account and navigation menu" : "Open account and navigation menu"}
+              aria-expanded={mobileMenuOpen}
               className={cn(
-                "lg:hidden relative w-11 h-11 flex flex-col items-center justify-center gap-[5.5px] rounded-[8px] border transition-all duration-300 active:scale-95 z-[110]",
-                mobileMenuOpen 
-                  ? "bg-[#1B3430] border-[#1B3430] shadow-inner" 
-                  : "bg-white border-stone-200 shadow-sm hover:border-stone-400"
-              )}
-            >
-              <span
-                className={cn(
-                  "block w-[18px] h-[1.8px] rounded-full transition-all duration-300 origin-center",
-                  mobileMenuOpen 
-                    ? "bg-white rotate-45 translate-y-[3.65px]" 
-                    : "bg-gray-900",
-                )}
-              />
-              <span
-                className={cn(
-                  "block w-[14px] h-[1.8px] rounded-full transition-all duration-300 origin-center self-end mr-[5px]",
-                  mobileMenuOpen 
-                    ? "bg-white -rotate-45 -translate-y-[3.65px] w-[18px] mr-0" 
-                    : "bg-gray-900",
-                )}
-              />
+                "relative z-[110] flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#DBE3D8] bg-[#EEF2EB] text-[#244339] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#B49161] lg:hidden",
+                mobileMenuOpen && "border-[#244339] bg-[#244339] text-white"
+              )}>
+              {mobileMenuOpen ? <X size={20} strokeWidth={1.8}/> :
+                profileData?.full_name?.trim() ?
+                  <span className="text-[15px] font-semibold" aria-hidden="true">{profileData.full_name.trim().charAt(0).toUpperCase()}</span>:
+                  <BrandIcon name="profile-circle" size={25} />}
             </button>
           </div>
         </div>
