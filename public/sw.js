@@ -1,29 +1,29 @@
-// public/sw.js
-const CACHE_NAME = 'slbi-shell-evergreen-v2'
-const OFFLINE_URL = '/'
+// Homepage navigations must never fall back to a previously deployed UI.
+// The old app-shell cache stored '/' indefinitely and could resurface stale
+// desktop/mobile markup when the connection failed during a refresh.
+const LEGACY_SHELL_CACHE_PREFIX = 'slbi-shell-evergreen-'
 
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.add(OFFLINE_URL))
-  )
+self.addEventListener('install', () => {
   self.skipWaiting()
 })
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    )
+    caches.keys()
+      .then((keys) => Promise.all(
+        keys.filter((key) => key.startsWith(LEGACY_SHELL_CACHE_PREFIX))
+          .map((key) => caches.delete(key))
+      ))
+      .then(() => self.clients.claim())
   )
-  self.clients.claim()
 })
 
 self.addEventListener('fetch', (event) => {
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request).catch(() => caches.match(OFFLINE_URL))
-    )
-  }
+  if (event.request.mode !== 'navigate') return
+  const url = new URL(event.request.url)
+  if (url.origin !== self.location.origin || url.pathname !== '/') return
+  // Only the public Home route opts out of cached navigation documents.
+  event.respondWith(fetch(event.request, { cache: 'no-store' }))
 })
 
 self.addEventListener('push', (event) => {

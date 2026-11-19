@@ -28,15 +28,15 @@
     z-index:160!important;
   }
   body:has(#slbi-native-mobile-home) header[data-home-mobile="true"] > div {
-    height:102px!important;padding:7px 18px 42px!important;
+    height:85px!important;padding:10px 18px 10px!important;
   }
-  /* Existing profile-based greeting sits above the existing location picker. */
+  /* Mobile Home: two-line welcome; area selection is no longer in the header. */
   body:has(#slbi-native-mobile-home) header[data-home-mobile="true"] [aria-label="Welcome to SL Business Index"] {
     display:flex!important;
     flex:1 1 auto!important;
     min-width:0!important;
     justify-content:center!important;
-    gap:0!important;
+    gap:3px!important;
   }
   body:has(#slbi-native-mobile-home) header[data-home-mobile="true"] [aria-label="Welcome to SL Business Index"] > span:first-child {
     display:block!important;
@@ -48,7 +48,9 @@
     letter-spacing:-.035em!important;
   }
   body:has(#slbi-native-mobile-home) header[data-home-mobile="true"] [aria-label="Welcome to SL Business Index"] > span:nth-child(2) {
-    display:none!important;
+    display:block!important;color:#647369!important;
+    font-size:12.5px!important;line-height:1.35!important;
+    font-weight:400!important;
   }
   body:has(#slbi-native-mobile-home) header[data-home-mobile="true"] > div > div:last-child {
     margin-left:auto!important;gap:9px!important;
@@ -69,7 +71,7 @@
   /* The area selector reuses HeroSearch's existing state and onClick. */
   .slbi-native-search-panel {
     isolation:isolate;position:relative;z-index:100!important;
-    background:#fff;padding:0 16px 12px!important;
+    background:#fff;padding:4px 16px 12px!important;
   }
   .slbi-native-home .slbi-hero-search-form {
     position:relative!important;
@@ -111,7 +113,7 @@
     position:absolute!important;top:-51px!important;left:0!important;
     width:min(252px,calc(100vw - 150px))!important;
     min-width:0!important;max-width:none!important;
-    height:46px!important;display:block!important;
+    height:46px!important;display:none!important;
     z-index:120!important;margin:0!important;
   }
   .slbi-native-home button[aria-label="Choose district or town"] {
@@ -225,14 +227,17 @@
   /* Original portrait listing proportions and full in-card business details. */
   .slbi-native-featured {background:#fff;padding:17px 0 12px!important;}
   .slbi-native-featured-heading {
-    display:flex;align-items:flex-end!important;justify-content:space-between;
-    padding:0 16px!important;margin:0 0 13px!important;gap:12px!important;
+    display:flex;align-items:center!important;justify-content:space-between;
+    padding:0 16px!important;margin:0 0 13px!important;gap:8px!important;
   }
   .slbi-native-featured-heading h2 {
-    margin:0!important;color:#1A2921!important;
-    font-size:clamp(34px,10vw,42px)!important;line-height:1.08!important;
-    font-weight:500!important;letter-spacing:-.05em!important;
+    flex:1 1 auto;min-width:0;margin:0!important;
+    white-space:nowrap!important;text-wrap:nowrap!important;
+    font-size:clamp(20px,6.35vw,28px)!important;line-height:1.15!important;
+    font-weight:550!important;letter-spacing:-.052em!important;
   }
+  .slbi-native-featured-heading h2 span:first-child {color:#1B3430!important;}
+  .slbi-native-featured-heading h2 span:last-child {color:#4A8C70!important;}
   .slbi-native-featured-heading a {
     display:inline-flex;align-items:center;gap:4px!important;
     color:#5B655D!important;font-size:12px!important;font-weight:400!important;
@@ -332,18 +337,23 @@
     box-shadow:0 -2px 14px rgba(20,40,28,.045)!important;backdrop-filter:none!important;
   }
   body:has(#slbi-native-mobile-home) [data-slbi-viewport-dock="true"] a {
-    display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;
-    height:60px!important;gap:3px!important;padding:4px 1px!important;
+    display:grid!important;grid-template-rows:23px 13px;justify-items:center!important;align-content:center!important;
+    height:60px!important;gap:5px!important;padding:5px 1px!important;
     border-radius:9px!important;color:#6D7871!important;white-space:nowrap;
   }
   body:has(#slbi-native-mobile-home) [data-slbi-viewport-dock="true"] a[aria-current="page"] {
     color:#146449!important;
   }
+  /* Keep the actual BrandIcon wrapper full-size; only the active dot is tiny. */
+  body:has(#slbi-native-mobile-home) [data-slbi-viewport-dock="true"] a > span:first-child {
+    width:23px!important;height:23px!important;grid-row:1;
+    display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  }
   body:has(#slbi-native-mobile-home) [data-slbi-viewport-dock="true"] a::after {
     content:attr(title);display:block;max-width:100%;overflow:hidden;
-    font-size:9.5px!important;font-weight:400!important;line-height:1.12;text-overflow:ellipsis;
+    font-size:9.5px!important;font-weight:400!important;line-height:1.12;text-overflow:ellipsis;text-align:center;white-space:nowrap;
   }
-  body:has(#slbi-native-mobile-home) [data-slbi-viewport-dock="true"] a > span:last-child {
+  body:has(#slbi-native-mobile-home) [data-slbi-viewport-dock="true"] a > span[aria-hidden="true"] {
     bottom:3px!important;background:#146449!important;
     height:3px!important;width:3px!important;
   }

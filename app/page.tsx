@@ -2,7 +2,8 @@ import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query
 import { createClient } from '@/lib/supabase/server'
 import HomePageClient from './HomePageClient'
 
-export const revalidate = 300
+// Do not reuse pre-deployment Home markup on mobile refreshes.
+export const revalidate = 0
 
 export default async function HomePage() {
   const queryClient = new QueryClient()
