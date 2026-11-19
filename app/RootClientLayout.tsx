@@ -57,12 +57,15 @@ export default function RootClientLayout({
                 <NavbarWrapper>
                   <Navbar />
                 </NavbarWrapper>
+                {/* Render the viewport dock before potentially streaming page
+                    content, not after a long homepage and footer. */}
+                <MobilePublicDock />
                 <main>{children}</main>
                 <GlobalAnnouncement />
                 <FooterWrapper>
                   <Footer />
                 </FooterWrapper>
-                <MobilePublicDock />
+                <MobilePublicDock role="spacer" />
               </ThemeProvider>
             </SessionProvider>
           </QueryProvider>

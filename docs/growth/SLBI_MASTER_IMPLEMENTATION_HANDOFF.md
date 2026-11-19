@@ -1,5 +1,10 @@
 # SLBusinessIndex — MASTER IMPLEMENTATION & CHAT HANDOFF
 
+## 2026-11-19 — Mobile dock first-paint / scroll positioning hotfix
+- **Read first:** [P2-33 Mobile dock first-paint fix](p2/P2_33_MOBILE_DOCK_FIRST_PAINT_FIX_20261119.md).
+- User screenshot shows the public five-icon bar only appearing/aligning after scroll. The fixed nav is now SSR-rendered before homepage content, always shown regardless of focus/scroll, and centered using left/right safe-area insets; footer spacer rendered separately.
+- Release verification and follow-up browser screenshot acceptance documented in the linked handoff and PR.
+
 ## 2026-11-19 — Public mobile header + bottom dock alignment revision
 - **Read first:** [Mobile header & five-item public dock handoff](p2/P2_32_MOBILE_HEADER_DOCK_ALIGNMENT_20261119.md).
 - Based on user screenshots: mobile logo replaced by real username + local time-of-day greeting; five equal-width Iconsax navigation tabs in exact order Explore, Categories, Nearby, Business News, About; left-align Explore near me / Browse categories actions in search card.
