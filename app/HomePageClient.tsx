@@ -424,7 +424,7 @@ export default function HomePageClient() {
                   isFetchingLocation={isFetchingLocation}
                   handleUseCurrentLocation={handleUseCurrentLocation}
                 />
-                <div className="slbi-home-search-actions mt-2.5 flex flex-wrap items-center gap-2 border-t border-white/10 px-0.5 pt-2.5 sm:mt-3 sm:gap-3 sm:pt-3">
+                <div className="slbi-home-search-actions mt-2.5 flex flex-col items-start gap-2 border-t border-white/10 px-0.5 pt-2.5 sm:mt-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3 sm:pt-3">
                   <button
                     type="button"
                     onClick={() => handleUseCurrentLocation(true)}
