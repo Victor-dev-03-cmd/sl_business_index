@@ -1,10 +1,12 @@
 'use client';
 
+import {useLayoutEffect,useState} from 'react';
+import {createPortal} from 'react-dom';
 import Link from 'next/link';
 import {usePathname} from 'next/navigation';
 import BrandIcon from './BrandIcon';
 
-/** Same five public routes and exact order as the desktop menu. */
+/** Exactly the five public destinations in the desktop menu order. */
 export const mobilePublicTabs=[
   {href:'/',label:'Explore',icon:'home-2'},
   {href:'/category',label:'Categories',icon:'category-2'},
@@ -14,39 +16,52 @@ export const mobilePublicTabs=[
 ] as const;
 
 /**
- * Server-rendered viewport-fixed dock: visible on first paint, regardless
- * of scroll position, focus, React hydration or browser keyboard.
+ * Mobile viewport dock:
  *
- * CSS left/right insets and auto margins replace the translated left:50%
- * position that shifted/clipped the dock in mobile viewport screenshots.
- * Keeping the nav in the initial React tree (instead of a mount-time portal)
- * prevents a delayed appearance on low-end/mobile devices.
+ * Render the nav into document.body, completely outside site wrappers whose
+ * stacking contexts, overflow, transformations, and streaming updates can
+ * change the containing block of a normal position:fixed descendant.
+ *
+ * Use an EXPLICIT viewport-width-constrained size with left/right:0 and
+ * auto margins rather than width:auto or a transform for centering.
+ *
+ * The dock is never gated on scrolling, input focus, media queries in JS,
+ * page data or current scroll position. Mount during the first hydration
+ * layout pass and leave it in place through scrolls and route changes.
  */
 export default function MobilePublicDock({role='nav'}:{role?:'nav'|'spacer'}){
   const pathname=usePathname();
+  const [portalRoot,setPortalRoot]=useState<HTMLElement|null>(null);
+
+  useLayoutEffect(()=>{
+    if(role==='nav')setPortalRoot(document.body);
+  },[role]);
+
   const excluded=['/login','/signup','/forgot-password','/reset-password',
     '/update-password','/auth','/admin','/vendor'];
   if(excluded.some(route=>pathname===route||pathname.startsWith(route+'/')))return null;
 
-  // Footer clearance stays at the bottom of the document. Render the dock
-  // early (immediately after Navbar) so SSR/streaming never delays it until
-  // the entire homepage and footer have loaded.
-  if(role==='spacer')return <div aria-hidden="true" className="h-[90px] sm:hidden"/>;
+  // The end-of-document spacer stays inside the page, NOT inside the portal.
+  if(role==='spacer')return <div aria-hidden="true" className="h-[94px] sm:hidden"/>;
 
-  return <nav
+  if(!portalRoot)return null;
+
+  return createPortal(
+    <nav
       aria-label="Mobile quick navigation"
       data-slbi-viewport-dock="true"
       style={{
         position:'fixed',
-        left:'max(12px, env(safe-area-inset-left, 0px))',
-        right:'max(12px, env(safe-area-inset-right, 0px))',
+        left:0,
+        right:0,
         bottom:'max(12px, env(safe-area-inset-bottom, 0px))',
-        width:'auto',
-        maxWidth:440,
+        width:'min(420px, calc(100vw - 24px))',
+        maxWidth:420,
         marginInline:'auto',
         boxSizing:'border-box',
+        transform:'none',
       }}
-      className="z-[80] grid h-[66px] grid-cols-5 items-center gap-0.5 overflow-hidden rounded-[20px] border border-white/30 bg-[#29453E]/95 px-1.5 text-[#E5F1E9] shadow-[0_12px_36px_rgba(7,31,23,.30)] backdrop-blur-xl supports-[backdrop-filter]:bg-[#304D43]/85 sm:hidden">
+      className="z-[1200] grid h-[66px] grid-cols-5 items-center gap-0.5 overflow-hidden rounded-[20px] border border-white/30 bg-[#29453E]/95 px-1.5 text-[#E5F1E9] shadow-[0_12px_36px_rgba(7,31,23,.30)] backdrop-blur-xl supports-[backdrop-filter]:bg-[#304D43]/85 sm:hidden">
       {mobilePublicTabs.map(tab=>{
         const active=tab.href==='/'?pathname==='/':
           tab.href==='/category'?pathname==='/category'||pathname.startsWith('/category/'):
@@ -64,5 +79,7 @@ export default function MobilePublicDock({role='nav'}:{role?:'nav'|'spacer'}){
             className="absolute bottom-[4px] h-[5px] w-[5px] rounded-full bg-[#F2D79F]"/>}
         </Link>;
       })}
-    </nav>;
+    </nav>,
+    portalRoot
+  );
 }

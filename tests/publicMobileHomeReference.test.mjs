@@ -11,6 +11,7 @@ const navbar=read('app/components/Navbar.tsx');
 const root=read('app/RootClientLayout.tsx');
 const dock=read('app/components/MobilePublicDock.tsx');
 const styles=read('app/home-mobile.css');
+const globalCss=read('app/globals.css');
 const icons=read('app/components/BrandIcon.tsx');
 const details=read('app/business/[slug]/BusinessDetailsClient.tsx');
 const saved=read('app/saved/page.tsx');
@@ -76,19 +77,24 @@ test('Real mobile Iconsax menu links exist, are accessible and do not replace ve
   assert.match(dock,/sm:hidden/);
   assert.match(dock,/grid-cols-5/);
   assert.match(dock,/w-full min-w-0/);
-  assert.match(dock,/maxWidth:440/);
+  assert.match(dock,/maxWidth:420/);
   assert.match(dock,/position:'fixed'/);
   assert.match(dock,/data-slbi-viewport-dock="true"/);
-  // A first-paint nav must not wait for a portal/hydration or a scroll event.
-  assert.doesNotMatch(dock,/createPortal|setBody\(|useEffect|useState/);
+  assert.match(dock,/import \{createPortal\} from 'react-dom'/);
+  assert.match(dock,/useLayoutEffect\(\(\)=>\{/);
+  assert.match(dock,/setPortalRoot\(document\.body\)/);
+  assert.match(dock,/return createPortal\(/);
+  assert.match(dock,/portalRoot\s*\)/);
+  assert.match(dock,/z-\[1200\]/);
   assert.doesNotMatch(dock,/scrollY|scrollTop|scrollIntoView|focusin|focusout|typing/);
-  assert.ok(dock.includes("left:'max(12px, env(safe-area-inset-left, 0px))'"));
-  assert.ok(dock.includes("right:'max(12px, env(safe-area-inset-right, 0px))'"));
+  assert.match(dock,/left:0,\s*right:0/);
+  assert.ok(dock.includes("width:'min(420px, calc(100vw - 24px))'"));
   assert.ok(dock.includes("bottom:'max(12px, env(safe-area-inset-bottom, 0px))'"));
   assert.match(dock,/marginInline:'auto'/);
-
+  assert.match(dock,/transform:'none'/);
+  assert.match(globalCss,/html \{\s*scrollbar-gutter: stable;/);
+  assert.match(globalCss,/@media \(max-width: 639px\)\s*\{\s*html\s*\{\s*scrollbar-gutter: auto;/);
   assert.doesNotMatch(dock,/translateX\(-50%\)|left:'50%'/);
-  assert.doesNotMatch(dock,/typing|focusin|focusout/);
   assert.doesNotMatch(tabDeclaration,/add-square|bookmark-2|search-normal/);
   assert.match(navbar,/href="\/notifications" aria-label="View notifications"/);
   assert.match(navbar,/name="profile-circle"/);
@@ -160,9 +166,9 @@ test('Reference mobile greeting is personalized and follows browser-local daytim
   assert.match(navbar,/<LogoLink\s*\/>/);
 });
 
-test('Dock and left-aligned hero actions remain usable on narrow phones',()=>{
+test('Body-portaled dock and left-aligned hero actions remain usable on narrow phones',()=>{
   for(const viewport of [280,320,360,375,390,414,430,480,600]){
-    const width=Math.min(440,viewport-24);
+    const width=Math.min(420,viewport-24);
     const left=(viewport-width)/2;
     const padding=6;
     const gap=2;
@@ -176,4 +182,19 @@ test('Dock and left-aligned hero actions remain usable on narrow phones',()=>{
   assert.match(home,/sm:flex-row sm:flex-wrap sm:items-center/);
   assert.match(styles,/\.slbi-home-search-actions \{display:flex;flex-direction:column;align-items:flex-start/);
   assert.match(search,/slbi-hero-search-form/);
+});
+
+test('mobile dock explicitly uses viewport width, not document scrollbar gutter',()=>{
+  assert.match(dock,/width:'min\(420px, calc\(100vw - 24px\)\)'/);
+  assert.match(dock,/left:0,\s*right:0/);
+  assert.match(dock,/marginInline:'auto'/);
+  for(const viewport of [280,320,360,375,390,414,430,440,480,600]){
+    // Verify the intended geometry independently of transformed body layouts.
+    const width=Math.min(420,viewport-24);
+    const left=(viewport-width)/2;
+    const right=left+width;
+    assert.ok(left>=12, 'left inset '+viewport);
+    assert.ok(right<=viewport-12, 'right inset '+viewport);
+    assert.equal((viewport-right)-left,0,'centered '+viewport);
+  }
 });

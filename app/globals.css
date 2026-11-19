@@ -48,6 +48,15 @@ html {
   scrollbar-gutter: stable;
 }
 
+/* On mobile, a permanently reserved scrollbar gutter shifts viewport-fixed
+   overlays away from the true screen center. The mobile navigation is sized
+   using 100vw and must align against the complete physical viewport width. */
+@media (max-width: 639px) {
+  html {
+    scrollbar-gutter: auto;
+  }
+}
+
 :root {
   --font-sans: var(--font-inter), var(--font-tamil), var(--font-sinhala), ui-sans-serif, system-ui;
   --background: 42 30% 97%;
