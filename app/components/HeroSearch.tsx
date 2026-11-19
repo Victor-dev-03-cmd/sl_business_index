@@ -63,6 +63,7 @@ interface HeroSearchProps {
   userCoords: { lat: number; lng: number } | null;
   isFetchingLocation: boolean;
   handleUseCurrentLocation: (autoSearch?: boolean) => void;
+  idPrefix?: string;
 }
 
 export default function HeroSearch({
@@ -71,8 +72,12 @@ export default function HeroSearch({
   userCoords,
   isFetchingLocation,
   handleUseCurrentLocation,
+  idPrefix = "hero",
 }: HeroSearchProps) {
   const router = useRouter();
+  // UI-only IDs distinguish the mobile and desktop search instances.
+  const inputId = idPrefix === "hero" ? "hero-business-query" : idPrefix + "-business-query";
+  const suggestionsId = idPrefix === "hero" ? "hero-search-suggestions" : idPrefix + "-search-suggestions";
   const searchDictionary = useSearchDictionary();
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -323,9 +328,9 @@ export default function HeroSearch({
           <div className="flex min-w-0 flex-1 items-center gap-2.5 rounded-[8px] px-3 py-2 sm:py-1">
             <BrandIcon name="search-normal" size={20} className="shrink-0 text-stone-400" />
             <div className="min-w-0 flex-1">
-              <label htmlFor="hero-business-query" className="block text-[10px] font-bold uppercase tracking-[0.08em] text-stone-500">Business or service</label>
+              <label htmlFor={inputId} className="block text-[10px] font-bold uppercase tracking-[0.08em] text-stone-500">Business or service</label>
               <input
-                id="hero-business-query"
+                id={inputId}
                 type="search"
                 autoComplete="off"
                 value={searchQuery}
@@ -340,7 +345,7 @@ export default function HeroSearch({
                   }
                 }}
                 aria-expanded={showDropdown}
-                aria-controls="hero-search-suggestions"
+                aria-controls={suggestionsId}
                 placeholder="What are you looking for?"
                 className="mt-0.5 block h-[29px] w-full min-w-0 appearance-none border-0 bg-transparent px-0 pr-1 text-[15px] font-medium leading-[27px] text-stone-900 outline-none placeholder:font-normal placeholder:text-stone-400"
               />
@@ -418,7 +423,7 @@ export default function HeroSearch({
       {/* Lightweight autocomplete. No full-page overlay or scroll lock. */}
       {showDropdown && (
         <div
-          id="hero-search-suggestions"
+          id={suggestionsId}
           role="region"
           aria-label="Business search suggestions"
           className="absolute left-0 right-0 top-full z-50 mt-2 max-h-[288px] overflow-y-auto overscroll-auto rounded-xl border border-stone-200 bg-white text-left shadow-[0_14px_42px_rgba(15,23,42,0.14)]"
