@@ -46,6 +46,12 @@ test('Reference mobile hero matches real Home search architecture without breaki
 test('Real mobile Iconsax menu links exist, are accessible and do not replace vendor layout',()=>{
   assert.match(root,/import MobilePublicDock/);
   assert.match(root,/<MobilePublicDock\s*\/>/);
+  assert.match(root,/<MobilePublicDock role="spacer"\s*\/>/);
+  assert.ok(root.indexOf('<MobilePublicDock />')<root.indexOf('<main>{children}</main>'),
+    'fixed nav must appear in the first streamed shell, before main content');
+  assert.ok(root.indexOf('<MobilePublicDock role="spacer" />')>
+    root.indexOf('<FooterWrapper>'), 'footer clearance remains at document end');
+  assert.match(dock,/if\(role==='spacer'\)return <div aria-hidden="true"/);
   const destinations=[
     ['/', 'Explore','home-2'],
     ['/category','Categories','category-2'],
@@ -70,11 +76,20 @@ test('Real mobile Iconsax menu links exist, are accessible and do not replace ve
   assert.match(dock,/sm:hidden/);
   assert.match(dock,/grid-cols-5/);
   assert.match(dock,/w-full min-w-0/);
-  assert.ok(dock.includes("width:'calc(100vw - 24px)'"));
   assert.match(dock,/maxWidth:440/);
-  assert.ok(dock.includes("transform:'translateX(-50%)'"));
+  assert.match(dock,/position:'fixed'/);
+  assert.match(dock,/data-slbi-viewport-dock="true"/);
+  // A first-paint nav must not wait for a portal/hydration or a scroll event.
+  assert.doesNotMatch(dock,/createPortal|setBody\(|useEffect|useState/);
+  assert.doesNotMatch(dock,/scrollY|scrollTop|scrollIntoView|focusin|focusout|typing/);
+  assert.ok(dock.includes("left:'max(12px, env(safe-area-inset-left, 0px))'"));
+  assert.ok(dock.includes("right:'max(12px, env(safe-area-inset-right, 0px))'"));
+  assert.ok(dock.includes("bottom:'max(12px, env(safe-area-inset-bottom, 0px))'"));
+  assert.match(dock,/marginInline:'auto'/);
+
+  assert.doesNotMatch(dock,/translateX\(-50%\)|left:'50%'/);
+  assert.doesNotMatch(dock,/typing|focusin|focusout/);
   assert.doesNotMatch(tabDeclaration,/add-square|bookmark-2|search-normal/);
-  assert.match(dock,/focusin/);
   assert.match(navbar,/href="\/notifications" aria-label="View notifications"/);
   assert.match(navbar,/name="profile-circle"/);
   assert.match(navbar,/setMobileMenuOpen\(value => !value\)/);
