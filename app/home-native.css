@@ -47,7 +47,7 @@
     font-weight:500!important;
     letter-spacing:-.035em!important;
   }
-  body:has(#slbi-native-mobile-home) header[data-home-mobile="true"] [aria-label="Welcome to SL Business Index"] > span:last-child {
+  body:has(#slbi-native-mobile-home) header[data-home-mobile="true"] [aria-label="Welcome to SL Business Index"] > span:nth-child(2) {
     display:none!important;
   }
   body:has(#slbi-native-mobile-home) header[data-home-mobile="true"] > div > div:last-child {
