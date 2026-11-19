@@ -1,5 +1,10 @@
 # SLBusinessIndex — MASTER IMPLEMENTATION & CHAT HANDOFF
 
+## 2026-11-19 — P2-36: Nearby mobile cards and single bottom navigator
+- [P2-36 Nearby mobile cards / navigation handoff](p2/P2_36_NEARBY_MOBILE_RESULTS_AND_NAV_HANDOFF_20261119.md).
+- User reference: compact Nearby explorer and several business cards in usable viewport; remove global five-button dock **only on Nearby** so only the existing native Map/Listings/Filters bar remains.
+- Mobile search/filter/diagnostics compressed; cards and actions made clearer; desktop discovery/ranking logic unchanged.
+
 ## 2026-11-19 — P2-35: Homepage-only mobile overflow and compact glass card
 - [P2-35 mobile Home overflow root-cause and QA](p2/P2_35_MOBILE_HOME_OVERFLOW_COMPACT_FIX_20261119.md).
 - Categories and other public pages have correct fixed dock. Home only: gold mobile map at `right:-65px` expanded a 390px Chromium viewport to 455px, shifting its global dock ~32.5px.

@@ -37,8 +37,10 @@ export default function MobilePublicDock({role='nav'}:{role?:'nav'|'spacer'}){
     if(role==='nav')setPortalRoot(document.body);
   },[role]);
 
+  // Nearby is a focused explorer with its own Map / Listings / Filters
+  // mobile navigator. Never stack the global five-tab bar above that navigator.
   const excluded=['/login','/signup','/forgot-password','/reset-password',
-    '/update-password','/auth','/admin','/vendor'];
+    '/update-password','/auth','/admin','/vendor','/nearby'];
   if(excluded.some(route=>pathname===route||pathname.startsWith(route+'/')))return null;
 
   // The end-of-document spacer stays inside the page, NOT inside the portal.
