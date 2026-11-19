@@ -356,7 +356,7 @@ export default function HomePageClient() {
   }, [categories]);
 
   return (
-    <div className="min-h-[100dvh] bg-white font-normal">
+    <div className="slbi-home-root min-h-[100dvh] bg-white font-normal">
 
       {/* --- PHASE 3: Split editorial hero with accessible SVG product motion --- */}
       <section

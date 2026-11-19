@@ -31,7 +31,8 @@ test('Reference mobile hero matches real Home search architecture without breaki
   assert.match(home,/hidden lg:block/);
   assert.match(home,/sri-lanka-gold-outline\.svg/);
   assert.match(styles,/@media \(max-width:767px\)/);
-  assert.match(styles,/min-height:calc\(100svh - 76px\)/);
+  assert.match(home,/className="slbi-home-root min-h-\[100dvh\]/);
+  assert.match(styles,/\.slbi-home-hero-grid \{\s*min-height:0;/);
   assert.match(styles,/\.slbi-home-hero-title/);
   assert.match(styles,/\.slbi-home-search-surface/);
   assert.match(styles,/\.slbi-hero-search-button/);
@@ -197,4 +198,26 @@ test('mobile dock explicitly uses viewport width, not document scrollbar gutter'
     assert.ok(right<=viewport-12, 'right inset '+viewport);
     assert.equal((viewport-right)-left,0,'centered '+viewport);
   }
+});
+
+test('Homepage-only mobile overflow cannot displace the otherwise-correct fixed public dock',()=>{
+  // The regression is specific to Home: the previously off-screen decorative
+  // map had right:-65px, which expanded Chromium's 390px viewport to 455px.
+  // This is guarded in the existing Verify Next.js Build workflow.
+  const mobileStyles=styles.split('@media (max-width:767px) {')[1]
+    .split('@media (max-width:360px) {')[0];
+  assert.match(mobileStyles,/\.slbi-home-root\s*\{[^}]*overflow-x:clip;/);
+  assert.match(mobileStyles,/\.slbi-home-hero\s*\{[^}]*overflow-x:clip;/);
+  assert.match(mobileStyles,/\.slbi-home-mobile-map\s*\{[^}]*right:0;/);
+  assert.doesNotMatch(mobileStyles,/\.slbi-home-mobile-map\s*\{[^}]*right:-65px;/);
+  assert.doesNotMatch(styles.split('@media (max-width:767px) {')[0],/\.slbi-home-root\s*\{/);
+  assert.match(mobileStyles,/\.slbi-home-hero-grid\s*\{\s*min-height:0;/);
+  assert.match(mobileStyles,/padding:28px 16px 52px;/);
+  assert.match(mobileStyles,/\.slbi-home-search-surface\s*\{[^}]*padding:8px;/);
+  assert.match(mobileStyles,/\.slbi-hero-search-button\s*\{[^}]*min-height:46px;/);
+  assert.match(mobileStyles,/\.slbi-home-search-actions\s*\{[^}]*align-items:flex-start;/);
+  // Changing the shared dock again risks regressions on Categories & Nearby.
+  assert.match(dock,/import \{createPortal\} from 'react-dom'/);
+  assert.match(dock,/position:'fixed'/);
+  assert.match(dock,/width:'min\(420px, calc\(100vw - 24px\)\)'/);
 });
