@@ -23,7 +23,7 @@ export function readSavedBusinesses():SavedBusiness[]{
       if(!item||typeof item!=='object')return [];
       const row=item as Record<string,unknown>;
       const id=clean(row.id,80),slug=clean(row.slug,140),name=clean(row.name,160);
-      if(!/^[\da-f-]{36}$/i.test(id)||!name||used.has(id))return [];
+      if(!/^(?:[\da-f-]{36}|\d{1,16})$/i.test(id)||!name||used.has(id))return [];
       used.add(id);
       return [{id,slug:slug||id,name,category:clean(row.category,100),
         city:clean(row.city,100)}];
@@ -31,7 +31,7 @@ export function readSavedBusinesses():SavedBusiness[]{
   }catch{return [];}
 }
 export function saveBusinessLocally(item:SavedBusiness):boolean{
-  if(typeof window==='undefined'||!/^[\da-f-]{36}$/i.test(item.id))return false;
+  if(typeof window==='undefined'||!/^(?:[\da-f-]{36}|\d{1,16})$/i.test(item.id))return false;
   const current=readSavedBusinesses();
   const exists=current.some(x=>x.id===item.id);
   const next=exists?current.filter(x=>x.id!==item.id):[item,...current].slice(0,MAX);

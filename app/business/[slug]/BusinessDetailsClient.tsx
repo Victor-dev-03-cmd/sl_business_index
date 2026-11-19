@@ -70,10 +70,10 @@ interface Review {
 export default function BusinessDetailsClient({ business }: Props) {
   const [reviews, setReviews] = useState<Review[]>([]);
   const {items:savedBusinesses,toggle:toggleSavedBusiness}=useSavedBusinesses();
-  const isSaved=savedBusinesses.some(item=>item.id===business.id);
+  const isSaved=savedBusinesses.some(item=>item.id===String(business.id));
   const handleToggleSaved=()=>{
     const added=toggleSavedBusiness({
-      id:business.id,slug:business.slug||business.id,name:business.name,
+      id:String(business.id),slug:String(business.slug||business.id),name:business.name,
       category:business.category||'',
       city:business.address?.split(',').pop()?.trim()||'',
     });
