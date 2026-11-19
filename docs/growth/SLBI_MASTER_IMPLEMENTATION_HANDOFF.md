@@ -1,5 +1,10 @@
 # SLBusinessIndex — MASTER IMPLEMENTATION & CHAT HANDOFF
 
+## 2026-11-19 — P2-34: Cross-browser permanent mobile dock repair
+- [P2-34 mobile navbar screen-recording analysis and body-portal fix](p2/P2_34_MOBILE_DOCK_BODY_PORTAL_20261119.md): after user reported missing-on-first-load/clipped dock on Samsung, Vivo and desktop Chrome.
+- Chromium reproduced asymmetrical centering from mobile scrollbar-gutter reservation; fix: mobile-only scrollbar-gutter auto, explicit viewport width, and body-portaled fixed dock that is independent of scrolling, focus and page ancestor stacking contexts.
+- Manual live-device screenshot verification remains separate from CI / isolated Chromium fixture coverage.
+
 ## 2026-11-19 — Mobile dock first-paint / scroll positioning hotfix
 - **Read first:** [P2-33 Mobile dock first-paint fix](p2/P2_33_MOBILE_DOCK_FIRST_PAINT_FIX_20261119.md).
 - User screenshot shows the public five-icon bar only appearing/aligning after scroll. The fixed nav is now SSR-rendered before homepage content, always shown regardless of focus/scroll, and centered using left/right safe-area insets; footer spacer rendered separately.
