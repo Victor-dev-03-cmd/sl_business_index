@@ -82,7 +82,8 @@ test('Real mobile Iconsax menu links exist, are accessible and do not replace ve
   assert.match(icons,/import\("iconsax"\)/);
   for(const icon of ['bookmark-2','notification','add-square','profile-circle',
     'home-2','category-2','location','note-2','info-circle']){
-    assert.ok(icons.includes('"'+icon+'":'),icon+' icon SVG fallback');
+    assert.ok(icons.includes('"'+icon+'":')||icons.includes('\n  '+icon+':'),
+      icon+' icon SVG fallback');
   }
 });
 
