@@ -32,7 +32,7 @@
     isolation:isolate;
     z-index:20;
     background:radial-gradient(ellipse at 12% 0%,#174b39 0%,#0c342a 64%,#0b2f25 100%);
-    padding:0 16px 20px;
+    padding:0 16px 20px!important;
     border-radius:0 0 22px 22px;
     box-shadow:0 7px 16px rgba(15,40,27,.09);
   }
@@ -121,13 +121,13 @@
   .slbi-native-home .slbi-hero-search-button svg {width:20px!important;height:20px!important;}
   .slbi-native-home #mobile-home-search-suggestions {z-index:80!important; max-height:270px!important;}
   .slbi-native-content {background:#fbfaf5;}
-  .slbi-native-categories {padding:20px 17px 8px;}
+  .slbi-native-categories {padding:20px 17px 8px!important;}
   .slbi-native-category-grid {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;}
   .slbi-native-category-tile {
     display:flex;flex-direction:column;align-items:center;justify-content:center;
-    gap:9px;height:99px;min-width:0;padding:9px 2px;
+    gap:9px;height:99px;min-width:0;padding:9px 2px!important;
     text-align:center;color:#102e25;text-decoration:none;
-    border:1px solid rgba(229,235,225,.8);border-radius:16px;
+    border:1px solid rgba(229,235,225,.8)!important;border-radius:16px;
     background:linear-gradient(135deg,#eff5ef,#e5f2e9);
     box-shadow:none;transition:background-color .15s ease;
   }
@@ -139,18 +139,18 @@
   .slbi-native-category-tile:focus-visible,.slbi-native-nearby-button:focus-visible {
     outline:2px solid #c99b59;outline-offset:3px;
   }
-  .slbi-native-nearby {padding:18px 17px 12px;}
+  .slbi-native-nearby {padding:18px 17px 12px!important;}
   .slbi-native-nearby-button {
     width:100%;height:82px;min-height:82px;display:flex;gap:9px;
     align-items:center;position:relative;overflow:hidden;
-    border:3px solid #102f27;border-radius:17px;
+    border:3px solid #102f27!important;border-radius:17px;
     background:linear-gradient(110deg,#103e2f,#052f24);
     color:#e6cc92;font-size:21px;font-weight:650;letter-spacing:-.035em;
-    padding:0 20px;text-align:left;
+    padding:0 20px!important;text-align:left;
     box-shadow:0 0 0 1px #d5bb86 inset;
   }
   .slbi-native-nearby-button::before {
-    content:"";position:absolute;inset:5px;border:1px solid rgba(226,196,132,.65);
+    content:"";position:absolute;inset:5px;border:1px solid rgba(226,196,132,.65)!important;
     border-radius:11px;pointer-events:none;
   }
   .slbi-native-nearby-button > span,.slbi-native-nearby-button > svg {position:relative;z-index:1;}
@@ -159,13 +159,13 @@
     position:absolute!important;top:-60px;right:2px;height:210px;width:155px;
     opacity:.45;object-fit:contain;pointer-events:none;
   }
-  .slbi-native-featured {padding:19px 0 40px;}
+  .slbi-native-featured {padding:19px 0 40px!important;}
   .slbi-native-featured-heading {
     display:flex;justify-content:space-between;align-items:center;
-    gap:12px;padding:0 17px;margin-bottom:15px;
+    gap:12px;padding:0 17px!important;margin-bottom:15px;
   }
   .slbi-native-featured-heading h2 {
-    margin:0;color:#131e18;
+    margin:0!important;color:#131e18;
     font-size:22px;font-weight:650;line-height:1.25;letter-spacing:-.04em;
   }
   .slbi-native-featured-heading a {
@@ -176,13 +176,13 @@
     display:flex;gap:12px;overflow-x:auto;overflow-y:hidden;
     scroll-snap-type:x mandatory;scroll-padding-left:17px;
     overscroll-behavior-x:contain;
-    padding:0 17px 14px;scrollbar-width:none;
+    padding:0 17px 14px!important;scrollbar-width:none;
   }
   .slbi-native-listing-track::-webkit-scrollbar {display:none;}
   .slbi-native-card {
     flex:0 0 min(78vw,320px);width:min(78vw,320px);
     scroll-snap-align:start;display:block;overflow:hidden;
-    min-width:0;border:1px solid #e9ece4;border-radius:17px;
+    min-width:0;border:1px solid #e9ece4!important;border-radius:17px;
     background:#fff;color:#142e25;text-decoration:none;
     box-shadow:0 6px 19px rgba(14,47,33,.08);
   }
@@ -193,29 +193,29 @@
   .slbi-native-photo-area {
     position:absolute;left:10px;bottom:9px;display:flex;align-items:center;gap:4px;
     max-width:60%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
-    border-radius:8px;padding:5px 8px;background:rgba(250,250,244,.93);
+    border-radius:8px!important;padding:5px 8px;background:rgba(250,250,244,.93);
     color:#213c30;font-size:11px;font-weight:550;
   }
-  .slbi-native-card-details {padding:11px 11px 14px;}
+  .slbi-native-card-details {padding:11px 11px 14px!important;}
   .slbi-native-card-details h3 {
-    margin:0;font-size:16px;font-weight:650;line-height:1.3;
+    margin:0!important;font-size:16px;font-weight:650;line-height:1.3;
     letter-spacing:-.03em;color:#172e25;overflow:hidden;
     display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;
   }
-  .slbi-native-card-subtitle {display:flex;align-items:center;gap:9px;margin-top:6px;min-height:20px;}
+  .slbi-native-card-subtitle {display:flex;align-items:center;gap:9px;margin-top:6px!important;min-height:20px;}
   .slbi-native-rating {display:inline-flex;align-items:center;gap:4px;color:#283729;font-weight:550;font-size:12px;}
   .slbi-native-rating svg {color:#e1a841;}
   .slbi-native-business-address {display:block;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:11px;color:#6e7d73;}
-  .slbi-native-empty {margin:0 17px;padding:28px 18px;border:1px solid #e6e8df;border-radius:14px;background:#fff;color:#476557;font-size:13px;}
+  .slbi-native-empty {margin:0 17px!important;padding:28px 18px;border:1px solid #e6e8df!important;border-radius:14px;background:#fff;color:#476557;font-size:13px;}
   .slbi-native-empty a {text-decoration:underline;}
   .slbi-native-card-placeholder {height:250px;}
   .slbi-native-card-placeholder-title {
-    height:18px;border-radius:6px;background:#f0f0ed;margin:13px 12px;
+    height:18px;border-radius:6px!important;background:#f0f0ed;margin:13px 12px!important;
   }
 }
 @media (max-width:350px) {
   .slbi-native-category-grid {gap:7px;}
-  .slbi-native-categories,.slbi-native-nearby {padding-left:12px;padding-right:12px;}
+  .slbi-native-categories,.slbi-native-nearby {padding-left:12px!important;padding-right:12px;}
   .slbi-native-category-tile {height:88px;gap:5px;}
   .slbi-native-category-tile svg {height:28px;width:28px;}
   .slbi-native-category-tile span {font-size:11px;}
