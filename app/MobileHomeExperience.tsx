@@ -123,7 +123,6 @@ export default function MobileHomeExperience({
       <section className="slbi-native-featured" aria-label="Featured Sri Lankan businesses">
         <div className="slbi-native-featured-heading">
           <h2><span>Featured</span>{" "}<span>businesses</span></h2>
-          <Link href="/nearby">See all <ArrowRight size={15} strokeWidth={1.7} aria-hidden="true" /></Link>
         </div>
         {featuredLoading ? (
           <div className="slbi-native-listing-track" role="status" aria-label="Loading featured listings">

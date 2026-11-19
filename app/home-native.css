@@ -70,7 +70,7 @@
   }
   /* The area selector reuses HeroSearch's existing state and onClick. */
   .slbi-native-search-panel {
-    isolation:isolate;position:relative;z-index:100!important;
+    isolation:isolate;position:relative;z-index:10!important;
     background:#fff;padding:4px 16px 12px!important;
   }
   .slbi-native-home .slbi-hero-search-form {
@@ -233,7 +233,7 @@
   .slbi-native-featured-heading h2 {
     flex:1 1 auto;min-width:0;margin:0!important;
     white-space:nowrap!important;text-wrap:nowrap!important;
-    font-size:clamp(20px,6.35vw,28px)!important;line-height:1.15!important;
+    font-size:clamp(34px,10vw,42px)!important;line-height:1.08!important;
     font-weight:550!important;letter-spacing:-.052em!important;
   }
   .slbi-native-featured-heading h2 span:first-child {color:#1B3430!important;}
@@ -370,6 +370,10 @@
   .slbi-native-home :where(button,a):focus-visible {
     outline:2px solid #26795B!important;outline-offset:2px!important;
   }
+}
+@media (max-width:330px) {
+  /* Preserve a single line even on very narrow phones. */
+  .slbi-native-featured-heading h2 {font-size:clamp(28px,9.5vw,32px)!important;}
 }
 @media (max-width:350px) {
   .slbi-native-category-tile {flex-basis:66px!important;}
