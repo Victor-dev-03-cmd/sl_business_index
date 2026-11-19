@@ -1,5 +1,11 @@
 # SLBusinessIndex — MASTER IMPLEMENTATION & CHAT HANDOFF
 
+## 2026-11-19 — P2-35: Homepage-only mobile overflow and compact glass card
+- [P2-35 mobile Home overflow root-cause and QA](p2/P2_35_MOBILE_HOME_OVERFLOW_COMPACT_FIX_20261119.md).
+- Categories and other public pages have correct fixed dock. Home only: gold mobile map at `right:-65px` expanded a 390px Chromium viewport to 455px, shifting its global dock ~32.5px.
+- Fix is scoped to mobile Homepage: right:0 map, clip horizontal decorative overflow at Home root/hero, compact search/glass card and excessive hero bottom padding. Global navbar unchanged.
+- Headless Chromium fixture verifies 280–600px device widths and stable dock geometry after scroll; production E2E on real Samsung/Vivo remains separate.
+
 ## 2026-11-19 — P2-34: Cross-browser permanent mobile dock repair
 - [P2-34 mobile navbar screen-recording analysis and body-portal fix](p2/P2_34_MOBILE_DOCK_BODY_PORTAL_20261119.md): after user reported missing-on-first-load/clipped dock on Samsung, Vivo and desktop Chrome.
 - Chromium reproduced asymmetrical centering from mobile scrollbar-gutter reservation; fix: mobile-only scrollbar-gutter auto, explicit viewport width, and body-portaled fixed dock that is independent of scrolling, focus and page ancestor stacking contexts.
