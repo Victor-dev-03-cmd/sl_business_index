@@ -1,5 +1,10 @@
 # SLBusinessIndex — MASTER IMPLEMENTATION & CHAT HANDOFF
 
+## 2026-11-19 — Public mobile header + bottom dock alignment revision
+- **Read first:** [Mobile header & five-item public dock handoff](p2/P2_32_MOBILE_HEADER_DOCK_ALIGNMENT_20261119.md).
+- Based on user screenshots: mobile logo replaced by real username + local time-of-day greeting; five equal-width Iconsax navigation tabs in exact order Explore, Categories, Nearby, Business News, About; left-align Explore near me / Browse categories actions in search card.
+- Implementation branch `fix/mobile-header-dock-alignment-20261119` isolates this change from Vendor GrowthOS. CI and production release receipt tracked in PR; manual mobile screenshot QA remains an explicit gate.
+
 ## 2026-11-19 — P2-31: GrowthOS production closeout and Mobile Homepage design handoff
 - **Read first:** [P2-31 release and mobile-home design handoff](p2/P2_31_CAPTION_RELEASE_AND_MOBILE_HOME_HANDOFF_20261119.md).
 - Production `main` merge `91976efae960a55786384bd12b181dfa98616972` from PR #119; Vercel `dpl_6po1VamiPzzSBH7Mrukb7vXG2rgG` READY, `www.slbusinessindex.com` alias verified; six QA workflow families + main production build passed.

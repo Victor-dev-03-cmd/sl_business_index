@@ -9,6 +9,7 @@ import CategoriesMenu from "./CategoriesMenu";
 import CategorySubNavbar from "./CategorySubNavbar";
 import AuthButton from "./AuthButton";
 import LogoLink from "./LogoLink";
+import MobileGreeting from "./MobileGreeting";
 import BrandIcon from "./BrandIcon";
 import NotificationBell from "./NotificationBell";
 import LiveCounter from "./LiveCounter";
@@ -325,9 +326,15 @@ export default function Navbar() {
           onMouseEnter={closeMegaMenu}
           onFocusCapture={closeMegaMenu}
         >
-        <div className="mx-auto flex h-[76px] max-w-[1440px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-          {/* Logo */}
-          <div className="flex-shrink-0">
+        <div className="mx-auto flex h-[76px] max-w-[1440px] items-center justify-between gap-2.5 px-4 sm:gap-4 sm:px-6 lg:px-8">
+          {/* Mobile only: personalized two-line welcome. Keep the actual
+              SLBI wordmark unchanged from tablet/desktop breakpoints onward. */}
+          <MobileGreeting
+            username={profileData?.username}
+            fullName={profileData?.full_name}
+            email={profileData?.email}
+          />
+          <div className="hidden shrink-0 sm:block">
             <LogoLink />
           </div>
 

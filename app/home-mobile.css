@@ -34,6 +34,7 @@
     border-radius:15px;
     padding:7px;
     box-shadow:0 8px 25px rgba(0,0,0,.13);
+    text-align:left;
   }
   .slbi-hero-search-form:focus-within {box-shadow:0 0 0 2px rgba(233,197,137,.36),0 8px 25px rgba(0,0,0,.12);}
   .slbi-hero-search-button {
@@ -44,7 +45,10 @@
     font-size:13px;
     box-shadow:0 3px 13px rgba(7,35,25,.19);
   }
-  .slbi-home-search-actions {display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding-top:11px;}
+  /* Mobile actions follow the reference's left edge, not a centered column. */
+  .slbi-home-search-actions {display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:8px;padding-top:11px;text-align:left;}
+  .slbi-home-search-actions > button,
+  .slbi-home-search-actions > a {align-self:flex-start;margin-left:0;margin-right:auto;max-width:100%;}
   .slbi-home-search-hint {margin-top:13px;font-size:11px;line-height:1.6;color:#C6D8C8;}
   .slbi-home-mobile-map {position:absolute;right:-65px;bottom:24px;width:205px;height:auto;opacity:.31;pointer-events:none;}
 }
