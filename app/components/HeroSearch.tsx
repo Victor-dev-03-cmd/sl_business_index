@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect, useMemo, useDeferredValue } from "r
 import { useRouter } from "next/navigation";
 import { Search, ChevronRight, Building2, Star, Tags, MapPin, ChevronDown, Check, X } from "lucide-react";
 import CategoryIcon from "./CategoryIcon";
+import BrandIcon from "./BrandIcon";
 import { cn, expandSearchQuery } from "@/lib/utils";
 import { supabase } from "@/lib/supabaseClient";
 import { motion } from "framer-motion";
@@ -316,11 +317,11 @@ export default function HeroSearch({
         onSubmit={handleSubmit}
         ref={searchBarRef}
         role="search"
-        className="rounded-[11px] border border-stone-200 bg-white p-1.5 shadow-[0_8px_28px_rgba(2,22,44,0.12)] focus-within:ring-2 focus-within:ring-emerald-200 sm:p-2"
+        className="slbi-hero-search-form rounded-[11px] border border-stone-200 bg-white p-1.5 shadow-[0_8px_28px_rgba(2,22,44,0.12)] focus-within:ring-2 focus-within:ring-emerald-200 sm:p-2"
       >
         <div className="flex flex-col gap-1 sm:flex-row sm:items-stretch sm:gap-0">
           <div className="flex min-w-0 flex-1 items-center gap-2.5 rounded-[8px] px-3 py-2 sm:py-1">
-            <Search size={20} strokeWidth={1.8} className="shrink-0 text-stone-400" />
+            <BrandIcon name="search-normal" size={20} className="shrink-0 text-stone-400" />
             <div className="min-w-0 flex-1">
               <label htmlFor="hero-business-query" className="block text-[10px] font-bold uppercase tracking-[0.08em] text-stone-500">Business or service</label>
               <input
@@ -360,7 +361,7 @@ export default function HeroSearch({
               onClick={() => { setAreaOpen(v => !v); setIsSearchFocused(false); setAreaQuery(""); }}
               className="flex min-h-[54px] w-full items-center gap-2 rounded-[8px] px-3 text-left transition-colors hover:bg-stone-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 sm:min-h-[56px]"
             >
-              <MapPin size={19} strokeWidth={1.8} className="shrink-0 text-stone-400" />
+              <BrandIcon name="location" size={19} className="shrink-0 text-stone-400" />
               <span className="min-w-0 flex-1">
                 <span className="block text-[10px] font-bold uppercase tracking-[0.08em] text-stone-500">Area / town</span>
                 <span className="mt-0.5 block truncate text-[13px] font-semibold text-stone-800">{selectedArea?.label || "All Sri Lanka"}</span>
@@ -407,9 +408,9 @@ export default function HeroSearch({
 
           <button
             type="submit"
-            className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-[8px] bg-[#1B3430] px-5 text-[13px] font-semibold text-white shadow-[0_5px_16px_rgba(18,62,101,0.2)] transition-colors hover:bg-[#2B6552] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 sm:min-h-[56px]"
+            className="slbi-hero-search-button inline-flex min-h-[48px] items-center justify-center gap-2 rounded-[8px] bg-[#1B3430] px-5 text-[13px] font-semibold text-white shadow-[0_5px_16px_rgba(18,62,101,0.2)] transition-colors hover:bg-[#2B6552] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 sm:min-h-[56px]"
           >
-            <Search size={18} strokeWidth={2} /> Search
+            <BrandIcon name="search-normal" size={18} /> Search
           </button>
         </div>
       </form>

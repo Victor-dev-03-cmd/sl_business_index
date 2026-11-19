@@ -6,6 +6,7 @@ import {
   ChevronLeft, ChevronRight, CircleHelp, CirclePlus, Cpu, Heart,
   House, Info, LayoutGrid, LogIn, LogOut, MapPin, Monitor,
   Newspaper, Phone, Plane, Search, Shield, ShoppingCart, Star,
+  Bookmark, Bell, SquarePlus, CircleUserRound, RefreshCw, CheckCircle2,
   Store, Users, type LucideIcon,
 } from "lucide-react";
 
@@ -58,6 +59,12 @@ const fallbacks: Readonly<Record<string, LucideIcon>> = {
   "arrow-right-2": ChevronRight,
   "arrow-right-3": ChevronRight,
   "arrow-up-right": ArrowUpRight,
+  "bookmark-2": Bookmark,
+  "notification": Bell,
+  "add-square": SquarePlus,
+  "profile-circle": CircleUserRound,
+  "refresh": RefreshCw,
+  "tick-circle": CheckCircle2,
   login: LogIn,
   logout: LogOut,
 };

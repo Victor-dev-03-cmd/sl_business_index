@@ -15,6 +15,7 @@ import DynamicAppearance from "./components/DynamicAppearance";
 import { SessionProvider } from "./components/SessionContext";
 import LoadingProvider from "./components/LoadingProvider";
 import IconsaxRegistry from "./components/IconsaxRegistry";
+import MobilePublicDock from "./components/MobilePublicDock";
 import { Toaster } from "sonner";
 
 export default function RootClientLayout({
@@ -61,6 +62,7 @@ export default function RootClientLayout({
                 <FooterWrapper>
                   <Footer />
                 </FooterWrapper>
+                <MobilePublicDock />
               </ThemeProvider>
             </SessionProvider>
           </QueryProvider>

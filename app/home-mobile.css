@@ -1,0 +1,58 @@
+/* Reference-led public mobile hero only. Existing desktop homepage unaffected.
+   Keep readable text and search semantics, use no expensive animation/filters. */
+@media (max-width:767px) {
+  .slbi-home-hero {
+    background:
+      radial-gradient(ellipse 78% 26% at 88% 79%,rgba(177,133,72,.23),transparent 72%),
+      radial-gradient(ellipse 80% 50% at 0% 12%,rgba(34,87,71,.34),transparent 78%),
+      linear-gradient(155deg,#17392f 0%,#102d27 55%,#254139 100%);
+  }
+  .slbi-home-hero-grid {
+    min-height:calc(100svh - 76px);
+    align-items:start;
+    padding:36px 18px 112px;
+    gap:0;
+  }
+  .slbi-home-hero-title {
+    font-size:clamp(2.55rem,11.8vw,3.3rem);
+    font-weight:570;
+    line-height:1.06;
+    letter-spacing:-.065em;
+    text-wrap:balance;
+  }
+  .slbi-home-hero-badge {margin-bottom:22px;}
+  .slbi-home-hero-description {margin-top:20px;max-width:340px;font-size:15px;line-height:1.6;}
+  .slbi-home-search-wrap {margin-top:27px;}
+  .slbi-home-search-surface {
+    border-radius:23px;
+    padding:11px;
+    border:1px solid rgba(222,236,222,.26);
+    background:linear-gradient(136deg,rgba(225,240,224,.12),rgba(176,200,183,.08));
+    box-shadow:0 15px 40px rgba(0,0,0,.12);
+  }
+  .slbi-hero-search-form {
+    border-radius:15px;
+    padding:7px;
+    box-shadow:0 8px 25px rgba(0,0,0,.13);
+  }
+  .slbi-hero-search-form:focus-within {box-shadow:0 0 0 2px rgba(233,197,137,.36),0 8px 25px rgba(0,0,0,.12);}
+  .slbi-hero-search-button {
+    border-radius:10px;
+    min-height:52px;
+    margin-top:3px;
+    background:#18392f;
+    font-size:13px;
+    box-shadow:0 3px 13px rgba(7,35,25,.19);
+  }
+  .slbi-home-search-actions {display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding-top:11px;}
+  .slbi-home-search-hint {margin-top:13px;font-size:11px;line-height:1.6;color:#C6D8C8;}
+  .slbi-home-mobile-map {position:absolute;right:-65px;bottom:24px;width:205px;height:auto;opacity:.31;pointer-events:none;}
+}
+@media (max-width:360px) {
+  .slbi-home-hero-grid {padding-left:14px;padding-right:14px;}
+  .slbi-home-hero-title {font-size:clamp(2.38rem,11.4vw,2.7rem);}
+  .slbi-home-search-surface {padding:8px;}
+}
+@media (prefers-reduced-motion:reduce) {
+  .slbi-hero-search-form,.slbi-hero-search-button {transition:none;}
+}
