@@ -1,5 +1,11 @@
 # SLBusinessIndex — MASTER IMPLEMENTATION & CHAT HANDOFF
 
+## 2026-11-19 — P2-31: GrowthOS production closeout and Mobile Homepage design handoff
+- **Read first:** [P2-31 release and mobile-home design handoff](p2/P2_31_CAPTION_RELEASE_AND_MOBILE_HOME_HANDOFF_20261119.md).
+- Production `main` merge `91976efae960a55786384bd12b181dfa98616972` from PR #119; Vercel `dpl_6po1VamiPzzSBH7Mrukb7vXG2rgG` READY, `www.slbusinessindex.com` alias verified; six QA workflow families + main production build passed.
+- Caption Lab fixes include per-language partial success/retry, local All-mode polish, compact notifications, consumed-handoff + session reset on Planner save; common voice engine remains restricted to authenticated owner/QA.
+- **Next:** Implement mobile public homepage to supplied 2026-11-19 visual reference, preserving desktop and real navigation actions. Work isolated to `feat/mobile-home-reference-20261119`; browser end-to-end QA for Gemini/Planner still open.
+
 ## 2026-11-18 — P2-30 Caption Lab Save to Planner column-GRANT fix (DB HOTFIX APPLIED; CI/RELEASE PENDING)
 - **Read first:** [P2-30 Caption Planner permission repair and control audit](p2/P2_30_CAMPAIGN_PLANNER_COLUMN_GRANT_AUDIT_20261118.md). Owner reproduced `permission denied for table marketing_campaigns` on Save to Planner after P2-29.
 - **Exact cause:** Secure P2-05 column-level INSERT grants did not include the new P2-29 `poster_asset_id` column. Caption Lab inserts this column even with null; other columns were already allowed. Existing owner RLS was intact.
