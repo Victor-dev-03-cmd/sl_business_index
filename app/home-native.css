@@ -1,0 +1,224 @@
+/* Reference-based mobile-only public Homepage layout.
+   Scoped to phone widths; desktop/tablet and all other routes are untouched. */
+@media (max-width:639px) {
+  body:has(#slbi-native-mobile-home) aside[aria-label="SL Business Index announcement"] { display:none!important; }
+  body:has(#slbi-native-mobile-home) header[data-home-mobile="true"] {
+    background:#0d3329!important; border:0!important; box-shadow:none!important;
+  }
+  body:has(#slbi-native-mobile-home) header[data-home-mobile="true"] > div {
+    height:70px!important; padding:12px 19px 4px!important;
+  }
+  body:has(#slbi-native-mobile-home) header[data-home-mobile="true"] [aria-label="Welcome to SL Business Index"] > span:first-child {
+    color:#f9f6e8!important; font-size:15px!important; font-weight:550!important;
+  }
+  body:has(#slbi-native-mobile-home) header[data-home-mobile="true"] [aria-label="Welcome to SL Business Index"] > span:last-child {
+    color:#e4cfad!important; font-size:12px!important;
+  }
+  body:has(#slbi-native-mobile-home) header[data-home-mobile="true"] a[aria-label="View notifications"] {color:#faf8ef!important;}
+  body:has(#slbi-native-mobile-home) header[data-home-mobile="true"] button[aria-label$="account and navigation menu"] {
+    color:#15362b!important;background:#f4f8f0!important;border:1px solid #dce5d7!important;
+    width:42px!important;height:42px!important;
+  }
+
+  .slbi-native-home {
+    background:#fbfaf5;
+    min-height:100vh;
+    width:100%;
+    overflow-x:hidden; overflow-x:clip;
+    color:#152d26;
+  }
+  .slbi-native-search-panel {
+    position:relative;
+    isolation:isolate;
+    z-index:20;
+    background:radial-gradient(ellipse at 12% 0%,#174b39 0%,#0c342a 64%,#0b2f25 100%);
+    padding:0 16px 20px;
+    border-radius:0 0 22px 22px;
+    box-shadow:0 7px 16px rgba(15,40,27,.09);
+  }
+  .slbi-native-home .slbi-hero-search-form {
+    background:transparent!important;
+    border:0!important; padding:0!important; margin:0!important;
+    box-shadow:none!important; border-radius:0!important;
+    text-align:left!important; outline:0!important;
+  }
+  .slbi-native-home .slbi-hero-search-form:focus-within {box-shadow:none!important;}
+  .slbi-native-home .slbi-hero-search-form > div {
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) 47px!important;
+    grid-template-rows:46px 57px!important;
+    gap:0!important; align-items:stretch!important;
+  }
+  .slbi-native-home .slbi-hero-search-form > div > div:first-child {
+    position:relative!important;
+    grid-row:2!important;grid-column:1!important;
+    min-width:0!important; width:auto!important;
+    padding:0 0 0 12px!important; margin:0!important;
+    background:#fff!important;
+    border-radius:15px 0 0 15px!important;
+    box-shadow:0 5px 14px rgba(0,0,0,.18)!important;
+    gap:8px!important;
+    align-items:center!important;
+  }
+  .slbi-native-home .slbi-hero-search-form label[for="mobile-home-business-query"] {
+    position:absolute!important;height:1px!important;width:1px!important;
+    padding:0!important;margin:-1px!important;overflow:hidden!important;
+    clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important;
+  }
+  .slbi-native-home .slbi-hero-search-form input#mobile-home-business-query {
+    margin:0!important; display:block!important;
+    height:48px!important;line-height:48px!important;
+    width:100%!important;max-width:100%!important;
+    font-size:13px!important;font-weight:400!important;
+    padding:0!important; color:#18382d!important;
+  }
+  .slbi-native-home .slbi-hero-search-form input#mobile-home-business-query::placeholder {
+    color:#8f9994!important; opacity:1!important;
+  }
+  .slbi-native-home .slbi-hero-search-form > div > div:nth-child(2) {display:none!important;}
+  .slbi-native-home .slbi-hero-search-form > div > div:nth-child(3) {
+    grid-row:1!important;grid-column:1 / -1!important;
+    position:relative!important;
+    display:flex!important; min-width:0!important;
+    max-width:none!important;width:100%!important;
+    padding:0!important;margin:0!important;
+    z-index:50!important;
+  }
+  .slbi-native-home button[aria-label="Choose district or town"] {
+    color:#f8f8ef!important;
+    display:flex!important; width:100%!important;
+    min-height:44px!important; height:44px!important;
+    padding:0 3px!important;gap:7px!important;
+    border-radius:8px!important;
+    justify-content:flex-start!important;
+  }
+  .slbi-native-home button[aria-label="Choose district or town"] > span {
+    display:block!important; flex:0 1 auto!important;
+  }
+  .slbi-native-home button[aria-label="Choose district or town"] > span > span:first-child {display:none!important;}
+  .slbi-native-home button[aria-label="Choose district or town"] > span > span:last-child {
+    font-size:16px!important; font-weight:650!important;color:#fff!important; margin:0!important;
+  }
+  .slbi-native-home button[aria-label="Choose district or town"] > svg:last-child {color:#fff!important;}
+  .slbi-native-home .slbi-hero-search-form > div > div:nth-child(3) > div {
+    left:0!important;right:auto!important;top:100%!important;
+    width:min(330px,calc(100vw - 32px))!important;
+    min-width:0!important;max-width:none!important;
+    z-index:1000!important;
+  }
+  .slbi-native-home .slbi-hero-search-button {
+    grid-row:2!important; grid-column:2!important;
+    margin:0!important; padding:0!important;
+    display:flex!important; flex:none!important;
+    width:47px!important; min-width:47px!important;
+    height:57px!important; min-height:57px!important;
+    font-size:0!important;gap:0!important;
+    border-radius:0 15px 15px 0!important;
+    color:#123d31!important;
+    background:#fff!important;
+    box-shadow:0 5px 14px rgba(0,0,0,.18)!important;
+  }
+  .slbi-native-home .slbi-hero-search-button svg {width:20px!important;height:20px!important;}
+  .slbi-native-home #mobile-home-search-suggestions {z-index:80!important; max-height:270px!important;}
+  .slbi-native-content {background:#fbfaf5;}
+  .slbi-native-categories {padding:20px 17px 8px;}
+  .slbi-native-category-grid {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;}
+  .slbi-native-category-tile {
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:9px;height:99px;min-width:0;padding:9px 2px;
+    text-align:center;color:#102e25;text-decoration:none;
+    border:1px solid rgba(229,235,225,.8);border-radius:16px;
+    background:linear-gradient(135deg,#eff5ef,#e5f2e9);
+    box-shadow:none;transition:background-color .15s ease;
+  }
+  .slbi-native-category-tile:nth-child(4n+1),.slbi-native-category-tile:nth-child(4n+3) {
+    background:linear-gradient(135deg,#f8f4e8,#f1edda);
+  }
+  .slbi-native-category-tile svg {height:33px;width:33px;color:#122c23;flex:0 0 auto;}
+  .slbi-native-category-tile span {font-size:13px;font-weight:500;line-height:1.15;letter-spacing:-.02em;}
+  .slbi-native-category-tile:focus-visible,.slbi-native-nearby-button:focus-visible {
+    outline:2px solid #c99b59;outline-offset:3px;
+  }
+  .slbi-native-nearby {padding:18px 17px 12px;}
+  .slbi-native-nearby-button {
+    width:100%;height:82px;min-height:82px;display:flex;gap:9px;
+    align-items:center;position:relative;overflow:hidden;
+    border:3px solid #102f27;border-radius:17px;
+    background:linear-gradient(110deg,#103e2f,#052f24);
+    color:#e6cc92;font-size:21px;font-weight:650;letter-spacing:-.035em;
+    padding:0 20px;text-align:left;
+    box-shadow:0 0 0 1px #d5bb86 inset;
+  }
+  .slbi-native-nearby-button::before {
+    content:"";position:absolute;inset:5px;border:1px solid rgba(226,196,132,.65);
+    border-radius:11px;pointer-events:none;
+  }
+  .slbi-native-nearby-button > span,.slbi-native-nearby-button > svg {position:relative;z-index:1;}
+  .slbi-native-nearby-button:disabled {opacity:.75;cursor:wait;}
+  .slbi-native-map-art {
+    position:absolute!important;top:-60px;right:2px;height:210px;width:155px;
+    opacity:.45;object-fit:contain;pointer-events:none;
+  }
+  .slbi-native-featured {padding:19px 0 40px;}
+  .slbi-native-featured-heading {
+    display:flex;justify-content:space-between;align-items:center;
+    gap:12px;padding:0 17px;margin-bottom:15px;
+  }
+  .slbi-native-featured-heading h2 {
+    margin:0;color:#131e18;
+    font-size:22px;font-weight:650;line-height:1.25;letter-spacing:-.04em;
+  }
+  .slbi-native-featured-heading a {
+    display:flex;gap:4px;align-items:center;flex:none;
+    font-size:13px;font-weight:550;color:#b28a4c;text-decoration:none;
+  }
+  .slbi-native-listing-track {
+    display:flex;gap:12px;overflow-x:auto;overflow-y:hidden;
+    scroll-snap-type:x mandatory;scroll-padding-left:17px;
+    overscroll-behavior-x:contain;
+    padding:0 17px 14px;scrollbar-width:none;
+  }
+  .slbi-native-listing-track::-webkit-scrollbar {display:none;}
+  .slbi-native-card {
+    flex:0 0 min(78vw,320px);width:min(78vw,320px);
+    scroll-snap-align:start;display:block;overflow:hidden;
+    min-width:0;border:1px solid #e9ece4;border-radius:17px;
+    background:#fff;color:#142e25;text-decoration:none;
+    box-shadow:0 6px 19px rgba(14,47,33,.08);
+  }
+  .slbi-native-card-photo {
+    position:relative;display:flex;align-items:center;justify-content:center;
+    width:100%;height:181px;overflow:hidden;background:#f0f3ed;
+  }
+  .slbi-native-photo-area {
+    position:absolute;left:10px;bottom:9px;display:flex;align-items:center;gap:4px;
+    max-width:60%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+    border-radius:8px;padding:5px 8px;background:rgba(250,250,244,.93);
+    color:#213c30;font-size:11px;font-weight:550;
+  }
+  .slbi-native-card-details {padding:11px 11px 14px;}
+  .slbi-native-card-details h3 {
+    margin:0;font-size:16px;font-weight:650;line-height:1.3;
+    letter-spacing:-.03em;color:#172e25;overflow:hidden;
+    display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;
+  }
+  .slbi-native-card-subtitle {display:flex;align-items:center;gap:9px;margin-top:6px;min-height:20px;}
+  .slbi-native-rating {display:inline-flex;align-items:center;gap:4px;color:#283729;font-weight:550;font-size:12px;}
+  .slbi-native-rating svg {color:#e1a841;}
+  .slbi-native-business-address {display:block;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:11px;color:#6e7d73;}
+  .slbi-native-empty {margin:0 17px;padding:28px 18px;border:1px solid #e6e8df;border-radius:14px;background:#fff;color:#476557;font-size:13px;}
+  .slbi-native-empty a {text-decoration:underline;}
+  .slbi-native-card-placeholder {height:250px;}
+  .slbi-native-card-placeholder-title {
+    height:18px;border-radius:6px;background:#f0f0ed;margin:13px 12px;
+  }
+}
+@media (max-width:350px) {
+  .slbi-native-category-grid {gap:7px;}
+  .slbi-native-categories,.slbi-native-nearby {padding-left:12px;padding-right:12px;}
+  .slbi-native-category-tile {height:88px;gap:5px;}
+  .slbi-native-category-tile svg {height:28px;width:28px;}
+  .slbi-native-category-tile span {font-size:11px;}
+  .slbi-native-featured-heading h2 {font-size:20px;}
+}
+
