@@ -321,7 +321,8 @@ export default function Navbar() {
           if (event.key === "Escape") closeMegaMenu();
         }}
       >
-        <header 
+        <header
+          data-home-mobile={pathname === "/" ? "true" : undefined}
           className={cn("relative z-[90] border-b bg-[#FCFAF6] transition-[border-color,box-shadow] duration-150", scrolled ? "border-stone-200 shadow-[0_2px_10px_rgba(15,23,42,0.055)]" : "border-stone-100")}
           onMouseEnter={closeMegaMenu}
           onFocusCapture={closeMegaMenu}
