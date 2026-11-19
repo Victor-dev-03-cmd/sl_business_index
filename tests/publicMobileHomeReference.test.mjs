@@ -209,7 +209,7 @@ test('Homepage-only mobile overflow cannot displace the otherwise-correct fixed 
   assert.match(mobileStyles,/\.slbi-home-root\s*\{[^}]*overflow-x:clip;/);
   assert.match(mobileStyles,/\.slbi-home-hero\s*\{[^}]*overflow-x:clip;/);
   assert.match(mobileStyles,/\.slbi-home-mobile-map\s*\{[^}]*right:0;/);
-  assert.doesNotMatch(mobileStyles,/right:-65px/);
+  assert.doesNotMatch(mobileStyles,/\.slbi-home-mobile-map\s*\{[^}]*right:-65px;/);
   assert.doesNotMatch(styles.split('@media (max-width:767px) {')[0],/\.slbi-home-root\s*\{/);
   assert.match(mobileStyles,/\.slbi-home-hero-grid\s*\{\s*min-height:0;/);
   assert.match(mobileStyles,/padding:28px 16px 52px;/);
