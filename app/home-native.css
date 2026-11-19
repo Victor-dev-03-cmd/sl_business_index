@@ -222,3 +222,12 @@
   .slbi-native-featured-heading h2 {font-size:20px;}
 }
 
+
+
+/* Shorter phone screens: keep the first listing's title/rating above the fixed dock. */
+@media (max-width:639px) and (max-height:860px) {
+  .slbi-native-card-photo {height:136px!important;}
+  .slbi-native-card-details {padding:8px 11px 12px!important;}
+  .slbi-native-card-details h3 {font-size:15px!important;line-height:1.2!important;}
+  .slbi-native-card-subtitle {margin-top:2px!important;min-height:18px!important;}
+}
