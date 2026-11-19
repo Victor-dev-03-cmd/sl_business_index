@@ -63,7 +63,7 @@ const FeaturedListingCard = React.memo(function FeaturedListingCard({
                   href={`/business/${business.slug || business.id}`}
                   prefetch={false}
                   aria-label={`View ${business.name} business profile`}
-                  className="group relative block aspect-[9/16] [content-visibility:auto] [contain-intrinsic-size:237px_422px] w-[178px] shrink-0 snap-start overflow-hidden rounded-[22px] border border-[#E0EADB] bg-[#1B3430] shadow-[0_3px_12px_rgba(15,40,67,0.07)] transition-colors duration-150 hover:border-[#75AB8D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 sm:w-[207px] lg:w-[229px] xl:w-[237px]"
+                  className="slbi-home-featured-card group relative block aspect-[9/16] [content-visibility:auto] [contain-intrinsic-size:237px_422px] w-[178px] shrink-0 snap-start overflow-hidden rounded-[22px] border border-[#E0EADB] bg-[#1B3430] shadow-[0_3px_12px_rgba(15,40,67,0.07)] transition-colors duration-150 hover:border-[#75AB8D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 sm:w-[207px] lg:w-[229px] xl:w-[237px]"
                 >
                   {/* 9:16 visual works with landscape photos as well as portrait images. */}
                   <div className="absolute inset-0 overflow-hidden">
@@ -75,7 +75,7 @@ const FeaturedListingCard = React.memo(function FeaturedListingCard({
                         loading="lazy"
                         quality={55}
                         decoding="async"
-                        sizes="(max-width: 640px) 178px, (max-width: 1024px) 207px, 237px"
+                        sizes="(max-width: 639px) 310px, (max-width: 1024px) 207px, 237px"
                         className="object-cover"
                       />
                     ) : (
@@ -462,7 +462,7 @@ export default function HomePageClient() {
       {/* --- BROWSE CATEGORIES: editorial, accessible, and lightweight --- */}
       <section
         aria-labelledby="browse-categories-heading"
-        className="relative isolate border-b border-[#F0F2E9] bg-[#F8F7F2] py-20 sm:py-24 lg:py-28"
+        className="slbi-home-categories relative isolate border-b border-[#F0F2E9] bg-[#F8F7F2] py-20 sm:py-24 lg:py-28"
       >
         <div className="pointer-events-none absolute right-0 top-0 h-72 w-72 rounded-full bg-[#F0D9AC]/25 blur-[100px]" aria-hidden="true" />
         <div className="relative mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12">
@@ -524,7 +524,7 @@ export default function HomePageClient() {
             ref={scrollContainerRef}
             onScroll={updateScrollControls}
             aria-label="Browse business categories"
-            className="grid grid-cols-2 gap-3 sm:gap-4 md:flex md:snap-x md:snap-mandatory md:gap-4 md:overflow-x-auto md:overscroll-x-contain md:pb-6 md:scroll-smooth md:[scrollbar-width:none] md:[&::-webkit-scrollbar]:hidden"
+            className="slbi-mobile-category-grid grid grid-cols-2 gap-3 sm:gap-4 md:flex md:snap-x md:snap-mandatory md:gap-4 md:overflow-x-auto md:overscroll-x-contain md:pb-6 md:scroll-smooth md:[scrollbar-width:none] md:[&::-webkit-scrollbar]:hidden"
           >
             {categoriesLoading ? (
               Array.from({ length: 8 }, (_, i) => (
@@ -548,7 +548,7 @@ export default function HomePageClient() {
                   onClick={() => handleCategoryClick(cat.name)}
                   aria-label={"Browse " + cat.name}
                   className={
-                    "group relative min-h-[182px] w-full flex-col justify-between overflow-hidden rounded-[22px] border border-[#E0EADB] bg-white p-4 text-left shadow-[0_3px_16px_rgba(15,40,67,0.025)] transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-1 hover:border-[#CADDCB] hover:shadow-[0_12px_30px_rgba(15,40,67,0.09)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 sm:p-5 md:h-[228px] md:w-[232px] md:shrink-0 md:snap-start " +
+                    "slbi-mobile-category-tile group relative min-h-[182px] w-full flex-col justify-between overflow-hidden rounded-[22px] border border-[#E0EADB] bg-white p-4 text-left shadow-[0_3px_16px_rgba(15,40,67,0.025)] transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-1 hover:border-[#CADDCB] hover:shadow-[0_12px_30px_rgba(15,40,67,0.09)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 sm:p-5 md:h-[228px] md:w-[232px] md:shrink-0 md:snap-start " +
                     (!showAllCategories && idx >= 8 ? "hidden md:flex" : "flex")
                   }
                 >
@@ -609,10 +609,34 @@ export default function HomePageClient() {
         </div>
       </section>
 
+      {/* Mobile-only compact Nearby entry. Reuses the exact existing location handler. */}
+      <section className="slbi-mobile-nearby-entry sm:hidden" aria-label="Explore businesses near you">
+        <button
+          type="button"
+          onClick={() => handleUseCurrentLocation(true)}
+          disabled={isFetchingLocation}
+          className="slbi-mobile-nearby-banner group relative flex min-h-[82px] w-full items-center justify-between overflow-hidden rounded-[18px] border border-[#C6A870] bg-[#17392F] px-5 py-4 text-left text-[#F0D9AC] shadow-[0_6px_18px_rgba(22,48,38,.11)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#BA9768] disabled:cursor-wait disabled:opacity-70"
+        >
+          <span className="relative z-10 inline-flex items-center gap-2 text-[19px] font-semibold tracking-[-.04em]">
+            {isFetchingLocation ? "Finding location…" : "Explore Near Me"}
+            <ArrowRight size={21} strokeWidth={1.8} />
+          </span>
+          <Image
+            src="/sri-lanka-gold-outline.svg"
+            width={120}
+            height={210}
+            unoptimized
+            alt=""
+            aria-hidden="true"
+            className="pointer-events-none absolute -right-1 -top-12 h-[190px] w-[115px] opacity-40"
+          />
+        </button>
+      </section>
+
       {/* --- FEATURED LISTINGS: premium portrait business showcase --- */}
       <section
         aria-labelledby="featured-listings-title"
-        className="relative isolate overflow-hidden border-b border-[#F0F2E9] bg-white py-20 sm:py-24 lg:py-28"
+        className="slbi-home-featured relative isolate overflow-hidden border-b border-[#F0F2E9] bg-white py-20 sm:py-24 lg:py-28"
       >
         <div className="pointer-events-none absolute -left-48 top-0 h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle,rgba(224,234,219,0.32)_0%,transparent_72%)]" aria-hidden="true" />
         <div className="relative mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12">
@@ -677,7 +701,7 @@ export default function HomePageClient() {
             ref={featuredScrollRef}
             onScroll={updateFeaturedScrollControls}
             aria-label="Featured Sri Lankan business listings"
-            className="flex gap-3 overflow-x-auto overscroll-x-contain pb-6 pr-2 snap-x snap-proximity [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4 lg:gap-5"
+            className="slbi-home-featured-carousel flex gap-3 overflow-x-auto overscroll-x-contain pb-6 pr-2 snap-x snap-proximity [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4 lg:gap-5"
           >
             {featuredLoading ? (
               Array.from({ length: 6 }, (_, i) => (
