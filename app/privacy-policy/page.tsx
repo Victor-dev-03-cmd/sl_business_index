@@ -66,7 +66,7 @@ export default function PrivacyPolicyPage() {
       </LegalSection>
 
       <LegalSection id="sharing-disclosure" number={3} heading="Data sharing & disclosure">
-        <p className={legalBody}><strong className={legalStrong}>We do not sell your personal data.</strong> Some information must be available or processed so our services can work:</p>
+        <p className={legalBody}><strong className={legalStrong}>We do not sell your personal data.</strong> The Live Visitors panel shows anonymous public-page browser connections and, when configured, privacy-filtered aggregate city and country activity from Google Analytics 4; smaller geographic groups are withheld and no individual locations are displayed. Some information must be available or processed so our services can work:</p>
         <ul className={legalList}>
           <li><strong className={legalStrong}>Public business profiles:</strong> Information you submit for a public listing, such as a business phone number or address, is intended to be visible to visitors.</li>
           <li><strong className={legalStrong}>Technology providers:</strong> We may use trusted infrastructure, authentication, database, mapping and communication providers to operate the platform.</li>

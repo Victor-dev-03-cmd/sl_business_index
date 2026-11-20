@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Navbar from "./components/Navbar";
+import { LivePresenceProvider } from "./components/LivePresenceProvider";
 import Footer from "./components/Footer";
 import NavbarWrapper from "./components/NavbarWrapper";
 import FooterWrapper from "./components/FooterWrapper";
@@ -53,6 +54,7 @@ export default function RootClientLayout({
             <DynamicAppearance />
             <SessionProvider>
               <ThemeProvider>
+                <LivePresenceProvider>
                 <AnnouncementWrapper>
                   <AnnouncementBar />
                 </AnnouncementWrapper>
@@ -69,6 +71,7 @@ export default function RootClientLayout({
                   <Footer />
                 </FooterWrapper>
                 <MobilePublicDock role="spacer" />
+              </LivePresenceProvider>
               </ThemeProvider>
             </SessionProvider>
           </QueryProvider>
