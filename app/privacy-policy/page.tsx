@@ -75,6 +75,7 @@ export default function PrivacyPolicyPage() {
       </LegalSection>
 
       <LegalSection id="cookies-tracking" number={4} heading="Cookies & tracking">
+        <p className={legalBody}>If you enable device notifications, we use Firebase Cloud Messaging to register a device delivery token associated with your signed-in session. This is optional. Lock-screen alerts contain a generic update notice rather than your account details. You can disable device alerts from Notifications, and signing out revokes the session-bound registration. Firebase processes delivery data to deliver these notifications.</p>
         <p className={legalBody}>Cookies and related technologies may support account sessions, preferences, security and site analytics. You can control or disable cookies using your browser settings, but some login, security or personalization features may not function as intended.</p>
         <p className={legalBody}>For GrowthOS work, we intend to evaluate the purpose, permissions and retention of analytics separately from operational and security logs before activating new uses.</p>
       </LegalSection>

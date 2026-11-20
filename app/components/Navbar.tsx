@@ -398,12 +398,8 @@ export default function Navbar() {
               </Link>
             )}
             <LiveCounter />
-             <Link href="/search" aria-label="Search businesses" className="hidden lg:flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-stone-600 hover:bg-stone-100 hover:text-stone-950"><BrandIcon name="search-normal-1" size={19} /></Link>
-            <div className="hidden sm:block">{fullUserData && <NotificationBell />}</div>
-            <Link href="/notifications" aria-label="View notifications"
-              className="flex h-10 w-10 items-center justify-center rounded-full text-[#244238] transition-colors hover:bg-[#EAF0E9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#B49161] sm:hidden">
-              <BrandIcon name="notification" size={21}/>
-            </Link>
+             
+            <NotificationBell />
             
             <div className="hidden sm:block"><AuthButton user={fullUserData} /></div>
              {showRegister && <Link href="/register-business" aria-label="List Your Business" title="List Your Business" className="hidden h-10 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-[#1B3430] px-3 text-xs font-semibold text-white shadow-md transition-all hover:bg-[#26483B] hover:shadow-lg lg:inline-flex min-[1600px]:px-4"><BrandIcon name="buildings-2" size={17} /> <span className="hidden min-[1600px]:inline">List Your Business</span><ArrowUpRight size={15} className="hidden min-[1600px]:block" /></Link>}

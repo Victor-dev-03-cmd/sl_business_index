@@ -3,6 +3,7 @@
 import { createContext, useContext, ReactNode, useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { Session, User } from '@supabase/supabase-js';
+import {clearLocalPush,readPushRegistration,refreshPush} from '@/lib/push/client';
 
 interface SessionContextType {
   session: Session | null;
@@ -44,6 +45,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       authListener.subscription.unsubscribe();
     };
   }, [getSession]);
+
+  useEffect(() => {
+    if(loading)return;
+    const saved=readPushRegistration();
+    if(!saved)return;
+    if(!user||saved.uid!==user.id){void clearLocalPush();return;}
+    void refreshPush(user.id).catch(()=>{});
+  },[loading,user?.id]);
 
   return (
     <SessionContext.Provider value={{ session, user, loading, refreshSession: getSession }}>
