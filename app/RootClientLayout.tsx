@@ -16,6 +16,7 @@ import { SessionProvider } from "./components/SessionContext";
 import LoadingProvider from "./components/LoadingProvider";
 import IconsaxRegistry from "./components/IconsaxRegistry";
 import MobilePublicDock from "./components/MobilePublicDock";
+import MobileInstallPrompt from "./components/MobileInstallPrompt";
 import { Toaster } from "sonner";
 
 export default function RootClientLayout({
@@ -61,6 +62,7 @@ export default function RootClientLayout({
                 {/* Render the viewport dock before potentially streaming page
                     content, not after a long homepage and footer. */}
                 <MobilePublicDock />
+                <MobileInstallPrompt />
                 <main>{children}</main>
                 <GlobalAnnouncement />
                 <FooterWrapper>
