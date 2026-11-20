@@ -261,3 +261,12 @@ button, input, select, textarea, option { font-family: inherit; }
     display:none!important;
   }
 }
+
+
+/* Native phone account drawer must cover the portal-based viewport dock. */
+@media (max-width:639px) {
+  body:has(button[aria-label="Close account and navigation menu"][aria-expanded="true"])
+    [data-slbi-viewport-dock="true"] {
+    display:none!important;
+  }
+}
