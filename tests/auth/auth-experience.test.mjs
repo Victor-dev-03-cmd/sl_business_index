@@ -47,7 +47,7 @@ test('OAuth callback persists PKCE session onto the redirect response', () => {
 
 test('Google auth starts on canonical domain to keep PKCE verifier on same origin', () => {
   const page = read('app/components/auth/AuthExperience.tsx');
-  assert.match(page, /www\.slbusinessindex\.com/);
+  assert.match(page, /hostname === 'slbusinessindex\.com'/);
   assert.match(page, /hostname\.endsWith\('\.vercel\.app'\)/);
-  assert.match(page, /https:\/\/slbusinessindex\.com/);
+  assert.match(page, /https:\/\/www\.slbusinessindex\.com/);
 });

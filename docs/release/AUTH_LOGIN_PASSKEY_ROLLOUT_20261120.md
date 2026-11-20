@@ -50,3 +50,9 @@ Do not release just because the UI and build are green: OAuth credentials, redir
 - Google/Passkey login started from the www or Vercel preview hostname navigates to the canonical production login **before** starting OAuth. This keeps the PKCE verifier cookie and callback on the same host. Email/password preview testing remains possible.
 - Default callback route after login is `/` when no `next` is provided; this is intentional. The navbar should detect and show the logged-in account from the returned cookies.
 - Do not leak user emails, identity information, tokens or cookies in server logging.
+
+## Production domain verification (Vercel)
+
+The verified project custom domain is **https://www.slbusinessindex.com**. The apex https://slbusinessindex.com is not a directly attached Vercel project domain as of deployment audit. For consistency, start Google and Passkey login on the **www** host, where the PKCE code-verifier and resulting session cookies will be stored. The UI redirects apex or Vercel preview attempts to `https://www.slbusinessindex.com/login` before starting auth. This does not require inventing a cross-domain cookie handoff.
+
+**Required Supabase Auth URL Configuration:** add `https://www.slbusinessindex.com/auth/callback` as an explicit allowed Redirect URL (not a Google Cloud authorized URI); prefer `https://www.slbusinessindex.com` as Site URL when compatible with the rest of the production configuration. Keep the provider Google Cloud URI `https://oofxhragafekazwjikae.supabase.co/auth/v1/callback` unchanged.

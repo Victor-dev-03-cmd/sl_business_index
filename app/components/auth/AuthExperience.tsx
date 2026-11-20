@@ -101,8 +101,8 @@ function LoginExperience({ mode }: { mode: AuthMode }) {
     // production hostname, not a preview or www origin which would send the
     // provider callback to a different host and lose the verifier cookie.
     const hostname = window.location.hostname.toLowerCase();
-    if (hostname === 'www.slbusinessindex.com' || hostname.endsWith('.vercel.app')) {
-      const target = new URL(isLogin ? '/login' : '/signup', 'https://slbusinessindex.com');
+    if (hostname === 'slbusinessindex.com' || hostname.endsWith('.vercel.app')) {
+      const target = new URL(isLogin ? '/login' : '/signup', 'https://www.slbusinessindex.com');
       if (next !== '/') target.searchParams.set('next', next);
       window.location.assign(target.toString());
       return;
@@ -127,8 +127,8 @@ function LoginExperience({ mode }: { mode: AuthMode }) {
   async function handlePasskey() {
     if (busy) return;
     const hostname = window.location.hostname.toLowerCase();
-    if (hostname === 'www.slbusinessindex.com' || hostname.endsWith('.vercel.app')) {
-      const target = new URL(isLogin ? '/login' : '/signup', 'https://slbusinessindex.com');
+    if (hostname === 'slbusinessindex.com' || hostname.endsWith('.vercel.app')) {
+      const target = new URL(isLogin ? '/login' : '/signup', 'https://www.slbusinessindex.com');
       if (next !== '/') target.searchParams.set('next', next);
       window.location.assign(target.toString());
       return;
