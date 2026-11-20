@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useSession } from "@/app/components/SessionContext";
 import { supabase } from "@/lib/supabaseClient";
@@ -16,6 +17,7 @@ const label = "block text-[11px] font-bold uppercase tracking-[0.12em] text-[#67
 
 export default function NewsEditorModal({ onClose, onPublished }: { onClose: () => void; onPublished: () => void }) {
   const { user, loading: sessionLoading } = useSession();
+  const router = useRouter();
   const dialog = useRef<HTMLDivElement>(null);
   const [businesses, setBusinesses] = useState<Eligible[]>([]);
   const [checking, setChecking] = useState(true);
@@ -37,6 +39,22 @@ export default function NewsEditorModal({ onClose, onPublished }: { onClose: () 
     if (!user?.id) { setChecking(false); return; }
     let active = true;
     void (async () => {
+      // Legacy links can still open this modal. Official SLBI admins must be
+      // redirected to the distinct official newsroom before vendor checks.
+      // Authorization is repeated on the destination server and by RLS.
+      if (user.email?.trim().toLowerCase() === "slbusinessindex@gmail.com") {
+        const { data: identity, error: authError } = await supabase.auth.getUser();
+        if (!active) return;
+        if (!authError && identity.user?.id === user.id) {
+          const { data: profile, error: roleError } = await supabase
+            .from("profiles").select("role").eq("id", user.id).maybeSingle();
+          if (!active) return;
+          if (!roleError && profile?.role === "admin") {
+            router.replace("/admin/business-news");
+            return;
+          }
+        }
+      }
       const { data, error } = await supabase.from("businesses").select("id,name")
         .eq("owner_id", user.id).eq("is_verified", true).eq("status", "approved").order("name");
       if (!active) return;
@@ -47,7 +65,7 @@ export default function NewsEditorModal({ onClose, onPublished }: { onClose: () 
       setChecking(false);
     })();
     return () => { active = false; };
-  }, [sessionLoading, user?.id]);
+  }, [router, sessionLoading, user?.id, user?.email]);
 
   useEffect(() => {
     const previous = document.body.style.overflow;
@@ -130,7 +148,7 @@ export default function NewsEditorModal({ onClose, onPublished }: { onClose: () 
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-6 sm:px-8">
         {!sessionLoading && !user ? <div className="py-10 text-center"><ShieldCheck size={38} className="mx-auto text-[#46866a]"/>
           <h3 className="mt-4 font-[family-name:var(--font-inter)] text-2xl text-[#1e392d]">Sign in to contribute</h3><p className="mt-2 text-sm text-[#70776e]">News stories are published by verified business owners.</p>
-          <Link href="/login?redirect=%2Fbusiness-news%3Fpost%3Dtrue" className="mt-5 inline-flex rounded-lg bg-[#1e392d] px-6 py-3 text-sm font-bold text-white">Sign in <ArrowUpRight size={15} className="ml-2"/></Link></div>
+          <Link href="/login?next=%2Fbusiness-news%2Fpublish" className="mt-5 inline-flex rounded-lg bg-[#1e392d] px-6 py-3 text-sm font-bold text-white">Sign in <ArrowUpRight size={15} className="ml-2"/></Link></div>
           : checking || sessionLoading ? <div role="status" className="flex min-h-[200px] items-center justify-center gap-2 text-sm text-[#687469]"><LoaderCircle className="animate-spin" size={19}/>Checking verification…</div>
           : !businesses.length ? <div className="py-10 text-center"><ShieldCheck size={38} className="mx-auto text-[#a98957]"/>
             <h3 className="mt-4 font-[family-name:var(--font-inter)] text-2xl text-[#1e392d]">Verified business required</h3><p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#70776e]">Your business must be approved and verified before publishing news.</p>

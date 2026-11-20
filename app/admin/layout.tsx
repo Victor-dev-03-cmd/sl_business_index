@@ -69,7 +69,10 @@ export default function AdminLayout({
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { data: user, isLoading } = useUser();
-  const officialEditor = user?.email?.toLowerCase() === "slbusinessindex@gmail.com" && user?.role?.toLowerCase() === "admin";
+  // Menu visibility is a convenience, not authorization: the newsroom's
+  // server page and database RLS independently verify the protected admin role.
+  // Do not hide the link simply because the general profile query is stale.
+  const officialEditor = user?.email?.trim().toLowerCase() === "slbusinessindex@gmail.com";
   const visibleMenuItems = adminMenuItems.filter(item => item.href !== "/admin/business-news" || officialEditor);
 
   useEffect(() => {
