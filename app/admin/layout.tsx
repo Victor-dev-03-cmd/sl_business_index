@@ -72,7 +72,7 @@ export default function AdminLayout({
   // Menu visibility is a convenience, not authorization: the newsroom's
   // server page and database RLS independently verify the protected admin role.
   // Do not hide the link simply because the general profile query is stale.
-  const officialEditor = user?.email?.trim().toLowerCase() === "slbusinessindex@gmail.com";
+  const officialEditor = user?.role === "admin" || user?.role === "ceo";
   const visibleMenuItems = adminMenuItems.filter(item => item.href !== "/admin/business-news" || officialEditor);
 
   useEffect(() => {

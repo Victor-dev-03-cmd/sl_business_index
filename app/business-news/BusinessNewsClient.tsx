@@ -8,6 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabaseClient";
 import { useSession } from "@/app/components/SessionContext";
+import { useUser } from "@/lib/hooks/useUser";
 import VerifiedBadge from "@/app/components/VerifiedBadge";
 import ReportModal from "@/app/components/ReportModal";
 import {
@@ -64,8 +65,8 @@ function StoryImage({ post, lead = false }: { post: NewsPost; lead?: boolean }) 
   }
   return <div className={"relative h-full w-full overflow-hidden bg-[#f2eee6] " + (post.content_format === "poster" ? "p-3" : "")}>
     <Image src={src} alt={"Illustration for " + post.title} fill
-      sizes={lead ? "(max-width: 900px) 100vw, 46vw" : "(max-width: 640px) 100vw, (max-width: 1280px) 320px, 360px"}
-      quality={65} loading={lead ? "eager" : "lazy"} fetchPriority={lead ? "high" : "auto"} className={post.content_format === "poster" ? "object-contain p-3" : "object-cover"} />
+      sizes={lead ? "(max-width: 1023px) 100vw, 58vw" : "(max-width: 640px) 100vw, (max-width: 1280px) 320px, 360px"}
+      quality={85} loading={lead ? "eager" : "lazy"} fetchPriority={lead ? "high" : "auto"} className={lead || post.content_format === "poster" ? "object-contain" : "object-cover"} />
     {(post.images?.length || 0) > 1 && <span className="absolute bottom-3 right-3 rounded-md bg-[#132a20]/90 px-2.5 py-1.5 text-[10px] font-bold text-white">
       +{(post.images?.length || 1) - 1} photos
     </span>}
@@ -104,7 +105,20 @@ function StoryActions({ post, onReport, onShare }: { post: NewsPost; onReport: (
 
 function FullStory({ post }: { post: NewsPost }) {
   return <div className="mt-5 border-t border-[#e8e6dc] pt-5">
-    <div className="whitespace-pre-line break-words text-[14px] leading-[1.95] text-[#494f47]">{post.content}</div>
+    <div className="mx-auto max-w-[900px] space-y-3 break-words text-[15px] leading-[1.55] text-[#39443b] sm:text-[16px]">
+      {post.content.replace(/\r\n/g, "\n").trim().split(/\n\s*\n+/).filter(Boolean).map((paragraph, index) => {
+        const clean = paragraph.trim().replace(/^#{1,4}\s+/, "");
+        const headingText = clean.match(/^\*\*(.+)\*\*$/);
+        if (headingText || /^#{1,4}\s/.test(paragraph.trim())) {
+          return <h3 key={index} className="pt-1 text-[17px] font-bold leading-snug text-[#203e2d]">{headingText?.[1] || clean}</h3>;
+        }
+        const lines = clean.split("\n").filter(Boolean);
+        if (lines.every(line => /^\s*[-•]\s+/.test(line))) {
+          return <ul key={index} className="list-disc space-y-1 pl-5">{lines.map((line, i) => <li key={i}>{line.replace(/^\s*[-•]\s+/, "").replace(/\*\*/g,"")}</li>)}</ul>;
+        }
+        return <p key={index} className="whitespace-pre-line">{clean.replace(/\*\*/g,"")}</p>;
+      })}
+    </div>
     {(post.images?.length || 0) > 1 && <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
       {post.images?.slice(1).map((src, index) => <div key={src} className="relative aspect-[4/3] overflow-hidden rounded-md bg-[#f4f0e9]">
         <Image src={src} fill alt={"Additional photo " + (index + 2) + " for " + post.title} quality={65} loading="lazy" sizes="(max-width: 640px) 45vw, 230px" className="object-cover"/>
@@ -117,25 +131,25 @@ function LeadStory({ post, expanded, onToggle, onReport, onShare, highlighted }:
   post: NewsPost; expanded: boolean; onToggle: () => void; onReport: (post: NewsPost) => void; onShare: (post: NewsPost) => void; highlighted: boolean;
 }) {
   return <article id={"post-" + post.id} className={"scroll-mt-[148px] overflow-hidden rounded-[14px] border border-[#E2E7DD] bg-white shadow-[0_8px_28px_rgba(40,68,48,.035)] " + (highlighted ? "ring-2 ring-[#d4a367]" : "")}>
-    <div className="grid lg:grid-cols-[1.07fr_0.93fr]">
+    <div className="grid lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] lg:items-center">
       <div className="order-last flex min-w-0 flex-col px-4 py-5 sm:px-8 sm:py-8 lg:order-first lg:px-9 lg:py-10">
         <div className="flex items-center gap-2.5"><span className="h-1.5 w-1.5 rounded-full bg-[#c87c49]"/><span className={kickerClass}>Lead story</span>
           <span className="text-[10px] text-[#898b82]">/ {typeLabel[post.post_type] || "Business news"}</span></div>
-        <h2 className={"mt-3 text-[clamp(1.8rem,3.35vw,3.5rem)] leading-[1.1] sm:mt-5 " + heading}>{post.title}</h2>
-        <p className="mt-3 line-clamp-3 whitespace-pre-line text-[13px] leading-[1.75] text-[#687065] sm:mt-5 sm:text-[15px]">{post.content}</p>
+        <h2 className={"mt-3 text-[clamp(1.65rem,2.55vw,2.9rem)] leading-[1.13] sm:mt-5 " + heading}>{post.title}</h2>
+        <p className="mt-3 line-clamp-3 whitespace-pre-line text-[13px] leading-[1.55] text-[#687065] sm:mt-5 sm:text-[15px]">{post.content}</p>
         <div className="mt-auto pt-5 sm:pt-8"><StoryByline post={post}/>
           <button type="button" onClick={onToggle} aria-expanded={expanded} className="mt-7 inline-flex min-h-11 items-center gap-2 border-b-2 border-[#2b6650] pb-1 text-[12px] font-extrabold uppercase tracking-[.08em] text-[#2b6650] hover:text-[#16402d]">
             {expanded ? "Close article" : "Read full story"} <ArrowUpRight size={16}/>
           </button></div>
       </div>
-      <div className="relative order-first h-[220px] border-b border-[#E2E5DD] sm:h-[330px] lg:order-last lg:h-auto lg:min-h-[420px] lg:border-b-0 lg:border-l">
+      <div className="relative order-first aspect-[16/10] self-start border-b border-[#E2E5DD] lg:order-last lg:aspect-[16/11] lg:self-center lg:border-b-0 lg:border-l">
         <StoryImage post={post} lead/>
         <div className="pointer-events-none absolute left-4 top-4 rounded-sm bg-[#fffefb]/95 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[.13em] text-[#335b45] shadow-sm">
           {post.content_format === "poster" ? "Photo story" : post.content_format === "article" ? "In depth" : "Community dispatch"}
         </div>
       </div>
     </div>
-    {expanded && <div className="border-t border-[#e8e4db] px-6 pb-8 pt-1 sm:px-10"><FullStory post={post}/></div>}
+    {expanded && <div className="border-t border-[#e8e4db] px-4 pb-7 pt-1 sm:px-10"><FullStory post={post}/></div>}
     <div className="border-t border-[#e8e5db] px-6 py-4 sm:px-10"><StoryActions post={post} onReport={onReport} onShare={onShare}/></div>
   </article>;
 }
@@ -151,7 +165,7 @@ function FeedStory({ post, expanded, onToggle, onReport, onShare, highlighted }:
           {post.content_format === "poster" && <span className="inline-flex items-center gap-1 text-[#68816c]"><ImageIcon size={13}/> Poster</span>}
         </div>
         <h3 className={"mt-3 text-[clamp(1.4rem,2.2vw,2rem)] leading-[1.18] " + heading}>{post.title}</h3>
-        <p className="mt-3 line-clamp-3 whitespace-pre-line text-[13px] leading-[1.85] text-[#697167]">{post.content}</p>
+        <p className="mt-3 line-clamp-3 whitespace-pre-line text-[13px] leading-[1.6] text-[#697167]">{post.content}</p>
         <div className="mt-5"><StoryByline post={post} compact/></div>
         <button onClick={onToggle} aria-expanded={expanded} type="button" className="mt-4 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[.1em] text-[#2b7154] hover:underline">
           {expanded ? "Show less" : "Read story"} <ArrowRight size={14}/></button>
@@ -181,7 +195,8 @@ export default function BusinessNewsClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   // Display labels only; the secure publishing router checks actual admin access.
-  const officialAccountLabel = user?.email?.toLowerCase() === "slbusinessindex@gmail.com";
+  const { data: profile } = useUser();
+  const officialAccountLabel = profile?.role === "admin" || profile?.role === "ceo";
   const queryClient = useQueryClient();
   const postLinkId = searchParams.get("post_id");
   const [editorOpen, setEditorOpen] = useState(searchParams.get("post") === "vendor");
@@ -267,7 +282,7 @@ export default function BusinessNewsClient() {
   const day = new Date().toLocaleDateString("en-LK", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Colombo" });
 
   return <div className="min-h-screen bg-[#FAFBF8] pb-24 font-[family-name:var(--font-inter)] text-[#24372d]">
-    <div className="mx-auto max-w-[1280px] px-4 sm:px-7 lg:px-10">
+    <div className="mx-auto max-w-[1600px] px-4 sm:px-7 lg:px-12">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E2E5DD] py-2.5 text-[10px] font-bold uppercase tracking-[.13em] text-[#667467]">
         <span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-[#cc8556]"/> Sri Lanka&apos;s business community</span>
         <span className="flex items-center gap-2"><CalendarDays size={13}/> {day}</span>

@@ -16,6 +16,18 @@ function OTPConfirmPage() {
   const [otp, setOtp] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [notice, setNotice] = useState('');
+  async function resendCode() {
+    if (!email || resending) return;
+    setResending(true); setError(null); setNotice('');
+    try {
+      const { error } = await supabase.auth.resend({type:'signup', email});
+      if (error) throw error;
+      setNotice('A new verification code has been requested. Check your email.');
+    } catch { setError('Could not resend the code. Try again shortly or contact support.'); }
+    finally { setResending(false); }
+  }
 
   useEffect(() => {
     if (!email) {
@@ -99,9 +111,10 @@ function OTPConfirmPage() {
 
         <div className="text-sm text-center text-gray-600">
           Didn't receive the code?
-          <button className="font-medium text-primary hover:underline">
-            Resend
+          <button type="button" onClick={resendCode} disabled={resending || !email} className="ml-1 font-medium text-primary hover:underline disabled:opacity-50">
+            {resending ? 'Sending…' : 'Resend'}
           </button>
+          {notice && <p role="status" className="mt-2 text-emerald-700">{notice}</p>}
         </div>
       </div>
     </div>

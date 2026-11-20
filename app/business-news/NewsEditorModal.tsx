@@ -42,18 +42,22 @@ export default function NewsEditorModal({ onClose, onPublished }: { onClose: () 
       // Legacy links can still open this modal. Official SLBI admins must be
       // redirected to the distinct official newsroom before vendor checks.
       // Authorization is repeated on the destination server and by RLS.
-      if (user.email?.trim().toLowerCase() === "slbusinessindex@gmail.com") {
-        const { data: identity, error: authError } = await supabase.auth.getUser();
-        if (!active) return;
-        if (!authError && identity.user?.id === user.id) {
-          const { data: profile, error: roleError } = await supabase
-            .from("profiles").select("role").eq("id", user.id).maybeSingle();
-          if (!active) return;
-          if (!roleError && profile?.role === "admin") {
-            router.replace("/admin/business-news");
-            return;
-          }
-        }
+      const { data: identity, error: authError } = await supabase.auth.getUser();
+      if (!active) return;
+      if (authError || identity.user?.id !== user.id) {
+        toast.error("Unable to verify your session. Please sign in again.");
+        onClose(); return;
+      }
+      const { data: profile, error: roleError } = await supabase
+        .from("profiles").select("role").eq("id", user.id).maybeSingle();
+      if (!active) return;
+      if (roleError || !profile) {
+        toast.error("Publishing access could not be verified. Please try again.");
+        onClose(); return;
+      }
+      if (profile.role === "admin" || profile.role === "ceo") {
+        router.replace("/admin/business-news");
+        return;
       }
       const { data, error } = await supabase.from("businesses").select("id,name")
         .eq("owner_id", user.id).eq("is_verified", true).eq("status", "approved").order("name");
@@ -65,7 +69,7 @@ export default function NewsEditorModal({ onClose, onPublished }: { onClose: () 
       setChecking(false);
     })();
     return () => { active = false; };
-  }, [router, sessionLoading, user?.id, user?.email]);
+  }, [router, sessionLoading, user?.id, onClose]);
 
   useEffect(() => {
     const previous = document.body.style.overflow;

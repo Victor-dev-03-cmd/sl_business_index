@@ -388,9 +388,9 @@ export default function Navbar() {
 
            {/* Right: icons + toggle */}
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-            {profileData?.role?.toLowerCase() === "vendor" && (
+            {["admin", "ceo", "vendor"].includes(profileData?.role?.toLowerCase() || "") && (
               <Link
-                href="/business-news?post=true"
+                href="/business-news/publish"
                 className="hidden 2xl:flex h-10 items-center gap-1.5 rounded-xl border border-stone-200 px-3 text-xs font-semibold text-stone-700 hover:bg-stone-50"
               >
                 <BrandIcon name="add" size={15} /> Add News
