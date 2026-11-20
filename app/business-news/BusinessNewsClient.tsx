@@ -117,19 +117,19 @@ function FullStory({ post }: { post: NewsPost }) {
 function LeadStory({ post, expanded, onToggle, onReport, onShare, highlighted }: {
   post: NewsPost; expanded: boolean; onToggle: () => void; onReport: (post: NewsPost) => void; onShare: (post: NewsPost) => void; highlighted: boolean;
 }) {
-  return <article id={"post-" + post.id} className={"scroll-mt-[148px] overflow-hidden border border-[#e3e1d5] bg-white " + (highlighted ? "ring-2 ring-[#d4a367]" : "")}>
+  return <article id={"post-" + post.id} className={"scroll-mt-[148px] overflow-hidden rounded-[14px] border border-[#E2E7DD] bg-white shadow-[0_8px_28px_rgba(40,68,48,.035)] " + (highlighted ? "ring-2 ring-[#d4a367]" : "")}>
     <div className="grid lg:grid-cols-[1.07fr_0.93fr]">
-      <div className="flex min-w-0 flex-col px-6 py-7 sm:px-9 sm:py-9 lg:px-10 lg:py-11">
+      <div className="order-last flex min-w-0 flex-col px-4 py-5 sm:px-8 sm:py-8 lg:order-first lg:px-9 lg:py-10">
         <div className="flex items-center gap-2.5"><span className="h-1.5 w-1.5 rounded-full bg-[#c87c49]"/><span className={kickerClass}>Lead story</span>
           <span className="text-[10px] text-[#898b82]">/ {typeLabel[post.post_type] || "Business news"}</span></div>
-        <h2 className={"mt-5 text-[clamp(2.15rem,3.5vw,4.5rem)] leading-[1.08] " + heading}>{post.title}</h2>
-        <p className="mt-5 line-clamp-4 whitespace-pre-line text-[14px] leading-[1.8] text-[#687065] sm:text-[15px]">{post.content}</p>
-        <div className="mt-auto pt-8"><StoryByline post={post}/>
+        <h2 className={"mt-3 text-[clamp(1.8rem,3.35vw,3.5rem)] leading-[1.1] sm:mt-5 " + heading}>{post.title}</h2>
+        <p className="mt-3 line-clamp-3 whitespace-pre-line text-[13px] leading-[1.75] text-[#687065] sm:mt-5 sm:text-[15px]">{post.content}</p>
+        <div className="mt-auto pt-5 sm:pt-8"><StoryByline post={post}/>
           <button type="button" onClick={onToggle} aria-expanded={expanded} className="mt-7 inline-flex min-h-11 items-center gap-2 border-b-2 border-[#2b6650] pb-1 text-[12px] font-extrabold uppercase tracking-[.08em] text-[#2b6650] hover:text-[#16402d]">
             {expanded ? "Close article" : "Read full story"} <ArrowUpRight size={16}/>
           </button></div>
       </div>
-      <div className="relative min-h-[300px] border-t border-[#e2dfd4] lg:min-h-[470px] lg:border-l lg:border-t-0">
+      <div className="relative order-first h-[220px] border-b border-[#E2E5DD] sm:h-[330px] lg:order-last lg:h-auto lg:min-h-[420px] lg:border-b-0 lg:border-l">
         <StoryImage post={post} lead/>
         <div className="pointer-events-none absolute left-4 top-4 rounded-sm bg-[#fffefb]/95 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[.13em] text-[#335b45] shadow-sm">
           {post.content_format === "poster" ? "Photo story" : post.content_format === "article" ? "In depth" : "Community dispatch"}
@@ -144,21 +144,21 @@ function LeadStory({ post, expanded, onToggle, onReport, onShare, highlighted }:
 function FeedStory({ post, expanded, onToggle, onReport, onShare, highlighted }: {
   post: NewsPost; expanded: boolean; onToggle: () => void; onReport: (post: NewsPost) => void; onShare: (post: NewsPost) => void; highlighted: boolean;
 }) {
-  return <article id={"post-" + post.id} className={"scroll-mt-[148px] border-b border-[#e1dfd5] py-7 first:pt-0 " + (highlighted ? "rounded-md bg-[#fbf2e2] px-3 ring-2 ring-[#d4a367]" : "")}>
+  return <article id={"post-" + post.id} className={"scroll-mt-[148px] border-b border-[#E1E6DD] py-6 first:pt-0 sm:py-8 " + (highlighted ? "rounded-md bg-[#fbf2e2] px-3 ring-2 ring-[#d4a367]" : "")}>
     <div className="grid items-start gap-5 sm:grid-cols-[minmax(0,1fr)_210px] md:gap-7">
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-[10px] font-bold uppercase tracking-[.12em]">
           <span className="text-[#b36c40]">{typeLabel[post.post_type] || "News"}</span><span className="text-[#97998f]">{post.category || "Business"}</span>
           {post.content_format === "poster" && <span className="inline-flex items-center gap-1 text-[#68816c]"><ImageIcon size={13}/> Poster</span>}
         </div>
-        <h3 className={"mt-3 text-[clamp(1.55rem,2.2vw,2.3rem)] leading-[1.15] " + heading}>{post.title}</h3>
+        <h3 className={"mt-3 text-[clamp(1.4rem,2.2vw,2rem)] leading-[1.18] " + heading}>{post.title}</h3>
         <p className="mt-3 line-clamp-3 whitespace-pre-line text-[13px] leading-[1.85] text-[#697167]">{post.content}</p>
         <div className="mt-5"><StoryByline post={post} compact/></div>
         <button onClick={onToggle} aria-expanded={expanded} type="button" className="mt-4 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[.1em] text-[#2b7154] hover:underline">
           {expanded ? "Show less" : "Read story"} <ArrowRight size={14}/></button>
       </div>
       <button onClick={onToggle} aria-label={"Read " + post.title} type="button"
-        className={"relative order-first w-full overflow-hidden bg-[#eaece2] sm:order-last " + (post.content_format === "poster" ? "aspect-[4/5]" : "aspect-[16/11]")}>
+        className={"relative order-first w-full overflow-hidden bg-[#eaece2] sm:order-last " + (post.content_format === "poster" ? "aspect-[16/11] sm:aspect-[4/5]" : "aspect-[16/10]")}>
         <StoryImage post={post}/>
       </button>
     </div>
@@ -260,26 +260,26 @@ export default function BusinessNewsClient() {
   };
   const day = new Date().toLocaleDateString("en-LK", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Colombo" });
 
-  return <div className="min-h-screen bg-[#f8f7f2] pb-24 font-[family-name:var(--font-inter)] text-[#24372d]">
-    <div className="mx-auto max-w-[1480px] px-4 sm:px-7 lg:px-10">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#d9d8cf] py-3 text-[10px] font-bold uppercase tracking-[.13em] text-[#667467]">
+  return <div className="min-h-screen bg-[#FAFBF8] pb-24 font-[family-name:var(--font-inter)] text-[#24372d]">
+    <div className="mx-auto max-w-[1280px] px-4 sm:px-7 lg:px-10">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E2E5DD] py-2.5 text-[10px] font-bold uppercase tracking-[.13em] text-[#667467]">
         <span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-[#cc8556]"/> Sri Lanka&apos;s business community</span>
         <span className="flex items-center gap-2"><CalendarDays size={13}/> {day}</span>
       </div>
-      <header className="border-b-[3px] border-double border-[#283e32] pb-7 pt-9 text-center sm:pb-9 sm:pt-11">
+      <header className="border-b-[3px] border-double border-[#CFD8CD] pb-5 pt-6 text-center sm:pb-8 sm:pt-10">
         <div className="mx-auto mb-3 flex w-fit items-center gap-2 text-[10px] font-extrabold uppercase tracking-[.29em] text-[#b18459]"><span className="h-px w-7 bg-[#b18459]"/> SL Business Index <span className="h-px w-7 bg-[#b18459]"/></div>
-        <h1 className="font-[family-name:var(--font-inter)] text-[clamp(3.1rem,7.5vw,7.5rem)] font-bold leading-[.95] tracking-[-.065em] text-[#193528]">
-          The Business <span className="italic text-[#59816a]">Journal.</span>
+        <h1 className="font-serif text-[clamp(2.6rem,6.2vw,5.8rem)] font-bold leading-[1.04] tracking-[-.045em] text-[#193528]">
+          Business <span className="text-[#4D755D]">News</span>
         </h1>
-        <p className="mx-auto mt-5 max-w-[660px] text-[13px] leading-6 text-[#6d766c] sm:text-[15px]">
-          Local stories, industry insights, business opportunities and photo updates — contributed by verified Sri Lankan businesses.
+        <p className="mx-auto mt-3 max-w-[660px] text-[12px] leading-6 text-[#6d766c] sm:text-[15px]">
+          Official announcements, local business stories and opportunities from across Sri Lanka.
         </p>
-        <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
           <button type="button" onClick={() => setEditorOpen(true)} className="inline-flex min-h-11 items-center gap-2 rounded-[8px] bg-[#203d2e] px-5 text-[12px] font-bold text-white transition-colors hover:bg-[#315f43]"><PenLine size={16}/> Publish a story <ArrowUpRight size={15}/></button>
           <a href="#latest-edition" className="inline-flex min-h-11 items-center gap-2 rounded-[8px] border border-[#d8dbcf] bg-white px-5 text-[12px] font-semibold text-[#325641] hover:bg-[#f0f3eb]">Explore the edition <ArrowDown size={15}/></a>
         </div>
       </header>
-      <nav aria-label="Journal categories" className="flex gap-1.5 overflow-x-auto border-b border-[#dad9ce] py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <nav aria-label="Journal categories" className="flex gap-1.5 overflow-x-auto border-b border-[#DDE5DD] py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <button type="button" onClick={() => { setCategory("all"); setVisibleCount(12); }} aria-current={category === "all" ? "page" : undefined}
           className={"shrink-0 rounded-md px-4 py-2 text-[11px] font-bold transition-colors " + (category === "all" ? "bg-[#203e2d] text-white" : "text-[#626c61] hover:bg-[#ebece4]")}>All industries</button>
         {CATEGORIES.map(value => <button type="button" key={value} onClick={() => { setCategory(value); setVisibleCount(12); }}
@@ -293,14 +293,14 @@ export default function BusinessNewsClient() {
             <h2 className={"mt-1 text-[30px] leading-tight sm:text-[38px] " + heading}>The latest edition</h2></div>
           <div className="flex items-center gap-2 text-[11px] font-semibold text-[#69766a]"><Newspaper size={15}/> {isLoading ? "Loading stories" : filteredPosts.length + " " + (filteredPosts.length === 1 ? "story" : "stories")}</div>
         </div>
-        <div className="mb-7 grid gap-3 rounded-[11px] border border-[#e2e0d5] bg-white p-3 sm:grid-cols-[minmax(0,1fr)_180px_150px] sm:gap-4 sm:p-4">
-          <label className="relative flex min-w-0 items-center">
+        <div className="mb-7 grid grid-cols-2 gap-3 rounded-[11px] border border-[#E2E7DD] bg-white p-3 sm:grid-cols-[minmax(0,1fr)_180px_150px] sm:gap-4 sm:p-4">
+          <label className="relative col-span-2 flex min-w-0 items-center sm:col-span-1">
             <Search size={17} className="absolute left-3.5 text-[#9a9e93]"/>
             <input aria-label="Search business journal stories" value={searchText} onChange={e => { setSearchText(e.target.value); setVisibleCount(12); }}
               placeholder="Search headlines, businesses, stories…" className="min-h-11 w-full rounded-[8px] border border-[#e2e3d9] bg-[#fafaf7] py-2 pl-10 pr-3 text-[12px] text-[#2b4033] outline-none placeholder:text-[#96998d] focus:border-[#448266]"/>
           </label>
           <select aria-label="Filter district" value={district} onChange={e => { setDistrict(e.target.value); setVisibleCount(12); }}
-            className="min-h-11 rounded-[8px] border border-[#e2e3d9] bg-[#fafaf7] px-3 text-[12px] font-semibold text-[#596e5d] outline-none focus:border-[#448266]">
+            className="min-h-11 w-full min-w-0 rounded-[8px] border border-[#e2e3d9] bg-[#fafaf7] px-3 text-[12px] font-semibold text-[#596e5d] outline-none focus:border-[#448266]">
             <option value="all">All districts</option>{DISTRICTS.map(d => <option key={d}>{d}</option>)}
           </select>
           <select aria-label="Filter story type" value={kind} onChange={e => { setKind(e.target.value as typeof kind); setVisibleCount(12); }}
@@ -329,7 +329,7 @@ export default function BusinessNewsClient() {
         : <>
           <LeadStory post={lead} expanded={expandedId === lead.id} highlighted={highlightId === lead.id}
             onToggle={() => setExpandedId(id => id === lead.id ? null : lead.id)} onReport={onReport} onShare={onShare}/>
-          <div className="mt-10 grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_310px] xl:gap-14">
+          <div className="mt-8 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_300px] xl:gap-10">
             <section aria-labelledby="more-stories-title" className="min-w-0">
               <div className="mb-5 flex items-center justify-between border-b-2 border-[#223b2d] pb-4">
                 <div><p className={kickerClass}>The community newsroom</p><h2 id="more-stories-title" className={"mt-1 text-[29px] " + heading}>More from the journal</h2></div>
@@ -343,11 +343,11 @@ export default function BusinessNewsClient() {
                 className="mt-7 flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-[#cad9cd] bg-white text-[12px] font-bold text-[#2b6043] hover:bg-[#eff5ef]">Load more stories <ChevronDown size={15}/></button>}
             </section>
             <aside className="min-w-0 space-y-6 lg:sticky lg:top-[98px]" aria-label="Journal sidebar">
-              <div className="overflow-hidden border border-[#dde3d7] bg-[#1c3528] p-7 text-white">
-                <span className="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[.18em] text-[#c6c7a5]"><PenLine size={15}/> The publisher&apos;s desk</span>
-                <h3 className="mt-5 font-[family-name:var(--font-inter)] text-[30px] leading-[1.13] tracking-tight">Your story belongs here.</h3>
-                <p className="mt-4 text-[12px] leading-6 text-[#c1d1c5]">Business articles, announcements, posters and opportunities from verified local owners.</p>
-                <button type="button" onClick={() => setEditorOpen(true)} className="mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[7px] bg-[#f2ecdc] px-4 text-[12px] font-bold text-[#234132] hover:bg-white">Publish a story <ArrowUpRight size={15}/></button>
+              <div className="overflow-hidden rounded-[12px] border border-[#DDE8DC] bg-[#F1F7F1] p-6 text-[#244A34]">
+                <span className="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[.18em] text-[#6E9275]"><PenLine size={15}/> The publisher&apos;s desk</span>
+                <h3 className="mt-4 font-serif text-[27px] font-bold leading-[1.15] tracking-tight">Your story belongs here.</h3>
+                <p className="mt-3 text-[12px] leading-6 text-[#617766]">Business articles, announcements, posters and opportunities from verified local owners.</p>
+                <button type="button" onClick={() => setEditorOpen(true)} className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[7px] bg-[#24583B] px-4 text-[12px] font-bold text-white hover:bg-[#1E4931]">Publish a story <ArrowUpRight size={15}/></button>
               </div>
               <div className="border border-[#e0dfd4] bg-white px-6 py-6">
                 <div className="flex items-center justify-between"><p className={kickerClass}>On the record</p><Newspaper size={17} className="text-[#8b9d8b]"/></div>
