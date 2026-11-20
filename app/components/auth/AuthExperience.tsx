@@ -51,6 +51,27 @@ function LoginExperience({ mode }: { mode: AuthMode }) {
     setCanUseWebAuthn(window.isSecureContext && typeof window.PublicKeyCredential !== 'undefined');
   }, []);
 
+  // Returning visitors with a verified server-readable session should not
+  // have to choose a login method again simply because they opened /login.
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (!active || !data.session) return;
+        const response = await fetch('/api/auth/session-status', {
+          credentials: 'same-origin', cache: 'no-store',
+        });
+        if (!active || !response.ok) return;
+        const state: { authenticated?: boolean } = await response.json();
+        if (active && state.authenticated) window.location.replace(next);
+      } catch {
+        // An unavailable session check must not block manual login.
+      }
+    })();
+    return () => { active = false; };
+  }, [next]);
+
   const resetCaptcha = () => {
     setTurnstileToken(null);
     setCaptchaVersion(value => value + 1);
@@ -284,7 +305,7 @@ function LoginExperience({ mode }: { mode: AuthMode }) {
                 </Link>
               </p>
               <p className="mt-5 text-[11px] leading-5 text-[#9AA69F]">
-                By continuing, you agree to our <Link href="/terms" className="text-[#507965] hover:underline">Terms</Link> and <Link href="/privacy-policy" className="text-[#507965] hover:underline">Privacy Policy</Link>.
+                By continuing, you agree to our <Link href="/terms-of-service" className="text-[#507965] hover:underline">Terms</Link> and <Link href="/privacy-policy" className="text-[#507965] hover:underline">Privacy Policy</Link>.
               </p>
               <Link href="/" className="mt-5 inline-flex items-center gap-1.5 text-[12px] font-medium text-[#81938A] hover:text-[#183A31] lg:hidden"><ArrowLeft size={14} /> Back to website</Link>
             </div>
