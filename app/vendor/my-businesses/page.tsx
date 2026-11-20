@@ -92,8 +92,10 @@ export default function MyBusinessesPage() {
   });
 
   const count = businesses.length;
-  const maxListings = typeof planDetails?.max_listings === 'number' ? planDetails.max_listings : null;
-  const limitReached = maxListings !== null && count >= maxListings;
+  // Listing caps are for paid vendor accounts, never trusted admin roles.
+  const isStaff = user?.role === 'admin' || user?.role === 'ceo';
+  const maxListings = isStaff ? null : typeof planDetails?.max_listings === 'number' ? planDetails.max_listings : null;
+  const limitReached = !isStaff && maxListings !== null && count >= maxListings;
   const available = maxListings === null ? null : Math.max(0, maxListings - count);
   const approved = businesses.filter(b => b.status === 'approved').length;
   const pending = businesses.filter(b => !b.status || b.status === 'pending').length;
@@ -208,18 +210,18 @@ export default function MyBusinessesPage() {
         <section className={panel + ' px-4 py-4 sm:px-5'}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-[12px] font-bold text-[#2C2C31]">Listing allowance <span className="ml-1 text-[10px] font-semibold text-slate-400">· {planName} plan</span></p>
+              <p className="text-[12px] font-bold text-[#2C2C31]">Listing allowance <span className="ml-1 text-[10px] font-semibold text-slate-400">· {isStaff ? 'Admin access' : planName + ' plan'}</span></p>
               <p className="mt-1 text-[11px] text-slate-500">
-                {maxListings === null ? (planError ? 'Unable to verify your listing allowance.' : 'Checking your listing allowance…') :
+                {isStaff ? 'Unlimited business registrations · Admin account' : maxListings === null ? (planError ? 'Unable to verify your listing allowance.' : 'Checking your listing allowance…') :
                   `${number(count)} of ${number(maxListings)} listings used · ${number(available || 0)} remaining`}
               </p>
             </div>
-            <Link href="/vendor/billing" className="inline-flex items-center gap-1 text-[11px] font-bold text-[#2C2C31] hover:underline">
+            {!isStaff && <Link href="/vendor/billing" className="inline-flex items-center gap-1 text-[11px] font-bold text-[#2C2C31] hover:underline">
               Manage plan <IconsaxIcon name="arrow-right-2" size={13} />
-            </Link>
+            </Link>}
           </div>
           <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#ebf0ed]">
-            <div className="h-full rounded-full bg-[#242428] transition-[width]" style={{ width: maxListings === null || maxListings <= 0 ? '0%' : Math.min(100, count / maxListings * 100) + '%' }} />
+            <div className="h-full rounded-full bg-[#242428] transition-[width]" style={{ width: isStaff ? '100%' : maxListings === null || maxListings <= 0 ? '0%' : Math.min(100, count / maxListings * 100) + '%' }} />
           </div>
           {limitReached && <p className="mt-2 text-[10px] font-medium text-[#986b2b]">Your plan's listing allowance is full. Review billing options to add another business.</p>}
         </section>
