@@ -22,7 +22,13 @@ export default function NotificationBell(){
   const [open,setOpen]=useState(false);
   const trigger=useRef<HTMLButtonElement>(null);
   const [position,setPosition]=useState({top:88,right:12});
-  const reposition=()=>{const r=trigger.current?.getBoundingClientRect();if(r)setPosition({top:r.bottom+10,right:Math.max(12,window.innerWidth-r.right)})};
+  const reposition=()=>{
+    const r=trigger.current?.getBoundingClientRect();
+    if(!r)return;
+    const panelWidth=Math.min(400,window.innerWidth-24);
+    const right=Math.max(12,Math.min(window.innerWidth-r.right,window.innerWidth-panelWidth-12));
+    setPosition({top:r.bottom+10,right});
+  };
   useEffect(()=>{if(!open)return;const close=()=>setOpen(false);window.addEventListener('resize',close);return()=>window.removeEventListener('resize',close)},[open]);
   const [items,setItems]=useState<Item[]>([]);
   const [unread,setUnread]=useState(0);
