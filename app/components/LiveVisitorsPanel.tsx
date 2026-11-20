@@ -2,13 +2,13 @@
 import {useEffect,useRef,useState,useId,type PointerEvent} from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import {Activity,Globe2,MapPin,Minus,Plus,RotateCcw,X,ShieldCheck,Info,Maximize2,Minimize2} from 'lucide-react'
-import {coastline,cityPins} from '@/lib/live/geo'
+import {coastline} from '@/lib/live/geo'
+import {useLiveActivity} from './LivePresenceProvider'
 import {openAnalyticsPreferences} from './GoogleAnalyticsTracker'
 type Bucket={name:string;count:number;x?:number;y?:number}
 type Report={status:'ready'|'not_configured'|'unavailable';total?:number|null;countries?:Bucket[];cities?:Bucket[];updatedAt?:string}
 const colors=['#087fdd','#f97316','#d946ef','#16a34a','#eab308','#e11d48','#06b6d4']
 const initial={x:0,y:0,zoom:1}
-const labelCities=['Jaffna','Mannar','Vavuniya','Anuradhapura','Trincomalee','Puttalam','Kurunegala','Kandy','Batticaloa','Colombo','Badulla','Ratnapura','Galle','Matara','Hambantota']
 export default function LiveVisitorsPanel({open,onClose,count}:{open:boolean;onClose:()=>void;count:number|null}){
   const [report,setReport]=useState<Report|null>(null)
   const [tab,setTab]=useState<'island'|'world'>('island')
@@ -30,9 +30,11 @@ export default function LiveVisitorsPanel({open,onClose,count}:{open:boolean;onC
     const timer=window.setInterval(()=>{if(document.visibilityState==='visible')void refresh()},60000)
     return()=>{active=false;controller.abort();window.clearInterval(timer)}
   },[open])
-  const cities=report?.cities||[], countries=report?.countries||[]
+  const live=useLiveActivity()
+  const cities=live.regions, countries=live.countries
   const items=tab==='island'?cities:countries
   const ready=report?.status==='ready'
+  const liveReady=live.count!==null
   const sriLanka=countries.find(c=>c.name==='Sri Lanka')
   const bounds=tab==='island'?{x:175,y:43,w:320,h:465}:{x:0,y:0,w:960,h:480}
   const cx=bounds.x+bounds.w/2,cy=bounds.y+bounds.h/2
@@ -68,7 +70,7 @@ export default function LiveVisitorsPanel({open,onClose,count}:{open:boolean;onC
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <div className="rounded-xl border border-slate-200 bg-white p-3 sm:p-4"><p className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500"/> Active now</p><p className="mt-1 text-3xl font-bold tabular-nums text-slate-900">{count??'—'}</p><p className="mt-1 text-[10px] text-slate-500">Connected public-page tabs</p></div>
             <div className="rounded-xl border border-slate-200 bg-white p-3 sm:p-4"><p className="text-[11px] font-semibold text-slate-600">Recent active users</p><p className="mt-1 text-3xl font-bold tabular-nums text-slate-900">{ready?report?.total??'—':'—'}</p><p className="mt-1 text-[10px] text-slate-500">GA4 · Last 30 minutes</p></div>
-            <div className="col-span-2 rounded-xl border border-slate-200 bg-white p-3 sm:col-span-1 sm:p-4"><p className="text-[11px] font-semibold text-slate-600">{tab==='island'?'Sri Lanka activity':'Countries with activity'}</p><p className="mt-1 text-3xl font-bold tabular-nums text-slate-900">{ready?(tab==='island'?sriLanka?.count??0:countries.length):'—'}</p><p className="mt-1 text-[10px] text-slate-500">GA4 · Last 30 minutes</p></div>
+            <div className="col-span-2 rounded-xl border border-slate-200 bg-white p-3 sm:col-span-1 sm:p-4"><p className="text-[11px] font-semibold text-slate-600">{tab==='island'?'Sri Lanka activity':'Countries with activity'}</p><p className="mt-1 text-3xl font-bold tabular-nums text-slate-900">{liveReady?(tab==='island'?sriLanka?.count??0:countries.length):'—'}</p><p className="mt-1 text-[10px] text-slate-500">Live · shared approximate areas</p></div>
           </div>
           <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_340px]">
             <section className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white">
@@ -79,16 +81,15 @@ export default function LiveVisitorsPanel({open,onClose,count}:{open:boolean;onC
                 <div className="flex gap-1">{[{Icon:Minus,label:'Zoom out',fn:()=>zoom(-.25)},{Icon:Plus,label:'Zoom in',fn:()=>zoom(.25)},{Icon:RotateCcw,label:'Reset map',fn:()=>{setView(initial);setSelected(null)}}].map(({Icon,label,fn})=><button key={label} aria-label={label} type="button" onClick={fn} className="grid h-9 w-9 place-items-center rounded-md border border-slate-200 text-slate-700 hover:bg-slate-100"><Icon size={16}/></button>)}</div>
               </div>
               <div className="relative overflow-hidden bg-[#f3f5f7]">
-                <svg ref={svg} viewBox={bounds.x+' '+bounds.y+' '+bounds.w+' '+bounds.h} aria-label={tab==='island'?'Sri Lanka city activity map':'Worldwide country activity map'} className={'block w-full cursor-grab touch-none select-none active:cursor-grabbing '+(expanded?'h-[56dvh] min-h-[340px] lg:h-[calc(100dvh-290px)]':'h-[420px] sm:h-[540px] lg:h-[565px]')} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={()=>{drag.current=null}} onPointerCancel={()=>{drag.current=null}}>
+                <svg ref={svg} viewBox={bounds.x+' '+bounds.y+' '+bounds.w+' '+bounds.h} aria-label={tab==='island'?'Sri Lanka live activity map':'Worldwide live activity map'} className={'block w-full cursor-grab touch-none select-none active:cursor-grabbing '+(expanded?'h-[56dvh] min-h-[340px] lg:h-[calc(100dvh-290px)]':'h-[420px] sm:h-[540px] lg:h-[565px]')} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={()=>{drag.current=null}} onPointerCancel={()=>{drag.current=null}}>
                   <defs><pattern id={gid+'grid'} width="18" height="18" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".7" fill="#64748b" opacity=".16"/></pattern></defs>
                   <rect x={bounds.x} y={bounds.y} width={bounds.w} height={bounds.h} fill={'url(#'+gid+'grid)'}/>
                   <g transform={'translate('+view.x+' '+view.y+') translate('+cx+' '+cy+') scale('+view.zoom+') translate('+(-cx)+' '+(-cy)+')'}>
                     {tab==='island'?<>
                       <path d={coastline} fill="#e1e4e8" stroke="#20242a" strokeWidth="1.2" strokeLinejoin="round" vectorEffect="non-scaling-stroke"/>
-                      {labelCities.map(n=>{const p=cityPins[n];if(!p)return null;const right=p[0]>320;return <g key={n} opacity=".85" pointerEvents="none"><circle cx={p[0]} cy={p[1]} r="1.8" fill="#737b88"/><text x={p[0]+(right?5:-5)} y={p[1]-4} textAnchor={right?'start':'end'} fontSize="6.8" fill="#4b5563" fontWeight="500">{n}</text></g>})}
                     </>:<image href="/live/world.svg" x="0" y="0" width="960" height="480"/>}
-                    {items.filter(c=>c.x!==undefined&&c.y!==undefined).map((c,i)=>{const color=colors[i%colors.length],r=tab==='island'?4:5;const active=selected===c.name;return <g key={c.name} transform={'translate('+c.x+' '+c.y+')'} onPointerDown={e=>e.stopPropagation()} onClick={()=>select(c)} role="button" tabIndex={0} aria-label={c.name+' '+c.count+' recent active users'} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();select(c)}}} className="cursor-pointer">
-                      <circle r={Math.min(20,r+5+Math.log2(c.count+1))} fill={color} opacity={active?.35:.16}/><circle r={r+Math.min(3,Math.log2(c.count+1))} fill={color} stroke="white" strokeWidth="1.6"/><text x="0" y=".5" dominantBaseline="middle" textAnchor="middle" fill="white" fontWeight="700" fontSize={c.count>99?'3.5':'5.5'}>{c.count}</text><title>{c.name}: {c.count} recent active users</title>
+                    {items.filter(c=>c.x!==undefined&&c.y!==undefined).map((c,i)=>{const color=colors[i%colors.length],r=tab==='island'?4:5;const active=selected===c.name;return <g key={c.name} transform={'translate('+c.x+' '+c.y+')'} onPointerDown={e=>e.stopPropagation()} onClick={()=>select(c)} role="button" tabIndex={0} aria-label={c.name+' '+c.count+' active connections'} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();select(c)}}} className="cursor-pointer">
+                      <circle r={Math.min(20,r+5+Math.log2(c.count+1))} fill={color} opacity={active?.35:.16}/><circle r={r+Math.min(3,Math.log2(c.count+1))} fill={color} stroke="white" strokeWidth="1.6"/><text x="0" y=".5" dominantBaseline="middle" textAnchor="middle" fill="white" fontWeight="700" fontSize={c.count>99?'3.5':'5.5'}>{c.count}</text><title>{c.name}: {c.count} active connections</title>
                       </g>})}
                   </g>
                 </svg>
@@ -97,15 +98,15 @@ export default function LiveVisitorsPanel({open,onClose,count}:{open:boolean;onC
               </div>
             </section>
             <aside className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Location overview</p><h3 className="mt-2 text-lg font-bold text-slate-900">{tab==='island'?'Sri Lankan cities':'Worldwide countries'}</h3>
-              {tab==='island'&&ready&&sriLanka&&<div className="mt-3 flex items-center justify-between rounded-lg bg-slate-100 p-3 text-xs font-semibold"><span>All Sri Lanka</span><span className="tabular-nums">{sriLanka.count}</span></div>}
-              {!report?<p className="mt-5 text-sm text-slate-500">Loading activity…</p>:!ready?<div className="mt-5 flex gap-2 rounded-lg bg-slate-100 p-3 text-xs leading-5 text-slate-600"><Info size={17} className="shrink-0"/>{report.status==='not_configured'?'Geographic statistics are not connected yet.':'Geographic statistics are temporarily unavailable.'}</div>:items.length===0?<p className="mt-5 text-sm leading-6 text-slate-500">{tab==='island'?'No city groups meet the privacy threshold yet. Smaller groups are included in the Sri Lanka country total.':'No reportable country activity yet.'}</p>:<div className="mt-3 max-h-[420px] divide-y divide-slate-100 overflow-y-auto">{items.map((c,i)=><button type="button" key={c.name} onClick={()=>select(c)} className={'flex w-full items-center gap-3 px-1 py-3 text-left text-sm hover:bg-slate-50 '+(selected===c.name?'bg-slate-100':'')}><span className="h-3 w-3 shrink-0 rounded-full" style={{background:colors[i%colors.length]}}/><span className="flex-1 text-slate-700">{c.name}</span><span className="font-bold tabular-nums text-slate-900">{c.count}</span></button>)}</div>}
-              <div className="mt-5 border-t border-slate-200 pt-4 text-[11px] leading-5 text-slate-600"><ShieldCheck size={16} className="mb-1 text-slate-700"/>Dots represent approximate location groups, not individual people. Country totals can include one user; city groups below five are withheld. No personal information is displayed.</div>
-              {report?.updatedAt&&<p className="mt-3 text-[10px] text-slate-500">Updated {new Date(report.updatedAt).toLocaleTimeString()} · Refreshes every 60 seconds</p>}
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Location overview</p><h3 className="mt-2 text-lg font-bold text-slate-900">{tab==='island'?'Live locations in Sri Lanka':'Live worldwide locations'}</h3>
+              {tab==='island'&&liveReady&&sriLanka&&<div className="mt-3 flex items-center justify-between rounded-lg bg-slate-100 p-3 text-xs font-semibold"><span>All Sri Lanka</span><span className="tabular-nums">{sriLanka.count}</span></div>}
+              {!liveReady?<div className="mt-5 flex gap-2 rounded-lg bg-slate-100 p-3 text-xs leading-5 text-slate-600"><Info size={17} className="shrink-0"/>Connecting to live activity…</div>:items.length===0?<p className="mt-5 text-sm leading-6 text-slate-500">No active connections with a shared area in this view yet. A marker appears as soon as a visitor shares their approximate area, even if the count is one.</p>:<div className="mt-3 max-h-[420px] divide-y divide-slate-100 overflow-y-auto">{items.map((c,i)=><button type="button" key={c.name} onClick={()=>select(c)} className={'flex w-full items-center gap-3 px-1 py-3 text-left text-sm hover:bg-slate-50 '+(selected===c.name?'bg-slate-100':'')}><span className="h-3 w-3 shrink-0 rounded-full" style={{background:colors[i%colors.length]}}/><span className="flex-1 text-slate-700">{c.name}</span><span className="font-bold tabular-nums text-slate-900">{c.count}</span></button>)}</div>}
+              <div className="mt-5 border-t border-slate-200 pt-4 text-[11px] leading-5 text-slate-600"><ShieldCheck size={16} className="mb-1 text-slate-700"/>Dots appear only for active connections that opt in to area sharing. Sri Lanka is shown at province level; worldwide at country level. No exact position, identity or device information is shown.</div>
+              {liveReady&&<p className="mt-3 text-[10px] text-slate-500">{live.mapped} of {live.count} active connections sharing an area · Live updates</p>}
               <button type="button" onClick={()=>{openAnalyticsPreferences();onClose()}} className="mt-4 text-xs font-semibold text-slate-700 underline">Analytics preferences</button>
             </aside>
           </div>
-          <p className="mt-4 text-[11px] leading-5 text-slate-500">Supabase Presence shows connected tabs now; GA4 locations report recent activity over 30 minutes and may omit opted-out users or unavailable locations. <a href="/privacy-policy" className="font-semibold underline">Privacy policy</a>.</p>
+          <p className="mt-4 text-[11px] leading-5 text-slate-500">Supabase Presence updates live connections and approximate areas while the page is visible. GA4 recent active users is a separate 30-minute statistic. Location estimates can be inaccurate or unavailable. <a href="/privacy-policy" className="font-semibold underline">Privacy policy</a>.</p>
         </div>
       </Dialog.Content>
     </Dialog.Portal>
