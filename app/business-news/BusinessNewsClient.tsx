@@ -275,7 +275,8 @@ export default function BusinessNewsClient() {
           Official announcements, local business stories and opportunities from across Sri Lanka.
         </p>
         <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
-          <button type="button" onClick={() => setEditorOpen(true)} className="inline-flex min-h-11 items-center gap-2 rounded-[8px] bg-[#203d2e] px-5 text-[12px] font-bold text-white transition-colors hover:bg-[#315f43]"><PenLine size={16}/> Publish a story <ArrowUpRight size={15}/></button>
+          {isOfficialAdmin ? <Link href="/admin/business-news" className="inline-flex min-h-11 items-center gap-2 rounded-[8px] bg-[#203d2e] px-5 text-[12px] font-bold text-white hover:bg-[#315f43]"><ShieldCheck size={16}/> Official newsroom <ArrowUpRight size={15}/></Link> :
+            <button type="button" onClick={() => setEditorOpen(true)} className="inline-flex min-h-11 items-center gap-2 rounded-[8px] bg-[#203d2e] px-5 text-[12px] font-bold text-white hover:bg-[#315f43]"><PenLine size={16}/> Publish a story <ArrowUpRight size={15}/></button>}
           <a href="#latest-edition" className="inline-flex min-h-11 items-center gap-2 rounded-[8px] border border-[#d8dbcf] bg-white px-5 text-[12px] font-semibold text-[#325641] hover:bg-[#f0f3eb]">Explore the edition <ArrowDown size={15}/></a>
         </div>
       </header>
@@ -346,8 +347,9 @@ export default function BusinessNewsClient() {
               <div className="overflow-hidden rounded-[12px] border border-[#DDE8DC] bg-[#F1F7F1] p-6 text-[#244A34]">
                 <span className="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[.18em] text-[#6E9275]"><PenLine size={15}/> The publisher&apos;s desk</span>
                 <h3 className="mt-4 font-serif text-[27px] font-bold leading-[1.15] tracking-tight">Your story belongs here.</h3>
-                <p className="mt-3 text-[12px] leading-6 text-[#617766]">Business articles, announcements, posters and opportunities from verified local owners.</p>
-                <button type="button" onClick={() => setEditorOpen(true)} className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[7px] bg-[#24583B] px-4 text-[12px] font-bold text-white hover:bg-[#1E4931]">Publish a story <ArrowUpRight size={15}/></button>
+                <p className="mt-3 text-[12px] leading-6 text-[#617766]">Official announcements and community stories from verified businesses.</p>
+                {isOfficialAdmin ? <Link href="/admin/business-news" className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[7px] bg-[#24583B] px-4 text-[12px] font-bold text-white hover:bg-[#1E4931]">Open official newsroom <ArrowUpRight size={15}/></Link> :
+                <button type="button" onClick={() => setEditorOpen(true)} className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[7px] bg-[#24583B] px-4 text-[12px] font-bold text-white hover:bg-[#1E4931]">Publish a story <ArrowUpRight size={15}/></button>}
               </div>
               <div className="border border-[#e0dfd4] bg-white px-6 py-6">
                 <div className="flex items-center justify-between"><p className={kickerClass}>On the record</p><Newspaper size={17} className="text-[#8b9d8b]"/></div>
@@ -367,7 +369,7 @@ export default function BusinessNewsClient() {
                     <div key={item.label} className="border-y border-[#e5e4da] py-3"><span className="block font-[family-name:var(--font-inter)] text-[27px] font-bold text-[#224632]">{item.value}</span>
                       <span className="text-[10px] font-semibold text-[#82887d]">{item.label}</span></div>)}
                 </div>
-                <p className="mt-4 text-[11px] leading-5 text-[#85877e]">These are business-contributed updates, not independently verified reporting. Check details with the publisher.</p>
+                <p className="mt-4 text-[11px] leading-5 text-[#85877e]">Official announcements carry an Official badge. Community stories are supplied by their publishers.</p>
               </div>
               <div className="border-t-[3px] border-[#284938] pt-5">
                 <p className={kickerClass}>Explore the directory</p>
@@ -385,7 +387,8 @@ export default function BusinessNewsClient() {
         <div><p className={kickerClass}>Your business. Your voice.</p>
           <h2 className={"mt-2 text-[clamp(1.8rem,3vw,2.8rem)] " + heading}>From storefronts to stories.</h2>
           <p className="mt-3 max-w-[660px] text-[13px] leading-6 text-[#778075]">Publish an illustrated update, a longer article or a job opportunity — credited to your approved and verified business.</p></div>
-        <button type="button" onClick={() => setEditorOpen(true)} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[7px] bg-[#244533] px-6 text-[12px] font-bold text-white hover:bg-[#336a4a]"><Megaphone size={17}/> Submit a story <ArrowUpRight size={15}/></button>
+        {isOfficialAdmin ? <Link href="/admin/business-news" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[7px] bg-[#244533] px-6 text-[12px] font-bold text-white hover:bg-[#336a4a]"><ShieldCheck size={17}/> Official publishing <ArrowUpRight size={15}/></Link> :
+          <button type="button" onClick={() => setEditorOpen(true)} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[7px] bg-[#244533] px-6 text-[12px] font-bold text-white hover:bg-[#336a4a]"><Megaphone size={17}/> Submit a story <ArrowUpRight size={15}/></button>}
       </div>
     </section>
     {editorOpen && <NewsEditorModal onClose={closeEditor} onPublished={onPublished}/>}
