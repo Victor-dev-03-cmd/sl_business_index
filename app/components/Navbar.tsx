@@ -33,10 +33,13 @@ import {
   Plus,
   Search,
   ArrowUpRight,
+  Newspaper,
+  type LucideIcon,
 } from "lucide-react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface UserProfile {
   id?: string;
@@ -62,6 +65,7 @@ export default function Navbar() {
   >(undefined);
   const [categories, setCategories] = useState<Category[]>([]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const [categOpen, setCategOpen] = useState(false);
   const [isLegacy, setIsLegacy] = useState(false);
   const [subNavbarOpen, setSubNavbarOpen] = useState(false);
@@ -267,6 +271,20 @@ export default function Navbar() {
   }, [user]);
 
   const close = () => setMobileMenuOpen(false);
+  const handleSignOut = async () => {
+    if (isSigningOut) return;
+    setIsSigningOut(true);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      close();
+      window.location.assign("/");
+    } catch (error) {
+      console.error("Sign out failed:", error);
+      toast.error("Unable to sign out. Please try again.");
+      setIsSigningOut(false);
+    }
+  };
 
   /* profileData: merged profile — fullUserData when loaded, raw auth user
      as immediate fallback so the card renders the moment session resolves */
@@ -523,13 +541,13 @@ export default function Navbar() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", stiffness: 320, damping: 32 }}
-              className="fixed top-0 right-0 z-[100] h-full w-full max-w-[360px] bg-[#FCFAF6] shadow-[0_25px_80px_rgba(15,23,42,0.24)] flex flex-col"
+              className="fixed top-0 right-0 z-[100] h-full w-full max-w-[360px] bg-[#FCFAF6] shadow-[0_25px_80px_rgba(15,23,42,0.24)] flex flex-col max-sm:h-[100dvh] max-sm:w-[calc(100vw-18px)] max-sm:overflow-hidden max-sm:rounded-l-[26px] max-sm:bg-white"
             >
               {/* ── Panel header ── */}
-              <div className="flex items-center justify-between h-16 px-5 border-b border-gray-100 shrink-0">
+              <div className="flex items-center justify-between h-16 px-5 border-b border-gray-100 shrink-0 max-sm:h-[78px] max-sm:px-4 max-sm:border-[#E8EDEA]">
                 <LogoLink />
                 <div className="flex items-center gap-2">
-                  <button type="button" onClick={close} aria-label="Close menu" className="flex h-10 w-10 items-center justify-center rounded-xl border border-stone-200 text-stone-700 hover:bg-stone-50"><X size={19} /></button>
+                  <button type="button" onClick={close} aria-label="Close menu" className="flex h-10 w-10 items-center justify-center rounded-xl border border-stone-200 text-stone-700 hover:bg-stone-50 max-sm:rounded-full max-sm:border-[#E1E8E3] max-sm:bg-white"><X size={19} /></button>
                 </div>
               </div>
 
@@ -550,7 +568,7 @@ export default function Navbar() {
               {/* Show card as soon as session user is confirmed */}
               {!sessionLoading && user && (
                 <div className="mx-4 mt-4 shrink-0">
-                  <div className="flex items-center gap-3 p-3.5 bg-brand-dark/5 rounded-xl border border-brand-dark/10">
+                  <div className="flex items-center gap-3 p-3.5 bg-brand-dark/5 rounded-xl border border-brand-dark/10 max-sm:rounded-[16px] max-sm:border-[#E0E7E4] max-sm:bg-[#F7F8F8]">
                     {/* Avatar */}
                     <div className="w-10 h-10 rounded-full bg-brand-dark flex items-center justify-center text-white text-sm font-semibold overflow-hidden shrink-0">
                       {(profileData && profileData.avatar_url) ? (
@@ -585,8 +603,9 @@ export default function Navbar() {
                       (profileData && profileData.role === "ceo")) && (
                       <Link
                         href="/admin/dashboard"
+                        aria-label="Open admin dashboard"
                         onClick={close}
-                        className="ml-auto shrink-0 p-3 bg-white rounded-lg border border-gray-200 text-brand-dark hover:bg-brand-dark hover:text-white transition-colors flex items-center justify-center min-w-[44px] min-h-[44px]"
+                        className="ml-auto shrink-0 p-3 bg-white rounded-lg border border-gray-200 text-brand-dark hover:bg-brand-dark hover:text-white transition-colors flex items-center justify-center min-w-[44px] min-h-[44px] max-sm:border-transparent max-sm:bg-transparent max-sm:p-2 max-sm:hover:bg-[#EAF0EC]"
                       >
                         <BrandIcon name="element-3" size={20} />
                       </Link>
@@ -594,8 +613,9 @@ export default function Navbar() {
                     {(profileData && profileData.role === "vendor") && (
                       <Link
                         href="/vendor/dashboard"
+                        aria-label="Open vendor dashboard"
                         onClick={close}
-                        className="ml-auto shrink-0 p-3 bg-white rounded-lg border border-gray-200 text-brand-dark hover:bg-brand-dark hover:text-white transition-colors flex items-center justify-center min-w-[44px] min-h-[44px]"
+                        className="ml-auto shrink-0 p-3 bg-white rounded-lg border border-gray-200 text-brand-dark hover:bg-brand-dark hover:text-white transition-colors flex items-center justify-center min-w-[44px] min-h-[44px] max-sm:border-transparent max-sm:bg-transparent max-sm:p-2 max-sm:hover:bg-[#EAF0EC]"
                       >
                         <BrandIcon name="briefcase" size={20} />
                       </Link>
@@ -604,9 +624,58 @@ export default function Navbar() {
                 </div>
               )}
 
-              {/* ── Nav links (scrollable) ── */}
+              {/* Native phone-only menu, leaving tablet navigation unchanged. */}
+              <nav aria-label="Mobile account navigation"
+                className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4 pt-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden"
+                style={{ fontFamily: "var(--font-inter), sans-serif" }}>
+                <p className="mb-2 px-1 text-[11px] font-medium uppercase tracking-[0.07em] text-[#727D77]">Discover</p>
+                <div className="space-y-0.5">
+                  <MobileDrawerLink href="/" label="Home" icon={Home} onClick={close} />
+                  <MobileDrawerLink href="/nearby" label="Nearby" icon={MapPin} onClick={close} />
+                  <div>
+                    <button type="button" onClick={() => setCategOpen(v => !v)}
+                      aria-expanded={categOpen} aria-controls="slbi-phone-drawer-categories"
+                      className="flex min-h-[55px] w-full items-center gap-3 rounded-xl px-1 text-left text-[#22332D] transition-colors hover:bg-[#F6F8F6] active:bg-[#EFF3F0]">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] bg-[#F4F6F7] text-[#244238]">
+                        <LayoutGrid size={19} strokeWidth={1.7} aria-hidden="true" />
+                      </span>
+                      <span className="flex-1 text-[14px] font-medium">Categories</span>
+                      <ChevronDown size={16} aria-hidden="true"
+                        className={cn("mr-2 text-[#B1B9B4] transition-transform duration-150", categOpen && "rotate-180")} />
+                    </button>
+                    {categOpen && (
+                      <div id="slbi-phone-drawer-categories"
+                        className="mb-3 ml-4 grid grid-cols-2 gap-2 border-l border-[#E5EAE7] pb-1 pl-4 pt-2">
+                        {categories.slice(0, 10).map(cat => (
+                          <Link key={cat.name} href={"/category/" + slugify(cat.name)}
+                            onClick={close}
+                            className="min-w-0 truncate rounded-lg bg-[#F6F8F7] px-2.5 py-2.5 text-[11px] font-medium text-[#395044] hover:bg-[#ECF3EE]">
+                            {cat.name}
+                          </Link>
+                        ))}
+                        <Link href="/category" onClick={close}
+                          className="col-span-2 rounded-lg bg-[#EAF2ED] px-3 py-2.5 text-center text-[12px] font-medium text-[#245941]">
+                          Browse all categories
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                  <MobileDrawerLink href="/business-news" label="SL-News" icon={Newspaper} onClick={close} />
+                  {showRegister && (
+                    <MobileDrawerLink href="/register-business" label="Register Business" icon={Building2} onClick={close} />
+                  )}
+                </div>
+                <p className="mb-2 mt-7 px-1 text-[11px] font-medium uppercase tracking-[0.07em] text-[#727D77]">Support &amp; Info</p>
+                <div className="space-y-0.5">
+                  <MobileDrawerLink href="/about" label="About" icon={Info} onClick={close} />
+                  <MobileDrawerLink href="/faq" label="FAQ" icon={HelpIcon} onClick={close} />
+                  <MobileDrawerLink href="/contact" label="Contact" icon={Phone} onClick={close} />
+                </div>
+              </nav>
+
+              {/* Tablet nav: keep previous layout and category dropdown. */}
               <motion.nav
-                className="flex-1 overflow-y-auto px-5 py-5 space-y-1"
+                className="hidden flex-1 overflow-y-auto px-5 py-5 space-y-1 sm:block"
                 variants={listVariants}
                 initial="closed"
                 animate="open"
@@ -751,20 +820,37 @@ export default function Navbar() {
                 </motion.div>
               </motion.nav>
 
-              {/* ── Auth footer ── */}
+              {/* The sign-out action never scrolls behind the site bottom dock. */}
+              <div className="shrink-0 border-t border-[#E5EAE7] bg-white px-4 pt-4 sm:hidden"
+                style={{ paddingBottom: "max(12px, env(safe-area-inset-bottom, 0px))" }}>
+                {user ? (
+                  <button type="button" onClick={handleSignOut} disabled={isSigningOut}
+                    className="flex h-[49px] w-full items-center justify-center gap-2 rounded-full bg-[#FDF0EE] text-[14px] font-medium text-[#B33B42] transition-colors hover:bg-[#F9E6E4] active:bg-[#F5DEDB] disabled:opacity-60">
+                    <LogOut size={17} strokeWidth={1.8} aria-hidden="true" />
+                    {isSigningOut ? "Signing out…" : "Sign Out"}
+                  </button>
+                ) : (
+                  <div className="flex gap-2">
+                    <Link href="/login" onClick={close}
+                      className="flex h-[47px] flex-1 items-center justify-center rounded-full bg-[#235B45] text-[13px] font-medium text-white">Sign In</Link>
+                    <Link href="/signup" onClick={close}
+                      className="flex h-[47px] flex-1 items-center justify-center rounded-full border border-[#DFE7E2] text-[13px] font-medium text-[#244638]">Create Account</Link>
+                  </div>
+                )}
+                <p className="mt-3 text-center text-[10px] tracking-[0.01em] text-[#929D96]">SL Business Index</p>
+              </div>
+
+              {/* Tablet auth footer: original layout. */}
               <div
-                className="shrink-0 px-4 py-4 border-t border-gray-100 space-y-2"
+                className="hidden shrink-0 px-4 py-4 border-t border-gray-100 space-y-2 sm:block"
                 style={{
                   paddingBottom: "calc(env(safe-area-inset-bottom) + 1rem)",
                 }}
               >
                 {user ? (
                   <button
-                    onClick={async () => {
-                      await supabase.auth.signOut();
-                      close();
-                      window.location.href = "/";
-                    }}
+                    onClick={handleSignOut}
+                    disabled={isSigningOut}
                     className="w-full flex items-center justify-center gap-2 h-11 border border-red-200 text-red-500 rounded-[6px] text-sm font-semibold hover:bg-red-50 active:bg-red-100 transition-colors"
                   >
                     <BrandIcon name="logout" size={17} />
@@ -850,5 +936,24 @@ function MobileNavLink({
         <ChevronRight size={14} className="ml-auto text-gray-300" />
       </Link>
     </motion.div>
+  );
+}
+
+
+/** Icons stay bundled Lucide SVGs; no new asset fetch or per-row motion. */
+function MobileDrawerLink({
+  href, label, icon: Icon, onClick,
+}: {
+  href: string; label: string; icon: LucideIcon; onClick: () => void;
+}) {
+  return (
+    <Link href={href} onClick={onClick}
+      className="flex min-h-[55px] items-center gap-3 rounded-xl px-1 text-[#22332D] transition-colors hover:bg-[#F6F8F6] active:bg-[#EFF3F0]">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] bg-[#F4F6F7] text-[#244238]">
+        <Icon size={19} strokeWidth={1.7} aria-hidden="true" />
+      </span>
+      <span className="min-w-0 flex-1 text-[14px] font-medium">{label}</span>
+      <ChevronRight size={16} aria-hidden="true" className="mr-2 shrink-0 text-[#B8C1BC]" />
+    </Link>
   );
 }
