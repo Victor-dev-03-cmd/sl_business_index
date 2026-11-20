@@ -20,6 +20,12 @@ export default function RegisterBusinessPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [businessName, setBusinessName] = useState('');
+  const [adminForOwner, setAdminForOwner] = useState(true);
+  const [ownerAccountEmail, setOwnerAccountEmail] = useState('');
+  const [ownerAccountPassword, setOwnerAccountPassword] = useState('');
+  const [ownerConsent, setOwnerConsent] = useState(false);
+  const [assistedResult, setAssistedResult] = useState<{email: string; confirmationSent: boolean; existing: boolean} | null>(null);
+  const [existingOwnerAccount, setExistingOwnerAccount] = useState(false);
   const [description, setDescription] = useState('');
   const [logo, setLogo] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -152,6 +158,12 @@ export default function RegisterBusinessPage() {
     setLoading(true);
     setError(null);
 
+    if (isAdmin && adminForOwner && (!ownerConsent || !ownerAccountEmail.trim() ||
+        (!existingOwnerAccount && ownerAccountPassword.length < 12))) {
+      setError('Enter the owner’s account email, a temporary password of at least 12 characters for a new account, and confirm their authorization.');
+      setLoading(false); return;
+    }
+
     if (!businessName.trim()) {
       setError('Business Name is required.');
       setLoading(false);
@@ -226,7 +238,6 @@ export default function RegisterBusinessPage() {
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      console.log('User check:', user?.id);
       if (!user) throw new Error('You must be logged in to register a business.');
 
       let logoUrl = null;
@@ -257,8 +268,7 @@ export default function RegisterBusinessPage() {
         hoverImageUrl = urlData.publicUrl;
       }
 
-      const { error: insertError } = await supabase.from('businesses').insert([
-        {
+      const listing = {
           name: businessName,
           description,
           logo_url: logoUrl,
@@ -279,10 +289,27 @@ export default function RegisterBusinessPage() {
           latitude: location.lat,
           longitude: location.lng,
           status: 'pending'
-        },
-      ]);
-
-      if (insertError) throw insertError;
+      };
+      if (isAdmin && adminForOwner) {
+        const { owner_id: _adminOwner, ...details } = listing;
+        void _adminOwner;
+        const response = await fetch('/api/admin/businesses/assisted', {
+          method: 'POST', credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: ownerAccountEmail.trim(), password: existingOwnerAccount ? undefined : ownerAccountPassword,
+            existingAccount: existingOwnerAccount, consent: ownerConsent, turnstileToken,
+            business: { ...details, locationConfirmed }
+          }),
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'Unable to register a business for this owner.');
+        setAssistedResult({email: ownerAccountEmail.trim(), confirmationSent: result.confirmationSent === true, existing: result.existing === true});
+        setOwnerAccountPassword('');
+      } else {
+        const { error: insertError } = await supabase.from('businesses').insert([listing]);
+        if (insertError) throw insertError;
+      }
 
       setIsSubmitted(true);
       window.scrollTo(0, 0);
@@ -417,6 +444,11 @@ export default function RegisterBusinessPage() {
             Our team is reviewing your application.
           </p>
 
+          {assistedResult && <div className="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-left text-sm text-emerald-900">
+            <p className="font-semibold">Business assigned to {assistedResult.email}. Your admin account is unchanged.</p>
+            <p className="mt-2">{assistedResult.existing ? 'The owner keeps their existing password.' : assistedResult.confirmationSent ? 'Confirmation email requested. The owner must verify their email, then sign in with the temporary password and change it.' : 'Business saved successfully. The confirmation email could not be sent automatically. The owner can request a new verification code using the account confirmation page.'} Vendor dashboard access follows business approval.</p>
+            {!assistedResult.existing && <p className="mt-2 break-all text-xs">Owner verification page: https://www.slbusinessindex.com/auth/confirm-otp?email={encodeURIComponent(assistedResult.email)}</p>}
+          </div>}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
             <div className="p-6 bg-gray-50/50 rounded-[6px] border border-gray-300 flex flex-col items-center text-center">
               <Clock className="text-brand-dark mb-3" size={24} strokeWidth={1.5} />
@@ -461,6 +493,18 @@ export default function RegisterBusinessPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-12">
+            {isAdmin && <section className="space-y-4 rounded-xl border border-emerald-200 bg-emerald-50/50 p-4 sm:p-6">
+              <h2 className="text-lg font-semibold text-brand-dark">Administrative registration</h2>
+              <label className="flex items-center gap-2 text-sm"><input type="radio" checked={adminForOwner} onChange={() => setAdminForOwner(true)} name="adminOwnership"/> Register for another business owner (recommended)</label>
+              <label className="flex items-center gap-2 text-sm"><input type="radio" checked={!adminForOwner} onChange={() => { setAdminForOwner(false); setOwnerAccountPassword(''); }} name="adminOwnership"/> Register a listing owned by my admin account</label>
+              {adminForOwner && <div className="grid gap-4 sm:grid-cols-2">
+                <p className="text-sm leading-6 text-gray-600 sm:col-span-2">The listing will belong to the owner’s separate account. Your admin email, role and session will not change. New accounts must verify their own email before sign-in.</p>
+                <label className="flex items-center gap-2 text-sm sm:col-span-2"><input type="checkbox" checked={existingOwnerAccount} onChange={e => {setExistingOwnerAccount(e.target.checked);setOwnerAccountPassword('');}}/> Owner already has an SLBI account (keep their existing password)</label>
+                <label className="text-sm">Owner’s login email <span className="text-red-600">*</span><input required type="email" autoComplete="off" value={ownerAccountEmail} onChange={e => setOwnerAccountEmail(e.target.value)} className="mt-2 block w-full rounded-md border border-gray-300 bg-white p-3"/></label>
+                {!existingOwnerAccount && <label className="text-sm">Temporary login password <span className="text-red-600">*</span><input required type="password" minLength={12} maxLength={128} autoComplete="new-password" value={ownerAccountPassword} onChange={e => setOwnerAccountPassword(e.target.value)} className="mt-2 block w-full rounded-md border border-gray-300 bg-white p-3"/></label>}
+                <label className="flex items-start gap-2 text-sm text-gray-700 sm:col-span-2"><input required type="checkbox" className="mt-1" checked={ownerConsent} onChange={e => setOwnerConsent(e.target.checked)}/> The business owner requested and authorized this registration. I will provide the temporary password privately and instruct them to change it.</label>
+              </div>}
+            </section>}
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
               <div className="lg:col-span-1">

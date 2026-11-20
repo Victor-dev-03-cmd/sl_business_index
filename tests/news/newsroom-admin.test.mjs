@@ -4,12 +4,12 @@ import { readFileSync } from 'node:fs'
 
 const read = path => readFileSync(new URL('../../' + path, import.meta.url), 'utf8')
 
-test('official news editing requires both verified email and database admin role', () => {
+test('official news editing requires verified authentication and database staff role', () => {
   const page = read('app/admin/business-news/page.tsx')
   const sql = read('supabase/migrations/20261120053349_business_news_official_admin_editorial_v1.sql')
   assert.match(page, /supabase\.auth\.getUser\(\)/)
-  assert.match(page, /profile\?\.role\?\.toLowerCase\(\) !== 'admin'/)
-  assert.match(page, /slbusinessindex@gmail\.com/)
+  assert.match(page, /\['admin', 'ceo'\]\.includes\(profile\.role\)/)
+  assert.doesNotMatch(page, /slbusinessindex@gmail\.com/)
   assert.match(sql, /Official SLBI admin can publish news/)
   assert.match(sql, /is_official IS TRUE/)
   assert.match(sql, /p\.role::text = 'admin'/)

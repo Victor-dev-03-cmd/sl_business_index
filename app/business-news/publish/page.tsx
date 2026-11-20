@@ -3,35 +3,14 @@ import { createClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
 
-/**
- * One publishing entry point for every Business News CTA.
- *
- * Resolve the official editor from a verified Supabase Auth identity and
- * protected profile role on the server. An admin's previous business listing
- * is intentionally irrelevant to newsroom access.
- *
- * Other users keep the existing vendor news editor, which still requires an
- * approved/verified business. This route never bypasses publishing RLS.
- */
 export default async function BusinessNewsPublishPage() {
   const supabase = await createClient()
   const { data: { user }, error } = await supabase.auth.getUser()
-
-  if (error || !user) {
-    redirect('/login?next=%2Fbusiness-news%2Fpublish')
-  }
-
-  if (user.email?.trim().toLowerCase() === 'slbusinessindex@gmail.com') {
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .maybeSingle()
-
-    if (!profileError && profile?.role === 'admin') {
-      redirect('/admin/business-news')
-    }
-  }
-
+  if (error || !user) redirect('/login?next=%2Fbusiness-news%2Fpublish')
+  const { data: profile, error: roleError } = await supabase.from('profiles')
+    .select('role').eq('id', user.id).maybeSingle()
+  // A failed role lookup must never silently send staff to vendor verification.
+  if (roleError || !profile) throw new Error('Publishing access could not be verified. Please reload and try again.')
+  if (profile.role === 'admin' || profile.role === 'ceo') redirect('/admin/business-news')
   redirect('/business-news?post=vendor')
 }

@@ -64,11 +64,16 @@ export default function AdminNewsEditor() {
       return
     }
     const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user || user.email?.toLowerCase() !== 'slbusinessindex@gmail.com') {
+    if (authError || !user) {
       toast.error('Official admin sign-in is required.')
       return
     }
-    // Server-side RLS independently verifies admin role, owner ID, and email.
+    const { data: profile, error: roleError } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
+    if (roleError || !profile || !['admin', 'ceo'].includes(profile.role)) {
+      toast.error('Verified admin publishing access is required.')
+      return
+    }
+    // RLS independently verifies the protected staff role and owner ID.
     setSaving(true)
     setProgress(0)
     const uploaded: string[] = []
