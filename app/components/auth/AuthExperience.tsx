@@ -110,10 +110,14 @@ function LoginExperience({ mode }: { mode: AuthMode }) {
     setError(null);
     setBusy('google');
     try {
+      // Avoid a needless ?next=%2F query on the default callback, so the
+      // exact production URL allowlist entry matches without a wildcard.
+      const callbackUrl = new URL('/auth/callback', window.location.origin);
+      if (next !== '/') callbackUrl.searchParams.set('next', next);
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin + '/auth/callback?next=' + encodeURIComponent(next),
+          redirectTo: callbackUrl.toString(),
         },
       });
       if (oauthError) throw oauthError;
