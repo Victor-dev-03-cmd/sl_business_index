@@ -25,6 +25,7 @@ import {
   QrCode,
   Link as LinkIcon,
   Quote,
+  Newspaper,
 } from "lucide-react";
 import AuthButton from "@/app/components/AuthButton";
 import NotificationBell from "@/app/components/NotificationBell";
@@ -40,6 +41,7 @@ const adminMenuItems = [
   { name: "Requests", href: "/admin/requests", icon: ClipboardList },
   { name: "Verifications", href: "/admin/verifications", icon: ShieldCheck },
   { name: "Featured", href: "/admin/featured", icon: Star },
+  { name: "Business News", href: "/admin/business-news", icon: Newspaper },
   { name: "Billing", href: "/admin/billing", icon: CreditCard },
   { name: "Categories", href: "/admin/categories", icon: Tags },
   { name: "Users", href: "/admin/users", icon: Users },
@@ -67,6 +69,8 @@ export default function AdminLayout({
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { data: user, isLoading } = useUser();
+  const officialEditor = user?.email?.toLowerCase() === "slbusinessindex@gmail.com" && user?.role?.toLowerCase() === "admin";
+  const visibleMenuItems = adminMenuItems.filter(item => item.href !== "/admin/business-news" || officialEditor);
 
   useEffect(() => {
     setMounted(true);
@@ -111,7 +115,7 @@ export default function AdminLayout({
         </div>
 
         <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-          {adminMenuItems.map((item) => {
+          {visibleMenuItems.map((item) => {
             const isActive = pathname === item.href;
             const Icon = item.icon;
             return (
@@ -203,7 +207,7 @@ export default function AdminLayout({
 
           {/* Drawer Nav */}
           <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
-            {adminMenuItems.map((item) => {
+            {visibleMenuItems.map((item) => {
               const isActive = pathname === item.href;
               const Icon = item.icon;
               return (
