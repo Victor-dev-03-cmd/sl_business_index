@@ -1,5 +1,6 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextRequest, NextResponse } from 'next/server'
+import { googleIdentityProfile } from '@/lib/auth/google-profile'
 
 type CookieToSet = { name: string; value: string; options?: CookieOptions }
 
@@ -87,8 +88,9 @@ export async function GET(request: NextRequest) {
 
     // The auth trigger creates new profiles; never overwrite existing roles
     // or subscriptions when an existing email account links Google identity.
+    const google = googleIdentityProfile(user)
     const { data: profile, error: profileError } = await supabase.from('profiles')
-      .select('id').eq('id', user.id).maybeSingle()
+      .select('id, full_name, avatar_url').eq('id', user.id).maybeSingle()
     if (!profileError && !profile) {
       const emailPrefix = user.email?.split('@')[0] || 'user'
       const fullName = typeof user.user_metadata?.full_name === 'string'
@@ -96,11 +98,22 @@ export async function GET(request: NextRequest) {
       const username = typeof user.user_metadata?.user_name === 'string'
         ? user.user_metadata.user_name.slice(0, 80) : emailPrefix
       const { error: insertError } = await supabase.from('profiles').insert({
-        id: user.id, full_name: fullName, username, role: 'customer',
+        id: user.id, full_name: google.name || fullName, username,
+        avatar_url: google.avatar || null, role: 'customer',
       })
       if (insertError && insertError.code !== '23505') {
         console.warn('SLBI_OAUTH_CALLBACK_PROFILE_SYNC_PENDING')
       }
+    }
+
+    // Update only an empty avatar. User-edited profile photos and roles
+    // must never be overwritten when a Google account is linked.
+    if (!profileError && profile && !profile.avatar_url && google.avatar) {
+      const { error: avatarError } = await supabase.from('profiles')
+        .update({ avatar_url: google.avatar })
+        .eq('id', user.id)
+        .is('avatar_url', null)
+      if (avatarError) console.warn('SLBI_GOOGLE_AVATAR_SYNC_PENDING')
     }
 
     console.info('SLBI_OAUTH_CALLBACK_SUCCESS')

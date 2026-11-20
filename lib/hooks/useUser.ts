@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import type { User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabaseClient'
+import { googleIdentityProfile } from '@/lib/auth/google-profile'
 
 export interface AuthUser {
   id: string
@@ -42,16 +43,17 @@ async function fetchProfileAndBusiness(authUser: User): Promise<AuthUser> {
     console.warn('Could not load full user profile or business ownership')
   }
   const profile = profileResult.data
+  const google = googleIdentityProfile(authUser)
 
   // Roles only come from the database; never trust user_metadata for access.
   return {
     id: authUser.id,
     email: authUser.email,
-    full_name: profile?.full_name || undefined,
+    full_name: profile?.full_name?.trim() || google.name,
     username: profile?.username || undefined,
     role: profile?.role || undefined,
     verification_status: profile?.verification_status || undefined,
-    avatar_url: profile?.avatar_url || undefined,
+    avatar_url: profile?.avatar_url?.trim() || google.avatar,
     hasBusiness: !businessResult.error && (businessResult.count || 0) > 0,
   }
 }
