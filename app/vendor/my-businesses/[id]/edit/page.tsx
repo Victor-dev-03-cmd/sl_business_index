@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
 import { notFound, useRouter, useParams } from 'next/navigation';
 import EditBusinessForm from './EditBusinessForm';
+import BusinessProfileEditor from './BusinessProfileEditor';
 import { Loader2 } from 'lucide-react';
 
 export default function EditBusinessPage() {
@@ -72,6 +73,7 @@ export default function EditBusinessPage() {
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <EditBusinessForm business={business} />
       </div>
+      <div className="mt-6"><BusinessProfileEditor key={id} businessId={id}/></div>
     </div>
   );
 }

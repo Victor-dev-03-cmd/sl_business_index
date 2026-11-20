@@ -115,6 +115,10 @@ export default async function BusinessDetailPage({ params }: Props) {
     redirect(`/business/${business.slug}`);
   }
 
+  const supabase = await createClient();
+  const {data:profileContent} = await supabase.from('business_profile_content').select('services,gallery_paths').eq('business_id',business.id).maybeSingle();
+  const galleryUrls = [...new Set<string>((profileContent?.gallery_paths || []).filter((path:unknown):path is string=>typeof path==='string'&&path.startsWith(String(business.id)+'/')))].map(path=>supabase.storage.from('business-gallery').getPublicUrl(path).data.publicUrl);
+  const services = Array.isArray(profileContent?.services) ? profileContent.services.filter((service:unknown):service is string=>typeof service==='string'&&Boolean(service.trim())) : [];
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
@@ -148,9 +152,9 @@ export default async function BusinessDetailPage({ params }: Props) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
-      <BusinessDetailsClient business={business} />
+      <BusinessDetailsClient business={business} galleryUrls={galleryUrls} services={services} />
     </>
   );
 }
