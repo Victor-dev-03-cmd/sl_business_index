@@ -42,3 +42,11 @@ Scope: Google, Passkey (WebAuthn), Email. **No Facebook provider.**
 - Wrong password, cancelled WebAuthn prompt, unsupported browser, disabled Google/provider, and blocked third-party cookies show recoverable errors.
 
 Do not release just because the UI and build are green: OAuth credentials, redirect allowlist, and passkey provider enablement are external configuration that code cannot prove.
+
+## OAuth production remediation (same-day)
+
+- Supabase Auth identities indicate a Google identity can be linked to an existing email account; do not replace the existing user or reset the user's profile/role.
+- Callback explicitly attaches Supabase SSR authentication cookies to the returned redirect response, then verifies `getUser()` and the session cookie.
+- Google/Passkey login started from the www or Vercel preview hostname navigates to the canonical production login **before** starting OAuth. This keeps the PKCE verifier cookie and callback on the same host. Email/password preview testing remains possible.
+- Default callback route after login is `/` when no `next` is provided; this is intentional. The navbar should detect and show the logged-in account from the returned cookies.
+- Do not leak user emails, identity information, tokens or cookies in server logging.

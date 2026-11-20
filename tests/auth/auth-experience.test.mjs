@@ -35,3 +35,19 @@ test('passkey enrollment is real and linked from account dropdown', () => {
 test('unused forced 10-minute session manager has been deleted', () => {
   assert.equal(existsSync(new URL('../../app/components/SessionManager.tsx', import.meta.url)), false);
 });
+
+test('OAuth callback persists PKCE session onto the redirect response', () => {
+  const callback = read('app/auth/callback/route.ts');
+  assert.match(callback, /exchangeCodeForSession\(code\)/);
+  assert.match(callback, /response\.cookies\.set\(name, value, options\)/);
+  assert.match(callback, /request\.cookies\.set\(name, value\)/);
+  assert.match(callback, /SLBI_OAUTH_CALLBACK_COOKIE_MISSING/);
+  assert.match(callback, /SLBI_OAUTH_CALLBACK_SUCCESS/);
+});
+
+test('Google auth starts on canonical domain to keep PKCE verifier on same origin', () => {
+  const page = read('app/components/auth/AuthExperience.tsx');
+  assert.match(page, /www\.slbusinessindex\.com/);
+  assert.match(page, /hostname\.endsWith\('\.vercel\.app'\)/);
+  assert.match(page, /https:\/\/slbusinessindex\.com/);
+});
