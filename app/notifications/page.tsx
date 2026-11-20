@@ -5,6 +5,7 @@ import Link from 'next/link';
 import BrandIcon from '@/app/components/BrandIcon';
 import {useSession} from '@/app/components/SessionContext';
 import {supabase} from '@/lib/supabaseClient';
+import PushNotificationToggle from '@/components/PushNotificationToggle';
 
 type Item={id:string;title:string;message:string;type:string;created_at:string;is_read:boolean};
 export default function PublicNotificationsPage(){
@@ -54,6 +55,7 @@ export default function PublicNotificationsPage(){
         {!!unread&&<button type="button" onClick={()=>void markAll()} disabled={working}
           className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-[#D6DFD4] bg-white px-4 text-[12px] font-semibold text-[#27634B] disabled:opacity-50"><BrandIcon name="tick-circle" size={17}/> Mark all as read ({unread})</button>}
       </div>
+      {user&&<div className="mb-5 rounded-xl border border-[#E1E6DC] bg-white p-4"><PushNotificationToggle/></div>}
       {error&&<p role="alert" className="mb-4 rounded-xl border border-[#F3DACB] bg-[#FFF9F5] p-3 text-[12px] text-[#8B462B]">{error}</p>}
       {sessionLoading||loading?<p role="status" className="rounded-2xl bg-white p-6 text-[13px] text-[#65796B]">Loading notifications…</p>:
         !user?<div className="rounded-[22px] border border-[#E2E5DA] bg-white px-5 py-10 text-center">

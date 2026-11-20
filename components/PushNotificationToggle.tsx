@@ -1,104 +1,36 @@
-// components/PushNotificationToggle.tsx
 'use client'
-
-import { useState, useEffect } from 'react'
-import { Bell, BellOff } from 'lucide-react'
-import { toast } from 'sonner'
-import { getVapidPublicKey } from '@/lib/vapid'
-
-function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
-  const rawData = window.atob(base64)
-  const outputArray = new Uint8Array(rawData.length)
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i)
+import {useEffect,useState} from 'react'
+import {BellRing,BellOff,Smartphone} from 'lucide-react'
+import {toast} from 'sonner'
+import {useSession} from '@/app/components/SessionContext'
+import {supportsPush,isIosDevice,isInstalled,readPushRegistration,enablePush,disablePush} from '@/lib/push/client'
+export default function PushNotificationToggle(){
+  const {user}=useSession();
+  const [available,setAvailable]=useState(false)
+  const [enabled,setEnabled]=useState(false)
+  const [supported,setSupported]=useState(false)
+  const [install,setInstall]=useState(false)
+  const [busy,setBusy]=useState(false)
+  useEffect(()=>{
+    let alive=true;
+    setSupported(supportsPush());setInstall(isIosDevice()&&!isInstalled());
+    const sync=()=>setEnabled(supportsPush()&&Notification.permission==='granted'&&readPushRegistration()?.uid===user?.id&&!!user);
+    sync();window.addEventListener('slbi-push-state',sync);
+    void fetch('/api/push/config',{cache:'no-store'}).then(r=>r.json()).then(v=>{if(alive)setAvailable(v.enabled===true)}).catch(()=>{});
+    return()=>{alive=false;window.removeEventListener('slbi-push-state',sync)}
+  },[user?.id])
+  async function toggle(){
+    if(!user||busy)return;
+    setBusy(true)
+    try{
+      if(enabled){await disablePush();setEnabled(false);toast.success('Device alerts disabled')}
+      else{await enablePush(user.id);setEnabled(true);toast.success('Device alerts enabled')}
+    }catch(e){toast.error(e instanceof Error?e.message:'Unable to update device alerts.')}
+    finally{setBusy(false)}
   }
-  return outputArray
-}
-
-export default function PushNotificationToggle() {
-  const [isSubscribed, setIsSubscribed] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [supported, setSupported] = useState(false)
-
-  useEffect(() => {
-    if ('serviceWorker' in navigator && 'PushManager' in window) {
-      setSupported(true)
-      navigator.serviceWorker.ready.then((registration) => {
-        registration.pushManager.getSubscription().then((sub) => {
-          setIsSubscribed(!!sub)
-        })
-      })
-    }
-  }, [])
-
-  const handleToggle = async () => {
-    setIsLoading(true)
-    try {
-      const registration = await navigator.serviceWorker.ready
-
-      if (isSubscribed) {
-        const subscription = await registration.pushManager.getSubscription()
-        if (subscription) {
-          await subscription.unsubscribe()
-          await fetch('/api/push/unsubscribe', {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ endpoint: subscription.endpoint }),
-          })
-        }
-        setIsSubscribed(false)
-        toast.success('Push notifications disabled')
-      } else {
-        const permission = await Notification.requestPermission()
-        if (permission !== 'granted') {
-          toast.error('Notification permission denied')
-          return
-        }
-
-        const subscription = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(getVapidPublicKey()),
-        })
-
-        const key = subscription.getKey('p256dh')
-        const authKey = subscription.getKey('auth')
-
-        await fetch('/api/push/subscribe', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            endpoint: subscription.endpoint,
-            p256dh: key ? btoa(String.fromCharCode(...new Uint8Array(key))) : '',
-            auth: authKey ? btoa(String.fromCharCode(...new Uint8Array(authKey))) : '',
-          }),
-        })
-
-        setIsSubscribed(true)
-        toast.success('Push notifications enabled')
-      }
-    } catch (err) {
-      toast.error('Failed to update notification settings')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  if (!supported) return null
-
-  return (
-    <button
-      onClick={handleToggle}
-      disabled={isLoading}
-      title={isSubscribed ? 'Disable push notifications' : 'Enable push notifications'}
-      className="p-2 rounded-lg transition-colors hover:bg-gray-100 disabled:opacity-50"
-    >
-      {isSubscribed ? (
-        <Bell size={20} className="text-brand-blue" />
-      ) : (
-        <BellOff size={20} className="text-gray-400" />
-      )}
-    </button>
-  )
+  return <div className="flex items-start gap-3 rounded-xl bg-[#F5F8F5] p-3">
+    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white text-[#327254]">{install?<Smartphone size={18}/>:enabled?<BellRing size={18}/>:<BellOff size={18}/>}</span>
+    <div className="min-w-0 flex-1"><p className="text-xs font-semibold text-[#264738]">Device notifications</p><p className="mt-1 text-[11px] leading-4 text-stone-500">{install?'Add SLBI to your Home Screen to enable alerts.':!available?'Push service is not configured yet.':!supported?'This browser does not support push notifications.':enabled?'Receive updates even when this page is closed.':'Enable background and lock-screen alerts.'}</p></div>
+    {!install&&available&&supported&&user&&<button type="button" role="switch" aria-label="Device notifications" aria-checked={enabled} disabled={busy} onClick={()=>void toggle()} className={'relative mt-1 h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-50 '+(enabled?'bg-[#347A58]':'bg-stone-300')}><span className={'absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-all '+(enabled?'left-6':'left-1')}/></button>}
+  </div>
 }
