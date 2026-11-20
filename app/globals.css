@@ -270,3 +270,34 @@ button, input, select, textarea, option { font-family: inherit; }
     display:none!important;
   }
 }
+
+
+/* Shared Sonner notification surface: all public, vendor and admin toasts. */
+[data-sonner-toaster] { --width: 390px; z-index: 2147483000 !important; font-family: var(--font-sans); }
+[data-sonner-toast].slbi-toast {
+  --slbi-toast-accent:#475569; --slbi-toast-tint:#f1f5f9;
+  background:#fff !important; color:#18251f !important;
+  border:1px solid #e3e8e5 !important; border-inline-start:4px solid var(--slbi-toast-accent) !important;
+  border-radius:12px !important; box-shadow:0 8px 28px rgba(18,36,25,.12) !important;
+  padding:14px 40px 14px 13px !important; gap:12px !important; align-items:flex-start !important;
+}
+[data-sonner-toast].slbi-toast[data-type="success"] { --slbi-toast-accent:#168653; --slbi-toast-tint:#eaf7ef; }
+[data-sonner-toast].slbi-toast[data-type="error"] { --slbi-toast-accent:#c53f44; --slbi-toast-tint:#fcecee; }
+[data-sonner-toast].slbi-toast[data-type="warning"] { --slbi-toast-accent:#b87914; --slbi-toast-tint:#fff5df; }
+[data-sonner-toast].slbi-toast[data-type="info"] { --slbi-toast-accent:#2869bd; --slbi-toast-tint:#edf4ff; }
+[data-sonner-toast].slbi-toast [data-icon] {
+  display:grid !important; place-items:center; flex:0 0 34px !important; width:34px !important; height:34px !important;
+  margin:0 !important; border-radius:8px; background:var(--slbi-toast-tint); color:var(--slbi-toast-accent);
+}
+[data-sonner-toast].slbi-toast [data-content] { min-width:0; flex:1; align-self:center; }
+[data-sonner-toast].slbi-toast .slbi-toast-title { font-size:13px; font-weight:600; line-height:1.45; overflow-wrap:anywhere; }
+[data-sonner-toast].slbi-toast .slbi-toast-description { margin-top:3px; color:#64716b !important; font-size:12px; line-height:1.5; overflow-wrap:anywhere; }
+[data-sonner-toast].slbi-toast .slbi-toast-close {
+  left:auto !important; right:8px !important; top:8px !important; transform:none !important;
+  width:26px !important; height:26px !important; background:transparent !important; color:#69756f !important;
+  border:0 !important; border-radius:6px !important;
+}
+[data-sonner-toast].slbi-toast .slbi-toast-close:hover { background:#f1f4f2 !important; }
+@media (prefers-reduced-motion: reduce) {
+  [data-sonner-toast].slbi-toast, [data-sonner-toast].slbi-toast * { animation-duration:.01ms !important; transition-duration:.01ms !important; }
+}

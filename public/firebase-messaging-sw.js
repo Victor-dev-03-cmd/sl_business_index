@@ -16,12 +16,12 @@ if(self.SLBI_FIREBASE_CONFIG){
   importScripts('https://www.gstatic.com/firebasejs/12.6.0/firebase-app-compat.js','https://www.gstatic.com/firebasejs/12.6.0/firebase-messaging-compat.js');
   firebase.initializeApp(self.SLBI_FIREBASE_CONFIG);
   firebase.messaging().onBackgroundMessage(payload=>{
-    // Generic lock-screen copy intentionally contains no account details.
+    // Generic lock-screen copy; requests visible, persistent alert presentation. OS controls screen wake and sound.
     return self.registration.showNotification('SL Business Index',{
       body:'You have a new update. Open SLBI to view it.',
       icon:'/icons/pwa-192.png',badge:'/icons/pwa-192.png',
       tag:payload.data?.id ? 'slbi-'+payload.data.id : 'slbi-update',
-      silent:false,requireInteraction:false,data:{url:'/notifications'}
+      silent:false,requireInteraction:true,vibrate:[180,80,180],timestamp:Date.now(),data:{url:'/notifications'}
     });
   });
 }

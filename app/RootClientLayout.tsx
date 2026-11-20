@@ -19,7 +19,7 @@ import LoadingProvider from "./components/LoadingProvider";
 import IconsaxRegistry from "./components/IconsaxRegistry";
 import MobilePublicDock from "./components/MobilePublicDock";
 import MobileInstallPrompt from "./components/MobileInstallPrompt";
-import { Toaster } from "sonner";
+import SiteToaster from "./components/SiteToaster";
 
 export default function RootClientLayout({
   children,
@@ -52,7 +52,7 @@ export default function RootClientLayout({
           <ClarityTracker />
           <GoogleAnalyticsTracker />
           <QueryProvider>
-            <Toaster richColors closeButton position="bottom-right" />
+            <SiteToaster />
             <DynamicAppearance />
             <SessionProvider>
               <ThemeProvider>

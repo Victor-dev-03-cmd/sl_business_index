@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import {emitTrustedAlert,billingFailure} from '@/lib/push/alerts'
 import { createClient } from '@/lib/supabase/server'
 import { billingNoStoreHeaders, getBillingPool, hybridBillingEnabled, safeDbError, sameOrigin } from '@/lib/billing/postgres'
 
@@ -29,6 +30,7 @@ export async function GET() {
     return json({ requests: results.rows[0]?.data ?? [] })
   } catch (error) {
     console.error('Hybrid staff queue failed', (error as { code?: string })?.code || 'unavailable')
+    await emitTrustedAlert(null,'critical_billing')
     return json({ error: 'Billing staff queue is temporarily unavailable.' }, 503)
   }
 }
@@ -62,14 +64,33 @@ export async function POST(request: Request) {
   try {
     // A separate DB staff connection can invoke staff_action. Other API
     // endpoints only have EXECUTE grants for customer-scoped functions.
-    const result = await getBillingPool('staff').query(
+    const db=getBillingPool('staff')
+    // Only use owner identity from the staff-authorized billing database.
+    // Lookup failure must not block the underlying billing operation.
+    let recipient:string|undefined
+    try{
+      const queue=await db.query('SELECT billing.staff_queue() AS data')
+      const rows=queue.rows[0]?.data
+      const owner=Array.isArray(rows)?rows.find((row:{id?:string})=>row.id===requestId)?.user_id:undefined
+      if(typeof owner==='string'&&uuid.test(owner))recipient=owner
+    }catch{console.warn('SLBI billing notification recipient lookup unavailable')}
+    const result = await db.query(
       'SELECT billing.staff_action($1::uuid,$2::uuid,$3::text,$4::text,$5::text,$6::boolean) AS data',
       [auth.user.id, requestId, action, note, bankReference ?? null, verified === true],
     )
-    return json({ result: result.rows[0]?.data })
+    const data=result.rows[0]?.data
+    const status=data?.status
+    if(recipient){
+      if(status==='reviewing')await emitTrustedAlert(recipient,'billing_reviewing',requestId)
+      else if(status==='awaiting_payment')await emitTrustedAlert(recipient,'billing_awaiting_payment',requestId)
+      else if(status==='rejected')await emitTrustedAlert(recipient,'billing_rejected',requestId)
+      else if(status==='activated')await emitTrustedAlert(recipient,'billing_activated',requestId)
+    }
+    return json({ result: data })
   } catch (error) {
     const mapped = safeDbError(error)
     console.error('Hybrid staff action failed', (error as { code?: string })?.code || 'unavailable')
+    if(mapped.status>=500)await billingFailure(auth.user.id)
     return json({ error: mapped.message }, mapped.status)
   }
 }

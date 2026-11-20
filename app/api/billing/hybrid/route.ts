@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import {emitTrustedAlert,billingFailure} from '@/lib/push/alerts'
 import { createClient } from '@/lib/supabase/server'
 import { billingNoStoreHeaders, getBillingPool, hybridBillingEnabled, safeDbError, sameOrigin } from '@/lib/billing/postgres'
 
@@ -32,6 +33,7 @@ export async function GET() {
     return json({ plans: plans.rows[0]?.data ?? [], account: account.rows[0]?.data ?? {} })
   } catch (error) {
     console.error('Hybrid Billing GET failed', (error as { code?: string })?.code || 'unavailable')
+    await billingFailure(auth.user.id)
     return json({ error: 'Billing records are temporarily unavailable.' }, 503)
   }
 }
@@ -62,14 +64,17 @@ export async function POST(request: Request) {
       'SELECT billing.submit_request($1::uuid,$2::uuid,$3::text,$4::text) AS id',
       [auth.user.id, planId, billingCycle, idempotencyKey],
     )
+    const requestId=result.rows[0]?.id
+    if(typeof requestId==='string')await emitTrustedAlert(auth.user.id,'billing_submitted',requestId)
     return json({
-      requestId: result.rows[0]?.id,
+      requestId,
       status: 'submitted',
       message: 'Your billing request is recorded. No payment has been collected or activated.',
     }, 201)
   } catch (error) {
     const mapped = safeDbError(error)
     console.error('Hybrid Billing POST failed', (error as { code?: string })?.code || 'unavailable')
+    if(mapped.status>=500)await billingFailure(auth.user.id)
     return json({ error: mapped.message }, mapped.status)
   }
 }
@@ -93,10 +98,12 @@ export async function DELETE(request: Request) {
     await getBillingPool().query('SELECT billing.cancel_request($1::uuid,$2::uuid)', [
       auth.user.id, body.requestId,
     ])
+    await emitTrustedAlert(auth.user.id,'billing_cancelled',body.requestId)
     return json({ success: true, status: 'cancelled' })
   } catch (error) {
     const mapped = safeDbError(error)
     console.error('Hybrid Billing cancellation failed', (error as { code?: string })?.code || 'unavailable')
+    if(mapped.status>=500)await billingFailure(auth.user.id)
     return json({ error: mapped.message }, mapped.status)
   }
 }

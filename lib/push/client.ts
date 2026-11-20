@@ -1,6 +1,7 @@
 'use client'
+import {toast} from 'sonner'
 type WebConfig={apiKey:string;projectId:string;messagingSenderId:string;appId:string}
-type Messaging={getToken(options:{vapidKey:string;serviceWorkerRegistration:ServiceWorkerRegistration}):Promise<string>;deleteToken():Promise<boolean>;onMessage(cb:()=>void):()=>void}
+type Messaging={getToken(options:{vapidKey:string;serviceWorkerRegistration:ServiceWorkerRegistration}):Promise<string>;deleteToken():Promise<boolean>;onMessage(cb:(payload:{data?:{id?:string}})=>void):()=>void}
 type Firebase={apps:{name:string}[];initializeApp(config:WebConfig):unknown;messaging:(()=>Messaging)&{isSupported?:()=>boolean}}
 type Saved={token:string;uid:string}
 const key='slbi-fcm-registration-v1';
@@ -29,7 +30,10 @@ async function messaging(){
     if(!f||f.messaging.isSupported?.()===false)throw new Error('This browser does not support Firebase push.');
     if(!f.apps.length)f.initializeApp(c.config);
     const m=f.messaging();
-    if(!unsubscribe)unsubscribe=m.onMessage(()=>window.dispatchEvent(new Event('slbi-push-received')));
+    if(!unsubscribe)unsubscribe=m.onMessage(payload=>{
+      window.dispatchEvent(new Event('slbi-push-received'));
+      if(document.visibilityState==='visible'&&readPushRegistration())toast.info('New notification',{id:payload.data?.id?'push-'+payload.data.id:undefined,description:'Open Notifications to view your latest update.'});
+    });
     return m;
   })().catch(e=>{pending=null;throw e});
   return pending;
@@ -90,6 +94,7 @@ export async function refreshPush(uid:string){
   if(saved.uid!==uid||!supportsPush()||Notification.permission!=='granted'){await clearLocalPush();return}
   const reg=await navigator.serviceWorker.getRegistration('/firebase-push/');
   if(!reg||!reg.scope.endsWith('/firebase-push/'))return;
+  await reg.update().catch(()=>undefined);
   const m=await messaging();const c=await config();
   const token=await m.getToken({vapidKey:c.vapidKey,serviceWorkerRegistration:reg});
   if(!token)return;
