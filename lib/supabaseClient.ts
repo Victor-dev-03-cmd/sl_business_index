@@ -13,6 +13,8 @@ export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     detectSessionInUrl: true,
     flowType: 'pkce',
+    // Opt in to Supabase's experimental WebAuthn passkey API.
+    experimental: { passkey: true },
   },
   realtime: {
     params: {
