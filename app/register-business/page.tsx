@@ -84,6 +84,21 @@ export default function RegisterBusinessPage() {
     },
   });
 
+  // Only the trusted database role can bypass the ordinary one-listing guard.
+  const { data: registrationRole, isLoading: roleLoading } = useQuery({
+    queryKey: ['business-registration-role', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase.from('profiles')
+        .select('role').eq('id', user.id).single();
+      if (error) throw error;
+      return data?.role || null;
+    },
+    enabled: !!user?.id,
+    staleTime: 60_000,
+  });
+  const isAdmin = registrationRole === 'admin' || registrationRole === 'ceo';
+
   const { data: existingBusiness, isLoading: businessLoading } = useQuery({
     queryKey: ['existing-business', user?.id],
     queryFn: async () => {
@@ -101,7 +116,7 @@ export default function RegisterBusinessPage() {
     enabled: !!user,
   });
 
-  const fetchingStatus = userLoading || (!!user && businessLoading);
+  const fetchingStatus = userLoading || (!!user && (businessLoading || roleLoading));
 
   const handleLocationSelect = useCallback((lat: number, lng: number, address: string) => {
     setLocation({ lat, lng, address });
@@ -351,7 +366,7 @@ export default function RegisterBusinessPage() {
     );
   }
 
-  if (existingBusiness && (existingBusiness.status === 'pending' || existingBusiness.status === 'approved') && !isSubmitted) {
+  if (!isAdmin && existingBusiness && (existingBusiness.status === 'pending' || existingBusiness.status === 'approved') && !isSubmitted) {
     return (
       <div className="min-h-[100dvh] bg-gray-50/50 flex items-center justify-center py-12 px-6">
         <div className="max-w-2xl w-full bg-white p-10 md:p-16 border border-gray-300 shadow-2xl rounded-[6px] text-center transition-all animate-in fade-in zoom-in duration-500">
@@ -416,6 +431,10 @@ export default function RegisterBusinessPage() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
+             {isAdmin && <button type="button" onClick={() => window.location.assign('/register-business')}
+               className="flex items-center justify-center gap-2 px-8 py-4 bg-brand-dark text-white rounded-[6px] text-sm font-medium hover:bg-brand-blue">
+               <Building2 size={18}/> Register another business
+             </button>}
             <button
                   onClick={() => {
                     router.refresh();
@@ -438,7 +457,7 @@ export default function RegisterBusinessPage() {
 
           <div className="mb-12 border-b border-gray-50 pb-8 text-center md:text-left">
             <h1 className="text-4xl font-normal text-gray-900 tracking-tight">Register Your Business</h1>
-            <p className="text-gray-500 mt-3 text-lg font-normal">Join Sri Lanka's leading professional business directory.</p>
+            <p className="text-gray-500 mt-3 text-lg font-normal">{isAdmin ? 'Admin account · Register as many businesses as needed. Each listing follows the normal approval process.' : "Join Sri Lanka's leading professional business directory."}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-12">
