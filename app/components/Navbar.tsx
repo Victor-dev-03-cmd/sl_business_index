@@ -608,6 +608,7 @@ export default function Navbar() {
                         className="ml-auto shrink-0 p-3 bg-white rounded-lg border border-gray-200 text-brand-dark hover:bg-brand-dark hover:text-white transition-colors flex items-center justify-center min-w-[44px] min-h-[44px] max-sm:border-transparent max-sm:bg-transparent max-sm:p-2 max-sm:hover:bg-[#EAF0EC]"
                       >
                         <BrandIcon name="element-3" size={20} />
+                        <ChevronRight size={15} aria-hidden="true" className="ml-1 hidden text-[#9EA9A3] max-sm:block" />
                       </Link>
                     )}
                     {(profileData && profileData.role === "vendor") && (
@@ -618,6 +619,7 @@ export default function Navbar() {
                         className="ml-auto shrink-0 p-3 bg-white rounded-lg border border-gray-200 text-brand-dark hover:bg-brand-dark hover:text-white transition-colors flex items-center justify-center min-w-[44px] min-h-[44px] max-sm:border-transparent max-sm:bg-transparent max-sm:p-2 max-sm:hover:bg-[#EAF0EC]"
                       >
                         <BrandIcon name="briefcase" size={20} />
+                        <ChevronRight size={15} aria-hidden="true" className="ml-1 hidden text-[#9EA9A3] max-sm:block" />
                       </Link>
                     )}
                   </div>
