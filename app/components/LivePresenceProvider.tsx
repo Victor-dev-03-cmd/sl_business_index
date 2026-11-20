@@ -11,16 +11,17 @@ function isPublic(path: string) {
 export function LivePresenceProvider({children}:{children:ReactNode}) {
   const path = usePathname() || '/'
   const enabled = isPublic(path)
+  const observe = enabled || /^\/admin(?:\/|$)/.test(path)
   const [count,setCount] = useState<number|null>(null)
   useEffect(()=>{
     // Anonymous per-connection key; never send auth ID, IP, location or page.
     const nav = navigator as Navigator & {globalPrivacyControl?:boolean}
-    if (!enabled || nav.doNotTrack === '1' || nav.globalPrivacyControl) {setCount(null);return}
+    if (!observe || nav.doNotTrack === '1' || nav.globalPrivacyControl) {setCount(null);return}
     let connected=false, alive=true
     const channel = supabase.channel('slbi-online-v2',{config:{presence:{key:crypto.randomUUID()}}})
     const visibility = () => {
       if (!connected || !alive) return
-      if(document.visibilityState==='visible') void channel.track({active:true})
+      if(enabled && document.visibilityState==='visible') void channel.track({active:true})
       else void channel.untrack()
     }
     channel.on('presence',{event:'sync'},()=>{
@@ -37,6 +38,6 @@ export function LivePresenceProvider({children}:{children:ReactNode}) {
       document.removeEventListener('visibilitychange',visibility)
       void supabase.removeChannel(channel)
     }
-  },[enabled])
-  return <LiveContext.Provider value={enabled ? count : null}>{children}</LiveContext.Provider>
+  },[enabled,observe])
+  return <LiveContext.Provider value={observe ? count : null}>{children}</LiveContext.Provider>
 }
