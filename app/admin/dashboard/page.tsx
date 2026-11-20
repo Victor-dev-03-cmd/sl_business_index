@@ -165,7 +165,8 @@ export default function AdminDashboard() {
         await supabase
           .from("profiles")
           .update({ role: "vendor" })
-          .eq("id", owner_id);
+          .eq("id", owner_id)
+          .eq("role", "customer"); // Never demote an admin/CEO when approving their own business.
       }
     },
     onSuccess: () => {
