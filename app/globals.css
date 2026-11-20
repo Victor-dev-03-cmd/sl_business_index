@@ -254,3 +254,10 @@ button, input, select, textarea, option { font-family: inherit; }
     animation: hero-discovery-ignite 1050ms ease-out both;
   }
 }
+
+/* Phone-only: account drawer always wins over the install education card. */
+@media (max-width:639px) {
+  body:has(button[aria-label="Close account and navigation menu"][aria-expanded="true"]) [data-slbi-install-nudge="true"] {
+    display:none!important;
+  }
+}
