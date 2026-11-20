@@ -12,6 +12,7 @@ import AnnouncementWrapper from "./components/AnnouncementWrapper";
 import QueryProvider from "./components/QueryProvider";
 import GlobalAnnouncement from "@/components/GlobalAnnouncement";
 import ClarityTracker from "./components/ClarityTracker";
+import GoogleAnalyticsTracker from "./components/GoogleAnalyticsTracker";
 import DynamicAppearance from "./components/DynamicAppearance";
 import { SessionProvider } from "./components/SessionContext";
 import LoadingProvider from "./components/LoadingProvider";
@@ -49,6 +50,7 @@ export default function RootClientLayout({
       <LoadingProvider>
           <IconsaxRegistry />
           <ClarityTracker />
+          <GoogleAnalyticsTracker />
           <QueryProvider>
             <Toaster richColors closeButton position="bottom-right" />
             <DynamicAppearance />
