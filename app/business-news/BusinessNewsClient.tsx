@@ -8,12 +8,13 @@ import { useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabaseClient";
 import { useSession } from "@/app/components/SessionContext";
+import { useUser } from "@/lib/hooks/useUser";
 import VerifiedBadge from "@/app/components/VerifiedBadge";
 import ReportModal from "@/app/components/ReportModal";
 import {
   ArrowDown, ArrowRight, ArrowUpRight, BookOpen, Building2,
   CalendarDays, ChevronDown, Flag, Image as ImageIcon,
-  Megaphone, Newspaper, PenLine, Phone, Search, Share2,
+  Megaphone, Newspaper, PenLine, Phone, Search, Share2, ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -27,7 +28,8 @@ type NewsPost = {
   content: string;
   created_at: string;
   owner_id: string;
-  business_id: string;
+  business_id: string | null;
+  is_official: boolean;
   category: string | null;
   district: string | null;
   post_type: NewsType;
@@ -37,11 +39,11 @@ type NewsPost = {
   businesses: { name: string; logo_url: string | null; is_verified: boolean; status: string } | null;
 };
 
-const CATEGORIES = ["Manpower Services", "Care & Lifestyle", "Professional & Finance", "Construction & Industrial", "Technical & Electronics", "Events, Food & Leisure", "Travel & Transport", "Retail & Others"];
+const CATEGORIES = ["Platform Updates", "Business Registration", "Business Tools", "Business Opportunities", "Guides & Resources", "Industry News", "Manpower Services", "Care & Lifestyle", "Professional & Finance", "Construction & Industrial", "Technical & Electronics", "Events, Food & Leisure", "Travel & Transport", "Retail & Others"];
 const DISTRICTS = ["Ampara", "Anuradhapura", "Badulla", "Batticaloa", "Colombo", "Galle", "Gampaha", "Hambantota", "Jaffna", "Kalutara", "Kandy", "Kegalle", "Kilinochchi", "Kurunegala", "Mannar", "Matale", "Matara", "Monaragala", "Mullaitivu", "Nuwara Eliya", "Polonnaruwa", "Puttalam", "Ratnapura", "Trincomalee", "Vavuniya"];
 const typeLabel: Record<NewsType, string> = { news: "Business news", hiring: "Hiring", looking: "Opportunity sought" };
 const kickerClass = "text-[10px] font-extrabold uppercase tracking-[.17em] text-[#9b754f]";
-const heading = "font-[family-name:var(--font-inter)] font-bold tracking-[-.045em] text-[#1c3026]";
+const heading = "font-serif font-bold tracking-[-.025em] text-[#1b3025]";
 
 function displayDate(date: string, options: Intl.DateTimeFormatOptions = { day: "numeric", month: "short", year: "numeric" }): string {
   return new Date(date).toLocaleDateString("en-LK", options);
@@ -72,20 +74,22 @@ function StoryImage({ post, lead = false }: { post: NewsPost; lead?: boolean }) 
 }
 
 function StoryByline({ post, compact = false }: { post: NewsPost; compact?: boolean }) {
+  const official = post.is_official;
   return <div className="flex min-w-0 items-center gap-2.5">
-    <span className={"flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#e3e4da] bg-[#eef1e9] " + (compact ? "h-8 w-8" : "h-10 w-10")}>
-      {post.businesses?.logo_url ? (
-        // Logos are business-supplied and may use non-CDN object storage providers.
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={post.businesses.logo_url} loading="lazy" decoding="async" className="h-full w-full object-cover" alt=""/>
-      ) : <Building2 size={compact ? 14 : 19} className="text-[#708675]"/>}
+    <span className={"flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#E0E8DE] bg-[#F0F6EF] " + (compact ? "h-8 w-8" : "h-10 w-10")}>
+      {official ? <ShieldCheck size={compact ? 17 : 21} className="text-[#2C7350]"/> :
+        post.businesses?.logo_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={post.businesses.logo_url} loading="lazy" decoding="async" className="h-full w-full object-cover" alt=""/>
+        ) : <Building2 size={compact ? 14 : 19} className="text-[#708675]"/>}
     </span>
     <span className="min-w-0">
-      <span className="flex items-center gap-1.5 truncate text-[11px] font-bold text-[#2a4737]">
-        <span className="truncate">{post.businesses?.name || "Local business"}</span>
-        {post.businesses?.is_verified && <VerifiedBadge size={13}/>}
+      <span className="flex items-center gap-1.5 text-[11px] font-bold text-[#2A4737]">
+        <span className="truncate">{official ? "SL Business Index Admin" : post.businesses?.name || "Local business"}</span>
+        {official ? <span className="shrink-0 rounded border border-[#D3E6D6] bg-[#EFF7F0] px-1.5 py-0.5 text-[9px] font-bold uppercase text-[#377C53]">Official</span> :
+          post.businesses?.is_verified && <VerifiedBadge size={13}/>}
       </span>
-      <span className="block text-[10px] text-[#929087]">{displayDate(post.created_at)}{post.district ? " · " + post.district : ""}</span>
+      <span className="block text-[10px] text-[#929087]">{displayDate(post.created_at)} · {post.district || "All Sri Lanka"}</span>
     </span>
   </div>;
 }
@@ -165,15 +169,18 @@ function FeedStory({ post, expanded, onToggle, onReport, onShare, highlighted }:
 
 async function loadNews(): Promise<NewsPost[]> {
   const { data, error } = await supabase.from("business_news")
-    .select("id,title,content,created_at,owner_id,business_id,category,district,post_type,content_format,contact_phone,images,businesses!inner(name,logo_url,is_verified,status)")
-    .eq("businesses.status", "approved")
+    .select("id,title,content,created_at,owner_id,business_id,is_official,category,district,post_type,content_format,contact_phone,images,businesses(name,logo_url,is_verified,status)")
     .order("created_at", { ascending: false }).limit(84);
   if (error) throw error;
-  return (data || []) as unknown as NewsPost[];
+  return ((data || []) as unknown as NewsPost[]).filter(post =>
+    post.is_official === true || (post.businesses?.is_verified === true && post.businesses?.status === "approved")
+  );
 }
 
 export default function BusinessNewsClient() {
   const { user } = useSession();
+  const { data: profile } = useUser();
+  const isOfficialAdmin = profile?.email?.toLowerCase() === "slbusinessindex@gmail.com" && profile?.role?.toLowerCase() === "admin";
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const postLinkId = searchParams.get("post_id");
@@ -222,10 +229,10 @@ export default function BusinessNewsClient() {
     const needle = searchText.trim().toLocaleLowerCase();
     return posts.filter(post => {
       if (category !== "all" && post.category !== category) return false;
-      if (district !== "all" && post.district !== district) return false;
+      if (district !== "all" && post.district && post.district !== district) return false;
       if (kind !== "all" && post.post_type !== kind) return false;
       if (!needle) return true;
-      return [post.title, post.content, post.category, post.district, post.businesses?.name].some(value => (value || "").toLocaleLowerCase().includes(needle));
+      return [post.title, post.content, post.category, post.district, post.is_official ? "SL Business Index Admin" : post.businesses?.name].some(value => (value || "").toLocaleLowerCase().includes(needle));
     });
   }, [posts, searchText, category, district, kind]);
   const lead = filteredPosts[0] || null;
