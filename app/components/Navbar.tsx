@@ -10,6 +10,7 @@ import CategorySubNavbar from "./CategorySubNavbar";
 import AuthButton from "./AuthButton";
 import LogoLink from "./LogoLink";
 import MobileGreeting from "./MobileGreeting";
+import { googleIdentityProfile } from "@/lib/auth/google-profile";
 import BrandIcon from "./BrandIcon";
 import NotificationBell from "./NotificationBell";
 import LiveCounter from "./LiveCounter";
@@ -248,6 +249,7 @@ export default function Navbar() {
   useEffect(() => {
     const fetchUserProfile = async () => {
       if (user) {
+        const google = googleIdentityProfile(user);
         try {
           const { data, error } = await supabase
             .from("profiles")
@@ -259,9 +261,14 @@ export default function Navbar() {
             id: user.id,
             email: user.email,
             ...data,
+            full_name: data.full_name?.trim() || google.name,
+            avatar_url: data.avatar_url?.trim() || google.avatar,
           } as UserProfile);
         } catch {
-          setFullUserData({ id: user.id, email: user.email } as UserProfile);
+          setFullUserData({
+            id: user.id, email: user.email,
+            full_name: google.name, avatar_url: google.avatar,
+          } as UserProfile);
         }
       } else {
         setFullUserData(null);
@@ -295,8 +302,9 @@ export default function Navbar() {
         ? {
             id: user.id,
             email: user.email,
-            full_name: (user.user_metadata && user.user_metadata.full_name) as string | undefined,
-            avatar_url: (user.user_metadata && user.user_metadata.avatar_url) as string | undefined,
+            full_name: googleIdentityProfile(user).name ||
+              (user.user_metadata && user.user_metadata.full_name) as string | undefined,
+            avatar_url: googleIdentityProfile(user).avatar,
           }
         : null;
 
@@ -410,6 +418,8 @@ export default function Navbar() {
                 mobileMenuOpen && "border-[#244339] bg-[#244339] text-white"
               )}>
               {mobileMenuOpen ? <X size={20} strokeWidth={1.8}/> :
+                profileData?.avatar_url ?
+                  <Image src={profileData.avatar_url} width={40} height={40} alt="Your profile" className="size-full object-cover" unoptimized /> :
                 profileData?.full_name?.trim() ?
                   <span className="text-[15px] font-semibold" aria-hidden="true">{profileData.full_name.trim().charAt(0).toUpperCase()}</span>:
                   <BrandIcon name="profile-circle" size={25} />}
