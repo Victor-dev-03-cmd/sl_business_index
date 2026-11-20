@@ -353,7 +353,7 @@ export default function Navbar() {
           onMouseEnter={closeMegaMenu}
           onFocusCapture={closeMegaMenu}
         >
-        <div className="mx-auto flex h-[76px] max-w-[1440px] items-center justify-between gap-2.5 px-4 sm:gap-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex h-[76px] w-full max-w-[1800px] items-center justify-between gap-2.5 px-4 sm:gap-4 sm:px-6 lg:gap-5 lg:px-8 2xl:gap-7 2xl:px-10">
           {/* Mobile only: personalized two-line welcome. Keep the actual
               SLBI wordmark unchanged from tablet/desktop breakpoints onward. */}
           <MobileGreeting
@@ -361,12 +361,12 @@ export default function Navbar() {
             fullName={profileData?.full_name}
             email={profileData?.email}
           />
-          <div className="hidden shrink-0 sm:block">
-            <LogoLink />
+          <div className="hidden shrink-0 sm:block lg:mr-2">
+            <LogoLink className="shrink-0" />
           </div>
 
           {/* Premium desktop navigation */}
-           <nav aria-label="Main navigation" className="hidden lg:flex min-w-0 flex-1 items-center justify-center gap-0.5">
+           <nav aria-label="Main navigation" className="hidden min-w-0 flex-1 items-center justify-center gap-1 lg:flex xl:gap-1.5 2xl:gap-2">
              {[
                { href: "/", label: "Explore", icon: "home-2" },
                { href: "/category", label: "Categories", icon: "category-2" },
@@ -375,10 +375,10 @@ export default function Navbar() {
                { href: "/about", label: "About", icon: "info-circle" },
              ].map(item => {
                const active = pathname === item.href || (item.href === "/category" && pathname.startsWith("/category/"));
-               return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={cn("inline-flex h-10 items-center gap-1.5 whitespace-nowrap rounded-xl px-3 text-[13px] font-semibold tracking-tight transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500", active ? "bg-stone-100 text-[#1B3430]" : "text-stone-600 hover:bg-stone-50 hover:text-stone-950")}><BrandIcon name={item.icon} size={17} variant={active ? "bulk" : "linear"} className="text-current" /><span>{item.label}</span>{item.href === "/business-news" && hasNewNews && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />}</Link>;
+               return <Link key={item.href} href={item.href} aria-label={item.label} title={item.label} aria-current={active ? "page" : undefined} className={cn("inline-flex h-10 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl px-2.5 text-[13px] xl:px-2.5 2xl:px-3 font-semibold tracking-tight transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500", active ? "bg-stone-100 text-[#1B3430]" : "text-stone-600 hover:bg-stone-50 hover:text-stone-950")}><BrandIcon name={item.icon} size={17} variant={active ? "bulk" : "linear"} className="text-current" /><span className="hidden xl:inline">{item.label}</span>{item.href === "/business-news" && hasNewNews && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />}</Link>;
              })}
-             <div className="group relative">
-               <button type="button" aria-label="Resources menu" aria-haspopup="true" className="flex h-10 items-center gap-1 rounded-xl px-3 text-[13px] font-semibold text-stone-600 hover:bg-stone-50 hover:text-stone-950"><BrandIcon name="element-3" size={17} /><span>Resources</span><ChevronDown size={14} /></button>
+             <div className="group relative shrink-0">
+               <button type="button" title="Resources" aria-label="Resources menu" aria-haspopup="true" className="flex h-10 shrink-0 items-center gap-1 rounded-xl px-2.5 text-[13px] font-semibold text-stone-600 2xl:px-3 hover:bg-stone-50 hover:text-stone-950"><BrandIcon name="element-3" size={17} /><span className="hidden xl:inline">Resources</span><ChevronDown size={14} className="shrink-0" /></button>
                <div className="invisible pointer-events-none absolute left-0 top-full z-[120] w-48 rounded-2xl border border-stone-200 bg-white p-2 opacity-0 shadow-xl transition-opacity duration-150 group-hover:visible group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:visible group-focus-within:pointer-events-auto group-focus-within:opacity-100">
                  <Link href="/faq" className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-stone-700 hover:bg-stone-50"><BrandIcon name="message-question" size={17} />Help & FAQ</Link>
                  <Link href="/contact" className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-stone-700 hover:bg-stone-50"><BrandIcon name="call" size={17} />Contact Us</Link>
@@ -387,17 +387,18 @@ export default function Navbar() {
            </nav>
 
            {/* Right: icons + toggle */}
-          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3 lg:gap-2 xl:gap-2.5 2xl:gap-3">
             {["admin", "ceo", "vendor"].includes(profileData?.role?.toLowerCase() || "") && (
               <Link
                 href="/business-news/publish"
-                className="hidden 2xl:flex h-10 items-center gap-1.5 rounded-xl border border-stone-200 px-3 text-xs font-semibold text-stone-700 hover:bg-stone-50"
+                aria-label="Add News" title="Add News"
+                className="hidden h-10 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-stone-200 px-2.5 text-xs font-semibold text-stone-700 hover:bg-stone-50 lg:inline-flex min-[1600px]:px-3"
               >
-                <BrandIcon name="add" size={15} /> Add News
+                <BrandIcon name="add" size={17} /> <span className="hidden min-[1600px]:inline">Add News</span>
               </Link>
             )}
             <LiveCounter />
-             <Link href="/search" aria-label="Search businesses" className="hidden lg:flex h-10 w-10 items-center justify-center rounded-xl text-stone-600 hover:bg-stone-100 hover:text-stone-950"><BrandIcon name="search-normal-1" size={19} /></Link>
+             <Link href="/search" aria-label="Search businesses" className="hidden lg:flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-stone-600 hover:bg-stone-100 hover:text-stone-950"><BrandIcon name="search-normal-1" size={19} /></Link>
             <div className="hidden sm:block">{fullUserData && <NotificationBell />}</div>
             <Link href="/notifications" aria-label="View notifications"
               className="flex h-10 w-10 items-center justify-center rounded-full text-[#244238] transition-colors hover:bg-[#EAF0E9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#B49161] sm:hidden">
@@ -405,7 +406,7 @@ export default function Navbar() {
             </Link>
             
             <div className="hidden sm:block"><AuthButton user={fullUserData} /></div>
-             {showRegister && <Link href="/register-business" className="hidden xl:inline-flex h-10 items-center gap-1.5 whitespace-nowrap rounded-xl bg-[#1B3430] px-4 text-xs font-semibold text-white shadow-md transition-all hover:bg-[#26483B] hover:shadow-lg"><BrandIcon name="buildings-2" size={16} /> List Your Business <ArrowUpRight size={15} /></Link>}
+             {showRegister && <Link href="/register-business" aria-label="List Your Business" title="List Your Business" className="hidden h-10 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-[#1B3430] px-3 text-xs font-semibold text-white shadow-md transition-all hover:bg-[#26483B] hover:shadow-lg lg:inline-flex min-[1600px]:px-4"><BrandIcon name="buildings-2" size={17} /> <span className="hidden min-[1600px]:inline">List Your Business</span><ArrowUpRight size={15} className="hidden min-[1600px]:block" /></Link>}
 
             {/* Mobile reference: profile-shaped menu control instead of a hamburger.
                 The existing complete menu drawer stays accessible on tap. */}
@@ -430,8 +431,8 @@ export default function Navbar() {
 
       {/* Refined industry ribbon — hover, click and keyboard focus open mega menu. */}
       <div className="hidden border-b border-stone-200 bg-[#F2EFE7] lg:block">
-        <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8">
-          <nav aria-label="Business industries" className="flex h-12 items-center gap-1 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8 2xl:px-10">
+          <nav aria-label="Business industries" className="flex h-12 items-center gap-1 overflow-x-auto whitespace-nowrap xl:gap-1.5 2xl:gap-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <span className="mr-2 inline-flex shrink-0 items-center gap-2 border-r border-stone-200 pr-4 text-[10px] font-bold uppercase tracking-[0.14em] text-[#36785E]">
               <BrandIcon name="category-2" size={16} /> Industries
             </span>
