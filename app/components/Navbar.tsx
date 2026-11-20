@@ -396,7 +396,7 @@ export default function Navbar() {
                 <BrandIcon name="add" size={15} /> Add News
               </Link>
             )}
-            <div className="hidden 2xl:block"><LiveCounter /></div>
+            <LiveCounter />
              <Link href="/search" aria-label="Search businesses" className="hidden lg:flex h-10 w-10 items-center justify-center rounded-xl text-stone-600 hover:bg-stone-100 hover:text-stone-950"><BrandIcon name="search-normal-1" size={19} /></Link>
             <div className="hidden sm:block">{fullUserData && <NotificationBell />}</div>
             <Link href="/notifications" aria-label="View notifications"
