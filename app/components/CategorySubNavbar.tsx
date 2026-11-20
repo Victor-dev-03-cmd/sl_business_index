@@ -105,7 +105,7 @@ export default function CategorySubNavbar({
       aria-label={activeCategory + " business categories"}
       className="absolute inset-x-0 top-full z-[70] hidden border-t border-stone-100 bg-[#FCFAF6] shadow-[0_26px_65px_rgba(9,31,54,0.15)] lg:block"
     >
-      <div className="mx-auto grid w-full max-w-[1440px] grid-cols-[280px_minmax(0,1fr)] px-6 py-5 xl:px-8">
+      <div className="mx-auto grid w-full max-w-[1800px] grid-cols-[280px_minmax(0,1fr)] px-6 py-5 lg:px-8 2xl:px-10">
         <div className="flex min-h-[290px] flex-col justify-between rounded-[18px] bg-[#1B3430] p-7 text-white">
           <div>
             <div className="mb-6 inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/15 bg-white/10">

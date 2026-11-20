@@ -35,7 +35,7 @@ export default function AnnouncementBar() {
       className="relative isolate overflow-hidden border-b border-white/10 bg-[#1B3430] text-white"
     >
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#152C25] via-[#23483B] to-[#1B3430]" />
-      <div className="relative mx-auto flex min-h-10 w-full max-w-[1440px] items-center justify-between gap-3 px-4 py-1.5 sm:px-6 lg:px-8">
+      <div className="relative mx-auto flex min-h-10 w-full max-w-[1800px] items-center justify-between gap-3 px-4 py-1.5 sm:px-6 lg:px-8 2xl:px-10">
         <div className="flex min-w-0 items-center gap-3">
           <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-emerald-300/20 bg-emerald-200/10 text-[#F0D9AC]">
             <Megaphone size={13} strokeWidth={1.9} />
