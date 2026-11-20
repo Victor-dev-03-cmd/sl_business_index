@@ -22,8 +22,8 @@ export default function NewsEditorModal({ onClose, onPublished }: { onClose: () 
   const [businessId, setBusinessId] = useState("");
   const [format, setFormat] = useState<Format>("article");
   const [kind, setKind] = useState<Kind>("news");
-  const [category, setCategory] = useState(CATEGORIES[0]);
-  const [district, setDistrict] = useState("Colombo");
+  const [category, setCategory] = useState("");
+  const [district, setDistrict] = useState("all");
   const [title, setTitle] = useState("");
   const [story, setStory] = useState("");
   const [phone, setPhone] = useState("");
@@ -105,7 +105,7 @@ export default function NewsEditorModal({ onClose, onPublished }: { onClose: () 
       }
       const { error } = await supabase.from("business_news").insert({
         business_id: businessId, owner_id: user.id, title: title.trim(), content: story.trim(),
-        contact_phone: phone.trim() || null, category, district, post_type: kind, content_format: format, images,
+        contact_phone: phone.trim() || null, category: category || null, district: district === "all" ? null : district, post_type: kind, content_format: format, images, is_official: false,
       });
       if (error) throw error;
       toast.success("Story published successfully", { description: "Your verified business update is now in the journal." });
@@ -151,10 +151,10 @@ export default function NewsEditorModal({ onClose, onPublished }: { onClose: () 
                 <option value="news">Business news / announcement</option><option value="hiring">Hiring &amp; opportunities</option><option value="looking">Looking for services</option>
               </select></div>
               <div><label className={label} htmlFor="editor-district">District</label><select id="editor-district" value={district} onChange={e => setDistrict(e.target.value)} className={input}>
-                {DISTRICTS.map(d => <option key={d}>{d}</option>)}</select></div>
+                <option value="all">All Sri Lanka · All districts</option>{DISTRICTS.map(d => <option key={d}>{d}</option>)}</select></div>
             </div>
-            <div><label className={label} htmlFor="editor-category">Industry</label><select id="editor-category" value={category} onChange={e => setCategory(e.target.value)} className={input}>
-              {CATEGORIES.map(c => <option key={c}>{c}</option>)}</select></div>
+            <div><label className={label} htmlFor="editor-category">Industry / service (optional)</label><select id="editor-category" value={category} onChange={e => setCategory(e.target.value)} className={input}>
+              <option value="">General business update</option>{CATEGORIES.map(c => <option key={c}>{c}</option>)}</select></div>
             <div><label className={label} htmlFor="editor-headline">Headline</label>
               <input id="editor-headline" value={title} onChange={e => setTitle(e.target.value)} required maxLength={150}
                 placeholder="Write a clear, useful headline" className={input}/><p className="mt-1 text-right text-[10px] text-[#8b8c83]">{title.length}/150</p></div>
