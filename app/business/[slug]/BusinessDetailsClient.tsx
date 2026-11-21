@@ -4,6 +4,9 @@ import React, { useState, useEffect, useRef } from "react";
 import { Business } from "@/lib/types";
 import {
   MapPin,
+  Info,
+  Bookmark,
+  MessageCircle,
   Phone,
   Mail,
   Globe,
@@ -74,8 +77,8 @@ interface Review {
 export default function BusinessDetailsClient({ business, galleryUrls, services }: Props) {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [photoIndex, setPhotoIndex] = useState<number | null>(null);
-  const photos = [...new Set([business.image_url, ...galleryUrls].filter((url): url is string => Boolean(url)))];
-  const heroPhoto = photos[0];
+  // Registration cover image stays in discovery cards, not the public profile.
+  const photos = [...new Set(galleryUrls.filter(url => Boolean(url)))];
   const {items:savedBusinesses,toggle:toggleSavedBusiness}=useSavedBusinesses();
   const isSaved=savedBusinesses.some(item=>item.id===String(business.id));
   const handleToggleSaved=()=>{
@@ -329,6 +332,9 @@ export default function BusinessDetailsClient({ business, galleryUrls, services 
           .join(" · ")
       : null;
   const canCall = Boolean(business.phone?.trim());
+  const digits = (business.phone || "").replace(/\D/g,"");
+  const whatsappNumber = /^0\d{9}$/.test(digits) ? "94"+digits.slice(1) : /^94\d{9}$/.test(digits) ? digits : /^\+/.test(business.phone || "") && /^[1-9]\d{7,14}$/.test(digits) ? digits : null;
+  const whatsappHref = whatsappNumber ? "https://wa.me/"+whatsappNumber : null;
   const hasRating = Number.isFinite(Number(business.rating)) && Number(business.rating) > 0 &&
     (business.reviews_count || 0) > 0;
 
@@ -354,79 +360,155 @@ export default function BusinessDetailsClient({ business, galleryUrls, services 
   };
 
 
-  const inputStyle = "w-full rounded-lg border border-neutral-200 bg-white px-3.5 py-3 text-sm text-neutral-900 outline-none transition-colors placeholder:text-neutral-400 focus:border-[#B7874D] focus:ring-2 focus:ring-[#EBDAC4]";
-  const card = "scroll-mt-28 min-w-0 rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-7";
-  const action = "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-neutral-200 bg-white px-4 text-sm font-medium text-neutral-800 transition hover:border-[#BE9B71] hover:bg-[#FAF7F2] focus-visible:outline-2 focus-visible:outline-[#B7874D]";
-  const sectionLinks = [{href:"#overview",label:"Overview"},{href:"#services",label:"Services"},{href:"#gallery",label:"Gallery"},{href:"#location",label:"Location"},{href:"#reviews",label:"Reviews"},{href:"#enquiry",label:"Enquiry"}];
+
+  const inputStyle = "w-full rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-sm text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-500 focus:ring-1 focus:ring-neutral-400";
+  const action = "inline-flex min-h-11 min-w-0 items-center justify-start gap-2 rounded-lg px-2.5 text-sm font-medium text-neutral-800 hover:bg-neutral-100 focus-visible:outline-2 focus-visible:outline-neutral-600";
   const logDirections=()=>void logEvent(business.id,"location_click",business.address?.split(",").pop()?.trim()||"Unknown");
   const advancePhoto=(direction:number)=>setPhotoIndex(index=>index===null||!photos.length?null:(index+direction+photos.length)%photos.length);
+  const bentoTiles=photos.slice(0,4);
+  const bentoSize=bentoTiles.length;
+  const bentoColumns=bentoSize===4?"grid-cols-[1.35fr_1fr_.58fr] grid-rows-2":bentoSize===3?"grid-cols-[1.35fr_1fr] grid-rows-2":bentoSize===2?"grid-cols-2 grid-rows-1":"grid-cols-1 grid-rows-1";
+
   return (
-    <div className="min-h-[80dvh] bg-[#F8F8F7] text-neutral-900">
-      <div className="mx-auto max-w-[1480px] px-4 pb-5 pt-5 sm:px-6 lg:px-10 lg:pt-8">
-        <nav aria-label="Breadcrumb" className="mb-5 flex min-w-0 items-center gap-2 text-xs text-neutral-500 sm:text-sm">
+    <div data-business-profile className="min-h-[80dvh] bg-white font-sans text-neutral-900" style={{fontFamily:"var(--font-inter), var(--font-tamil), var(--font-sinhala), sans-serif"}}>
+      <div className="mx-auto max-w-[1480px] px-4 pb-12 pt-5 sm:px-6 lg:px-10 lg:pt-8">
+        <nav aria-label="Breadcrumb" className="mb-6 flex min-w-0 items-center gap-2 text-xs text-neutral-500">
           <Link href="/" className="shrink-0 hover:text-neutral-900">Home</Link><ChevronRight size={13} className="shrink-0"/>
           <Link href="/nearby" className="shrink-0 hover:text-neutral-900">Businesses</Link><ChevronRight size={13} className="shrink-0"/>
-          <span aria-current="page" className="truncate font-medium text-neutral-800">{business.name}</span>
+          <span aria-current="page" className="truncate text-neutral-800">{business.name}</span>
         </nav>
-        <section aria-labelledby="business-profile-title" className="grid items-stretch gap-5 rounded-2xl border border-neutral-200 bg-white p-3 shadow-sm sm:p-5 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-8 lg:p-6">
-          <div className="relative aspect-[4/3] min-w-0 overflow-hidden rounded-xl bg-[#F2F1EE] sm:aspect-[16/10] lg:aspect-auto lg:min-h-[340px]">
-            {heroPhoto?<Image src={heroPhoto} alt={business.name+" business photo"} fill priority sizes="(max-width:1023px) 100vw, 45vw" className="object-contain"/>:
-              business.logo_url?<Image src={business.logo_url} alt={business.name+" logo"} fill sizes="(max-width:1023px) 100vw, 45vw" className="object-contain p-12"/>:
-              <div className="flex h-full flex-col items-center justify-center gap-3 text-neutral-400"><Building2 size={58} strokeWidth={1.2}/><span className="text-xs">Business photo not provided</span></div>}
-            {!!photos.length&&<button type="button" onClick={()=>setPhotoIndex(0)} className="absolute bottom-3 right-3 inline-flex min-h-10 items-center gap-2 rounded-lg bg-neutral-950/85 px-3.5 text-xs font-semibold text-white hover:bg-black"><Images size={15}/> View photos ({photos.length})</button>}
-          </div>
-          <div className="flex min-w-0 flex-col justify-center px-2 pb-3 pt-1 sm:px-3 lg:py-5">
-            <div className="mb-4 flex flex-wrap items-center gap-2">
-              {business.category&&<span className="rounded-md bg-[#F4EEE5] px-2.5 py-1.5 text-xs font-semibold text-[#845D2E]">{business.category}</span>}
-              {verified&&<span className="inline-flex items-center gap-1.5 rounded-md border border-[#E5D4BE] bg-white px-2.5 py-1.5 text-xs font-medium text-[#79562D]"><VerifiedBadge size={14}/> Verified business</span>}
-            </div>
-            <h1 id="business-profile-title" className="break-words text-[clamp(1.8rem,3.3vw,3.5rem)] font-semibold leading-[1.12] tracking-tight text-neutral-950">{business.name}</h1>
-            <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
-              {hasRating?<a href="#reviews" className="inline-flex items-center gap-2 font-semibold text-neutral-900"><Star size={18} className="fill-[#B98542] text-[#B98542]"/>{Number(business.rating).toFixed(1)} <span className="font-normal text-neutral-500">({business.reviews_count} reviews)</span></a>:<a href="#reviews" className="flex items-center gap-2 text-neutral-500"><Star size={17}/> No reviews yet</a>}
-              {business.is_registered&&<span className="inline-flex items-center gap-1.5 border-l border-neutral-200 pl-3 text-xs text-neutral-600"><ShieldCheck size={15}/> Registration provided</span>}
-            </div>
-            {fullAddress&&<p className="mt-5 flex items-start gap-2.5 break-words text-sm leading-6 text-neutral-600"><MapPin size={18} className="mt-0.5 shrink-0 text-[#A17A45]"/>{fullAddress}</p>}
-            <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-neutral-100 pt-5">
-              {canCall&&<a href={"tel:"+business.phone} onClick={recordCall} className="inline-flex min-h-11 min-w-0 items-center gap-2 rounded-lg bg-neutral-900 px-4 text-sm font-semibold text-white transition hover:bg-neutral-700"><Phone size={16}/><span className="break-all">{business.phone}</span></a>}
-              {directionsHref&&<a href={directionsHref} target="_blank" rel="noopener noreferrer" onClick={logDirections} className={action}><Navigation size={16}/> Directions</a>}
-              <a href="#enquiry" className={action}><MessageSquare size={16}/> Enquire</a>
-              <button type="button" onClick={handleToggleSaved} aria-pressed={isSaved} className={action}><BrandIcon name="bookmark-2" size={17} variant={isSaved?'bold':'linear'}/>{isSaved?'Saved':'Save'}</button>
-              <button type="button" onClick={shareBusiness} className={action}><Share2 size={16}/> Share</button>
-            </div>
-          </div>
-        </section>
-      </div>
+        <div className="grid items-start gap-y-7 lg:grid-cols-[minmax(0,2.7fr)_minmax(0,1fr)] lg:gap-x-8 xl:gap-x-12">
+          <div className="min-w-0">
+            <section aria-labelledby="business-profile-title" className="grid items-center gap-4 border-b border-neutral-200 pb-6 sm:grid-cols-[minmax(100px,144px)_minmax(0,1fr)] lg:gap-5 xl:grid-cols-[minmax(112px,148px)_minmax(0,1fr)_minmax(0,282px)]">
+              <div data-profile-logo className="relative aspect-square w-[104px] overflow-hidden rounded-xl border border-neutral-100 bg-neutral-50 sm:w-full">
+                {business.logo_url?<Image src={business.logo_url} alt={business.name+" logo"} fill priority sizes="(max-width:639px) 104px, 148px" className="object-contain p-2"/>:
+                  <div className="flex h-full flex-col items-center justify-center gap-2 text-neutral-400"><Building2 size={36} strokeWidth={1.4}/><span className="text-[11px]">No logo</span></div>}
+              </div>
+              <div className="min-w-0 space-y-2">
+                {business.category&&<p className="break-words text-xs font-medium text-neutral-600 sm:text-sm">{business.category}</p>}
+                <h1 id="business-profile-title" className="break-words text-[clamp(1.45rem,2.1vw,2.15rem)] font-semibold leading-tight tracking-tight">{business.name}</h1>
+                <div className="space-y-1.5 text-sm">
+                  {hasRating?<a href="#reviews" className="flex flex-wrap items-center gap-2 hover:underline"><Star size={16} className="fill-neutral-800 text-neutral-800"/><span className="font-medium">{Number(business.rating).toFixed(1)}</span><span className="text-neutral-500">({business.reviews_count} reviews)</span></a>:<a href="#reviews" className="flex items-center gap-2 text-neutral-600 hover:underline"><Star size={16}/> No reviews yet</a>}
+                  {business.is_registered&&<p className="flex items-center gap-2 text-neutral-600"><ShieldCheck size={16}/> Registration provided</p>}
+                  {verified&&<p className="flex items-center gap-2 text-neutral-700"><ShieldCheck size={16}/> Verified business</p>}
+                  {business.owner_name&&<p className="flex items-center gap-2 pt-1 text-base font-medium"><UserRound size={19} className="shrink-0 text-neutral-500"/><span className="break-words">{business.owner_name}</span></p>}
+                </div>
+              </div>
+              <div aria-label="Business actions" className="grid grid-cols-2 gap-1 min-[420px]:grid-cols-3 sm:col-span-2 xl:col-span-1">
+                {whatsappHref&&<a href={whatsappHref} target="_blank" rel="noopener noreferrer" className={action}><MessageCircle size={18} className="shrink-0"/> WhatsApp</a>}
+                {canCall&&<a href={"tel:"+business.phone} onClick={recordCall} className={action}><Phone size={17} className="shrink-0"/> Call me</a>}
+                {directionsHref&&<a href={directionsHref} target="_blank" rel="noopener noreferrer" onClick={logDirections} className={action}><Navigation size={17} className="shrink-0"/> Directions</a>}
+                <a href="#enquiry" className={action}><MessageSquare size={17} className="shrink-0"/> Enquire</a>
+                <button type="button" onClick={handleToggleSaved} aria-pressed={isSaved} className={action}><Bookmark size={17} className={"shrink-0 "+(isSaved?"fill-neutral-800":"")}/>{isSaved?'Saved':'Save'}</button>
+                <button type="button" onClick={shareBusiness} className={action}><Share2 size={17} className="shrink-0"/> Share</button>
+              </div>
+            </section>
 
-      <nav aria-label="Business profile sections" className="border-y border-neutral-200 bg-white">
-        <div className="mx-auto flex max-w-[1480px] items-center gap-5 overflow-x-auto px-4 [scrollbar-width:none] sm:px-6 lg:px-10">
-          {sectionLinks.map(link=><a key={link.href} href={link.href} className="shrink-0 border-b-2 border-transparent py-3 text-sm font-medium text-neutral-600 transition hover:border-[#B7874D] hover:text-neutral-950">{link.label}</a>)}
-          <button type="button" onClick={()=>setShowReportModal(true)} className="ml-auto inline-flex shrink-0 items-center gap-2 py-3 text-xs text-neutral-500 hover:text-red-700"><Flag size={14}/> Report listing</button>
-        </div>
-      </nav>
-
-      <div className="mx-auto grid max-w-[1480px] items-start gap-5 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)] lg:gap-6 lg:px-10 lg:py-8">
-        <div className="min-w-0 space-y-5">
-          <section id="overview" className={card}>
-            <h2 className="flex items-center gap-2.5 text-xl font-semibold tracking-tight"><Building2 size={21} className="text-[#A17A45]"/> About the business</h2>
-            <p className="mt-4 whitespace-pre-line break-words text-sm leading-7 text-neutral-600">{business.description?.trim()||"This business has not added a description yet."}</p>
-          </section>
-          <section id="services" className={card}>
-            <h2 className="flex items-center gap-2.5 text-xl font-semibold tracking-tight"><BriefcaseBusiness size={21} className="text-[#A17A45]"/> Services</h2>
-            {services.length?<div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">{services.map((service,index)=><div key={index} className="flex min-w-0 items-center gap-3 rounded-lg border border-neutral-200 bg-[#FAF9F7] p-3"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-white text-[#A17A45]"><BriefcaseBusiness size={17}/></span><span className="min-w-0 break-words text-sm font-medium">{service}</span></div>)}</div>:<p className="mt-4 text-sm leading-6 text-neutral-500">Services have not been listed yet. Contact the business to learn more.</p>}
-            {!!business.facilities?.length&&<div className="mt-6 border-t border-neutral-100 pt-5"><h3 className="mb-3 text-sm font-semibold">Facilities &amp; amenities</h3><div className="flex flex-wrap gap-2">{business.facilities.map((facility,index)=><span key={index} className="inline-flex items-center gap-2 rounded-lg border border-neutral-200 px-3 py-2 text-xs text-neutral-700"><span className="text-[#A17A45]">{getFacilityIcon(facility)}</span>{facility}</span>)}</div></div>}
-          </section>
-          <section id="gallery" className={card}>
-            <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="flex items-center gap-2.5 text-xl font-semibold tracking-tight"><Images size={21} className="text-[#A17A45]"/> Gallery</h2>{photos.length>0&&<button type="button" onClick={()=>setPhotoIndex(0)} className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#895F2E] hover:underline">View all {photos.length} <ArrowUpRight size={15}/></button>}</div>
-            {galleryUrls.length?<div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:gap-3">{galleryUrls.slice(0,6).map((url,index)=><button key={url} type="button" onClick={()=>setPhotoIndex(photos.indexOf(url))} aria-label={"Open gallery image "+(index+1)} className="relative aspect-[4/3] overflow-hidden rounded-lg bg-neutral-100 focus-visible:outline-2 focus-visible:outline-[#B7874D]"><Image src={url} alt={business.name+" gallery photo "+(index+1)} fill sizes="(max-width:639px) 46vw, (max-width:1023px) 30vw, 20vw" className="object-cover transition hover:scale-[1.03]"/></button>)}</div>:<p className="mt-4 text-sm text-neutral-500">Additional business photos have not been uploaded yet.</p>}
-          </section>
-                      <section id="reviews" className="scroll-mt-28 rounded-2xl border border-[#E5E7EB] bg-white p-6 shadow-sm sm:p-8">
+            <div className="grid items-start gap-y-7 pt-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.45fr)] lg:gap-x-6 xl:gap-x-8">
+              <div className="min-w-0 space-y-8">
+                <section id="overview" className="scroll-mt-24 min-w-0">
+                  <h2 className="flex items-center gap-2 text-base font-semibold"><Info size={19} className="text-neutral-500"/> About the business</h2>
+                  <p className="mt-3 whitespace-pre-line break-words text-sm leading-7 text-neutral-600">{business.description?.trim()||"This business has not added a description yet."}</p>
+                  {(business.email||websiteHref||hoursLabel)&&<dl className="mt-5 space-y-3 border-t border-neutral-100 pt-4 text-sm">
+                    {business.email&&<div className="flex min-w-0 items-start gap-2"><Mail size={17} className="mt-0.5 shrink-0 text-neutral-500"/><div className="min-w-0"><dt className="sr-only">Email</dt><dd className="break-all"><a className="hover:underline" href={"mailto:"+business.email}>{business.email}</a></dd></div></div>}
+                    {websiteHref&&<div className="flex min-w-0 items-start gap-2"><Globe size={17} className="mt-0.5 shrink-0 text-neutral-500"/><div className="min-w-0"><dt className="sr-only">Website</dt><dd className="break-words"><a href={websiteHref} target="_blank" rel="noopener noreferrer" className="hover:underline">{business.website_name||"Visit website"} <ExternalLink size={12} className="inline"/></a></dd></div></div>}
+                    {hoursLabel&&<div className="flex min-w-0 items-start gap-2"><Clock size={17} className="mt-0.5 shrink-0 text-neutral-500"/><div className="min-w-0"><dt className="font-medium">Opening hours</dt><dd className="mt-1 whitespace-pre-line break-words text-neutral-600">{hoursLabel}</dd></div></div>}
+                  </dl>}
+                </section>
+                <section id="gallery" className="scroll-mt-24 min-w-0">
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2"><h2 className="flex items-center gap-2 text-base font-semibold"><Images size={19} className="text-neutral-500"/> Gallery</h2>{photos.length>0&&<button type="button" onClick={()=>setPhotoIndex(0)} className="inline-flex items-center gap-1 text-xs font-medium text-neutral-700 hover:underline">View all ({photos.length}) <ArrowUpRight size={14}/></button>}</div>
+                  {bentoSize>0?<div data-bento-gallery className={"grid h-[220px] gap-2 overflow-hidden sm:h-[280px] "+bentoColumns}>
+                    {bentoTiles.map((url,index)=><button type="button" key={url} aria-label={"Open gallery photo "+(index+1)} onClick={()=>setPhotoIndex(index)} className={"group relative min-h-0 min-w-0 overflow-hidden rounded-lg bg-neutral-100 focus-visible:outline-2 focus-visible:outline-neutral-600 "+(bentoSize>=3&&(index===0||(bentoSize===4&&index===3))?"row-span-2":"")}><Image src={url} alt={business.name+" gallery photo "+(index+1)} fill sizes="(max-width:639px) 94vw, (max-width:1023px) 48vw, 32vw" className="object-cover"/>{index===bentoSize-1&&photos.length>bentoSize&&<span className="absolute inset-0 grid place-items-center bg-black/40 text-sm font-semibold text-white">+{photos.length-bentoSize} photos</span>}</button>)}
+                  </div>:<div className="flex min-h-[175px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-neutral-200 bg-neutral-50 p-5 text-center"><Images size={28} strokeWidth={1.4} className="text-neutral-400"/><p className="text-sm text-neutral-500">No gallery photos uploaded yet.</p></div>}
+                </section>
+              </div>
+              <section id="services" className="scroll-mt-24 min-w-0">
+                <h2 className="mb-3 flex items-center gap-2 text-base font-semibold"><BriefcaseBusiness size={19} className="text-neutral-500"/> Services</h2>
+                <div className="min-h-[160px] rounded-xl border border-neutral-200 bg-neutral-50/70 p-3.5">
+                  {services.length?<ul className="divide-y divide-neutral-200">{services.map((service,index)=><li key={index} className="flex items-start gap-2 py-3 first:pt-1 last:pb-1 text-sm"><CheckCircle2 size={16} className="mt-0.5 shrink-0 text-neutral-500"/><span className="min-w-0 break-words">{service}</span></li>)}</ul>:<p className="text-sm leading-6 text-neutral-500">Services have not been listed yet.</p>}
+                  {!!business.facilities?.length&&<div className="mt-4 border-t border-neutral-200 pt-3"><h3 className="mb-2 text-xs font-semibold">Facilities &amp; amenities</h3><ul className="space-y-2">{business.facilities.map((facility,index)=><li key={index} className="flex items-center gap-2 text-xs text-neutral-600"><span className="shrink-0">{getFacilityIcon(facility)}</span>{facility}</li>)}</ul></div>}
+                </div>
+              </section>
+            </div>
+          </div>
+          <aside aria-label="Location and enquiry" className="min-w-0 space-y-5 lg:row-span-2">
+            <section id="location" className="scroll-mt-24 min-w-0">
+              <h2 className="flex items-center justify-center gap-2 text-base font-semibold"><MapPin size={20} className="text-neutral-500"/> Location</h2>
+              {fullAddress&&<p className="my-3 break-words text-center text-sm leading-5 text-neutral-600">{fullAddress}</p>}
+              {hasCoordinates?<div className="relative isolate z-0 mt-3 h-[250px] w-full overflow-hidden rounded-xl border border-neutral-200"><LeafletMap centerLat={lat} centerLng={lng} businesses={[business]} zoom={15} height="100%" showUserLocation={false} enableClustering={false} wrapperClassName="relative isolate z-0 h-full w-full overflow-hidden" /></div>:<div className="mt-3 grid min-h-40 place-items-center rounded-xl border border-neutral-200 bg-neutral-50 p-5 text-center text-sm text-neutral-500">Precise map location has not been provided.</div>}
+            </section>
+            <section id="enquiry" className="scroll-mt-24 rounded-xl border border-neutral-200 bg-white p-4 xl:p-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#F5F5F5] text-[#404040]"><Send size={20}/></div>
+                <div>
+                  
+                  <h2 className="mt-0.5 text-lg font-semibold tracking-tight text-[#202124]">Quick enquiry</h2>
+                </div>
+              </div>
+              <p className="mt-4 text-[12px] leading-6 text-[#6B7280]">Send a message directly to this business.</p>
+              <form onSubmit={handleEnquirySubmit} onChange={() => setWhatsappReadyUrl(null)} className="mt-4 space-y-3.5">
+                <div>
+                  <label htmlFor="enquiry-name" className="mb-1.5 block text-[11px] font-semibold text-[#4B5563]">Your name</label>
+                  <input id="enquiry-name" type="text" required maxLength={100} placeholder="Full name"
+                    value={enquiryForm.name} onChange={e => setEnquiryForm({...enquiryForm, name: e.target.value})} className={inputStyle}/>
+                </div>
+                <div>
+                  <label htmlFor="enquiry-email" className="mb-1.5 block text-[11px] font-semibold text-[#4B5563]">Email address</label>
+                  <input id="enquiry-email" type="email" required maxLength={160} placeholder="you@example.com"
+                    value={enquiryForm.email} onChange={e => setEnquiryForm({...enquiryForm, email: e.target.value})} className={inputStyle}/>
+                </div>
+                <div>
+                  <label htmlFor="enquiry-phone" className="mb-1.5 block text-[11px] font-semibold text-[#4B5563]">Phone number</label>
+                  <input id="enquiry-phone" type="tel" required maxLength={24} placeholder="Your contact number"
+                    value={enquiryForm.phone} onChange={e => setEnquiryForm({...enquiryForm, phone: e.target.value})} className={inputStyle}/>
+                </div>
+                <div>
+                  <label htmlFor="enquiry-message" className="mb-1.5 block text-[11px] font-semibold text-[#4B5563]">Message</label>
+                  <textarea id="enquiry-message" rows={4} required maxLength={3000} placeholder="How can this business help?"
+                    value={enquiryForm.message} onChange={e => setEnquiryForm({...enquiryForm, message: e.target.value})} className={inputStyle}/>
+                </div>
+                <label className="flex cursor-pointer items-start gap-2 rounded-xl border border-[#E5E7EB] bg-[#FAFAFA] px-3.5 py-3 text-[11px] leading-5 text-[#525252]">
+                  <input type="checkbox" checked={leadConsent} onChange={e => setLeadConsent(e.target.checked)} required
+                    className="mt-1 h-4 w-4 shrink-0 accent-[#262626]" />
+                  <span>I agree to send my name, email, phone and message to this business for responding to my enquiry. Please do not send sensitive IDs or payment details.</span>
+                </label>
+                {secureLeadsEnabled && turnstileSiteKey && (
+                  <div className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-[#FAFAFA] p-3">
+                    <Turnstile key={turnstileReset} siteKey={turnstileSiteKey}
+                      options={{ action: "business_enquiry", size: "flexible" }}
+                      onSuccess={token => setTurnstileToken(token)}
+                      onExpire={() => setTurnstileToken("")}
+                      onError={() => setTurnstileToken("")}
+                    />
+                  </div>
+                )}
+                {secureLeadsEnabled && !turnstileSiteKey && (
+                  <p role="alert" className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+                    Secure enquiry verification is temporarily unavailable.
+                  </p>
+                )}
+                <button type="submit" disabled={submittingEnquiry || !leadConsent || (secureLeadsEnabled && !turnstileToken)}
+                  className="mt-2 inline-flex min-h-[50px] w-full items-center justify-center gap-2 rounded-lg bg-[#252525] px-5 text-[13px] font-bold text-white transition-colors hover:bg-[#444444] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#737373] disabled:opacity-60">
+                  {submittingEnquiry ? <Loader2 size={17} className="animate-spin"/> : <Send size={17}/>} Send enquiry
+                </button>
+              </form>
+              {whatsappReadyUrl && (
+                <a href={whatsappReadyUrl} target="_blank" rel="noopener noreferrer"
+                  className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#E5E5E5] bg-[#FAFAFA] px-4 text-[12px] font-bold text-[#262626] transition-colors hover:bg-[#F5F5F5]">
+                  Continue on WhatsApp <ArrowUpRight size={16}/>
+                </a>
+              )}
+              <p className="mt-4 text-center text-[11px] leading-5 text-[#737373]">Please avoid sharing sensitive personal or payment information.</p>
+            </section>
+          </aside>
+          <div className="min-w-0 lg:col-start-1">            <section id="reviews" className="scroll-mt-28 border-t border-neutral-200 pt-7">
               <div className="flex flex-wrap items-end justify-between gap-4 border-b border-[#E5E7EB] pb-7">
                 <div>
-                  <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.17em] text-[#9A6C35]">Community experience</p>
-                  <h2 className="text-xl sm:text-2xl font-semibold tracking-tight text-[#202124]">Customer reviews<span className="text-[#B7874D]">.</span></h2>
+                  
+                  <h2 className="text-xl sm:text-2xl font-semibold tracking-tight text-[#202124]">Customer reviews</h2>
                   <p className="mt-2 text-[13px] text-[#6B7280]">{reviews.length} published {reviews.length === 1 ? "review" : "reviews"}</p>
                 </div>
-                <a href="#write-review" className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-[#E5E7EB] bg-[#FAF8F4] px-4 text-[12px] font-semibold text-[#825A2B] hover:bg-[#F5EFE5]">
+                <a href="#write-review" className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-[#E5E7EB] bg-[#FAFAFA] px-4 text-[12px] font-semibold text-[#262626] hover:bg-[#F5F5F5]">
                   <MessageSquare size={15}/> Write a review
                 </a>
               </div>
@@ -434,8 +516,8 @@ export default function BusinessDetailsClient({ business, galleryUrls, services 
               {reviewsLoading ? (
                 <div role="status" className="py-9 text-center text-[13px] text-[#6B7280]"><Loader2 size={22} className="mx-auto mb-2 animate-spin"/>Loading reviews…</div>
               ) : reviews.length === 0 ? (
-                <div className="mt-6 flex items-center gap-4 rounded-[18px] border border-dashed border-[#E5E7EB] bg-[#FAFAFA] p-5">
-                  <MessageSquare size={23} className="shrink-0 text-[#A67B49]"/>
+                <div className="mt-6 flex items-center gap-4 rounded-lg border border-dashed border-[#E5E7EB] bg-[#FAFAFA] p-5">
+                  <MessageSquare size={23} className="shrink-0 text-[#737373]"/>
                   <p className="text-[13px] leading-6 text-[#6B7280]">No customer reviews yet. You can be the first to share your experience.</p>
                 </div>
               ) : (
@@ -443,7 +525,7 @@ export default function BusinessDetailsClient({ business, galleryUrls, services 
                   {reviews.map(review => (
                     <article key={review.id} className="py-6 first:pt-7">
                       <div className="flex items-start gap-3.5">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-[#78634D] text-[16px] font-semibold text-white">{review.user_name?.charAt(0)?.toUpperCase() || "C"}</div>
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#525252] text-[16px] font-semibold text-white">{review.user_name?.charAt(0)?.toUpperCase() || "C"}</div>
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <h3 className="text-[14px] font-semibold text-[#262626]">{review.user_name}</h3>
@@ -451,13 +533,13 @@ export default function BusinessDetailsClient({ business, galleryUrls, services 
                           </div>
                           <div className="mt-1.5 flex gap-1" aria-label={review.rating + " out of 5 stars"}>
                             {[1, 2, 3, 4, 5].map(n => (
-                              <Star key={n} size={13} className={n <= review.rating ? "fill-[#B98542] text-[#B98542]" : "text-[#D1D5DB]"}/>
+                              <Star key={n} size={13} className={n <= review.rating ? "fill-[#262626] text-[#262626]" : "text-[#D1D5DB]"}/>
                             ))}
                           </div>
                           <p className="mt-4 whitespace-pre-line break-words text-[13px] leading-[1.85] text-[#4B5563]">{review.comment}</p>
                           {review.review_replies?.[0] && (
-                            <div className="mt-4 rounded-[16px] border-l-[3px] border-[#C9A26D] bg-[#FAF7F2] p-4">
-                              <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.09em] text-[#805829]"><MessageSquare size={14}/> Business response</p>
+                            <div className="mt-4 rounded-lg border-l-[3px] border-[#737373] bg-[#FAFAFA] p-4">
+                              <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.09em] text-[#404040]"><MessageSquare size={14}/> Business response</p>
                               <p className="mt-2 break-words text-[12px] leading-6 text-[#525252]">{review.review_replies[0].reply_text}</p>
                             </div>
                           )}
@@ -489,8 +571,8 @@ export default function BusinessDetailsClient({ business, galleryUrls, services 
                         {[1, 2, 3, 4, 5].map(star => (
                           <button type="button" key={star} aria-label={star + " stars"} aria-pressed={reviewForm.rating === star}
                             onClick={() => setReviewForm({...reviewForm, rating: star})}
-                            className="rounded-lg p-2 transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A26D]">
-                            <Star size={23} className={star <= reviewForm.rating ? "fill-[#B98542] text-[#B98542]" : "text-[#D1D5DB]"}/>
+                            className="rounded-lg p-2 transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#737373]">
+                            <Star size={23} className={star <= reviewForm.rating ? "fill-[#262626] text-[#262626]" : "text-[#D1D5DB]"}/>
                           </button>
                         ))}
                       </div>
@@ -503,98 +585,17 @@ export default function BusinessDetailsClient({ business, galleryUrls, services 
                       placeholder="Tell others about your experience…" className={inputStyle}/>
                   </div>
                   <button type="submit" disabled={submittingReview}
-                    className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[13px] bg-[#252525] px-6 text-[13px] font-bold text-white transition-colors hover:bg-[#444444] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A26D] disabled:opacity-60">
+                    className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-[#252525] px-6 text-[13px] font-bold text-white transition-colors hover:bg-[#444444] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#737373] disabled:opacity-60">
                     {submittingReview ? <Loader2 size={17} className="animate-spin"/> : <Send size={17}/>}
                     Submit review
                   </button>
                 </form>
               </div>
             </section>
-
+</div>
         </div>
-        <aside className="min-w-0 space-y-5" aria-label="Business information">
-          {(business.email||websiteHref||business.owner_name||hoursLabel)&&<section className={card}>
-            <h2 className="flex items-center gap-2.5 text-xl font-semibold tracking-tight"><Globe size={21} className="text-[#A17A45]"/> Business information</h2>
-            <dl className="mt-3 divide-y divide-neutral-100">
-              {business.email&&<div className="flex items-start gap-3 py-3"><Mail size={17} className="mt-1 shrink-0 text-[#A17A45]"/><div className="min-w-0"><dt className="text-xs text-neutral-500">Email</dt><dd className="mt-1 break-all text-sm font-medium"><a href={"mailto:"+business.email} className="hover:underline">{business.email}</a></dd></div></div>}
-              {websiteHref&&<div className="flex items-start gap-3 py-3"><Globe size={17} className="mt-1 shrink-0 text-[#A17A45]"/><div className="min-w-0"><dt className="text-xs text-neutral-500">Website</dt><dd className="mt-1 break-all text-sm font-medium"><a href={websiteHref} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 hover:underline">{business.website_name||"Visit website"}<ExternalLink size={13}/></a></dd></div></div>}
-              {business.owner_name&&<div className="flex items-start gap-3 py-3"><UserRound size={17} className="mt-1 shrink-0 text-[#A17A45]"/><div className="min-w-0"><dt className="text-xs text-neutral-500">Business contact</dt><dd className="mt-1 break-words text-sm font-medium">{business.owner_name}</dd></div></div>}
-            </dl>
-            {hoursLabel&&<div className="border-t border-neutral-100 pt-4"><h3 className="flex items-center gap-2 text-sm font-semibold"><Clock size={17} className="text-[#A17A45]"/> Opening hours</h3><p className="mt-2 whitespace-pre-line break-words text-sm leading-6 text-neutral-600">{hoursLabel}</p></div>}
-          </section>}
-
-          <section id="location" className="scroll-mt-28 overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
-            <div className="flex items-center justify-between gap-3 px-5 py-4"><h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight"><MapPin size={21} className="text-[#A17A45]"/> Location</h2>{directionsHref&&<a href={directionsHref} target="_blank" rel="noopener noreferrer" onClick={logDirections} className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-[#895F2E] hover:underline">Open map <ExternalLink size={13}/></a>}</div>
-            {hasCoordinates?<div className="relative isolate z-0 h-[250px] w-full overflow-hidden border-t border-neutral-100"><LeafletMap centerLat={lat} centerLng={lng} businesses={[business]} zoom={15} height="100%" showUserLocation={false} enableClustering={false} wrapperClassName="relative isolate z-0 h-full w-full overflow-hidden" /></div>:<div className="grid min-h-32 place-items-center border-t border-neutral-100 bg-neutral-50 p-5 text-center text-sm text-neutral-500">Precise map location has not been provided.</div>}
-          </section>
-                      <section id="enquiry" className="scroll-mt-28 rounded-2xl border border-[#E5E7EB] bg-white p-6 shadow-sm sm:p-7">
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-[#FAF1E5] text-[#8C6236]"><Send size={20}/></div>
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-[#9A6C35]">Start a conversation</p>
-                  <h2 className="mt-0.5 text-xl font-semibold tracking-tight text-[#202124]">Quick enquiry</h2>
-                </div>
-              </div>
-              <p className="mt-4 text-[12px] leading-6 text-[#6B7280]">Share your enquiry with this business. Your message and contact details will be submitted to the directory.</p>
-              <form onSubmit={handleEnquirySubmit} onChange={() => setWhatsappReadyUrl(null)} className="mt-6 space-y-3.5">
-                <div>
-                  <label htmlFor="enquiry-name" className="mb-1.5 block text-[11px] font-semibold text-[#4B5563]">Your name</label>
-                  <input id="enquiry-name" type="text" required maxLength={100} placeholder="Full name"
-                    value={enquiryForm.name} onChange={e => setEnquiryForm({...enquiryForm, name: e.target.value})} className={inputStyle}/>
-                </div>
-                <div>
-                  <label htmlFor="enquiry-email" className="mb-1.5 block text-[11px] font-semibold text-[#4B5563]">Email address</label>
-                  <input id="enquiry-email" type="email" required maxLength={160} placeholder="you@example.com"
-                    value={enquiryForm.email} onChange={e => setEnquiryForm({...enquiryForm, email: e.target.value})} className={inputStyle}/>
-                </div>
-                <div>
-                  <label htmlFor="enquiry-phone" className="mb-1.5 block text-[11px] font-semibold text-[#4B5563]">Phone number</label>
-                  <input id="enquiry-phone" type="tel" required maxLength={24} placeholder="Your contact number"
-                    value={enquiryForm.phone} onChange={e => setEnquiryForm({...enquiryForm, phone: e.target.value})} className={inputStyle}/>
-                </div>
-                <div>
-                  <label htmlFor="enquiry-message" className="mb-1.5 block text-[11px] font-semibold text-[#4B5563]">Message</label>
-                  <textarea id="enquiry-message" rows={4} required maxLength={3000} placeholder="How can this business help?"
-                    value={enquiryForm.message} onChange={e => setEnquiryForm({...enquiryForm, message: e.target.value})} className={inputStyle}/>
-                </div>
-                <label className="flex cursor-pointer items-start gap-2 rounded-xl border border-[#E5E7EB] bg-[#FAFAFA] px-3.5 py-3 text-[11px] leading-5 text-[#525252]">
-                  <input type="checkbox" checked={leadConsent} onChange={e => setLeadConsent(e.target.checked)} required
-                    className="mt-1 h-4 w-4 shrink-0 accent-[#956A39]" />
-                  <span>I agree to send my name, email, phone and message to this business for responding to my enquiry. Please do not send sensitive IDs or payment details.</span>
-                </label>
-                {secureLeadsEnabled && turnstileSiteKey && (
-                  <div className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-[#FAFAFA] p-3">
-                    <Turnstile key={turnstileReset} siteKey={turnstileSiteKey}
-                      options={{ action: "business_enquiry", size: "flexible" }}
-                      onSuccess={token => setTurnstileToken(token)}
-                      onExpire={() => setTurnstileToken("")}
-                      onError={() => setTurnstileToken("")}
-                    />
-                  </div>
-                )}
-                {secureLeadsEnabled && !turnstileSiteKey && (
-                  <p role="alert" className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
-                    Secure enquiry verification is temporarily unavailable.
-                  </p>
-                )}
-                <button type="submit" disabled={submittingEnquiry || !leadConsent || (secureLeadsEnabled && !turnstileToken)}
-                  className="mt-2 inline-flex min-h-[50px] w-full items-center justify-center gap-2 rounded-[13px] bg-[#252525] px-5 text-[13px] font-bold text-white transition-colors hover:bg-[#444444] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A26D] disabled:opacity-60">
-                  {submittingEnquiry ? <Loader2 size={17} className="animate-spin"/> : <Send size={17}/>} Send enquiry
-                </button>
-              </form>
-              {whatsappReadyUrl && (
-                <a href={whatsappReadyUrl} target="_blank" rel="noopener noreferrer"
-                  className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#DDD6C9] bg-[#FAF7F2] px-4 text-[12px] font-bold text-[#815B31] transition-colors hover:bg-[#F2EBDF]">
-                  Continue on WhatsApp <ArrowUpRight size={16}/>
-                </a>
-              )}
-              <p className="mt-4 text-center text-[11px] leading-5 text-[#737373]">Please avoid sharing sensitive personal or payment information.</p>
-            </section>
-
-
-        </aside>
+        <div className="mt-8 border-t border-neutral-200 pt-4"><button type="button" onClick={()=>setShowReportModal(true)} className="inline-flex items-center gap-2 text-xs text-neutral-500 hover:text-neutral-900"><Flag size={14}/> Report listing</button></div>
       </div>
-
       <Dialog.Root open={photoIndex!==null} onOpenChange={open=>{if(!open)setPhotoIndex(null)}}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-[2000] bg-black/80"/>
