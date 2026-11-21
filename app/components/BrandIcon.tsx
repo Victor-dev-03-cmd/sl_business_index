@@ -7,7 +7,7 @@ import {
   House, Info, LayoutGrid, LogIn, LogOut, MapPin, Monitor,
   Newspaper, Phone, Plane, Search, Shield, ShoppingCart, Star,
   Bookmark, Bell, SquarePlus, CircleUserRound, RefreshCw, CheckCircle2,
-  Store, Users, type LucideIcon,
+  Store, Users, Sun, Moon, type LucideIcon,
 } from "lucide-react";
 
 export type BrandIconProps = {
@@ -48,6 +48,8 @@ const fallbacks: Readonly<Record<string, LucideIcon>> = {
   airplane: Plane,
   shop: Store,
   monitor: Monitor,
+  "sun-1": Sun,
+  moon: Moon,
   "book-1": BookOpen,
   "shopping-cart": ShoppingCart,
   shield: Shield,

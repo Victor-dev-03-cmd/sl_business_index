@@ -20,6 +20,7 @@ import IconsaxRegistry from "./components/IconsaxRegistry";
 import MobilePublicDock from "./components/MobilePublicDock";
 import MobileInstallPrompt from "./components/MobileInstallPrompt";
 import SiteToaster from "./components/SiteToaster";
+import { AppearanceController } from "./components/PublicAppearance";
 
 export default function RootClientLayout({
   children,
@@ -48,6 +49,7 @@ export default function RootClientLayout({
         </div>
       </noscript>
       <LoadingProvider>
+          <AppearanceController />
           <IconsaxRegistry />
           <ClarityTracker />
           <GoogleAnalyticsTracker />

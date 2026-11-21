@@ -12,6 +12,7 @@ import LogoLink from "./LogoLink";
 import MobileGreeting from "./MobileGreeting";
 import { googleIdentityProfile } from "@/lib/auth/google-profile";
 import BrandIcon from "./BrandIcon";
+import { AppearanceControl } from "./PublicAppearance";
 import NotificationBell from "./NotificationBell";
 import LiveCounter from "./LiveCounter";
 import { X, ChevronDown, ChevronRight, ArrowUpRight } from "lucide-react";
@@ -360,6 +361,7 @@ export default function Navbar() {
                <div className="invisible pointer-events-none absolute left-0 top-full z-[120] w-48 rounded-2xl border border-stone-200 bg-white p-2 opacity-0 shadow-xl transition-opacity duration-150 group-hover:visible group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:visible group-focus-within:pointer-events-auto group-focus-within:opacity-100">
                  <Link href="/faq" className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-stone-700 hover:bg-stone-50"><BrandIcon name="message-question" size={17} />Help & FAQ</Link>
                  <Link href="/contact" className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-stone-700 hover:bg-stone-50"><BrandIcon name="call" size={17} />Contact Us</Link>
+                 <div className="slbi-appearance-desktop"><AppearanceControl /></div>
                </div>
              </div>
            </nav>
@@ -657,6 +659,7 @@ export default function Navbar() {
                   <MobileDrawerLink href="/about" label="About" iconName="info-circle" onClick={close} />
                   <MobileDrawerLink href="/faq" label="FAQ" iconName="message-question" onClick={close} />
                   <MobileDrawerLink href="/contact" label="Contact" iconName="call" onClick={close} />
+                  <AppearanceControl />
                 </div>
               </nav>
 
@@ -805,6 +808,7 @@ export default function Navbar() {
                     )}
                   </AnimatePresence>
                 </motion.div>
+                <AppearanceControl />
               </motion.nav>
 
               {/* The sign-out action never scrolls behind the site bottom dock. */}

@@ -1,6 +1,7 @@
 import { Inter, Noto_Sans_Tamil, Noto_Sans_Sinhala } from "next/font/google";
 import RootClientLayout from "./RootClientLayout";
 import "./globals.css";
+import "./public-dark-theme.css";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -25,6 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} ${tamil.variable} ${sinhala.variable}`} suppressHydrationWarning>
+      <head><meta name="theme-color" content="#FCFAF6" data-slbi-theme-color="true" /><script dangerouslySetInnerHTML={{ __html: "(()=>{try{const v=localStorage.getItem('slbi-appearance-v1');const p=v==='dark'||v==='system'?v:'light';const s=location.pathname.split('/')[1];const d=s!=='admin'&&s!=='vendor'&&(p==='dark'||(p==='system'&&matchMedia('(prefers-color-scheme: dark)').matches));document.documentElement.dataset.slbiTheme=d?'dark':'light';document.documentElement.dataset.slbiAppearance=p;document.querySelector('meta[data-slbi-theme-color]')?.setAttribute('content',d?'#101010':'#FCFAF6')}catch{}})();" }} /></head>
       <body className="antialiased" suppressHydrationWarning>
         <RootClientLayout>
           {children}
