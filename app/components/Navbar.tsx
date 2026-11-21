@@ -14,29 +14,7 @@ import { googleIdentityProfile } from "@/lib/auth/google-profile";
 import BrandIcon from "./BrandIcon";
 import NotificationBell from "./NotificationBell";
 import LiveCounter from "./LiveCounter";
-import {
-  X,
-  Home,
-  Info,
-  Phone,
-  Building2,
-  LayoutGrid,
-  LogIn,
-  LogOut,
-  ChevronDown,
-  ChevronRight,
-  LayoutDashboard,
-  Briefcase,
-  MapPin,
-  Moon,
-  HelpCircle as HelpIcon,
-  Megaphone,
-  Plus,
-  Search,
-  ArrowUpRight,
-  Newspaper,
-  type LucideIcon,
-} from "lucide-react";
+import { X, ChevronDown, ChevronRight, ArrowUpRight } from "lucide-react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
@@ -341,7 +319,7 @@ export default function Navbar() {
       ════════════════════════════════════ */}
       <div
         ref={headerRootRef}
-        className="sticky top-0 z-50 w-full"
+        className="sticky top-0 z-50 w-full font-sans"
         onMouseLeave={handleMouseLeave}
         onKeyDown={(event) => {
           if (event.key === "Escape") closeMegaMenu();
@@ -548,7 +526,7 @@ export default function Navbar() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", stiffness: 320, damping: 32 }}
-              className="fixed top-0 right-0 z-[100] h-full w-full max-w-[360px] bg-[#FCFAF6] shadow-[0_25px_80px_rgba(15,23,42,0.24)] flex flex-col max-sm:h-[100dvh] max-sm:w-[calc(100vw-18px)] max-sm:overflow-hidden max-sm:rounded-l-[26px] max-sm:bg-white"
+              className="fixed top-0 right-0 z-[100] h-full w-full font-sans max-w-[360px] bg-[#FCFAF6] shadow-[0_25px_80px_rgba(15,23,42,0.24)] flex flex-col max-sm:h-[100dvh] max-sm:w-[calc(100vw-18px)] max-sm:overflow-hidden max-sm:rounded-l-[26px] max-sm:bg-white"
             >
               {/* ── Panel header ── */}
               <div className="flex items-center justify-between h-16 px-5 border-b border-gray-100 shrink-0 max-sm:h-[78px] max-sm:px-4 max-sm:border-[#E8EDEA]">
@@ -636,17 +614,17 @@ export default function Navbar() {
               {/* Native phone-only menu, leaving tablet navigation unchanged. */}
               <nav aria-label="Mobile account navigation"
                 className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4 pt-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden"
-                style={{ fontFamily: "var(--font-inter), sans-serif" }}>
+                style={{ fontFamily: "var(--font-inter), var(--font-tamil), var(--font-sinhala), sans-serif" }}>
                 <p className="mb-2 px-1 text-[11px] font-medium uppercase tracking-[0.07em] text-[#727D77]">Discover</p>
                 <div className="space-y-0.5">
-                  <MobileDrawerLink href="/" label="Home" icon={Home} onClick={close} />
-                  <MobileDrawerLink href="/nearby" label="Nearby" icon={MapPin} onClick={close} />
+                  <MobileDrawerLink href="/" label="Home" iconName="home-2" onClick={close} />
+                  <MobileDrawerLink href="/nearby" label="Nearby" iconName="location" onClick={close} />
                   <div>
                     <button type="button" onClick={() => setCategOpen(v => !v)}
                       aria-expanded={categOpen} aria-controls="slbi-phone-drawer-categories"
                       className="flex min-h-[55px] w-full items-center gap-3 rounded-xl px-1 text-left text-[#22332D] transition-colors hover:bg-[#F6F8F6] active:bg-[#EFF3F0]">
                       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] bg-[#F4F6F7] text-[#244238]">
-                        <LayoutGrid size={19} strokeWidth={1.7} aria-hidden="true" />
+                        <BrandIcon name="category-2" size={19} variant="linear" />
                       </span>
                       <span className="flex-1 text-[14px] font-medium">Categories</span>
                       <ChevronDown size={16} aria-hidden="true"
@@ -669,16 +647,16 @@ export default function Navbar() {
                       </div>
                     )}
                   </div>
-                  <MobileDrawerLink href="/business-news" label="SL-News" icon={Newspaper} onClick={close} />
+                  <MobileDrawerLink href="/business-news" label="SL-News" iconName="note-2" onClick={close} />
                   {showRegister && (
-                    <MobileDrawerLink href="/register-business" label="Register Business" icon={Building2} onClick={close} />
+                    <MobileDrawerLink href="/register-business" label="Register Business" iconName="buildings-2" onClick={close} />
                   )}
                 </div>
                 <p className="mb-2 mt-7 px-1 text-[11px] font-medium uppercase tracking-[0.07em] text-[#727D77]">Support &amp; Info</p>
                 <div className="space-y-0.5">
-                  <MobileDrawerLink href="/about" label="About" icon={Info} onClick={close} />
-                  <MobileDrawerLink href="/faq" label="FAQ" icon={HelpIcon} onClick={close} />
-                  <MobileDrawerLink href="/contact" label="Contact" icon={Phone} onClick={close} />
+                  <MobileDrawerLink href="/about" label="About" iconName="info-circle" onClick={close} />
+                  <MobileDrawerLink href="/faq" label="FAQ" iconName="message-question" onClick={close} />
+                  <MobileDrawerLink href="/contact" label="Contact" iconName="call" onClick={close} />
                 </div>
               </nav>
 
@@ -835,7 +813,7 @@ export default function Navbar() {
                 {user ? (
                   <button type="button" onClick={handleSignOut} disabled={isSigningOut}
                     className="flex h-[49px] w-full items-center justify-center gap-2 rounded-full bg-[#FDF0EE] text-[14px] font-medium text-[#B33B42] transition-colors hover:bg-[#F9E6E4] active:bg-[#F5DEDB] disabled:opacity-60">
-                    <LogOut size={17} strokeWidth={1.8} aria-hidden="true" />
+                    <BrandIcon name="logout" size={17} variant="linear" />
                     {isSigningOut ? "Signing out…" : "Sign Out"}
                   </button>
                 ) : (
@@ -949,17 +927,17 @@ function MobileNavLink({
 }
 
 
-/** Icons stay bundled Lucide SVGs; no new asset fetch or per-row motion. */
+/** Use the shared Iconsax renderer, with its immediate SVG fallback. */
 function MobileDrawerLink({
-  href, label, icon: Icon, onClick,
+  href, label, iconName, onClick,
 }: {
-  href: string; label: string; icon: LucideIcon; onClick: () => void;
+  href: string; label: string; iconName: string; onClick: () => void;
 }) {
   return (
     <Link href={href} onClick={onClick}
       className="flex min-h-[55px] items-center gap-3 rounded-xl px-1 text-[#22332D] transition-colors hover:bg-[#F6F8F6] active:bg-[#EFF3F0]">
       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] bg-[#F4F6F7] text-[#244238]">
-        <Icon size={19} strokeWidth={1.7} aria-hidden="true" />
+        <BrandIcon name={iconName} size={19} variant="linear" />
       </span>
       <span className="min-w-0 flex-1 text-[14px] font-medium">{label}</span>
       <ChevronRight size={16} aria-hidden="true" className="mr-2 shrink-0 text-[#B8C1BC]" />
