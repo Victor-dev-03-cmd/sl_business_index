@@ -1,0 +1,35 @@
+/* Icon-only appearance shortcut; existing header/menu geometry remains intact. */
+.slbi-header-theme-toggle{
+  position:relative;display:inline-grid;place-items:center;
+  flex:0 0 40px;width:40px;height:40px;border-radius:50%;
+  border:1px solid transparent;background:transparent;color:#244238;
+  cursor:pointer;transition:background-color .15s,color .15s,border-color .15s;
+}
+.slbi-header-theme-toggle:hover{background:#F0F2E9;}
+.slbi-header-theme-toggle:focus-visible{outline:2px solid #36785E;outline-offset:2px;}
+.slbi-header-theme-toggle .slbi-theme-moon{display:inline-flex;}
+.slbi-header-theme-toggle .slbi-theme-sun{display:none;}
+html[data-slbi-theme="dark"] .slbi-header-theme-toggle{color:#FF9633;}
+html[data-slbi-theme="dark"] .slbi-header-theme-toggle:hover{background:#382417;border-color:#765034;}
+html[data-slbi-theme="dark"] .slbi-header-theme-toggle:focus-visible{outline-color:#FF7900;}
+html[data-slbi-theme="dark"] .slbi-header-theme-toggle .slbi-theme-moon{display:none;}
+html[data-slbi-theme="dark"] .slbi-header-theme-toggle .slbi-theme-sun{display:inline-flex;}
+@media(max-width:639px){
+  body:has(#slbi-native-mobile-home) header[data-home-mobile="true"] .slbi-header-theme-toggle{
+    flex-basis:42px;width:42px;height:42px;border:1px solid #E7EBE8;background:#fff;color:#203D32;
+  }
+  html[data-slbi-theme="dark"] body:has(#slbi-native-mobile-home) header[data-home-mobile="true"] .slbi-header-theme-toggle{
+    border-color:#383838;background:#222222;color:#FF9633;
+  }
+  body:has(.slbi-home-root):not(:has(#slbi-native-mobile-home)) header .slbi-header-theme-toggle{color:#FCFBF5;}
+  body:has(.slbi-home-root):not(:has(#slbi-native-mobile-home)) header .slbi-header-theme-toggle:hover{background:rgba(255,255,255,.10);}
+  html[data-slbi-theme="dark"] body:has(.slbi-home-root) header .slbi-header-theme-toggle{color:#FF9633;}
+}
+@media(max-width:374px){
+  header:has(.slbi-header-theme-toggle) > div > div:last-child{gap:4px!important;}
+  header .slbi-header-theme-toggle,
+  body:has(#slbi-native-mobile-home) header[data-home-mobile="true"] .slbi-header-theme-toggle{
+    flex-basis:36px;width:36px;height:36px;
+  }
+}
+@media(prefers-reduced-motion:reduce){.slbi-header-theme-toggle{transition:none;}}

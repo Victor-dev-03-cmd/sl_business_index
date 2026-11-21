@@ -2,6 +2,7 @@
 import {useEffect,useLayoutEffect,useState} from 'react';
 import {usePathname} from 'next/navigation';
 import BrandIcon from './BrandIcon';
+import './header-appearance.css';
 
 type Appearance='light'|'dark'|'system';
 const key='slbi-appearance-v1', changeEvent='slbi-appearance-change', query='(prefers-color-scheme: dark)';
@@ -15,6 +16,38 @@ function applyMode(mode:Appearance,path:string){
   document.documentElement.dataset.slbiAppearance=mode;
   document.documentElement.dataset.slbiTheme=dark?'dark':'light';
   document.querySelector('meta[data-slbi-theme-color]')?.setAttribute('content',dark?'#101010':'#FCFAF6');
+}
+function saveMode(next:Appearance){
+  fallback=next;
+  try{localStorage.setItem(key,next)}catch{}
+  applyMode(next,window.location.pathname);
+  window.dispatchEvent(new Event(changeEvent));
+}
+function resolvedDark():boolean {
+  const mode=readMode();
+  return mode==='dark'||(mode==='system'&&window.matchMedia(query).matches);
+}
+export function HeaderThemeToggle(){
+  const [dark,setDark]=useState(false);
+  useLayoutEffect(()=>{
+    const sync=()=>setDark(resolvedDark());
+    const media=window.matchMedia(query);
+    sync();
+    if(media.addEventListener)media.addEventListener('change',sync);else media.addListener(sync);
+    window.addEventListener('storage',sync);
+    window.addEventListener(changeEvent,sync);
+    return()=>{
+      if(media.removeEventListener)media.removeEventListener('change',sync);else media.removeListener(sync);
+      window.removeEventListener('storage',sync);
+      window.removeEventListener(changeEvent,sync);
+    };
+  },[]);
+  const label=dark?'Switch to light mode':'Switch to dark mode';
+  return <button type="button" className="slbi-header-theme-toggle" aria-label={label} title={label}
+    onClick={()=>saveMode(resolvedDark()?'light':'dark')}>
+    <span className="slbi-theme-moon"><BrandIcon name="moon" size={20}/></span>
+    <span className="slbi-theme-sun"><BrandIcon name="sun-1" size={20}/></span>
+  </button>;
 }
 export function AppearanceController(){
   const path=usePathname()||'/';
@@ -41,10 +74,8 @@ export function AppearanceControl(){
     return()=>{window.removeEventListener('storage',sync);window.removeEventListener(changeEvent,sync)};
   },[]);
   function change(next:Appearance){
-    fallback=next;setMode(next);
-    try{localStorage.setItem(key,next)}catch{}
-    applyMode(next,window.location.pathname);
-    window.dispatchEvent(new Event(changeEvent));
+    setMode(next);
+    saveMode(next);
   }
   return <label className="slbi-appearance-control">
     <span><BrandIcon name={mode==='dark'?'moon':mode==='system'?'monitor':'sun-1'} size={17}/> Appearance</span>

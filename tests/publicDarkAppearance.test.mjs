@@ -19,3 +19,15 @@ test('existing main navigation remains intact',()=>{
  assert.ok(nav.includes('MobileDrawerLink href="/" label="Home" iconName="home-2"'));
  assert.ok(read('app/components/MobilePublicDock.tsx').includes('grid-cols-5'));
 });
+
+test('Header appearance shortcut sits next to the notification bell and shares the persisted preference',()=>{
+ const nav=read('app/components/Navbar.tsx'),control=read('app/components/PublicAppearance.tsx'),css=read('app/components/header-appearance.css');
+ assert.match(nav,/<NotificationBell \/>\s*<HeaderThemeToggle \/>/);
+ assert.ok(control.includes("saveMode(resolvedDark()?'light':'dark')"));
+ assert.ok(control.includes("media.addEventListener('change',sync)"));
+ assert.ok(control.includes("window.addEventListener(changeEvent,sync)"));
+ assert.ok(control.includes('Switch to light mode'));
+ assert.ok(control.includes('Switch to dark mode'));
+ assert.ok(css.includes('html[data-slbi-theme="dark"] .slbi-header-theme-toggle .slbi-theme-sun'));
+ assert.ok(css.includes('@media(max-width:374px)'));
+});

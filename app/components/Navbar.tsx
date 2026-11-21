@@ -12,7 +12,7 @@ import LogoLink from "./LogoLink";
 import MobileGreeting from "./MobileGreeting";
 import { googleIdentityProfile } from "@/lib/auth/google-profile";
 import BrandIcon from "./BrandIcon";
-import { AppearanceControl } from "./PublicAppearance";
+import { AppearanceControl, HeaderThemeToggle } from "./PublicAppearance";
 import NotificationBell from "./NotificationBell";
 import LiveCounter from "./LiveCounter";
 import { X, ChevronDown, ChevronRight, ArrowUpRight } from "lucide-react";
@@ -380,6 +380,7 @@ export default function Navbar() {
             <LiveCounter />
              
             <NotificationBell />
+            <HeaderThemeToggle />
             
             <div className="hidden sm:block"><AuthButton user={fullUserData} /></div>
              {showRegister && <Link href="/register-business" aria-label="List Your Business" title="List Your Business" className="hidden h-10 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-[#1B3430] px-3 text-xs font-semibold text-white shadow-md transition-all hover:bg-[#26483B] hover:shadow-lg lg:inline-flex min-[1600px]:px-4"><BrandIcon name="buildings-2" size={17} /> <span className="hidden min-[1600px]:inline">List Your Business</span><ArrowUpRight size={15} className="hidden min-[1600px]:block" /></Link>}
