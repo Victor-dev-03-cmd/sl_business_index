@@ -1324,7 +1324,7 @@ export default function NearbyExplorer() {
           </div>
         </aside>
 
-        <main className={(mobileView === "map" ? "flex" : "hidden") + " relative min-h-0 min-w-0 flex-1 flex-col bg-[#E8ECE4] md:flex"} aria-label="Interactive business map">
+        <main className={(mobileView === "map" ? "flex" : "hidden") + " relative min-h-0 min-w-0 flex-1 flex-col bg-[#E8ECE4] md:flex"} data-slbi-nearby-map="true" aria-label="Interactive business map">
           <div className={"absolute inset-0 " + (mapAppearance === "studio" ? "nearby-map-studio" : "")}>
             {(desktopMapEnabled || mobileView === "map") ? <LeafletMap
               tileProvider="osm"

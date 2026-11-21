@@ -69,9 +69,10 @@ export default async function CategoryDetailPage({ params }: Props) {
 
   return (
     <div className="min-h-[100dvh] bg-[#FAFBF8]">
-      <section className="relative isolate overflow-hidden bg-[#193B2F] text-white">
+      <section data-slbi-category-hero="true" className="relative isolate overflow-hidden bg-[#193B2F] text-white">
         <div
           aria-hidden="true"
+          data-slbi-category-grid="true"
           className="pointer-events-none absolute inset-0 opacity-[0.17]"
           style={{
             backgroundImage: "linear-gradient(rgba(211,233,215,.11) 1px, transparent 1px), linear-gradient(90deg, rgba(211,233,215,.11) 1px, transparent 1px)",
@@ -130,7 +131,7 @@ export default async function CategoryDetailPage({ params }: Props) {
             </div>
 
             <div className="hidden lg:block" aria-hidden="true">
-              <div className="rounded-[11px] border border-[#90BDA0]/30 bg-[#244C3D]/80 p-6">
+              <div data-slbi-category-guide="true" className="rounded-[11px] border border-[#90BDA0]/30 bg-[#244C3D]/80 p-6">
                 <div className="flex items-center justify-between border-b border-white/10 pb-4">
                   <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#F0D9AC]">Find with confidence</span>
                   <Compass size={18} className="text-[#A2E9BD]" />

@@ -93,3 +93,21 @@ test('information pages and SVG artwork have scoped dark styling',()=>{
  assert.ok(css.includes('[data-slbi-action-icon="call"]{background-color:#16A34A!important'));
  assert.ok(css.includes('img[src*="/business-actions/"]{filter:none!important'));
 });
+
+
+test('hero focus, category detail and Nearby tiles use scoped dark appearance',()=>{
+ const css=read('app/public-dark-theme.css');
+ const category=read('app/category/[slug]/page.tsx');
+ const nearby=read('app/nearby/NearbyExplorer.tsx');
+ assert.ok(category.includes('data-slbi-category-hero="true"'));
+ assert.ok(category.includes('data-slbi-category-grid="true"'));
+ assert.ok(category.includes('data-slbi-category-guide="true"'));
+ assert.ok(css.includes('body .slbi-hero-search-form:focus-within'));
+ assert.ok(css.includes('box-shadow:0 0 0 2px #FF9633'));
+ assert.ok(css.includes('[data-slbi-category-hero]{background-color:#181818!important'));
+ assert.ok(nearby.includes('data-slbi-nearby-map="true"'));
+ assert.ok(nearby.includes('tileProvider="osm"'));
+ assert.ok(css.includes('[data-slbi-nearby-map] .leaflet-tile-pane{filter:invert(1)'));
+ assert.ok(!css.includes('[data-slbi-nearby-map] .leaflet-marker-pane{filter:'));
+ assert.ok(css.includes('[data-slbi-nearby-map] .leaflet-control-attribution a'));
+});

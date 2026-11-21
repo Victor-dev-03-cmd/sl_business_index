@@ -2170,3 +2170,63 @@ html[data-slbi-theme="dark"] body [data-slbi-ui="push-control"] [role="switch"][
 html[data-slbi-theme="dark"] body [data-slbi-ui="push-control"] [role="switch"]>span{background-color:#F5F5F5!important;}
 html[data-slbi-theme="dark"] body [data-slbi-ui="area-dropdown"] input,html[data-slbi-theme="dark"] body [data-slbi-ui="categories-menu"] input{background-color:#222222!important;color:#F5F5F5!important;border-color:#383838!important;}
 html[data-slbi-theme="dark"] body [data-slbi-ui="analytics-preferences"] button:not([data-slbi-ui="analytics-allow"]){color:#F5F5F5!important;border-color:#383838!important;}
+
+/* Final public dark refinements: colors only, no extra tile requests or map remount. */
+html[data-slbi-theme="dark"] body .slbi-hero-search-form:focus-within{
+ --tw-ring-color:#FF9633!important;--tw-ring-offset-color:#181818!important;
+ border-color:#FF9633!important;
+ box-shadow:0 0 0 2px #FF9633,0 0 0 5px rgba(255,121,0,.14),0 8px 28px rgba(0,0,0,.24)!important;
+}
+html[data-slbi-theme="dark"] body .slbi-hero-search-form :is(button,a):focus-visible{--tw-ring-color:#FF9633!important;outline-color:#FF9633!important;}
+@media(max-width:639px){
+ html[data-slbi-theme="dark"] body .slbi-native-home .slbi-hero-search-form:focus-within{box-shadow:none!important;}
+ html[data-slbi-theme="dark"] body .slbi-native-home .slbi-hero-search-form > div > div:first-child:focus-within{border-color:#FF9633!important;box-shadow:0 0 0 2px #FF9633,0 0 0 4px rgba(255,121,0,.14)!important;}
+}
+html[data-slbi-theme="dark"] body [data-slbi-category-hero]{background-color:#181818!important;color:#F5F5F5!important;}
+html[data-slbi-theme="dark"] body [data-slbi-category-hero] [data-slbi-category-grid]{background-image:linear-gradient(rgba(255,150,51,.16) 1px,transparent 1px),linear-gradient(90deg,rgba(255,150,51,.16) 1px,transparent 1px)!important;}
+html[data-slbi-theme="dark"] body [data-slbi-category-hero] [data-slbi-category-guide]{background-color:#222222!important;border-color:#765034!important;}
+html[data-slbi-theme="dark"] body [data-slbi-category-hero] h1{color:#F5F5F5!important;}
+html[data-slbi-theme="dark"] body [data-slbi-category-hero] h1>span{color:#FF7900!important;}
+html[data-slbi-theme="dark"] body [data-slbi-category-hero] .text-\[\#B2D2BE\],
+html[data-slbi-theme="dark"] body [data-slbi-category-hero] .text-\[\#C6DED0\],
+html[data-slbi-theme="dark"] body [data-slbi-category-hero] .text-\[\#AFD2BB\],
+html[data-slbi-theme="dark"] body [data-slbi-category-hero] .text-\[\#BED8C9\]{color:#C9C9C9!important;}
+html[data-slbi-theme="dark"] body [data-slbi-category-hero] .text-\[\#F0D9AC\],
+html[data-slbi-theme="dark"] body [data-slbi-category-hero] .text-\[\#E3C58D\],
+html[data-slbi-theme="dark"] body [data-slbi-category-hero] .text-\[\#A2E9BD\],
+html[data-slbi-theme="dark"] body [data-slbi-category-hero] .text-\[\#C7F1D6\],
+html[data-slbi-theme="dark"] body [data-slbi-category-hero] .text-\[\#C8EFD3\]{color:#FFB56B!important;}
+html[data-slbi-theme="dark"] body [data-slbi-category-hero] .text-\[\#E4F1E6\]{color:#F5F5F5!important;}
+html[data-slbi-theme="dark"] body [data-slbi-category-hero] .bg-\[\#2D5946\],
+html[data-slbi-theme="dark"] body [data-slbi-category-hero] .bg-\[\#33654F\]{background-color:#382417!important;}
+html[data-slbi-theme="dark"] body [data-slbi-category-hero] .border-\[\#86B89D\]\/35,
+html[data-slbi-theme="dark"] body [data-slbi-category-hero] .border-\[\#90BDA0\]\/30,
+html[data-slbi-theme="dark"] body [data-slbi-category-hero] .border-white\/20,
+html[data-slbi-theme="dark"] body [data-slbi-category-hero] .border-white\/10{border-color:#765034!important;}
+html[data-slbi-theme="dark"] body [data-slbi-category-hero] .bg-white\/\[0\.06\]{background-color:rgba(255,121,0,.075)!important;}
+
+html[data-slbi-theme="dark"] body [data-slbi-category-hero] a:hover{color:#FFB56B!important;border-color:#B86A33!important;}
+html[data-slbi-theme="dark"] body [data-slbi-category-hero] a:focus-visible{outline:2px solid #FF9633!important;outline-offset:3px!important;}
+
+/* Render the existing OpenStreetMap raster tile pane in night colors.
+   Keep marker, overlay, popup and attribution panes unfiltered. */
+html[data-slbi-theme="dark"] body [data-slbi-nearby-map]{background-color:#181818!important;}
+html[data-slbi-theme="dark"] body [data-slbi-nearby-map] .leaflet-container{background:#181818!important;}
+html[data-slbi-theme="dark"] body [data-slbi-nearby-map] .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) saturate(.48) brightness(.91) contrast(.91)!important;}
+html[data-slbi-theme="dark"] body [data-slbi-nearby-map] .leaflet-bar{border-color:#454545!important;box-shadow:0 5px 18px rgba(0,0,0,.38)!important;}
+html[data-slbi-theme="dark"] body [data-slbi-nearby-map] .leaflet-bar a{background-color:#222222!important;color:#F5F5F5!important;border-color:#454545!important;}
+html[data-slbi-theme="dark"] body [data-slbi-nearby-map] .leaflet-bar a:hover{background-color:#382417!important;color:#FFB56B!important;}
+html[data-slbi-theme="dark"] body [data-slbi-nearby-map] .leaflet-bar a.leaflet-disabled{background-color:#181818!important;color:#808080!important;}
+html[data-slbi-theme="dark"] body [data-slbi-nearby-map] .leaflet-control-attribution{background:rgba(24,24,24,.92)!important;color:#D0D0D0!important;}
+html[data-slbi-theme="dark"] body [data-slbi-nearby-map] .leaflet-control-attribution a{color:#FFB56B!important;}
+html[data-slbi-theme="dark"] body [data-slbi-nearby-map] .slbi-modern-pin.active{outline-color:rgba(255,150,51,.7)!important;}
+html[data-slbi-theme="dark"] body [data-slbi-nearby-map] .slbi-modern-cluster-inner{background-color:#AE500C!important;color:#FFF!important;border-color:#F5F5F5!important;}
+html[data-slbi-theme="dark"] body [data-slbi-nearby-map] .leaflet-popup-content-wrapper,html[data-slbi-theme="dark"] body [data-slbi-nearby-map] .leaflet-popup-tip{background-color:#222222!important;color:#F5F5F5!important;}
+html[data-slbi-theme="dark"] body [data-slbi-nearby-map] .slbi-business-popup a[href^="/business/"]{background-color:#FF7900!important;color:#101010!important;}
+html[data-slbi-theme="dark"] body [data-slbi-nearby-map] .slbi-business-popup a[href^="/business/"]:hover{background-color:#FF9633!important;color:#101010!important;}
+html[data-slbi-theme="dark"] body [data-slbi-nearby-map] :is(button[aria-label="Choose map appearance"],button[aria-label="Expand map to full width"],button[aria-label="Show business results panel"]){background-color:#222222!important;color:#F5F5F5!important;border-color:#454545!important;}
+html[data-slbi-theme="dark"] body [data-slbi-nearby-map] #nearby-map-appearance{background-color:#222222!important;border-color:#454545!important;}
+html[data-slbi-theme="dark"] body [data-slbi-nearby-map] #nearby-map-appearance button[aria-pressed="true"],html[data-slbi-theme="dark"] body [data-slbi-nearby-map] #nearby-map-appearance button:hover{background-color:#382417!important;}
+html[data-slbi-theme="dark"] body [data-slbi-nearby-map] #nearby-map-appearance button > span > span:first-child{color:#F5F5F5!important;}
+html[data-slbi-theme="dark"] body [data-slbi-nearby-map] #nearby-map-appearance button > span > span:last-child{color:#B5B5B5!important;}
+html[data-slbi-theme="dark"] body [data-slbi-nearby-map] #nearby-map-appearance button svg{color:#FF9633!important;}
