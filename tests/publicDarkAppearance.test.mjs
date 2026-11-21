@@ -111,3 +111,14 @@ test('hero focus, category detail and Nearby tiles use scoped dark appearance',(
  assert.ok(!css.includes('[data-slbi-nearby-map] .leaflet-marker-pane{filter:'));
  assert.ok(css.includes('[data-slbi-nearby-map] .leaflet-control-attribution a'));
 });
+
+test('Nearby dark palette prioritizes readable text and role-specific action colors',()=>{
+ const css=read('app/nearby/nearby-map.css'), source=read('app/nearby/NearbyExplorer.tsx');
+ for(const role of ['map','directions','call','profile'])assert.ok(source.includes('data-nearby-action="'+role+'"'));
+ for(const role of ['category','address','distance'])assert.ok(source.includes('data-nearby-text="'+role+'"'));
+ for(const [role,color] of [['map','#8EBEFF'],['directions','#80DFC1'],['call','#86E6A1'],['profile','#FFB56B']])assert.ok(css.includes('[data-nearby-action="'+role+'"]{color:'+color+'!important'));
+ assert.ok(css.includes('html[data-slbi-theme="dark"] body .slbi-nearby-root .slbi-nearby-card h3{color:#F5F5F5!important'));
+ assert.ok(css.includes('[data-nearby-selected="true"]'));
+ assert.ok(css.includes('button[aria-pressed="false"]'));
+ assert.ok(source.includes('tileProvider="osm"'));
+});

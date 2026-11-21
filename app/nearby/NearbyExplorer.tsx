@@ -667,7 +667,7 @@ export default function NearbyExplorer() {
     <div className="slbi-nearby-root flex h-[100dvh] min-h-[500px] w-full flex-col overflow-hidden bg-[#F5F2EB] font-sans text-[#243D38]">
       <header ref={headerRef} className="slbi-nearby-header relative z-[1200] shrink-0 border-b border-[#E5DED2] bg-[#F5F1EB] shadow-[0_6px_25px_rgba(26,49,45,0.09)]">
         {/* Dark editorial navigation gives the map explorer a clear visual hierarchy. */}
-        <div className="bg-[#1B3230]">
+        <div data-nearby-surface="topbar" className="bg-[#1B3230]">
         <div className="mx-auto flex min-h-[52px] max-w-[1800px] items-center justify-between gap-3 px-3 md:min-h-[62px] md:gap-4 md:px-4 sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-3">
             <Link
@@ -698,6 +698,7 @@ export default function NearbyExplorer() {
               type="button"
               disabled={locationLoading}
               onClick={locateMe}
+              data-nearby-action="locate"
               className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#E8BB7B] px-3.5 text-[12px] font-semibold text-[#203936] transition-colors hover:bg-[#F4CE9A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:cursor-wait disabled:opacity-60 sm:px-4"
             >
               <LocateFixed size={17} className={locationLoading ? "animate-pulse" : ""} />
@@ -711,7 +712,7 @@ export default function NearbyExplorer() {
         {/* Consistent search, town selector and filters for every screen */}
         <div className="mx-auto flex max-w-[1800px] flex-col gap-2 px-3 pb-2 pt-2 md:gap-2.5 md:px-4 md:pb-2.5 md:pt-2.5 sm:px-6 md:flex-row md:items-stretch md:gap-3 lg:px-8">
           <div className="relative min-w-0 flex-1">
-            <form onSubmit={submitSearch} role="search" className="flex h-[45px] items-center gap-2 rounded-[14px] border border-[#E3DCD0] bg-white p-1.5 pl-3.5 shadow-[0_3px_12px_rgba(30,58,53,0.04)] focus-within:border-[#8EBAAB] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#D7E9DC]/80">
+            <form onSubmit={submitSearch} data-nearby-surface="search" role="search" className="flex h-[45px] items-center gap-2 rounded-[14px] border border-[#E3DCD0] bg-white p-1.5 pl-3.5 shadow-[0_3px_12px_rgba(30,58,53,0.04)] focus-within:border-[#8EBAAB] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#D7E9DC]/80">
               <Search size={18} className="shrink-0 text-[#7C9AAF]" />
               <input
                 type="search"
@@ -754,7 +755,7 @@ export default function NearbyExplorer() {
             {searchDropdownOpen && (
               <div
                 id="nearby-search-suggestions"
-                className="absolute inset-x-0 top-full z-[1600] mt-2 max-h-[min(360px,55dvh)] overflow-y-auto overscroll-auto rounded-2xl border border-[#DCE6EF] bg-white p-2 shadow-[0_18px_45px_rgba(11,45,75,0.16)]"
+                data-nearby-surface="suggestions" className="absolute inset-x-0 top-full z-[1600] mt-2 max-h-[min(360px,55dvh)] overflow-y-auto overscroll-auto rounded-2xl border border-[#DCE6EF] bg-white p-2 shadow-[0_18px_45px_rgba(11,45,75,0.16)]"
               >
                 {categorySuggestions.length > 0 && (
                   <div className="border-b border-[#EDF1F5] pb-2">
@@ -808,7 +809,7 @@ export default function NearbyExplorer() {
                 {suggestionsLoading && (
                   <p className="px-3 py-2 text-[11px] text-[#8DA3B7]">Finding matches…</p>
                 )}
-                <button type="button" onClick={() => submitSearch()} className="mt-1 flex w-full items-center justify-between rounded-xl bg-[#EEF6FB] px-3 py-3 text-[12px] font-semibold text-[#18517B] hover:bg-[#DFEEF8]">
+                <button type="button" onClick={() => submitSearch()} data-nearby-action="search-more" className="mt-1 flex w-full items-center justify-between rounded-xl bg-[#EEF6FB] px-3 py-3 text-[12px] font-semibold text-[#18517B] hover:bg-[#DFEEF8]">
                   Search for “{searchText.trim()}” <ArrowRight size={16} />
                 </button>
               </div>
@@ -819,7 +820,7 @@ export default function NearbyExplorer() {
             <div className="relative min-w-0 flex-1 md:w-[235px]">
               <button
                 type="button"
-                aria-label="Choose district or town"
+                aria-label="Choose district or town" data-nearby-action="area"
                 aria-controls="nearby-area-picker"
                 aria-expanded={areaOpen}
                 onClick={() => { setAreaOpen(value => !value); setAreaText(""); setSearchFocused(false); setFiltersOpen(false); }}
@@ -876,6 +877,7 @@ export default function NearbyExplorer() {
                 type="button"
                 aria-expanded={filtersOpen}
                 aria-controls="nearby-filter-panel"
+                data-nearby-action="filters"
                 onClick={openFilters}
                 className="relative inline-flex h-[45px] items-center gap-2 rounded-[14px] border border-[#E3DCD0] bg-white px-3.5 text-[12px] font-semibold text-[#385B52] shadow-[0_3px_12px_rgba(30,58,53,0.04)] transition-colors hover:border-[#B4CABB] hover:bg-[#FAFCF8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 sm:px-4"
               >
@@ -936,7 +938,7 @@ export default function NearbyExplorer() {
                         <div className="flex max-h-[230px] flex-wrap gap-2 overflow-y-auto pr-1">
                           <button
                             type="button"
-                            onClick={() => setDraftCategory(null)}
+                            onClick={() => setDraftCategory(null)} aria-pressed={!draftCategory}
                             className={"rounded-full border px-3 py-2 text-[12px] font-medium transition-colors " + (!draftCategory ? "border-[#1B547A] bg-[#123D63] text-white" : "border-[#DDE7EF] text-[#54768F] hover:bg-[#F0F7FB]")}
                           >
                             All categories
@@ -945,7 +947,7 @@ export default function NearbyExplorer() {
                             <button
                               type="button"
                               key={item.id}
-                              onClick={() => setDraftCategory(item.name)}
+                              onClick={() => setDraftCategory(item.name)} aria-pressed={draftCategory === item.name}
                               className={"rounded-full border px-3 py-2 text-[12px] font-medium transition-colors " + (draftCategory === item.name ? "border-[#1B547A] bg-[#123D63] text-white" : "border-[#DDE7EF] text-[#54768F] hover:bg-[#F0F7FB]")}
                             >
                               {item.name}
@@ -959,7 +961,7 @@ export default function NearbyExplorer() {
                         className="inline-flex h-11 items-center gap-2 rounded-xl border border-[#DDE7EF] px-4 text-[12px] font-semibold text-[#597B92] hover:bg-[#F5F9FC]">
                         <RotateCcw size={15} /> Reset
                       </button>
-                      <button type="button" onClick={() => applySearch({ category: draftCategory, radius: radiusDraft, verifiedOnly: draftVerifiedOnly, withPhotosOnly: draftWithPhotosOnly })}
+                      <button type="button" data-nearby-action="apply" onClick={() => applySearch({ category: draftCategory, radius: radiusDraft, verifiedOnly: draftVerifiedOnly, withPhotosOnly: draftWithPhotosOnly })}
                         className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-[#123D63] px-4 text-[12px] font-semibold text-white hover:bg-[#1B5C8D]">
                         Apply filters <ArrowRight size={16} />
                       </button>
@@ -999,12 +1001,12 @@ export default function NearbyExplorer() {
             );
           })}
           <span aria-hidden="true" className="mx-1 h-5 w-px shrink-0 bg-[#DCD3C6]"/>
-          <button type="button" aria-pressed={verifiedOnly}
+          <button type="button" aria-pressed={verifiedOnly} data-nearby-chip="verified"
             onClick={() => applySearch({ verifiedOnly: !verifiedOnly })}
             className={"inline-flex min-h-10 shrink-0 md:min-h-9 items-center gap-1.5 rounded-full border px-3.5 text-[11px] font-semibold transition-colors " + (verifiedOnly ? "border-[#2E7568] bg-[#276F62] text-white" : "border-[#DDD8CD] bg-[#FCFAF6] text-[#536F63] hover:bg-[#F1F8F1]")}>
             <BadgeCheck size={14}/> Verified
           </button>
-          <button type="button" aria-pressed={withPhotosOnly}
+          <button type="button" aria-pressed={withPhotosOnly} data-nearby-chip="photos"
             onClick={() => applySearch({ withPhotosOnly: !withPhotosOnly })}
             className={"inline-flex min-h-10 shrink-0 md:min-h-9 items-center gap-1.5 rounded-full border px-3.5 text-[11px] font-semibold transition-colors " + (withPhotosOnly ? "border-[#2E7568] bg-[#276F62] text-white" : "border-[#DDD8CD] bg-[#FCFAF6] text-[#536F63] hover:bg-[#F1F8F1]")}>
             <Camera size={14}/> Photos
@@ -1101,7 +1103,7 @@ export default function NearbyExplorer() {
               <div className="flex flex-wrap items-center gap-2">
                 <p className="text-[11px] text-[#8A897C]">{sortBy === "best-match" ? "Best matches for this area" : sortBy === "nearest" ? "Closest first" : sortBy === "top-rated" ? "Highest rated first" : "A to Z"}</p>
                 <span
-                  title="Semantic V3 Beta is always enabled. Real E5 re-ranking runs for supported canonical searches with approved matching listings; V2/GeoRank remains the safe fallback."
+                  data-nearby-text="engine" title="Semantic V3 Beta is always enabled. Real E5 re-ranking runs for supported canonical searches with approved matching listings; V2/GeoRank remains the safe fallback."
                   className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-[#1D7265] bg-[#E1F2EC] px-2.5 py-1 text-[10px] font-semibold text-[#1E6A51]"
                 >
                   <Sparkles size={12}/> Semantic V3 Beta · ON
@@ -1257,7 +1259,7 @@ export default function NearbyExplorer() {
                 const active = selectedBusiness?.id === business.id;
                 const rating = Number(business.rating);
                 return (
-                  <article key={business.id} id={"nearby-card-" + business.id} className={"slbi-nearby-card group rounded-[14px] border md:rounded-[10px] bg-white p-3 shadow-[0_2px_12px_rgba(15,46,73,0.03)] transition-[border-color,box-shadow] duration-150 hover:border-[#9DC2B2] hover:shadow-[0_8px_20px_rgba(15,46,73,0.07)] " + (active ? "border-[#4F9E84] ring-1 ring-[#CBE7D8]" : "border-[#DFE9E1]")}>
+                  <article key={business.id} id={"nearby-card-" + business.id} data-nearby-selected={active ? "true" : "false"} className={"slbi-nearby-card group rounded-[14px] border md:rounded-[10px] bg-white p-3 shadow-[0_2px_12px_rgba(15,46,73,0.03)] transition-[border-color,box-shadow] duration-150 hover:border-[#9DC2B2] hover:shadow-[0_8px_20px_rgba(15,46,73,0.07)] " + (active ? "border-[#4F9E84] ring-1 ring-[#CBE7D8]" : "border-[#DFE9E1]")}>
                     <button
                       type="button"
                       onClick={() => showBusinessOnMap(business)}
@@ -1280,10 +1282,10 @@ export default function NearbyExplorer() {
                           <h3 className="line-clamp-2 min-w-0 flex-1 text-[15px] font-semibold leading-[1.4] tracking-[-0.025em] text-[#123B5B] sm:text-[16px]">{business.name}</h3>
                           {business.is_verified && business.can_show_badge && <VerifiedBadge size={15}/>}
                         </div>
-                        <p className="mt-1.5 truncate text-[11px] font-semibold text-[#4381A9]">{business.category || "Local business"}</p>
-                        <p className="mt-2 line-clamp-2 text-[11px] leading-4 text-[#8198A9]">{getBusinessDisplayAddress(business)}</p>
+                        <p data-nearby-text="category" className="mt-1.5 truncate text-[11px] font-semibold text-[#4381A9]">{business.category || "Local business"}</p>
+                        <p data-nearby-text="address" className="mt-2 line-clamp-2 text-[11px] leading-4 text-[#8198A9]">{getBusinessDisplayAddress(business)}</p>
                         <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] font-semibold">
-                          {business.distanceText && <span className="inline-flex items-center gap-1 rounded-full bg-[#EDF5FB] px-2.5 py-1 text-[#326A90]"><MapPin size={11}/>{business.distanceText}</span>}
+                          {business.distanceText && <span data-nearby-text="distance" className="inline-flex items-center gap-1 rounded-full bg-[#EDF5FB] px-2.5 py-1 text-[#326A90]"><MapPin size={11}/>{business.distanceText}</span>}
                           {business.match_type === "category_related" && (
                             <span title="This category is related, but the specific item is not verified" className="inline-flex items-center gap-1 rounded-[5px] border border-[#E5D9C7] bg-[#FBF6E8] px-2 py-1 text-[#816A3A]">
                               Related category · service unconfirmed
@@ -1296,14 +1298,14 @@ export default function NearbyExplorer() {
                     <div className="slbi-nearby-card-footer mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t border-[#EDF1EA] pt-2.5">
                       <span className="hidden items-center gap-1.5 text-[11px] text-[#718779] md:inline-flex"><MapPin size={13} /> Nearby listing</span>
                       <div className="slbi-nearby-card-actions grid w-full grid-cols-4 items-center gap-1 md:flex md:w-auto md:flex-wrap md:gap-x-3 md:gap-y-2">
-                        <button type="button" onClick={() => showBusinessOnMap(business)} className="inline-flex min-h-9 items-center justify-center text-[11px] font-semibold text-[#387B61] hover:text-[#1B4F3B] md:min-h-0 md:text-[12px]"><span className="md:hidden">Map</span><span className="hidden md:inline">Show on map</span></button>
+                        <button type="button" data-nearby-action="map" onClick={() => showBusinessOnMap(business)} className="inline-flex min-h-9 items-center justify-center text-[11px] font-semibold text-[#387B61] hover:text-[#1B4F3B] md:min-h-0 md:text-[12px]"><span className="md:hidden">Map</span><span className="hidden md:inline">Show on map</span></button>
                         {typeof business.latitude === "number" && typeof business.longitude === "number" && (
-                          <a href={"https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(business.latitude + "," + business.longitude)} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-9 items-center justify-center gap-1 text-[11px] font-semibold text-[#387B61] hover:text-[#1B4F3B] md:min-h-0 md:text-[12px]">Directions <Navigation size={12} className="hidden sm:block"/></a>
+                          <a data-nearby-action="directions" href={"https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(business.latitude + "," + business.longitude)} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-9 items-center justify-center gap-1 text-[11px] font-semibold text-[#387B61] hover:text-[#1B4F3B] md:min-h-0 md:text-[12px]">Directions <Navigation size={12} className="hidden sm:block"/></a>
                         )}
                         {business.phone && String(business.phone).replace(/[^\d+]/g, "") && (
-                          <a href={"tel:" + String(business.phone).replace(/[^\d+]/g, "")} className="inline-flex min-h-9 items-center justify-center text-[11px] font-semibold text-[#387B61] hover:text-[#1B4F3B] md:min-h-0 md:text-[12px]">Call</a>
+                          <a data-nearby-action="call" href={"tel:" + String(business.phone).replace(/[^\d+]/g, "")} className="inline-flex min-h-9 items-center justify-center text-[11px] font-semibold text-[#387B61] hover:text-[#1B4F3B] md:min-h-0 md:text-[12px]">Call</a>
                         )}
-                        <Link href={"/business/" + (business.slug || business.id)} className="inline-flex min-h-9 items-center justify-center gap-1 text-[11px] font-bold text-[#164D76] hover:text-[#0B304F] md:min-h-0 md:text-[12px]"><span className="md:hidden">Profile</span><span className="hidden md:inline">View profile</span> <ArrowUpRight size={13} className="hidden sm:block"/></Link>
+                        <Link data-nearby-action="profile" href={"/business/" + (business.slug || business.id)} className="inline-flex min-h-9 items-center justify-center gap-1 text-[11px] font-bold text-[#164D76] hover:text-[#0B304F] md:min-h-0 md:text-[12px]"><span className="md:hidden">Profile</span><span className="hidden md:inline">View profile</span> <ArrowUpRight size={13} className="hidden sm:block"/></Link>
                       </div>
                     </div>
                   </article>
@@ -1415,12 +1417,12 @@ export default function NearbyExplorer() {
           )}
           {selectedBusiness && (
             <div className="absolute bottom-5 left-4 right-4 z-[900] md:bottom-6 md:left-6 md:right-auto md:w-[min(360px,calc(100%-48px))]">
-              <div className="rounded-[24px] border border-[#DCE8F0] bg-white p-4 shadow-[0_18px_50px_rgba(8,40,66,0.22)]">
+              <div data-nearby-surface="selected-business" className="rounded-[24px] border border-[#DCE8F0] bg-white p-4 shadow-[0_18px_50px_rgba(8,40,66,0.22)]">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#7495AB]">Selected business</p>
                     <h3 className="mt-1.5 line-clamp-2 text-[17px] font-semibold tracking-[-0.03em] text-[#163F5D]">{selectedBusiness.name}</h3>
-                    <p className="mt-1 truncate text-[12px] text-[#7894A8]">{selectedBusiness.category || "Local business"}</p>
+                    <p data-nearby-text="category" className="mt-1 truncate text-[12px] text-[#7894A8]">{selectedBusiness.category || "Local business"}</p>
                   </div>
                   <button type="button" onClick={() => setSelectedBusiness(null)} aria-label="Close selected business" className="flex h-8 w-8 items-center justify-center rounded-xl border border-[#E5ECF2] text-[#7895AA] hover:bg-[#F2F7FA]">
                     <X size={16}/>
@@ -1433,7 +1435,7 @@ export default function NearbyExplorer() {
                     ) : <Building2 size={23} strokeWidth={1.5} />}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[12px] font-semibold text-[#244E69]">{getBusinessDisplayAddress(selectedBusiness)}</p>
+                    <p data-nearby-text="address" className="truncate text-[12px] font-semibold text-[#244E69]">{getBusinessDisplayAddress(selectedBusiness)}</p>
                     <div className="mt-1 flex items-center gap-2 text-[11px] text-[#6489A3]">
                       {typeof selectedBusiness.distance_meters === "number" && <span>{formatDistance(selectedBusiness.distance_meters)} away</span>}
                       {Number(selectedBusiness.rating) > 0 && <span className="inline-flex items-center gap-1"><Star size={12} className="fill-amber-400 text-amber-400"/>{Number(selectedBusiness.rating).toFixed(1)}</span>}
@@ -1441,12 +1443,12 @@ export default function NearbyExplorer() {
                   </div>
                 </div>
                 <div className="mt-3 flex items-center gap-2">
-                  <Link href={"/business/" + (selectedBusiness.slug || selectedBusiness.id)} className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-[#123E65] px-4 text-[12px] font-semibold text-white hover:bg-[#205E8B]">
+                  <Link data-nearby-action="profile" href={"/business/" + (selectedBusiness.slug || selectedBusiness.id)} className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-[#123E65] px-4 text-[12px] font-semibold text-white hover:bg-[#205E8B]">
                     View profile <ArrowUpRight size={14}/>
                   </Link>
                   {validCoords(Number(selectedBusiness.latitude), Number(selectedBusiness.longitude)) && (
                     <a
-                      href={"https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(selectedBusiness.latitude + "," + selectedBusiness.longitude)}
+                      data-nearby-action="directions" href={"https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(selectedBusiness.latitude + "," + selectedBusiness.longitude)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-[#DCE7EF] px-3.5 text-[12px] font-semibold text-[#235A7C] hover:bg-[#F2F8FC]"
