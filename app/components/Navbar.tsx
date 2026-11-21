@@ -377,7 +377,7 @@ export default function Navbar() {
                 <BrandIcon name="add" size={17} /> <span className="hidden min-[1600px]:inline">Add News</span>
               </Link>
             )}
-            <LiveCounter />
+            <div data-slbi-desktop-live="true" className="hidden shrink-0 sm:inline-flex"><LiveCounter /></div>
              
             <NotificationBell />
             <HeaderThemeToggle />

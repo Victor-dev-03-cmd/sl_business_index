@@ -133,3 +133,9 @@ test('phone username stays bright in dark mode without changing desktop or light
  assert.ok(block.includes('body:has(#slbi-native-mobile-home)'));
  assert.ok(block.includes('color:#FFFFFF!important'));
 });
+
+test('phone header hides only the live analytics trigger',()=>{
+ const nav=read('app/components/Navbar.tsx');
+ assert.ok(nav.includes('data-slbi-desktop-live="true" className="hidden shrink-0 sm:inline-flex"><LiveCounter /></div>'));
+ assert.match(nav,/<NotificationBell \/>\s*<HeaderThemeToggle \/>/);
+});
