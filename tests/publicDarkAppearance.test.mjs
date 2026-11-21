@@ -53,3 +53,26 @@ test('theme switches avoid duplicate writes and transient color animation',()=>{
  assert.ok(!css.includes('[class~="bg-white"]'));
  assert.ok(css.includes('.bg-\\[\\#FCFAF6\\]'));
 });
+
+test('late-mounted public surfaces have explicit dark palette hooks',()=>{
+ const css=read('app/public-dark-theme.css');
+ const supports={
+ 'app/components/AuthButton.tsx':['sign-in','profile-menu','profile-summary','profile-role','sign-out'],
+ 'app/components/Navbar.tsx':['sign-in','resources-menu','account-drawer','industry-bar'],
+ 'app/components/CategorySubNavbar.tsx':['industry-menu','industry-intro','industry-icon'],
+ 'app/components/CategoriesMenu.tsx':['categories-menu'],
+ 'app/components/LiveCounter.tsx':['live-trigger','live-dot'],
+ 'app/components/LiveVisitorsPanel.tsx':['live-panel','live-map','live-island','live-world','live-grid'],
+ 'app/components/NotificationBell.tsx':['notifications-menu'],
+ 'app/components/GoogleAnalyticsTracker.tsx':['analytics-preferences','analytics-allow'],
+ 'app/components/HeroSearch.tsx':['area-dropdown','search-dropdown'],
+ 'components/PushNotificationToggle.tsx':['push-control']
+ };
+ for(const [p,hooks] of Object.entries(supports))for(const hook of hooks){
+  assert.ok(read(p).includes('data-slbi-ui="'+hook+'"'),p+':'+hook);
+  assert.ok(css.includes('[data-slbi-ui="'+hook+'"]'),hook);
+ }
+ assert.ok(css.includes('[data-slbi-ui="sign-in"][href="/login"]{background-color:#FF7900!important'));
+ assert.ok(css.includes('[data-slbi-ui="live-world"]{filter:'));
+ assert.ok(css.includes('[data-slbi-ui="profile-menu"] [role="menuitem"]'));
+});

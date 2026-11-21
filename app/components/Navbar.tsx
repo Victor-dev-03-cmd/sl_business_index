@@ -358,7 +358,7 @@ export default function Navbar() {
              })}
              <div className="group relative shrink-0">
                <button type="button" title="Resources" aria-label="Resources menu" aria-haspopup="true" className="flex h-10 shrink-0 items-center gap-1 rounded-xl px-2.5 text-[13px] font-semibold text-stone-600 2xl:px-3 hover:bg-stone-50 hover:text-stone-950"><BrandIcon name="element-3" size={17} /><span className="hidden xl:inline">Resources</span><ChevronDown size={14} className="shrink-0" /></button>
-               <div className="invisible pointer-events-none absolute left-0 top-full z-[120] w-48 rounded-2xl border border-stone-200 bg-white p-2 opacity-0 shadow-xl transition-opacity duration-150 group-hover:visible group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:visible group-focus-within:pointer-events-auto group-focus-within:opacity-100">
+               <div data-slbi-ui="resources-menu" className="invisible pointer-events-none absolute left-0 top-full z-[120] w-48 rounded-2xl border border-stone-200 bg-white p-2 opacity-0 shadow-xl transition-opacity duration-150 group-hover:visible group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:visible group-focus-within:pointer-events-auto group-focus-within:opacity-100">
                  <Link href="/faq" className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-stone-700 hover:bg-stone-50"><BrandIcon name="message-question" size={17} />Help & FAQ</Link>
                  <Link href="/contact" className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-stone-700 hover:bg-stone-50"><BrandIcon name="call" size={17} />Contact Us</Link>
                  <div className="slbi-appearance-desktop"><AppearanceControl /></div>
@@ -407,7 +407,7 @@ export default function Navbar() {
       </header>
 
       {/* Refined industry ribbon — hover, click and keyboard focus open mega menu. */}
-      <div className="hidden border-b border-stone-200 bg-[#F2EFE7] lg:block">
+      <div data-slbi-ui="industry-bar" className="hidden border-b border-stone-200 bg-[#F2EFE7] lg:block">
         <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8 2xl:px-10">
           <nav aria-label="Business industries" className="flex h-12 items-center gap-1 overflow-x-auto whitespace-nowrap xl:gap-1.5 2xl:gap-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <span className="mr-2 inline-flex shrink-0 items-center gap-2 border-r border-stone-200 pr-4 text-[10px] font-bold uppercase tracking-[0.14em] text-[#36785E]">
@@ -473,7 +473,7 @@ export default function Navbar() {
         mobileMenuOpen && (
           <div className="fixed inset-0 z-[100] flex">
             <div className="fixed inset-0 bg-black opacity-40" onClick={close}></div>
-            <div className="relative ml-auto h-full w-full max-w-[320px] bg-white shadow-2xl flex flex-col overflow-y-auto">
+            <div data-slbi-ui="account-drawer" className="relative ml-auto h-full w-full max-w-[320px] bg-white shadow-2xl flex flex-col overflow-y-auto">
               <div className="flex items-center justify-between h-16 px-5 border-b border-gray-100 shrink-0">
                 <LogoLink />
               </div>
@@ -525,6 +525,7 @@ export default function Navbar() {
             {/* Panel */}
             <motion.div
               key="panel"
+              data-slbi-ui="account-drawer"
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
@@ -824,6 +825,7 @@ export default function Navbar() {
                 ) : (
                   <div className="flex gap-2">
                     <Link href="/login" onClick={close}
+                      data-slbi-ui="sign-in"
                       className="flex h-[47px] flex-1 items-center justify-center rounded-full bg-[#235B45] text-[13px] font-medium text-white">Sign In</Link>
                     <Link href="/signup" onClick={close}
                       className="flex h-[47px] flex-1 items-center justify-center rounded-full border border-[#DFE7E2] text-[13px] font-medium text-[#244638]">Create Account</Link>
@@ -853,6 +855,7 @@ export default function Navbar() {
                     <Link
                       href="/login"
                       onClick={close}
+                      data-slbi-ui="sign-in"
                       className="w-full flex items-center justify-center gap-2 h-11 bg-brand-dark text-white rounded-[6px] text-sm font-semibold hover:bg-brand-blue transition-colors shadow-sm"
                     >
                       <BrandIcon name="login" size={17} />

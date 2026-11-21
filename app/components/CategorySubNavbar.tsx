@@ -102,11 +102,12 @@ export default function CategorySubNavbar({
   return (
     <section
       id="industry-mega-menu"
+      data-slbi-ui="industry-menu"
       aria-label={activeCategory + " business categories"}
       className="absolute inset-x-0 top-full z-[70] hidden border-t border-stone-100 bg-[#FCFAF6] shadow-[0_26px_65px_rgba(9,31,54,0.15)] lg:block"
     >
       <div className="mx-auto grid w-full max-w-[1800px] grid-cols-[280px_minmax(0,1fr)] px-6 py-5 lg:px-8 2xl:px-10">
-        <div className="flex min-h-[290px] flex-col justify-between rounded-[18px] bg-[#1B3430] p-7 text-white">
+        <div data-slbi-ui="industry-intro" className="flex min-h-[290px] flex-col justify-between rounded-[18px] bg-[#1B3430] p-7 text-white">
           <div>
             <div className="mb-6 inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/15 bg-white/10">
               <BrandIcon name={GROUP_ICON_NAMES[activeCategory] || "category-2"} size={23} color="#F0D9AC" variant="bulk" />
@@ -154,7 +155,7 @@ export default function CategorySubNavbar({
                 onClick={onClose}
                 className="group flex min-h-12 items-center justify-between gap-3 rounded-xl px-3 py-3 text-[13px] font-medium text-stone-600 transition-colors duration-150 hover:bg-[#F8F7F2] hover:text-[#1B3430] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
               >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-[#E0EADB] bg-[#F8F7F2] text-[#36785E] transition-colors group-hover:border-[#C5DCCB] group-hover:bg-[#EAF3ED]">
+                <span data-slbi-ui="industry-icon" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-[#E0EADB] bg-[#F8F7F2] text-[#36785E] transition-colors group-hover:border-[#C5DCCB] group-hover:bg-[#EAF3ED]">
                   <BrandIcon name={serviceIcon(item.name, activeCategory)} size={18} />
                 </span>
                 <span className="min-w-0 flex-1 leading-snug">{item.name}</span>

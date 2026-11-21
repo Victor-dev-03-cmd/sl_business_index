@@ -80,7 +80,7 @@ export default function CategoriesMenu({ initialCategories = [], isMobile = fals
       {isMegaMenuOpen && (
         <>
           <div className="fixed inset-0 top-30 z-[30] bg-black/5" onClick={() => setIsMegaMenuOpen(false)}></div>
-          <div className="absolute top-[calc(100%+0.5rem)] left-1/2 -translate-x-1/2 w-[95vw] max-w-7xl bg-white shadow-2xl p-8 border border-gray-200 rounded-xl z-[40] animate-in fade-in slide-in-from-top-4 duration-300">
+          <div data-slbi-ui="categories-menu" className="absolute top-[calc(100%+0.5rem)] left-1/2 -translate-x-1/2 w-[95vw] max-w-7xl bg-white shadow-2xl p-8 border border-gray-200 rounded-xl z-[40] animate-in fade-in slide-in-from-top-4 duration-300">
             <div className="max-w-full mx-auto">
               <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-300 pb-6">
                 <div>

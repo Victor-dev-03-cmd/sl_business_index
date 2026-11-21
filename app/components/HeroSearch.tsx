@@ -374,7 +374,7 @@ export default function HeroSearch({
               <ChevronDown size={15} className={cn("shrink-0 text-stone-400 transition-transform", areaOpen && "rotate-180")} />
             </button>
             {areaOpen && (
-              <div className="absolute left-0 right-0 top-full z-[100] mt-2 min-w-[250px] overflow-hidden rounded-2xl border border-stone-200 bg-white p-2 text-left shadow-[0_20px_55px_rgba(2,22,44,0.22)] sm:right-auto sm:w-[330px]">
+              <div data-slbi-ui="area-dropdown" className="absolute left-0 right-0 top-full z-[100] mt-2 min-w-[250px] overflow-hidden rounded-2xl border border-stone-200 bg-white p-2 text-left shadow-[0_20px_55px_rgba(2,22,44,0.22)] sm:right-auto sm:w-[330px]">
                 <div className="flex items-center gap-2 rounded-xl border border-stone-200 bg-stone-50 px-3">
                   <Search size={16} className="shrink-0 text-stone-400" />
                   <input
@@ -426,6 +426,7 @@ export default function HeroSearch({
           id={suggestionsId}
           role="region"
           aria-label="Business search suggestions"
+          data-slbi-ui="search-dropdown"
           className="absolute left-0 right-0 top-full z-50 mt-2 max-h-[288px] overflow-y-auto overscroll-auto rounded-xl border border-stone-200 bg-white text-left shadow-[0_14px_42px_rgba(15,23,42,0.14)]"
         >
             {/* Loading indicator */}

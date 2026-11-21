@@ -73,12 +73,13 @@ export default function AuthButton({ user }: { user?: AuthUser | null }) {
         </DropdownMenuTrigger>
 
         <DropdownMenuContent
+          data-slbi-ui="profile-menu"
           className="w-[calc(100vw-2rem)] max-w-[280px] sm:w-64 bg-white p-2 shadow-2xl border border-gray-100 rounded-[6px] z-[200]"
           align="center"
           sideOffset={8}
           collisionPadding={12}
         >
-          <div className="px-3 py-3 mb-2 bg-gray-50/50 rounded-[6px]">
+          <div data-slbi-ui="profile-summary" className="px-3 py-3 mb-2 bg-gray-50/50 rounded-[6px]">
             <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">
               Signed in as
             </p>
@@ -90,7 +91,7 @@ export default function AuthButton({ user }: { user?: AuthUser | null }) {
                 <VerifiedBadge size={10} />
               )}
             </div>
-            <div className="mt-1 inline-flex px-2 py-0.5 rounded-full bg-brand-sand/30 text-brand-text text-[10px] uppercase">
+            <div data-slbi-ui="profile-role" className="mt-1 inline-flex px-2 py-0.5 rounded-full bg-brand-sand/30 text-brand-text text-[10px] uppercase">
               {user.role || "customer"}
             </div>
           </div>
@@ -141,7 +142,7 @@ export default function AuthButton({ user }: { user?: AuthUser | null }) {
           <DropdownMenuSeparator />
 
           <button onClick={handleSignOut} className="w-full">
-            <DropdownMenuItem className="text-red-600 cursor-pointer py-3">
+            <DropdownMenuItem data-slbi-ui="sign-out" className="text-red-600 cursor-pointer py-3">
               <LogOut className="mr-3 h-5 w-5 opacity-70" />
               <span>Sign Out</span>
             </DropdownMenuItem>
@@ -154,6 +155,7 @@ export default function AuthButton({ user }: { user?: AuthUser | null }) {
   return (
     <Link
       href="/login"
+      data-slbi-ui="sign-in"
       className="inline-flex h-11 min-w-[104px] items-center justify-center gap-2 rounded-xl border border-[#2C745A] bg-[#2F765C] px-5 text-[13px] font-bold text-[#FFF9EF] shadow-[0_5px_16px_rgba(28,88,64,0.17)] transition-[background-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-[#CAA36F] hover:bg-[#205640] hover:shadow-[0_8px_22px_rgba(28,88,64,0.24)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D1B078] focus-visible:ring-offset-2"
     >
       Sign In

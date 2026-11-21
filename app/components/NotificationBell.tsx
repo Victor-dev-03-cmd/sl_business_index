@@ -81,7 +81,7 @@ export default function NotificationBell(){
       </button>
     </Dialog.Trigger>
     <Dialog.Portal>
-      <Dialog.Content aria-describedby={undefined} style={{top:position.top,right:position.right,maxHeight:"min(680px, calc(100dvh - "+(position.top+12)+"px))"}} className="fixed z-[250] flex max-h-[min(680px,85dvh)] w-[min(400px,calc(100vw-24px))] flex-col overflow-hidden rounded-2xl border border-[#E1E7E2] bg-white text-[#20382E] shadow-[0_20px_65px_rgba(15,35,25,.16)] outline-none">
+      <Dialog.Content data-slbi-ui="notifications-menu" aria-describedby={undefined} style={{top:position.top,right:position.right,maxHeight:"min(680px, calc(100dvh - "+(position.top+12)+"px))"}} className="fixed z-[250] flex max-h-[min(680px,85dvh)] w-[min(400px,calc(100vw-24px))] flex-col overflow-hidden rounded-2xl border border-[#E1E7E2] bg-white text-[#20382E] shadow-[0_20px_65px_rgba(15,35,25,.16)] outline-none">
         <div className="flex shrink-0 items-start justify-between gap-3 border-b border-stone-100 px-4 pb-3 pt-4 sm:px-5">
           <div><Dialog.Title className="text-lg font-semibold tracking-tight">Notifications</Dialog.Title><p className="mt-1 text-xs text-stone-500">{count?count+' unread updates':'Your latest account updates'}</p></div>
           <button type="button" onClick={()=>setOpen(false)} aria-label="Close notifications" className="grid h-8 w-8 place-items-center rounded-lg text-stone-500 hover:bg-stone-100"><X size={17}/></button>

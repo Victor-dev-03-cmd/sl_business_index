@@ -57,7 +57,7 @@ export default function LiveVisitorsPanel({open,onClose,count}:{open:boolean;onC
   return <Dialog.Root open={open} onOpenChange={value=>{if(!value)onClose()}}>
     <Dialog.Portal>
       <Dialog.Overlay className="fixed inset-0 z-[1000] bg-black/45 backdrop-blur-sm"/>
-      <Dialog.Content className={'fixed z-[1001] flex flex-col overflow-hidden border border-slate-200 bg-[#f8f9fb] shadow-2xl outline-none '+(expanded?'inset-0 h-[100dvh] w-full rounded-none':'left-1/2 top-1/2 max-h-[94dvh] w-[calc(100%-20px)] max-w-[1380px] -translate-x-1/2 -translate-y-1/2 rounded-2xl')}>
+      <Dialog.Content data-slbi-ui="live-panel" className={'fixed z-[1001] flex flex-col overflow-hidden border border-slate-200 bg-[#f8f9fb] shadow-2xl outline-none '+(expanded?'inset-0 h-[100dvh] w-full rounded-none':'left-1/2 top-1/2 max-h-[94dvh] w-[calc(100%-20px)] max-w-[1380px] -translate-x-1/2 -translate-y-1/2 rounded-2xl')}>
         <header className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-4 sm:px-7 sm:py-5">
           <div className="flex min-w-0 items-center gap-3"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-800"><Activity size={23}/></span><div>
           <Dialog.Title className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Live Visitors</Dialog.Title><Dialog.Description className="mt-1 text-xs text-slate-500">SL Business Index · Worldwide activity</Dialog.Description></div></div>
@@ -80,14 +80,14 @@ export default function LiveVisitorsPanel({open,onClose,count}:{open:boolean;onC
                 </div>
                 <div className="flex gap-1">{[{Icon:Minus,label:'Zoom out',fn:()=>zoom(-.25)},{Icon:Plus,label:'Zoom in',fn:()=>zoom(.25)},{Icon:RotateCcw,label:'Reset map',fn:()=>{setView(initial);setSelected(null)}}].map(({Icon,label,fn})=><button key={label} aria-label={label} type="button" onClick={fn} className="grid h-9 w-9 place-items-center rounded-md border border-slate-200 text-slate-700 hover:bg-slate-100"><Icon size={16}/></button>)}</div>
               </div>
-              <div className="relative overflow-hidden bg-[#f3f5f7]">
+              <div data-slbi-ui="live-map" className="relative overflow-hidden bg-[#f3f5f7]">
                 <svg ref={svg} viewBox={bounds.x+' '+bounds.y+' '+bounds.w+' '+bounds.h} aria-label={tab==='island'?'Sri Lanka live activity map':'Worldwide live activity map'} className={'block w-full cursor-grab touch-none select-none active:cursor-grabbing '+(expanded?'h-[56dvh] min-h-[340px] lg:h-[calc(100dvh-290px)]':'h-[420px] sm:h-[540px] lg:h-[565px]')} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={()=>{drag.current=null}} onPointerCancel={()=>{drag.current=null}}>
-                  <defs><pattern id={gid+'grid'} width="18" height="18" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".7" fill="#64748b" opacity=".16"/></pattern></defs>
+                  <defs><pattern id={gid+'grid'} width="18" height="18" patternUnits="userSpaceOnUse"><circle data-slbi-ui="live-grid" cx="1" cy="1" r=".7" fill="#64748b" opacity=".16"/></pattern></defs>
                   <rect x={bounds.x} y={bounds.y} width={bounds.w} height={bounds.h} fill={'url(#'+gid+'grid)'}/>
                   <g transform={'translate('+view.x+' '+view.y+') translate('+cx+' '+cy+') scale('+view.zoom+') translate('+(-cx)+' '+(-cy)+')'}>
                     {tab==='island'?<>
-                      <path d={coastline} fill="#e1e4e8" stroke="#20242a" strokeWidth="1.2" strokeLinejoin="round" vectorEffect="non-scaling-stroke"/>
-                    </>:<image href="/live/world.svg" x="0" y="0" width="960" height="480"/>}
+                      <path data-slbi-ui="live-island" d={coastline} fill="#e1e4e8" stroke="#20242a" strokeWidth="1.2" strokeLinejoin="round" vectorEffect="non-scaling-stroke"/>
+                    </>:<image data-slbi-ui="live-world" href="/live/world.svg" x="0" y="0" width="960" height="480"/>}
                     {items.filter(c=>c.x!==undefined&&c.y!==undefined).map((c,i)=>{const color=colors[i%colors.length],r=tab==='island'?4:5;const active=selected===c.name;return <g key={c.name} transform={'translate('+c.x+' '+c.y+')'} onPointerDown={e=>e.stopPropagation()} onClick={()=>select(c)} role="button" tabIndex={0} aria-label={c.name+' '+c.count+' active connections'} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();select(c)}}} className="cursor-pointer">
                       <circle r={Math.min(20,r+5+Math.log2(c.count+1))} fill={color} opacity={active?.35:.16}/><circle r={r+Math.min(3,Math.log2(c.count+1))} fill={color} stroke="white" strokeWidth="1.6"/><text x="0" y=".5" dominantBaseline="middle" textAnchor="middle" fill="white" fontWeight="700" fontSize={c.count>99?'3.5':'5.5'}>{c.count}</text><title>{c.name}: {c.count} active connections</title>
                       </g>})}

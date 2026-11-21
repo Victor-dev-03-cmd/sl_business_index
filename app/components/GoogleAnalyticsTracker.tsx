@@ -60,12 +60,12 @@ export default function GoogleAnalyticsTracker(){
     return()=>{flags['ga-disable-'+id]=true}
   },[path,consent,blocked,initialized,allowedRoute,valid])
   if(!valid||!initialized||blocked||!allowedRoute||consent!==null)return null
-  return <aside role="region" aria-label="Analytics preferences" className="fixed bottom-[84px] left-3 right-3 z-[80] mx-auto max-w-[460px] rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-800 shadow-lg sm:bottom-5 sm:left-auto sm:right-5">
+  return <aside role="region" aria-label="Analytics preferences" data-slbi-ui="analytics-preferences" className="fixed bottom-[84px] left-3 right-3 z-[80] mx-auto max-w-[460px] rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-800 shadow-lg sm:bottom-5 sm:left-auto sm:right-5">
     <p className="font-semibold">Help us understand visitor activity</p>
     <p className="mt-1 text-xs leading-5 text-slate-600">Optional analytics also shares your approximate country or Sri Lankan province in Live Visitors while you are active. No exact location or identity is shown. <a href="/privacy-policy" className="underline">Privacy policy</a>.</p>
     <div className="mt-3 flex flex-wrap gap-2">
       <button onClick={()=>{setConsent('deny');setPreference('deny')}} className="min-h-10 flex-1 rounded-lg border border-slate-300 px-3 text-xs font-semibold">No thanks</button>
-      <button onClick={()=>{setConsent('allow');setPreference('allow')}} className="min-h-10 flex-1 rounded-lg bg-[#193e32] px-3 text-xs font-semibold text-white">Allow analytics &amp; area</button>
+      <button onClick={()=>{setConsent('allow');setPreference('allow')}} data-slbi-ui="analytics-allow" className="min-h-10 flex-1 rounded-lg bg-[#193e32] px-3 text-xs font-semibold text-white">Allow analytics &amp; area</button>
     </div>
   </aside>
 }
