@@ -2080,3 +2080,15 @@ html[data-slbi-theme="dark"] [data-slbi-hero-map="true"] [stroke="#B4D5AD"]{stro
 html[data-slbi-theme="dark"] [data-slbi-hero-map="true"] [fill="#2F7159"]{fill:#8C3D00!important;}
 html[data-slbi-theme="dark"] [data-slbi-hero-map="true"] [stroke="#E5FFED"]{stroke:#FFF1E2!important;}
 html[data-slbi-theme="dark"] [data-slbi-hero-map="true"] [fill="#E8F6E9"]{fill:#F5F5F5!important;}
+
+/* Component-specific accent wins over generic button aliases.
+   Keep light mode and all layout properties untouched. */
+html[data-slbi-theme="dark"] body .slbi-home-root .slbi-hero-search-form button.slbi-hero-search-button,
+html[data-slbi-theme="dark"] body .slbi-native-home .slbi-hero-search-form button.slbi-hero-search-button{
+ background-color:#FF7900!important;color:#101010!important;
+}
+html[data-slbi-theme="dark"] body .slbi-home-root .slbi-hero-search-form button.slbi-hero-search-button:hover,
+html[data-slbi-theme="dark"] body .slbi-native-home .slbi-hero-search-form button.slbi-hero-search-button:hover{
+ background-color:#FF9633!important;
+}
+html[data-slbi-theme="dark"] body footer[class]{background-color:#181818!important;}
