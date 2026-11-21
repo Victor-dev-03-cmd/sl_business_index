@@ -119,6 +119,7 @@ function HeroDiscoveryGraphic() {
   return (
     <div
       className="relative z-10 mx-auto w-full max-w-[425px] select-none sm:max-w-[490px] lg:max-w-[610px]"
+      data-slbi-hero-map="true"
       role="img"
       aria-label="Neon outline of Sri Lanka with location markers for Jaffna, Kilinochchi, Mullaitivu, Mannar, Anuradhapura, Batticaloa, Kandy, and Colombo"
     >

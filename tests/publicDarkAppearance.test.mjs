@@ -31,3 +31,12 @@ test('Header appearance shortcut sits next to the notification bell and shares t
  assert.ok(css.includes('html[data-slbi-theme="dark"] .slbi-header-theme-toggle .slbi-theme-sun'));
  assert.ok(css.includes('@media(max-width:374px)'));
 });
+
+test('dark surface and map colors override production utility specificity',()=>{
+ const css=read('app/public-dark-theme.css');
+ assert.match(css,/\.slbi-home-hero\{background:#181818!important/);
+ assert.match(css,/\.slbi-hero-search-form\{background-color:#222222!important/);
+ assert.match(css,/\[class~="bg-white"\][\s\S]*?\{background-color:#222222!important/);
+ assert.ok(read('app/components/HeroDiscoveryGraphic.tsx').includes('data-slbi-hero-map="true"'));
+ assert.ok(css.includes('[stop-color="#67E2B0"]{stop-color:#FF7900!important;'));
+});
