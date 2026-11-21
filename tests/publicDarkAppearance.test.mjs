@@ -24,7 +24,7 @@ test('Header appearance shortcut sits next to the notification bell and shares t
  const nav=read('app/components/Navbar.tsx'),control=read('app/components/PublicAppearance.tsx'),css=read('app/components/header-appearance.css');
  assert.match(nav,/<NotificationBell \/>\s*<HeaderThemeToggle \/>/);
  assert.ok(control.includes("saveMode(resolvedDark()?'light':'dark')"));
- assert.ok(control.includes("media.addEventListener('change',sync)"));
+ assert.ok(control.includes("system.addEventListener('change',update)"));
  assert.ok(control.includes("window.addEventListener(changeEvent,sync)"));
  assert.ok(control.includes('Switch to light mode'));
  assert.ok(control.includes('Switch to dark mode'));
@@ -36,7 +36,20 @@ test('dark surface and map colors override production utility specificity',()=>{
  const css=read('app/public-dark-theme.css');
  assert.match(css,/\.slbi-home-hero\{background:#181818!important/);
  assert.match(css,/\.slbi-hero-search-form\{background-color:#222222!important/);
- assert.match(css,/\[class~="bg-white"\][\s\S]*?\{background-color:#222222!important/);
+ assert.match(css,/\.bg-white(?=[,\s{])[\s\S]*?\{background-color:#222222!important/);
  assert.ok(read('app/components/HeroDiscoveryGraphic.tsx').includes('data-slbi-hero-map="true"'));
  assert.ok(css.includes('[stop-color="#67E2B0"]{stop-color:#FF7900!important;'));
+});
+
+test('theme switches avoid duplicate writes and transient color animation',()=>{
+ const css=read('app/public-dark-theme.css'),control=read('app/components/PublicAppearance.tsx');
+ assert.ok(control.includes('if(root.dataset.slbiTheme===next)return false'));
+ assert.ok(control.includes('suppressSwitchTransitions()'));
+ assert.ok(control.includes('requestAnimationFrame(releaseSwitch)'));
+ assert.ok(control.includes("removeAttribute('data-slbi-theme-switching')"));
+ assert.ok(!control.includes('window.addEventListener(changeEvent,update)'));
+ assert.equal((control.match(/localStorage\.getItem\(key\)/g)||[]).length,1);
+ assert.match(css,/html\[data-slbi-theme-switching\] \*::after\s*\{\s*transition-property:none!important/);
+ assert.ok(!css.includes('[class~="bg-white"]'));
+ assert.ok(css.includes('.bg-\\[\\#FCFAF6\\]'));
 });
