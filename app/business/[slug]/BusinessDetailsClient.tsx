@@ -76,6 +76,9 @@ interface Review {
 
 export default function BusinessDetailsClient({ business, galleryUrls, services }: Props) {
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewSummary, setReviewSummary] = useState<{count:number;average:number|null}|null>(null);
+  const turnstileContainerRef = useRef<HTMLDivElement>(null);
+  const [turnstileSize, setTurnstileSize] = useState<"normal" | "compact" | null>(null);
   const [photoIndex, setPhotoIndex] = useState<number | null>(null);
   // Registration cover image stays in discovery cards, not the public profile.
   const photos = [...new Set(galleryUrls.filter(url => Boolean(url)))];
@@ -115,27 +118,67 @@ export default function BusinessDetailsClient({ business, galleryUrls, services 
   const [showReportModal, setShowReportModal] = useState(false);
 
   useEffect(() => {
-    fetchReviews();
+    let active = true;
+    setReviewsLoading(true);
+    setReviewSummary(null);
+    setReviews([]);
+    void (async () => {
+      try {
+        // Never trust the stale denormalized counter on the business row.
+        // Both conditions exclude pending/rejected reviews, even for staff.
+        const {data, count, error} = await supabase
+          .from("reviews")
+          .select("id,user_name,rating,comment,created_at,review_replies(reply_text, created_at)", {count:"exact"})
+          .eq("business_id", business.id)
+          .eq("is_approved", true)
+          .eq("moderation_status", "approved")
+          .order("created_at", {ascending:false});
+        if (error || count === null) throw error || new Error("Review count unavailable");
+        const published = (data || []) as Review[];
+        let average:number|null = null;
+        if (count > 0 && published.length === count) {
+          average = published.reduce((sum, review) => sum + Number(review.rating), 0) / count;
+        } else if(count > 0) {
+          // PostgREST may cap returned rows; count every rating bucket instead
+          // of presenting a partial-page average as the complete result.
+          const buckets=await Promise.all([1,2,3,4,5].map(rating=>supabase.from("reviews").select("id",{count:"exact",head:true}).eq("business_id",business.id).eq("is_approved",true).eq("moderation_status","approved").eq("rating",rating)));
+          if(buckets.every(bucket=>!bucket.error && bucket.count!==null) && buckets.reduce((sum,bucket)=>sum+(bucket.count||0),0)===count){
+            average=buckets.reduce((sum,bucket,index)=>sum+(index+1)*(bucket.count||0),0)/count;
+          }
+        }
+        if(active){setReviews(published);setReviewSummary({count,average:average!==null&&Number.isFinite(average)?average:null});}
+      } catch (error) {
+        console.error("Error fetching reviews:", error);
+      } finally {
+        if(active)setReviewsLoading(false);
+      }
+    })();
     recordView();
+    return()=>{active=false};
   }, [business.id]);
 
-  const fetchReviews = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("reviews")
-        .select("*, review_replies(reply_text, created_at)")
-        .eq("business_id", business.id)
-        .eq("is_approved", true)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      setReviews(data || []);
-    } catch (error) {
-      console.error("Error fetching reviews:", error);
-    } finally {
-      setReviewsLoading(false);
+  useEffect(()=>{
+    if(!secureLeadsEnabled||!turnstileSiteKey)return;
+    const container=turnstileContainerRef.current;
+    if(!container)return;
+    let previous:"normal"|"compact"|null=null;
+    const update=()=>{
+      const next=container.clientWidth>=300?"normal":"compact";
+      if(next!==previous){
+        previous=next;
+        setTurnstileToken("");
+        setTurnstileSize(next);
+      }
+    };
+    update();
+    if(typeof ResizeObserver==="undefined"){
+      window.addEventListener("resize",update);
+      return()=>window.removeEventListener("resize",update);
     }
-  };
+    const observer=new ResizeObserver(update);
+    observer.observe(container);
+    return()=>observer.disconnect();
+  },[secureLeadsEnabled,turnstileSiteKey]);
 
   const recordView = async () => {
     try {
@@ -306,7 +349,7 @@ export default function BusinessDetailsClient({ business, galleryUrls, services 
 
   // Display only business-supplied contact and verification details.
   const verified = Boolean(
-    business.can_show_badge && (business.is_verified || business.verification_status === "verified")
+    business.status === "approved" && business.can_show_badge === true && (business.is_verified === true || business.verification_status === "verified")
   );
   const lat = Number(business.latitude);
   const lng = Number(business.longitude);
@@ -335,8 +378,7 @@ export default function BusinessDetailsClient({ business, galleryUrls, services 
   const digits = (business.phone || "").replace(/\D/g,"");
   const whatsappNumber = /^0\d{9}$/.test(digits) ? "94"+digits.slice(1) : /^94\d{9}$/.test(digits) ? digits : /^\+/.test(business.phone || "") && /^[1-9]\d{7,14}$/.test(digits) ? digits : null;
   const whatsappHref = whatsappNumber ? "https://wa.me/"+whatsappNumber : null;
-  const hasRating = Number.isFinite(Number(business.rating)) && Number(business.rating) > 0 &&
-    (business.reviews_count || 0) > 0;
+  const hasRating = reviewSummary !== null && reviewSummary.count > 0 && reviewSummary.average !== null;
 
   const shareBusiness = async () => {
     const url = window.location.href;
@@ -362,7 +404,7 @@ export default function BusinessDetailsClient({ business, galleryUrls, services 
 
 
   const inputStyle = "w-full rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-sm text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-500 focus:ring-1 focus:ring-neutral-400";
-  const action = "inline-flex min-h-11 min-w-0 items-center justify-start gap-2 rounded-lg px-2.5 text-sm font-medium text-neutral-800 hover:bg-neutral-100 focus-visible:outline-2 focus-visible:outline-neutral-600";
+  const action = "flex min-h-[76px] w-full min-w-0 flex-col items-center justify-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-1 py-2 text-center text-[11px] font-medium leading-tight text-neutral-800 transition-colors hover:border-neutral-300 hover:bg-neutral-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-600 sm:text-xs";
   const logDirections=()=>void logEvent(business.id,"location_click",business.address?.split(",").pop()?.trim()||"Unknown");
   const advancePhoto=(direction:number)=>setPhotoIndex(index=>index===null||!photos.length?null:(index+direction+photos.length)%photos.length);
   const bentoTiles=photos.slice(0,4);
@@ -379,7 +421,7 @@ export default function BusinessDetailsClient({ business, galleryUrls, services 
         </nav>
         <div className="grid items-start gap-y-7 lg:grid-cols-[minmax(0,2.7fr)_minmax(0,1fr)] lg:gap-x-8 xl:gap-x-12">
           <div className="min-w-0">
-            <section aria-labelledby="business-profile-title" className="grid items-center gap-4 border-b border-neutral-200 pb-6 sm:grid-cols-[minmax(100px,144px)_minmax(0,1fr)] lg:gap-5 xl:grid-cols-[minmax(112px,148px)_minmax(0,1fr)_minmax(0,282px)]">
+            <section aria-labelledby="business-profile-title" className="grid items-center gap-4 border-b border-neutral-200 pb-6 sm:grid-cols-[minmax(100px,144px)_minmax(0,1fr)] lg:gap-5 xl:grid-cols-[minmax(112px,148px)_minmax(0,1fr)_310px]">
               <div data-profile-logo className="relative aspect-square w-[104px] overflow-hidden rounded-xl border border-neutral-100 bg-neutral-50 sm:w-full">
                 {business.logo_url?<Image src={business.logo_url} alt={business.name+" logo"} fill priority sizes="(max-width:639px) 104px, 148px" className="object-contain p-2"/>:
                   <div className="flex h-full flex-col items-center justify-center gap-2 text-neutral-400"><Building2 size={36} strokeWidth={1.4}/><span className="text-[11px]">No logo</span></div>}
@@ -388,19 +430,25 @@ export default function BusinessDetailsClient({ business, galleryUrls, services 
                 {business.category&&<p className="break-words text-xs font-medium text-neutral-600 sm:text-sm">{business.category}</p>}
                 <h1 id="business-profile-title" className="break-words text-[clamp(1.45rem,2.1vw,2.15rem)] font-semibold leading-tight tracking-tight">{business.name}</h1>
                 <div className="space-y-1.5 text-sm">
-                  {hasRating?<a href="#reviews" className="flex flex-wrap items-center gap-2 hover:underline"><Star size={16} className="fill-neutral-800 text-neutral-800"/><span className="font-medium">{Number(business.rating).toFixed(1)}</span><span className="text-neutral-500">({business.reviews_count} reviews)</span></a>:<a href="#reviews" className="flex items-center gap-2 text-neutral-600 hover:underline"><Star size={16}/> No reviews yet</a>}
-                  {business.is_registered&&<p className="flex items-center gap-2 text-neutral-600"><ShieldCheck size={16}/> Registration provided</p>}
-                  {verified&&<p className="flex items-center gap-2 text-neutral-700"><ShieldCheck size={16}/> Verified business</p>}
+                  <a href="#reviews" className="flex min-w-0 flex-wrap items-center gap-1.5 text-sm text-neutral-700 hover:underline">
+                    <Star size={17} aria-hidden="true" className={"shrink-0 "+(hasRating?"fill-amber-400 text-amber-500":"text-neutral-400")}/>
+                    {reviewsLoading?<span className="text-neutral-500">Loading reviews…</span>:reviewSummary===null?<span className="text-neutral-500">Reviews unavailable</span>:reviewSummary.count===0?<span>No reviews yet</span>:<>
+                      {reviewSummary.average!==null&&<span className="font-semibold tabular-nums text-neutral-900">{reviewSummary.average.toFixed(1)}</span>}
+                      <span className="text-neutral-500">({reviewSummary.count} {reviewSummary.count===1?"review":"reviews"})</span>
+                    </>}
+                  </a>
+                  {business.is_registered&&!verified&&<p className="flex items-center gap-2 text-neutral-600"><ShieldCheck size={16} className="shrink-0"/> Registration provided</p>}
+                  {verified&&<div className="flex items-center gap-2 text-neutral-700"><VerifiedBadge size={13}/> <span>Verified business</span></div>}
                   {business.owner_name&&<p className="flex items-center gap-2 pt-1 text-base font-medium"><UserRound size={19} className="shrink-0 text-neutral-500"/><span className="break-words">{business.owner_name}</span></p>}
                 </div>
               </div>
-              <div aria-label="Business actions" className="grid grid-cols-2 gap-1 min-[420px]:grid-cols-3 sm:col-span-2 xl:col-span-1">
-                {whatsappHref&&<a href={whatsappHref} target="_blank" rel="noopener noreferrer" className={action}><MessageCircle size={18} className="shrink-0"/> WhatsApp</a>}
-                {canCall&&<a href={"tel:"+business.phone} onClick={recordCall} className={action}><Phone size={17} className="shrink-0"/> Call me</a>}
-                {directionsHref&&<a href={directionsHref} target="_blank" rel="noopener noreferrer" onClick={logDirections} className={action}><Navigation size={17} className="shrink-0"/> Directions</a>}
-                <a href="#enquiry" className={action}><MessageSquare size={17} className="shrink-0"/> Enquire</a>
-                <button type="button" onClick={handleToggleSaved} aria-pressed={isSaved} className={action}><Bookmark size={17} className={"shrink-0 "+(isSaved?"fill-neutral-800":"")}/>{isSaved?'Saved':'Save'}</button>
-                <button type="button" onClick={shareBusiness} className={action}><Share2 size={17} className="shrink-0"/> Share</button>
+              <div aria-label="Business actions" className="grid w-full min-w-0 grid-cols-3 auto-rows-fr gap-2 sm:col-span-2 xl:col-span-1">
+                {whatsappHref&&<a href={whatsappHref} target="_blank" rel="noopener noreferrer" className={action}><Image src="/business-actions/whatsapp.svg" alt="" width={23} height={23} unoptimized className="h-6 w-6 shrink-0 object-contain"/><span className="whitespace-nowrap">WhatsApp</span></a>}
+                {canCall&&<a href={"tel:"+business.phone} onClick={recordCall} className={action}><span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[#16A34A] text-white"><Phone size={15} strokeWidth={2.5} aria-hidden="true"/></span><span className="whitespace-nowrap">Call me</span></a>}
+                {directionsHref&&<a href={directionsHref} target="_blank" rel="noopener noreferrer" onClick={logDirections} className={action}><Image src="/business-actions/google-maps.svg" alt="" width={24} height={24} unoptimized className="h-6 w-6 shrink-0 object-contain"/><span className="whitespace-nowrap">Directions</span></a>}
+                <a href="#enquiry" className={action}><MessageSquare size={24} strokeWidth={1.9} aria-hidden="true" className="shrink-0 text-blue-600"/><span className="whitespace-nowrap">Enquire</span></a>
+                <button type="button" onClick={handleToggleSaved} aria-pressed={isSaved} className={action}><Bookmark size={24} strokeWidth={1.9} aria-hidden="true" className={"shrink-0 text-amber-600 "+(isSaved?"fill-amber-400":"")}/><span className="whitespace-nowrap">{isSaved?'Saved':'Save'}</span></button>
+                <button type="button" onClick={shareBusiness} className={action}><Share2 size={24} strokeWidth={1.9} aria-hidden="true" className="shrink-0 text-slate-600"/><span className="whitespace-nowrap">Share</span></button>
               </div>
             </section>
 
@@ -473,13 +521,13 @@ export default function BusinessDetailsClient({ business, galleryUrls, services 
                   <span>I agree to send my name, email, phone and message to this business for responding to my enquiry. Please do not send sensitive IDs or payment details.</span>
                 </label>
                 {secureLeadsEnabled && turnstileSiteKey && (
-                  <div className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-[#FAFAFA] p-3">
-                    <Turnstile key={turnstileReset} siteKey={turnstileSiteKey}
-                      options={{ action: "business_enquiry", size: "flexible" }}
+                  <div ref={turnstileContainerRef} data-enquiry-turnstile className="flex w-full min-w-0 max-w-full items-center justify-center py-1">
+                    {turnstileSize!==null&&<Turnstile key={turnstileReset+"-"+turnstileSize} siteKey={turnstileSiteKey}
+                      options={{ action: "business_enquiry", size: turnstileSize, theme: "light" }}
                       onSuccess={token => setTurnstileToken(token)}
                       onExpire={() => setTurnstileToken("")}
                       onError={() => setTurnstileToken("")}
-                    />
+                    />}
                   </div>
                 )}
                 {secureLeadsEnabled && !turnstileSiteKey && (
@@ -506,7 +554,7 @@ export default function BusinessDetailsClient({ business, galleryUrls, services 
                 <div>
                   
                   <h2 className="text-xl sm:text-2xl font-semibold tracking-tight text-[#202124]">Customer reviews</h2>
-                  <p className="mt-2 text-[13px] text-[#6B7280]">{reviews.length} published {reviews.length === 1 ? "review" : "reviews"}</p>
+                  <p className="mt-2 text-[13px] text-[#6B7280]">{reviewSummary === null ? (reviewsLoading ? "Loading reviews…" : "Review count unavailable") : reviewSummary.count+" published "+(reviewSummary.count===1?"review":"reviews")}</p>
                 </div>
                 <a href="#write-review" className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-[#E5E7EB] bg-[#FAFAFA] px-4 text-[12px] font-semibold text-[#262626] hover:bg-[#F5F5F5]">
                   <MessageSquare size={15}/> Write a review
@@ -515,6 +563,8 @@ export default function BusinessDetailsClient({ business, galleryUrls, services 
 
               {reviewsLoading ? (
                 <div role="status" className="py-9 text-center text-[13px] text-[#6B7280]"><Loader2 size={22} className="mx-auto mb-2 animate-spin"/>Loading reviews…</div>
+              ) : reviewSummary === null ? (
+                <p className="py-6 text-sm text-neutral-500">Reviews could not be loaded. Please refresh to try again.</p>
               ) : reviews.length === 0 ? (
                 <div className="mt-6 flex items-center gap-4 rounded-lg border border-dashed border-[#E5E7EB] bg-[#FAFAFA] p-5">
                   <MessageSquare size={23} className="shrink-0 text-[#737373]"/>
