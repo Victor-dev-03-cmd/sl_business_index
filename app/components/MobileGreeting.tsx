@@ -25,7 +25,7 @@ export default function MobileGreeting({username,fullName,email}:Props){
   const name=(fromProfile||email?.split('@')[0]?.trim()||'Explorer').slice(0,90);
   return <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 sm:hidden"
     aria-label="Welcome to SL Business Index">
-    <span className="block truncate text-[15px] font-semibold leading-[1.3] tracking-[-.025em] text-[#172D27]"
+    <span data-slbi-mobile-username="true" className="block truncate text-[15px] font-semibold leading-[1.3] tracking-[-.025em] text-[#172D27]"
       title={isMobileHome ? 'Welcome, '+name : 'Hello, '+name}>
       {isMobileHome ? <>Welcome, {name}</> : <>Hello, {name}</>}
     </span>

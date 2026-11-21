@@ -122,3 +122,14 @@ test('Nearby dark palette prioritizes readable text and role-specific action col
  assert.ok(css.includes('button[aria-pressed="false"]'));
  assert.ok(source.includes('tileProvider="osm"'));
 });
+
+test('phone username stays bright in dark mode without changing desktop or light appearance',()=>{
+ const source=read('app/components/MobileGreeting.tsx'), css=read('app/public-dark-theme.css');
+ assert.ok(source.includes('data-slbi-mobile-username="true"'));
+ assert.ok(source.includes('sm:hidden'));
+ const block=css.slice(css.indexOf('/* Only phone header account name:'));
+ assert.ok(block.includes('@media (max-width:639px)'));
+ assert.ok(block.includes('html[data-slbi-theme="dark"] body header'));
+ assert.ok(block.includes('body:has(#slbi-native-mobile-home)'));
+ assert.ok(block.includes('color:#FFFFFF!important'));
+});

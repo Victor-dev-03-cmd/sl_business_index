@@ -2230,3 +2230,12 @@ html[data-slbi-theme="dark"] body [data-slbi-nearby-map] #nearby-map-appearance 
 html[data-slbi-theme="dark"] body [data-slbi-nearby-map] #nearby-map-appearance button > span > span:first-child{color:#F5F5F5!important;}
 html[data-slbi-theme="dark"] body [data-slbi-nearby-map] #nearby-map-appearance button > span > span:last-child{color:#B5B5B5!important;}
 html[data-slbi-theme="dark"] body [data-slbi-nearby-map] #nearby-map-appearance button svg{color:#FF9633!important;}
+
+/* Only phone header account name: outrank legacy homepage-specific colors. */
+@media (max-width:639px){
+  html[data-slbi-theme="dark"] body header [aria-label="Welcome to SL Business Index"] > [data-slbi-mobile-username="true"],
+  html[data-slbi-theme="dark"] body:has(.slbi-home-root) header [aria-label="Welcome to SL Business Index"] > [data-slbi-mobile-username="true"][title],
+  html[data-slbi-theme="dark"] body:has(#slbi-native-mobile-home) header[data-home-mobile="true"] [aria-label="Welcome to SL Business Index"] > [data-slbi-mobile-username="true"][title]{
+    color:#FFFFFF!important;
+  }
+}
