@@ -2,6 +2,7 @@ import { Inter, Noto_Sans_Tamil, Noto_Sans_Sinhala } from "next/font/google";
 import RootClientLayout from "./RootClientLayout";
 import "./globals.css";
 import "./public-dark-theme.css";
+import "./info-dark-theme.css";
 
 const inter = Inter({
   subsets: ["latin"],

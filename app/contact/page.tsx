@@ -43,7 +43,7 @@ const contactPageSchema = {
 const whatsappCard = "inline-flex min-h-12 items-center justify-center gap-2 rounded-[12px] bg-[#e9cb93] px-6 text-[13px] font-bold text-[#223f2d] transition-colors hover:bg-[#ffddab] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#f0d8a3]";
 
 export default function ContactPage() {
-  return <main className="min-h-screen bg-[#fcfbf7] font-[family-name:var(--font-inter)] text-[#1b3929]">
+  return <main data-slbi-info-page="contact" className="min-h-screen bg-[#fcfbf7] font-[family-name:var(--font-inter)] text-[#1b3929]">
     <script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(contactPageSchema)}}/>
     <section className="relative isolate overflow-hidden border-b border-[#d9e7d8] bg-[#15392b]">
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-25 [background-image:radial-gradient(#8ebda0_1px,transparent_1px)] [background-size:28px_28px]"/>

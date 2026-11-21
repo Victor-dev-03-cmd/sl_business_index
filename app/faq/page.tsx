@@ -16,7 +16,7 @@ const schema = {
 
 function FAQArtwork() {
   return (
-    <svg viewBox="0 0 540 365" xmlns="http://www.w3.org/2000/svg" role="img"
+    <svg data-slbi-info-art="faq" viewBox="0 0 540 365" xmlns="http://www.w3.org/2000/svg" role="img"
       aria-labelledby="faq-hero-illustration" className="h-auto w-full">
       <title id="faq-hero-illustration">Questions leading to helpful business discovery and growth answers</title>
       <defs>
@@ -62,7 +62,7 @@ function FAQArtwork() {
 
 export default function FAQPage() {
   return (
-    <main className="min-h-screen bg-[#fbfcf8] font-[family-name:var(--font-inter)] text-[#1b402f]">
+    <main data-slbi-info-page="faq" className="min-h-screen bg-[#fbfcf8] font-[family-name:var(--font-inter)] text-[#1b402f]">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }}/>
       <section className="relative overflow-hidden border-b border-[#e3ebdf] bg-[radial-gradient(ellipse_at_80%_25%,#ebf5e9_0%,#fbfcf8_57%)]">
         <div className="mx-auto grid max-w-[1440px] items-center gap-10 px-5 pb-16 pt-14 sm:px-8 sm:pt-20 lg:grid-cols-[1fr_.86fr] lg:gap-14 lg:px-12 lg:py-24">

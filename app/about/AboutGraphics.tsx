@@ -13,7 +13,7 @@ export function GrowthConstellation() {
   );
 
   return (
-    <svg viewBox="0 0 730 568" xmlns="http://www.w3.org/2000/svg" role="img"
+    <svg data-slbi-info-art="constellation" viewBox="0 0 730 568" xmlns="http://www.w3.org/2000/svg" role="img"
       aria-labelledby="about-constellation-title about-constellation-desc" className="block h-auto w-full">
       <title id="about-constellation-title">SL Business Index connected growth operating system</title>
       <desc id="about-constellation-desc">A central business workspace connected conceptually to discovery, engagement, growth, campaigns, trust and insights.</desc>
@@ -91,7 +91,7 @@ export function GrowthConstellation() {
 
 export function GrowthJourneyIllustration() {
   return (
-    <svg viewBox="0 0 670 365" role="img" aria-labelledby="about-journey-title about-journey-desc"
+    <svg data-slbi-info-art="journey" viewBox="0 0 670 365" role="img" aria-labelledby="about-journey-title about-journey-desc"
       xmlns="http://www.w3.org/2000/svg" className="h-auto w-full">
       <title id="about-journey-title">Connected local business discovery and growth journey</title>
       <desc id="about-journey-desc">A listing card leads to a customer connection, which leads to useful business insights and improvements.</desc>
@@ -139,7 +139,7 @@ export function GrowthJourneyIllustration() {
 
 export function PrivacyShieldIllustration() {
   return (
-    <svg viewBox="0 0 500 300" role="img" aria-labelledby="about-privacy-title" className="h-auto w-full" xmlns="http://www.w3.org/2000/svg">
+    <svg data-slbi-info-art="privacy" viewBox="0 0 500 300" role="img" aria-labelledby="about-privacy-title" className="h-auto w-full" xmlns="http://www.w3.org/2000/svg">
       <title id="about-privacy-title">Separate privacy-aware growth analytics and operational security</title>
       <defs><linearGradient id="about-shield-fill" x1="0" y1="0" x2="500" y2="300">
         <stop stopColor="#1b4534"/><stop offset="1" stopColor="#346d4f"/>

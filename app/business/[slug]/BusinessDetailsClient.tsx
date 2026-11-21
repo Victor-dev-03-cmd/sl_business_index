@@ -442,13 +442,13 @@ export default function BusinessDetailsClient({ business, galleryUrls, services 
                   {business.owner_name&&<p className="flex items-center gap-2 pt-1 text-base font-medium"><UserRound size={19} className="shrink-0 text-neutral-500"/><span className="break-words">{business.owner_name}</span></p>}
                 </div>
               </div>
-              <div aria-label="Business actions" className="grid w-full min-w-0 grid-cols-3 auto-rows-fr gap-2 sm:col-span-2 xl:col-span-1">
+              <div data-slbi-business-actions="true" aria-label="Business actions" className="grid w-full min-w-0 grid-cols-3 auto-rows-fr gap-2 sm:col-span-2 xl:col-span-1">
                 {whatsappHref&&<a href={whatsappHref} target="_blank" rel="noopener noreferrer" className={action}><Image src="/business-actions/whatsapp.svg" alt="" width={23} height={23} unoptimized className="h-6 w-6 shrink-0 object-contain"/><span className="whitespace-nowrap">WhatsApp</span></a>}
-                {canCall&&<a href={"tel:"+business.phone} onClick={recordCall} className={action}><span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[#16A34A] text-white"><Phone size={15} strokeWidth={2.5} aria-hidden="true"/></span><span className="whitespace-nowrap">Call me</span></a>}
+                {canCall&&<a href={"tel:"+business.phone} onClick={recordCall} className={action}><span data-slbi-action-icon="call" className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[#16A34A] text-white"><Phone size={15} strokeWidth={2.5} aria-hidden="true"/></span><span className="whitespace-nowrap">Call me</span></a>}
                 {directionsHref&&<a href={directionsHref} target="_blank" rel="noopener noreferrer" onClick={logDirections} className={action}><Image src="/business-actions/google-maps.svg" alt="" width={24} height={24} unoptimized className="h-6 w-6 shrink-0 object-contain"/><span className="whitespace-nowrap">Directions</span></a>}
-                <a href="#enquiry" className={action}><MessageSquare size={24} strokeWidth={1.9} aria-hidden="true" className="shrink-0 text-blue-600"/><span className="whitespace-nowrap">Enquire</span></a>
-                <button type="button" onClick={handleToggleSaved} aria-pressed={isSaved} className={action}><Bookmark size={24} strokeWidth={1.9} aria-hidden="true" className={"shrink-0 text-amber-600 "+(isSaved?"fill-amber-400":"")}/><span className="whitespace-nowrap">{isSaved?'Saved':'Save'}</span></button>
-                <button type="button" onClick={shareBusiness} className={action}><Share2 size={24} strokeWidth={1.9} aria-hidden="true" className="shrink-0 text-slate-600"/><span className="whitespace-nowrap">Share</span></button>
+                <a href="#enquiry" className={action}><MessageSquare data-slbi-action-icon="enquiry" size={24} strokeWidth={1.9} aria-hidden="true" className="shrink-0 text-blue-600"/><span className="whitespace-nowrap">Enquire</span></a>
+                <button type="button" onClick={handleToggleSaved} aria-pressed={isSaved} className={action}><Bookmark data-slbi-action-icon="save" size={24} strokeWidth={1.9} aria-hidden="true" className={"shrink-0 text-amber-600 "+(isSaved?"fill-amber-400":"")}/><span className="whitespace-nowrap">{isSaved?'Saved':'Save'}</span></button>
+                <button type="button" onClick={shareBusiness} className={action}><Share2 data-slbi-action-icon="share" size={24} strokeWidth={1.9} aria-hidden="true" className="shrink-0 text-slate-600"/><span className="whitespace-nowrap">Share</span></button>
               </div>
             </section>
 

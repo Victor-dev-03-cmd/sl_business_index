@@ -134,7 +134,7 @@ const stages = [
 
 export default function AboutPage() {
   return (
-    <main className="min-h-screen overflow-x-clip bg-[#fbfaf6] font-[family-name:var(--font-inter)] text-[#1b382c]">
+    <main data-slbi-info-page="about" className="min-h-screen overflow-x-clip bg-[#fbfaf6] font-[family-name:var(--font-inter)] text-[#1b382c]">
       {/* HERO · product direction, illustrated with locally rendered SVG vectors */}
       <section className="relative isolate overflow-hidden border-b border-[#e4e9df] bg-[radial-gradient(ellipse_at_75%_28%,#ecf4e9_0%,#fbfaf6_52%,#fffdf9_100%)]">
         <div aria-hidden="true" className="pointer-events-none absolute left-0 top-0 h-full w-[40%] bg-[linear-gradient(90deg,rgba(224,237,222,.2),transparent)]"/>

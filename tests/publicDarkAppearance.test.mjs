@@ -76,3 +76,20 @@ test('late-mounted public surfaces have explicit dark palette hooks',()=>{
  assert.ok(css.includes('[data-slbi-ui="live-world"]{filter:'));
  assert.ok(css.includes('[data-slbi-ui="profile-menu"] [role="menuitem"]'));
 });
+
+
+test('information pages and SVG artwork have scoped dark styling',()=>{
+ const css=read('app/info-dark-theme.css'),root=read('app/layout.tsx');
+ assert.ok(root.includes('import "./info-dark-theme.css"'));
+ for(const p of ['about','faq','contact'])assert.ok(read('app/'+p+'/page.tsx').includes('data-slbi-info-page="'+p+'"'));
+ for(const id of ['constellation','journey','privacy'])assert.ok(read('app/about/AboutGraphics.tsx').includes('data-slbi-info-art="'+id+'"'));
+ assert.ok(read('app/faq/page.tsx').includes('data-slbi-info-art="faq"'));
+ assert.ok(css.includes('text[fill="#183a2c"]'));
+ assert.ok(css.includes('[stop-color="#d6ebda"]'));
+ assert.ok(css.includes('[aria-label="FAQ categories"]'));
+ assert.ok(css.includes('outline:2px solid #FF9633!important'));
+ const business=read('app/business/[slug]/BusinessDetailsClient.tsx');
+ for(const id of ['call','enquiry','save','share'])assert.ok(business.includes('data-slbi-action-icon="'+id+'"'));
+ assert.ok(css.includes('[data-slbi-action-icon="call"]{background-color:#16A34A!important'));
+ assert.ok(css.includes('img[src*="/business-actions/"]{filter:none!important'));
+});
