@@ -33,6 +33,7 @@ const primaryNav:NavItem[]=[
   {name:'Growth Insights',href:'/vendor/insights',icon:'status-up'},
 ];
 const growthNav:NavItem[]=[
+  {name:'Gallery & Services',href:'/vendor/gallery-services',icon:'image'},
   {name:'Growth OS',href:'/vendor/growth',icon:'chart'},
   {name:'Marketing Studio',href:'/vendor/marketing',icon:'flash'},
   {name:'QR Studio',href:'/vendor/qr-code',icon:'scan-barcode'},

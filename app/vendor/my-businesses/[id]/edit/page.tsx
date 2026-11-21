@@ -6,7 +6,8 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
 import { notFound, useRouter, useParams } from 'next/navigation';
 import EditBusinessForm from './EditBusinessForm';
-import BusinessProfileEditor from './BusinessProfileEditor';
+import Link from 'next/link';
+import { Images, ChevronRight } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 
 export default function EditBusinessPage() {
@@ -73,7 +74,7 @@ export default function EditBusinessPage() {
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <EditBusinessForm business={business} />
       </div>
-      <div className="mt-6"><BusinessProfileEditor key={id} businessId={id}/></div>
+      <Link href={"/vendor/gallery-services?business="+encodeURIComponent(id)} className="mt-6 flex items-center gap-4 rounded-xl border border-neutral-200 bg-white p-5 hover:border-orange-300"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-orange-50 text-orange-600"><Images size={22}/></span><span className="min-w-0 flex-1"><span className="block font-semibold">Gallery &amp; Services</span><span className="mt-1 block text-sm text-neutral-500">Manage photos and service details on your public profile.</span></span><ChevronRight size={19}/></Link>
     </div>
   );
 }

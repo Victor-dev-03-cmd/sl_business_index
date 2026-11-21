@@ -165,6 +165,7 @@ export default function MyBusinessesPage() {
             <p className="text-[12px] text-slate-500">Manage your directory presence, listing details and publication status.</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <Link href="/vendor/gallery-services" className={button}><IconsaxIcon name="image" size={16}/> Gallery &amp; Services</Link>
             <button type="button" onClick={() => void refetch()} disabled={loading || isFetching} className={button}>
               <IconsaxIcon name="refresh" size={15} /> Refresh
             </button>
@@ -313,6 +314,7 @@ export default function MyBusinessesPage() {
                             <div className="flex items-center justify-end gap-1.5">
                               <button type="button" onClick={() => setSelectedId(String(b.id))} className={button} aria-label={'View details of ' + b.name}><IconsaxIcon name="eye" size={14} /> Details</button>
                               <Link className={button} href={`/vendor/my-businesses/${encodeURIComponent(String(b.id))}/edit`}><IconsaxIcon name="setting-2" size={14} /> Edit</Link>
+                              <Link className={button} title="Manage gallery and services" aria-label={"Manage gallery and services for "+b.name} href={`/vendor/gallery-services?business=${encodeURIComponent(String(b.id))}`}><IconsaxIcon name="image" size={16}/></Link>
                               {b.status === 'approved' && <Link className={button} title="Open public profile" target="_blank" rel="noopener noreferrer" href={listingUrl(b)}><IconsaxIcon name="arrow-right-2" size={14} /></Link>}
                             </div>
                           </td>
@@ -342,6 +344,7 @@ export default function MyBusinessesPage() {
                     <div className="mt-3 flex flex-wrap gap-2">
                       <button type="button" className={button} onClick={() => setSelectedId(String(b.id))}>Details</button>
                       <Link href={`/vendor/my-businesses/${encodeURIComponent(String(b.id))}/edit`} className={button}>Edit business</Link>
+                      <Link href={`/vendor/gallery-services?business=${encodeURIComponent(String(b.id))}`} className={button}><IconsaxIcon name="image" size={15}/> Gallery &amp; Services</Link>
                       {b.status === 'approved' && <Link href={listingUrl(b)} target="_blank" rel="noopener noreferrer" className={button}>Public profile</Link>}
                     </div>
                   </article>;
@@ -399,6 +402,7 @@ export default function MyBusinessesPage() {
             </div>
             <div className="flex flex-wrap gap-2 border-t border-[#edf0ee] bg-white p-4">
               <Link href={`/vendor/my-businesses/${encodeURIComponent(String(selected.id))}/edit`} className="inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-lg bg-[#202024] px-3 text-xs font-bold text-white"><IconsaxIcon name="setting-2" size={15} color="#fff" /> Edit details</Link>
+              <Link href={`/vendor/gallery-services?business=${encodeURIComponent(String(selected.id))}`} className={button}><IconsaxIcon name="image" size={15}/> Gallery &amp; Services</Link>
               {selected.status === 'approved' && <>
                 <Link href={listingUrl(selected)} target="_blank" rel="noopener noreferrer" className={button}>View profile</Link>
                 <button type="button" onClick={() => void copyProfile(selected)} className={button}>Copy link</button>

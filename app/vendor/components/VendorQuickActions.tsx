@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import IconsaxIcon from './IconsaxIcon';
 
 export const VENDOR_QUICK_ACTIONS = [
+  { title:'Gallery & Services', description:'Upload business photos and manage your public services', href:'/vendor/gallery-services', icon:'image', group:'Businesses', keywords:'gallery bento photo images upload services profile portfolio' },
   { title:'Business overview', description:'Review live directory listings and recent activity', href:'/vendor/dashboard', icon:'category', group:'Overview', keywords:'home dashboard activity' },
   { title:'Manage listings', description:'View status, public profiles and listing completeness', href:'/vendor/my-businesses', icon:'shop', group:'Businesses', keywords:'business open profile listings' },
   { title:'Customer enquiries', description:'Respond to leads, add notes and track follow-ups', href:'/vendor/leads', icon:'message-text', group:'Customers', keywords:'leads crm pipeline' },
