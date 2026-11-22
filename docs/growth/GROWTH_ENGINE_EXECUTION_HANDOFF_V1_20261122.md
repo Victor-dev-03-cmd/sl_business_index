@@ -1,5 +1,8 @@
 # SLBI Growth Engine — execution handoff V1.0
 
+## 2026-11-22 — G0 RECOVERY AND BACKUP CHECKPOINT (latest)
+Read [recovery rehearsal and backup gate](G0_06_RECOVERY_REHEARSAL_AND_BACKUP_GATE_20261122.md). PR #150 merged f76b961d96d7c42e3e284eea859c7b043d68513e, 5/5 candidate workflows green; exact recovery/reapply, definition drift, fixture preservation and retention tests pass. Live Supabase organization Free plan, no verified backup available through tools, main only. Production SQL NOT applied. Need verified manual backup/recovery and explicit lead/review scope, separate wallet allowance decision, staging/live-shape acceptance. No paid upgrade or PITR, no credentials/data in repo/chat. G0 remains open; G1 gated.
+
 ## 2026-11-22 — G0 GUARDED RELEASE CHECKPOINT (latest)
 Read [guarded release checkpoint](G0_05_GUARDED_DATABASE_RELEASE_CHECKPOINT_20261122.md), [release package](g0/release/README.md) and [G1 context data proposal](g0/G1_KNOWLEDGE_CONTEXT_PROPOSAL.md). PR #149 merged e4ca3c84ac7c36b966270915ceeaefc39d604dc3, seven candidate workflows pass; exact guarded SQL bodies passed isolated lead/review/wallet tests. Enquiry API independent Turnstile UUID and conflict mapping merged, no layout change. Live DB remains unchanged; request explicit scoped lead/review release approval and separate wallet policy approval, verify backup/staging/maintenance and postchecks. G1 input mapping prepared but not integrated; all master and engineering gates remain unchecked. Continue G0 acceptance, then G1.
 

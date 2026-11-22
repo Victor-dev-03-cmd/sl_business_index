@@ -1,5 +1,8 @@
 # SLBusinessIndex — repository handoff for coding agents
 
+## LATEST G0 — Recovery rehearsal and backup gate
+Read [checkpoint](docs/growth/G0_06_RECOVERY_REHEARSAL_AND_BACKUP_GATE_20261122.md). PR #150 passed 5/5 and merged. Tested recovery and reapply, no live SQL. Supabase Free tier; verified manual backup/recovery required before production, explicit lead/review release scope and separate wallet decision. No paid upgrade/secret sharing. G1 gated, next-chat prompt required.
+
 ## CURRENT G0 RELEASE CHECKPOINT
 Read [guarded release checkpoint](docs/growth/G0_05_GUARDED_DATABASE_RELEASE_CHECKPOINT_20261122.md), [release package](docs/growth/g0/release/README.md) and [G1 context proposal](docs/growth/g0/G1_KNOWLEDGE_CONTEXT_PROPOSAL.md). PR #149 7/7 workflow pass and merged. Exact SQL tested, not live. Explicit scope approval lead/review and separate wallet policy, verified backup/staging, migration and remaining G0 acceptance required. No G1 integration before gates. Next-chat prompt required.
 
