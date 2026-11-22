@@ -1,4 +1,4 @@
-import { createHmac } from 'node:crypto';
+import { createHmac, randomUUID } from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 import { isSameOrigin } from '@/lib/growth/ingestion-contract';
 import { validateLeadSubmission } from '@/lib/growth/lead-contract';
@@ -47,7 +47,9 @@ export async function POST(request:Request){
       method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
       body:new URLSearchParams({
         secret:turnstileSecret,response:lead.turnstileToken,
-        idempotency_key:lead.requestId,
+        // CRM idempotency is separate from single-use challenge validation.
+        // Each newly issued Turnstile token must be independently verified.
+        idempotency_key:randomUUID(),
       }),
       signal:AbortSignal.timeout(7_000),
       cache:'no-store',
@@ -78,6 +80,7 @@ export async function POST(request:Request){
       p_rate_bucket:rateBucket,p_business_bucket:businessBucket,
     });
     if(error){
+      if(error.code==='22023'&&error.message==='lead-request-conflict')return reply(409,'lead-request-conflict');
       // Protect customer PII and connection strings: do not log the raw error.
       console.error('Secure lead submission unavailable',error.code||'database');
       return reply(503,'submission-unavailable');
