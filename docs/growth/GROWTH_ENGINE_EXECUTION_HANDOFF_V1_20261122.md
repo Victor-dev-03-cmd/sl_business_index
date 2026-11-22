@@ -1,4 +1,6 @@
 # SLBI Growth Engine — execution handoff V1.0
+
+**CURRENT G0-01 CHECKPOINT:** [Read the foundation evidence audit](G0_01_FOUNDATION_EVIDENCE_AUDIT_20261122.md). Initial read-only inventory performed; CI/migration/billing/data-provenance blockers remain, no gate complete. Use detailed next-chat prompt. Owner requires that every milestone final report and handoff include the next-chat prompt.
 **Owner direction: 2026-11-22, Asia/Colombo. Status: PLANNING ACCEPTED; G0 is next/in progress; no Growth Engine release gate accepted.**
 Repository: Victor-dev-03-cmd/sl_business_index. Branch main is canonical. Read this document and [living checklist](GROWTH_ENGINE_RELEASE_CHECKLIST.md) before any new Growth Engine implementation. This document records the accepted direction and detailed proposed implementation; individual schema, cost, tool, score and provider choices still require validation/review. This is not a release receipt.
 

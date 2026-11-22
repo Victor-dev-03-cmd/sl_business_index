@@ -1,5 +1,9 @@
 # SLBusinessIndex — repository handoff for coding agents
 
+## ACTIVE G0-01 EVIDENCE — 2026-11-22
+Read [G0-01 audit](docs/growth/G0_01_FOUNDATION_EVIDENCE_AUDIT_20261122.md) before continuing. G0-01 is in progress, all gates unchecked; latest examined CI fails two mobile header assertions, raw migration ID drift unresolved, legacy lead insert and stale review caches need review. No product changes. Next work as specified in the audit blocker register; preserve Discovery and Marketing QA. Owner requires ready-to-copy next-chat prompt at the end of EVERY development/production milestone report, with exact evidence and earliest unchecked task. Record prompt in handoff. 
+
+
 ## ACTIVE HANDOFF — 2026-11-22: Growth Engine V1
 Before new work read [master](docs/growth/SLBI_MASTER_IMPLEMENTATION_HANDOFF.md), [Growth execution brief](docs/growth/GROWTH_ENGINE_EXECUTION_HANDOFF_V1_20261122.md), [living checklist](docs/growth/GROWTH_ENGINE_RELEASE_CHECKLIST.md) and [P2 ledger](docs/growth/p2/IMPLEMENTATION_STATUS_LIVE.md) on main. Owner approved phased Growth-first focus, all ten release gates unchecked. This overrides older execution-order checkpoints (not original six-engine taxonomy). Next G0-01 read-only evidence audit; do not skip to G1/UI build. Preserve Discovery, internal Marketing QA, existing wallet and current UX. Follow existing reviewed branch/PR product release workflow; documentation-only updates may merge independently. UI/UX standards and review of external references are in the brief. Update handoff + checklist after real work; no unapproved spend, broad rollout, external sends, production schema writes or fake QA claims.
 

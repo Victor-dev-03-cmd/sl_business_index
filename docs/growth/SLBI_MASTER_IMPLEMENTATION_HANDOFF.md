@@ -1,5 +1,12 @@
 # SLBusinessIndex — MASTER IMPLEMENTATION & CHAT HANDOFF
 
+## 2026-11-22 — G0-01 FOUNDATION AUDIT IN PROGRESS (read FIRST)
+- See [G0-01 Foundation Evidence Audit](G0_01_FOUNDATION_EVIDENCE_AUDIT_20261122.md). Read-only evidence snapshot `de3e65eda2d38f195bacabed4e67eee86a8ebcbc` verified production READY (dpl_C75MMgwHM4e4uUAkGuu7LBRdV9yu; www alias), but GitHub CI runs 45036966166 and 45029756947 failed on 2 old mobile header assertions; migration version-prefix comparison 115 repo / 47 live / 20 matches. Do not blindly replay migration files.
+- Live 525 analytics rows (44 growth-v1, 481 unmarked), 15 CRM leads incl legacy direct insert allowed, 2 approved businesses with review aggregate cache mismatch; active internal QA entitlement 1; only Campaign Planner global live. 25 scoped tables RLS enabled, mutation RPC execution gated; synthetic negatives still pending. Neon billing schema and runtime flags not fully established. See detailed blocker register and evidence.
+- G0-01 remains incomplete; **all 10 master + 41 engineering gates unchecked**. Next: CI test-contract remediation review, migration mapping, deployment/DB configuration evidence. Then G0-02 provenance, G0-03 security and G0-04 billing. No app or production DB changes in this audit.
+- Owner requests the next-chat ready-to-copy prompt after every development or production milestone; persist in current audit/handoff and include it in final report. Follow G0–G9, no shortcuts.
+
+
 ## 2026-11-22 — ACTIVE PRIORITY: Growth Engine V1 (read FIRST)
 - Owner approved the Growth Engine planning direction and requested sequential implementation and cross-chat handoff. Read [Growth Engine execution handoff](GROWTH_ENGINE_EXECUTION_HANDOFF_V1_20261122.md) and [living release checklist](GROWTH_ENGINE_RELEASE_CHECKLIST.md). All ten master release gates remain unchecked at owner's direction.
 - **Next task G0-01**: verify exact source/deployments, database ownership contracts and permissions read-only; finish G0 audit before G1. G0–G9 are detailed in the handoff; preserve original six engines and eight algorithm identities. Earlier Marketing-first order is historical; Growth is now the primary workstream, preserve Discovery and Marketing QA. No blanket rollout.
