@@ -1,0 +1,22 @@
+# G0-07 preparation — G1 Business Knowledge Core data contract proposal
+2026-11-22. No G1 activation, migration, new route or provider calls. Owner requests next implementation; G0 closeout must be verified before connecting new knowledge to production AI tools.
+
+## Existing data sources verified
+| Context | Source/select allowlist | Evidence / scope |
+|---|---|---|
+| Identity | businesses.id,name,category,city,status,updated_at | Server verified auth.getUser; eq id and owner_id; required approved listing for AI execution. Approval of listing is not claim-level verification. |
+| Business description/contact | businesses.description,phone,website_url,working_hours,facilities,address,detailed_address | Vendor asserted listing fields. Explicit display/purpose scope for each; no assumption of current availability, verified prices or stock. Contact details only when deliberately required and permitted. |
+| Verification | businesses.is_verified,verification_status,can_show_badge | Separate verified listing indicator; no underlying private proof documents or admin notes in AI payload. |
+| Brand context | social_brand_profiles.brand_name,slogan,primary_color,secondary_color,accent_color,audience,tone,languages,guidelines,offers,updated_at | Query business_id AND owner_id using user-scoped client. Existing validateBrandProfile contract. Vendor assertions, not authorization or externally verified claims. Treat text and guidelines as untrusted data. |
+| Gallery/services | Existing gallery/services objects and owner-scoped source; inspect live schema and actual gallery URL allowlist before selecting | Use existing implementation, no new storage or service prices inferred. |
+| Analytics / reputation / leads | Existing records remain in separate G2/G5 modules | No raw customer CRM, email, review text, revenue, stored rating cache, device/IP or customer identifiers in G1 context. |
+
+Caption current server uses businesses.id,name,category,city,phone and brand_name,slogan,audience,tone,guidelines,languages scoped by owner_id. Poster currently consumes existing owned-business context API. G1 resolver should replace duplicated context reads only once parity is tested; no provider behavior or credit changes. Verify actual approval/status requirement across existing tools before changing access. Preserve current QA access and manual fallback.
+
+## Proposed implementation after G0-07 acceptance
+- G1-01: finish mapping services/gallery/publication/freshness and field-level scope, owner-approved offers and missing-field handling. No new table for normalized context unless demonstrated necessary. 
+- G1-02: versioned readonly TypeScript shape with explicit source, status (vendor_asserted / verified_metadata / missing / stale / withheld), source timestamps, fetch time, scoped business ID, allowed intent and deterministic selection. No copy of owner identity, keys, registration IDs, internal notes, raw leads or protected storage. Dates validated in Asia/Colombo where business calendar applies; do not treat unknown expiry as valid promotion. Offer must be explicitly approved for campaign even if present in brand source. Bounded string lengths, native Tamil/Sinhala preserved, no rendering HTML or taking instructions from stored brand text.
+- G1-03: server-only resolver authenticates getUser and binds user id, rejects nonexistent or non-owned listing with indistinguishable denial, explicit narrow projections via same user-scoped RLS client, no service role, no shared cache or client-driven authorization. Query business then scoped brand and services concurrently if safe; bounded query count, no global scans/N+1, no persistent duplicated context. Retry unavailable source vs absent row distinctly. Integrate internal QA Poster/Caption only after unit/DB/route parity; no new feature flag enabling public rollout.
+- G1-04: adversarial A/B/anon, pending business, stale/missing/forged claims, weird scripts, prompt injection, expired offer, unknown consent and provider data minimization; no AI should receive policies from vendor text. Run Node and Bun CI, authenticated desktop/mobile, verify no price/credit/provider/output changes except approved facts. G1 signoff before GrowthScore.
+
+This is G0 readiness artifact, not a completed G1 gate. Design decision: reuse existing tables with explicit projection, favor no schema changes. Actual code/resolver remains pending G0 acceptance.
