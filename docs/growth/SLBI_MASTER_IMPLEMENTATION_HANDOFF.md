@@ -1,5 +1,9 @@
 # SLBusinessIndex — MASTER IMPLEMENTATION & CHAT HANDOFF
 
+## 2026-11-23 — owner manual backup captured (restore pending)
+Owner supplied terminal evidence of successful AES-256 encrypted PostgreSQL custom archive for project oofxhragafekazwjikae, 2026-11-22 19:11:29–19:15:15 UTC, 434906 bytes, checksum and archive decode PASS. Actual isolated restore NOT_RUN and release BLOCKED; second copy and separate encryption passphrase pending. See [manual backup checkpoint](G0_07_MANUAL_BACKUP_OPERATOR_CHECKPOINT_20261122.md). No production writes or G0/G1 acceptance.
+
+
 ## 2026-11-23 (Asia/Colombo) — PR #151 merged; backup operator gate remains open
 Manual-backup source merged at `a7a210f9a70bc893a68f9ea682e0ecc569f6ccd5`; candidate `9dd216ba824a026731fa0e719656e94a9b0bd664` passed 4/4: Next.js 45053060744, independent PG billing 45053060725, billing V2 45053060762, G0 integrity 45053060632. Production `dpl_DQBpnP3Zov11woxefQopNxKwZPDP` READY with www.slbusinessindex.com alias, exact merge SHA; main workflow 45056063654 was in progress at inspection. No manual Preview or live SQL writes. Actual encrypted database dump and isolated recovery still not verified (owner-side execution needed). Read [manual backup checkpoint](G0_07_MANUAL_BACKUP_OPERATOR_CHECKPOINT_20261122.md) for fresh preflight and next prompt. G0 and G1 acceptance remain blocked; no added cloud spend.
 
