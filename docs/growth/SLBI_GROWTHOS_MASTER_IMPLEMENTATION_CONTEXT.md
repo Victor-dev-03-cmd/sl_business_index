@@ -1,4 +1,6 @@
 # SLBusinessIndex | GrowthOS P2 Detailed Context — NEW CHAT HANDOFF
+
+**2026-11-22 CURRENT PRIORITY:** See [Growth Engine execution handoff](GROWTH_ENGINE_EXECUTION_HANDOFF_V1_20261122.md) and [living release checklist](GROWTH_ENGINE_RELEASE_CHECKLIST.md). The owner directs Growth Engine V1 as next primary workstream; all release gates unchecked. Begin G0-01. Historical Marketing -> Growth -> SEO sequencing and older P2 deployment notes below are snapshots; preserve six-engine taxonomy and existing Marketing QA. Read current master and live ledger on main.
 Version 1.0 | 2026-11-13 | Owner-approved architecture | Tamil collaboration
 
 **Current 2026-11-14 source note:** PR #68 is MERGED into main at `852da22` (tested application code `c2326c5`, 7/7 CI, Preview READY). P2 schemas, provider OAuth activation, KMS and verified Pro entitlements remain NOT LIVE; old branch-status passages below are historical. Existing Basic manual campaigns are preserved. See the main living ledger for latest evidence.

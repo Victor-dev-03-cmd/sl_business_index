@@ -1,5 +1,12 @@
 # SLBusinessIndex — MASTER IMPLEMENTATION & CHAT HANDOFF
 
+## 2026-11-22 — ACTIVE PRIORITY: Growth Engine V1 (read FIRST)
+- Owner approved the Growth Engine planning direction and requested sequential implementation and cross-chat handoff. Read [Growth Engine execution handoff](GROWTH_ENGINE_EXECUTION_HANDOFF_V1_20261122.md) and [living release checklist](GROWTH_ENGINE_RELEASE_CHECKLIST.md). All ten master release gates remain unchecked at owner's direction.
+- **Next task G0-01**: verify exact source/deployments, database ownership contracts and permissions read-only; finish G0 audit before G1. G0–G9 are detailed in the handoff; preserve original six engines and eight algorithm identities. Earlier Marketing-first order is historical; Growth is now the primary workstream, preserve Discovery and Marketing QA. No blanket rollout.
+- P2-37 application SHA `299a3a3f00124a9a8b395a1bc19f95030c39e2fc` was verified Production READY on 2026-11-22; 142/142 scoped tests + TypeScript passed. Real provider/device QA and atomic storage/asset integrity gates remain open. Only Campaign Planner global live; Poster/Caption internal QA.
+- Keep current stack and existing pages. Advanced UI/UX is mandatory per phase; owner permits carefully reviewed/appropriately licensed public skills/references if needed, not blind remote execution. Do not introduce extra infrastructure, paid API or schema writes without scope and review. Use the living checklist, update exact evidence and next action every chat.
+
+
 ## 2026-11-19 — P2-36: Nearby mobile cards and single bottom navigator
 - [P2-36 Nearby mobile cards / navigation handoff](p2/P2_36_NEARBY_MOBILE_RESULTS_AND_NAV_HANDOFF_20261119.md).
 - User reference: compact Nearby explorer and several business cards in usable viewport; remove global five-button dock **only on Nearby** so only the existing native Map/Listings/Filters bar remains.

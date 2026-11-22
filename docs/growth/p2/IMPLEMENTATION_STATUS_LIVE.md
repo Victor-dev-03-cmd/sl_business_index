@@ -1,5 +1,10 @@
 # SLBI Marketing Engine | LIVE IMPLEMENTATION STATUS
 
+## 2026-11-22 — P2-37 closeout and Growth Engine transition
+- Exact application commit `299a3a3f00124a9a8b395a1bc19f95030c39e2fc` production READY; prior exact regression 142/142 and TypeScript pass. See [P2-37 detail](P2_37_POSTER_CAPTION_CRITICAL_WORKSPACE_HARDENING_20261122.md).
+- Production rollout read-back: campaign-planner live, 11/12 coming_soon, Poster/Caption internal QA only. 0 connection records. Real authorized provider/device E2E, cross-tab atomic storage quota and campaign asset integrity still open.
+- New primary workstream: [Growth Engine phased handoff](../GROWTH_ENGINE_EXECUTION_HANDOFF_V1_20261122.md) and [living checklist](../GROWTH_ENGINE_RELEASE_CHECKLIST.md), G0-01 read-only foundation audit next. All 10 Growth release gates unchecked. Keep Marketing app statuses, plans/providers/costs and manual CRM/Planner unchanged. Do not activate rollout or send/publish based on a build.
+
 ## 2026-11-18 — P2-30 Caption Lab Planner permission hotfix (DB APPLIED; RELEASE TESTS PENDING)
 - **Detailed handoff:** [P2-30 Campaign Planner Column GRANT Audit](P2_30_CAMPAIGN_PLANNER_COLUMN_GRANT_AUDIT_20261118.md).
 - **Production cause/fix verified:** `marketing_campaigns.poster_asset_id` needed column-level authenticated **INSERT**, missing after P2-29; applied one-column migration `20261118003000_p2_campaign_asset_insert_column_grant.sql`, `can_insert_asset=true`, broad INSERT/DELETE/TRUNCATE=false, anon SELECT=false, owner RLS=true. Authenticated `EXPLAIN INSERT` with exact Caption fields passed without production write.
