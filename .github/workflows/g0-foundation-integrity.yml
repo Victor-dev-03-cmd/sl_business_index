@@ -15,7 +15,7 @@ jobs:
     timeout-minutes: 10
     strategy:
       matrix:
-        domain: [lead, review]
+        domain: [lead, review, billing]
     services:
       postgres:
         image: postgres:17-alpine
@@ -61,3 +61,11 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f docs/growth/g0/REVIEW_CACHE_REVIEW_ONLY.sql
           psql -v ON_ERROR_STOP=1 -f tests/g0/review_cache.sql
           bash tests/g0/review_cache_concurrency.sh
+      - name: Wallet entitlement and refund edge cases
+        if: matrix.domain == 'billing'
+        run: |
+          psql -v ON_ERROR_STOP=1 -f tests/billing_v2/bootstrap.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261110010000_growth_os_credit_foundation.sql
+          psql -v ON_ERROR_STOP=1 -f tests/g0/billing_refund_bootstrap.sql
+          psql -v ON_ERROR_STOP=1 -f docs/growth/g0/WALLET_ENTITLEMENT_REFUND_REVIEW_ONLY.sql
+          psql -v ON_ERROR_STOP=1 -f tests/g0/billing_refund.sql
