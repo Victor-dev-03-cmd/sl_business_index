@@ -21,3 +21,18 @@ export function serializeEditedCaption(angles:AngleSet,tags:readonly string[]):{
 export function isCurrentPosterOutput(input:{hasBlob:boolean;stage:string;generating:boolean;composing:boolean;artworkKey:string;creativeKey:string;completedRenderKey:string;renderKey:string;copyLanguageConsistent:boolean;serviceFocusApproved:boolean}):boolean{
   return input.hasBlob&&input.stage==='ready'&&!input.generating&&!input.composing&&Boolean(input.artworkKey)&&input.artworkKey===input.creativeKey&&Boolean(input.completedRenderKey)&&input.completedRenderKey===input.renderKey&&input.copyLanguageConsistent&&input.serviceFocusApproved;
 }
+
+// Infer only known export ratios from the lossless PNG header. Never force an
+// unrelated shape or stretch a vendor-uploaded image.
+export async function inferPosterFormat(image:Blob):Promise<string>{
+  const bytes=new Uint8Array(await image.slice(0,24).arrayBuffer());
+  if(bytes.length<24||bytes[0]!==137||bytes[1]!==80||bytes[2]!==78||bytes[3]!==71)return 'uploaded';
+  const view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  const w=view.getUint32(16),h=view.getUint32(20);
+  if(!w||!h)return 'uploaded';
+  const ratio=w/h;
+  for(const [format,target] of [['story',9/16],['portrait',4/5],['square',1],['landscape',1200/630]] as const){
+    if(Math.abs(ratio-target)<0.005)return format;
+  }
+  return 'uploaded';
+}

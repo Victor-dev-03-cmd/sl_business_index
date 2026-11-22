@@ -16,7 +16,7 @@ import {captionIssueMessage,failedCaptionLanguages,type CaptionIssue}
 import {
   SlbiVoiceRecorder,requestSlbiVoiceTranscript,SLBI_VOICE_MAX_BYTES,
 } from '@/lib/marketing/voice/slbi-voice-engine';
-import {preparePlannerCaption,captionRequestIdentity,serializeEditedCaption} from '@/lib/marketing/workspace-safety';
+import {preparePlannerCaption,captionRequestIdentity,serializeEditedCaption,inferPosterFormat} from '@/lib/marketing/workspace-safety';
 import {plannerBriefFromCaption} from '@/lib/marketing/caption-planner-brief';
 import {listSavedPosters,privatePosterUrl,readSavedPoster,uploadSavedPoster,type SavedPosterAsset} from '@/lib/marketing/saved-poster-cloud-client';
 import type {CaptionLanguage} from '@/lib/marketing/caption-contract';
@@ -206,9 +206,8 @@ export default function ConnectedCaptionLab(){
   const activePreviewLanguage:CaptionLanguage=previewLanguage==='all'?
     (chosenLanguages.find(lang=>Boolean(captions[lang][angle]?.trim()))||chosenLanguages[0]):
     previewLanguage;
-  const generationSignature=JSON.stringify({
-    businessId,goal,tone,message,conditions,cta,posterKey,posterHeadline:linked?.context.headline,posterOffer:linked?.context.offer,languages:chosenLanguages,
-  });
+  const requestSignature=JSON.stringify({businessId,goal,tone,message:message.trim(),conditions:conditions.trim(),cta:cta.trim(),posterHeadline:hasLinked?(linked?.context.headline||''):'',posterOffer:hasLinked?(linked?.context.offer||''):''});
+  const generationSignature=JSON.stringify({requestSignature,posterKey,languages:chosenLanguages});
   const canRetryLanguages=Boolean(failedGenerations&&
     failedGenerations.signature===generationSignature&&failedGenerations.languages.length);
   useEffect(()=>{
@@ -513,7 +512,7 @@ export default function ConnectedCaptionLab(){
       setNotice('Your typed message is unchanged. Your recording is kept in this tab: tap Retry transcription.');
     }finally{setVoiceBusy(false);void refreshVoiceQuota();}
   };
-  const retryVoice=()=>{if(failedVoiceRef.current&&!voiceBusy)void transcribe(failedVoiceRef.current);};
+  const retryVoice=()=>{if(failedVoiceRef.current&&!isBusy&&!operationRef.current)void transcribe(failedVoiceRef.current);};
   const startVoice=async()=>{
     if(isBusy||operationRef.current)return;
     if(voiceReviewDraft){
@@ -599,7 +598,7 @@ export default function ConnectedCaptionLab(){
       // Per-language isolation: a failed model call never blocks another
       // selected language and never deletes a successful saved draft.
       for(const language of targets){
-        const identity=await captionRequestIdentity(generationSignature,language);
+        const identity=await captionRequestIdentity(requestSignature,language);
         let requestKey=requestKeysRef.current.get(identity);
         try{requestKey=requestKey||sessionStorage.getItem(identity)||undefined;}catch{}
         if(!requestKey||!uuid.test(requestKey))requestKey=crypto.randomUUID();
@@ -845,7 +844,7 @@ export default function ConnectedCaptionLab(){
         city:selected.city||'',address:selected.address||'',phone:selected.phone||'',
         website:selected.website_url||'',headline:'',offer:'',cta:'',
         vibe:'',language:activePreviewLanguage,sample:false,
-        source:'device_upload',format:'uploaded',
+        source:'device_upload',format:await inferPosterFormat(image),
       };
       const id=await saveLinkedPoster(context,image);
       selectRecentPoster({id,createdAt:Date.now(),context,image});
@@ -865,7 +864,7 @@ export default function ConnectedCaptionLab(){
         city:selected.city||'',address:selected.address||'',phone:selected.phone||'',
         website:selected.website_url||'',headline:'',offer:'',
         cta:'',vibe:'',language:activePreviewLanguage,
-        sample:false,source:'device_upload',format:'uploaded',
+        sample:false,source:'device_upload',format:await inferPosterFormat(image),
       };
       const id=await saveLinkedPoster(context,image);
       selectRecentPoster({id,createdAt:Date.now(),context,image});

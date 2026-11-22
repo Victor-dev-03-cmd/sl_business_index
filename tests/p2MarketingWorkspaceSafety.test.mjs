@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {preparePlannerCaption,captionRequestIdentity,serializeEditedCaption,isCurrentPosterOutput} from '../lib/marketing/workspace-safety.ts';
+import {preparePlannerCaption,captionRequestIdentity,serializeEditedCaption,isCurrentPosterOutput,inferPosterFormat} from '../lib/marketing/workspace-safety.ts';
 import {plannerBriefFromCaption} from '../lib/marketing/caption-planner-brief.ts';
 import {parseGeminiCaptionOutput} from '../lib/marketing/caption-gemini-output.ts';
 import {parseThreeAngles} from '../lib/marketing/caption-workspace.ts';
@@ -57,4 +57,9 @@ test('save and generation share operation lock; no automatic repeat billable act
  const storage=read('app/api/marketing/poster/saved/route.ts');
  assert.match(storage,/createHash\('sha256'\).update\(prefix\)/);
  assert.match(storage,/upsert:false/);
+});
+
+test('PNG headers preserve actual known export aspect ratio without guessing unknown ratios',async()=>{
+ const png=(w,h)=>{const bytes=new Uint8Array(24);bytes.set([137,80,78,71,13,10,26,10]);const view=new DataView(bytes.buffer);view.setUint32(16,w);view.setUint32(20,h);return new Blob([bytes],{type:'image/png'});};
+ for(const [w,h,format] of [[1080,1920,'story'],[1080,1350,'portrait'],[1080,1080,'square'],[1200,630,'landscape'],[1200,800,'uploaded']])assert.equal(await inferPosterFormat(png(w,h)),format);
 });

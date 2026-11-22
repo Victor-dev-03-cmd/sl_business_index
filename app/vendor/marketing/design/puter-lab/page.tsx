@@ -526,6 +526,7 @@ export default function PuterMultilingualPosterLab(){
   };
   const prepareWithGemini=async()=>{
     if(!businessId||prompt.trim().length<5){setError('Choose a business and enter a prompt.');return;}
+    if(pendingTranscript){setError('Apply or discard the reviewed transcript first.');return;}
     if(locked||operationRef.current)return;
     operationRef.current=true;setGeminiBusy(true);setError('');setDesignAdvisory('');
     setStatus('Gemini is understanding your voice brief and verified business facts…');
@@ -615,6 +616,7 @@ export default function PuterMultilingualPosterLab(){
     }
     if(!facts||!businessId){setError('Choose a verified owned business first.');return;}
     if(locked||operationRef.current)return;
+    if(pendingTranscript){setError('Apply or discard the reviewed transcript first.');return;}
     if(prompt.trim().length<5||!headline.trim()){
       setError('Enter your campaign idea and an exact headline for the poster.');return;
     }
@@ -972,7 +974,7 @@ export default function PuterMultilingualPosterLab(){
                     <Mic size={17}/>
                   </button>}
                   <button type="button" onClick={()=>void prepareWithGemini()}
-                    disabled={locked||!businessId||prompt.trim().length<5}
+                    disabled={locked||!businessId||prompt.trim().length<5||Boolean(pendingTranscript)}
                     aria-label="Prepare poster with Gemini" title="Prepare art direction and typography with Gemini"
                     className="flex size-8 items-center justify-center rounded-full bg-[#262126] text-white hover:bg-[#493B3E] disabled:bg-[#E7E1DD] disabled:text-[#AAA19B]">
                     {geminiBusy?<LoaderCircle size={16} className="animate-spin"/>:
@@ -1043,7 +1045,7 @@ export default function PuterMultilingualPosterLab(){
             Default is a no-credit sample, not a real AI quality test.
           </p>}
           <button type="button" onClick={()=>void generate()}
-            disabled={locked||(realMode&&!sdkReady)||!facts||prompt.trim().length<5||!headline.trim()||!copyLanguageConsistent||!serviceFocus.trim()||!serviceFocusApproved||(realMode&&!consent)}
+            disabled={locked||Boolean(pendingTranscript)||(realMode&&!sdkReady)||!facts||prompt.trim().length<5||!headline.trim()||!copyLanguageConsistent||!serviceFocus.trim()||!serviceFocusApproved||(realMode&&!consent)}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#262126] px-3 py-3 text-[11px] font-bold text-white disabled:opacity-40">
             {generating?<LoaderCircle size={16} className="animate-spin"/>:<FlaskConical size={16}/>}
             {generating?'Generating artwork…':realMode?'Generate with SLBI Image Generator':'Preview poster sample'}

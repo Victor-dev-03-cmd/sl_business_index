@@ -498,3 +498,7 @@ At each completed task **while actively working with an assistant**:
 **Security:** Live verification: 12/12 status Coming Soon, 0 OAuth intents/connections/secrets, 0 verified active Pro, 0 social brand profiles, preexisting campaigns count 1; all five new tables RLS true. Authenticated users can read catalogue statuses only; cannot write them; cannot read vault or call secret-write RPC. Old unbound service-role store grant revoked. OAuth feature explicitly impossible in Vercel Production regardless of DB. Existing PostGIS `spatial_ref_sys` RLS warning unrelated. No real user/browser authenticated E2E yet. `marketing_campaigns` old owner `FOR ALL` can still allow fake `posted`; staged P2-05 fix should be separately migration-tested and deployed soon.
 
 **Next one-by-one app launch:** `docs/growth/p2/P2_MARKETING_ROLLOUT_RUNBOOK_20261114.md` describes status promotion and gate requirements. Priority: P2-05 live campaign RLS repair, verified Pro billing, consented Google test OAuth with managed KMS, refresh and remote revoke, genuine owner-A/Basic-B browser acceptance, then marketing provider publishing with approvals and delivery receipts. Marketing → Growth → SEO. Avoid merging old draft PRs blindly.
+
+
+## 2026-11-22 — Poster/Caption critical workspace hardening
+- See [P2-37 audit fixes](p2/P2_37_POSTER_CAPTION_CRITICAL_WORKSPACE_HARDENING_20261122.md). Prioritize no-silent-data-loss, safe retry and exact output identity, while maintaining internal QA access. Real provider/device acceptance remains open.
