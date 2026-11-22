@@ -7,12 +7,12 @@ import {
 } from '@/lib/marketing/poster-reference-library';
 
 export default function PuterReferenceGallery({
-  chosen,onChoose,showAll,onToggleAll,
+  chosen,onChoose,showAll,onToggleAll,disabled=false,
 }:{
   chosen:PosterStyleId|null;
   onChoose:(style:PosterReferenceStyle)=>void;
   showAll:boolean;
-  onToggleAll:()=>void;
+  onToggleAll:()=>void;disabled?:boolean;
 }){
   const displayed=showAll?POSTER_REFERENCE_STYLES:suggestedPosterStyles(new Date());
   return <div className="flex h-full min-h-0 w-full flex-col gap-3 overflow-y-auto p-1 sm:p-2">
@@ -26,7 +26,7 @@ export default function PuterReferenceGallery({
           Choose a look. Your exact business text stays editable.
         </p>
       </div>
-      <button type="button" onClick={onToggleAll}
+      <button type="button" disabled={disabled} onClick={onToggleAll}
         aria-expanded={showAll}
         className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-[#DBD5D1] bg-white px-2 py-1.5 text-[10px] font-semibold text-[#705A50] hover:border-[#D5A57F]">
         <Images size={13}/>{showAll?'Seasonal':'All styles'}
@@ -37,7 +37,7 @@ export default function PuterReferenceGallery({
         const selected=chosen===style.id;
         return <button key={style.id} type="button"
           aria-label={'Use '+style.name+' poster reference style'}
-          aria-pressed={selected} onClick={()=>onChoose(style)}
+          aria-pressed={selected} disabled={disabled} onClick={()=>onChoose(style)}
           className={'group relative flex min-w-0 flex-col overflow-hidden rounded-xl border text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 '+
             (selected?'border-[#F17B28] bg-[#FFF5EB] ring-1 ring-[#F5AF70]':'border-[#E4DCD7] bg-white hover:border-[#DDB188]')}>
           <div className="relative w-full overflow-hidden bg-[#132B30]">

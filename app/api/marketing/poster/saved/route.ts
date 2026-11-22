@@ -1,4 +1,5 @@
 import 'server-only';
+import {createHash} from 'node:crypto';
 import {createClient as createAdminClient} from '@supabase/supabase-js';
 import {createClient} from '@/lib/supabase/server';
 import {isSameOrigin} from '@/lib/growth/ingestion-contract';
@@ -103,19 +104,28 @@ export async function POST(request:Request){
   if(ctx.denied)return ctx.denied;
   const admin=ctx.admin!;
   const prefix='saved/'+ctx.uid+'/'+businessId+'/';
+  // Same owner/business and exact PNG bytes produce the same immutable asset ID.
+  const digest=createHash('sha256').update(prefix).update(Buffer.from(await image.arrayBuffer())).digest('hex');
+  const assetId=digest.slice(0,8)+'-'+digest.slice(8,12)+'-'+digest.slice(12,16)+'-'+digest.slice(16,20)+'-'+digest.slice(20,32);
+  const {data:existing,error:existingError}=await admin.storage.from(BUCKET).list(prefix,{search:assetId+'.png',limit:1});
+  if(existingError)return json(503,{error:'Private poster identity cannot be checked.'});
+  if(existing?.some(file=>file.name===assetId+'.png'))return json(200,{assetId,saved:true,reused:true});
   const {data:files,error:listError}=await admin.storage.from(BUCKET)
     .list(prefix,{limit:MAX_SAVED_PER_BUSINESS,offset:0});
   if(listError)return json(503,{error:'Private poster storage quota cannot be verified.'});
   if((files||[]).filter(x=>x.name.endsWith('.png')).length>=MAX_SAVED_PER_BUSINESS)
     return json(409,{error:'This business has reached 50 saved posters. Contact support before adding more.'});
-  const assetId=crypto.randomUUID();
   // Fail closed. A server-owned service role is required to write this locked
   // bucket; never issue a public URL or grant client Storage write permission.
   const {error}=await admin.storage.from(BUCKET).upload(
     path(ctx.uid!,businessId,assetId),image,{
       contentType:'image/png',cacheControl:'0',upsert:false,
     });
-  if(error)return json(503,{error:'Private poster upload failed. Please retry; your local PNG is unchanged.'});
+  if(error){
+    const {data:retry}=await admin.storage.from(BUCKET).list(prefix,{search:assetId+'.png',limit:1});
+    if(retry?.some(file=>file.name===assetId+'.png'))return json(200,{assetId,saved:true,reused:true});
+    return json(503,{error:'Private poster upload failed. Please retry; your local PNG is unchanged.'});
+  }
   return json(201,{assetId,saved:true});
 }
 

@@ -399,7 +399,7 @@ export default function ConnectedCaptionLab(){
       if(typeof saved.includeTags==='boolean')setIncludeTags(saved.includeTags);
       if(Array.isArray(saved.customTags))setCustomTags(p=>({...p,[businessId]:saved!.customTags!.filter(t=>typeof t==='string'&&normalizedTag(t)===t).slice(0,12)}));
       if(Array.isArray(saved.removedTags))setRemovedTags(p=>({...p,[businessId]:saved!.removedTags!.filter(t=>typeof t==='string'&&normalizedTag(t)===t).slice(0,100)}));
-      if(saved.generatedTags&&LANGUAGES.every(l=>Array.isArray(saved!.generatedTags![l])))setGeneratedTags(saved.generatedTags);
+      if(saved.generatedTags&&LANGUAGES.every(l=>Array.isArray(saved!.generatedTags![l])&&saved!.generatedTags![l].every(t=>typeof t==='string'&&normalizedTag(t)===t)))setGeneratedTags(saved.generatedTags);
       if(saved.draftIds)setDraftIds(Object.fromEntries(LANGUAGES.filter(l=>uuid.test(saved!.draftIds?.[l]||'')).map(l=>[l,saved!.draftIds![l]])));
       if(PLATFORMS.includes(saved.platform))setPlatform(saved.platform);
       if(ANGLES.includes(saved.angle))setAngle(saved.angle);
@@ -464,7 +464,7 @@ export default function ConnectedCaptionLab(){
             businessId,businessName:selected?.name||'',category:selected?.category||'',
             city:selected?.city||'',address:selected?.address||'',phone:selected?.phone||'',
             website:selected?.website_url||'',headline:'',offer:'',cta:'',vibe:'',
-            language:lang,sample:false,source:'device_upload',format:'uploaded',
+            language:lang,sample:false,source:'device_upload',format:item.brief?.format||'uploaded',palette:item.brief?.palette,
             savedPosterAssetId:item.poster_asset_id,
           },
         };
@@ -515,12 +515,12 @@ export default function ConnectedCaptionLab(){
   };
   const retryVoice=()=>{if(failedVoiceRef.current&&!voiceBusy)void transcribe(failedVoiceRef.current);};
   const startVoice=async()=>{
-    if(voiceBusy||recording||requestingMic||saving||busy)return;
+    if(isBusy||operationRef.current)return;
     if(voiceReviewDraft){
       setError('Apply or discard the full reviewed transcript before starting a recording.');return;
     }
     setError('');setVoicePermissionHelp(false);
-    setRequestingMic(true);
+    operationRef.current=true;setRequestingMic(true);
     setNotice('Allow microphone access in your browser to record your brief.');
     try{
       const capture=new SlbiVoiceRecorder({
@@ -564,7 +564,7 @@ export default function ConnectedCaptionLab(){
         setVoicePermissionHelp(true);
       }
       setNotice('');
-    }finally{setRequestingMic(false);}
+    }finally{operationRef.current=false;setRequestingMic(false);}
   };
   const sendVoice=()=>{voiceCaptureRef.current?.stop('sent');};
   const pauseVoice=()=>{
@@ -817,7 +817,7 @@ export default function ConnectedCaptionLab(){
     setLinked(record);setPosterKey(record.id);setPosterPickerOpen(false);
     setCloudAssetId(record.context.savedPosterAssetId||'');
     setSavedCampaignId('');setSavedCampaignPosterId('');setLastSavedCampaignId('');
-    setCaptions(emptyCaptions());setGeneratedTags({ta:[],si:[],en:[]});setDraftIds({});
+    setCaptions(emptyCaptions());setGeneratedTags({ta:[],si:[],en:[]});setDraftIds({});setFailedGenerations(null);
     setMessage([record.context.headline,record.context.serviceFocus,record.context.offer]
       .filter(Boolean).join('. ').slice(0,600));
     setCta(record.context.cta.slice(0,180));
@@ -874,7 +874,7 @@ export default function ConnectedCaptionLab(){
   };
   const onBusinessChange=(id:string)=>{
     if(id===businessId||isBusy||operationRef.current)return;
-    activeBusinessRef.current=id;setDrafts([]);setPlannerDrafts([]);setDraftIds({});setDraftLimit(25);
+    activeBusinessRef.current=id;setDrafts([]);setPlannerDrafts([]);setDraftIds({});setDraftLimit(25);setPlannerLoading(false);
     releaseVoiceMedia();
     setBusinessId(id);setLinked(null);setPosterKey('');setCloudAssetId('');setCloudChoices([]);
     setPosterPickerOpen(false);setPosterChoices([]);
@@ -1461,7 +1461,7 @@ export default function ConnectedCaptionLab(){
               className="text-[#6B7280] disabled:opacity-40" aria-label="Refresh drafts"><RefreshCcw size={15}/></button>
           </div>
           <p className="mt-1 text-[10px] text-[#9CA3AF]">{drafts.length} saved records · {generatedLanguages.length} language(s) available for review</p>
-          <div className="mt-2 space-y-1.5">
+          <div className="mt-2 max-h-[300px] space-y-1.5 overflow-y-auto">
             {drafts.map(draft=><button type="button" key={draft.id} disabled={isBusy} onClick={()=>resumeAiDraft(draft)} className="block w-full rounded-lg border border-[#E5E7EB] bg-white px-2 py-2 text-left text-[10px] disabled:opacity-50"><span className="font-bold">{labels[draft.language]} · {draft.created_at?new Date(draft.created_at).toLocaleDateString():'Saved draft'}</span><span className="block truncate text-[#6B7280]">{parseThreeAngles(draft.caption).hook}</span></button>)}
             {!drafts.length&&<p className="text-[10px] text-[#9CA3AF]">No saved drafts</p>}
             {draftHasMore&&draftLimit<200&&<button type="button" disabled={isBusy} onClick={()=>setDraftLimit(n=>Math.min(200,n+25))} className="rounded-lg border px-2 py-1 text-[11px]">Load older drafts</button>}

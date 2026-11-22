@@ -130,6 +130,12 @@ export default function PuterMultilingualPosterLab(){
   const [generating,setGenerating]=useState(false);
   const [composing,setComposing]=useState(false);
   const [artworkSrc,setArtworkSrc]=useState('');
+  const [artworkKey,setArtworkKey]=useState('');
+  const [completedRenderKey,setCompletedRenderKey]=useState('');
+  const [autoSaveFailed,setAutoSaveFailed]=useState(false);
+  const autoSavedRevisionRef=useRef(-1);
+  const operationRef=useRef(false);
+  const [requestingMic,setRequestingMic]=useState(false);
   const [finalUrl,setFinalUrl]=useState('');
   const [finalBlob,setFinalBlob]=useState<Blob|null>(null);
   const [linkingCaption,setLinkingCaption]=useState(false);
@@ -164,7 +170,8 @@ export default function PuterMultilingualPosterLab(){
   const typographyPreset=resolvePremiumPosterPreset(selectedPremiumStyle);
   const business=businesses.find(b=>b.id===businessId);
   const facts=business?.facts;
-  const currentKey=businessId+'|'+language+'|'+prompt.trim()+'|'+referenceSummary;
+  const currentKey=JSON.stringify([businessId,language,prompt.trim(),referenceSummary,format,selectedSuggestionId,selectedReferenceId,manualOffer?offer.trim():'']);
+  const creativeKey=JSON.stringify([businessId,prompt.trim(),referenceSummary,model,realMode,selectedReferenceId,sendReferenceImage,useAttachedImage,serviceFocus.trim(),referenceFiles.map(file=>[file.name,file.size,file.lastModified])]);
   const attachedImage=referenceFiles.find(isPosterReferenceImage)||null;
   const currentBrief=brief&&briefKey===currentKey?brief:null;
   const currentBlueprint=blueprint&&blueprintKey===currentKey?blueprint:null;
@@ -180,7 +187,7 @@ export default function PuterMultilingualPosterLab(){
   const suggestedCampaigns=useMemo(()=>posterSuggestions(new Date(),facts?.category||'',7),
     [facts?.category]);
   const dimensions=POSTER_FORMATS[format];
-  useEffect(()=>{setSavedPosterId('');},[finalBlob]);
+  useEffect(()=>{setSavedPosterId('');setAutoSaveNotice('');setAutoSaveFailed(false);},[finalBlob]);
   useEffect(()=>{activeBusinessRef.current=businessId;},[businessId]);
   useEffect(()=>{activeBlobRef.current=finalBlob;},[finalBlob]);
   useEffect(()=>{
@@ -205,35 +212,6 @@ export default function PuterMultilingualPosterLab(){
     void promise.catch(()=>{uploadsRef.current.delete(blob);});
     return promise;
   },[]);
-  // Final artwork, including a newly recomposed caption/typography, is saved
-  // automatically after a short quiet period. Only fully composed PNGs enter
-  // cloud storage; provider failures and unfinished in-memory frames do not.
-  useEffect(()=>{
-    if(!finalBlob||!businessId||composing||generating||generationStage!=='ready'||
-       !copyLanguageConsistent||!serviceFocusApproved)return;
-    if(uploadsRef.current.has(finalBlob))return;
-    const blob=finalBlob;
-    const timer=setTimeout(()=>{
-      if(uploadsRef.current.has(blob))return;
-      setSavingPoster(true);setAutoSaveNotice('Saving your generated PNG privately…');
-      void savePosterBlob(blob,businessId).then(async id=>{
-        if(activeBusinessRef.current!==businessId)return;
-        if(activeBlobRef.current===blob){
-          setSavedPosterId(id);setAutoSaveNotice('Auto-saved to your private poster library.');
-        }
-        const assets=await listSavedPosters(businessId).catch(()=>null);
-        if(assets&&activeBusinessRef.current===businessId)setSavedAssets(assets);
-      }).catch(e=>{
-        if(activeBusinessRef.current===businessId&&activeBlobRef.current===blob){
-          setAutoSaveNotice('Automatic save failed. Keep this tab open and check storage access.');
-          setError('Automatic poster save failed: '+errorMessage(e));
-        }
-      }).finally(()=>setSavingPoster(false));
-    },900);
-    return()=>clearTimeout(timer);
-  },[finalBlob,businessId,composing,generating,generationStage,
-     copyLanguageConsistent,serviceFocusApproved,savePosterBlob]);
-
   // Dual execution: once the owner reviews a JSON blueprint, warm the chosen
   // licensed fonts independently of the next image-model request.
   // Never fetch a model or use Puter allowance from this effect.
@@ -388,10 +366,14 @@ export default function PuterMultilingualPosterLab(){
     language,
   }:null,[facts,headline,offer,serviceFocus,cta,showPhone,showWebsite,showEmail,language]);
 
+  const renderKey=JSON.stringify([artworkKey,imageRevision,format,exactCopy,selectedPremiumStyle,activeDesign,selectedPanelStyle,serviceFocusApproved]);
+  const outputReady=Boolean(finalBlob&&finalUrl&&generationStage==='ready'&&!generating&&!composing&&artworkKey===creativeKey&&completedRenderKey===renderKey&&copyLanguageConsistent&&serviceFocusApproved);
+  const outputReadyRef=useRef(false);
+  useEffect(()=>{outputReadyRef.current=outputReady;},[outputReady]);
   // Recompose typography at the exact selected PNG dimensions. Changing text,
   // format or contact options never triggers a new billable Puter request.
   useEffect(()=>{
-    if(!artworkSrc||!exactCopy||!copyLanguageConsistent)return;
+    if(!artworkSrc||!exactCopy||!copyLanguageConsistent||generating||artworkKey!==creativeKey||!serviceFocusApproved){setComposing(false);return;}
     let cancelled=false;
     setComposing(true);setGenerationStage('typography');setEstimatedProgress(94);setError('');
     const timeout=setTimeout(()=>{
@@ -401,7 +383,7 @@ export default function PuterMultilingualPosterLab(){
           if(cancelled)return;
           const url=URL.createObjectURL(blob);
           if(finalUrlRef.current)URL.revokeObjectURL(finalUrlRef.current);
-          finalUrlRef.current=url;setFinalBlob(blob);setFinalUrl(url);
+          finalUrlRef.current=url;setFinalBlob(blob);setFinalUrl(url);setCompletedRenderKey(renderKey);
           setEstimatedProgress(100);setGenerationStage('ready');
           setStatus(isRealOutput?
             'Exact-text poster composed at '+dimensions.width+'×'+dimensions.height+' PNG. Ready to download.':
@@ -411,10 +393,49 @@ export default function PuterMultilingualPosterLab(){
         .finally(()=>{if(!cancelled)setComposing(false);});
     },220);
     return()=>{cancelled=true;clearTimeout(timeout);};
-  },[artworkSrc,imageRevision,format,exactCopy,copyLanguageConsistent,selectedPremiumStyle,activeDesign,selectedPanelStyle,isRealOutput,dimensions.width,dimensions.height]);
+  },[artworkSrc,imageRevision,format,exactCopy,copyLanguageConsistent,selectedPremiumStyle,activeDesign,selectedPanelStyle,isRealOutput,dimensions.width,dimensions.height,artworkKey,creativeKey,renderKey,serviceFocusApproved,generating]);
   // Preserve the last successful preview visually during copy/language edits.
   // Export and handoff remain blocked until the updated copy is valid.
   // The next successful compose revokes the old object URL atomically.
+
+  // Save the first complete real artwork once per generation. Further local
+  // typography/size edits are explicit saves, not unlimited library versions.
+  const saveCurrentPoster=async()=>{
+    if(!outputReady||!finalBlob||!businessId||savingPoster||linkingCaption||operationRef.current)return;
+    operationRef.current=true;setSavingPoster(true);setError('');
+    const blob=finalBlob;
+    try{
+      const id=await savePosterBlob(blob,businessId);
+      if(activeBusinessRef.current===businessId&&activeBlobRef.current===blob){
+        setSavedPosterId(id);setAutoSaveFailed(false);setAutoSaveNotice('Saved to your private poster library.');
+      }
+      const assets=await listSavedPosters(businessId);
+      if(activeBusinessRef.current===businessId)setSavedAssets(assets);
+    }catch(e){setAutoSaveFailed(true);setError('Poster save failed: '+errorMessage(e));}
+    finally{operationRef.current=false;setSavingPoster(false);}
+  };
+  useEffect(()=>{
+    if(!outputReady||!finalBlob||!businessId||!isRealOutput||generationStage!=='ready'||
+       autoSavedRevisionRef.current===imageRevision)return;
+    const blob=finalBlob;
+    const timer=setTimeout(()=>{
+      if(!outputReadyRef.current||operationRef.current||activeBusinessRef.current!==businessId||activeBlobRef.current!==blob)return;
+      autoSavedRevisionRef.current=imageRevision;
+      setSavingPoster(true);setAutoSaveNotice('Saving your generated PNG privately…');
+      void savePosterBlob(blob,businessId).then(async id=>{
+        if(activeBusinessRef.current!==businessId)return;
+        if(activeBlobRef.current===blob){setSavedPosterId(id);setAutoSaveFailed(false);setAutoSaveNotice('Auto-saved to your private poster library.');}
+        const assets=await listSavedPosters(businessId).catch(()=>null);
+        if(assets&&activeBusinessRef.current===businessId)setSavedAssets(assets);
+      }).catch(e=>{
+        if(activeBusinessRef.current===businessId&&activeBlobRef.current===blob){
+          setAutoSaveFailed(true);setAutoSaveNotice('Automatic save failed. Use Retry save; your PNG is unchanged.');
+          setError('Automatic poster save failed: '+errorMessage(e));
+        }
+      }).finally(()=>setSavingPoster(false));
+    },900);
+    return()=>clearTimeout(timer);
+  },[outputReady,finalBlob,businessId,isRealOutput,generationStage,imageRevision,savePosterBlob]);
 
   const transcribe=async(blob:Blob)=>{
     failedVoiceRef.current=blob;
@@ -504,8 +525,8 @@ export default function PuterMultilingualPosterLab(){
   };
   const prepareWithGemini=async()=>{
     if(!businessId||prompt.trim().length<5){setError('Choose a business and enter a prompt.');return;}
-    if(geminiBusy||recording||transcribing||generating||referenceBusy)return;
-    setGeminiBusy(true);setError('');setDesignAdvisory('');
+    if(locked||operationRef.current)return;
+    operationRef.current=true;setGeminiBusy(true);setError('');setDesignAdvisory('');
     setStatus('Gemini is understanding your voice brief and verified business facts…');
     const forKey=currentKey;
     try{
@@ -526,7 +547,7 @@ export default function PuterMultilingualPosterLab(){
         }
         throw Error(data.error||'Gemini could not prepare this design blueprint.');
       }
-      if(forKey!==businessId+'|'+language+'|'+prompt.trim()+'|'+referenceSummary)return;
+      if(forKey!==currentKey)return;
       if(data.blueprint){
         setDesignAdvisory('');
         // Dual-output: creative art direction + reviewed typography JSON.
@@ -563,7 +584,7 @@ export default function PuterMultilingualPosterLab(){
         setStatus('Gemini brief ready. Review the text before using Puter.');
       }else throw Error('Gemini returned no valid design blueprint.');
     }catch(e){setError(errorMessage(e));setStatus('');}
-    finally{setGeminiBusy(false);void refreshGeminiQuota();}
+    finally{operationRef.current=false;setGeminiBusy(false);void refreshGeminiQuota();}
   };
   // Zero-credit visual continuity when Puter sample mode is unavailable or
   // no separate Puter account is signed in. This is an ORIGINAL local SLBI
@@ -576,7 +597,7 @@ export default function PuterMultilingualPosterLab(){
     const url=URL.createObjectURL(previewPng);
     const previous=sampleArtworkUrlRef.current;
     sampleArtworkUrlRef.current=url;
-    setArtworkSrc(url);
+    setArtworkSrc(url);setArtworkKey(creativeKey);
     setImageRevision(n=>n+1);
     setIsRealOutput(false);setGenerationStage('typography');setEstimatedProgress(94);
     setBrowseReferences(false);
@@ -592,7 +613,7 @@ export default function PuterMultilingualPosterLab(){
       return;
     }
     if(!facts||!businessId){setError('Choose a verified owned business first.');return;}
-    if(recording||transcribing||geminiBusy||generating||referenceBusy)return;
+    if(locked||operationRef.current)return;
     if(prompt.trim().length<5||!headline.trim()){
       setError('Enter your campaign idea and an exact headline for the poster.');return;
     }
@@ -608,7 +629,7 @@ export default function PuterMultilingualPosterLab(){
       setError('Review and confirm that this product or service is actually offered by the selected business before generating.');return;
     }
     if(realMode&&!consent){setError('Please explicitly confirm possible Puter charges.');return;}
-    setGenerating(true);setComposing(false);setError('');setDesignAdvisory('');
+    operationRef.current=true;setGenerating(true);setComposing(false);setError('');setDesignAdvisory('');setArtworkKey('');setCompletedRenderKey('');setAutoSaveNotice('');setAutoSaveFailed(false);
     setGenerationStage('connecting');setEstimatedProgress(7);
     setStatus('SLBI Image Generator is preparing your poster artwork…');
     let phase:'sign_in'|'image_request'='sign_in';
@@ -647,7 +668,7 @@ export default function PuterMultilingualPosterLab(){
       const image=await puter.ai.txt2img(creative,options);
       if(!image?.src||typeof image.src!=='string')
         throw {code:'upstream_failed',message:'Image provider returned no printable image'};
-      setArtworkSrc(image.src);setImageRevision(n=>n+1);setIsRealOutput(realMode);
+      setArtworkSrc(image.src);setArtworkKey(creativeKey);setImageRevision(n=>n+1);setIsRealOutput(realMode);
       setGenerationStage('typography');setEstimatedProgress(94);setBrowseReferences(false);
       setStatus(realMode?'SLBI artwork ready. Applying your exact approved copy…':
         'Puter SAMPLE returned. Composing exact preview text…');
@@ -669,12 +690,12 @@ export default function PuterMultilingualPosterLab(){
           (detail.code!=='unknown_provider_error'?' (Code: '+detail.code+')':''));
         setStatus('No automatic paid retry was made. Your previous poster and campaign brief remain available.');
       }
-    }finally{setGenerating(false);}
+    }finally{operationRef.current=false;setGenerating(false);}
   };
   const deletePoster=async(asset:SavedPosterAsset)=>{
-    if(!businessId||deletingPosterId)return;
+    if(!businessId||deletingPosterId||savingPoster||linkingCaption||operationRef.current)return;
     if(!window.confirm('Permanently delete this private saved poster? This cannot be undone.'))return;
-    setDeletingPosterId(asset.id);setError('');
+    operationRef.current=true;setDeletingPosterId(asset.id);setError('');
     try{
       await deleteSavedPoster(businessId,asset.id);
       setSavedAssets(previous=>previous.filter(item=>item.id!==asset.id));
@@ -685,10 +706,10 @@ export default function PuterMultilingualPosterLab(){
       }
       setStatus('Unused private poster deleted. Your remaining images are unchanged.');
     }catch(e){setError(errorMessage(e));}
-    finally{setDeletingPosterId('');}
+    finally{operationRef.current=false;setDeletingPosterId('');}
   };
   const download=()=>{
-    if(!finalBlob||!finalUrl||composing||!copyLanguageConsistent||!serviceFocusApproved)return;
+    if(!outputReady||!finalBlob||!finalUrl||!copyLanguageConsistent||!serviceFocusApproved)return;
     const anchor=document.createElement('a');
     const safeName=(facts?.name||'business').toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,32);
     anchor.href=finalUrl;
@@ -697,12 +718,12 @@ export default function PuterMultilingualPosterLab(){
     document.body.appendChild(anchor);anchor.click();anchor.remove();
   };
   const continueToCaption=async()=>{
-    if(!finalBlob||!facts||!businessId||composing||linkingCaption||!copyLanguageConsistent||!serviceFocusApproved)return;
-    setLinkingCaption(true);setError('');
+    if(!outputReady||!finalBlob||!facts||!businessId||linkingCaption||operationRef.current||!copyLanguageConsistent||!serviceFocusApproved)return;
+    operationRef.current=true;setLinkingCaption(true);setError('');
     try{
       // Complete the cloud backup before navigating when possible. A transient
       // storage failure still permits the safe browser-local handoff.
-      const backedUpId=savedPosterId||await savePosterBlob(finalBlob,businessId)
+      const backedUpId=await savePosterBlob(finalBlob,businessId)
         .catch(()=> '');
       if(backedUpId)setSavedPosterId(backedUpId);
       const id=await saveLinkedPoster({
@@ -717,9 +738,9 @@ export default function PuterMultilingualPosterLab(){
       // This is a user-initiated navigation only. No paid caption
       // model is called without the Caption Lab Generate action.
       window.location.assign('/vendor/marketing/captions?handoff='+encodeURIComponent(id));
-    }catch(e){setError(errorMessage(e));setLinkingCaption(false);}
+    }catch(e){setError(errorMessage(e));setLinkingCaption(false);operationRef.current=false;}
   };
-  const locked=generating||geminiBusy||transcribing||recording||referenceBusy;
+  const locked=generating||geminiBusy||transcribing||recording||referenceBusy||linkingCaption||savingPoster||Boolean(deletingPosterId)||requestingMic;
   return <main className="mx-auto flex w-full max-w-[1620px] flex-col gap-3 px-3 py-3 text-[#292327] sm:px-5 xl:h-[calc(100dvh-9.5rem)] xl:min-h-0 xl:overflow-hidden xl:py-2">
     <Script src="https://js.puter.com/v2/" strategy="afterInteractive"
       onReady={()=>setSdkReady(true)}
@@ -772,7 +793,7 @@ export default function PuterMultilingualPosterLab(){
             </button>
           </div>)}
         </div>:<p className="rounded-lg bg-[#F9FAFB] p-5 text-center text-xs text-[#6B7280]">
-          No saved posters yet. Every completed generated PNG is automatically stored here.
+          No saved posters yet. Real artwork is auto-saved once; save edited or sample versions explicitly.
         </p>}
       </section>
     </div>}
@@ -796,7 +817,7 @@ export default function PuterMultilingualPosterLab(){
                 failedVoiceRef.current=null;setPendingTranscript('');disposeVoice();
                 setBusinessId(e.target.value);setBrief(null);setBriefKey('');
                 setReferenceFiles([]);setReferenceSummary('');setUseAttachedImage(false);
-                setArtworkSrc('');setFinalBlob(null);setFinalUrl('');
+                setArtworkSrc('');setArtworkKey('');setCompletedRenderKey('');setFinalBlob(null);setFinalUrl('');setSavedAssets([]);
                 setHeadline(starterHeadline(language,selectedReferenceId));setOffer('');
                 setServiceFocus('');setServiceEvidence('');setServiceFocusApproved(false);setManualFocus(false);
                 setCta(STARTER_COPY[language].cta);
@@ -1021,7 +1042,7 @@ export default function PuterMultilingualPosterLab(){
             Default is a no-credit sample, not a real AI quality test.
           </p>}
           <button type="button" onClick={()=>void generate()}
-            disabled={locked||(realMode&&!sdkReady)||!facts||prompt.trim().length<5||!headline.trim()||(realMode&&!consent)}
+            disabled={locked||(realMode&&!sdkReady)||!facts||prompt.trim().length<5||!headline.trim()||!copyLanguageConsistent||!serviceFocus.trim()||!serviceFocusApproved||(realMode&&!consent)}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#262126] px-3 py-3 text-[11px] font-bold text-white disabled:opacity-40">
             {generating?<LoaderCircle size={16} className="animate-spin"/>:<FlaskConical size={16}/>}
             {generating?'Generating artwork…':realMode?'Generate with SLBI Image Generator':'Preview poster sample'}
@@ -1046,7 +1067,7 @@ export default function PuterMultilingualPosterLab(){
             className="block h-full w-full max-h-full max-w-full object-contain drop-shadow-[0_12px_24px_rgba(24,22,25,.17)]"
             style={{aspectRatio:dimensions.width+'/'+dimensions.height}}/>:
           <PuterReferenceGallery
-            chosen={selectedReferenceId}
+            chosen={selectedReferenceId} disabled={locked}
             onChoose={chooseReference}
             showAll={browseAllStyles}
             onToggleAll={()=>setBrowseAllStyles(value=>!value)}/>}
@@ -1058,7 +1079,7 @@ export default function PuterMultilingualPosterLab(){
         <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-[#E7E1DE] pt-2.5">
           <p className="min-w-0 flex-1 text-[10px] leading-4 text-[#81736E]">
             {savingPoster?'Auto-saving image…':autoSaveNotice||
-              (finalBlob?'Completed images are auto-saved privately':'No automatic social publishing')}
+              (outputReady?'Save this version privately or download it':finalBlob?'Previous preview — review or regenerate before export':'No automatic social publishing')}
           </p>
           <div className="flex flex-wrap items-center gap-2">
             <button type="button" onClick={()=>setSavedPickerOpen(true)}
@@ -1066,12 +1087,13 @@ export default function PuterMultilingualPosterLab(){
               className="inline-flex items-center gap-1.5 rounded-lg border border-[#E6DED8] bg-white px-3 py-2.5 text-[11px] font-bold text-[#292327] disabled:opacity-40">
               <ImageIcon size={14}/> Saved ({savedAssets.length})
             </button>
-            <button type="button" onClick={download} disabled={!finalBlob||composing||generating||!copyLanguageConsistent||!serviceFocusApproved}
+            <button type="button" onClick={()=>void saveCurrentPoster()} disabled={!outputReady||locked||Boolean(savedPosterId)} className="inline-flex items-center gap-1.5 rounded-lg border border-[#FDBA74] bg-[#FFF7ED] px-3 py-2.5 text-[11px] font-bold text-[#9A3412] disabled:opacity-40">{savingPoster?'Saving…':savedPosterId?'Saved':autoSaveFailed?'Retry save':'Save version'}</button>
+            <button type="button" onClick={download} disabled={!outputReady||locked}
               className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[#E6DED8] bg-white px-3 py-2.5 text-[11px] font-bold text-[#292327] disabled:opacity-40">
               <Download size={14}/> Download PNG
             </button>
             <button type="button" onClick={()=>void continueToCaption()}
-              disabled={!finalBlob||composing||generating||linkingCaption||!businessId||!copyLanguageConsistent||!serviceFocusApproved}
+              disabled={!outputReady||locked}
               className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-[#262126] px-3 py-2.5 text-[11px] font-bold text-white disabled:opacity-40">
               <WandSparkles size={14} className="text-[#FDBA74]"/>
               {linkingCaption?'Linking poster…':'Write Caption for this Poster'}
@@ -1102,7 +1124,7 @@ export default function PuterMultilingualPosterLab(){
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-[11px] font-bold">Campaign reference</p>
               <button type="button" onClick={()=>setBrowseReferences(value=>!value)}
-                disabled={generating||composing}
+                disabled={locked||composing}
                 className="rounded-lg border border-[#E5D8CC] px-2 py-1 text-[10px] font-semibold text-[#8D572D] disabled:opacity-50">
                 {browseReferences&&finalUrl?'View poster':'Browse styles'}
               </button>
@@ -1207,7 +1229,7 @@ export default function PuterMultilingualPosterLab(){
             </p>}
             <div>
               <label htmlFor="puter-headline" className="mb-1 block text-[11px] font-semibold">Headline</label>
-              <input id="puter-headline" value={headline} maxLength={120} disabled={generating}
+              <input id="puter-headline" value={headline} maxLength={120} disabled={locked}
                 onChange={e=>{setHeadline(e.target.value);setManualHeadline(true);}}
                 className="w-full rounded-lg border border-[#E4DDDA] px-3 py-2.5 text-[12px] focus:border-[#EC9D68] focus:outline-none"/>
             </div>
@@ -1215,7 +1237,7 @@ export default function PuterMultilingualPosterLab(){
               <label htmlFor="puter-service-focus" className="block text-[11px] font-bold text-[#7A411A]">
                 Promoted product or service <span className="text-[#C2410C]">*</span>
               </label>
-              <input id="puter-service-focus" value={serviceFocus} maxLength={85} disabled={generating}
+              <input id="puter-service-focus" value={serviceFocus} maxLength={85} disabled={locked}
                 onChange={e=>{setServiceFocus(e.target.value);setServiceFocusApproved(false);
                   setManualFocus(true);setServiceEvidence('');}}
                 placeholder={language==='ta'?'எ.கா. வலைத்தள மற்றும் செயலி உருவாக்கம்':
@@ -1230,7 +1252,7 @@ export default function PuterMultilingualPosterLab(){
               </p>
               <label className="flex items-start gap-2 text-[10px] font-semibold leading-4 text-[#69492F]">
                 <input type="checkbox" checked={serviceFocusApproved}
-                  disabled={generating||!serviceFocus.trim()||!isPosterTextInLanguage(serviceFocus,language)}
+                  disabled={locked||!serviceFocus.trim()||!isPosterTextInLanguage(serviceFocus,language)}
                   onChange={e=>setServiceFocusApproved(e.target.checked)}
                   className="mt-0.5 accent-[#F97316]"/>
                 I confirm this is a real product/service offered by the selected business.
@@ -1238,14 +1260,14 @@ export default function PuterMultilingualPosterLab(){
             </div>
             <div>
               <label htmlFor="puter-offer" className="mb-1 block text-[11px] font-semibold">Exact offer</label>
-              <input id="puter-offer" value={offer} maxLength={60} disabled={generating}
+              <input id="puter-offer" value={offer} maxLength={60} disabled={locked}
                 onChange={e=>{setOffer(e.target.value);setManualOffer(true);}}
                 placeholder="e.g. 30% OFF"
                 className="w-full rounded-lg border border-[#E4DDDA] px-3 py-2.5 text-[12px] focus:border-[#EC9D68] focus:outline-none"/>
             </div>
             <div>
               <label htmlFor="puter-cta" className="mb-1 block text-[11px] font-semibold">Call to action</label>
-              <input id="puter-cta" value={cta} maxLength={105} disabled={generating}
+              <input id="puter-cta" value={cta} maxLength={105} disabled={locked}
                 onChange={e=>{setCta(e.target.value);setManualCta(true);}}
                 className="w-full rounded-lg border border-[#E4DDDA] px-3 py-2.5 text-[12px] focus:border-[#EC9D68] focus:outline-none"/>
             </div>
@@ -1257,15 +1279,15 @@ export default function PuterMultilingualPosterLab(){
             </p>
             <div className="grid grid-cols-2 gap-2 text-[10px]">
               <label className="flex items-center gap-1.5 rounded-lg bg-[#F8F6F4] px-2 py-2">
-                <input type="checkbox" checked={showPhone} disabled={generating||!facts?.phone}
+                <input type="checkbox" checked={showPhone} disabled={locked||!facts?.phone}
                   onChange={e=>setShowPhone(e.target.checked)}/> Phone
               </label>
               <label className="flex items-center gap-1.5 rounded-lg bg-[#F8F6F4] px-2 py-2">
-                <input type="checkbox" checked={showWebsite} disabled={generating||!facts?.website}
+                <input type="checkbox" checked={showWebsite} disabled={locked||!facts?.website}
                   onChange={e=>setShowWebsite(e.target.checked)}/> Website
               </label>
               <label className="col-span-2 flex items-center gap-1.5 rounded-lg bg-[#F8F6F4] px-2 py-2">
-                <input type="checkbox" checked={showEmail} disabled={generating||!facts?.email}
+                <input type="checkbox" checked={showEmail} disabled={locked||!facts?.email}
                   onChange={e=>setShowEmail(e.target.checked)}/> Verified business email
               </label>
             </div>

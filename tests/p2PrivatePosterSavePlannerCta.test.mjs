@@ -130,6 +130,8 @@ test('Owner-only planner grants and automatic image persistence cannot bypass RL
   assert.match(grants,/GRANT INSERT \(poster_asset_id\) ON TABLE public\.marketing_campaigns TO authenticated/);
   assert.doesNotMatch(grants,/GRANT ALL|DISABLE ROW LEVEL SECURITY|TO anon;/i);
   assert.match(poster,/generationStage!=='ready'/);
+  assert.match(poster,/autoSavedRevisionRef.current===imageRevision/);
+  assert.match(poster,/completedRenderKey===renderKey/);
   assert.match(poster,/!copyLanguageConsistent\|\|!serviceFocusApproved/);
   assert.match(poster,/savedPosterAssetId:backedUpId\|\|undefined/);
   assert.match(page,/setCloudAssetId\(record.context.savedPosterAssetId\|\|''\)/);
