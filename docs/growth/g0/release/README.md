@@ -1,4 +1,8 @@
 # G0 release readiness package — 2026-11-22
+
+## 2026-11-22 — G0 MANUAL BACKUP OPERATOR CHECKPOINT (latest)
+Owner approved manual backup on Free plan only. Read [G0_07_MANUAL_BACKUP_OPERATOR_CHECKPOINT_20261122.md](../../G0_07_MANUAL_BACKUP_OPERATOR_CHECKPOINT_20261122.md). Branch `growth/g0-manual-backup-gate`: owner-only encrypted native archive helper and restore/evidence runbook; archive decode is not recovery. Live 47 migrations, 24 businesses, 2 cache mismatches, zero wallet mismatch/overcap; no live SQL writes. Actual backup/isolated restore pending, no paid upgrade or G1 integration. Next-chat prompt in checkpoint.
+
 Snapshot main 8c99d165e80e899455c2004a1c1337475551395b. These are **review-only transaction bodies**, not executed migrations. Separate lead, review and wallet release decisions. Live preflight: exact four function SHA-256 hashes, owner postgres, search_path empty, anon/auth execute denied, service_role allowed; review types numeric/int/bool, internal schema absent, 24 listings/23 approved, 2 cache mismatches; 0 reserved captions, 0 pending posters, 0 overcap wallets and 0 future entitlements. Snapshot expires whenever live schema changes.
 
 - Lead forward: request identity binds to existing normalized payload/business; legacy direct insert unchanged. App additionally separates Turnstile verification ID from stable CRM request ID, maps exact conflict to HTTP 409, never silently submits a fresh enquiry. Official Turnstile requires independently validated single-use tokens: https://developers.cloudflare.com/turnstile/get-started/server-side-validation/.
