@@ -83,8 +83,10 @@ export function parseGeminiCaptionOutput(raw:unknown,language:CaptionLanguage,ve
       clean.includes('[[HOOK]]')||clean.includes('[[STORY]]')||clean.includes('[[SHORT]]'))return null;
     // A selected Tamil/Sinhala draft must be actual native-language copy,
     // rather than mostly English text merely labeled as that language.
-    if(language==='ta'&&!/[\u0B80-\u0BFF]/u.test(clean))return null;
-    if(language==='si'&&!/[\u0D80-\u0DFF]/u.test(clean))return null;
+    const letters=Array.from(clean).filter(ch=>/\p{L}/u.test(ch));
+    const native=letters.filter(ch=>language==='ta'?/\p{Script=Tamil}/u.test(ch):language==='si'?/\p{Script=Sinhala}/u.test(ch):/\p{Script=Latin}/u.test(ch)).length;
+    // Permit brand names and established loanwords, not a token native character.
+    if(native<4||native/Math.max(1,letters.length)<0.45)return null;
     angles[angle]=clean;
   }
   if(!Array.isArray(root.hashtags)||root.hashtags.length<6||root.hashtags.length>8)return null;

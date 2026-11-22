@@ -24,6 +24,7 @@ export type LinkedPosterContext={
   sample:boolean;
   source:'poster_studio'|'device_upload';
   format:string;
+  palette?:string;
   savedPosterAssetId?:string; // Private owner-owned cloud UUID; never a public URL.
 };
 export type LinkedPosterRecord={
@@ -82,7 +83,7 @@ export async function saveLinkedPoster(context:LinkedPosterContext,image:Blob):P
     vibe:clean(context.vibe,80),language:context.language,
     sample:Boolean(context.sample),
     source:context.source==='device_upload'?'device_upload':'poster_studio',
-    format:clean(context.format,20),
+    format:clean(context.format,20),palette:clean(context.palette,20)||undefined,
     savedPosterAssetId:validHandoffId(context.savedPosterAssetId)?context.savedPosterAssetId:undefined,
   };
   await operation<void>('readwrite',(store,done)=>{

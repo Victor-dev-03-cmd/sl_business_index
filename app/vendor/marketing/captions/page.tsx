@@ -16,6 +16,7 @@ import {captionIssueMessage,failedCaptionLanguages,type CaptionIssue}
 import {
   SlbiVoiceRecorder,requestSlbiVoiceTranscript,SLBI_VOICE_MAX_BYTES,
 } from '@/lib/marketing/voice/slbi-voice-engine';
+import {preparePlannerCaption,captionRequestIdentity,serializeEditedCaption} from '@/lib/marketing/workspace-safety';
 import {plannerBriefFromCaption} from '@/lib/marketing/caption-planner-brief';
 import {listSavedPosters,privatePosterUrl,readSavedPoster,uploadSavedPoster,type SavedPosterAsset} from '@/lib/marketing/saved-poster-cloud-client';
 import type {CaptionLanguage} from '@/lib/marketing/caption-contract';
@@ -34,16 +35,17 @@ import {
 
 type Business={id:string;name:string;city:string|null;category:string;phone:string|null;website_url:string|null;address:string|null};
 type StoredDraft={id:string;business_id?:string;caption:string;language:CaptionLanguage;review_status:string;created_at?:string};
-type ApiBody={error?:string;code?:string;draft?:StoredDraft;drafts?:StoredDraft[];chargedCredits?:number};
+type ApiBody={error?:string;code?:string;draft?:StoredDraft;drafts?:StoredDraft[];chargedCredits?:number;refundConfirmed?:boolean;hasMore?:boolean};
 type GeminiQuota={used:number;limit:number;remaining:number;dayUtc:string};
 type PlannerDraft={
   id:string;business_id:string;banner_text:string;platforms:string[]|null;
   created_at:string|null;poster_asset_id:string|null;
-  brief:{cta?:string;terms?:string;language?:string;objective?:string}|null;
+  brief:{cta?:string;terms?:string;language?:string;objective?:string;format?:string;palette?:string}|null;
 };
 type WorkspaceSnapshot={
   message:string;cta:string;conditions:string;captions:CaptionSet;
   platform:SocialPlatform;angle:CaptionAngle;previewLanguage:CaptionLanguage|'all';
+  languages?:CaptionLanguage[];goal?:CampaignGoal;tone?:TonePosition;includeTags?:boolean;customTags?:string[];removedTags?:string[];generatedTags?:Record<CaptionLanguage,string[]>;draftIds?:Partial<Record<CaptionLanguage,string>>;
 };
 const uuid=/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i;
 const field='w-full rounded-xl border border-[#E5E7EB] bg-white px-3.5 py-3 text-[12px] text-[#1F2937] outline-none transition focus:border-[#FB923C] focus:ring-2 focus:ring-[#F97316]/10';
@@ -68,7 +70,7 @@ async function imageFileToPng(file:File):Promise<Blob>{
   if(!['image/png','image/jpeg','image/webp'].includes(file.type)||!file.size||
       file.size>12_000_000)
     throw Error('Choose a PNG, JPG or WebP image smaller than 12 MB.');
-  if(file.type==='image/png')return file;
+  // Decode PNG as well to enforce the same pixel and encoding checks.
   const src=URL.createObjectURL(file);
   try{
     const img=new Image();
@@ -87,7 +89,7 @@ async function imageFileToPng(file:File):Promise<Blob>{
     ctx.drawImage(img,0,0);
     const png=await new Promise<Blob>((resolve,reject)=>
       canvas.toBlob(blob=>blob?resolve(blob):reject(Error('Could not prepare the PNG.')),'image/png'));
-    if(png.size>15_000_000)throw Error('The PNG is too large. Choose a smaller image.');
+    if(png.size>12_000_000)throw Error('The PNG is too large. Choose a smaller image.');
     return png;
   }finally{URL.revokeObjectURL(src);}
 }
@@ -118,6 +120,13 @@ export default function ConnectedCaptionLab(){
   const [cta,setCta]=useState('');
   const [captions,setCaptions]=useState<CaptionSet>(()=>emptyCaptions());
   const [drafts,setDrafts]=useState<StoredDraft[]>([]);
+  const [draftIds,setDraftIds]=useState<Partial<Record<CaptionLanguage,string>>>({});
+  const [draftSaving,setDraftSaving]=useState(false);
+  const [draftLimit,setDraftLimit]=useState(25);
+  const [draftHasMore,setDraftHasMore]=useState(false);
+  const operationRef=useRef(false);
+  const activeBusinessRef=useRef('');
+  const requestKeysRef=useRef(new Map<string,string>());
   const [plannerDrafts,setPlannerDrafts]=useState<PlannerDraft[]>([]);
   const [plannerLoading,setPlannerLoading]=useState(false);
   const [workspaceKey,setWorkspaceKey]=useState('');
@@ -190,6 +199,7 @@ export default function ConnectedCaptionLab(){
     document.addEventListener('keydown',onKeyDown);
     return()=>{document.removeEventListener('keydown',onKeyDown);previousFocus?.focus();};
   },[posterPickerOpen]);
+  useEffect(()=>{activeBusinessRef.current=businessId;},[businessId]);
   const selected=useMemo(()=>businesses.find(b=>b.id===businessId),[businesses,businessId]);
   const hasLinked=Boolean(linked&&linked.context.businessId===businessId);
   const chosenLanguages:CaptionLanguage[]=languageSelections.length?languageSelections:['ta'];
@@ -197,7 +207,7 @@ export default function ConnectedCaptionLab(){
     (chosenLanguages.find(lang=>Boolean(captions[lang][angle]?.trim()))||chosenLanguages[0]):
     previewLanguage;
   const generationSignature=JSON.stringify({
-    businessId,goal,tone,message,conditions,cta,posterKey,languages:chosenLanguages,
+    businessId,goal,tone,message,conditions,cta,posterKey,posterHeadline:linked?.context.headline,posterOffer:linked?.context.offer,languages:chosenLanguages,
   });
   const canRetryLanguages=Boolean(failedGenerations&&
     failedGenerations.signature===generationSignature&&failedGenerations.languages.length);
@@ -315,19 +325,19 @@ export default function ConnectedCaptionLab(){
   const loadDrafts=useCallback(async(signal?:AbortSignal)=>{
     if(!businessId){setDrafts([]);setGeneratedLanguages([]);return;}
     try{
-      const res=await fetch('/api/marketing/caption?businessId='+encodeURIComponent(businessId),{
+      const res=await fetch('/api/marketing/caption?businessId='+encodeURIComponent(businessId)+'&limit='+draftLimit,{
         credentials:'same-origin',cache:'no-store',signal,
       });
       const data=await decode(res);
       if(!res.ok)throw Error(data.error||'Unable to read saved captions.');
-      if(signal?.aborted)return;
+      if(signal?.aborted||activeBusinessRef.current!==businessId)return;
       const list=Array.isArray(data.drafts)?data.drafts:[];
       // A network refresh updates ONLY the library, not the active editor.
       // This prevents stale Gemini drafts overriding a new Poster Studio handoff.
-      setDrafts(list);
+      setDrafts(list);setDraftHasMore(Boolean(data.hasMore));
       setGeneratedLanguages(LANGUAGES.filter(lang=>Boolean(newDraftLanguage(list,lang))));
     }catch(e){if(!signal?.aborted)setNotice(e instanceof Error?e.message:'Existing drafts unavailable.');}
-  },[businessId]);
+  },[businessId,draftLimit]);
   useEffect(()=>{
     const controller=new AbortController();
     void loadDrafts(controller.signal);
@@ -344,10 +354,10 @@ export default function ConnectedCaptionLab(){
         .eq('status','drafted').eq('is_archived',false)
         .order('created_at',{ascending:false}).limit(300);
       if(result.error)throw result.error;
-      setPlannerDrafts((result.data||[]) as PlannerDraft[]);
+      if(activeBusinessRef.current===businessId)setPlannerDrafts((result.data||[]) as PlannerDraft[]);
     }catch(e){setNotice('Saved Planner drafts could not be listed: '+
       (e instanceof Error?e.message:'Please retry.'));}
-    finally{setPlannerLoading(false);}
+    finally{if(activeBusinessRef.current===businessId)setPlannerLoading(false);}
   },[businessId]);
   useEffect(()=>{void loadPlannerDrafts();},[loadPlannerDrafts]);
 
@@ -372,7 +382,7 @@ export default function ConnectedCaptionLab(){
       if(skip)sessionStorage.removeItem(key);
       else{
         const raw=sessionStorage.getItem(key);
-        if(raw&&raw.length<25000)saved=JSON.parse(raw) as WorkspaceSnapshot;
+        if(raw&&raw.length<55000)saved=JSON.parse(raw) as WorkspaceSnapshot;
       }
     }catch{/* Session storage cannot block new campaign editing. */}
     if(saved){
@@ -383,6 +393,14 @@ export default function ConnectedCaptionLab(){
         LANGUAGES.every(lang=>ANGLES.every(angle=>
           typeof saved.captions?.[lang]?.[angle]==='string')))
         setCaptions(saved.captions);
+      if(Array.isArray(saved.languages)&&saved.languages.length&&saved.languages.every(l=>LANGUAGES.includes(l)))setLanguageSelections(saved.languages);
+      if(saved.goal&&GOALS.includes(saved.goal))setGoal(saved.goal);
+      if(saved.tone===0||saved.tone===1||saved.tone===2)setTone(saved.tone);
+      if(typeof saved.includeTags==='boolean')setIncludeTags(saved.includeTags);
+      if(Array.isArray(saved.customTags))setCustomTags(p=>({...p,[businessId]:saved!.customTags!.filter(t=>typeof t==='string'&&normalizedTag(t)===t).slice(0,12)}));
+      if(Array.isArray(saved.removedTags))setRemovedTags(p=>({...p,[businessId]:saved!.removedTags!.filter(t=>typeof t==='string'&&normalizedTag(t)===t).slice(0,100)}));
+      if(saved.generatedTags&&LANGUAGES.every(l=>Array.isArray(saved!.generatedTags![l])))setGeneratedTags(saved.generatedTags);
+      if(saved.draftIds)setDraftIds(Object.fromEntries(LANGUAGES.filter(l=>uuid.test(saved!.draftIds?.[l]||'')).map(l=>[l,saved!.draftIds![l]])));
       if(PLATFORMS.includes(saved.platform))setPlatform(saved.platform);
       if(ANGLES.includes(saved.angle))setAngle(saved.angle);
       if(saved.previewLanguage==='all'||LANGUAGES.includes(saved.previewLanguage))
@@ -398,15 +416,18 @@ export default function ConnectedCaptionLab(){
       try{
         if(filled){
           const snapshot:WorkspaceSnapshot={message,cta,conditions,captions,platform,
-            angle,previewLanguage};
+            angle,previewLanguage,languages:languageSelections,goal,tone,includeTags,customTags:customTags[businessId]||[],removedTags:removedTags[businessId]||[],generatedTags,draftIds};
           sessionStorage.setItem(workspaceKey,JSON.stringify(snapshot));
         }else sessionStorage.removeItem(workspaceKey);
       }catch{/* Session storage errors never block editing. */}
     },350);
     return()=>clearTimeout(timer);
-  },[workspaceKey,message,cta,conditions,captions,platform,angle,previewLanguage]);
+  },[workspaceKey,message,cta,conditions,captions,platform,angle,previewLanguage,languageSelections,goal,tone,includeTags,customTags,removedTags,generatedTags,draftIds,businessId]);
 
   const resumeAiDraft=(record:StoredDraft)=>{
+    if(isBusy||operationRef.current||record.business_id&&record.business_id!==businessId)return;
+    setDraftIds(p=>({...p,[record.language]:record.id}));setSavedCampaignId('');setSavedCampaignPosterId('');
+    setLanguageSelections(p=>p.includes(record.language)?p:[...p,record.language]);
     setCaptions(previous=>({...previous,[record.language]:parseThreeAngles(record.caption)}));
     setGeneratedTags(previous=>({...previous,[record.language]:
       extractSavedCaptionHashtags(record.caption)}));
@@ -415,7 +436,10 @@ export default function ConnectedCaptionLab(){
     setLastSavedCampaignId('');
   };
   const resumePlannerDraft=async(item:PlannerDraft)=>{
-    if(item.business_id!==businessId)return;
+    if(item.business_id!==businessId||isBusy||operationRef.current)return;
+    operationRef.current=true;setPosterBusy(true);
+    try{
+    setDraftIds({});
     const lang:CaptionLanguage=item.brief?.language==='தமிழ்'?'ta':
       item.brief?.language==='සිංහල'?'si':'en';
     setCaptions({...emptyCaptions(),[lang]:{hook:item.banner_text,story:'',short:''}});
@@ -446,9 +470,10 @@ export default function ConnectedCaptionLab(){
         };
         const url=URL.createObjectURL(image);
         posterUrlRef.current=url;setPosterUrl(url);setLinked(record);
-      }catch{/* Campaign text remains accessible if its linked PNG is missing. */}
+      }catch{setError('Linked image unavailable. Your caption is safe. Attach a replacement before saving.');setCloudAssetId('');}
     }
     setNotice('Planner draft opened. Edit the caption and Save to Planner to update it.');
+    }finally{operationRef.current=false;setPosterBusy(false);}
   };
   const toggleLanguage=(lang:CaptionLanguage)=>{
     setLanguageSelections(current=>current.includes(lang)?
@@ -563,7 +588,8 @@ export default function ConnectedCaptionLab(){
   };
 
   const generate=async(retryFailedOnly=false)=>{
-    if(busy||!selected||message.trim().length<5)return;
+    if(isBusy||operationRef.current||!selected||message.trim().length<5||voiceReviewDraft)return;
+    operationRef.current=true;
     const targets=retryFailedOnly&&canRetryLanguages&&failedGenerations?
       failedGenerations.languages:chosenLanguages;
     setBusy(true);setError('');setNotice('');
@@ -573,12 +599,19 @@ export default function ConnectedCaptionLab(){
       // Per-language isolation: a failed model call never blocks another
       // selected language and never deletes a successful saved draft.
       for(const language of targets){
+        const identity=await captionRequestIdentity(generationSignature,language);
+        let requestKey=requestKeysRef.current.get(identity);
+        try{requestKey=requestKey||sessionStorage.getItem(identity)||undefined;}catch{}
+        if(!requestKey||!uuid.test(requestKey))requestKey=crypto.randomUUID();
+        requestKeysRef.current.set(identity,requestKey);
+        try{sessionStorage.setItem(identity,requestKey);}catch{}
+        const forget=()=>{requestKeysRef.current.delete(identity);try{sessionStorage.removeItem(identity);}catch{}};
         try{
           const response=await fetch('/api/marketing/caption',{
             method:'POST',credentials:'same-origin',cache:'no-store',
             headers:{'Content-Type':'application/json'},
             body:JSON.stringify({
-              businessId,requestKey:crypto.randomUUID(),
+              businessId,requestKey,
               objective:goalObjective[goal],language,campaignGoal:goal,
               posterHeadline:hasLinked?(linked?.context.headline||''):'',
               posterOffer:hasLinked?(linked?.context.offer||''):'',
@@ -590,12 +623,14 @@ export default function ConnectedCaptionLab(){
           });
           const data=await decode(response);
           if(!response.ok||!data.draft?.caption){
+            if(data.refundConfirmed===true||data.code==='CAPTION_REQUEST_REFUNDED')forget();
             failures.push({
               language,status:response.status,code:data.code||'',
               detail:data.error||'Caption generation is unavailable.',
             });
             continue;
           }
+          forget();setDraftIds(p=>({...p,[language]:data.draft!.id}));
           setCaptions(previous=>({...previous,[language]:parseThreeAngles(data.draft!.caption)}));
           setGeneratedTags(previous=>({...previous,[language]:
             extractSavedCaptionHashtags(data.draft!.caption)}));
@@ -622,7 +657,7 @@ export default function ConnectedCaptionLab(){
         setNotice(completed.map(lang=>labels[lang]).join(' + ')+
           ' captions ready. Review the facts before saving.');
       }
-    }finally{setBusy(false);}
+    }finally{operationRef.current=false;setBusy(false);}
   };
   const editTags=(tag:string,action:'add'|'remove')=>{
     const normalized=normalizedTag(tag);
@@ -684,7 +719,7 @@ export default function ConnectedCaptionLab(){
     }catch{/* Browser storage failure must not block a completed save. */}
     failedVoiceRef.current=null;
     setMessage('');setConditions('');setCta('');
-    setCaptions(emptyCaptions());setGeneratedTags({ta:[],si:[],en:[]});
+    setCaptions(emptyCaptions());setGeneratedTags({ta:[],si:[],en:[]});setDraftIds({});
     setGeneratedLanguages([]);setFailedGenerations(null);
     setCustomTags(previous=>({...previous,[businessId]:[]}));
     setRemovedTags(previous=>({...previous,[businessId]:[]}));
@@ -697,8 +732,10 @@ export default function ConnectedCaptionLab(){
     setWorkspaceEpoch(epoch=>epoch+1);
   };
   const savePlanner=async()=>{
-    if(saving||!selected||!currentCaption.trim())return;
-    setSaving(true);setError('');setNotice('');
+    if(isBusy||operationRef.current||!selected||!currentCaption.trim())return;
+    const prepared=preparePlannerCaption(currentCaption,visibleTags,includeTags);
+    if(!prepared.ok){setError(prepared.error);return;}
+    operationRef.current=true;setSaving(true);setError('');setNotice('');
     try{
       const {data:{user},error:authError}=await supabase.auth.getUser();
       if(authError||!user)throw Error('Sign in before saving a campaign.');
@@ -706,19 +743,19 @@ export default function ConnectedCaptionLab(){
       const ownership=await supabase.from('businesses').select('id')
         .eq('id',businessId).eq('owner_id',user.id).maybeSingle();
       if(ownership.error||!ownership.data)throw Error('Business ownership could not be verified.');
-      const combined=(includeTags?withHashtags(currentCaption.trim(),visibleTags):
-        removeHashtags(currentCaption.trim())).slice(0,3000);
+      const combined=prepared.text;
       const first=previewLanguage==='all'?chosenLanguages[0]:previewLanguage;
       // marketing_campaign_brief_shape_v2 permits exactly seven fields.
       // The complete selected copy stays in banner_text, while other angles
       // persist separately in the user's marketing_ai_drafts records.
       const brief=plannerBriefFromCaption({
         caption:combined,cta,terms:conditions,language:first,
-        objective:goalObjective[goal],
+        objective:goalObjective[goal],format:linked?.context.format,palette:linked?.context.palette,
       });
       // Store the linked poster first, never claim it was saved when the
       // original is still just a two-hour browser-local handoff.
       let posterAssetId=cloudAssetId;
+      if(posterAssetId)await readSavedPoster(businessId,posterAssetId);
       if(hasLinked&&linked?.image&&!posterAssetId){
         posterAssetId=await uploadSavedPoster(businessId,linked.image);
         setCloudAssetId(posterAssetId);
@@ -750,11 +787,13 @@ export default function ConnectedCaptionLab(){
       await loadPlannerDrafts();
       setNotice('Saved to Campaign Planner. A clean new workspace is ready. Open any prior draft from the Saved Planner Drafts list.');
     }catch(e){setError(e instanceof Error?e.message:'Save to Campaign Planner failed.');}
-    finally{setSaving(false);}
+    finally{operationRef.current=false;setSaving(false);}
   };
   const pickPoster=async()=>{
+    if(isBusy||operationRef.current)return;
     if(!businessId||!selected){setError('Select your business before attaching a poster.');return;}
-    setPosterPickerOpen(true);setError('');
+    operationRef.current=true;setPosterBusy(true);setPosterPickerOpen(true);setError('');
+    try{
     const [local,cloud]=await Promise.allSettled([
       listLinkedPosters(businessId),listSavedPosters(businessId),
     ]);
@@ -764,6 +803,7 @@ export default function ConnectedCaptionLab(){
       (cloud.reason instanceof Error?cloud.reason.message:'Private library unavailable.'):'');
     if(local.status==='rejected'&&cloud.status==='rejected')
       setNotice('Poster libraries unavailable. You can still upload an image from your device.');
+    }finally{operationRef.current=false;setPosterBusy(false);}
   };
   const selectRecentPoster=(record:LinkedPosterRecord)=>{
     if(!businesses.some(b=>b.id===record.context.businessId)||record.context.businessId!==businessId){
@@ -777,26 +817,26 @@ export default function ConnectedCaptionLab(){
     setLinked(record);setPosterKey(record.id);setPosterPickerOpen(false);
     setCloudAssetId(record.context.savedPosterAssetId||'');
     setSavedCampaignId('');setSavedCampaignPosterId('');setLastSavedCampaignId('');
-    setCaptions(emptyCaptions());setGeneratedTags({ta:[],si:[],en:[]});
+    setCaptions(emptyCaptions());setGeneratedTags({ta:[],si:[],en:[]});setDraftIds({});
     setMessage([record.context.headline,record.context.serviceFocus,record.context.offer]
       .filter(Boolean).join('. ').slice(0,600));
     setCta(record.context.cta.slice(0,180));
     setNotice('Poster attached. Review your campaign brief, then generate captions.');
   };
   const saveCaptionImage=async()=>{
-    if(!businessId||!hasLinked||!linked?.image||cloudSaving)return;
-    setCloudSaving(true);setError('');
+    if(isBusy||operationRef.current||!businessId||!hasLinked||!linked?.image)return;
+    operationRef.current=true;setCloudSaving(true);setError('');
     try{
       const id=cloudAssetId||await uploadSavedPoster(businessId,linked.image);
       setCloudAssetId(id);
       setNotice('Image saved privately to SLBI. It is available across your signed-in devices.');
       setCloudChoices(await listSavedPosters(businessId));
     }catch(e){setError(e instanceof Error?e.message:'Unable to save the PNG privately.');}
-    finally{setCloudSaving(false);}
+    finally{operationRef.current=false;setCloudSaving(false);}
   };
   const selectCloudPoster=async(asset:SavedPosterAsset)=>{
-    if(!selected||!businessId||posterBusy)return;
-    setPosterBusy(true);setError('');
+    if(isBusy||operationRef.current||!selected||!businessId)return;
+    operationRef.current=true;setPosterBusy(true);setError('');
     try{
       const image=await readSavedPoster(businessId,asset.id);
       const context:LinkedPosterContext={
@@ -811,12 +851,12 @@ export default function ConnectedCaptionLab(){
       setCloudAssetId(asset.id);
       setNotice('Private saved PNG attached. It will stay linked when you Save to Planner.');
     }catch(e){setError(e instanceof Error?e.message:'Saved image could not be loaded.');}
-    finally{setPosterBusy(false);}
+    finally{operationRef.current=false;setPosterBusy(false);}
   };
   const uploadDevicePoster=async(file?:File)=>{
-    if(!file)return;
+    if(!file||isBusy||operationRef.current)return;
     if(!selected||!businessId){setError('Select your business first.');return;}
-    setPosterBusy(true);setError('');
+    operationRef.current=true;setPosterBusy(true);setError('');
     try{
       const image=await imageFileToPng(file);
       const context:LinkedPosterContext={
@@ -830,10 +870,11 @@ export default function ConnectedCaptionLab(){
       selectRecentPoster({id,createdAt:Date.now(),context,image});
       setNotice('Image attached from your device. It stays private in this browser.');
     }catch(e){setError(e instanceof Error?e.message:'Could not attach this image.');}
-    finally{setPosterBusy(false);}
+    finally{operationRef.current=false;setPosterBusy(false);}
   };
   const onBusinessChange=(id:string)=>{
-    if(id===businessId)return;
+    if(id===businessId||isBusy||operationRef.current)return;
+    activeBusinessRef.current=id;setDrafts([]);setPlannerDrafts([]);setDraftIds({});setDraftLimit(25);
     releaseVoiceMedia();
     setBusinessId(id);setLinked(null);setPosterKey('');setCloudAssetId('');setCloudChoices([]);
     setPosterPickerOpen(false);setPosterChoices([]);
@@ -842,16 +883,30 @@ export default function ConnectedCaptionLab(){
     setMessage('');setConditions('');setCta('');setVoiceReviewDraft('');setError('');setNotice('');
     failedVoiceRef.current=null;
     setCustomTags({});setRemovedTags({});setSavedCampaignId('');setSavedCampaignPosterId('');
-    setLastSavedCampaignId('');setCaptions(emptyCaptions());
+    setLastSavedCampaignId('');setCaptions(emptyCaptions());setDraftIds({});
     setGeneratedTags({ta:[],si:[],en:[]});setWorkspaceKey('');
     setFailedGenerations(null);setPreviewLanguage('all');setAngle('hook');setExpanded(false);
+  };
+  const saveAiDraftChanges=async()=>{
+    const id=draftIds[activePreviewLanguage];
+    if(!id||isBusy||operationRef.current)return;
+    const serialized=serializeEditedCaption(captions[activePreviewLanguage],visibleTags);
+    if(!serialized.ok){setError(serialized.error);return;}
+    operationRef.current=true;setDraftSaving(true);setError('');
+    try{
+      const response=await fetch('/api/marketing/caption',{method:'PATCH',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,caption:serialized.text,status:'pending_review'})});
+      const data=await decode(response);
+      if(!response.ok||!data.draft)throw Error(data.error||'Could not save caption changes.');
+      await loadDrafts();setNotice('Caption edits saved privately. No AI credits used.');
+    }catch(e){setError(e instanceof Error?e.message:'Could not save caption changes.');}
+    finally{operationRef.current=false;setDraftSaving(false);}
   };
   const downloadPoster=()=>{
     if(!posterUrl||!linked)return;
     const a=document.createElement('a');a.href=posterUrl;
     a.download='slbi-linked-poster-'+linked.context.format+'.png';a.click();
   };
-  const isBusy=busy||voiceBusy||requestingMic||recording||saving||posterBusy||cloudSaving;
+  const isBusy=busy||voiceBusy||requestingMic||recording||saving||posterBusy||cloudSaving||draftSaving;
   const previewAccount=selected?.name||'Your Business';
 
   return <main className="mx-auto w-full max-w-[1640px] space-y-4 px-2 pb-12 text-[#111827] sm:px-4">
@@ -897,7 +952,7 @@ export default function ConnectedCaptionLab(){
           <p className="mb-2 text-[11px] font-semibold text-[#374151]">Recent Poster Studio designs</p>
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
             {posterChoices.map(item=><button key={item.id} type="button"
-              onClick={()=>selectRecentPoster(item)} title={item.context.headline||'Recent Studio poster'}
+              disabled={isBusy} onClick={()=>selectRecentPoster(item)} title={item.context.headline||'Recent Studio poster'}
               className="flex min-w-0 flex-col items-center gap-1 rounded-lg border border-[#E5E7EB] p-1.5 hover:border-[#F97316] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#F97316]">
               <span className="flex h-16 w-full items-center justify-center overflow-hidden rounded bg-[#F9FAFB]">
                 {posterThumbnails[item.id]?
@@ -915,7 +970,7 @@ export default function ConnectedCaptionLab(){
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
             {cloudChoices.map(asset=><button key={asset.id} type="button"
               onClick={()=>void selectCloudPoster(asset)}
-              disabled={posterBusy||cloudSaving}
+              disabled={isBusy}
               title="Attach saved private poster"
               className="flex min-w-0 flex-col items-center gap-1 rounded-lg border border-[#E5E7EB] p-1.5 hover:border-[#F97316] disabled:opacity-50">
               <span className="flex h-16 w-full items-center justify-center overflow-hidden rounded bg-[#F9FAFB]">
@@ -932,7 +987,7 @@ export default function ConnectedCaptionLab(){
           Private saved posters unavailable: {cloudError}
         </p>}
         <div className="grid grid-cols-2 gap-2">
-          <button type="button" onClick={()=>posterInputRef.current?.click()} disabled={posterBusy}
+          <button type="button" onClick={()=>posterInputRef.current?.click()} disabled={isBusy}
             className="flex items-center justify-center gap-1.5 rounded-xl border border-[#111827] bg-[#111827] px-3 py-3 text-[12px] font-semibold text-white hover:bg-[#293241] disabled:border-[#E5E7EB] disabled:bg-[#F3F4F6] disabled:text-[#9CA3AF]">
             <Plus size={15}/> Upload image
           </button>
@@ -982,7 +1037,7 @@ export default function ConnectedCaptionLab(){
                 <CheckCircle2 size={13}/>}
               {cloudAssetId?'Saved':'Save image'}
             </button>}
-            <button type="button" disabled={posterBusy||!businessId} onClick={()=>void pickPoster()}
+            <button type="button" disabled={isBusy||!businessId} onClick={()=>void pickPoster()}
               className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-semibold text-[#C2410C] hover:bg-[#FFEDD5] disabled:opacity-45">
               <Plus size={13}/>{hasLinked?'Change':'Attach'}
             </button>
@@ -1015,7 +1070,7 @@ export default function ConnectedCaptionLab(){
             <span className="text-[10px] font-semibold text-[#EA580C]">{toneLabels[tone]}</span>
           </div>
           <input id="caption-tone" aria-label="Caption brand voice" type="range" min={0} max={2} step={1}
-            value={tone} onChange={e=>setTone(Number(e.target.value) as TonePosition)}
+            disabled={isBusy} value={tone} onChange={e=>setTone(Number(e.target.value) as TonePosition)}
             className="w-full accent-[#F97316]"/>
           <div className="flex justify-between gap-1 text-[9px] text-[#9CA3AF]"><span>Friendly</span><span>Professional</span><span>Energetic</span></div>
         </div>
@@ -1040,13 +1095,13 @@ export default function ConnectedCaptionLab(){
             </div>
           </div>
           <textarea id="caption-brief" rows={3} maxLength={600} value={message}
-            disabled={recording||voiceBusy}
+            disabled={isBusy}
             onChange={e=>setMessage(e.target.value)}
             className={field+' resize-y leading-6 disabled:bg-[#F9FAFB] disabled:text-[#6B7280]'}
             placeholder="Tell us your real offer, product or campaign in தமிழ், සිංහල, English or Tanglish."/>
           <p className="mt-1 text-[10px] text-[#6B7280]">Add your offer, key details or record a voice brief. Unsent edits are kept for this poster in your current browser session.</p>
           {failedVoiceRef.current&&!voiceBusy&&!recording&&<button type="button"
-            onClick={retryVoice} aria-label="Retry transcription of retained recording"
+            disabled={isBusy} onClick={retryVoice} aria-label="Retry transcription of retained recording"
             className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-[#FDBA74] bg-[#FFF7ED] px-3 py-2 text-[11px] font-bold text-[#9A3412]">
             <RefreshCcw size={13}/> Retry transcription · previous recording retained
           </button>}
@@ -1174,11 +1229,11 @@ export default function ConnectedCaptionLab(){
             <span>Offer terms & CTA <span className="font-normal text-[#9CA3AF]">(optional)</span></span>
             <ChevronDown size={14} className="slbi-caption-chevron"/>
           </summary>
-          <textarea rows={2} maxLength={300} value={conditions} onChange={e=>setConditions(e.target.value)}
+          <textarea rows={2} disabled={isBusy} maxLength={300} value={conditions} onChange={e=>setConditions(e.target.value)}
             placeholder="Only genuine terms or valid dates" className={field+' mt-3'}/>
-          <input maxLength={180} value={cta} onChange={e=>setCta(e.target.value)}
+          <input disabled={isBusy} maxLength={180} value={cta} onChange={e=>setCta(e.target.value)}
             placeholder="Contact us for more details" className={field+' mt-2'}/>
-          {selected?.phone&&<button type="button" onClick={()=>setCta('Contact us: '+selected.phone)}
+          {selected?.phone&&<button type="button" disabled={isBusy} onClick={()=>setCta('Contact us: '+selected.phone)}
             className="mt-2 rounded-lg border border-[#FCD9B5] bg-[#FFF7ED] px-3 py-2 text-[10px] font-bold text-[#9A3412]">
             Use verified business phone · {selected.phone}
           </button>}
@@ -1193,7 +1248,7 @@ export default function ConnectedCaptionLab(){
           <span className="ml-auto text-[10px] font-medium text-[#6B7280]">Live preview</span>
         </div>
         <div className="grid grid-cols-3 gap-1.5 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-1">
-          {PLATFORMS.map(p=><button key={p} type="button" onClick={()=>{setPlatform(p);setExpanded(false);}}
+          {PLATFORMS.map(p=><button key={p} type="button" disabled={isBusy} onClick={()=>{setPlatform(p);setExpanded(false);}}
             aria-pressed={platform===p}
             className={'rounded-lg px-1.5 py-2 text-[10px] font-bold transition '+
               (platform===p?'bg-white text-[#111827] shadow-sm':'text-[#6B7280]')}>
@@ -1201,11 +1256,11 @@ export default function ConnectedCaptionLab(){
           </button>)}
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
-          {chosenLanguages.map(l=><button key={l} type="button" onClick={()=>{setPreviewLanguage(l);setExpanded(false);}}
+          {chosenLanguages.map(l=><button key={l} type="button" disabled={isBusy} onClick={()=>{setPreviewLanguage(l);setExpanded(false);}}
             className={'rounded-full border px-3 py-1.5 text-[10px] font-bold '+
               (previewLanguage===l?'border-[#FDBA74] bg-[#FFF7ED] text-[#C2410C]':'border-[#E5E7EB] text-[#6B7280]')}>
             {labels[l]}</button>)}
-          {chosenLanguages.length>1&&<button type="button" onClick={()=>{setPreviewLanguage('all');setExpanded(false);}}
+          {chosenLanguages.length>1&&<button type="button" disabled={isBusy} onClick={()=>{setPreviewLanguage('all');setExpanded(false);}}
             className={'rounded-full border px-3 py-1.5 text-[10px] font-bold '+
               (previewLanguage==='all'?'border-[#FDBA74] bg-[#FFF7ED] text-[#C2410C]':'border-[#E5E7EB] text-[#6B7280]')}>All {chosenLanguages.length} Combined</button>}
         </div>
@@ -1235,12 +1290,12 @@ export default function ConnectedCaptionLab(){
             <div className="relative border-y border-[#E5E7EB] bg-[#F9FAFB]">
               <img src={posterUrl} alt="Attached poster preview"
                 className="max-h-[430px] w-full object-contain"/>
-              <button type="button" onClick={()=>void pickPoster()}
+              <button type="button" disabled={isBusy} onClick={()=>void pickPoster()}
                 className="absolute bottom-3 right-3 rounded-lg border border-[#E5E7EB] bg-white/95 px-3 py-2 text-[11px] font-semibold text-[#111827] shadow-sm hover:bg-white">
                 Change poster
               </button>
             </div>:
-            <button type="button" disabled={!businessId||posterBusy}
+            <button type="button" disabled={!businessId||isBusy}
               onClick={()=>void pickPoster()}
               onDragOver={e=>e.preventDefault()}
               onDrop={e=>{e.preventDefault();void uploadDevicePoster(e.dataTransfer.files?.[0]);}}
@@ -1264,7 +1319,7 @@ export default function ConnectedCaptionLab(){
           <button type="button" disabled={!currentCaption.trim()} onClick={()=>void copyCaption(false)}
             className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] bg-white px-3 py-3 text-[11px] font-semibold text-[#111827] hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:bg-[#F3F4F6] disabled:text-[#9CA3AF]">
             <Copy size={14}/> Copy Caption</button>
-          <button type="button" disabled={!currentCaption.trim()||saving} onClick={()=>void savePlanner()}
+          <button type="button" disabled={!currentCaption.trim()||isBusy} onClick={()=>void savePlanner()}
             className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#FDBA74] bg-[#FFF7ED] px-3 py-3 text-[11px] font-semibold text-[#9A3412] hover:bg-[#FFEDD5] disabled:cursor-not-allowed disabled:border-[#E5E7EB] disabled:bg-[#F3F4F6] disabled:text-[#9CA3AF]">
             {saving?<LoaderCircle size={14} className="animate-spin"/>:<Send size={14}/>}
             Save to Planner</button>
@@ -1301,7 +1356,7 @@ export default function ConnectedCaptionLab(){
           <span className="ml-auto text-[10px] text-[#9CA3AF]">Optimize</span>
         </div>
         <div className="space-y-1.5">
-          {ANGLES.map((a,i)=><button key={a} type="button" onClick={()=>{setAngle(a);setExpanded(false);}}
+          {ANGLES.map((a,i)=><button key={a} type="button" disabled={isBusy} onClick={()=>{setAngle(a);setExpanded(false);}}
             aria-pressed={angle===a}
             className={'w-full rounded-xl border px-2.5 py-2 text-left transition '+
               (angle===a?'border-[#FDBA74] bg-[#FFF7ED] shadow-sm':'border-[#E5E7EB] bg-white hover:bg-[#F9FAFB]')}>
@@ -1323,12 +1378,13 @@ export default function ConnectedCaptionLab(){
           <label htmlFor="caption-edit" className="mb-1.5 block text-[11px] font-bold">
             Edit {angleLabels[angle].title} · {labels[activePreviewLanguage]}
           </label>
-          <textarea id="caption-edit" rows={5} maxLength={3000}
+          <textarea id="caption-edit" disabled={isBusy} rows={5} maxLength={3000}
             value={captions[activePreviewLanguage][angle]}
             onChange={e=>updateAngle(activePreviewLanguage,e.target.value)}
             className={field+' resize-y leading-6 '+textFont(activePreviewLanguage)}
             placeholder="Generate AI variations or write your own fully editable copy here."/>
           <p className="mt-1 text-[10px] text-[#9CA3AF]">Edits update the live preview immediately; no regeneration cost.</p>
+          {draftIds[activePreviewLanguage]&&<button type="button" disabled={isBusy} onClick={()=>void saveAiDraftChanges()} className="mt-2 rounded-lg border border-[#FDBA74] px-3 py-2 text-[11px] font-semibold text-[#9A3412] disabled:opacity-50">{draftSaving?'Saving…':'Save AI draft changes'}</button>}
         </div>
         <div className="border-t border-[#F3F4F6] pt-3">
           <div className="mb-2 flex items-center gap-2">
@@ -1336,7 +1392,7 @@ export default function ConnectedCaptionLab(){
             <h3 className="slbi-section-title text-[12px]">Smart Hashtag Manager</h3>
           </div>
           <div className="flex flex-wrap gap-1.5">
-            {visibleTags.map(tag=><button key={tag} type="button"
+            {visibleTags.map(tag=><button key={tag} type="button" disabled={isBusy}
               onClick={()=>editTags(tag,'remove')}
               aria-label={'Remove '+tag}
               className="inline-flex items-center gap-1 rounded-full border border-[#FED7AA] bg-[#FFF7ED] px-2 py-1.5 text-[10px] font-semibold text-[#C2410C]">
@@ -1344,29 +1400,29 @@ export default function ConnectedCaptionLab(){
             {!visibleTags.length&&<p className="text-[10px] text-[#9CA3AF]">AI hashtags appear here. Add only accurate local tags.</p>}
           </div>
           <div className="mt-2 flex gap-2">
-            <input value={tagInput} maxLength={40}
+            <input disabled={isBusy} value={tagInput} maxLength={40}
               onChange={e=>setTagInput(e.target.value)}
               onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();editTags(tagInput,'add');setTagInput('');}}}
               aria-label="Add a hashtag" placeholder="#SriLanka" className={field+' min-w-0 flex-1 py-2'}/>
             <button type="button" onClick={()=>{editTags(tagInput,'add');setTagInput('');}}
-              disabled={!normalizedTag(tagInput)} className="rounded-lg bg-[#111827] px-3 text-white disabled:opacity-40">
+              disabled={isBusy||!normalizedTag(tagInput)} className="rounded-lg bg-[#111827] px-3 text-white disabled:opacity-40">
               <Plus size={15}/></button>
           </div>
           <label className="mt-2 inline-flex items-center gap-2 text-[10px] font-semibold text-[#6B7280]">
-            <input type="checkbox" checked={includeTags} onChange={e=>setIncludeTags(e.target.checked)}
+            <input type="checkbox" checked={includeTags} disabled={isBusy} onChange={e=>setIncludeTags(e.target.checked)}
               className="accent-[#F97316]"/> Include hashtags in live preview
           </label>
         </div>
         <div className="border-t border-[#F3F4F6] pt-3">
           <h3 className="slbi-section-title mb-2 text-[12px]">Quick Polish <span className="font-normal text-[#9CA3AF]">· No new AI credits</span></h3>
           <div className="grid grid-cols-2 gap-2">
-            <button type="button" onClick={()=>polish('shorten')} disabled={!canPolish}
+            <button type="button" onClick={()=>polish('shorten')} disabled={isBusy||!canPolish}
               className="rounded-lg border border-[#E5E7EB] px-2 py-2.5 text-[10px] font-bold disabled:opacity-40">✨ Make it shorter</button>
-            <button type="button" onClick={()=>polish('urgency')} disabled={!canPolish}
+            <button type="button" onClick={()=>polish('urgency')} disabled={isBusy||!canPolish}
               className="rounded-lg border border-[#E5E7EB] px-2 py-2.5 text-[10px] font-bold disabled:opacity-40">🔥 Add urgency</button>
-            <button type="button" onClick={()=>polish('emojis')} disabled={!canPolish}
+            <button type="button" onClick={()=>polish('emojis')} disabled={isBusy||!canPolish}
               className="rounded-lg border border-[#E5E7EB] px-2 py-2.5 text-[10px] font-bold disabled:opacity-40">😊 Add emojis</button>
-            <button type="button" onClick={()=>polish('contact')} disabled={!canPolish}
+            <button type="button" onClick={()=>polish('contact')} disabled={isBusy||!canPolish}
               className="rounded-lg border border-[#E5E7EB] px-2 py-2.5 text-[10px] font-bold disabled:opacity-40">📞 Include contacts</button>
           </div>
         </div>
@@ -1406,16 +1462,10 @@ export default function ConnectedCaptionLab(){
           </div>
           <p className="mt-1 text-[10px] text-[#9CA3AF]">{drafts.length} saved records · {generatedLanguages.length} language(s) available for review</p>
           <div className="mt-2 space-y-1.5">
-            {LANGUAGES.map(l=>{
-              const draft=newDraftLanguage(drafts,l);
-              return <div key={l} className="flex items-center justify-between gap-2 text-[10px]">
-                <span>{labels[l]}</span>
-                {draft?<button type="button" onClick={()=>resumeAiDraft(draft)} disabled={isBusy}
-                  className="rounded-lg border border-[#E5E7EB] bg-white px-2 py-1 font-bold text-[#374151] hover:border-[#F97316] disabled:opacity-40">
-                  Open · {draft.review_status.replaceAll('_',' ')}
-                </button>:<span className="text-[#9CA3AF]">No saved draft</span>}
-              </div>;
-            })}
+            {drafts.map(draft=><button type="button" key={draft.id} disabled={isBusy} onClick={()=>resumeAiDraft(draft)} className="block w-full rounded-lg border border-[#E5E7EB] bg-white px-2 py-2 text-left text-[10px] disabled:opacity-50"><span className="font-bold">{labels[draft.language]} · {draft.created_at?new Date(draft.created_at).toLocaleDateString():'Saved draft'}</span><span className="block truncate text-[#6B7280]">{parseThreeAngles(draft.caption).hook}</span></button>)}
+            {!drafts.length&&<p className="text-[10px] text-[#9CA3AF]">No saved drafts</p>}
+            {draftHasMore&&draftLimit<200&&<button type="button" disabled={isBusy} onClick={()=>setDraftLimit(n=>Math.min(200,n+25))} className="rounded-lg border px-2 py-1 text-[11px]">Load older drafts</button>}
+            {draftHasMore&&draftLimit>=200&&<p className="text-[10px] text-[#9CA3AF]">Showing the latest 200 records.</p>}
           </div>
         </div>
         <p className="text-[10px] leading-5 text-[#6B7280]">Every edit updates your preview instantly. Saved drafts open only when you choose them.</p>

@@ -167,7 +167,7 @@ test('AI calls occur only on explicit generate, respect existing global hard-off
   assert.match(contracts,/mode\?:CaptionMode/);
   assert.match(page,/const generate=async\(retryFailedOnly=false\)=>/);
   assert.match(page,/onClick=\{\(\)=>void generate\(\)\}/);
-  assert.match(page,/requestKey:crypto\.randomUUID\(\)/);
+  assert.match(page,/requestKey=crypto\.randomUUID\(\)/);
   assert.match(page,/mode:'three_angles'/);
   assert.match(page,/One provider request and applicable credit reservation per selected language/);
   assert.match(page,/never auto-charged on page open/);

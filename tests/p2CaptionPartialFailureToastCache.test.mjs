@@ -30,7 +30,8 @@ test('Unavailable language retry never regenerates successful languages automati
   assert.match(caption,/failedGenerations\.languages:chosenLanguages/);
   assert.match(caption,/onClick=\{\(\)=>void generate\(true\)\}/);
   assert.match(caption,/Retry only unavailable caption languages/);
-  assert.match(caption,/requestKey:crypto\.randomUUID\(\)/);
+  assert.match(caption,/requestKey=crypto\.randomUUID\(\)/);
+  assert.match(caption,/sessionStorage\.getItem\(identity\)/);
   assert.match(caption,/generationSignature=JSON\.stringify/);
   assert.deepEqual(failedCaptionLanguages([
     {language:'si',status:503,code:'GEMINI_PROVIDER_FAILED',detail:'provider error'},
@@ -78,7 +79,7 @@ test('Quick Polish applies to all generated languages and never silently loses c
   assert.equal(single.captions.ta.hook,original.ta.hook);
   assert.match(caption,/const canPolish=previewLanguage==='all'\?/);
   assert.match(caption,/chosenLanguages\.find\(lang=>Boolean\(captions\[lang\]\[angle\]\?\.trim\(\)\)\)/);
-  assert.match(caption,/disabled=\{!canPolish\}/);
+  assert.match(caption,/disabled=\{isBusy\|\|!canPolish\}/);
   assert.match(caption,/All \{chosenLanguages.length\} Combined/);
 });
 

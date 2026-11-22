@@ -40,13 +40,14 @@ export async function GET(request:Request){
     .select('id').eq('id',businessId).eq('owner_id',user.id).maybeSingle();
   if(businessError)return response(503,{error:'Cannot validate business ownership.'});
   if(!business)return response(404,{error:'Business not found for this account.'});
+  const limit=Math.min(200,Math.max(25,Number(new URL(request.url).searchParams.get('limit'))||25));
   const {data,error}=await client.from('marketing_ai_drafts')
     .select('id,business_id,language,caption,review_status,model_id,created_at,updated_at')
     .eq('business_id',businessId).eq('user_id',user.id)
-    .order('created_at',{ascending:false}).limit(25);
+    .order('created_at',{ascending:false}).order('id',{ascending:false}).limit(limit+1);
   if(error)return response(503,{error:missingSchema(error.code)?
     'AI caption drafts are not enabled in this environment.':'Could not load your drafts.'});
-  return response(200,{drafts:data||[]});
+  return response(200,{drafts:(data||[]).slice(0,limit),hasMore:(data||[]).length>limit});
 }
 
 export async function PATCH(request:Request){
@@ -60,7 +61,7 @@ export async function PATCH(request:Request){
   let v:unknown;
   try{
     const raw=await request.text();
-    if(Buffer.byteLength(raw,'utf8')>6500)return response(413,{error:'Caption too long.'});
+    if(Buffer.byteLength(raw,'utf8')>14000)return response(413,{error:'Caption too long.'});
     v=JSON.parse(raw);
   }catch{return response(400,{error:'Invalid JSON.'});}
   if(!v||typeof v!=='object'||Array.isArray(v))return response(400,{error:'Invalid draft.'});
@@ -104,7 +105,7 @@ export async function POST(request:Request){
   let parsed:unknown;
   try{
     const raw=await request.text();
-    if(Buffer.byteLength(raw,'utf8')>4200)return response(413,{error:'Campaign brief is too long.'});
+    if(Buffer.byteLength(raw,'utf8')>12000)return response(413,{error:'Campaign brief is too long.'});
     parsed=JSON.parse(raw);
   }catch{return response(400,{error:'Invalid campaign JSON.'});}
   const check=validateCaptionInput(parsed);
@@ -156,6 +157,7 @@ export async function POST(request:Request){
     if(!error&&cached)return response(200,{draft:cached,cached:true});
     return response(409,{error:'This request completed. Refresh your draft library.'});
   }
+  if(reserved.job_state==='refunded')return response(409,{code:'CAPTION_REQUEST_REFUNDED',refundConfirmed:true,error:'Previous attempt was refunded. Click retry to start a new request.'});
   if(reserved.job_state!=='reserved')return response(409,{error:'This request has already been processed.'});
 
   // If an identical request is concurrently in flight, a response is
@@ -264,9 +266,11 @@ export async function POST(request:Request){
     });
   }catch(e){
     // A failing provider call cannot permanently consume a vendor's credits.
+    let refundConfirmed=false;
     try{
-      const {error:refundError}=await admin.rpc('marketing_refund_ai_draft',{p_job_id:reserved.job_id});
-      if(refundError)console.error('Marketing AI refund requires reconciliation',refundError.code);
+      const {data:refunded,error:refundError}=await admin.rpc('marketing_refund_ai_draft',{p_job_id:reserved.job_id});
+      refundConfirmed=!refundError&&refunded===true;
+      if(!refundConfirmed)console.error('Marketing AI refund requires reconciliation',refundError?.code);
     }catch{console.error('Marketing AI refund requires reconciliation');}
     console.warn('AI provider request failed',e instanceof Error?e.name:'unknown');
     const messages={
@@ -276,6 +280,6 @@ export async function POST(request:Request){
     };
     return response(503,{code:failureKind==='provider'?'GEMINI_PROVIDER_FAILED':
       failureKind==='output'?'GEMINI_CAPTION_INVALID':'CAPTION_DRAFT_SAVE_FAILED',
-      error:messages[failureKind]});
+      refundConfirmed,error:refundConfirmed?messages[failureKind]:'Caption delivery is uncertain. Retry the same request to recover its result without a new charge.'});
   }
 }
