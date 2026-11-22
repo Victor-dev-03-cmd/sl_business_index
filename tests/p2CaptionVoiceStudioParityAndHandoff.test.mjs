@@ -62,7 +62,7 @@ test('No transcribe or caption charging happens on record, pause, login or poste
   assert.doesNotMatch(transcribe,/\/api\/marketing\/caption/);
   const generate=lab.slice(lab.indexOf('  const generate=async('),lab.indexOf('  const editTags='));
   assert.match(generate,/\/api\/marketing\/caption/);
-  assert.match(generate,/requestKey:crypto\.randomUUID\(\)/);
+  assert.match(generate,/requestKey=crypto\.randomUUID\(\)/);
   assert.match(generate,/message:message\.trim\(\)/);
   assert.match(api,/process\.env\.SLBI_MARKETING_AI_ENABLED!=='true'/);
   assert.match(api,/marketing_reserve_ai_draft/);

@@ -34,7 +34,7 @@ test('Caption button is already wired to real Gemini with isolated internal QA g
   assert.match(page,/const generate=async\(retryFailedOnly=false\)=>/);
   assert.match(page,/fetch\('\/api\/marketing\/caption'/);
   assert.match(page,/mode:'three_angles'/);
-  assert.match(page,/requestKey:crypto\.randomUUID\(\)/);
+  assert.match(page,/requestKey=crypto\.randomUUID\(\)/);
   assert.match(route,/process\.env\.SLBI_MARKETING_AI_ENABLED!=='true'/);
   assert.match(route,/isPosterInternalQAAccount\(user\.id,client\)/);
   assert.match(route,/process\.env\.GEMINI_API_KEY\?\.trim\(\)/);

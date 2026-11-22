@@ -116,8 +116,8 @@ test('Provider failure maintains quota/refund boundary; no extra Gemini or image
   const save=page.slice(page.indexOf('  const savePlanner=async()=>{'),page.indexOf('  const pickPoster=async()=>{'));
   assert.match(save,/uploadSavedPoster/);
   assert.doesNotMatch(save,/\/api\/marketing\/caption|puter\.ai\.txt2img|marketing_reserve_ai_draft/);
-  const studioSave=poster.slice(poster.indexOf('  // Final artwork, including'),
-    poster.indexOf('  // Dual execution:'));
+  const studioSave=poster.slice(poster.indexOf('  // Save the first complete real artwork'),
+    poster.indexOf('  const transcribe=async'));
   assert.match(studioSave,/uploadSavedPoster|savePosterBlob/);
   assert.doesNotMatch(studioSave,/puter\.ai\.txt2img|api\/marketing\/caption/);
   assert.match(captionApi,/marketing_complete_ai_draft/);
@@ -131,7 +131,7 @@ test('Owner-only planner grants and automatic image persistence cannot bypass RL
   assert.doesNotMatch(grants,/GRANT ALL|DISABLE ROW LEVEL SECURITY|TO anon;/i);
   assert.match(poster,/generationStage!=='ready'/);
   assert.match(poster,/autoSavedRevisionRef.current===imageRevision/);
-  assert.match(poster,/completedRenderKey===renderKey/);
+  assert.match(poster,/isCurrentPosterOutput\(\{/);
   assert.match(poster,/!copyLanguageConsistent\|\|!serviceFocusApproved/);
   assert.match(poster,/savedPosterAssetId:backedUpId\|\|undefined/);
   assert.match(page,/setCloudAssetId\(record.context.savedPosterAssetId\|\|''\)/);

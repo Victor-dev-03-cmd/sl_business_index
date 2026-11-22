@@ -82,6 +82,6 @@ test('poster headline is compact and hero consumes visual middle; prior successf
   assert.match(composer,/CENTRAL 19–58%/);
   assert.match(layout,/HERO SUBJECT across MIDDLE 19%-58%/);
   assert.match(ui,/Preserve the last successful preview visually during copy\/language edits/);
-  assert.match(ui,/!finalBlob\|\|!finalUrl\|\|composing\|\|!copyLanguageConsistent/);
-  assert.match(ui,/!finalBlob\|\|composing\|\|generating\|\|!copyLanguageConsistent/);
+  assert.match(ui,/if\(!outputReady\|\|locked\|\|operationRef.current\|\|!finalBlob\|\|!finalUrl/);
+  assert.match(ui,/disabled=\{!outputReady\|\|locked\}/);
 });

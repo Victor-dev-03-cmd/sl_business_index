@@ -17,3 +17,7 @@ export function serializeEditedCaption(angles:AngleSet,tags:readonly string[]):{
   if(text.length>3000)return {ok:false,error:'The saved three-angle draft exceeds 3,000 characters. Shorten your copy; no text was removed.'};
   return {ok:true,text};
 }
+
+export function isCurrentPosterOutput(input:{hasBlob:boolean;stage:string;generating:boolean;composing:boolean;artworkKey:string;creativeKey:string;completedRenderKey:string;renderKey:string;copyLanguageConsistent:boolean;serviceFocusApproved:boolean}):boolean{
+  return input.hasBlob&&input.stage==='ready'&&!input.generating&&!input.composing&&Boolean(input.artworkKey)&&input.artworkKey===input.creativeKey&&Boolean(input.completedRenderKey)&&input.completedRenderKey===input.renderKey&&input.copyLanguageConsistent&&input.serviceFocusApproved;
+}

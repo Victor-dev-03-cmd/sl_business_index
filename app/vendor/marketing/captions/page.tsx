@@ -733,6 +733,7 @@ export default function ConnectedCaptionLab(){
   };
   const savePlanner=async()=>{
     if(isBusy||operationRef.current||!selected||!currentCaption.trim())return;
+    if(savedCampaignPosterId&&!cloudAssetId&&!hasLinked){setError('The original poster is unavailable. Attach a replacement before saving this draft.');return;}
     const prepared=preparePlannerCaption(currentCaption,visibleTags,includeTags);
     if(!prepared.ok){setError(prepared.error);return;}
     operationRef.current=true;setSaving(true);setError('');setNotice('');
@@ -890,11 +891,11 @@ export default function ConnectedCaptionLab(){
   const saveAiDraftChanges=async()=>{
     const id=draftIds[activePreviewLanguage];
     if(!id||isBusy||operationRef.current)return;
-    const serialized=serializeEditedCaption(captions[activePreviewLanguage],visibleTags);
+    const serialized=serializeEditedCaption(captions[activePreviewLanguage],previewLanguage==='all'?Array.from(new Set([...generatedTags[activePreviewLanguage],...(customTags[businessId]||[])])).filter(t=>!(removedTags[businessId]||[]).includes(t)):visibleTags);
     if(!serialized.ok){setError(serialized.error);return;}
     operationRef.current=true;setDraftSaving(true);setError('');
     try{
-      const response=await fetch('/api/marketing/caption',{method:'PATCH',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,caption:serialized.text,status:'pending_review'})});
+      const response=await fetch('/api/marketing/caption',{method:'PATCH',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,businessId,caption:serialized.text,status:'pending_review'})});
       const data=await decode(response);
       if(!response.ok||!data.draft)throw Error(data.error||'Could not save caption changes.');
       await loadDrafts();setNotice('Caption edits saved privately. No AI credits used.');

@@ -30,6 +30,7 @@ import {
 } from '@/lib/marketing/puter-poster-composer';
 import type {PosterBusinessFacts,PosterIntelligenceBrief} from '@/lib/marketing/poster-gemini-intelligence';
 import {saveLinkedPoster} from '@/lib/marketing/caption-poster-handoff';
+import {isCurrentPosterOutput} from '@/lib/marketing/workspace-safety';
 import {vendorFeedback} from '@/lib/ui/vendor-feedback';
 import {
   SlbiVoiceRecorder,requestSlbiVoiceTranscript,SLBI_VOICE_MAX_BYTES,
@@ -251,10 +252,10 @@ export default function PuterMultilingualPosterLab(){
     setUseAttachedImage(false);clearReferenceSummary();
   };
   const analyzeReferences=async()=>{
-    if(referenceBusy||!businessId||!referenceFiles.length)return;
+    if(locked||operationRef.current||!businessId||!referenceFiles.length)return;
     const validation=validatePosterReferences([],referenceFiles);
     if(!validation.ok){setError(validation.error);return;}
-    setReferenceBusy(true);setError('');
+    operationRef.current=true;setReferenceBusy(true);setError('');
     setStatus('Gemini is analyzing attached image and document references…');
     try{
       const res=await fetch('/api/marketing/poster/references/analyze',{
@@ -268,7 +269,7 @@ export default function PuterMultilingualPosterLab(){
       setBrief(null);setBriefKey('');setBlueprint(null);setBlueprintKey('');
       setStatus('Reference summary ready. Your documents and images were not stored in SLBI cloud storage.');
     }catch(e){setError(errorMessage(e));setStatus('Reference analysis was not applied. You can still use your original prompt.');}
-    finally{setReferenceBusy(false);void refreshGeminiQuota();}
+    finally{operationRef.current=false;setReferenceBusy(false);void refreshGeminiQuota();}
   };
   const chooseSuggestion=(suggestion:{id:string;label:string;prompt:string})=>{
     // Chips stage the owner's idea only; NEVER invoke Gemini or paid Puter.
@@ -367,7 +368,7 @@ export default function PuterMultilingualPosterLab(){
   }:null,[facts,headline,offer,serviceFocus,cta,showPhone,showWebsite,showEmail,language]);
 
   const renderKey=JSON.stringify([artworkKey,imageRevision,format,exactCopy,selectedPremiumStyle,activeDesign,selectedPanelStyle,serviceFocusApproved]);
-  const outputReady=Boolean(finalBlob&&finalUrl&&generationStage==='ready'&&!generating&&!composing&&artworkKey===creativeKey&&completedRenderKey===renderKey&&copyLanguageConsistent&&serviceFocusApproved);
+  const outputReady=isCurrentPosterOutput({hasBlob:Boolean(finalBlob&&finalUrl),stage:generationStage,generating,composing,artworkKey,creativeKey,completedRenderKey,renderKey,copyLanguageConsistent,serviceFocusApproved});
   const outputReadyRef=useRef(false);
   useEffect(()=>{outputReadyRef.current=outputReady;},[outputReady]);
   // Recompose typography at the exact selected PNG dimensions. Changing text,
@@ -401,7 +402,7 @@ export default function PuterMultilingualPosterLab(){
   // Save the first complete real artwork once per generation. Further local
   // typography/size edits are explicit saves, not unlimited library versions.
   const saveCurrentPoster=async()=>{
-    if(!outputReady||!finalBlob||!businessId||savingPoster||linkingCaption||operationRef.current)return;
+    if(!outputReady||locked||!finalBlob||!businessId||savingPoster||linkingCaption||operationRef.current)return;
     operationRef.current=true;setSavingPoster(true);setError('');
     const blob=finalBlob;
     try{
@@ -421,7 +422,7 @@ export default function PuterMultilingualPosterLab(){
     const timer=setTimeout(()=>{
       if(!outputReadyRef.current||operationRef.current||activeBusinessRef.current!==businessId||activeBlobRef.current!==blob)return;
       autoSavedRevisionRef.current=imageRevision;
-      setSavingPoster(true);setAutoSaveNotice('Saving your generated PNG privately…');
+      operationRef.current=true;setSavingPoster(true);setAutoSaveNotice('Saving your generated PNG privately…');
       void savePosterBlob(blob,businessId).then(async id=>{
         if(activeBusinessRef.current!==businessId)return;
         if(activeBlobRef.current===blob){setSavedPosterId(id);setAutoSaveFailed(false);setAutoSaveNotice('Auto-saved to your private poster library.');}
@@ -432,7 +433,7 @@ export default function PuterMultilingualPosterLab(){
           setAutoSaveFailed(true);setAutoSaveNotice('Automatic save failed. Use Retry save; your PNG is unchanged.');
           setError('Automatic poster save failed: '+errorMessage(e));
         }
-      }).finally(()=>setSavingPoster(false));
+      }).finally(()=>{operationRef.current=false;setSavingPoster(false);});
     },900);
     return()=>clearTimeout(timer);
   },[outputReady,finalBlob,businessId,isRealOutput,generationStage,imageRevision,savePosterBlob]);
@@ -467,7 +468,7 @@ export default function PuterMultilingualPosterLab(){
     }
     finally{setTranscribing(false);void refreshGeminiQuota();}
   };
-  const retryVoice=()=>{if(failedVoiceRef.current&&!transcribing)void transcribe(failedVoiceRef.current);};
+  const retryVoice=()=>{if(failedVoiceRef.current&&!locked&&!operationRef.current)void transcribe(failedVoiceRef.current);};
   const applyPendingTranscript=()=>{
     const next=[prompt===samplePrompt?'':prompt,pendingTranscript.trim()]
       .filter(Boolean).join(' ').trim();
@@ -481,12 +482,12 @@ export default function PuterMultilingualPosterLab(){
     setStatus('Reviewed transcript added safely. Tap Prepare with Gemini to build the design.');
   };
   const startVoice=async()=>{
-    if(recording||generating||geminiBusy||transcribing||referenceBusy)return;
+    if(locked||operationRef.current)return;
     if(pendingTranscript){
       setError('Apply or discard your reviewed transcript before another recording.');
       return;
     }
-    setError('');
+    operationRef.current=true;setRequestingMic(true);setError('');
     try{
       const capture=new SlbiVoiceRecorder({
         onState:state=>{
@@ -521,7 +522,7 @@ export default function PuterMultilingualPosterLab(){
         name==='NotFoundError'?'No microphone detected. Check your device.':
         name==='NotReadableError'?'Microphone is in use. Close the other app and retry.':
         e instanceof Error?e.message:'Microphone is unavailable in this browser.');
-    }
+    }finally{operationRef.current=false;setRequestingMic(false);}
   };
   const prepareWithGemini=async()=>{
     if(!businessId||prompt.trim().length<5){setError('Choose a business and enter a prompt.');return;}
@@ -693,7 +694,7 @@ export default function PuterMultilingualPosterLab(){
     }finally{operationRef.current=false;setGenerating(false);}
   };
   const deletePoster=async(asset:SavedPosterAsset)=>{
-    if(!businessId||deletingPosterId||savingPoster||linkingCaption||operationRef.current)return;
+    if(!businessId||locked||operationRef.current)return;
     if(!window.confirm('Permanently delete this private saved poster? This cannot be undone.'))return;
     operationRef.current=true;setDeletingPosterId(asset.id);setError('');
     try{
@@ -709,7 +710,7 @@ export default function PuterMultilingualPosterLab(){
     finally{operationRef.current=false;setDeletingPosterId('');}
   };
   const download=()=>{
-    if(!outputReady||!finalBlob||!finalUrl||!copyLanguageConsistent||!serviceFocusApproved)return;
+    if(!outputReady||locked||operationRef.current||!finalBlob||!finalUrl||!copyLanguageConsistent||!serviceFocusApproved)return;
     const anchor=document.createElement('a');
     const safeName=(facts?.name||'business').toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,32);
     anchor.href=finalUrl;
@@ -718,7 +719,7 @@ export default function PuterMultilingualPosterLab(){
     document.body.appendChild(anchor);anchor.click();anchor.remove();
   };
   const continueToCaption=async()=>{
-    if(!outputReady||!finalBlob||!facts||!businessId||linkingCaption||operationRef.current||!copyLanguageConsistent||!serviceFocusApproved)return;
+    if(!outputReady||locked||!finalBlob||!facts||!businessId||linkingCaption||operationRef.current||!copyLanguageConsistent||!serviceFocusApproved)return;
     operationRef.current=true;setLinkingCaption(true);setError('');
     try{
       // Complete the cloud backup before navigating when possible. A transient
@@ -785,7 +786,7 @@ export default function PuterMultilingualPosterLab(){
               Download PNG
             </a>
             <button type="button" onClick={()=>void deletePoster(asset)}
-              disabled={Boolean(deletingPosterId)||savingPoster}
+              disabled={locked}
               aria-label={'Delete private poster '+asset.id}
               className="inline-flex items-center justify-center gap-1 rounded-lg border border-red-200 bg-white px-2 py-2 text-[11px] font-bold text-red-700 disabled:opacity-50">
               {deletingPosterId===asset.id?<LoaderCircle size={13} className="animate-spin"/>:<Trash2 size={13}/>}

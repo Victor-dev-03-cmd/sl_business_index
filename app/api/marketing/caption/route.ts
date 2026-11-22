@@ -40,7 +40,7 @@ export async function GET(request:Request){
     .select('id').eq('id',businessId).eq('owner_id',user.id).maybeSingle();
   if(businessError)return response(503,{error:'Cannot validate business ownership.'});
   if(!business)return response(404,{error:'Business not found for this account.'});
-  const limit=Math.min(200,Math.max(25,Number(new URL(request.url).searchParams.get('limit'))||25));
+  const limit=Math.min(200,Math.max(25,Math.trunc(Number(new URL(request.url).searchParams.get('limit'))||25)));
   const {data,error}=await client.from('marketing_ai_drafts')
     .select('id,business_id,language,caption,review_status,model_id,created_at,updated_at')
     .eq('business_id',businessId).eq('user_id',user.id)
@@ -66,16 +66,16 @@ export async function PATCH(request:Request){
   }catch{return response(400,{error:'Invalid JSON.'});}
   if(!v||typeof v!=='object'||Array.isArray(v))return response(400,{error:'Invalid draft.'});
   const obj=v as Record<string,unknown>;
-  if(Object.keys(obj).some(k=>!['id','caption','status'].includes(k)) ||
+  if(Object.keys(obj).some(k=>!['id','businessId','caption','status'].includes(k)) ||
      typeof obj.id!=='string'||!uuid.test(obj.id) ||
+     (obj.businessId!==undefined&&(typeof obj.businessId!=='string'||!uuid.test(obj.businessId))) ||
      typeof obj.status!=='string'||!['pending_review','approved','rejected'].includes(obj.status))
     return response(400,{error:'Invalid review fields.'});
   const caption=sanitizeModelCaption(obj.caption);
   if(!caption)return response(400,{error:'Enter a readable caption (2–3000 characters).'});
-  const {data,error}=await client.from('marketing_ai_drafts')
-    .update({caption,review_status:obj.status})
-    .eq('id',obj.id).eq('user_id',user.id)
-    .select('id,caption,review_status,updated_at').maybeSingle();
+  let update=client.from('marketing_ai_drafts').update({caption,review_status:obj.status}).eq('id',obj.id).eq('user_id',user.id);
+  if(typeof obj.businessId==='string')update=update.eq('business_id',obj.businessId);
+  const {data,error}=await update.select('id,caption,review_status,updated_at').maybeSingle();
   if(error)return response(503,{error:missingSchema(error.code)?
     'Caption editing is not enabled in this environment.':'Unable to save caption review.'});
   if(!data)return response(404,{error:'Draft is not available to this account.'});
