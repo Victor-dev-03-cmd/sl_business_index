@@ -17,6 +17,7 @@ const details=read('app/business/[slug]/BusinessDetailsClient.tsx');
 const saved=read('app/saved/page.tsx');
 const notifications=read('app/notifications/page.tsx');
 const mobileGreeting=read('app/components/MobileGreeting.tsx');
+const bell=read('app/components/NotificationBell.tsx');
 
 test('Reference mobile hero matches real Home search architecture without breaking desktop',()=>{
   assert.match(home,/slbi-home-hero/);
@@ -97,7 +98,14 @@ test('Real mobile Iconsax menu links exist, are accessible and do not replace ve
   assert.match(globalCss,/@media \(max-width: 639px\)\s*\{\s*html\s*\{\s*scrollbar-gutter: auto;/);
   assert.doesNotMatch(dock,/translateX\(-50%\)|left:'50%'/);
   assert.doesNotMatch(tabDeclaration,/add-square|bookmark-2|search-normal/);
-  assert.match(navbar,/href="\/notifications" aria-label="View notifications"/);
+  // Shared notification component serves both desktop and mobile.
+  assert.equal((navbar.match(/<NotificationBell\s*\/>/g)||[]).length,1);
+  assert.match(bell,/if\(!uid&&!sessionLoading\)return <Link href="\/notifications" aria-label="Notifications"/);
+  assert.match(bell,/<Dialog\.Trigger asChild>/);
+  assert.match(bell,/aria-label=\{'Notifications'\+\(count\?/);
+  assert.match(bell,/<Link href="\/notifications" onClick=\{\(\)=>setOpen\(false\)\}/);
+  assert.match(bell,/\.eq\('user_id',uid\)/);
+  assert.match(navbar,/<HeaderThemeToggle\s*\/>/);
   assert.match(navbar,/name="profile-circle"/);
   assert.match(navbar,/setMobileMenuOpen\(value => !value\)/);
   assert.match(navbar,/aria-expanded=\{mobileMenuOpen\}/);
@@ -163,7 +171,10 @@ test('Reference mobile greeting is personalized and follows browser-local daytim
   assert.match(mobileGreeting,/sm:hidden/);
   assert.match(navbar,/<MobileGreeting/);
   assert.match(navbar,/username=\{profileData\?\.username\}/);
-  assert.match(navbar,/className="hidden shrink-0 sm:block"/);
+  assert.match(navbar,/<div className="hidden shrink-0 sm:block(?: [^"]*)?">\s*<LogoLink/);
+  // Owner's native mobile layout hides analytics only; desktop retains it.
+  assert.match(navbar,/<div data-slbi-desktop-live="true" className="hidden shrink-0 sm:inline-flex"><LiveCounter\s*\/><\/div>/);
+  assert.equal((navbar.match(/<LiveCounter\s*\/>/g)||[]).length,1);
   assert.match(navbar,/<LogoLink\s*\/>/);
 });
 
