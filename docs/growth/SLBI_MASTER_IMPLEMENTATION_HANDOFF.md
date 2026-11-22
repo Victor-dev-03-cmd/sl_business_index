@@ -1,5 +1,9 @@
 # SLBusinessIndex — MASTER IMPLEMENTATION & CHAT HANDOFF
 
+## 2026-11-23 — restored database parity; isolated migration rehearsal next
+Owner supplied restored aggregate and ACL evidence: 24 businesses/23 approved, 3 reviews, 15 leads, 47 migration records; 4/4 guarded RPC hashes/ownership/grants exactly match original live baseline; 8/8 inspected tables RLS on; 1 wallet, zero ledger mismatch/overcap; two original review-cache mismatches preserved. Logical recoverability of these inspected contracts confirmed. Next run [local lead/review rehearsal](g0/release/LOCAL_LEAD_REVIEW_REHEARSAL.sh) in existing offline container, not live. Script prepared, not yet executed. Fresh distinct-passphrase archive and separate encrypted copy, scoped production approval and remaining G0 gates still pending.
+
+
 ## 2026-11-23 — isolated logical restore succeeded; acceptance checks pending
 Owner supplied `RESTORE_SUCCESS` from strict `pg_restore --single-transaction --exit-on-error` into a local Supabase PostgreSQL 17.6 container (`--network none`, zero published ports, cron off). No production connection or data writes; restore was from the recorded encrypted archive. See [manual backup checkpoint](G0_07_MANUAL_BACKUP_OPERATOR_CHECKPOINT_20261122.md). Restored aggregate, RLS, ACL/fingerprint and migration rehearsal checks remain pending; platform storage/Vault recovery and cluster role globals are not certified. No G0/G1 acceptance.
 
