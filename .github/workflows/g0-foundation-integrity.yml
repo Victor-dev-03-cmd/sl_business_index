@@ -57,6 +57,9 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f tests/p0/verify_legacy_leads.sql
           psql -v ON_ERROR_STOP=1 -c "TRUNCATE public.slbi_lead_request_receipts, public.slbi_lead_rate_limits"
           psql -v ON_ERROR_STOP=1 -f tests/g0/lead_replay.sql
+          bash tests/g0/release_drift.sh lead
+          psql -v ON_ERROR_STOP=1 -f tests/g0/lead_recovery.sql
+          psql -v ON_ERROR_STOP=1 -f tests/g0/retention.sql
       - name: Reputation cache integration
         if: matrix.domain == 'review'
         run: |
@@ -68,6 +71,8 @@ jobs:
           psql -v ON_ERROR_STOP=1 --single-transaction -f docs/growth/g0/release/REVIEW_FORWARD_BODY.sql
           psql -v ON_ERROR_STOP=1 -f tests/g0/review_cache.sql
           bash tests/g0/review_cache_concurrency.sh
+          bash tests/g0/release_drift.sh review
+          psql -v ON_ERROR_STOP=1 -f tests/g0/review_recovery.sql
       - name: Wallet entitlement and refund edge cases
         if: matrix.domain == 'billing'
         run: |
@@ -78,3 +83,5 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f docs/growth/g0/release/WALLET_RECOVERY_BASELINE.sql
           psql -v ON_ERROR_STOP=1 --single-transaction -f docs/growth/g0/release/WALLET_FORWARD_BODY.sql
           psql -v ON_ERROR_STOP=1 -f tests/g0/billing_refund.sql
+          bash tests/g0/release_drift.sh billing
+          psql -v ON_ERROR_STOP=1 -f tests/g0/billing_recovery.sql
