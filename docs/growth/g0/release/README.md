@@ -1,5 +1,9 @@
 # G0 release readiness package — 2026-11-22
 
+## 2026-11-23 — owner isolated lead/review migration rehearsal PASS
+Owner ran `bash docs/growth/g0/release/LOCAL_LEAD_REVIEW_REHEARSAL.sh` from exact repository HEAD e6125daecfc25d4ffd50667371c2b372c0477367. Terminal reported PASS forward deployment and zero review cache mismatch; PASS synthetic service-role lead replay and conflict rejection; PASS exact recovery; PASS guarded reapply and preserved source rows; PASS outer transaction rolled back; LOCAL_REHEARSAL_SUCCESS. Actual restored production-shaped logical archive, local isolated connection only. No live migration, no wallet migration, no provider spend. This is a scoped rehearsal pass, not endpoint/device/tenant/admin/concurrency or complete G0 acceptance. Fresh independent-passphrase backup and independently stored encrypted copy verification, live preflight and explicit scoped release/maintenance approval remain pending; wallet remains separate. See [operator checkpoint](../../G0_07_MANUAL_BACKUP_OPERATOR_CHECKPOINT_20261122.md).
+
+
 ## 2026-11-22 — G0 MANUAL BACKUP OPERATOR CHECKPOINT (latest)
 Owner approved manual backup on Free plan only. Read [G0_07_MANUAL_BACKUP_OPERATOR_CHECKPOINT_20261122.md](../../G0_07_MANUAL_BACKUP_OPERATOR_CHECKPOINT_20261122.md). Branch `growth/g0-manual-backup-gate`: owner-only encrypted native archive helper and restore/evidence runbook; archive decode is not recovery. Live 47 migrations, 24 businesses, 2 cache mismatches, zero wallet mismatch/overcap; no live SQL writes. Actual backup/isolated restore pending, no paid upgrade or G1 integration. Next-chat prompt in checkpoint.
 

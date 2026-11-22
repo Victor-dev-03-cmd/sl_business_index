@@ -1,5 +1,9 @@
 # Growth Engine V1 — living release checklist
 
+## 2026-11-23 — owner isolated lead/review migration rehearsal PASS
+Owner ran `bash docs/growth/g0/release/LOCAL_LEAD_REVIEW_REHEARSAL.sh` from exact repository HEAD e6125daecfc25d4ffd50667371c2b372c0477367. Terminal reported PASS forward deployment and zero review cache mismatch; PASS synthetic service-role lead replay and conflict rejection; PASS exact recovery; PASS guarded reapply and preserved source rows; PASS outer transaction rolled back; LOCAL_REHEARSAL_SUCCESS. Actual restored production-shaped logical archive, local isolated connection only. No live migration, no wallet migration, no provider spend. This is a scoped rehearsal pass, not endpoint/device/tenant/admin/concurrency or complete G0 acceptance. Fresh independent-passphrase backup and independently stored encrypted copy verification, live preflight and explicit scoped release/maintenance approval remain pending; wallet remains separate. See [operator checkpoint](G0_07_MANUAL_BACKUP_OPERATOR_CHECKPOINT_20261122.md).
+
+
 ## 2026-11-23 — restored database parity; isolated migration rehearsal next
 Owner supplied restored aggregate and ACL evidence: 24 businesses/23 approved, 3 reviews, 15 leads, 47 migration records; 4/4 guarded RPC hashes/ownership/grants exactly match original live baseline; 8/8 inspected tables RLS on; 1 wallet, zero ledger mismatch/overcap; two original review-cache mismatches preserved. Logical recoverability of these inspected contracts confirmed. Next run [local lead/review rehearsal](g0/release/LOCAL_LEAD_REVIEW_REHEARSAL.sh) in existing offline container, not live. Script prepared, not yet executed. Fresh distinct-passphrase archive and separate encrypted copy, scoped production approval and remaining G0 gates still pending.
 
@@ -34,7 +38,7 @@ Owner approved manual backup on Free plan only. Read [G0_07_MANUAL_BACKUP_OPERAT
 - [ ] Production observability, operational readiness and rollback verified.
 
 ## Sequential engineering checklist
-Current position: [G0 manual backup operator checkpoint](G0_07_MANUAL_BACKUP_OPERATOR_CHECKPOINT_20261122.md). Live archive and isolated restore remain unverified. Prior [G0 recovery rehearsal and backup gate](G0_06_RECOVERY_REHEARSAL_AND_BACKUP_GATE_20261122.md). PR #150 merged, 5/5 candidate workflows passed; exact recovery/reapply and retention passed on disposable data. Supabase Free plan: verified manual backup required before live release; remaining G0 acceptance not complete.
+Current position: [G0 manual backup operator checkpoint](G0_07_MANUAL_BACKUP_OPERATOR_CHECKPOINT_20261122.md). Owner archive and isolated logical restore verified by supplied terminal evidence; scoped lead/review local rehearsal PASS. Fresh separate-passphrase backup, separate copy, negative auth/device gates and scoped maintenance approval remain open. Prior [G0 recovery rehearsal and backup gate](G0_06_RECOVERY_REHEARSAL_AND_BACKUP_GATE_20261122.md). PR #150 merged, 5/5 candidate workflows passed; exact recovery/reapply and retention passed on disposable data. Supabase Free plan: verified manual backup required before live release; remaining G0 acceptance not complete.
 ### G0 — Foundation
 - [ ] G0-01 Reverify main SHA, live deployment/alias, CI, migration history, enabled flags/rollout, inventory route/DB/RPC/ownership.
 - [ ] G0-02 Trace consent-aware growth events/leads and actual source-of-truth contracts; label legacy evidence, privacy and retention.
