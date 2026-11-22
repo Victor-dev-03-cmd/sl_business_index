@@ -1,5 +1,9 @@
 # SLBusinessIndex — repository handoff for coding agents
 
+## 2026-11-23 — isolated logical restore succeeded; acceptance checks pending
+Owner supplied `RESTORE_SUCCESS` from strict `pg_restore --single-transaction --exit-on-error` into a local Supabase PostgreSQL 17.6 container (`--network none`, zero published ports, cron off). No production connection or data writes; restore was from the recorded encrypted archive. See [manual backup checkpoint](docs/growth/G0_07_MANUAL_BACKUP_OPERATOR_CHECKPOINT_20261122.md). Restored aggregate, RLS, ACL/fingerprint and migration rehearsal checks remain pending; platform storage/Vault recovery and cluster role globals are not certified. No G0/G1 acceptance.
+
+
 ## 2026-11-23 — owner manual backup captured (restore pending)
 Owner supplied terminal evidence of successful AES-256 encrypted PostgreSQL custom archive for project oofxhragafekazwjikae, 2026-11-22 19:11:29–19:15:15 UTC, 434906 bytes, checksum and archive decode PASS. Actual isolated restore NOT_RUN and release BLOCKED; second copy and separate encryption passphrase pending. See [manual backup checkpoint](docs/growth/G0_07_MANUAL_BACKUP_OPERATOR_CHECKPOINT_20261122.md). No production writes or G0/G1 acceptance.
 
