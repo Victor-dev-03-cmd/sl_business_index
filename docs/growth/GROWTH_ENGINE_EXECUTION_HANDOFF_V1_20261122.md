@@ -1,5 +1,8 @@
 # SLBI Growth Engine — execution handoff V1.0
 
+## 2026-11-22 — G0 BUN + WALLET CHECKPOINT (latest)
+Read [G0 Bun/wallet checkpoint](G0_04_BUN_PERFORMANCE_AND_WALLET_CHECKPOINT_20261122.md) and [Bun performance policy](SLBI_BUN_PERFORMANCE_POLICY.md). PR #147 opt-in Bun development and runtime compatibility merged a0bbc923 after 5/5 CI pass (actual Bun build/server smoke), production Node runtime unchanged. PR #148 wallet entitlement/refund candidate merged 2c991e0d86eb50f58a97a89912361639f1fe99b2 after 5/5 CI pass. Review-only SQL NOT applied; no plans/credits/providers altered. Owner wants Bun-first and measured user speed; keep Node fallback and production config until verified canary. G0 remains open; do not mark G1 or master gates complete. Next approved release and rollback review, live verification, remaining G0 acceptance.
+
 ## 2026-11-22 — G0 DATA INTEGRITY CHECKPOINT (latest)
 Read [G0 data integrity and migration provenance](G0_03_DATA_INTEGRITY_AND_MIGRATION_CHECKPOINT_20261122.md); PR #146 merged 51b93d24dfd65cf1cff0ca143f4dc21e5f730e71, all five candidate CI workflows passed including synthetic lead replay and review concurrent aggregation. Review-only DB SQL NOT deployed. 47 live migration histories fingerprinted (34 exact content match; 13 historical catalog evidence), 115 repo migration scripts (27 exact match, 88 unclassified, never blindly replay). 1 wallet / 8 caption jobs ledger reconciled snapshot; future-verification/refund downgrade edges still need tests. 2 production approved listing rating caches mismatched. Next stage reviewed live migration/rollback and remaining G0 verification, no G1 yet; all gates unchecked. Use latest next-chat prompt.
 

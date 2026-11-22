@@ -14,7 +14,7 @@
 - [ ] Production observability, operational readiness and rollback verified.
 
 ## Sequential engineering checklist
-Current position: [G0 data integrity checkpoint](G0_03_DATA_INTEGRITY_AND_MIGRATION_CHECKPOINT_20261122.md). PR #146 merged, 5/5 candidate CI workflows pass; review-only SQL is tested but not applied. Migration provenance manifest recorded. Next: approved migration/rollback and remaining G0 acceptance, no G1.
+Current position: [G0 Bun/wallet checkpoint](G0_04_BUN_PERFORMANCE_AND_WALLET_CHECKPOINT_20261122.md). Bun tooling merged and tested, wallet candidate merged and tested; review-only SQL not live. Finish reviewed migrations, actual integration and G0 acceptance; G1 not released.
 ### G0 — Foundation
 - [ ] G0-01 Reverify main SHA, live deployment/alias, CI, migration history, enabled flags/rollout, inventory route/DB/RPC/ownership.
 - [ ] G0-02 Trace consent-aware growth events/leads and actual source-of-truth contracts; label legacy evidence, privacy and retention.
@@ -77,6 +77,8 @@ Current position: [G0 data integrity checkpoint](G0_03_DATA_INTEGRITY_AND_MIGRAT
 | 2026-11-22 | [G0 continuation](G0_02_FOUNDATION_REMEDIATION_CHECKPOINT_20261122.md); PR #145 merged 8a41b542d02cb92ec3f0c14912259270162954b4, four workflows pass, 34/47 live SQL content matched, flags/lead RPC/retention and Neon staging evidence, UI reference pinned | G0-B01 test fix merged, G0 remains open, no gate accepted | Remaining G0-01 reconciliation then G0-02/03/04 etc. |
 
 | 2026-11-22 | [G0 data integrity](G0_03_DATA_INTEGRITY_AND_MIGRATION_CHECKPOINT_20261122.md); PR #146 merged 51b93d24dfd65cf1cff0ca143f4dc21e5f730e71, 5/5 workflows pass, lead replay and concurrent review cache tests pass, 47-history manifest, wallet/job snapshot reconciled | Staged SQL not applied; no accepted gate | Reviewed release migration, remaining verification |
+
+| 2026-11-22 | [Bun and wallet checkpoint](G0_04_BUN_PERFORMANCE_AND_WALLET_CHECKPOINT_20261122.md); PR #147/#148 both merged, 5/5 candidate workflows each, Bun build/runtime smoke and wallet boundary tests passed | Development tooling live in repo, existing runtime unchanged; SQL staged only; no accepted gate | Reviewed scoped DB release and remaining G0 acceptance |
 
 ### Update protocol
 Add dated checkpoint per work package: exact parent/commit/branch/PR, file paths, schema and migration status, CI commands and counts, app/provider flags, Vercel URL/id/state, owner A/B and device results, costs/approval, blockers and next earliest unchecked item. A checked box requires evidence scoped to that actual acceptance condition. If a regression invalidates a gate, reopen it with reason. No secret values, customer data, invented test outcomes or premature global release. Preserve old checkpoints.

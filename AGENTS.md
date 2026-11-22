@@ -1,5 +1,8 @@
 # SLBusinessIndex — repository handoff for coding agents
 
+## LATEST G0 CHECKPOINT — Bun-first + wallet safety
+Read [Bun/wallet checkpoint](docs/growth/G0_04_BUN_PERFORMANCE_AND_WALLET_CHECKPOINT_20261122.md), [Bun performance policy](docs/growth/SLBI_BUN_PERFORMANCE_POLICY.md). PR #147 and #148 merged, each 5 CI workflows passed; current production runtime unchanged and wallet SQL not deployed. Owner requires Bun-first where compatible, benchmark before global runtime switch. Continue reviewed G0 release, actual tenant/device/provider/financial checks; no premature G1 or checked gates. Next-chat prompt required.
+
 ## LATEST G0 CHECKPOINT
 Read [data integrity checkpoint](docs/growth/G0_03_DATA_INTEGRITY_AND_MIGRATION_CHECKPOINT_20261122.md) and [migration manifest](docs/growth/g0/MIGRATION_PROVENANCE_20261122.json). PR #146 passed 5/5 candidate CI and merged, staged SQL not live. All gates unchecked. Continue exact release/rollback and remaining G0 evidence; no premature G1. Next-chat prompt required.
 
