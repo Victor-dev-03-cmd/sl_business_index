@@ -1,5 +1,9 @@
 # SLBusinessIndex — repository handoff for coding agents
 
+## 2026-11-22 — G0 MANUAL BACKUP OPERATOR CHECKPOINT (latest)
+Owner approved manual backup on Free plan only. Read [G0_07_MANUAL_BACKUP_OPERATOR_CHECKPOINT_20261122.md](docs/growth/G0_07_MANUAL_BACKUP_OPERATOR_CHECKPOINT_20261122.md). Branch `growth/g0-manual-backup-gate`: owner-only encrypted native archive helper and restore/evidence runbook; archive decode is not recovery. Live 47 migrations, 24 businesses, 2 cache mismatches, zero wallet mismatch/overcap; no live SQL writes. Actual backup/isolated restore pending, no paid upgrade or G1 integration. Next-chat prompt in checkpoint.
+
+
 ## LATEST G0 — Recovery rehearsal and backup gate
 Read [checkpoint](docs/growth/G0_06_RECOVERY_REHEARSAL_AND_BACKUP_GATE_20261122.md). PR #150 passed 5/5 and merged. Tested recovery and reapply, no live SQL. Supabase Free tier; verified manual backup/recovery required before production, explicit lead/review release scope and separate wallet decision. No paid upgrade/secret sharing. G1 gated, next-chat prompt required.
 
