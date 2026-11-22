@@ -1,5 +1,8 @@
 # SLBI Growth Engine — execution handoff V1.0
 
+## 2026-11-22 — G0 GUARDED RELEASE CHECKPOINT (latest)
+Read [guarded release checkpoint](G0_05_GUARDED_DATABASE_RELEASE_CHECKPOINT_20261122.md), [release package](g0/release/README.md) and [G1 context data proposal](g0/G1_KNOWLEDGE_CONTEXT_PROPOSAL.md). PR #149 merged e4ca3c84ac7c36b966270915ceeaefc39d604dc3, seven candidate workflows pass; exact guarded SQL bodies passed isolated lead/review/wallet tests. Enquiry API independent Turnstile UUID and conflict mapping merged, no layout change. Live DB remains unchanged; request explicit scoped lead/review release approval and separate wallet policy approval, verify backup/staging/maintenance and postchecks. G1 input mapping prepared but not integrated; all master and engineering gates remain unchecked. Continue G0 acceptance, then G1.
+
 ## 2026-11-22 — G0 BUN + WALLET CHECKPOINT (latest)
 Read [G0 Bun/wallet checkpoint](G0_04_BUN_PERFORMANCE_AND_WALLET_CHECKPOINT_20261122.md) and [Bun performance policy](SLBI_BUN_PERFORMANCE_POLICY.md). PR #147 opt-in Bun development and runtime compatibility merged a0bbc923 after 5/5 CI pass (actual Bun build/server smoke), production Node runtime unchanged. PR #148 wallet entitlement/refund candidate merged 2c991e0d86eb50f58a97a89912361639f1fe99b2 after 5/5 CI pass. Review-only SQL NOT applied; no plans/credits/providers altered. Owner wants Bun-first and measured user speed; keep Node fallback and production config until verified canary. G0 remains open; do not mark G1 or master gates complete. Next approved release and rollback review, live verification, remaining G0 acceptance.
 

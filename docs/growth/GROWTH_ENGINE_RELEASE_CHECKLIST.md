@@ -14,7 +14,7 @@
 - [ ] Production observability, operational readiness and rollback verified.
 
 ## Sequential engineering checklist
-Current position: [G0 Bun/wallet checkpoint](G0_04_BUN_PERFORMANCE_AND_WALLET_CHECKPOINT_20261122.md). Bun tooling merged and tested, wallet candidate merged and tested; review-only SQL not live. Finish reviewed migrations, actual integration and G0 acceptance; G1 not released.
+Current position: [G0 guarded release checkpoint](G0_05_GUARDED_DATABASE_RELEASE_CHECKPOINT_20261122.md). PR #149 merged, 7/7 candidate CI workflows passed, exact guarded SQL bodies passed disposable tests. Next explicit scoped production release approval for lead/review and separate wallet decision, followed by live and integrated G0 acceptance. G1 source mapping only.
 ### G0 — Foundation
 - [ ] G0-01 Reverify main SHA, live deployment/alias, CI, migration history, enabled flags/rollout, inventory route/DB/RPC/ownership.
 - [ ] G0-02 Trace consent-aware growth events/leads and actual source-of-truth contracts; label legacy evidence, privacy and retention.
@@ -79,6 +79,8 @@ Current position: [G0 Bun/wallet checkpoint](G0_04_BUN_PERFORMANCE_AND_WALLET_CH
 | 2026-11-22 | [G0 data integrity](G0_03_DATA_INTEGRITY_AND_MIGRATION_CHECKPOINT_20261122.md); PR #146 merged 51b93d24dfd65cf1cff0ca143f4dc21e5f730e71, 5/5 workflows pass, lead replay and concurrent review cache tests pass, 47-history manifest, wallet/job snapshot reconciled | Staged SQL not applied; no accepted gate | Reviewed release migration, remaining verification |
 
 | 2026-11-22 | [Bun and wallet checkpoint](G0_04_BUN_PERFORMANCE_AND_WALLET_CHECKPOINT_20261122.md); PR #147/#148 both merged, 5/5 candidate workflows each, Bun build/runtime smoke and wallet boundary tests passed | Development tooling live in repo, existing runtime unchanged; SQL staged only; no accepted gate | Reviewed scoped DB release and remaining G0 acceptance |
+
+| 2026-11-22 | [Guarded release checkpoint](G0_05_GUARDED_DATABASE_RELEASE_CHECKPOINT_20261122.md); PR #149 e4ca3c84ac7c36b966270915ceeaefc39d604dc3, 7/7 candidate workflows pass, 3/3 exact SQL domain jobs pass, G1 source map | API code merged; release package staged, live DB unchanged; no gate accepted | Scoped release approval, backup/staging, actual acceptance then G1 |
 
 ### Update protocol
 Add dated checkpoint per work package: exact parent/commit/branch/PR, file paths, schema and migration status, CI commands and counts, app/provider flags, Vercel URL/id/state, owner A/B and device results, costs/approval, blockers and next earliest unchecked item. A checked box requires evidence scoped to that actual acceptance condition. If a regression invalidates a gate, reopen it with reason. No secret values, customer data, invented test outcomes or premature global release. Preserve old checkpoints.

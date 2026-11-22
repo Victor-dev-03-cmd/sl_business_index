@@ -1,5 +1,8 @@
 # SLBusinessIndex — repository handoff for coding agents
 
+## CURRENT G0 RELEASE CHECKPOINT
+Read [guarded release checkpoint](docs/growth/G0_05_GUARDED_DATABASE_RELEASE_CHECKPOINT_20261122.md), [release package](docs/growth/g0/release/README.md) and [G1 context proposal](docs/growth/g0/G1_KNOWLEDGE_CONTEXT_PROPOSAL.md). PR #149 7/7 workflow pass and merged. Exact SQL tested, not live. Explicit scope approval lead/review and separate wallet policy, verified backup/staging, migration and remaining G0 acceptance required. No G1 integration before gates. Next-chat prompt required.
+
 ## LATEST G0 CHECKPOINT — Bun-first + wallet safety
 Read [Bun/wallet checkpoint](docs/growth/G0_04_BUN_PERFORMANCE_AND_WALLET_CHECKPOINT_20261122.md), [Bun performance policy](docs/growth/SLBI_BUN_PERFORMANCE_POLICY.md). PR #147 and #148 merged, each 5 CI workflows passed; current production runtime unchanged and wallet SQL not deployed. Owner requires Bun-first where compatible, benchmark before global runtime switch. Continue reviewed G0 release, actual tenant/device/provider/financial checks; no premature G1 or checked gates. Next-chat prompt required.
 
