@@ -49,6 +49,9 @@ AFTER INSERT OR DELETE OR UPDATE OF business_id,rating,is_approved ON public.rev
 FOR EACH ROW EXECUTE FUNCTION slbi_growth_internal.refresh_review_cache();
 -- Reconcile only inconsistent rows; guard computes from approved reviews.
 UPDATE public.businesses b SET rating=b.rating,reviews_count=b.reviews_count
-WHERE (b.rating,b.reviews_count) IS DISTINCT FROM
- (SELECT coalesce(avg(r.rating),0),count(*)::integer FROM public.reviews r WHERE r.business_id=b.id AND r.is_approved IS TRUE);
+FROM (SELECT own.id,coalesce(avg(r.rating),0) AS avg_rating,count(r.id)::integer AS review_count
+ FROM public.businesses own LEFT JOIN public.reviews r ON r.business_id=own.id AND r.is_approved IS TRUE
+ GROUP BY own.id) expected
+WHERE b.id=expected.id
+ AND (b.rating,b.reviews_count) IS DISTINCT FROM (expected.avg_rating,expected.review_count);
 COMMIT;

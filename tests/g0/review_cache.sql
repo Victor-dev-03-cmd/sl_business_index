@@ -35,3 +35,13 @@ DO $$ BEGIN
  IF has_function_privilege('anon','slbi_growth_internal.refresh_review_cache()','EXECUTE') OR has_function_privilege('authenticated','slbi_growth_internal.canonical_review_cache()','EXECUTE') THEN RAISE EXCEPTION 'private trigger execute allowed'; END IF;
 END $$;
 \echo 'PASS: review cache backfill, owner spoof resistance, approval, edit, delete, move, private trigger grants'
+-- A pending and a rejected review do not change public aggregates.
+INSERT INTO public.reviews(id,business_id,user_name,rating,comment,is_approved,moderation_status)
+VALUES('12345678-1234-4234-8234-123456789012','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','Pending fixture',5,'Pending',false,'pending');
+DO $$ BEGIN
+ IF NOT EXISTS(SELECT 1 FROM public.businesses WHERE id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' AND rating=0 AND reviews_count=0) THEN RAISE EXCEPTION 'pending review affects score'; END IF;
+END $$;
+UPDATE public.reviews SET moderation_status='rejected',is_approved=false WHERE id='12345678-1234-4234-8234-123456789012';
+DO $$ BEGIN
+ IF NOT EXISTS(SELECT 1 FROM public.businesses WHERE id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' AND rating=0 AND reviews_count=0) THEN RAISE EXCEPTION 'rejected review affects score'; END IF;
+END $$;

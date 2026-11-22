@@ -60,3 +60,4 @@ jobs:
           psql -v ON_ERROR_STOP=1 -c "ALTER TABLE public.businesses ADD COLUMN rating numeric DEFAULT 0, ADD COLUMN reviews_count integer DEFAULT 0"
           psql -v ON_ERROR_STOP=1 -f docs/growth/g0/REVIEW_CACHE_REVIEW_ONLY.sql
           psql -v ON_ERROR_STOP=1 -f tests/g0/review_cache.sql
+          bash tests/g0/review_cache_concurrency.sh
