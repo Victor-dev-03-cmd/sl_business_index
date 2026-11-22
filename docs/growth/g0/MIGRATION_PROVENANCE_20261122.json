@@ -1,0 +1,1356 @@
+{
+  "snapshot": "51b93d24dfd65cf1cff0ca143f4dc21e5f730e71",
+  "date": "2026-11-22",
+  "scope": "Read-only live migration-history fingerprint comparison; no executable history or customer data.",
+  "counts": {
+    "live": 47,
+    "live_content_match": 34,
+    "live_historical_catalog_evidence": 13,
+    "repository_sql_files": 115,
+    "repository_content_match": 27
+  },
+  "rules": [
+    "Historical record is not a pending migration.",
+    "Never replay unmatched files or repair live ledger to match filenames.",
+    "Review full live object equivalence and baseline/staging history before canonical migration chain.",
+    "Use new reviewed numbered migration only after staging and rollback checks."
+  ],
+  "live": [
+    {
+      "version": "20261110041516",
+      "name": "growth_security_guards",
+      "bytes": 3248,
+      "sha256": "0f4ffbc2a6f0b6af440efb16b7a8d83717c1c0a848d354ed58933d5c7b337f8e",
+      "git_blob_sha1": "968ffe676b4bfac020e8a7ff2fc00126fa01ed95",
+      "git_blob_sha1_with_final_lf": "e30ac605ea34b2e652b5839415a06cc96a4d2aaf",
+      "matching_paths": [
+        "supabase/migrations/20261110011000_growth_security_guards.sql"
+      ],
+      "classification": "content-match",
+      "evidence": "Recorded SQL bytes match a committed SQL blob (or sole terminal LF). Not proof all later live schema is equivalent."
+    },
+    {
+      "version": "20261110202745",
+      "name": "smart_search_v1_rpc",
+      "bytes": 5456,
+      "sha256": "baec87cbce2b59afb9869d892bf339a2667d9be2193f364ee49325dfcebe51b2",
+      "git_blob_sha1": "fbc7129d303aac61d05e1e06e514ed01efd5aa28",
+      "git_blob_sha1_with_final_lf": "126656787823c4425c4b5a779f580333efa4ea0e",
+      "matching_paths": [
+        "supabase/migrations/20261110202745_smart_search_v1_rpc.sql"
+      ],
+      "classification": "content-match",
+      "evidence": "Recorded SQL bytes match a committed SQL blob (or sole terminal LF). Not proof all later live schema is equivalent."
+    },
+    {
+      "version": "20261110214148",
+      "name": "slbi_multilingual_search_dictionary_v1",
+      "bytes": 200777,
+      "sha256": "c0c86397546e60bee1d6a5309bc18bec34a70ae9351420d138029453c20ee31d",
+      "git_blob_sha1": "afeeca8483f88d50f339af26d7d99e55d48e2c86",
+      "git_blob_sha1_with_final_lf": "ae3fd64fc5a2f2287056e87f37fbf4ccfac130b6",
+      "matching_paths": [
+        "supabase/migrations/20261110214148_slbi_multilingual_search_dictionary_v1.sql"
+      ],
+      "classification": "content-match",
+      "evidence": "Recorded SQL bytes match a committed SQL blob (or sole terminal LF). Not proof all later live schema is equivalent."
+    },
+    {
+      "version": "20261111071341",
+      "name": "semantic_v3_research_foundation",
+      "bytes": 5546,
+      "sha256": "8f5f667388e1ccba357125824cad3bb1c19e4c60aa436aaabafddcef4e4b8b9f",
+      "git_blob_sha1": "7da76cc3cbdf56631f06389c8e86af709fca6db4",
+      "git_blob_sha1_with_final_lf": "3a5884e2486136fd2ed744914c7d71abacd2a6f0",
+      "matching_paths": [],
+      "classification": "historical-catalog-evidence",
+      "evidence": "Objects confirmed: private embeddings, admin evaluation/relevance tables; RLS enabled. Later semantic versions supersede parts; seed-row and complete DDL equivalence not claimed."
+    },
+    {
+      "version": "20261111071708",
+      "name": "semantic_v3_native_review",
+      "bytes": 834,
+      "sha256": "848ef6150c3d1428d56a410dc55843e955ea7d434402d26c704f2ae14dc0b2a9",
+      "git_blob_sha1": "d1f40a4eebb45ea4bb02f0777f69f939f99da3ae",
+      "git_blob_sha1_with_final_lf": "b2f8f579b2c96886154406bc1c1bb52d5bb19dbb",
+      "matching_paths": [],
+      "classification": "historical-catalog-evidence",
+      "evidence": "Evaluation validation_status, validated_by and validated_at columns observed; compare full current admin policy before G0 closure."
+    },
+    {
+      "version": "20261111072328",
+      "name": "semantic_v3_multimodel_dimensions",
+      "bytes": 772,
+      "sha256": "11d3715f3cd442e468ed13c57292b9138bfeacaea6d4672565ce76842c5fefeb",
+      "git_blob_sha1": "13418a683b86dfb6eed1a93b730be6c07afcbcf9",
+      "git_blob_sha1_with_final_lf": "4bc8b7c620f10cbcc8adebbe5d6b324e21242733",
+      "matching_paths": [],
+      "classification": "historical-catalog-evidence",
+      "evidence": "Vector and embedding_dimensions columns observed on private table; actual dimension constraints still need comparison."
+    },
+    {
+      "version": "20261111073419",
+      "name": "slbi_semantic_v3_private_research_lab",
+      "bytes": 3618,
+      "sha256": "65664d59f2360ef2c84a30be37d7d218a626bc314952ea48628fd59f1468b09e",
+      "git_blob_sha1": "86f93fbfb0615c7329bf331cc1203f8f3f5e8700",
+      "git_blob_sha1_with_final_lf": "32c8043ae0cb9cbd2870b914a03128564ef1d3d6",
+      "matching_paths": [
+        "supabase/migrations/20261111073419_slbi_semantic_v3_private_research_lab.sql"
+      ],
+      "classification": "content-match",
+      "evidence": "Recorded SQL bytes match a committed SQL blob (or sole terminal LF). Not proof all later live schema is equivalent."
+    },
+    {
+      "version": "20261111081031",
+      "name": "slbi_app_settings_rls_admin_write",
+      "bytes": 1525,
+      "sha256": "b1f37b5a40bd051b268f7b6a80e643a88df79fb9ed602003ae31454e4dde45b5",
+      "git_blob_sha1": "fa5173f12114bd482773218c7f1bb440ded82ed8",
+      "git_blob_sha1_with_final_lf": "f98c389b37d15fad1883a97eb363299efbc31667",
+      "matching_paths": [
+        "supabase/migrations/20261111081031_slbi_app_settings_rls_admin_write.sql"
+      ],
+      "classification": "content-match",
+      "evidence": "Recorded SQL bytes match a committed SQL blob (or sole terminal LF). Not proof all later live schema is equivalent."
+    },
+    {
+      "version": "20261111121118",
+      "name": "vendor_notification_preferences_owner_scoped_v1",
+      "bytes": 1466,
+      "sha256": "df97e49aba7bb5d35181513e119b6ddb3f21b03cca6996de278546595730f109",
+      "git_blob_sha1": "fa0cb4f3b1e278dc6f8d9732df0018c2abf06d01",
+      "git_blob_sha1_with_final_lf": "48205c2d39e6f8cd987f19cd79859a6c25279a6a",
+      "matching_paths": [],
+      "classification": "historical-catalog-evidence",
+      "evidence": "Preferences table observed, RLS enabled, auth select granted; owner-policy exact body still to compare."
+    },
+    {
+      "version": "20261111121230",
+      "name": "private_verification_documents_owner_path_v1",
+      "bytes": 824,
+      "sha256": "7e0138fabb99c51cf86255c1733d62a9b1f5503c8d3dfcd652177c00bed3edb4",
+      "git_blob_sha1": "6c144b5b2094f4779ea8025edc2d1707744fde99",
+      "git_blob_sha1_with_final_lf": "9f925b9ee01de2a5e9501d04000f8e4710d0486c",
+      "matching_paths": [],
+      "classification": "historical-catalog-evidence",
+      "evidence": "verification-docs bucket private, 10 MiB, owner-upload policy observed; updated by next historical migration."
+    },
+    {
+      "version": "20261111130737",
+      "name": "fix_verification_upload_business_owner_path_v2",
+      "bytes": 529,
+      "sha256": "ef588f2c0c5182e6e93b86ac65d0598fcd122107476a274536405fabb0b90d73",
+      "git_blob_sha1": "7cfeab682a011f6b1e45d613375bd93e98776795",
+      "git_blob_sha1_with_final_lf": "621a44cb1d558bff9a118c54ddc930360a5ca2fd",
+      "matching_paths": [],
+      "classification": "historical-catalog-evidence",
+      "evidence": "Current policy verified: storage.objects.name qualified, path owner/business check."
+    },
+    {
+      "version": "20261112130101",
+      "name": "nearby_v3_readable_business_addresses",
+      "bytes": 2065,
+      "sha256": "f56b10413b7730a5f3ea9b2deb5050dc9221abb14b650671eb725db05edb38c9",
+      "git_blob_sha1": "3a8880c82b53567bf868cb105bce10cfd55ec191",
+      "git_blob_sha1_with_final_lf": "81967cb91773af86d725eba72dd51376873c3c09",
+      "matching_paths": [
+        "supabase/migrations/20261112173000_nearby_v3_readable_business_addresses.sql"
+      ],
+      "classification": "content-match",
+      "evidence": "Recorded SQL bytes match a committed SQL blob (or sole terminal LF). Not proof all later live schema is equivalent."
+    },
+    {
+      "version": "20261112132525",
+      "name": "business_news_editorial_formats",
+      "bytes": 2452,
+      "sha256": "8c39fbd110ac6ef66349b0a8b4706f99b14db31212310719b4645ca283823ef5",
+      "git_blob_sha1": "d781d9b19c616befbbb4057afecefaec73ceb9d7",
+      "git_blob_sha1_with_final_lf": "a6ddf3efc06b2a8238287234a3fc8d21702d1395",
+      "matching_paths": [
+        "supabase/migrations/20261112190000_business_news_editorial_formats.sql"
+      ],
+      "classification": "content-match",
+      "evidence": "Recorded SQL bytes match a committed SQL blob (or sole terminal LF). Not proof all later live schema is equivalent."
+    },
+    {
+      "version": "20261112132935",
+      "name": "business_news_feed_indexes",
+      "bytes": 458,
+      "sha256": "f5ef788abb260ce43478815cf9a45b91273e7d9150cdf4e6600c67b7326cce58",
+      "git_blob_sha1": "91eb7c0ab78901e713425b89be3cfd89d31bea88",
+      "git_blob_sha1_with_final_lf": "23fce7826538fc4af14dfd58389f64720e6711f4",
+      "matching_paths": [
+        "supabase/migrations/20261112191000_business_news_feed_indexes.sql"
+      ],
+      "classification": "content-match",
+      "evidence": "Recorded SQL bytes match a committed SQL blob (or sole terminal LF). Not proof all later live schema is equivalent."
+    },
+    {
+      "version": "20261112193546",
+      "name": "p0_security_foundation",
+      "bytes": 35701,
+      "sha256": "de171db610740594bfc6a265574f9d711306787281c2735a6f41ab96a17d6946",
+      "git_blob_sha1": "905b65bd82bcdc697e797abdcbd1283f0ba365cc",
+      "git_blob_sha1_with_final_lf": "ebe24f42617e9494b0b56d0e4cf1c9a1a924f027",
+      "matching_paths": [
+        "supabase/migrations/20261112193546_p0_security_foundation.sql"
+      ],
+      "classification": "content-match",
+      "evidence": "Recorded SQL bytes match a committed SQL blob (or sole terminal LF). Not proof all later live schema is equivalent."
+    },
+    {
+      "version": "20261112194811",
+      "name": "p0_business_logos_owner_isolation",
+      "bytes": 1462,
+      "sha256": "00f0c763266fddbd12af6ab2c1c43ed2f02bf2c38b1342f5a3ab5d6cca76a03d",
+      "git_blob_sha1": "0e99b30e74bb2e6c2475af8cb010acd918ed1067",
+      "git_blob_sha1_with_final_lf": "fcb9b2e99117c5495d2cb1624426d843e4244b84",
+      "matching_paths": [],
+      "classification": "historical-catalog-evidence",
+      "evidence": "Current logo mutations have owner-folder checks/admin policy, public image read; check malformed path handling and client upload acceptance."
+    },
+    {
+      "version": "20261113091046",
+      "name": "p1_public_api_truncate_lockdown",
+      "bytes": 2010,
+      "sha256": "6096467640305ef2d2e6db4ba7bd9f23be17d397f620095a7ef82f3505fc9dcc",
+      "git_blob_sha1": "bdc0091e34e13f1d5aef04669820a815ff178324",
+      "git_blob_sha1_with_final_lf": "6b84a65bb7e6669588d2fb8ad463310f8d3d5983",
+      "matching_paths": [
+        "docs/growth/p1/P1_API_TRUNCATE_LOCKDOWN_REVIEW_ONLY.sql",
+        "supabase/migrations/20261113091046_p1_public_api_truncate_lockdown.sql"
+      ],
+      "classification": "content-match",
+      "evidence": "Recorded SQL bytes match a committed SQL blob (or sole terminal LF). Not proof all later live schema is equivalent."
+    },
+    {
+      "version": "20261113091124",
+      "name": "p1_vendor_lead_followups_and_review_owner_rls",
+      "bytes": 5999,
+      "sha256": "c62cb36c5ea441f65ac34502428bbdbed18ff47b4063f7cc7b7dc9a7351a405e",
+      "git_blob_sha1": "9156b0a4739e4c02bf6371a1728bfb889c30e8f0",
+      "git_blob_sha1_with_final_lf": "d0e3d2e9545bec3c2a75de9a96be2cb5465676cc",
+      "matching_paths": [
+        "docs/growth/p1/P1_VENDOR_DATA_GUARDS_STAGING_ONLY.sql",
+        "supabase/migrations/20261113091124_p1_vendor_lead_followups_and_review_owner_rls.sql"
+      ],
+      "classification": "content-match",
+      "evidence": "Recorded SQL bytes match a committed SQL blob (or sole terminal LF). Not proof all later live schema is equivalent."
+    },
+    {
+      "version": "20261113091146",
+      "name": "p1_review_moderation_pending_staff_audit",
+      "bytes": 6472,
+      "sha256": "b976b886b7cc96bb70a41abb69ca94e8d35b19df5590901b04322d962a686054",
+      "git_blob_sha1": "0eb9f832b1bc72235feb33c1c6dca2d9a641a76f",
+      "git_blob_sha1_with_final_lf": "8802d387385e393620a1db4576b540d9b896eb09",
+      "matching_paths": [
+        "docs/growth/p1/P1_REVIEW_MODERATION_LOCKDOWN_STAGING_ONLY.sql",
+        "supabase/migrations/20261113091146_p1_review_moderation_pending_staff_audit.sql"
+      ],
+      "classification": "content-match",
+      "evidence": "Recorded SQL bytes match a committed SQL blob (or sole terminal LF). Not proof all later live schema is equivalent."
+    },
+    {
+      "version": "20261113091207",
+      "name": "p1_business_physical_address_postgis_guard",
+      "bytes": 3843,
+      "sha256": "d04c84b66d3f445ea630ca9053dc894fdcda9efa7995c6d3cfdc061e68c94139",
+      "git_blob_sha1": "120e45dcbe271df563e9ee0dca9dd5df9439de7b",
+      "git_blob_sha1_with_final_lf": "70087fbf1493409a0d42b15bba920e4a3de0c17e",
+      "matching_paths": [
+        "docs/growth/p1/P1_BUSINESS_LOCATION_GUARD_REVIEW_ONLY.sql",
+        "supabase/migrations/20261113091207_p1_business_physical_address_postgis_guard.sql"
+      ],
+      "classification": "content-match",
+      "evidence": "Recorded SQL bytes match a committed SQL blob (or sole terminal LF). Not proof all later live schema is equivalent."
+    },
+    {
+      "version": "20261114104216",
+      "name": "p2_marketing_global_foundation_coming_soon_v1",
+      "bytes": 34476,
+      "sha256": "a47411b369c9eecdfcd874e2eee1efb25d32802372be71fff1f07524b3585c6e",
+      "git_blob_sha1": "32733d1c32673e1bac287f49e7345731e55c6c2e",
+      "git_blob_sha1_with_final_lf": "931b9474324eca71109380069c9f2c58e4b992d6",
+      "matching_paths": [
+        "docs/growth/p2/P2_MARKETING_GLOBAL_BASELINE_PRODUCTION.sql"
+      ],
+      "classification": "content-match",
+      "evidence": "Recorded SQL bytes match a committed SQL blob (or sole terminal LF). Not proof all later live schema is equivalent."
+    },
+    {
+      "version": "20261114132728",
+      "name": "p2_campaign_planner_owner_rls_revision_audit_v1",
+      "bytes": 9274,
+      "sha256": "382f25be87ccd7341070657c86b077d184d974e5c841398d0cf1654c054ed4f7",
+      "git_blob_sha1": "1122a14933f2062cdb1fa379bda287ca1ebc9996",
+      "git_blob_sha1_with_final_lf": "e5b95acd2073b5ef2a860f1967ae86eb4a8dbcd3",
+      "matching_paths": [
+        "docs/growth/p2/P2_05_CAMPAIGN_SECURITY_PRODUCTION_CANDIDATE.sql"
+      ],
+      "classification": "content-match",
+      "evidence": "Recorded SQL bytes match a committed SQL blob (or sole terminal LF). Not proof all later live schema is equivalent."
+    },
+    {
+      "version": "20261114134136",
+      "name": "p2_campaign_planner_basic_marketplace_live_v1",
+      "bytes": 1724,
+      "sha256": "c4690b65baf033e3cc1bd91b6bee081eba7305e9918bdd68e4b849770cb627f8",
+      "git_blob_sha1": "5661d97942dbd35df0cf5303e9a185e02f456378",
+      "git_blob_sha1_with_final_lf": "774cab015bde87d93b45b6cc1dd96ce23ef51987",
+      "matching_paths": [],
+      "classification": "historical-catalog-evidence",
+      "evidence": "Campaign Planner rollout live; confirm related role and release tests."
+    },
+    {
+      "version": "20261114144023",
+      "name": "p2_campaign_planner_v2_editable_brief_archive",
+      "bytes": 4913,
+      "sha256": "3179e92d868f063e47591c7a0328f0c1167dd767ddad6b517d4788597562bbe9",
+      "git_blob_sha1": "288185c7cce9d5cfecd26aa6d7ead6362c05ceaa",
+      "git_blob_sha1_with_final_lf": "2b754a2ae58b7895bf04bc88c78c8fd4679802a0",
+      "matching_paths": [
+        "docs/growth/p2/P2_CAMPAIGN_PLANNER_V2_EDITABLE_BRIEF.sql"
+      ],
+      "classification": "content-match",
+      "evidence": "Recorded SQL bytes match a committed SQL blob (or sole terminal LF). Not proof all later live schema is equivalent."
+    },
+    {
+      "version": "20261114215434",
+      "name": "p2_poster_private_credit_jobs_default_disabled_20261115",
+      "bytes": 11933,
+      "sha256": "38c9ad27c33a25efa91bba854cafa1eb9278cb8a3fb00e5f01a94dd8855dd0ec",
+      "git_blob_sha1": "b11b4042c19eda2e4da65e6da341b852fe7ad335",
+      "git_blob_sha1_with_final_lf": "d6ce7b4fde3cbfc6167c905a3a722c6824f3289a",
+      "matching_paths": [
+        "docs/growth/p2/P2_04_POSTER_IMAGE_AI_STAGING_ONLY.sql"
+      ],
+      "classification": "content-match",
+      "evidence": "Recorded SQL bytes match a committed SQL blob (or sole terminal LF). Not proof all later live schema is equivalent."
+    },
+    {
+      "version": "20261114215442",
+      "name": "p2_poster_private_storage_default_locked_20261115",
+      "bytes": 1304,
+      "sha256": "91ab21e41adacf0195bbdd6ed6126544dbf108009e303c0da89db8dae44c0436",
+      "git_blob_sha1": "aa9ad668fc2a1357964818dbc20dc9b16c900e76",
+      "git_blob_sha1_with_final_lf": "7af976d6133f4a3c4dcca9f5bbb4f047d522c672",
+      "matching_paths": [
+        "docs/growth/p2/P2_04_PRIVATE_POSTER_STORAGE_STAGING_ONLY.sql"
+      ],
+      "classification": "content-match",
+      "evidence": "Recorded SQL bytes match a committed SQL blob (or sole terminal LF). Not proof all later live schema is equivalent."
+    },
+    {
+      "version": "20261115074345",
+      "name": "p2_poster_real_ai_image_edits_refund_retry_20261115",
+      "bytes": 6388,
+      "sha256": "b2ce1b9d7fe98afb7d570dec8e4d830f50f9b98deea37dcc2043a69c8f61c57d",
+      "git_blob_sha1": "7b6ade6357e1543c27bf251e77bd5b0536be1b33",
+      "git_blob_sha1_with_final_lf": "5179095edeb3d72e1466f13c13ca2751a56bc7ed",
+      "matching_paths": [
+        "docs/growth/p2/P2_05_POSTER_PROMPT_AI_EDITS_RETRY_20261115.sql",
+        "supabase/migrations/20261115074345_p2_poster_real_ai_image_edits_refund_retry_20261115.sql"
+      ],
+      "classification": "content-match",
+      "evidence": "Recorded SQL bytes match a committed SQL blob (or sole terminal LF). Not proof all later live schema is equivalent."
+    },
+    {
+      "version": "20261115084040",
+      "name": "p2_cloudflare_flux2_klein4b_model_allowlist",
+      "bytes": 1906,
+      "sha256": "adf77e0351533d536b0ff9802eab16dcc133523a58f82444462051e1b6154eb2",
+      "git_blob_sha1": "3009725fc6bb3a4f38fa977022487dc34e30babd",
+      "git_blob_sha1_with_final_lf": "e0ba7faa377641ad1e0be09a7d823452bd80a0dd",
+      "matching_paths": [
+        "supabase/migrations/20261115091000_p2_cloudflare_flux2_klein4b_model_allowlist.sql"
+      ],
+      "classification": "content-match",
+      "evidence": "Recorded SQL bytes match a committed SQL blob (or sole terminal LF). Not proof all later live schema is equivalent."
+    },
+    {
+      "version": "20261115100554",
+      "name": "p2_poster_gemini_voice_quota_20261115",
+      "bytes": 1502,
+      "sha256": "d82b6bc173a4a57d8babc725b766bb56ee57f7ba2e72147314f1828c0a906a30",
+      "git_blob_sha1": "dc8170a0de9ae9ddfdca4611e65d26916a5d9d8c",
+      "git_blob_sha1_with_final_lf": "a3196b95dff897738f3d4e4f5760ff9f346a6027",
+      "matching_paths": [
+        "supabase/migrations/20261115094500_p2_poster_gemini_voice_quota.sql"
+      ],
+      "classification": "content-match",
+      "evidence": "Recorded SQL bytes match a committed SQL blob (or sole terminal LF). Not proof all later live schema is equivalent."
+    },
+    {
+      "version": "20261116182801",
+      "name": "p2_caption_internal_qa_credit_foundation_20261116",
+      "bytes": 12089,
+      "sha256": "01d0eb75a8faddb05e9884bf839e07b12f5533d797bcad8133b904fbd38978e5",
+      "git_blob_sha1": "2b0221049d548e6307e065bc14e5d4f553d738c4",
+      "git_blob_sha1_with_final_lf": "3cf37d20af3318c6186d5ae35f66c7b954de7e14",
+      "matching_paths": [
+        "docs/growth/p2/P2_25_CAPTION_OWNER_QA_PRODUCTION_ACTIVATION_20261116.sql"
+      ],
+      "classification": "content-match",
+      "evidence": "Recorded SQL bytes match a committed SQL blob (or sole terminal LF). Not proof all later live schema is equivalent."
+    },
+    {
+      "version": "20261116195104",
+      "name": "p2_internal_qa_voice_brief_quota_override_20261116",
+      "bytes": 2668,
+      "sha256": "ab31adcf58fe92e9b839e670e28010d7d0d889bb9a3b93d76dfa4d8f42c22155",
+      "git_blob_sha1": "7fc0f709d0f48bceb83b75b9e0ac997247fe9615",
+      "git_blob_sha1_with_final_lf": "c2d3b3894475f1a86d454d98a12ecb29d9ee3628",
+      "matching_paths": [],
+      "classification": "historical-catalog-evidence",
+      "evidence": "Voice quota max_attempts exists, RPC service-only, RLS; later shared QA quota migration matched. No copying owner-specific history."
+    },
+    {
+      "version": "20261116195507",
+      "name": "p2_poster_gemini_shared_qa_quota_20261117",
+      "bytes": 3326,
+      "sha256": "5b445118fbc563944ff1008d4fa1738b3d2718d8573239b20908d57b5c75d8d7",
+      "git_blob_sha1": "51a884921dab26ff9de136d745b34be19da79dd8",
+      "git_blob_sha1_with_final_lf": "591f59a90e8cbb180f1fac80822c0d3f21117825",
+      "matching_paths": [
+        "docs/growth/p2/P2_26_POSTER_QA_GEMINI_SHARED_QUOTA_20261117.sql"
+      ],
+      "classification": "content-match",
+      "evidence": "Recorded SQL bytes match a committed SQL blob (or sole terminal LF). Not proof all later live schema is equivalent."
+    },
+    {
+      "version": "20261117184045",
+      "name": "p2_caption_planner_private_poster_asset_ref",
+      "bytes": 694,
+      "sha256": "12d9eddb673018502ea5f3ced43b00893e3221de1df28cdeaa86184e70827aff",
+      "git_blob_sha1": "4b4d250088f3e18dad294766cfaf3053dd636a83",
+      "git_blob_sha1_with_final_lf": "7a239b2291f91e8996431029d892f04912c4dba0",
+      "matching_paths": [
+        "supabase/migrations/20261117210000_p2_caption_planner_private_poster_asset_ref.sql"
+      ],
+      "classification": "content-match",
+      "evidence": "Recorded SQL bytes match a committed SQL blob (or sole terminal LF). Not proof all later live schema is equivalent."
+    },
+    {
+      "version": "20261117185250",
+      "name": "p2_campaign_asset_insert_column_grant",
+      "bytes": 2128,
+      "sha256": "ea4acd0019ef7461ea570a031b603cdafff94f7c40bbe895ed17e8e4f26519ad",
+      "git_blob_sha1": "666dc9a0bd15929c22bd5679cb086f43e56efde5",
+      "git_blob_sha1_with_final_lf": "c07fefba2c12bce7dcbed25caf74dd47be1f6fa1",
+      "matching_paths": [
+        "supabase/migrations/20261118003000_p2_campaign_asset_insert_column_grant.sql"
+      ],
+      "classification": "content-match",
+      "evidence": "Recorded SQL bytes match a committed SQL blob (or sole terminal LF). Not proof all later live schema is equivalent."
+    },
+    {
+      "version": "20261117185922",
+      "name": "p2_30_campaign_planner_authenticated_owner_grants_20261118",
+      "bytes": 475,
+      "sha256": "417749f3dd8838a51db7dfbf636177ca707f2907701e22809777595a4162dcda",
+      "git_blob_sha1": "82ebf67faffdc123bbd902dd1bf741b608dc260c",
+      "git_blob_sha1_with_final_lf": "3b2508d6975967cb78ec997b5fb18a441a769b39",
+      "matching_paths": [],
+      "classification": "historical-catalog-evidence",
+      "evidence": "Broad campaign table write grant superseded by P2-31 revoke and P2-32 column allowlist; do not replay."
+    },
+    {
+      "version": "20261117190516",
+      "name": "p2_31_restore_campaign_column_grants_20261118",
+      "bytes": 92,
+      "sha256": "c741c07278cf498fb2bc55d3ecb454e4293b3d86ec54aed526fb53de743d35bf",
+      "git_blob_sha1": "ecf51dbe7520ea2bea74b6531c1aeec10441b063",
+      "git_blob_sha1_with_final_lf": "4269c0f08fe94f3c384b830be040e9da0ce95176",
+      "matching_paths": [],
+      "classification": "historical-catalog-evidence",
+      "evidence": "Historical revoke-only SQL differs from repository remediation; P2-32 exact match and observed restored allowlist. Do not replay standalone revoke."
+    },
+    {
+      "version": "20261117190546",
+      "name": "p2_32_restore_owner_campaign_column_allowlist_20261118",
+      "bytes": 1477,
+      "sha256": "727dbc8dc14c683d1d6dc0cd881816d571a7cf14dd15771b98f5cdc38dcec104",
+      "git_blob_sha1": "fad70196a7d221dad1ae21e50edd8d3a569d745f",
+      "git_blob_sha1_with_final_lf": "d793735b8a989c06479fcea3e713183c2074fb01",
+      "matching_paths": [
+        "supabase/migrations/20261118005000_p2_32_restore_owner_campaign_column_allowlist.sql"
+      ],
+      "classification": "content-match",
+      "evidence": "Recorded SQL bytes match a committed SQL blob (or sole terminal LF). Not proof all later live schema is equivalent."
+    },
+    {
+      "version": "20261120053349",
+      "name": "business_news_official_admin_editorial_v1",
+      "bytes": 4430,
+      "sha256": "78838bfc0562236f8f77dbf8a95a1dbbfcd4816a2d9f5aeec998db08fdb1cbcd",
+      "git_blob_sha1": "faf5e2b5d615c3a38fe820460286dfcf8d76dcc9",
+      "git_blob_sha1_with_final_lf": "73f4b216ba2ae926617e6c42e2b3b60db6593c42",
+      "matching_paths": [
+        "supabase/migrations/20261120053349_business_news_official_admin_editorial_v1.sql"
+      ],
+      "classification": "content-match",
+      "evidence": "Recorded SQL bytes match a committed SQL blob (or sole terminal LF). Not proof all later live schema is equivalent."
+    },
+    {
+      "version": "20261120053823",
+      "name": "business_news_publisher_image_owner_paths_v1",
+      "bytes": 1274,
+      "sha256": "4cb0d4586d871714c1ce8c7354042eca083a60d1f05b08a382671ca83465490b",
+      "git_blob_sha1": "373c3e28e58650aed542c0b15c130247858db113",
+      "git_blob_sha1_with_final_lf": "0323bd6b41e04866dac69c2217972842c704cfb1",
+      "matching_paths": [
+        "supabase/migrations/20261120053823_business_news_publisher_image_owner_paths_v1.sql"
+      ],
+      "classification": "content-match",
+      "evidence": "Recorded SQL bytes match a committed SQL blob (or sole terminal LF). Not proof all later live schema is equivalent."
+    },
+    {
+      "version": "20261120073547",
+      "name": "newsroom_staff_role_access_v2",
+      "bytes": 2125,
+      "sha256": "26252a15d073f4dec12181bf72acd0ab09be2047072508a7616e45647d50d6d4",
+      "git_blob_sha1": "a25acda02bd8caede096925a2300c8a04a1ccc90",
+      "git_blob_sha1_with_final_lf": "d8d506b9c4e562dde1cabca085259a5d6bd7e94d",
+      "matching_paths": [
+        "supabase/migrations/20261120073547_newsroom_staff_role_access_v2.sql"
+      ],
+      "classification": "content-match",
+      "evidence": "Recorded SQL bytes match a committed SQL blob (or sole terminal LF). Not proof all later live schema is equivalent."
+    },
+    {
+      "version": "20261120094714",
+      "name": "fcm_device_outbox_server_only_v1",
+      "bytes": 6240,
+      "sha256": "ec2ff861da414c221d142b4acf9b99b0bad35844ade80c66399f910e5823a164",
+      "git_blob_sha1": "38dd66b25c240289b26e77597f67d10dde6f9597",
+      "git_blob_sha1_with_final_lf": "e9d0cb07c15e472ad73f0ca959087a0f304b8f08",
+      "matching_paths": [
+        "supabase/migrations/20261120094714_fcm_device_outbox_server_only_v1.sql"
+      ],
+      "classification": "content-match",
+      "evidence": "Recorded SQL bytes match a committed SQL blob (or sole terminal LF). Not proof all later live schema is equivalent."
+    },
+    {
+      "version": "20261120103549",
+      "name": "fcm_dispatch_enable_scheduler_extensions",
+      "bytes": 124,
+      "sha256": "27d57bff3923cfc49e75adfcd226e203127c9627fc5a8a0555b3bd319bb97209",
+      "git_blob_sha1": "1ac79d6deea1abde0be1cd7fef354431aba0b56b",
+      "git_blob_sha1_with_final_lf": "764ef4e43a155c4806de9ae1283ae55b30b58e84",
+      "matching_paths": [],
+      "classification": "historical-catalog-evidence",
+      "evidence": "pg_net and pg_cron installed; no replay."
+    },
+    {
+      "version": "20261120103628",
+      "name": "fcm_dispatch_direct_http_transport",
+      "bytes": 59,
+      "sha256": "451125c7e3a36a694d1fb7a17f0d62516756a45d712a8ae6ac45eed5ee126cbf",
+      "git_blob_sha1": "3349ca0f1d0a48e9713e7d8593cfc53c35cb8320",
+      "git_blob_sha1_with_final_lf": "f2b20aca533ad44b718e40e73402fd9429deaca4",
+      "matching_paths": [],
+      "classification": "historical-catalog-evidence",
+      "evidence": "http extension installed; no replay."
+    },
+    {
+      "version": "20261120104715",
+      "name": "fcm_committed_business_event_coverage_v1",
+      "bytes": 6249,
+      "sha256": "e4f8098dd3c72f141bef74d5eb45d17f83d859ae3aea91d6fef071bc2e7391e2",
+      "git_blob_sha1": "68249c1e01fdb0212a7bc7211952699cc19ba288",
+      "git_blob_sha1_with_final_lf": "8cfefff3f43cd71084d17e525acdacedd76c79c3",
+      "matching_paths": [
+        "supabase/migrations/20261120104715_fcm_committed_business_event_coverage_v1.sql"
+      ],
+      "classification": "content-match",
+      "evidence": "Recorded SQL bytes match a committed SQL blob (or sole terminal LF). Not proof all later live schema is equivalent."
+    },
+    {
+      "version": "20261120105243",
+      "name": "fcm_trusted_alert_bridge_v1",
+      "bytes": 4263,
+      "sha256": "19f1505c311790e420d6e8ae9de7a9019ab49e1937f2a7a2af06c5d23d18acad",
+      "git_blob_sha1": "464b0d62e9c640c78d2aaf96df498d6d50459c94",
+      "git_blob_sha1_with_final_lf": "ea66291306b618f5f1d6e9928e3524487e261617",
+      "matching_paths": [
+        "supabase/migrations/20261120105243_fcm_trusted_alert_bridge_v1.sql"
+      ],
+      "classification": "content-match",
+      "evidence": "Recorded SQL bytes match a committed SQL blob (or sole terminal LF). Not proof all later live schema is equivalent."
+    },
+    {
+      "version": "20261120171221",
+      "name": "business_profile_gallery_services_v1",
+      "bytes": 2926,
+      "sha256": "41af4072dfc14b5cf4afe582d6864b934c9dcfe9410520b81898544e6ee79383",
+      "git_blob_sha1": "54d10f018bf3ddc15ebca8a28f6cfaa83a889387",
+      "git_blob_sha1_with_final_lf": "9279580a25312b3c4eb52aecaf846417a41fead0",
+      "matching_paths": [
+        "supabase/migrations/20261120171221_business_profile_gallery_services_v1.sql"
+      ],
+      "classification": "content-match",
+      "evidence": "Recorded SQL bytes match a committed SQL blob (or sole terminal LF). Not proof all later live schema is equivalent."
+    },
+    {
+      "version": "20261121070240",
+      "name": "fix_business_gallery_storage_owner_scope",
+      "bytes": 958,
+      "sha256": "e2a62b2de1ef21df34beb120ab13eff890d28089e939892bb3db5f972e7e678f",
+      "git_blob_sha1": "c0949e868bf775e8b015b644edae484003ac3d87",
+      "git_blob_sha1_with_final_lf": "90ed0c9ebab019df6452cb7ffe6d12023a61686c",
+      "matching_paths": [
+        "supabase/migrations/20261121070240_fix_business_gallery_storage_owner_scope.sql"
+      ],
+      "classification": "content-match",
+      "evidence": "Recorded SQL bytes match a committed SQL blob (or sole terminal LF). Not proof all later live schema is equivalent."
+    }
+  ],
+  "repository_migrations": [
+    {
+      "path": "supabase/migrations/20260302085824_initial_system_setup.sql",
+      "git_blob_sha1": "47b8b1fb1786ceb6386f80dc42e74ed51cae25ad",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260302132537_add_website_fields_to_businesses.sql",
+      "git_blob_sha1": "bbf299e2fb0ef1dec82981f3e5ab6a4dd224719b",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260302133423_clean_up_website_fields.sql",
+      "git_blob_sha1": "f115fe6b2170a8cc83aa587b7b42f9a03af96813",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260302134437_fix_schema_permissions.sql",
+      "git_blob_sha1": "9b4514a661cd31f0053410347125b32142461344",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260302135111_add_email_to_profiles_and_backfill.sql",
+      "git_blob_sha1": "73eb877d5cb4b99f22b02bf36be8f410c20ab5d7",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260303091637_add_notifications_table.sql",
+      "git_blob_sha1": "46622ef5642f39a0529bfba35eb1c65afc14ea4f",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260303095623_fix_nearby_search_and_permissions.sql",
+      "git_blob_sha1": "33e4b56ba27b0ca5ce383605b81d69c4ab59bbdb",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260303102713_migrate_to_postgis_geography.sql",
+      "git_blob_sha1": "3ae81461dcbca874b474b8fdf4050d3a60357011",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260303103238_align_nearby_rpc_parameters.sql",
+      "git_blob_sha1": "91cafcd7c58388a35fb77c3e05fef1affa630104",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260303103956_upgrade_search_to_trigram.sql",
+      "git_blob_sha1": "85c637e67c66be69e8abbd27b68932e6e8a79e45",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260303105239_advanced_full_text_search_system.sql",
+      "git_blob_sha1": "c9ee07ae167ef86a59ba7e7295eed675b09914da",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260303110721_optimize_broad_search_logic.sql",
+      "git_blob_sha1": "be4daa7dac3117ca4ab6f5c7c497c7c0b2126268",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260303123950_fix_nearby_rpc_return_type.sql",
+      "git_blob_sha1": "79f36c8d4be2e01be51a0ea473c6ed1c68c61da1",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260305171500_add_categories_table.sql",
+      "git_blob_sha1": "b50f4cbdd4ae5575ca3dc9f8847fb85ffa643a35",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260305181500_force_refresh_categories.sql",
+      "git_blob_sha1": "b50f4cbdd4ae5575ca3dc9f8847fb85ffa643a35",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260308110000_vendor_dashboard_tables.sql",
+      "git_blob_sha1": "2279291bc7dac9945dd60b94cdacfe3a678f049a",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260308120000_admin_enhancements.sql",
+      "git_blob_sha1": "06ef28ee82b0f17fa757f76edeeb9c5685a6b811",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260308130000_add_facilities_to_businesses.sql",
+      "git_blob_sha1": "6f2d2f0de778fddc75955279ee426a020398e68d",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260308140000_add_view_increment_rpc.sql",
+      "git_blob_sha1": "048384f3c28e0aeb06cc11b300eaebf8d3e6867c",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260308150000_update_nearby_rpc_with_verified.sql",
+      "git_blob_sha1": "840428a12315faa2ca0a553c785b473efa0a176b",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260308160000_vendor_admin_enhancements.sql",
+      "git_blob_sha1": "b02c098c516d3d75ab3ddcf1fd80a1a0c7421d52",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260309010000_add_verification_to_profiles.sql",
+      "git_blob_sha1": "c556e8ce2522b044140c151776c9cef9aef342e5",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260309020000_update_nearby_rpc_with_verification_status.sql",
+      "git_blob_sha1": "ed61e9d9e66279e5e6d533e63c02763bf32099ec",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260309030000_fix_verifications_table.sql",
+      "git_blob_sha1": "4aaa27c9ed92240f562a00959578a3cd0eda5b73",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260309040000_ensure_verification_bucket.sql",
+      "git_blob_sha1": "ff42cc79db64fdabf4203f320a4ac2b2d2cd85dc",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260309050000_disable_rls_on_buckets.sql",
+      "git_blob_sha1": "b38418d293a4e968fbbae61a75fb21d5dc8cc9d4",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260309060000_fix_profiles_policy.sql",
+      "git_blob_sha1": "13a99d6f7a3fd9ab8b9a206323adeb5c417faf52",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260309070000_add_featured_to_businesses.sql",
+      "git_blob_sha1": "8d8e062b43e5dc4247e8b7f3c469a070f208946d",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260310080000_create_featured_listings_table.sql",
+      "git_blob_sha1": "5c9e073e5929bb1c099d9ff231f7203989c444dd",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260310090000_admin_notifications_triggers.sql",
+      "git_blob_sha1": "72ff3a07ce75172778dad3f110714ae2bec4bd20",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260310100000_subscription_plans_and_announcements.sql",
+      "git_blob_sha1": "fd2f83e5d2c7e2eca48a187250edc9ab6ae7722f",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260311100000_advanced_plans_and_notifications.sql",
+      "git_blob_sha1": "b0995d573c1700207e6b02ded5f8fae44c201fa9",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260311110000_update_nearby_rpc_with_plan_features.sql",
+      "git_blob_sha1": "c10ca6e4aa4c9ce1d739cf6d320152d8be9c5b0d",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260311120000_cache_business_features.sql",
+      "git_blob_sha1": "841812276c8ca62b18a88e0865f22dbe94e2d13c",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260311130000_default_basic_subscription.sql",
+      "git_blob_sha1": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260311150000_sync_featured_table.sql",
+      "git_blob_sha1": "207e1beced89722422e04c3d55b5ed5c84f765c2",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260311160000_comprehensive_billing_fix.sql",
+      "git_blob_sha1": "f009f0fc8cfddfc476ca75ad315fea4c1e0e275c",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260311170000_fix_user_trigger_role.sql",
+      "git_blob_sha1": "2e7e3fcba3e1139385c98151d4e6fede708e4dba",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260312113000_create_analytics_logs.sql",
+      "git_blob_sha1": "11257fee5da694c476bccf6a7e95cc176a5e3cf0",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260312120000_site_settings.sql",
+      "git_blob_sha1": "b735f7d447431e8eb504f0d7f6df0222691163a4",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260313060000_appearance_settings.sql",
+      "git_blob_sha1": "6ab6194552d47811c54543fac13f0aa8b46f6c7e",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260313100000_theme_colors.sql",
+      "git_blob_sha1": "15a492ab226b5da3ed5a84e0de8d11dedfd7b5ea",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260313110000_reviews_sentiment.sql",
+      "git_blob_sha1": "6da5156fa74576a28dd24afff4c2f0fc65b5f109",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260313120000_extra_site_settings.sql",
+      "git_blob_sha1": "ac3f2a09956dff7a116d8da22257070ff2cff3e7",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260315123000_add_avatar_url_to_profiles.sql",
+      "git_blob_sha1": "635afd27d3276463bdf1a4cd7893558044c9456a",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260316000000_create_promotions_table.sql",
+      "git_blob_sha1": "bb874472ef6a7d678928a544c1a231f9eb7dd0aa",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260316100000_fix_logo_upload_permissions.sql",
+      "git_blob_sha1": "db27dda9ea554e18d272d14cc39f0dde96f5c381",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260323010000_qr_inventory_system.sql",
+      "git_blob_sha1": "15f7a311aed04e754644c14376e470129d0ef412",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260323020000_add_advanced_feature_access_to_plans.sql",
+      "git_blob_sha1": "6138481017a2913797dc0750c93b82e12d41275b",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260323030000_add_dynamic_features_to_plans.sql",
+      "git_blob_sha1": "bf5fb42d8d08dc5ebebe3cb570f23ddbf8f07ccc",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260323040000_fix_storage_and_settings_rls.sql",
+      "git_blob_sha1": "a4f9edab8084ebd0b6bf75c3ca822b0c370dbd81",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260323050000_add_detailed_address_to_businesses.sql",
+      "git_blob_sha1": "ae80ad583df63ca41b91d779d07ef7171b026af9",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260323060000_fix_user_sign_up_permanently.sql",
+      "git_blob_sha1": "c5ab9f768c3f0a02c20be212364d65508249c386",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260323070000_consolidated_user_triggers.sql",
+      "git_blob_sha1": "03fa13763e2d3bc514b722aea2a42b49a6e0b43d",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260323080000_robust_auth_trigger_sync.sql",
+      "git_blob_sha1": "63020c56af5d8e1c5e32287137ae948c127075fa",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260323090000_add_category_images_bucket.sql",
+      "git_blob_sha1": "80dd2fe11e7a1c1674d540b3bed19fad30064a48",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260323100000_fix_qr_inventory_policies.sql",
+      "git_blob_sha1": "ac93c7e5aa87fbd9aa12f688585a3b8cc3eae072",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260323110000_recreate_qr_policies.sql",
+      "git_blob_sha1": "eef0ecccbfd7621e2eaf9f42cbb8eae292a34355",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260329103000_add_slug_to_businesses.sql",
+      "git_blob_sha1": "a99d3bf2e6ddca2b10f80341ece4bd58eb7b877a",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260329113000_update_nearby_rpc_category_filter.sql",
+      "git_blob_sha1": "8392fbc67a7524f32eea40ae5c94286c4cc8509e",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260329120000_fix_nearby_rpc_category_filter_case.sql",
+      "git_blob_sha1": "94f0785c36b76dd6d137dadeed60041398e172ca",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260329121000_fix_nearby_rpc_robust_category.sql",
+      "git_blob_sha1": "80f495756a7ea48ee4408171dea6f88904b3003b",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260329123000_optimize_nearby_rpc.sql",
+      "git_blob_sha1": "a5a54c6f12627e10f1ad4bae8799572b48dced36",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260329130000_businesses_rls_policies.sql",
+      "git_blob_sha1": "37072788e11a299cbdec43bf8dbf1c0296d658a0",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260329140000_unify_nearby_rpc.sql",
+      "git_blob_sha1": "f2ba362635344803eb25ad80709080a7d745a07f",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260329141000_fix_nearby_rpc_columns.sql",
+      "git_blob_sha1": "f2ba362635344803eb25ad80709080a7d745a07f",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260330014200_update_nearby_rpc_with_detailed_address.sql",
+      "git_blob_sha1": "aac4312c2d753bf775d4d1bb0df0ea4492ae70f6",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260330020000_add_city_and_update_nearby_search.sql",
+      "git_blob_sha1": "02a65d3522f0b37228d9c8eaf8a706366845895f",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260330030000_add_global_search_suggestions_rpc.sql",
+      "git_blob_sha1": "36f9ea616a6dce52b27bb660bd217a2e5fa0f732",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260330040000_create_contact_submissions.sql",
+      "git_blob_sha1": "b302a776933eba76a4317616dead7854a4bd4576",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260331000000_create_testimonials_table.sql",
+      "git_blob_sha1": "e4512360a2cb9321a1747fd0ca8518bb36c4c4bd",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260331100000_testimonials_storage.sql",
+      "git_blob_sha1": "68afb2403dc55beba91381abefa6c4957d449e79",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260430110000_add_business_news_table.sql",
+      "git_blob_sha1": "b116cdb6b2ac609537ba066f7c7249369096fb4c",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260430120000_update_business_news_fields.sql",
+      "git_blob_sha1": "94bed21871ce12085dced01b2ae71f733f0d3c10",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260430130000_add_news_images_and_storage.sql",
+      "git_blob_sha1": "3ca6c64c24d8db21447199e8572ea4567a9df7fb",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260501100000_add_verification_status_to_businesses.sql",
+      "git_blob_sha1": "ab68f664f12d39299dc1860b2cee5af224b97900",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260502100010_add_user_safety_and_moderation_v2.sql",
+      "git_blob_sha1": "f613efee97682dbec198f80a85421abf2cacc3a1",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260502110000_add_verification_details.sql",
+      "git_blob_sha1": "d2aa37be7b3bb1b7132d75cdba5c69119e2d3428",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260502120000_add_business_audit_trail.sql",
+      "git_blob_sha1": "5dcd83764ca67fc8ff4e181c39157c2149f04dbc",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260502120010_update_statuses.sql",
+      "git_blob_sha1": "1f70c168a9509cf923697c548c719feb367cb304",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260528000000_add_main_category_groups.sql",
+      "git_blob_sha1": "3b3b0614860f00b8aa4fb76f641e136f540933da",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260529000000_fix_signup_trigger.sql",
+      "git_blob_sha1": "fa495f401eae0a7b6809a9fc098604acb4c180bc",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20260605000000_pg_trgm_fuzzy_search.sql",
+      "git_blob_sha1": "711e0806d4a9157e1e2ac412df5376fa74cc6b3f",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20261009000000_push_subscriptions.sql",
+      "git_blob_sha1": "4969c70c64b52abd528f82b9366bfcea45f46a16",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20261110010000_growth_os_credit_foundation.sql",
+      "git_blob_sha1": "fa4574c05606e6cd2bdd40aa60c4fe0c471c862f",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20261110011000_growth_security_guards.sql",
+      "git_blob_sha1": "968ffe676b4bfac020e8a7ff2fc00126fa01ed95",
+      "matched_live_versions": [
+        "20261110041516"
+      ],
+      "classification": "content-match"
+    },
+    {
+      "path": "supabase/migrations/20261110202745_smart_search_v1_rpc.sql",
+      "git_blob_sha1": "fbc7129d303aac61d05e1e06e514ed01efd5aa28",
+      "matched_live_versions": [
+        "20261110202745"
+      ],
+      "classification": "content-match"
+    },
+    {
+      "path": "supabase/migrations/20261110214148_slbi_multilingual_search_dictionary_v1.sql",
+      "git_blob_sha1": "afeeca8483f88d50f339af26d7d99e55d48e2c86",
+      "matched_live_versions": [
+        "20261110214148"
+      ],
+      "classification": "content-match"
+    },
+    {
+      "path": "supabase/migrations/20261111073419_slbi_semantic_v3_private_research_lab.sql",
+      "git_blob_sha1": "86f93fbfb0615c7329bf331cc1203f8f3f5e8700",
+      "matched_live_versions": [
+        "20261111073419"
+      ],
+      "classification": "content-match"
+    },
+    {
+      "path": "supabase/migrations/20261111081031_slbi_app_settings_rls_admin_write.sql",
+      "git_blob_sha1": "fa5173f12114bd482773218c7f1bb440ded82ed8",
+      "matched_live_versions": [
+        "20261111081031"
+      ],
+      "classification": "content-match"
+    },
+    {
+      "path": "supabase/migrations/20261112173000_nearby_v3_readable_business_addresses.sql",
+      "git_blob_sha1": "3a8880c82b53567bf868cb105bce10cfd55ec191",
+      "matched_live_versions": [
+        "20261112130101"
+      ],
+      "classification": "content-match"
+    },
+    {
+      "path": "supabase/migrations/20261112190000_business_news_editorial_formats.sql",
+      "git_blob_sha1": "d781d9b19c616befbbb4057afecefaec73ceb9d7",
+      "matched_live_versions": [
+        "20261112132525"
+      ],
+      "classification": "content-match"
+    },
+    {
+      "path": "supabase/migrations/20261112191000_business_news_feed_indexes.sql",
+      "git_blob_sha1": "91eb7c0ab78901e713425b89be3cfd89d31bea88",
+      "matched_live_versions": [
+        "20261112132935"
+      ],
+      "classification": "content-match"
+    },
+    {
+      "path": "supabase/migrations/20261112193546_p0_security_foundation.sql",
+      "git_blob_sha1": "905b65bd82bcdc697e797abdcbd1283f0ba365cc",
+      "matched_live_versions": [
+        "20261112193546"
+      ],
+      "classification": "content-match"
+    },
+    {
+      "path": "supabase/migrations/20261113091046_p1_public_api_truncate_lockdown.sql",
+      "git_blob_sha1": "bdc0091e34e13f1d5aef04669820a815ff178324",
+      "matched_live_versions": [
+        "20261113091046"
+      ],
+      "classification": "content-match"
+    },
+    {
+      "path": "supabase/migrations/20261113091124_p1_vendor_lead_followups_and_review_owner_rls.sql",
+      "git_blob_sha1": "9156b0a4739e4c02bf6371a1728bfb889c30e8f0",
+      "matched_live_versions": [
+        "20261113091124"
+      ],
+      "classification": "content-match"
+    },
+    {
+      "path": "supabase/migrations/20261113091146_p1_review_moderation_pending_staff_audit.sql",
+      "git_blob_sha1": "0eb9f832b1bc72235feb33c1c6dca2d9a641a76f",
+      "matched_live_versions": [
+        "20261113091146"
+      ],
+      "classification": "content-match"
+    },
+    {
+      "path": "supabase/migrations/20261113091207_p1_business_physical_address_postgis_guard.sql",
+      "git_blob_sha1": "120e45dcbe271df563e9ee0dca9dd5df9439de7b",
+      "matched_live_versions": [
+        "20261113091207"
+      ],
+      "classification": "content-match"
+    },
+    {
+      "path": "supabase/migrations/20261114215434_p2_poster_private_credit_jobs_default_disabled_20261115.sql",
+      "git_blob_sha1": "bc7157b449ae94618ae71d77645d152346f4b88b",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20261114215442_p2_poster_private_storage_default_locked_20261115.sql",
+      "git_blob_sha1": "a49310fc4b7e287c28c3211c1f5467a1aed18d8a",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20261115074345_p2_poster_real_ai_image_edits_refund_retry_20261115.sql",
+      "git_blob_sha1": "7b6ade6357e1543c27bf251e77bd5b0536be1b33",
+      "matched_live_versions": [
+        "20261115074345"
+      ],
+      "classification": "content-match"
+    },
+    {
+      "path": "supabase/migrations/20261115091000_p2_cloudflare_flux2_klein4b_model_allowlist.sql",
+      "git_blob_sha1": "3009725fc6bb3a4f38fa977022487dc34e30babd",
+      "matched_live_versions": [
+        "20261115084040"
+      ],
+      "classification": "content-match"
+    },
+    {
+      "path": "supabase/migrations/20261115094500_p2_poster_gemini_voice_quota.sql",
+      "git_blob_sha1": "dc8170a0de9ae9ddfdca4611e65d26916a5d9d8c",
+      "matched_live_versions": [
+        "20261115100554"
+      ],
+      "classification": "content-match"
+    },
+    {
+      "path": "supabase/migrations/20261117210000_p2_caption_planner_private_poster_asset_ref.sql",
+      "git_blob_sha1": "4b4d250088f3e18dad294766cfaf3053dd636a83",
+      "matched_live_versions": [
+        "20261117184045"
+      ],
+      "classification": "content-match"
+    },
+    {
+      "path": "supabase/migrations/20261118003000_p2_campaign_asset_insert_column_grant.sql",
+      "git_blob_sha1": "666dc9a0bd15929c22bd5679cb086f43e56efde5",
+      "matched_live_versions": [
+        "20261117185250"
+      ],
+      "classification": "content-match"
+    },
+    {
+      "path": "supabase/migrations/20261118004500_p2_31_restore_campaign_column_grants.sql",
+      "git_blob_sha1": "44d9d33158d710699ea9773acdaa2ceb555ac8a0",
+      "matched_live_versions": [],
+      "classification": "unreconciled-repository-file-do-not-replay"
+    },
+    {
+      "path": "supabase/migrations/20261118005000_p2_32_restore_owner_campaign_column_allowlist.sql",
+      "git_blob_sha1": "d793735b8a989c06479fcea3e713183c2074fb01",
+      "matched_live_versions": [
+        "20261117190546"
+      ],
+      "classification": "content-match"
+    },
+    {
+      "path": "supabase/migrations/20261120053349_business_news_official_admin_editorial_v1.sql",
+      "git_blob_sha1": "faf5e2b5d615c3a38fe820460286dfcf8d76dcc9",
+      "matched_live_versions": [
+        "20261120053349"
+      ],
+      "classification": "content-match"
+    },
+    {
+      "path": "supabase/migrations/20261120053823_business_news_publisher_image_owner_paths_v1.sql",
+      "git_blob_sha1": "373c3e28e58650aed542c0b15c130247858db113",
+      "matched_live_versions": [
+        "20261120053823"
+      ],
+      "classification": "content-match"
+    },
+    {
+      "path": "supabase/migrations/20261120073547_newsroom_staff_role_access_v2.sql",
+      "git_blob_sha1": "a25acda02bd8caede096925a2300c8a04a1ccc90",
+      "matched_live_versions": [
+        "20261120073547"
+      ],
+      "classification": "content-match"
+    },
+    {
+      "path": "supabase/migrations/20261120094714_fcm_device_outbox_server_only_v1.sql",
+      "git_blob_sha1": "38dd66b25c240289b26e77597f67d10dde6f9597",
+      "matched_live_versions": [
+        "20261120094714"
+      ],
+      "classification": "content-match"
+    },
+    {
+      "path": "supabase/migrations/20261120104715_fcm_committed_business_event_coverage_v1.sql",
+      "git_blob_sha1": "8cfefff3f43cd71084d17e525acdacedd76c79c3",
+      "matched_live_versions": [
+        "20261120104715"
+      ],
+      "classification": "content-match"
+    },
+    {
+      "path": "supabase/migrations/20261120105243_fcm_trusted_alert_bridge_v1.sql",
+      "git_blob_sha1": "ea66291306b618f5f1d6e9928e3524487e261617",
+      "matched_live_versions": [
+        "20261120105243"
+      ],
+      "classification": "content-match"
+    },
+    {
+      "path": "supabase/migrations/20261120171221_business_profile_gallery_services_v1.sql",
+      "git_blob_sha1": "9279580a25312b3c4eb52aecaf846417a41fead0",
+      "matched_live_versions": [
+        "20261120171221"
+      ],
+      "classification": "content-match"
+    },
+    {
+      "path": "supabase/migrations/20261121070240_fix_business_gallery_storage_owner_scope.sql",
+      "git_blob_sha1": "90ed0c9ebab019df6452cb7ffe6d12023a61686c",
+      "matched_live_versions": [
+        "20261121070240"
+      ],
+      "classification": "content-match"
+    }
+  ]
+}

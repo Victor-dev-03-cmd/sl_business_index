@@ -14,7 +14,7 @@
 - [ ] Production observability, operational readiness and rollback verified.
 
 ## Sequential engineering checklist
-Current position: [G0 remediation checkpoint](G0_02_FOUNDATION_REMEDIATION_CHECKPOINT_20261122.md). PR #145 test-only fix merged; 4/4 CI workflows passed on candidate. **Next action: finish G0-01 migration reconciliation and exact main CI/deploy verification; continue G0-02/03/04 blocker remediation**, not complete. All detailed engineering gates remain unchecked; check only with exact evidence.
+Current position: [G0 data integrity checkpoint](G0_03_DATA_INTEGRITY_AND_MIGRATION_CHECKPOINT_20261122.md). PR #146 merged, 5/5 candidate CI workflows pass; review-only SQL is tested but not applied. Migration provenance manifest recorded. Next: approved migration/rollback and remaining G0 acceptance, no G1.
 ### G0 — Foundation
 - [ ] G0-01 Reverify main SHA, live deployment/alias, CI, migration history, enabled flags/rollout, inventory route/DB/RPC/ownership.
 - [ ] G0-02 Trace consent-aware growth events/leads and actual source-of-truth contracts; label legacy evidence, privacy and retention.
@@ -75,6 +75,8 @@ Current position: [G0 remediation checkpoint](G0_02_FOUNDATION_REMEDIATION_CHECK
 | 2026-11-22 | [G0-01 evidence audit](G0_01_FOUNDATION_EVIDENCE_AUDIT_20261122.md) at de3e65eda2d38f195bacabed4e67eee86a8ebcbc; production ready, CI 2 failures, migration ID drift, live RLS/grants and event/lead provenance inventory, review-cache mismatch; no runtime changes | G0-01 in progress / blocked, all boxes unchecked | G0-01 CI remediation review and migration reconciliation |
 
 | 2026-11-22 | [G0 continuation](G0_02_FOUNDATION_REMEDIATION_CHECKPOINT_20261122.md); PR #145 merged 8a41b542d02cb92ec3f0c14912259270162954b4, four workflows pass, 34/47 live SQL content matched, flags/lead RPC/retention and Neon staging evidence, UI reference pinned | G0-B01 test fix merged, G0 remains open, no gate accepted | Remaining G0-01 reconciliation then G0-02/03/04 etc. |
+
+| 2026-11-22 | [G0 data integrity](G0_03_DATA_INTEGRITY_AND_MIGRATION_CHECKPOINT_20261122.md); PR #146 merged 51b93d24dfd65cf1cff0ca143f4dc21e5f730e71, 5/5 workflows pass, lead replay and concurrent review cache tests pass, 47-history manifest, wallet/job snapshot reconciled | Staged SQL not applied; no accepted gate | Reviewed release migration, remaining verification |
 
 ### Update protocol
 Add dated checkpoint per work package: exact parent/commit/branch/PR, file paths, schema and migration status, CI commands and counts, app/provider flags, Vercel URL/id/state, owner A/B and device results, costs/approval, blockers and next earliest unchecked item. A checked box requires evidence scoped to that actual acceptance condition. If a regression invalidates a gate, reopen it with reason. No secret values, customer data, invented test outcomes or premature global release. Preserve old checkpoints.

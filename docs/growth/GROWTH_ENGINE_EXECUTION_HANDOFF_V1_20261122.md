@@ -1,5 +1,8 @@
 # SLBI Growth Engine — execution handoff V1.0
 
+## 2026-11-22 — G0 DATA INTEGRITY CHECKPOINT (latest)
+Read [G0 data integrity and migration provenance](G0_03_DATA_INTEGRITY_AND_MIGRATION_CHECKPOINT_20261122.md); PR #146 merged 51b93d24dfd65cf1cff0ca143f4dc21e5f730e71, all five candidate CI workflows passed including synthetic lead replay and review concurrent aggregation. Review-only DB SQL NOT deployed. 47 live migration histories fingerprinted (34 exact content match; 13 historical catalog evidence), 115 repo migration scripts (27 exact match, 88 unclassified, never blindly replay). 1 wallet / 8 caption jobs ledger reconciled snapshot; future-verification/refund downgrade edges still need tests. 2 production approved listing rating caches mismatched. Next stage reviewed live migration/rollback and remaining G0 verification, no G1 yet; all gates unchecked. Use latest next-chat prompt.
+
 ## 2026-11-22 — G0 CONTINUATION CHECKPOINT
 - Read [current G0 remediation checkpoint](G0_02_FOUNDATION_REMEDIATION_CHECKPOINT_20261122.md) and [UI/UX reference](SLBI_UI_UX_DEVELOPMENT_REFERENCE.md). PR #145 merged 8a41b542d02cb92ec3f0c14912259270162954b4 after four CI workflows passed (test-only, mobile layout unchanged); migration hash exact 34/47, 13 unresolved. Secure lead replay/retention/legacy parity, billing main vs staging, review and end-to-end gates remain open. G0 not accepted; no G1 yet.
 - Owner requires desktop/mobile **one shared business logic**, distinct responsive/native-style presentation, stability freeze only after verified acceptance, versioned corrective changes if security/integrity/regression requires. Reviewed MIT UI UX Pro Max pinned reference only, no installation. Every milestone concludes with updated handoff and ready-to-copy prompt.
