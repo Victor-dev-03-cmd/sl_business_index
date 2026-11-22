@@ -281,6 +281,10 @@ export default function BusinessDetailsClient({ business, galleryUrls, services 
         });
         const result = await response.json() as { success?: boolean; error?: string };
         if (!response.ok || !result.success) {
+          if (response.status === 409 && result.error === 'lead-request-conflict') {
+            // Never silently retry with a new ID: previous delivery may have succeeded.
+            throw new Error('This enquiry request conflicts with an earlier submission. Check whether the business received it before sending a new enquiry.');
+          }
           throw new Error(result.error || "Unable to save your enquiry securely.");
         }
       } else {
@@ -327,7 +331,8 @@ export default function BusinessDetailsClient({ business, galleryUrls, services 
           : "Your enquiry has been saved successfully.",
       });
     } catch (error) {
-      console.error("Error sending enquiry:", error);
+      // Avoid logging raw database/provider errors, which may contain contact details.
+      console.error('Enquiry submission failed');
       toast.error(error instanceof Error ? error.message : "Failed to send enquiry.");
     } finally {
       // Turnstile tokens expire and must not be reused after a server attempt.

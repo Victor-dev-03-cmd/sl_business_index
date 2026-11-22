@@ -50,6 +50,11 @@ test('secure lead endpoint fails closed and validates real Turnstile server-side
   assert.match(endpoint,/checkedToken\.action!=='business_enquiry'/);
   assert.match(endpoint,/checkedToken\.hostname!==host/);
   assert.match(endpoint,/createHmac\('sha256'/);
+  assert.match(endpoint,/idempotency_key:randomUUID\(\)/);
+  assert.doesNotMatch(endpoint,/idempotency_key:lead\.requestId/);
+  assert.match(endpoint,/error\.code==='22023'&&error\.message==='lead-request-conflict'\)return reply\(409/);
+  assert.match(form,/response\.status === 409 && result\.error === 'lead-request-conflict'/);
+  assert.match(form,/finally \{\s*\/\/ Turnstile tokens expire[\s\S]*?setTurnstileReset/);
   assert.match(endpoint,/supabase\.rpc\('slbi_submit_verified_lead'/);
   assert.match(endpoint,/SUPABASE_SECRET_KEY\|\|process\.env\.SUPABASE_SERVICE_ROLE_KEY/);
   assert.doesNotMatch(endpoint,/NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY/);
