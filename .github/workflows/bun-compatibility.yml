@@ -1,0 +1,47 @@
+name: Bun compatibility — Next.js runtime and build
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/bun-compatibility.yml'
+      - 'package.json'
+      - 'bun.lock'
+      - 'package-lock.json'
+      - 'tests/route-smoke.sh'
+      - 'app/**'
+      - 'lib/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  bun:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-key
+      CI: 'true'
+      SLBI_SMOKE_RUNTIME: bun
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.0'
+      - name: Reproducible Bun dependency install
+        run: |
+          bun --version
+          /usr/bin/time -p bun install --frozen-lockfile
+          git diff --exit-code -- bun.lock package-lock.json
+      - name: Bun SSR auth cookie and search evaluation
+        run: |
+          bun tests/auth/ssr-cookie-roundtrip.mjs
+          bun tests/hybridBenchmark.mjs
+          bun tests/userReportedSearchEvaluation.mjs
+      - name: Bun TypeScript
+        run: bun --bun tsc --noEmit
+      - name: Bun production build including sharp PWA assets
+        run: /usr/bin/time -p bun run build:bun
+      - name: Bun runtime anonymous security smoke
+        run: bash tests/route-smoke.sh
