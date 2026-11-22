@@ -1,5 +1,9 @@
 # Growth Engine V1 — living release checklist
 
+## 2026-11-23 (Asia/Colombo) — PR #151 merged; backup operator gate remains open
+Manual-backup source merged at `a7a210f9a70bc893a68f9ea682e0ecc569f6ccd5`; candidate `9dd216ba824a026731fa0e719656e94a9b0bd664` passed 4/4: Next.js 45053060744, independent PG billing 45053060725, billing V2 45053060762, G0 integrity 45053060632. Production `dpl_DQBpnP3Zov11woxefQopNxKwZPDP` READY with www.slbusinessindex.com alias, exact merge SHA; main workflow 45056063654 was in progress at inspection. No manual Preview or live SQL writes. Actual encrypted database dump and isolated recovery still not verified (owner-side execution needed). Read [manual backup checkpoint](G0_07_MANUAL_BACKUP_OPERATOR_CHECKPOINT_20261122.md) for fresh preflight and next prompt. G0 and G1 acceptance remain blocked; no added cloud spend.
+
+
 ## 2026-11-22 — G0 MANUAL BACKUP OPERATOR CHECKPOINT (latest)
 Owner approved manual backup on Free plan only. Read [G0_07_MANUAL_BACKUP_OPERATOR_CHECKPOINT_20261122.md](G0_07_MANUAL_BACKUP_OPERATOR_CHECKPOINT_20261122.md). Branch `growth/g0-manual-backup-gate`: owner-only encrypted native archive helper and restore/evidence runbook; archive decode is not recovery. Live 47 migrations, 24 businesses, 2 cache mismatches, zero wallet mismatch/overcap; no live SQL writes. Actual backup/isolated restore pending, no paid upgrade or G1 integration. Next-chat prompt in checkpoint.
 
@@ -87,6 +91,8 @@ Current position: [G0 manual backup operator checkpoint](G0_07_MANUAL_BACKUP_OPE
 | 2026-11-22 | [Guarded release checkpoint](G0_05_GUARDED_DATABASE_RELEASE_CHECKPOINT_20261122.md); PR #149 e4ca3c84ac7c36b966270915ceeaefc39d604dc3, 7/7 candidate workflows pass, 3/3 exact SQL domain jobs pass, G1 source map | API code merged; release package staged, live DB unchanged; no gate accepted | Scoped release approval, backup/staging, actual acceptance then G1 |
 
 | 2026-11-22 | [Recovery rehearsal](G0_06_RECOVERY_REHEARSAL_AND_BACKUP_GATE_20261122.md); PR #150 f76b961d96d7c42e3e284eea859c7b043d68513e, 5/5 workflows, 3/3 recovery/guarded reapply and retention; Free plan, no verified backup | No live changes; no gate accepted | Verified manual backup and scoped release, remaining G0 checks |
+
+| 2026-11-23 | PR #151 merged a7a210f9a70bc893a68f9ea682e0ecc569f6ccd5; 4/4 candidate CI, exact production READY; fresh RLS/RPC and review/wallet aggregate checks | Backup tooling merged, live archive/restore pending; no gate accepted | Owner evidence, scoped migrations and remaining G0 acceptance |
 
 ### Update protocol
 Add dated checkpoint per work package: exact parent/commit/branch/PR, file paths, schema and migration status, CI commands and counts, app/provider flags, Vercel URL/id/state, owner A/B and device results, costs/approval, blockers and next earliest unchecked item. A checked box requires evidence scoped to that actual acceptance condition. If a regression invalidates a gate, reopen it with reason. No secret values, customer data, invented test outcomes or premature global release. Preserve old checkpoints.

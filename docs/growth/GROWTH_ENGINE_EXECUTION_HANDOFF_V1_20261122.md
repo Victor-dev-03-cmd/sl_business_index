@@ -1,5 +1,9 @@
 # SLBI Growth Engine — execution handoff V1.0
 
+## 2026-11-23 (Asia/Colombo) — PR #151 merged; backup operator gate remains open
+Manual-backup source merged at `a7a210f9a70bc893a68f9ea682e0ecc569f6ccd5`; candidate `9dd216ba824a026731fa0e719656e94a9b0bd664` passed 4/4: Next.js 45053060744, independent PG billing 45053060725, billing V2 45053060762, G0 integrity 45053060632. Production `dpl_DQBpnP3Zov11woxefQopNxKwZPDP` READY with www.slbusinessindex.com alias, exact merge SHA; main workflow 45056063654 was in progress at inspection. No manual Preview or live SQL writes. Actual encrypted database dump and isolated recovery still not verified (owner-side execution needed). Read [manual backup checkpoint](G0_07_MANUAL_BACKUP_OPERATOR_CHECKPOINT_20261122.md) for fresh preflight and next prompt. G0 and G1 acceptance remain blocked; no added cloud spend.
+
+
 ## 2026-11-22 — G0 MANUAL BACKUP OPERATOR CHECKPOINT (latest)
 Owner approved manual backup on Free plan only. Read [G0_07_MANUAL_BACKUP_OPERATOR_CHECKPOINT_20261122.md](G0_07_MANUAL_BACKUP_OPERATOR_CHECKPOINT_20261122.md). Branch `growth/g0-manual-backup-gate`: owner-only encrypted native archive helper and restore/evidence runbook; archive decode is not recovery. Live 47 migrations, 24 businesses, 2 cache mismatches, zero wallet mismatch/overcap; no live SQL writes. Actual backup/isolated restore pending, no paid upgrade or G1 integration. Next-chat prompt in checkpoint.
 
