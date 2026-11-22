@@ -2,7 +2,11 @@
 set -euo pipefail
 
 # Isolated anonymous route checks. Authenticated E2E still requires Preview tests.
-npm run start -- -p 3099 >/tmp/slbi-next-smoke.log 2>&1 &
+case "${SLBI_SMOKE_RUNTIME:-node}" in
+  node) npm run start -- -p 3099 >/tmp/slbi-next-smoke.log 2>&1 & ;;
+  bun) bun --bun next start -p 3099 >/tmp/slbi-next-smoke.log 2>&1 & ;;
+  *) echo "Unsupported smoke runtime"; exit 2 ;;
+esac
 server_pid=$!
 trap 'kill "$server_pid" 2>/dev/null || true' EXIT
 for attempt in $(seq 1 35); do
