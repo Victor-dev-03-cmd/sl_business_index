@@ -1,5 +1,8 @@
 # SLBusinessIndex — repository handoff for coding agents
 
+## CURRENT CHECKPOINT — G0 continued, 2026-11-22
+Read [G0 remediation](docs/growth/G0_02_FOUNDATION_REMEDIATION_CHECKPOINT_20261122.md) and [UI/UX reference](docs/growth/SLBI_UI_UX_DEVELOPMENT_REFERENCE.md). PR #145 merged after 4/4 CI pass. All master/engineering gates still unchecked. Do not advance to G1 until verified G0 acceptance. Desktop/mobile layout may differ; shared business logic/APIs/security/data required. Freeze accepted contracts, no unnecessary redesign/rework, versioned reviewed corrective changes only. Owner-approved MIT UI UX Pro Max reference pinned, no runtime install. Next-chat prompt mandatory every milestone.
+
 ## ACTIVE G0-01 EVIDENCE — 2026-11-22
 Read [G0-01 audit](docs/growth/G0_01_FOUNDATION_EVIDENCE_AUDIT_20261122.md) before continuing. G0-01 is in progress, all gates unchecked; latest examined CI fails two mobile header assertions, raw migration ID drift unresolved, legacy lead insert and stale review caches need review. No product changes. Next work as specified in the audit blocker register; preserve Discovery and Marketing QA. Owner requires ready-to-copy next-chat prompt at the end of EVERY development/production milestone report, with exact evidence and earliest unchecked task. Record prompt in handoff. 
 

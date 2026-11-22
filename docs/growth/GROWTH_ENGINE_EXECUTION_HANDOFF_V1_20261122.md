@@ -1,5 +1,10 @@
 # SLBI Growth Engine — execution handoff V1.0
 
+## 2026-11-22 — G0 CONTINUATION CHECKPOINT
+- Read [current G0 remediation checkpoint](G0_02_FOUNDATION_REMEDIATION_CHECKPOINT_20261122.md) and [UI/UX reference](SLBI_UI_UX_DEVELOPMENT_REFERENCE.md). PR #145 merged 8a41b542d02cb92ec3f0c14912259270162954b4 after four CI workflows passed (test-only, mobile layout unchanged); migration hash exact 34/47, 13 unresolved. Secure lead replay/retention/legacy parity, billing main vs staging, review and end-to-end gates remain open. G0 not accepted; no G1 yet.
+- Owner requires desktop/mobile **one shared business logic**, distinct responsive/native-style presentation, stability freeze only after verified acceptance, versioned corrective changes if security/integrity/regression requires. Reviewed MIT UI UX Pro Max pinned reference only, no installation. Every milestone concludes with updated handoff and ready-to-copy prompt.
+
+
 **CURRENT G0-01 CHECKPOINT:** [Read the foundation evidence audit](G0_01_FOUNDATION_EVIDENCE_AUDIT_20261122.md). Initial read-only inventory performed; CI/migration/billing/data-provenance blockers remain, no gate complete. Use detailed next-chat prompt. Owner requires that every milestone final report and handoff include the next-chat prompt.
 **Owner direction: 2026-11-22, Asia/Colombo. Status: PLANNING ACCEPTED; G0 is next/in progress; no Growth Engine release gate accepted.**
 Repository: Victor-dev-03-cmd/sl_business_index. Branch main is canonical. Read this document and [living checklist](GROWTH_ENGINE_RELEASE_CHECKLIST.md) before any new Growth Engine implementation. This document records the accepted direction and detailed proposed implementation; individual schema, cost, tool, score and provider choices still require validation/review. This is not a release receipt.

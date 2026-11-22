@@ -1,5 +1,10 @@
 # SLBusinessIndex — MASTER IMPLEMENTATION & CHAT HANDOFF
 
+## 2026-11-22 — G0 CONTINUATION CHECKPOINT
+- Read [current G0 remediation checkpoint](G0_02_FOUNDATION_REMEDIATION_CHECKPOINT_20261122.md) and [UI/UX reference](SLBI_UI_UX_DEVELOPMENT_REFERENCE.md). PR #145 merged 8a41b542d02cb92ec3f0c14912259270162954b4 after four CI workflows passed (test-only, mobile layout unchanged); migration hash exact 34/47, 13 unresolved. Secure lead replay/retention/legacy parity, billing main vs staging, review and end-to-end gates remain open. G0 not accepted; no G1 yet.
+- Owner requires desktop/mobile **one shared business logic**, distinct responsive/native-style presentation, stability freeze only after verified acceptance, versioned corrective changes if security/integrity/regression requires. Reviewed MIT UI UX Pro Max pinned reference only, no installation. Every milestone concludes with updated handoff and ready-to-copy prompt.
+
+
 ## 2026-11-22 — G0-01 FOUNDATION AUDIT IN PROGRESS (read FIRST)
 - See [G0-01 Foundation Evidence Audit](G0_01_FOUNDATION_EVIDENCE_AUDIT_20261122.md). Read-only evidence snapshot `de3e65eda2d38f195bacabed4e67eee86a8ebcbc` verified production READY (dpl_C75MMgwHM4e4uUAkGuu7LBRdV9yu; www alias), but GitHub CI runs 45036966166 and 45029756947 failed on 2 old mobile header assertions; migration version-prefix comparison 115 repo / 47 live / 20 matches. Do not blindly replay migration files.
 - Live 525 analytics rows (44 growth-v1, 481 unmarked), 15 CRM leads incl legacy direct insert allowed, 2 approved businesses with review aggregate cache mismatch; active internal QA entitlement 1; only Campaign Planner global live. 25 scoped tables RLS enabled, mutation RPC execution gated; synthetic negatives still pending. Neon billing schema and runtime flags not fully established. See detailed blocker register and evidence.
