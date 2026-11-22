@@ -1,0 +1,63 @@
+name: G0 Foundation — Disposable integrity checks
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docs/growth/g0/**'
+      - 'tests/g0/**'
+      - '.github/workflows/g0-foundation-integrity.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  integrity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        domain: [lead, review]
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: slbi_g0
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres -d slbi_g0"
+          --health-interval 5s --health-timeout 5s --health-retries 15
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: slbi_g0
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Secure enquiry RPC integration
+        if: matrix.domain == 'lead'
+        run: |
+          psql -v ON_ERROR_STOP=1 -f tests/p0/security_bootstrap.sql
+          psql -v ON_ERROR_STOP=1 -f tests/p0/ingestion_bootstrap.sql
+          psql -v ON_ERROR_STOP=1 -f docs/growth/SECURE_EVENT_INGESTION_REVIEW_ONLY.sql
+          psql -v ON_ERROR_STOP=1 -f docs/growth/SECURE_LEAD_SUBMISSION_REVIEW_ONLY.sql
+          psql -v ON_ERROR_STOP=1 -f docs/growth/g0/LEAD_REPLAY_REVIEW_ONLY.sql
+          psql -v ON_ERROR_STOP=1 -f tests/p0/verify_ingestion.sql
+          psql -v ON_ERROR_STOP=1 -f docs/growth/p0/P0_LEGACY_LEADS_STAGE_REVIEW_ONLY.sql
+          psql -v ON_ERROR_STOP=1 -f tests/p0/verify_legacy_leads.sql
+          psql -v ON_ERROR_STOP=1 -c "TRUNCATE public.slbi_lead_request_receipts, public.slbi_lead_rate_limits"
+          psql -v ON_ERROR_STOP=1 -f tests/g0/lead_replay.sql
+      - name: Reputation cache integration
+        if: matrix.domain == 'review'
+        run: |
+          psql -v ON_ERROR_STOP=1 -f tests/p1-release/bootstrap.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113091124_p1_vendor_lead_followups_and_review_owner_rls.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113091146_p1_review_moderation_pending_staff_audit.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113091046_p1_public_api_truncate_lockdown.sql
+          psql -v ON_ERROR_STOP=1 -c "ALTER TABLE public.businesses ADD COLUMN rating numeric DEFAULT 0, ADD COLUMN reviews_count integer DEFAULT 0"
+          psql -v ON_ERROR_STOP=1 -f docs/growth/g0/REVIEW_CACHE_REVIEW_ONLY.sql
+          psql -v ON_ERROR_STOP=1 -f tests/g0/review_cache.sql
+          bash tests/g0/review_cache_concurrency.sh
