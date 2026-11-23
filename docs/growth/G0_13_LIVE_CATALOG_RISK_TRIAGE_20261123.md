@@ -31,6 +31,12 @@ Date 2026-11-23, Asia/Colombo. Repository baseline `a97152851cedebff17caef57cf6d
 
 All other unmatched SQL remain `UNRESOLVED_DO_NOT_REPLAY` in [G0-12](G0_12_MIGRATION_PROVENANCE_INVENTORY_20261123.md). These labels are **scoped observations**, not universal migration reconciliation.
 
+
+## Follow-up live-definition verification (same read-only checkpoint)
+- **Signup metadata role ambiguity resolved for current function text:** current `public.handle_new_user()` inserts `role = 'customer'` in both normal and fallback paths; it **does not** use `raw_user_meta_data->>'role'` for role. The March legacy SQL body did, but the current function has superseded that behavior. Current profile row-update guards `prevent_profile_role_escalation` and `slbi_p0_profile_review_guard` are enabled; exact trigger guard body semantics and disposable unauthorized profile update test still necessary. **No current metadata-role privilege escalation is established by this audit.**
+- **Business logo INSERT policy ambiguity narrowed:** current `storage.objects` policies that reference `business-logos` and permit INSERT/ALL are `Admins manage business-logos` (admin/ceo predicate) and `Owner can upload a logo.` (authenticated `auth.uid() = (storage.foldername(name))[1]::uuid`). No `Authenticated Upload to business-logos` bucket-only policy appeared in this scoped query; earlier historical broad-upload clause appears superseded **for these matching policies**. Full `storage.objects` policy OR composition, malformed folder names, storage API paths and real owner A/B upload tests are still required before G0-03 acceptance.
+- This follow-up is a **current-definition spot check**, not a signed-in endpoint test; do not infer all security from source inspections.
+
 ## Required next actions
 1. For **G0-01**, compare remaining unmatched SQL *bodies* in controlled batches against actual live object fingerprints (including each 13 historical record's precise residual constraints/policies), then reconstruct initial March baseline/staging import evidence. Never change Supabase migration history to force matching.
 2. For **G0-03**, inspect and negative-test actual role signup, storage upload, 3 anon-callable definers and non-pinned definer body/search_path in disposable environment; distinguish intended public functions from privileged data risk. Do not patch live production on a finding alone.
