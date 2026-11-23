@@ -1,6 +1,7 @@
 import { createHmac, randomUUID } from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 import { isPrivacyOptOut, isSameOrigin, validateGrowthEvent } from '@/lib/growth/ingestion-contract';
+import { getViewCounterMode } from '@/lib/growth/view-counter-mode';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -57,10 +58,16 @@ export async function POST(request:Request) {
     // G0-16 two-sided cutover flag. Keep legacy event ingestion unchanged
     // until the reviewed verified-view RPC and browser bundle are ready.
     // This is not a security boundary: final DB ACL revocation is mandatory.
-    const verifiedViewCounter =
-      eventType === 'view' &&
-      process.env.G0_VERIFIED_VIEW_COUNT_ENABLED === 'true' &&
-      process.env.NEXT_PUBLIC_G0_VERIFIED_VIEW_COUNT_ENABLED === 'true';
+    const viewMode=getViewCounterMode(
+      process.env.G0_VERIFIED_VIEW_COUNT_ENABLED,
+      process.env.NEXT_PUBLIC_G0_VERIFIED_VIEW_COUNT_ENABLED,
+    );
+    // Never record a view event in a mismatched release: legacy clients
+    // could otherwise double count, while new clients could undercount.
+    if (eventType === 'view' && viewMode === 'mismatch') {
+      return json({recorded:false,reason:'view-counter-config-mismatch'},503);
+    }
+    const verifiedViewCounter = eventType === 'view' && viewMode === 'verified';
     const {data,error}=verifiedViewCounter
       ? await server.rpc('slbi_record_verified_business_view',{
           p_event_id:eventId || randomUUID(),
