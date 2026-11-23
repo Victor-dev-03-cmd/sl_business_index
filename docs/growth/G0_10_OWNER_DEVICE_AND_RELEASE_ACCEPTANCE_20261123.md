@@ -1,5 +1,9 @@
 # G0-10 — actual device and scoped release acceptance
 
+## 2026-11-23 — Nearby GPS accuracy regression fix in progress (G0-10)
+Confirmed the prior default Colombo anchor plus Home/Nearby low-accuracy short-timeout GPS were unreliable. Candidate shared precise browser GPS module, no fake Colombo, strict GPS radius, permission/timeout/approximation notices and synthetic Android Chromium/iOS WebKit browser QA. Await branch exact CI and physical devices. No production SQL or new provider. See [location checkpoint](G0_10_NEARBY_GPS_RELIABILITY_20261123.md). Next: physical GPS and owner-side G0 backups/auth, then approved release, not G1.
+
+
 **State:** OPERATOR ACCEPTANCE PENDING — not a production migration approval. Updated 2026-11-23.
 
 ## Completed G0-09 browser-engine milestone
