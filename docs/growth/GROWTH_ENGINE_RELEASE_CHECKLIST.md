@@ -157,6 +157,8 @@ Current position: [G0 manual backup operator checkpoint](G0_07_MANUAL_BACKUP_OPE
 
 | 2026-11-23 | [G0-16 verified view counter candidate](G0_16_VERIFIED_VIEW_COUNTER_CANDIDATE_20261123.md): additive service-only invoker RPC, atomic rate-limited event+view, gated Next.js caller, separate unapproved old RPC revoke, disposable PG17 sequential/concurrent A/B/ACL/quota tests | Candidate code only, G0 0/7 master 0/10 | Exact CI review, staged flag/cutover/revocation, backup consent and owner acceptance before production |
 
+| 2026-11-24 | [G0-17 verified badge and cutover readiness](G0_17_BADGE_AND_VIEW_CUTOVER_READINESS_20261124.md): blue seal/white tick in Business Details, distinct registration icon, 503 fail-closed flag mismatch, Bun config + badge CI tests, secret-redacting preflight, live SELECT-only catalog preflight | UI/code only; production new RPC absent, legacy anon access remains; foundation 0/7, master 0/10 | Owner-backed staging, backup, migration approval, real A/B tests, coordinated legacy revoke |
+
 ### Update protocol
 Add dated checkpoint per work package: exact parent/commit/branch/PR, file paths, schema and migration status, CI commands and counts, app/provider flags, Vercel URL/id/state, owner A/B and device results, costs/approval, blockers and next earliest unchecked item. A checked box requires evidence scoped to that actual acceptance condition. If a regression invalidates a gate, reopen it with reason. No secret values, customer data, invented test outcomes or premature global release. Preserve old checkpoints.
 
