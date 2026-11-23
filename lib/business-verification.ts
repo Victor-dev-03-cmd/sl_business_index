@@ -12,7 +12,7 @@ import type { Business } from "@/lib/types";
  * listing approval by itself, or can_show_badge by itself.
  */
 export function isApprovedVerifiedBusiness(
-  business: Pick<Business, "status" | "is_verified" | "verification_status">,
+  business: Pick<Business, "status" | "is_verified" | "verification_status" | "can_show_badge">,
 ): boolean {
   const verification = business.verification_status?.trim().toLowerCase();
   return (
