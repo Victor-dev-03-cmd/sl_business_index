@@ -1,0 +1,27 @@
+name: G1 isolated read-only contract (NO RELEASE)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "lib/growth/g1/**"
+      - "tests/g1/**"
+      - "docs/growth/g0/exit/G0_OWNER_SCOPED_DECISIONS_20261124.json"
+      - ".github/workflows/g1-isolated-readonly.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  readonly-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.11"
+      - name: G0 owner scoped authorization and immutable exit status
+        run: node --test tests/g1/owner-decisions.test.mjs
+      - name: G1 synthetic owner-A/B knowledge allowlist / no provider calls
+        run: bun test tests/g1/read-only-knowledge.test.mjs

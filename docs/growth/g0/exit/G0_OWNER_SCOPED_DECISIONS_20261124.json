@@ -1,0 +1,68 @@
+{
+  "schema_version": "slbi-g0-owner-scoped-decisions-v1",
+  "decision_date_local": "2026-11-24",
+  "owner_decision_reference": "conversation:2026-11-24:g0-owner-decisions",
+  "decision_type": "scoped_policy_authorization_not_phase_exit",
+  "decisions": {
+    "g1_engineering": {
+      "decision": "APPROVED_ISOLATED_READ_ONLY_CODE_ONLY",
+      "permitted": [
+        "pure_read_only_business_knowledge_contract",
+        "synthetic_test_fixtures",
+        "isolated_github_branch",
+        "draft_pull_request",
+        "non_production_ci"
+      ],
+      "prohibited": [
+        "main_branch_merge",
+        "production_deployment",
+        "live_db_migration",
+        "provider_activation",
+        "production_data_reads_for_g1",
+        "production_writes"
+      ],
+      "implementation_status": "AUTHORIZED_NOT_RELEASED"
+    },
+    "wallet_refund": {
+      "decision": "MANUAL_ADMIN_REVIEW_ONLY",
+      "automatic_refunds": false,
+      "automatic_wallet_credits": false,
+      "application_enforcement_status": "UNVERIFIED_EXISTING_RUNTIME_MUST_BE_AUDITED"
+    },
+    "marketing_providers": {
+      "decision": "EXISTING_APPROVED_ONLY_WITH_EXISTING_ACCESS_BOUNDARIES",
+      "new_provider_activation": false,
+      "permission_expansion": false,
+      "application_enforcement_status": "NO_CHANGE_AUTHORIZED"
+    },
+    "desktop_gps": {
+      "decision": "BLOCK_UNTIL_FIXED_AND_PHYSICALLY_RETESTED",
+      "accepting_manual_location_as_closure": false,
+      "device_qa_status": "OPEN"
+    }
+  },
+  "g0_exit": {
+    "owner_accepted_gates": 0,
+    "total_gates": 7,
+    "status": "BLOCKED",
+    "phase_exit_signoff": false,
+    "master_growthos_accepted_gates": 0,
+    "master_growthos_total_gates": 10
+  },
+  "exclusions": [
+    "no_production_sql",
+    "no_paid_resource_approval",
+    "no_backup_restoration_attestation",
+    "no_live_provider_expansion",
+    "no_automatic_g0_acceptance"
+  ],
+  "next_owner_evidence": [
+    "fresh_independently_encrypted_backup",
+    "isolated_restore_check",
+    "verified_external_physical_drive_copy",
+    "desktop_gps_physical_retest",
+    "real_vendor_A_B_and_admin_QA",
+    "financial_refund_operational_enforcement_audit",
+    "consent_and_provenance_review"
+  ]
+}
