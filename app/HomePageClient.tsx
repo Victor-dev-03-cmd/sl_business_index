@@ -278,7 +278,7 @@ export default function HomePageClient() {
     });
   };
 
-  const handleUseCurrentLocation = (autoSearch: boolean = false) => {
+  const handleUseCurrentLocation = (autoSearch: boolean = false, nextSearch?: URLSearchParams) => {
     // Begin native permission request synchronously on the user's click.
     locationController.current?.abort();
     const controller = new AbortController();
@@ -291,10 +291,11 @@ export default function HomePageClient() {
         const coords = { lat: fix.lat, lng: fix.lng };
         setUserCoords(coords);
         if (autoSearch) {
-          const params = new URLSearchParams({
-            lat: coords.lat.toString(), lng: coords.lng.toString(),
-            radius: "5000", source: "gps",
-          });
+          const params = new URLSearchParams(nextSearch?.toString());
+          params.set("lat", coords.lat.toString());
+          params.set("lng", coords.lng.toString());
+          params.set("radius", params.get("radius") || "5000");
+          params.set("source", "gps");
           router.push("/nearby?" + params.toString());
         }
       })
@@ -313,14 +314,9 @@ export default function HomePageClient() {
   };
 
   const handleCategoryClick = (categoryName: string) => {
-    const params = new URLSearchParams();
-    if (userCoords) {
-      params.set("lat", userCoords.lat.toString());
-      params.set("lng", userCoords.lng.toString());
-      params.set("radius", "5000");
-    }
-    params.set("q", categoryName);
-    router.push(`/nearby?${params.toString()}`);
+    const params = new URLSearchParams({q: categoryName});
+    // Category taps follow exactly the same fresh-GPS route as Hero Search.
+    handleUseCurrentLocation(true, params);
   };
 
   // The database has only 16 parent groups, while important Food & Dining,

@@ -62,7 +62,7 @@ interface HeroSearchProps {
   featuredBusinesses: any[];
   userCoords: { lat: number; lng: number } | null;
   isFetchingLocation: boolean;
-  handleUseCurrentLocation: (autoSearch?: boolean) => void;
+  handleUseCurrentLocation: (autoSearch?: boolean, nextSearch?: URLSearchParams) => void;
   idPrefix?: string;
 }
 
@@ -248,14 +248,6 @@ export default function HeroSearch({
       }
     }
 
-    if (!finalLat && !finalDistrict && !finalSearchMode) {
-      if (!userCoords && !searchQuery.trim()) {
-        handleUseCurrentLocation(true);
-        return;
-      }
-      if (userCoords) finalSearchMode = "nearby";
-    }
-
     const searchParams = new URLSearchParams();
     searchParams.set("q", expandSearchQuery(lowerQuery || finalQuery.trim()));
     if (smartIntent.intentKey) searchParams.set("intent", smartIntent.intentKey);
@@ -266,12 +258,14 @@ export default function HeroSearch({
       searchParams.set("lng", finalLng);
       searchParams.set("radius", "3000");
       if (extractedTown) searchParams.set("town", extractedTown.name);
-    } else if ((finalSearchMode === "nearby" || (!finalDistrict && userCoords)) && userCoords) {
-      searchParams.set("lat", userCoords.lat.toString());
-      searchParams.set("lng", userCoords.lng.toString());
-      searchParams.set("radius", "5000");
     } else if (finalDistrict) {
       searchParams.set("district", finalDistrict);
+    } else {
+      // A new query requires a fresh location, never stale state or inferred IP.
+      // The Home handler begins the browser permission request on this gesture.
+      handleUseCurrentLocation(true, searchParams);
+      setIsSearchFocused(false);
+      return;
     }
 
     router.push(`/nearby?${searchParams.toString()}`);
@@ -279,13 +273,8 @@ export default function HeroSearch({
 
   const handleCategoryClick = (categoryName: string) => {
     const params = new URLSearchParams();
-    if (userCoords) {
-      params.set("lat", userCoords.lat.toString());
-      params.set("lng", userCoords.lng.toString());
-      params.set("radius", "5000");
-    }
     params.set("category", categoryName);
-    router.push(`/nearby?${params.toString()}`);
+    handleUseCurrentLocation(true, params);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -413,9 +402,11 @@ export default function HeroSearch({
 
           <button
             type="submit"
+            disabled={isFetchingLocation}
+            aria-busy={isFetchingLocation}
             className="slbi-hero-search-button inline-flex min-h-[48px] items-center justify-center gap-2 rounded-[8px] bg-[#1B3430] px-5 text-[13px] font-semibold text-white shadow-[0_5px_16px_rgba(18,62,101,0.2)] transition-colors hover:bg-[#2B6552] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 sm:min-h-[56px]"
           >
-            <BrandIcon name="search-normal" size={18} /> Search
+            <BrandIcon name="search-normal" size={18} /> {isFetchingLocation ? "Finding GPS…" : "Search"}
           </button>
         </div>
       </form>

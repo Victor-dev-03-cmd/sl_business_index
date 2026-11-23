@@ -67,16 +67,19 @@ test('map pins remain available when Google reverse geocoding fails', () => {
   assert.match(component,/onMapClick=\{handleMarkerDragEnd\}/);
 });
 
-test('GPS retries network location after high-accuracy timeout but not permission denied', () => {
-  assert.match(component,/window\.isSecureContext/);
-  assert.match(component,/if \(!navigator\.geolocation\)/);
-  assert.match(component,/navigator\.geolocation\.getCurrentPosition\(/);
-  assert.match(component,/highAccuracy && \(error\.code === 2 \|\| error\.code === 3\)/);
-  assert.match(component,/locate\(false\)/);
-  assert.match(component,/describeGeolocationFailure\(error\)/);
-  assert.match(component,/enableHighAccuracy: highAccuracy/);
-  assert.match(component,/maximumAge: highAccuracy \? 120000 : 600000/);
-  assert.match(component,/setIsLocating\(false\)/);
+test('registration GPS uses shared precise browser geolocation, never stale coarse fallback', () => {
+  assert.match(component,/requestPreciseLocation\(\{\s*signal:\s*controller\.signal\s*\}\)/);
+  assert.match(component,/gpsController\.current\?\.abort\(\)/);
+  assert.match(component,/locationError\(error\)\.message/);
+  assert.match(component,/handleMarkerDragEnd\(fix\.lat,\s*fix\.lng\)/);
+  assert.match(component,/Confirm the pin marks the real business entrance/);
+  assert.match(component,/isPlausibleSriLankaPin\(fix\.lat,\s*fix\.lng\)/);
+  assert.doesNotMatch(component,/maximumAge:\s*600000/);
+  assert.doesNotMatch(component,/locate\(false\)/);
+  const shared = read('lib/location/precise-geolocation.ts');
+  assert.match(shared,/enableHighAccuracy:\s*true/);
+  assert.match(shared,/maximumAge:\s*0/);
+  assert.match(shared,/MAX_NEARBY_GPS_ACCURACY_METERS\s*=\s*2000/);
 });
 
 test('Google autocomplete remains optional; same map picker used in vendor edit and registration', () => {
