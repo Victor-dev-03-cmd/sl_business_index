@@ -1,0 +1,33 @@
+name: G0-09 Browser Acceptance — isolated Android, iOS and desktop engines
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/g0-browser-acceptance.yml'
+      - 'tests/g0/browser/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser-engines:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    container:
+      image: mcr.microsoft.com/playwright:v1.65.1-noble
+    env:
+      CI: 'true'
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-key
+      NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY: '1x00000000000000000000AA'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install locked app dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Install pinned browser test runner without altering app lockfile
+        run: npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund @playwright/test@1.65.1
+      - name: Build production-mode local Next.js with dummy backend only
+        run: npm run build
+      - name: Test isolated login, signup and protected redirects in Chromium/WebKit
+        run: npx playwright test --config=tests/g0/browser/playwright.config.mjs
