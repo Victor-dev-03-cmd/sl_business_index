@@ -5,6 +5,10 @@ on:
     paths:
       - '.github/workflows/g0-browser-acceptance.yml'
       - 'tests/g0/browser/**'
+      - 'lib/location/**'
+      - 'app/nearby/**'
+      - 'app/HomePageClient.tsx'
+      - 'app/MobileHomeExperience.tsx'
   workflow_dispatch:
 permissions:
   contents: read

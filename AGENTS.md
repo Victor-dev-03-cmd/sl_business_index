@@ -1,5 +1,9 @@
 # SLBusinessIndex — repository handoff for coding agents
 
+## 2026-11-23 — Nearby GPS accuracy regression fix in progress (G0-10)
+Confirmed the prior default Colombo anchor plus Home/Nearby low-accuracy short-timeout GPS were unreliable. Candidate shared precise browser GPS module, no fake Colombo, strict GPS radius, permission/timeout/approximation notices and synthetic Android Chromium/iOS WebKit browser QA. Await branch exact CI and physical devices. No production SQL or new provider. See [location checkpoint](docs/growth/G0_10_NEARBY_GPS_RELIABILITY_20261123.md). Next: physical GPS and owner-side G0 backups/auth, then approved release, not G1.
+
+
 ## 2026-11-23 — G0-09 browser-mode PASS; G0-10 owner device QA pending
 PR [#154](https://github.com/Victor-dev-03-cmd/sl_business_index/pull/154) final candidate e4e11885cbf14aee1b38360a4d7a613b8f55a7ac, squash merge 30b75cfd7675c97bdc6e2ea53600eb24f00d1ae6; 6/6 CI PASS (G0-09 browsers 45109255521: 9/9 across Android Chromium/iOS WebKit/desktop Chromium; Next 45109255442; P1 45109255411; G0 integrity 45109255385; billing 45109255502 and 45109255517). Browser tests hit local Next with dummy Supabase and external browser requests blocked. Does NOT certify physical phones, authenticated owner/vendor/admin or production data writes. Fresh independent-passphrase backup, physical separate copy, device and provider acceptance, exact Lead/Review live release approval/window remain pending; wallet separate; G0 master 0/10 and G1 not started. See [G0-10 matrix](docs/growth/G0_10_OWNER_DEVICE_AND_RELEASE_ACCEPTANCE_20261123.md).
 

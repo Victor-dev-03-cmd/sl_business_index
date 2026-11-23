@@ -35,7 +35,7 @@ test('Mobile results use compact summary instead of the multirow diagnostic bloc
   assert.match(explorer,/mt-2\.5 hidden flex-wrap items-center justify-between gap-3 md:flex/);
   assert.match(explorer,/mt-2\.5 hidden flex-wrap items-center justify-between gap-2 md:flex/);
   assert.match(explorer,/Semantic V3 Beta · ON/);
-  assert.match(explorer,/className="mx-auto hidden max-w-\[1800px\] items-center justify-between gap-3 border-t border-\[#EBF0F4\]/);
+  assert.match(explorer,/className="mx-auto flex max-w-\[1800px\] items-center justify-between gap-3 border-t border-\[#EBF0F4\]/);
   assert.match(styles,/@media \(max-width: 767px\)/);
   assert.match(styles,/\.slbi-nearby-root\s*\{[^}]*height: 100dvh;/);
   assert.match(styles,/\.slbi-nearby-results-scroll\s*\{[^}]*-webkit-overflow-scrolling: touch;/);
@@ -71,4 +71,14 @@ test('Nearby mobile layout is scoped; original map/search and V3 logic remain',(
   assert.match(explorer,/aria-label="Interactive business map"/);
   assert.match(styles,/\.slbi-nearby-tabs/);
   assert.doesNotMatch(styles,/\.slbi-home-/);
+});
+
+
+// GPS is a user-controlled capability, never a guessed Colombo origin.
+test('Nearby never guesses Colombo as the user GPS location and uses the shared precise fix',()=>{
+  assert.match(explorer,/Sri Lanka · Choose your area/);
+  assert.doesNotMatch(explorer,/Colombo · Starting area/);
+  assert.match(explorer,/requestPreciseLocation\(/);
+  assert.match(explorer,/location\.kind === "gps"/);
+  assert.match(explorer,/enabled: location\.kind !== "default"/);
 });
