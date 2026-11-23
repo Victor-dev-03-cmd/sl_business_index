@@ -19,7 +19,7 @@ SQL
   pids+=("$!")
 done
 
-for pid in "\${pids[@]}"; do
+for pid in "${pids[@]}"; do
   if ! wait "$pid"; then
     echo "G0-16 FAIL: concurrent request failed"
     cat "$tmp"/*.err
