@@ -1,3 +1,6 @@
+## 2026-11-23 — G0-12 migration inventory reviewed (G0-01 still OPEN)
+Source main `7d3fd05ea94a0ae1653077fa531299ac2c595803`. Recomputed 47 live statements (34 exact content match; 13 catalog-evidence), 115 SQL files (27 content-matched; 88 unresolved), month breakdown March 72/April 3/May 7/June 1/October 1/November 4. File-by-file filename-heuristic risk queue and 13 residual cases are documented in [G0-12 inventory](docs/growth/G0_12_MIGRATION_PROVENANCE_INVENTORY_20261123.md). Heuristic is **not** current-object equivalence; do not replay migrations or update production ledger. G0 foundation remains 0/7, master 0/10, no G1 code; security/backup/device/Lead-Review/wallet gates open. Read document's next-chat prompt after milestone.
+
 # SLBusinessIndex — repository handoff for coding agents
 
 ## 2026-11-23 — G0-11 foundation exit audit (candidate)
