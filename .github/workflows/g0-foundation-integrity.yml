@@ -120,7 +120,7 @@ jobs:
         run: |
           bun test tests/g0/view-counter-mode.test.mjs
           node --test tests/business/verified-business-badge.test.mjs
-          bun test tests/business/verified-business-gate.test.ts
+          bun test tests/business/verified-business-gate.test.mjs
           bun scripts/g0/view-counter-staging-preflight.ts
       - name: Foundation exit gate cannot self-approve from CI
         run: bun test tests/g0/foundation-exit.test.mjs
