@@ -116,5 +116,10 @@ jobs:
           bun-version: '1.3.11'
       - name: Synthetic backup-copy hash and unsafe path tests (no production bytes)
         run: bun test tests/g0/backup-copy.test.mjs tests/location/*.test.mjs
+      - name: G0-17 verified view-counter flag and badge regression
+        run: |
+          bun test tests/g0/view-counter-mode.test.mjs
+          node --test tests/business/verified-business-badge.test.mjs
+          bun scripts/g0/view-counter-staging-preflight.ts
       - name: Foundation exit gate cannot self-approve from CI
         run: bun test tests/g0/foundation-exit.test.mjs
