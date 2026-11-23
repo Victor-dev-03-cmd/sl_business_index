@@ -23,6 +23,7 @@ import { rankSemanticV3Beta } from "@/lib/discovery/semanticBetaV3";
 import { resolveSmartSearch, radiusSteps } from "@/lib/discovery/smartSearch";
 import { useSearchDictionary } from "@/lib/discovery/useSearchDictionary";
 import { recordNearbySample } from "@/lib/discovery/diagnostics";
+import { alreadyGrantedLocationPermission, locationError, requestPreciseLocation } from "@/lib/location/precise-geolocation";
 
 const LeafletMap = dynamic(() => import("@/components/LeafletMap"), {
   ssr: false,
@@ -58,7 +59,7 @@ type SortMode = "best-match" | "nearest" | "top-rated" | "alphabetical";
 type AreaOption = { label: string; description: string; lat: number; lng: number; kind: "district" | "town" };
 
 const DEFAULT_LOCATION: LocationChoice = {
-  lat: 6.9271, lng: 79.8612, label: "Colombo · Starting area", kind: "default",
+  lat: 7.8731, lng: 80.7718, label: "Sri Lanka · Choose your area", kind: "default",
 };
 const DISTRICTS: Record<string, { lat: number; lng: number }> = {
   Ampara: { lat: 7.2912, lng: 81.6724 },
@@ -152,11 +153,13 @@ export default function NearbyExplorer() {
     const first = initialChoice(searchParams);
     return { lat: first.lat, lng: first.lng };
   });
-  const [mapZoom, setMapZoom] = useState(() => searchParams.has("lat") ? 13 : 11);
+  const [mapZoom, setMapZoom] = useState(() => searchParams.has("lat") ? 13 : 8);
   const [pendingArea, setPendingArea] = useState<{ lat: number; lng: number; zoom: number } | null>(null);
   const [userPosition, setUserPosition] = useState<{ lat: number; lng: number } | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationNotice, setLocationNotice] = useState("");
+  const [locationNoticeType, setLocationNoticeType] = useState<"error" | "success">("error");
+  const locationController = useRef<AbortController | null>(null);
 
   const [searchText, setSearchText] = useState(searchParams.get("q") || "");
   const [appliedQuery, setAppliedQuery] = useState(searchParams.get("q") || "");
@@ -236,17 +239,20 @@ export default function NearbyExplorer() {
     refetch,
   } = useQuery<NearbySearchResponse>({
     queryKey: [
-      "nearby-smartsearch-v1", location.lat, location.lng, radius,
+      "nearby-smartsearch-v1", location.kind, location.lat, location.lng, radius,
       normalizedSearch, category, selectedCategoryNames.join("|"),
       suggestedCategories.join("|"), smartIntent.specificService,
     ],
     queryFn: async ({ signal }) => {
       const startedAt = performance.now();
-      // With no explicit town/GPS selection, search across Sri Lanka as a
-      // final, clearly disclosed fallback rather than hiding distant matches.
-      const steps = normalizedSearch
-        ? [...radiusSteps(radius), ...(location.kind === "default" ? [500000] : [])]
-        : [radius];
+      // Search a user-approved GPS radius EXACTLY. The starting map is never
+      // treated as a detected user location. Untargeted keywords are explicitly
+      // island-wide; manual town/district searches retain disclosed expansion.
+      const steps = location.kind === "default"
+        ? [500000]
+        : location.kind === "gps"
+          ? [radius]
+          : normalizedSearch ? radiusSteps(radius) : [radius];
       let usedRadius = radius;
       let backend: NearbySearchResponse["backend"] = "smartsearch-v1";
       let results: NearbyBusiness[] = [];
@@ -308,6 +314,7 @@ export default function NearbyExplorer() {
       }
     },
     staleTime: 60 * 1000,
+    enabled: location.kind !== "default" || Boolean(normalizedSearch),
     retry: 1,
   });
 
@@ -532,6 +539,7 @@ export default function NearbyExplorer() {
     const nextRadius = options?.radius || radius;
 
     setLocation(nextLocation);
+    if (nextLocation.kind !== "gps") setUserPosition(null);
     setAppliedQuery(nextQuery);
     setSearchText(nextQuery);
     setCategory(nextCategory);
@@ -562,6 +570,7 @@ export default function NearbyExplorer() {
   };
 
   const selectArea = (choice: AreaOption) => {
+    locationController.current?.abort();
     applySearch({
       location: { lat: choice.lat, lng: choice.lng, label: choice.label + (choice.kind === "district" ? " District" : ", " + choice.description.split(" · ")[0]), kind: choice.kind },
       zoom: choice.kind === "town" ? 13 : 11,
@@ -570,27 +579,55 @@ export default function NearbyExplorer() {
   };
 
   const locateMe = () => {
-    if (!navigator.geolocation) {
-      setLocationNotice("Location is unavailable in this browser. Select a district or town instead.");
-      return;
-    }
+    // Called directly from the user gesture; an already granted permission
+    // may also refresh on page load without presenting a surprise prompt.
+    locationController.current?.abort();
+    const controller = new AbortController();
+    locationController.current = controller;
     setLocationLoading(true);
     setLocationNotice("");
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
+    void requestPreciseLocation({ signal: controller.signal })
+      .then(fix => {
+        if (locationController.current !== controller) return;
+        const { lat, lng, accuracyMeters } = fix;
+        const accuracyLabel = accuracyMeters < 1000
+          ? Math.round(accuracyMeters) + " m"
+          : (accuracyMeters / 1000).toFixed(1) + " km";
         setUserPosition({ lat, lng });
-        setLocationLoading(false);
-        applySearch({ location: { lat, lng, label: "Your current location", kind: "gps" }, zoom: 14 });
-      },
-      () => {
-        setLocationLoading(false);
-        setLocationNotice("We could not access your location. Choose a district or town to continue.");
-      },
-      { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 },
-    );
+        applySearch({
+          location: { lat, lng, label: "GPS location · ±" + accuracyLabel, kind: "gps" },
+          zoom: 15,
+        });
+        setLocationNoticeType("success");
+        setLocationNotice("GPS confirmed (±" + accuracyLabel + "). Showing matches within your selected " + formatDistance(radius) + " radius.");
+      })
+      .catch(error => {
+        if (locationController.current !== controller || controller.signal.aborted) return;
+        setLocationNoticeType("error");
+        setLocationNotice(locationError(error).message);
+      })
+      .finally(() => {
+        if (locationController.current === controller) {
+          locationController.current = null;
+          setLocationLoading(false);
+        }
+      });
   };
+
+  useEffect(() => {
+    if (location.kind !== "default") return;
+    let active = true;
+    // Some browsers don't implement the Permissions API; in that case the
+    // visible "Use my location" button is the reliable user-gesture trigger.
+    void alreadyGrantedLocationPermission().then(granted => {
+      if (active && granted && !locationController.current) locateMe();
+    });
+    return () => { active = false; };
+  // Only run when entering a default/unknown-area state, not during GPS updates.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.kind]);
+
+  useEffect(() => () => { locationController.current?.abort(); }, []);
 
   const submitSearch = (event?: React.FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
@@ -702,7 +739,7 @@ export default function NearbyExplorer() {
               className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#E8BB7B] px-3.5 text-[12px] font-semibold text-[#203936] transition-colors hover:bg-[#F4CE9A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:cursor-wait disabled:opacity-60 sm:px-4"
             >
               <LocateFixed size={17} className={locationLoading ? "animate-pulse" : ""} />
-              <span className="hidden sm:inline">{locationLoading ? "Locating…" : "Use my location"}</span>
+              <span className="hidden sm:inline">{locationLoading ? "Finding GPS…" : "Use my location"}</span>
             </button>
           </div>
         </div>
@@ -1017,10 +1054,10 @@ export default function NearbyExplorer() {
         </nav>
 
         {location.kind === "default" && !locationNotice && (
-          <div role="status" className="mx-auto hidden max-w-[1800px] items-center justify-between gap-3 border-t border-[#EBF0F4] bg-[#F2F8FC] px-4 py-2 text-[11px] text-[#4B7694] md:flex sm:px-6 lg:px-8">
+          <div role="status" className="mx-auto flex max-w-[1800px] items-center justify-between gap-3 border-t border-[#EBF0F4] bg-[#F2F8FC] px-3 py-2 text-[11px] text-[#4B7694] sm:px-6 lg:px-8">
             <span className="inline-flex min-w-0 items-center gap-2">
               <MapPin size={14} className="shrink-0" />
-              Starting in Colombo. Choose a district or town, or use your location for nearby results.
+              {locationLoading ? "Finding a precise GPS fix…" : "Location not set. Use GPS to find businesses near you, or choose a town."}
             </span>
             <button type="button" onClick={locateMe} disabled={locationLoading} className="inline-flex shrink-0 items-center gap-1.5 font-semibold text-[#195C89] hover:text-[#0C3554] disabled:opacity-60">
               <LocateFixed size={14}/><span className="hidden sm:inline">Use my location</span>
@@ -1028,7 +1065,9 @@ export default function NearbyExplorer() {
           </div>
         )}
         {locationNotice && (
-          <div role="status" className="mx-auto flex max-w-[1800px] items-center justify-between gap-3 border-t border-[#E4EDF4] px-4 py-2 text-[12px] text-[#9A5824] sm:px-6 lg:px-8">
+          <div role="status" aria-live="polite" data-nearby-location-status={locationNoticeType}
+            className={"mx-auto flex max-w-[1800px] items-center justify-between gap-3 border-t px-3 py-2 text-[12px] sm:px-6 lg:px-8 " +
+              (locationNoticeType === "success" ? "border-[#CDE2D3] bg-[#EBF8EF] text-[#21664D]" : "border-[#E4D6BC] bg-[#FFF8ED] text-[#895321]")}>
             <span>{locationNotice}</span>
             <button type="button" onClick={() => setLocationNotice("")} aria-label="Dismiss location notice"><X size={16}/></button>
           </div>
@@ -1152,6 +1191,16 @@ export default function NearbyExplorer() {
                 </button>
               </div>
 
+            ) : location.kind === "default" && !normalizedSearch ? (
+              <div className="min-[1280px]:col-span-2 rounded-[20px] border border-[#D9E6DE] bg-white px-5 py-8 text-center sm:px-8">
+                <LocateFixed size={30} className="mx-auto text-[#287762]" />
+                <h3 className="mt-4 text-[19px] font-semibold text-[#193F35]">Discover services near your real location</h3>
+                <p className="mx-auto mt-2 max-w-md text-[13px] leading-6 text-[#6F8A7C]">Your location is not set. Allow precise GPS to search inside your chosen radius, or select a town. We never assume you are in Colombo.</p>
+                <button type="button" onClick={locateMe} disabled={locationLoading}
+                  className="mt-5 min-h-11 rounded-xl bg-[#256C60] px-5 text-[13px] font-semibold text-white disabled:opacity-60">
+                  {locationLoading ? "Finding precise location…" : "Use my location"}
+                </button>
+              </div>
             ) : visibleBusinesses.length === 0 ? (
               <div className="space-y-4 pb-6 min-[1280px]:col-span-2">
                 <div className="relative overflow-hidden rounded-[24px] bg-[#1D3534] p-5 text-white shadow-[0_15px_36px_rgba(25,52,50,0.14)] sm:p-6">
