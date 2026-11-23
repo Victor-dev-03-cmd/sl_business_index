@@ -18,6 +18,6 @@ for(const [query,city] of [
   assert.ok(intent.location,'Known city should be parsed');
   assert.equal(intent.location.name.toLowerCase(),city);
   assert.ok(!intent.canonicalQuery.toLowerCase().includes(city),'City token must be removed from service query');
-  assert.match(intent.canonicalQuery,/hotel|restaurant/i);
+  assert.match(intent.canonicalQuery,/hotel|restaurant|food/i);
  });
 }

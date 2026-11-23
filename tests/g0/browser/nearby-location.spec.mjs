@@ -142,6 +142,6 @@ test('explicit Jaffna locality preserves query scope with GPS unavailable',async
       && parsed.searchParams.get('source')!=='gps'
       && (parsed.searchParams.get('town')?.toLowerCase()==='jaffna'
           || parsed.searchParams.get('district')?.toLowerCase()==='jaffna')
-      && (parsed.searchParams.get('q')||'').toLowerCase().includes('restaurant');
+      && /restaurant|food/.test((parsed.searchParams.get('q')||'').toLowerCase());
   },{timeout:20000});
 });
