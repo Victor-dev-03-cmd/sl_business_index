@@ -29,6 +29,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import dynamic from "next/dynamic";
 import VerifiedBadge from "./components/VerifiedBadge";
 import Testimonials from "./components/Testimonials";
+import { toast } from "sonner";
+import { locationError, requestPreciseLocation } from "@/lib/location/precise-geolocation";
 import HeroDiscoveryGraphic from "./components/HeroDiscoveryGraphic";
 
 // Server-render the visible search form: client-only 64px placeholder shifted
@@ -141,6 +143,9 @@ export default function HomePageClient() {
 
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [isFetchingLocation, setIsFetchingLocation] = useState(false);
+  const [locationNotice, setLocationNotice] = useState("");
+  const locationController = useRef<AbortController | null>(null);
+  useEffect(() => () => { locationController.current?.abort(); }, []);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -274,41 +279,37 @@ export default function HomePageClient() {
   };
 
   const handleUseCurrentLocation = (autoSearch: boolean = false) => {
-    if (!navigator.geolocation) return;
-
+    // Begin native permission request synchronously on the user's click.
+    locationController.current?.abort();
+    const controller = new AbortController();
+    locationController.current = controller;
     setIsFetchingLocation(true);
-
-    // Hard cap: never show spinner longer than 6 s
-    const timeoutId = setTimeout(() => setIsFetchingLocation(false), 6000);
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        clearTimeout(timeoutId);
-        const { latitude, longitude } = position.coords;
-        const coords = { lat: latitude, lng: longitude };
+    setLocationNotice("");
+    void requestPreciseLocation({ signal: controller.signal })
+      .then(fix => {
+        if (locationController.current !== controller) return;
+        const coords = { lat: fix.lat, lng: fix.lng };
         setUserCoords(coords);
-        setIsFetchingLocation(false);
-
         if (autoSearch) {
           const params = new URLSearchParams({
-            lat: coords.lat.toString(),
-            lng: coords.lng.toString(),
-            radius: "5000",
+            lat: coords.lat.toString(), lng: coords.lng.toString(),
+            radius: "5000", source: "gps",
           });
-          router.push(`/nearby?${params.toString()}`);
+          router.push("/nearby?" + params.toString());
         }
-      },
-      (err) => {
-        clearTimeout(timeoutId);
-        console.error("Error getting location: ", err.message);
-        setIsFetchingLocation(false);
-      },
-      {
-        enableHighAccuracy: false, // faster, good enough for search
-        timeout: 5000,
-        maximumAge: 60000, // reuse a cached fix up to 1 min old
-      },
-    );
+      })
+      .catch(error => {
+        if (locationController.current !== controller || controller.signal.aborted) return;
+        const message = locationError(error).message;
+        setLocationNotice(message);
+        toast.error(message, { duration: 8000 });
+      })
+      .finally(() => {
+        if (locationController.current === controller) {
+          locationController.current = null;
+          setIsFetchingLocation(false);
+        }
+      });
   };
 
   const handleCategoryClick = (categoryName: string) => {
@@ -370,6 +371,7 @@ export default function HomePageClient() {
         isFetchingLocation={isFetchingLocation}
         handleUseCurrentLocation={handleUseCurrentLocation}
         handleCategoryClick={handleCategoryClick}
+        locationNotice={locationNotice}
       />
 
       {/* --- PHASE 3: Split editorial hero with accessible SVG product motion --- */}
@@ -458,6 +460,7 @@ export default function HomePageClient() {
                   </Link>
                 </div>
               </div>
+              {locationNotice && <p role="alert" className="mt-3 text-[12px] leading-5 text-[#FFE0BB]">{locationNotice}</p>}
               <p className="slbi-home-search-hint mt-3 pl-1 text-[12px] text-[#94BAA0] sm:text-[13px]">
                 Try “Restaurants in Colombo” or “Electrician in Jaffna”
               </p>

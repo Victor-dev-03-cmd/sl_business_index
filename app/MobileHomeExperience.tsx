@@ -24,6 +24,7 @@ type Props = {
   featuredError: unknown;
   userCoords: { lat: number; lng: number } | null;
   isFetchingLocation: boolean;
+  locationNotice?: string;
   handleUseCurrentLocation: (autoSearch?: boolean) => void;
   handleCategoryClick: (name: string) => void;
 };
@@ -65,7 +66,7 @@ function MapPreview() {
 
 export default function MobileHomeExperience({
   categories, featuredBusinesses, categoriesLoading, featuredLoading, featuredError,
-  userCoords, isFetchingLocation, handleUseCurrentLocation, handleCategoryClick,
+  userCoords, isFetchingLocation, handleUseCurrentLocation, handleCategoryClick, locationNotice,
 }: Props) {
   return (
     <div className="slbi-native-home sm:hidden" id="slbi-native-mobile-home">
@@ -118,6 +119,7 @@ export default function MobileHomeExperience({
             <ArrowRight size={17} strokeWidth={1.7} aria-hidden="true" />
           </span>
         </button>
+        {locationNotice && <p role="alert" className="mt-2 px-3 text-[12px] leading-5 text-[#91592C]">{locationNotice}</p>}
       </section>
 
       <section className="slbi-native-featured" aria-label="Featured Sri Lankan businesses">
