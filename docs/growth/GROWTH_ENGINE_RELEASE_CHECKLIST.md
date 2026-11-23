@@ -146,6 +146,9 @@ Current position: [G0 manual backup operator checkpoint](G0_07_MANUAL_BACKUP_OPE
 
 | 2026-11-23 | PR #151 merged a7a210f9a70bc893a68f9ea682e0ecc569f6ccd5; 4/4 candidate CI, exact production READY; fresh RLS/RPC and review/wallet aggregate checks | Backup tooling merged, live archive/restore pending; no gate accepted | Owner evidence, scoped migrations and remaining G0 acceptance |
 
+
+| 2026-11-23 | [G0-12 provenance inventory](G0_12_MIGRATION_PROVENANCE_INVENTORY_20261123.md): 47 live (34 exact, 13 historical); 115 SQL files (27 matched, 88 not matched), distribution 72/3/7/1/1/4 by March/April/May/June/October/November. Filename-only risk queue; no catalog parity or replay, no production changes. | G0-01 OPEN; 0/7 foundation and 0/10 master accepted | Read SQL+present pg_catalog per object, classify historical supersession and runtime flags, request owner signoff only with evidence |
+
 ### Update protocol
 Add dated checkpoint per work package: exact parent/commit/branch/PR, file paths, schema and migration status, CI commands and counts, app/provider flags, Vercel URL/id/state, owner A/B and device results, costs/approval, blockers and next earliest unchecked item. A checked box requires evidence scoped to that actual acceptance condition. If a regression invalidates a gate, reopen it with reason. No secret values, customer data, invented test outcomes or premature global release. Preserve old checkpoints.
 
