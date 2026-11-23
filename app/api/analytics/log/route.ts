@@ -54,13 +54,27 @@ export async function POST(request:Request) {
     const server=createClient(url,supabaseSecret,{
       auth:{autoRefreshToken:false,persistSession:false,detectSessionInUrl:false},
     });
-    const {data,error}=await server.rpc('slbi_record_growth_event',{
-      p_event_id:eventId || randomUUID(),
-      p_business_id:businessId,
-      p_event_type:eventType,
-      p_channel:channel,
-      p_rate_bucket:bucket,
-    });
+    // G0-16 two-sided cutover flag. Keep legacy event ingestion unchanged
+    // until the reviewed verified-view RPC and browser bundle are ready.
+    // This is not a security boundary: final DB ACL revocation is mandatory.
+    const verifiedViewCounter =
+      eventType === 'view' &&
+      process.env.G0_VERIFIED_VIEW_COUNT_ENABLED === 'true' &&
+      process.env.NEXT_PUBLIC_G0_VERIFIED_VIEW_COUNT_ENABLED === 'true';
+    const {data,error}=verifiedViewCounter
+      ? await server.rpc('slbi_record_verified_business_view',{
+          p_event_id:eventId || randomUUID(),
+          p_business_id:businessId,
+          p_channel:channel,
+          p_rate_bucket:bucket,
+        })
+      : await server.rpc('slbi_record_growth_event',{
+          p_event_id:eventId || randomUUID(),
+          p_business_id:businessId,
+          p_event_type:eventType,
+          p_channel:channel,
+          p_rate_bucket:bucket,
+        });
     if(error) {
       // Database can be missing the reviewed migration; fail closed.
       console.error('Growth analytics ingestion unavailable:',error.code || 'database');
