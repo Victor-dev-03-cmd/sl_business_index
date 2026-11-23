@@ -70,12 +70,12 @@ test('Home Hero Enter obtains fresh GPS before carrying search query to Nearby',
   const id=testInfo.project.name==='desktop-chromium'?'hero-business-query':'mobile-home-business-query';
   const input=page.locator('#'+id);
   await expect(input).toBeVisible();
-  await input.fill('Electrician');
+  await input.fill('Hotels');
   await input.press('Enter');
   await expect(page).toHaveURL(url=>{
     const u=new URL(url);
     return u.pathname==='/nearby'
-      && (u.searchParams.get('q')||'').toLowerCase().includes('electrician')
+      && (u.searchParams.get('q')||'').toLowerCase().includes('hotel')
       && u.searchParams.get('lat')==='8.755'
       && u.searchParams.get('lng')==='80.497'
       && u.searchParams.get('radius')==='5000'
