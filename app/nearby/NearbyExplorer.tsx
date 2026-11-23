@@ -23,6 +23,7 @@ import { rankSemanticV3Beta } from "@/lib/discovery/semanticBetaV3";
 import { resolveSmartSearch, radiusSteps } from "@/lib/discovery/smartSearch";
 import { useSearchDictionary } from "@/lib/discovery/useSearchDictionary";
 import { recordNearbySample } from "@/lib/discovery/diagnostics";
+import { withinGpsRadius } from "@/lib/discovery/withinGpsRadius";
 import { locationError, requestPreciseLocation } from "@/lib/location/precise-geolocation";
 
 const LeafletMap = dynamic(() => import("@/components/LeafletMap"), {
@@ -302,12 +303,20 @@ export default function NearbyExplorer() {
               selectedCategoryNames.some((name) => name.toLowerCase() === String(row.category || "").toLowerCase()));
           }
           usedRadius = targetRadius;
-          results = (rows || []).map((row: any) => ({
+          const returned = (rows || []).map((row: any) => ({
             ...row,
             is_verified: row.is_verified === true || row.verification_status === "verified",
             distanceText: typeof row.distance_meters === "number"
               ? formatDistance(row.distance_meters) : undefined,
           })) as NearbyBusiness[];
+          // Distance from returned coordinates is checked independently of the
+          // RPC's relevance ranking. Never show a remote lexical/semantic hit
+          // outside the user-selected GPS radius in list or map.
+          results = location.kind === "gps"
+            ? returned.filter(item => withinGpsRadius(
+                location.lat, location.lng, radius, item.latitude, item.longitude,
+              ))
+            : returned;
           if (results.length > 0 || signal.aborted) break;
         }
         if (!signal.aborted) recordNearbySample(performance.now() - startedAt, results.length, false);

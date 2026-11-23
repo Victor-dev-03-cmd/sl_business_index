@@ -314,14 +314,9 @@ export default function HomePageClient() {
   };
 
   const handleCategoryClick = (categoryName: string) => {
-    const params = new URLSearchParams();
-    if (userCoords) {
-      params.set("lat", userCoords.lat.toString());
-      params.set("lng", userCoords.lng.toString());
-      params.set("radius", "5000");
-    }
-    params.set("q", categoryName);
-    router.push(`/nearby?${params.toString()}`);
+    const params = new URLSearchParams({q: categoryName});
+    // Category taps follow exactly the same fresh-GPS route as Hero Search.
+    handleUseCurrentLocation(true, params);
   };
 
   // The database has only 16 parent groups, while important Food & Dining,
