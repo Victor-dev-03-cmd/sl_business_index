@@ -5,6 +5,7 @@ on:
     paths:
       - 'docs/growth/g0/**'
       - 'tests/g0/**'
+      - 'scripts/g0/**'
       - '.github/workflows/g0-foundation-integrity.yml'
   workflow_dispatch:
 permissions:
@@ -85,3 +86,16 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f tests/g0/billing_refund.sql
           bash tests/g0/release_drift.sh billing
           psql -v ON_ERROR_STOP=1 -f tests/g0/billing_recovery.sql
+
+  backup-copy-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.3.11'
+      - name: Synthetic backup-copy hash and unsafe path tests (no production bytes)
+        run: bun test tests/g0/backup-copy.test.mjs
