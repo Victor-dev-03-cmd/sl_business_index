@@ -13,7 +13,6 @@ import {
   Clock,
   Star,
   Building2,
-  ShieldCheck,
   Share2,
   ExternalLink,
   MessageSquare,
@@ -450,8 +449,8 @@ export default function BusinessDetailsClient({ business, galleryUrls, services 
                       <span className="text-neutral-500">({reviewSummary.count} {reviewSummary.count===1?"review":"reviews"})</span>
                     </>}
                   </a>
-                  {business.is_registered&&!verified&&<p className="flex items-center gap-2 text-neutral-600"><ShieldCheck size={16} className="shrink-0"/> Registration provided</p>}
-                  {verified&&<div className="flex items-center gap-2 text-neutral-700"><VerifiedBadge size={13}/> <span>Verified business</span></div>}
+                  {business.is_registered&&!verified&&<p className="flex items-center gap-2 text-neutral-600"><Building2 size={16} className="shrink-0"/> Registration provided</p>}
+                  {verified&&<div className="flex items-center gap-2 text-slate-800 font-semibold"><VerifiedBadge size={15}/> <span>Verified Business</span></div>}
                   {business.owner_name&&<p className="flex items-center gap-2 pt-1 text-base font-medium"><UserRound size={19} className="shrink-0 text-neutral-500"/><span className="break-words">{business.owner_name}</span></p>}
                 </div>
               </div>
