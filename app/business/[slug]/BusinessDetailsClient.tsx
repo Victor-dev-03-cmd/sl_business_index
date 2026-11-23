@@ -189,6 +189,14 @@ export default function BusinessDetailsClient({ business, galleryUrls, services 
         business?.address?.split(",").pop()?.trim() || "Unknown",
       );
 
+      // G0-16: when the verified server counter is enabled, do not send a
+      // second direct browser RPC or a redundant user-scoped view write.
+      // The server logs and increments atomically; a disabled/missing backend
+      // fails closed for counts rather than falling back to anonymous mutation.
+      if (process.env.NEXT_PUBLIC_G0_VERIFIED_VIEW_COUNT_ENABLED === "true") {
+        return;
+      }
+
       const {
         data: { user },
       } = await supabase.auth.getUser();
