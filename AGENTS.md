@@ -1,5 +1,9 @@
 # SLBusinessIndex — repository handoff for coding agents
 
+## 2026-11-23 — G0-09 browser engine acceptance CI candidate
+Added isolated Playwright Chromium Android, WebKit iPhone and desktop browser smoke for anonymous vendor/admin/registration redirects, login/signup navigation and email form, no real Auth credentials, providers or production DB calls. Entire CI uses local Next build and dummy Supabase; physical-device real signed-in QA remains a gate. See docs/growth/G0_09_BROWSER_DEVICE_ACCEPTANCE_20261123.md. Pending PR CI; no production migrations, no G1.
+
+
 ## 2026-11-23 — G0-08 verified and merged, operator release still blocked
 [PR #153](https://github.com/Victor-dev-03-cmd/sl_business_index/pull/153) merged at `33f3b5187a9c0d84f5a0190536e3e76dfff7523d`, exact final PR head `bcdffffc2ddc6e0ac9f994496f06fa6e7f6e6b53`. **5/5 GitHub workflows PASS**: G0 integrity 45105335803 (lead/review/billing and Bun backup-copy), Next.js 45105335809, P1 integrated 45105335819, Independent PG Billing 45105335804, Billing V2 45105335826. Backup-copy Bun CI **6/6 PASS**, including interactive PTY unmounted-drive refusal. Read-only production preflight **6/6 PASS** on current frozen baseline: four RPC hashes/owner/grants, 14 RLS tables, 47 history records, 2 existing review mismatches, no wallet drift/overcap, legacy anonymous lead policy/grant. New tooling only; **no actual external copy**, no new independent-passphrase archive, no physical-device acceptance, no live DB migration, no wallet policy approval, no extra paid service. G0 master gates remain **0/10**; G1 not started. See [G0-08 handoff](docs/growth/G0_08_RELEASE_SAFETY_AND_BACKUP_COPY_20261123.md).
 
