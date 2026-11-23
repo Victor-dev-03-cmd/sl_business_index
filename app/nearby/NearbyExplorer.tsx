@@ -129,6 +129,7 @@ function initialChoice(params: ReturnType<typeof useSearchParams>): LocationChoi
       if (districtName) return { lat, lng, label: districtName + " District", kind: "district" };
       const townName = params.get("town");
       if (townName) return { lat, lng, label: townName + " · Selected town", kind: "town" };
+      if (params.get("source") === "gps") return { lat, lng, label: "Location from recent GPS search", kind: "gps" };
       return { lat, lng, label: "Selected map area", kind: "coordinates" };
     }
   }
@@ -155,7 +156,10 @@ export default function NearbyExplorer() {
   });
   const [mapZoom, setMapZoom] = useState(() => searchParams.has("lat") ? 13 : 8);
   const [pendingArea, setPendingArea] = useState<{ lat: number; lng: number; zoom: number } | null>(null);
-  const [userPosition, setUserPosition] = useState<{ lat: number; lng: number } | null>(null);
+  const [userPosition, setUserPosition] = useState<{ lat: number; lng: number } | null>(() => {
+    const initial = initialChoice(searchParams);
+    return initial.kind === "gps" ? { lat: initial.lat, lng: initial.lng } : null;
+  });
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationNotice, setLocationNotice] = useState("");
   const [locationNoticeType, setLocationNoticeType] = useState<"error" | "success">("error");
@@ -566,6 +570,7 @@ export default function NearbyExplorer() {
     if (nextQuery) params.set("q", nextQuery);
     if (nextCategory) params.set("category", nextCategory);
     if (nextLocation.kind === "district") params.set("district", nextLocation.label.replace(" District", ""));
+    if (nextLocation.kind === "gps") params.set("source", "gps");
     router.replace("/nearby?" + params.toString(), { scroll: false });
   };
 

@@ -278,7 +278,7 @@ export default function HomePageClient() {
     });
   };
 
-  const handleUseCurrentLocation = (autoSearch: boolean = false) => {
+  const handleUseCurrentLocation = (autoSearch: boolean = false, nextSearch?: URLSearchParams) => {
     // Begin native permission request synchronously on the user's click.
     locationController.current?.abort();
     const controller = new AbortController();
@@ -291,10 +291,11 @@ export default function HomePageClient() {
         const coords = { lat: fix.lat, lng: fix.lng };
         setUserCoords(coords);
         if (autoSearch) {
-          const params = new URLSearchParams({
-            lat: coords.lat.toString(), lng: coords.lng.toString(),
-            radius: "5000", source: "gps",
-          });
+          const params = new URLSearchParams(nextSearch?.toString());
+          params.set("lat", coords.lat.toString());
+          params.set("lng", coords.lng.toString());
+          params.set("radius", params.get("radius") || "5000");
+          params.set("source", "gps");
           router.push("/nearby?" + params.toString());
         }
       })
