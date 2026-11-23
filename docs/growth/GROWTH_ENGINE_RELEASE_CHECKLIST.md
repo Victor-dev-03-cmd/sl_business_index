@@ -151,6 +151,8 @@ Current position: [G0 manual backup operator checkpoint](G0_07_MANUAL_BACKUP_OPE
 
 | 2026-11-23 | [G0-13 live catalog risk triage](G0_13_LIVE_CATALOG_RISK_TRIAGE_20261123.md): seven source SQL bodies compared with SELECT-only production catalog. Storage RLS remains enabled; March bucket file does not disable RLS, legacy broad GRANT is unsafe to replay, geography current, wallet/campaign ACLs sampled and 3 anon-callable definer functions unpinned. | G0-01 OPEN; 0/7 foundation, 0/10 product | Remaining 88 body/object parity + 13 historical, public definer and signup/storage negatives, owner decisions |
 
+| 2026-11-23 | [G0-14 public RPC/semantic review](G0_14_PUBLIC_RPC_SEMANTIC_CATALOG_20261123.md): SELECT-only live function bodies and real semantic/evaluation schema presence; unpinned 3 anonymous definer APIs, unrestricted-in-body view increment risk, research vector/RLS/verification bucket evidence | G0-01 and G0-03 OPEN; foundation 0/7, product 0/10 | Disposable public RPC rate/ACL/path negatives, historical object parity and 88 SQL provenance, owner backup/device gates |
+
 ### Update protocol
 Add dated checkpoint per work package: exact parent/commit/branch/PR, file paths, schema and migration status, CI commands and counts, app/provider flags, Vercel URL/id/state, owner A/B and device results, costs/approval, blockers and next earliest unchecked item. A checked box requires evidence scoped to that actual acceptance condition. If a regression invalidates a gate, reopen it with reason. No secret values, customer data, invented test outcomes or premature global release. Preserve old checkpoints.
 
