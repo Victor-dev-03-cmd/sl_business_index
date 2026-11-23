@@ -23,7 +23,7 @@ import { rankSemanticV3Beta } from "@/lib/discovery/semanticBetaV3";
 import { resolveSmartSearch, radiusSteps } from "@/lib/discovery/smartSearch";
 import { useSearchDictionary } from "@/lib/discovery/useSearchDictionary";
 import { recordNearbySample } from "@/lib/discovery/diagnostics";
-import { alreadyGrantedLocationPermission, locationError, requestPreciseLocation } from "@/lib/location/precise-geolocation";
+import { locationError, requestPreciseLocation } from "@/lib/location/precise-geolocation";
 
 const LeafletMap = dynamic(() => import("@/components/LeafletMap"), {
   ssr: false,
@@ -250,7 +250,7 @@ export default function NearbyExplorer() {
       // island-wide; manual town/district searches retain disclosed expansion.
       const steps = location.kind === "default"
         ? [500000]
-        : location.kind === "gps"
+        : (location.kind === "gps" || location.kind === "coordinates")
           ? [radius]
           : normalizedSearch ? radiusSteps(radius) : [radius];
       let usedRadius = radius;
@@ -579,8 +579,8 @@ export default function NearbyExplorer() {
   };
 
   const locateMe = () => {
-    // Called directly from the user gesture; an already granted permission
-    // may also refresh on page load without presenting a surprise prompt.
+    // Called directly from the user gesture: iOS Safari/Chrome and Android
+    // must be able to ask for permission without a page-load race.
     locationController.current?.abort();
     const controller = new AbortController();
     locationController.current = controller;
@@ -614,18 +614,9 @@ export default function NearbyExplorer() {
       });
   };
 
-  useEffect(() => {
-    if (location.kind !== "default") return;
-    let active = true;
-    // Some browsers don't implement the Permissions API; in that case the
-    // visible "Use my location" button is the reliable user-gesture trigger.
-    void alreadyGrantedLocationPermission().then(granted => {
-      if (active && granted && !locationController.current) locateMe();
-    });
-    return () => { active = false; };
-  // Only run when entering a default/unknown-area state, not during GPS updates.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.kind]);
+  // Geolocation starts ONLY on the user's tap. iOS WebKit can stall a
+  // page-load location request even with a previously granted permission;
+  // user activation also gives consistent first-visit permission behavior.
 
   useEffect(() => () => { locationController.current?.abort(); }, []);
 

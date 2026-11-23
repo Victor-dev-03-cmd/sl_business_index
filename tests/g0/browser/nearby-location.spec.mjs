@@ -18,30 +18,37 @@ test('unknown GPS does not impersonate Colombo; first visit presents explicit ch
   await expect(page.getByText('Location not set. Use GPS to find businesses near you, or choose a town.')).toBeVisible();
 });
 
-test('GPS permission grants an accurate synthetic fix across engines',async({page,context},testInfo)=>{
-  test.setTimeout(45_000);
-  await context.grantPermissions(['geolocation'],{origin:'http://127.0.0.1:3098'});
-  await context.setGeolocation({latitude:8.756,longitude:80.496,accuracy:48});
+test('user tap applies an accurate synthetic GPS fix across engines',async({page,context},testInfo)=>{
+  // GitHub headless WebKit's native location provider remained pending
+  // despite grantPermissions; explicitly inject a provider response there.
+  // Chromium exercises Playwright's browser-level GPS mock. Neither is a
+  // physical iPhone/Android positioning test.
+  if(testInfo.project.name==='ios-webkit'){
+    await page.addInitScript(()=>{
+      Object.defineProperty(navigator,'geolocation',{
+        configurable:true,
+        value:{
+          getCurrentPosition:(success)=>{
+            setTimeout(()=>success({
+              coords:{latitude:8.756,longitude:80.496,accuracy:48},
+              timestamp:Date.now(),
+            }),20);
+          },
+          watchPosition:()=>1,
+          clearWatch:()=>{},
+        },
+      });
+    });
+  } else {
+    await context.grantPermissions(['geolocation'],{origin:'http://127.0.0.1:3098'});
+    await context.setGeolocation({latitude:8.756,longitude:80.496,accuracy:48});
+  }
   await page.goto('/nearby',{waitUntil:'domcontentloaded'});
   const button=page.locator('[data-nearby-action="locate"]');
   await expect(button).toBeVisible();
-  const enabled=await button.isEnabled();
-  if(enabled) await button.click();
-  await page.waitForTimeout(2200);
-  const diagnostics=await page.evaluate(async()=>{
-    let permission='unsupported';
-    try {permission=(await navigator.permissions.query({name:'geolocation'})).state;} catch {}
-    return {
-      secure:window.isSecureContext,
-      hasGeolocation:!!navigator.geolocation,
-      permission,
-      pending:document.querySelector('[data-nearby-action="locate"]')?.disabled,
-      notice:document.querySelector('[data-nearby-location-status]')?.textContent?.slice(0,220)||'',
-      currentArea:document.querySelector('[aria-label="Choose district or town"]')?.textContent?.slice(0,110)||'',
-    };
-  });
-  console.log('Synthetic GPS '+testInfo.project.name+': '+JSON.stringify({buttonEnabled:enabled,...diagnostics}));
-  await expect(page.getByText(/GPS location · ±48 m/).first()).toBeVisible({timeout:30000});
+  await expect(button).toBeEnabled();
+  await button.click(); // Native permission requests must originate on a tap.
+  await expect(page.getByText(/GPS location · ±48 m/).first()).toBeVisible({timeout:12000});
   await expect(page.getByText(/GPS confirmed.*selected.*radius/).first()).toBeVisible();
   await expect(page.getByText('Colombo · Starting area')).toHaveCount(0);
 });

@@ -147,17 +147,6 @@ export function requestPreciseLocation(options: RequestOptions = {}): Promise<Pr
   });
 }
 
-export async function alreadyGrantedLocationPermission(): Promise<boolean> {
-  // Query is optional. Safari and privacy-focused browsers may not expose it;
-  // do not automatically trigger a prompt outside an explicit user gesture.
-  if (typeof navigator === 'undefined' || !navigator.permissions?.query) return false;
-  try {
-    const result = await navigator.permissions.query({name: 'geolocation'});
-    return result.state === 'granted';
-  } catch {
-    return false;
-  }
-}
 
 export function locationError(error: unknown): LocationFailure {
   return error instanceof LocationFailure ? error : problem('unavailable');
