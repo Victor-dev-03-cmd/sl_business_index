@@ -24,4 +24,4 @@ jobs:
       - name: G0 owner scoped authorization and immutable exit status
         run: node --test tests/g1/owner-decisions.test.mjs
       - name: G1 synthetic owner-A/B knowledge allowlist / no provider calls
-        run: bun test tests/g1/read-only-knowledge.test.mjs
+        run: bun test tests/g1/read-only-knowledge.test.mjs tests/g1/knowledge-resolver-contract.test.mjs

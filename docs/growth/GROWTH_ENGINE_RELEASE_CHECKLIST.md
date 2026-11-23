@@ -165,6 +165,8 @@ Current position: [G0 manual backup operator checkpoint](G0_07_MANUAL_BACKUP_OPE
 
 | 2026-11-24 | [Owner scoped G0 choices + G1 isolated engineering](G1_01_ISOLATED_READ_ONLY_CONTEXT_20261124.md): read-only code on draft branch only, refund manual admin-reviewed (enforcement TBD), only preapproved Marketing providers with unchanged access, desktop GPS remains blocker until physical fix/retest | **Not G0 signoff**, G0 exit 0/7; GrowthOS release 0/10; no G1 deployment/main merge/live DB/paid resources | Audit refund runtime enforcement; G0 real QA, consent, secure RPC cutover, fresh backup & recovery evidence; owner release decision later |
 
+| 2026-11-24 | [G1-03 isolated owner-scoped resolver contract](G1_03_ISOLATED_OWNER_RESOLVER_20261124.md): draft PR #168, injected mock read-only adapter, UUID/auth/approved+owner checks, narrow projections, related record A/B validation and synthetic Bun tests | **Not G0 exit**, 0/7 foundation gates and 0/10 master release; no SSR/live DB/production wiring and no provider activation | Real signed-in A/B and G0 security/consent/backup/physical GPS acceptance before any production integration |
+
 ### Update protocol
 Add dated checkpoint per work package: exact parent/commit/branch/PR, file paths, schema and migration status, CI commands and counts, app/provider flags, Vercel URL/id/state, owner A/B and device results, costs/approval, blockers and next earliest unchecked item. A checked box requires evidence scoped to that actual acceptance condition. If a regression invalidates a gate, reopen it with reason. No secret values, customer data, invented test outcomes or premature global release. Preserve old checkpoints.
 
