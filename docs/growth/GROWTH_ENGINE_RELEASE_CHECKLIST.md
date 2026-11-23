@@ -159,6 +159,8 @@ Current position: [G0 manual backup operator checkpoint](G0_07_MANUAL_BACKUP_OPE
 
 | 2026-11-24 | [G0-17 verified badge and cutover readiness](G0_17_BADGE_AND_VIEW_CUTOVER_READINESS_20261124.md): blue seal/white tick in Business Details, distinct registration icon, 503 fail-closed flag mismatch, Bun config + badge CI tests, secret-redacting preflight, live SELECT-only catalog preflight | UI/code only; production new RPC absent, legacy anon access remains; foundation 0/7, master 0/10 | Owner-backed staging, backup, migration approval, real A/B tests, coordinated legacy revoke |
 
+| 2026-11-24 | [G0-17B verified badge fix](G0_17B_VERIFIED_BADGE_DATA_CONTRACT_FIX_20261124.md): production read-only 23 approved; 4 true approved+verified hidden by `can_show_badge=false`, 1 flag-only false positive; centralized server-mapped UI eligibility, blue circle/white tick, Bun tests | UI fix only; no production SQL; foundation 0/7, master 0/10 | PR exact CI and Vercel deployed commit, physical UI smoke; G0-17 view-counter cutover separately owner-gated |
+
 ### Update protocol
 Add dated checkpoint per work package: exact parent/commit/branch/PR, file paths, schema and migration status, CI commands and counts, app/provider flags, Vercel URL/id/state, owner A/B and device results, costs/approval, blockers and next earliest unchecked item. A checked box requires evidence scoped to that actual acceptance condition. If a regression invalidates a gate, reopen it with reason. No secret values, customer data, invented test outcomes or premature global release. Preserve old checkpoints.
 

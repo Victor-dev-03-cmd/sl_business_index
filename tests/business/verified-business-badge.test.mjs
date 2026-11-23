@@ -16,6 +16,10 @@ test('verified business displays a blue seal with an interior white check, not a
 
   assert.doesNotMatch(detail, /ShieldCheck/);
   assert.match(detail, /\{verified&&<div[^>]*><VerifiedBadge size=\{15\}\/> <span>Verified Business<\/span><\/div>\}/);
-  assert.match(detail, /business\.status === "approved" && business\.can_show_badge === true/);
+  assert.match(detail, /isApprovedVerifiedBusiness\(business\)/);
+  assert.doesNotMatch(detail, /business\.can_show_badge === true/);
+  const rule = read('lib/business-verification.ts');
+  assert.match(rule, /verification === "approved"/);
+  assert.match(rule, /business\.is_verified === true/);
   assert.match(detail, /business\.is_registered&&!verified&&<p[^>]*><Building2/);
 });
