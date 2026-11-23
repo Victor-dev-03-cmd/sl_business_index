@@ -72,3 +72,13 @@ test('Nearby mobile layout is scoped; original map/search and V3 logic remain',(
   assert.match(styles,/\.slbi-nearby-tabs/);
   assert.doesNotMatch(styles,/\.slbi-home-/);
 });
+
+
+// GPS is a user-controlled capability, never a guessed Colombo origin.
+test('Nearby never guesses Colombo as the user GPS location and uses the shared precise fix',()=>{
+  assert.match(explorer,/Sri Lanka · Choose your area/);
+  assert.doesNotMatch(explorer,/Colombo · Starting area/);
+  assert.match(explorer,/requestPreciseLocation\(/);
+  assert.match(explorer,/location\.kind === "gps"/);
+  assert.match(explorer,/enabled: location\.kind !== "default"/);
+});

@@ -6,6 +6,8 @@ on:
       - 'docs/growth/g0/**'
       - 'tests/g0/**'
       - 'scripts/g0/**'
+      - 'lib/location/**'
+      - 'tests/location/**'
       - '.github/workflows/g0-foundation-integrity.yml'
   workflow_dispatch:
 permissions:
@@ -98,4 +100,4 @@ jobs:
         with:
           bun-version: '1.3.11'
       - name: Synthetic backup-copy hash and unsafe path tests (no production bytes)
-        run: bun test tests/g0/backup-copy.test.mjs
+        run: bun test tests/g0/backup-copy.test.mjs tests/location/precise-geolocation.test.mjs
