@@ -102,6 +102,7 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f docs/growth/SECURE_EVENT_INGESTION_REVIEW_ONLY.sql
           psql -v ON_ERROR_STOP=1 --single-transaction -f docs/growth/g0/release/VIEW_COUNT_FORWARD_BODY.sql
           psql -v ON_ERROR_STOP=1 -f tests/g0/verified_view_counter.sql
+          bash tests/g0/verified_view_concurrency.sh
 
   backup-copy-contract:
     runs-on: ubuntu-latest
