@@ -56,11 +56,13 @@ dst_dev=$(findmnt -n -o SOURCE -T "$root")
 # Follow the entire single-parent block-device chain, including LUKS/dm mappings.
 # Unknown or multi-parent LVM/RAID topologies are blocked for separate manual review.
 physical_disk(){
-  local dev=$1 parents next i=0
+  local dev=$1 parents next kind i=0
   [[ -b "$dev" ]] || fail 'Backing filesystem device is not a block device'
   while (( i < 12 )); do
     parents=$(lsblk -n -o PKNAME "$dev" | sed '/^[[:space:]]*$/d')
     if [[ -z "$parents" ]]; then
+      kind=$(lsblk -ndo TYPE "$dev")
+      [[ "$kind" == disk ]] || fail 'Backing device is loop/virtual/unknown, not proven separate physical disk'
       printf '%s\n' "$(basename "$dev")"
       return 0
     fi
