@@ -74,6 +74,7 @@ jobs:
           psql -v ON_ERROR_STOP=1 --single-transaction -f docs/growth/g0/release/REVIEW_FORWARD_BODY.sql
           psql -v ON_ERROR_STOP=1 -f tests/g0/review_cache.sql
           bash tests/g0/review_cache_concurrency.sh
+          psql -v ON_ERROR_STOP=1 -f tests/g0/review_public_contract.sql
           bash tests/g0/release_drift.sh review
           psql -v ON_ERROR_STOP=1 -f tests/g0/review_recovery.sql
       - name: Wallet entitlement and refund edge cases
