@@ -35,7 +35,7 @@ test('Mobile results use compact summary instead of the multirow diagnostic bloc
   assert.match(explorer,/mt-2\.5 hidden flex-wrap items-center justify-between gap-3 md:flex/);
   assert.match(explorer,/mt-2\.5 hidden flex-wrap items-center justify-between gap-2 md:flex/);
   assert.match(explorer,/Semantic V3 Beta · ON/);
-  assert.match(explorer,/className="mx-auto hidden max-w-\[1800px\] items-center justify-between gap-3 border-t border-\[#EBF0F4\]/);
+  assert.match(explorer,/className="mx-auto flex max-w-\[1800px\] items-center justify-between gap-3 border-t border-\[#EBF0F4\]/);
   assert.match(styles,/@media \(max-width: 767px\)/);
   assert.match(styles,/\.slbi-nearby-root\s*\{[^}]*height: 100dvh;/);
   assert.match(styles,/\.slbi-nearby-results-scroll\s*\{[^}]*-webkit-overflow-scrolling: touch;/);
