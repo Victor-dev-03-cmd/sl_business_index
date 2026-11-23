@@ -42,6 +42,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { supabase } from "@/lib/supabaseClient";
 import VerifiedBadge from "@/app/components/VerifiedBadge";
+import { isApprovedVerifiedBusiness } from "@/lib/business-verification";
 import BrandIcon from "@/app/components/BrandIcon";
 import {useSavedBusinesses} from "@/lib/public-saved-businesses";
 import ReportModal from "@/app/components/ReportModal";
@@ -360,9 +361,9 @@ export default function BusinessDetailsClient({ business, galleryUrls, services 
   };
 
   // Display only business-supplied contact and verification details.
-  const verified = Boolean(
-    business.status === "approved" && business.can_show_badge === true && (business.is_verified === true || business.verification_status === "verified")
-  );
+  // Only business-level approval and verification grant the blue tick.
+  // can_show_badge is a legacy flag not synchronized by approval flows.
+  const verified = isApprovedVerifiedBusiness(business);
   const lat = Number(business.latitude);
   const lng = Number(business.longitude);
   const hasCoordinates = business.latitude != null && business.longitude != null && Number.isFinite(lat) && Number.isFinite(lng) &&
