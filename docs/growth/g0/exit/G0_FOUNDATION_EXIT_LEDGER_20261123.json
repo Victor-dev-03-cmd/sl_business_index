@@ -1,0 +1,135 @@
+{
+  "schema_version": "slbi-g0-foundation-exit-v1",
+  "observed_utc": "2026-11-23T09:18:42Z",
+  "application_commit": "cc7b001685fbe327b1387db5078a93f47e5625a2",
+  "production_deployment": {
+    "commit": "cc7b001685fbe327b1387db5078a93f47e5625a2",
+    "status": "READY",
+    "alias": "www.slbusinessindex.com"
+  },
+  "production_read_only_preflight": {
+    "status": "PASS",
+    "count": 6,
+    "total": 6,
+    "meaning": "Frozen baseline intact; not authorization for production writes",
+    "review_cache_mismatches": 2,
+    "scoped_rls": "14/14",
+    "migration_history_count": 47,
+    "wallet_drift_count": 0
+  },
+  "security_advisor_triage": {
+    "status": "REVIEW_REQUIRED",
+    "sensitive_table_unsafe_read_acl_count": 0,
+    "extension_owned_postgis_reference_table": true,
+    "application_anon_definer_count": 3,
+    "application_definer_mutable_search_path_count": 14,
+    "meaning": "Counts indicate review scope, not demonstrated exploit; do not alter extension-managed objects"
+  },
+  "phase_exit": {
+    "status": "BLOCKED",
+    "accepted": 0,
+    "total": 7,
+    "requires_all_gate_acceptance": true
+  },
+  "master_product_release": {
+    "status": "BLOCKED",
+    "accepted": 0,
+    "total": 10,
+    "meaning": "Whole GrowthOS product gates across G1–G9; not prerequisites to start engineering G1 once G0 is accepted"
+  },
+  "g0_gates": [
+    {
+      "id": "G0-01",
+      "name": "runtime and migration provenance",
+      "status": "OPEN",
+      "evidence": [
+        "production READY at recorded SHA",
+        "8/8 CI on previously merged GPS fix",
+        "47 migration records unchanged",
+        "34/47 live SQL content matches documented"
+      ],
+      "blockers": [
+        "Residual migration equivalence and 88 repository SQL-file classifications remain unreviewed",
+        "Approval of exact current runtime/flags and migration inventory"
+      ]
+    },
+    {
+      "id": "G0-02",
+      "name": "consent-aware events, lead provenance and privacy",
+      "status": "OPEN",
+      "evidence": [
+        "Legacy enquiry policy frozen and currently passing preflight",
+        "Disposable real-JWT lead tests previously passed"
+      ],
+      "blockers": [
+        "Legacy anonymous insert path remains live",
+        "Provenance, privacy, expiry, mobile compatibility and live cutover not accepted"
+      ]
+    },
+    {
+      "id": "G0-03",
+      "name": "tenant auth and privileged database security",
+      "status": "OPEN",
+      "evidence": [
+        "14/14 scoped RLS",
+        "Protected 4 RPC hashes and grants unchanged",
+        "Disposable owner A/B/admin negative JWT tests passed",
+        "Sensitive private ACL snapshot 0 unsafe reads"
+      ],
+      "blockers": [
+        "Owner/vendor/admin real signed-in device acceptance missing",
+        "Review application SECURITY DEFINER and mutable search_path advisor findings; explicit disposition per routine"
+      ]
+    },
+    {
+      "id": "G0-04",
+      "name": "billing and wallet source-of-truth",
+      "status": "OPEN",
+      "evidence": [
+        "Wallet ledger drift 0 and overcap 0 at snapshot",
+        "Disposable refund and billing tests passed"
+      ],
+      "blockers": [
+        "Wallet refund after downgrade policy and hybrid billing reconciliation not authorized",
+        "Provider cost and payment settlement E2E not reconciled"
+      ]
+    },
+    {
+      "id": "G0-05",
+      "name": "P2-37 marketing and real provider acceptance",
+      "status": "OPEN",
+      "evidence": [
+        "Existing Marketing Studio unchanged and QA-only"
+      ],
+      "blockers": [
+        "Authenticated Poster/Caption/Planner, assets, quotas and language acceptance",
+        "Approved provider/OAuth cost boundaries and consent tests"
+      ]
+    },
+    {
+      "id": "G0-06",
+      "name": "responsive UI and physical device baseline",
+      "status": "OPEN",
+      "evidence": [
+        "Simulated Android Chromium, iOS WebKit and desktop browser QA 27/27 previously passed",
+        "Owner reports mobile location works"
+      ],
+      "blockers": [
+        "Owner reports desktop browser GPS still unreliable; record as known exception pending repro",
+        "Real Android/iPhone and desktop authenticated QA D01–D10 not evidenced"
+      ]
+    },
+    {
+      "id": "G0-07",
+      "name": "G1 entry contract and owner decision",
+      "status": "OPEN",
+      "evidence": [
+        "G0 release package, isolated DB restoration and lead/review recovery rehearsals available"
+      ],
+      "blockers": [
+        "Owner review of G0-01…06 disposition, scoped production migration/backup policy and G1 data contract acceptance",
+        "New independently encrypted archive and separate physical copy not verified"
+      ]
+    }
+  ]
+}
