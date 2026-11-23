@@ -18,7 +18,7 @@ jobs:
     timeout-minutes: 10
     strategy:
       matrix:
-        domain: [lead, review, billing, public_rpc]
+        domain: [lead, review, billing, public_rpc, view_counter]
     services:
       postgres:
         image: postgres:17-alpine
@@ -93,6 +93,16 @@ jobs:
         if: matrix.domain == 'public_rpc'
         run: |
           psql -v ON_ERROR_STOP=1 -f tests/g0/public_rpc_negative.sql
+
+      - name: G0-16 verified view counter with isolated PostgreSQL security boundaries
+        if: matrix.domain == 'view_counter'
+        run: |
+          psql -v ON_ERROR_STOP=1 -f tests/p0/security_bootstrap.sql
+          psql -v ON_ERROR_STOP=1 -f tests/p0/ingestion_bootstrap.sql
+          psql -v ON_ERROR_STOP=1 -f docs/growth/SECURE_EVENT_INGESTION_REVIEW_ONLY.sql
+          psql -v ON_ERROR_STOP=1 --single-transaction -f docs/growth/g0/release/VIEW_COUNT_FORWARD_BODY.sql
+          psql -v ON_ERROR_STOP=1 -f tests/g0/verified_view_counter.sql
+          bash tests/g0/verified_view_concurrency.sh
 
   backup-copy-contract:
     runs-on: ubuntu-latest
