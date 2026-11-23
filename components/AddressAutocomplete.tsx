@@ -18,7 +18,8 @@ import dynamic from 'next/dynamic';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabaseClient';
 import { isPlausibleSriLankaPin } from '@/lib/businessLocation';
-import { buildVendorEnteredArea, describeGeolocationFailure, isReadableBusinessArea, SRI_LANKAN_DISTRICTS } from '@/lib/businessPinFallback';
+import { buildVendorEnteredArea, isReadableBusinessArea, SRI_LANKAN_DISTRICTS } from '@/lib/businessPinFallback';
+import { requestPreciseLocation, locationError } from '@/lib/location/precise-geolocation';
 
 const LeafletMap = dynamic(() => import('@/components/LeafletMap'), {
   ssr: false,
@@ -29,7 +30,7 @@ const LeafletMap = dynamic(() => import('@/components/LeafletMap'), {
   )
 });
 
-const defaultCenter = { lat: 6.9271, lng: 79.8612 };
+const defaultCenter = { lat: 7.8731, lng: 80.7718 }; // Sri Lanka overview, not inferred vendor GPS
 
 interface AddressAutocompleteProps {
   onLocationSelectAction: (lat: number, lng: number, address: string) => void;
@@ -75,6 +76,8 @@ export default function AddressAutocomplete({
   });
 
   const [isLocating, setIsLocating] = useState(false);
+  const [gpsAccuracyNotice, setGpsAccuracyNotice] = useState("");
+  const gpsController = useRef<AbortController | null>(null);
   const [manualAreaMode, setManualAreaMode] = useState(false);
   const [manualLocality, setManualLocality] = useState('');
   const [manualDistrict, setManualDistrict] = useState('');
@@ -93,7 +96,10 @@ export default function AddressAutocomplete({
   const [zoom, setZoom] = useState(initialLat != null && initialLng != null && isPlausibleSriLankaPin(initialLat, initialLng) ? 16 : 10);
   const [nearbyBusinesses, setNearbyBusinesses] = useState<any[]>([]);
   const appliedInitialLocation = useRef('');
-  useEffect(() => () => { locationRequestId.current += 1; }, []);
+  useEffect(() => () => {
+    locationRequestId.current += 1;
+    gpsController.current?.abort();
+  }, []);
 
   // The registration page can receive a preselected map location via URL
   // after this dynamic component has mounted.
@@ -188,6 +194,7 @@ export default function AddressAutocomplete({
   }, [setValue, clearSuggestions, onLocationSelectAction, onLocationConfirmedChange]);
 
   const handleMarkerDragEnd = useCallback(async (lat: number, lng: number) => {
+    gpsController.current?.abort();
     const requestId = ++locationRequestId.current;
     setIsLocating(false);
     if (!isPlausibleSriLankaPin(lat, lng)) {
@@ -260,52 +267,38 @@ export default function AddressAutocomplete({
   };
 
   const findMyLocation = () => {
-    if (!window.isSecureContext) {
-      toast.error('Browser location needs HTTPS. Open the secure website or use the manual map pin.');
-      return;
-    }
-    if (!navigator.geolocation) {
-      toast.error('This browser cannot retrieve GPS. Click your shop entrance on the map instead.');
-      return;
-    }
+    gpsController.current?.abort();
+    const controller = new AbortController();
+    gpsController.current = controller;
     const requestId = ++locationRequestId.current;
     setIsLocating(true);
-    const locate = (highAccuracy: boolean) => {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          if (locationRequestId.current !== requestId) return;
-          const { latitude, longitude, accuracy } = position.coords;
-          if (!isPlausibleSriLankaPin(latitude, longitude)) {
-            setIsLocating(false);
-            toast.error('The detected location is outside Sri Lanka. Use the map to mark your shop instead.');
-            return;
-          }
-          if (Number.isFinite(accuracy) && accuracy > 150) {
-            toast.warning('Approximate location (' + Math.round(accuracy) + ' m). Drag the map marker to the actual shop entrance.');
-          }
-          // GPS locates the DEVICE, not the business. The same map-pin,
-          // editable-area, and shop-entrance validation must still apply.
-          void handleMarkerDragEnd(latitude, longitude);
-        },
-        (error) => {
-          if (locationRequestId.current !== requestId) return;
-          // Desktop hardware and many phones can time out acquiring precise
-          // GPS; attempt coarse/network positioning once before failing.
-          if (highAccuracy && (error.code === 2 || error.code === 3)) {
-            locate(false);
-            return;
-          }
+    setGpsAccuracyNotice("");
+    // Same permission and accuracy validator as Home and Nearby. A device
+    // position is never equivalent to an actual business entrance.
+    void requestPreciseLocation({signal: controller.signal})
+      .then(fix => {
+        if (locationRequestId.current !== requestId || controller.signal.aborted) return;
+        if (!isPlausibleSriLankaPin(fix.lat,fix.lng)) {
+          toast.error('Location appears outside Sri Lanka. Select your actual shop entrance on the map.');
+          return;
+        }
+        const accuracy = Math.round(fix.accuracyMeters);
+        setGpsAccuracyNotice('Device GPS ±' + accuracy + ' m. Confirm the pin marks the real business entrance; move it if needed.');
+        if (accuracy > 150) toast.warning('GPS is approximate (±' + accuracy + ' m). Drag the pin to your business entrance.');
+        void handleMarkerDragEnd(fix.lat,fix.lng);
+      })
+      .catch(error => {
+        if (locationRequestId.current !== requestId || controller.signal.aborted) return;
+        const message = locationError(error).message;
+        setGpsAccuracyNotice(message + ' You can place your shop entrance on the map manually.');
+        toast.error(message, {duration: 8000});
+      })
+      .finally(() => {
+        if (gpsController.current === controller) {
+          gpsController.current = null;
           setIsLocating(false);
-          toast.error(describeGeolocationFailure(error));
-        },
-        {
-          enableHighAccuracy: highAccuracy,
-          timeout: highAccuracy ? 12000 : 16000,
-          maximumAge: highAccuracy ? 120000 : 600000,
-        },
-      );
-    };
-    locate(true);
+        }
+      });
   };
 
   return (
@@ -375,6 +368,7 @@ export default function AddressAutocomplete({
             </div>
           </div>
 
+          {gpsAccuracyNotice && <p role="status" aria-live="polite" data-business-gps-notice className="rounded-lg border border-[#E8DDCC] bg-[#FFF9F0] px-3 py-2 text-xs leading-5 text-[#81582B]">{gpsAccuracyNotice}</p>}
           <div className="space-y-2 rounded-lg border border-[#DEDDE3] bg-[#F8F8FA] px-3 py-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-xs font-semibold text-[#33343B]">
