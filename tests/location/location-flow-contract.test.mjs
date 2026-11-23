@@ -17,7 +17,7 @@ test('Hero search passes full keyword/category intent to fresh GPS before routin
   assert.match(home,/params\.set\("source",\s*"gps"\)/);
 });
 test('Nearby only searches an accepted radius for GPS, including map listings',()=>{
-  assert.match(nearby,/location\.kind === "gps"\s*\?\s*\[radius\]/);
+  assert.match(nearby,/\(location\.kind === "gps" \|\| location\.kind === "coordinates"\)\s*\?\s*\[radius\]/);
   assert.match(nearby,/withinGpsRadius\(/);
   assert.match(nearby,/results = location\.kind === "gps"/);
   assert.match(nearby,/mapFeatures = useMemo\(\(\) => visibleBusinesses/);
