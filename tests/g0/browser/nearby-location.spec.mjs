@@ -102,3 +102,46 @@ test('Hero search fails visibly on denied GPS; never fabricates Colombo or drops
   expect(new URL(page.url()).pathname).toBe('/');
   await expect(input).toHaveValue('Hospital');
 });
+
+
+test('Hotel in Colombo uses the requested city instead of asking for device GPS',async({page},testInfo)=>{
+  await page.addInitScript(()=>{
+    Object.defineProperty(navigator,'geolocation',{configurable:true,value:{
+      getCurrentPosition:(_ok,err)=>setTimeout(()=>err({code:1,message:'GPS should not be called for explicit city'}),20)
+    }});
+  });
+  await page.goto('/',{waitUntil:'domcontentloaded'});
+  const input=page.locator(testInfo.project.name==='desktop-chromium'?'#hero-business-query':'#mobile-home-business-query');
+  await expect(input).toBeVisible();
+  await input.fill('Hotels in Colombo');
+  await input.press('Enter');
+  await expect(page).toHaveURL(url=>{
+    const parsed=new URL(url);
+    return parsed.pathname==='/nearby'
+      && parsed.searchParams.get('source')!=='gps'
+      && (parsed.searchParams.get('town')?.toLowerCase()==='colombo'
+          || parsed.searchParams.get('district')?.toLowerCase()==='colombo')
+      && (parsed.searchParams.get('q')||'').toLowerCase().includes('hotel');
+  },{timeout:20000});
+  await expect(page.getByText(/Location permission is blocked/)).toHaveCount(0);
+});
+
+test('explicit Jaffna locality preserves query scope with GPS unavailable',async({page},testInfo)=>{
+  await page.addInitScript(()=>{
+    Object.defineProperty(navigator,'geolocation',{configurable:true,value:{
+      getCurrentPosition:(_ok,err)=>setTimeout(()=>err({code:1,message:'test disabled'}),20)
+    }});
+  });
+  await page.goto('/',{waitUntil:'domcontentloaded'});
+  const input=page.locator(testInfo.project.name==='desktop-chromium'?'#hero-business-query':'#mobile-home-business-query');
+  await input.fill('Restaurant in Jaffna');
+  await input.press('Enter');
+  await expect(page).toHaveURL(url=>{
+    const parsed=new URL(url);
+    return parsed.pathname==='/nearby'
+      && parsed.searchParams.get('source')!=='gps'
+      && (parsed.searchParams.get('town')?.toLowerCase()==='jaffna'
+          || parsed.searchParams.get('district')?.toLowerCase()==='jaffna')
+      && (parsed.searchParams.get('q')||'').toLowerCase().includes('restaurant');
+  },{timeout:20000});
+});
