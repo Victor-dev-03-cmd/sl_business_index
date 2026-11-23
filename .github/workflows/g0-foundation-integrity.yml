@@ -18,7 +18,7 @@ jobs:
     timeout-minutes: 10
     strategy:
       matrix:
-        domain: [lead, review, billing, public_rpc, view_counter]
+        domain: [lead, review, review_public, billing, public_rpc, view_counter]
     services:
       postgres:
         image: postgres:17-alpine
@@ -76,6 +76,19 @@ jobs:
           bash tests/g0/review_cache_concurrency.sh
           bash tests/g0/release_drift.sh review
           psql -v ON_ERROR_STOP=1 -f tests/g0/review_recovery.sql
+      - name: G0-18 separate review public-moderation cache candidate
+        if: matrix.domain == 'review_public'
+        run: |
+          psql -v ON_ERROR_STOP=1 -f tests/p1-release/bootstrap.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113091124_p1_vendor_lead_followups_and_review_owner_rls.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113091146_p1_review_moderation_pending_staff_audit.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113091046_p1_public_api_truncate_lockdown.sql
+          psql -v ON_ERROR_STOP=1 -c "ALTER TABLE public.businesses ADD COLUMN rating numeric DEFAULT 0, ADD COLUMN reviews_count integer DEFAULT 0"
+          psql -v ON_ERROR_STOP=1 --single-transaction -f docs/growth/g0/candidates/REVIEW_PUBLIC_MODERATION_FORWARD_BODY.sql
+          psql -v ON_ERROR_STOP=1 -f tests/g0/review_cache.sql
+          bash tests/g0/review_cache_concurrency.sh
+          psql -v ON_ERROR_STOP=1 -f tests/g0/review_public_contract.sql
+
       - name: Wallet entitlement and refund edge cases
         if: matrix.domain == 'billing'
         run: |
