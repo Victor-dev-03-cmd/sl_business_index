@@ -153,6 +153,8 @@ Current position: [G0 manual backup operator checkpoint](G0_07_MANUAL_BACKUP_OPE
 
 | 2026-11-23 | [G0-14 public RPC/semantic review](G0_14_PUBLIC_RPC_SEMANTIC_CATALOG_20261123.md): SELECT-only live function bodies and real semantic/evaluation schema presence; unpinned 3 anonymous definer APIs, unrestricted-in-body view increment risk, research vector/RLS/verification bucket evidence | G0-01 and G0-03 OPEN; foundation 0/7, product 0/10 | Disposable public RPC rate/ACL/path negatives, historical object parity and 88 SQL provenance, owner backup/device gates |
 
+| 2026-11-23 | [G0-15 disposable public RPC tests](G0_15_PUBLIC_RPC_NEGATIVE_TESTS_20261123.md): synthetic PG17 role/RLS fixture, approved-only suggestions + unbounded caller-specified limit; knowingly reproduces anon definer increment of pending other-tenant business views, no direct anon table UPDATE. Integrated G0 CI public_rpc matrix. | G0-03 OPEN; **known-risk reproducer is not a security pass**; G0 0/7, master 0/10 | Exact PR CI; trace real caller and design guarded/idempotent rate-limited RPC with disposable negatives, separate live approval |
+
 ### Update protocol
 Add dated checkpoint per work package: exact parent/commit/branch/PR, file paths, schema and migration status, CI commands and counts, app/provider flags, Vercel URL/id/state, owner A/B and device results, costs/approval, blockers and next earliest unchecked item. A checked box requires evidence scoped to that actual acceptance condition. If a regression invalidates a gate, reopen it with reason. No secret values, customer data, invented test outcomes or premature global release. Preserve old checkpoints.
 
