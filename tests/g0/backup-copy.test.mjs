@@ -31,4 +31,12 @@ for(const [title,change,pass] of [
 ]){
  test(title,()=>{const x=fixture();try{change(x);const p=run('--verify',x.src,x.copy);if(pass){assert.equal(p.status,0,p.stderr);assert.match(p.stdout,/COPY_BYTES_VERIFIED/);}else{assert.notEqual(p.status,0);}}finally{rmSync(x.root,{recursive:true,force:true});}});
 }
-test('unmounted copy destination fails closed',()=>{const x=fixture();try{assert.notEqual(run('--copy',x.src,x.copy).status,0);}finally{rmSync(x.root,{recursive:true,force:true});}});
+test('unmounted destination is rejected even inside interactive PTY',()=>{
+ const x=fixture();
+ try{
+  const command='bash scripts/g0/verify-independent-backup-copy.sh --copy '+x.src+' '+x.copy;
+  const p=spawnSync('script',['-e','-q','-c',command,'/dev/null'],{encoding:'utf8'});
+  assert.notEqual(p.status,0);
+  assert.match((p.stdout||'')+(p.stderr||''),/Destination must be mounted external filesystem root/);
+ }finally{rmSync(x.root,{recursive:true,force:true});}
+});
