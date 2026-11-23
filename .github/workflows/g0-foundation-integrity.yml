@@ -18,7 +18,7 @@ jobs:
     timeout-minutes: 10
     strategy:
       matrix:
-        domain: [lead, review, billing]
+        domain: [lead, review, billing, public_rpc]
     services:
       postgres:
         image: postgres:17-alpine
@@ -88,6 +88,11 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f tests/g0/billing_refund.sql
           bash tests/g0/release_drift.sh billing
           psql -v ON_ERROR_STOP=1 -f tests/g0/billing_recovery.sql
+
+      - name: G0-15 isolated public RPC negative/baseline regression
+        if: matrix.domain == 'public_rpc'
+        run: |
+          psql -v ON_ERROR_STOP=1 -f tests/g0/public_rpc_negative.sql
 
   backup-copy-contract:
     runs-on: ubuntu-latest
