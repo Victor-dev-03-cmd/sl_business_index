@@ -66,27 +66,7 @@ physical_disk(){
       printf '%s\n' "$(basename "$dev")"
       return 0
     fi
-    [[ "$parents" != *
-printf 'Source disk %s; destination disk %s. Confirm secure independently controlled storage; type COPY: ' "$src_disk" "$dst_disk"
-read -r confirm
-[[ "$confirm" == COPY ]] || fail 'Cancelled'
-base=$(basename "$src")
-[[ "$base" =~ ^slbi-[0-9]{8}T[0-9]{6}Z-[[:alnum:]]+$ ]] || fail 'Unexpected backup directory name'
-copies="$root/slbi-encrypted-copies"
-if [[ ! -e "$copies" ]]; then mkdir -m 700 -- "$copies"; fi
-[[ -d "$copies" && ! -L "$copies" && -O "$copies" && "$(stat -c %a "$copies")" == 700 ]] || fail 'Destination folder must be owner-only 0700'
-target="$copies/$base"
-[[ ! -e "$target" && ! -L "$target" ]] || fail 'Copy exists: never overwrite verified backup'
-tmp=$(mktemp -d "$copies/.partial.XXXXXXXX")
-cleanup(){ if [[ -n "$tmp" && -d "$tmp" ]]; then rm -f -- "$tmp/database.dump.gpg" "$tmp/SHA256SUMS" "$tmp/evidence.txt"; rmdir -- "$tmp" || true; fi; }
-trap cleanup EXIT
-cp -- "$src/database.dump.gpg" "$src/SHA256SUMS" "$src/evidence.txt" "$tmp/"
-chmod 600 -- "$tmp/database.dump.gpg" "$tmp/SHA256SUMS" "$tmp/evidence.txt"
-verify_copy "$tmp"
-mv -- "$tmp" "$target"
-tmp=''
-echo 'COPY_VERIFIED_SEPARATE_PHYSICAL_DRIVE (owner-attested, keep medium disconnected)'
-\n'* ]] || fail 'Ambiguous multi-parent block device'
+    [[ "$parents" != *$'\n'* ]] || fail 'Ambiguous multi-parent block device'
     next=$(printf '%s' "$parents" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
     [[ "$next" =~ ^[[:alnum:]_.-]+$ && -b "/dev/$next" ]] || fail 'Unresolvable physical device ancestry'
     dev="/dev/$next"
