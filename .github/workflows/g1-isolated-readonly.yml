@@ -25,3 +25,6 @@ jobs:
         run: node --test tests/g1/owner-decisions.test.mjs
       - name: G1 synthetic owner-A/B knowledge allowlist / no provider calls
         run: bun test tests/g1/read-only-knowledge.test.mjs tests/g1/knowledge-resolver-contract.test.mjs tests/g1/isolated-ssr-read-adapter.test.mjs
+
+      - name: G1 live three-page SSR read-only integration static security contract
+        run: node --test tests/g1/live-page-integration.test.mjs

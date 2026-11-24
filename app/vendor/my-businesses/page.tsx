@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import { Business } from '@/lib/types';
 import IconsaxIcon from '../components/IconsaxIcon';
+import G1BusinessKnowledgePanel from '../components/G1BusinessKnowledgePanel';
 
 type Status = 'all' | 'approved' | 'pending' | 'rejected' | 'suspended';
 type Sort = 'newest' | 'oldest' | 'name' | 'views';
@@ -226,6 +227,8 @@ export default function MyBusinessesPage() {
           </div>
           {limitReached && <p className="mt-2 text-[10px] font-medium text-[#986b2b]">Your plan's listing allowance is full. Review billing options to add another business.</p>}
         </section>
+
+        <G1BusinessKnowledgePanel location="business" businesses={businesses.map(b=>({id:String(b.id),name:b.name,status:b.status}))}/>
 
         <section className={panel + ' overflow-hidden'}>
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e9edf0] px-5 py-4">

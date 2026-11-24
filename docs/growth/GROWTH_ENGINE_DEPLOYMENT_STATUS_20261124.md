@@ -1,3 +1,5 @@
+> **G1-05 release candidate update, 2026-11-24:** The G1-01…04 *code-only* state below is historical. G1-05 adds actual user-facing read-only Knowledge Summary to My Businesses, Gallery & Services, Marketing Studio, with an authenticated owner-scoped GET endpoint; it is **not automatically live until exact Vercel READY confirmed**. Marketing AI/auto-post is not wired. No G0 production SQL. See [G1-05 details](G1_05_VENDOR_LIVE_KNOWLEDGE_INTEGRATION_20261124.md).
+
 # SLBusinessIndex — What is actually LIVE vs code-only
 Date: 2026-11-24 | Owner-approved deployment policy, supersedes earlier G1 draft-only restriction.
 

@@ -104,7 +104,9 @@ test('only approved published contacts are drawn and changing copy avoids a new 
   assert.doesNotMatch(compose,/OpenAI|Gemini API|createGeminiPosterBrief/);
 });
 test('production Cloudflare provider and Turnstile login remain unchanged',()=>{
-  const login=read('app/login/page.tsx');
+  const loginPage=read('app/login/page.tsx');
+  const login=read('app/components/auth/AuthExperience.tsx');
+  assert.match(loginPage,/AuthExperience mode="login"/);
   const backend=read('app/api/auth/password-login/route.ts');
   assert.match(provider,/const CF_MODEL='@cf\/black-forest-labs\/flux-2-klein-4b'/);
   assert.match(login,/siteKey=\{process\.env\.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY!\}/);
@@ -545,10 +547,11 @@ test('production polish removes only sandbox UI, never owner-only authorization 
 });
 test('stale English fields can no longer be silently exported on Tamil or Sinhala selection',()=>{
   assert.match(lab,/copyLanguageConsistent=isPosterCopyInLanguage/);
-  assert.match(lab,/if\(!artworkSrc\|\|!exactCopy\|\|!copyLanguageConsistent\)return/);
+  assert.match(lab,/if\(!artworkSrc\|\|!exactCopy\|\|!copyLanguageConsistent\|\|generating\|\|artworkKey!==creativeKey\|\|!serviceFocusApproved\)\{/);
+  assert.match(lab,/const outputReady=isCurrentPosterOutput\(/);
+  assert.match(lab,/if\(!outputReady\|\|locked\|\|operationRef\.current\|\|!finalBlob\|\|!finalUrl\|\|!copyLanguageConsistent\|\|!serviceFocusApproved\)return/);
   assert.match(lab,/if\(!copyLanguageConsistent\)\{/);
   assert.match(lab,/Preserve the last successful preview visually during copy\/language edits/);
-  assert.match(lab,/!finalBlob\|\|!finalUrl\|\|composing\|\|!copyLanguageConsistent/);
   assert.match(lab,/if\(!manualHeadline\|\|!isPosterTextInLanguage\(headline,language\)\)/);
   assert.match(lab,/if\(!manualCta\|\|!isPosterTextInLanguage\(cta,language\)\)/);
   assert.match(lab,/if\(!manualOffer\|\|!isPosterTextInLanguage\(offer,language\)\|\|/);
