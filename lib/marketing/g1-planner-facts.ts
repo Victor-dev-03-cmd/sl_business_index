@@ -15,7 +15,7 @@ export function readG1PlannerFacts(response:unknown,businessId:string):G1Planner
  const name=v(brand,'name'),items=services.value,count=gallery.value,verified=v(listing,'verification');
  if(name!==null&&!safe(name))return null;
  if(items!==null&&(!Array.isArray(items)||items.length>10||!items.every(safe)))return null;
- if(count!==null&&(!Number.isInteger(count)||(count as number)<0||(count as number)>12))return null;
+ if(count!==null&&(!Number.isInteger(count as number)||(count as number)<0||(count as number)>12))return null;
  if(typeof verified!=='boolean')return null;
  return {businessId,brandName:name as string|null,
    services:items===null?[]:Array.from(new Set(items as string[])),
