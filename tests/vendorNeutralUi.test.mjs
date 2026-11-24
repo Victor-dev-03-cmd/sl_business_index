@@ -56,8 +56,8 @@ test('Settings Studio uses version-free Tailwind neumorphism and responsive cont
 });
 test('centered desktop top navigation exposes reversible, dismissible dropdowns with restrained corners',()=>{
   assert.match(vendorLayout,/vendor-topbar-center absolute left-1\/2 hidden -translate-x-1\/2/);
-  assert.match(vendorLayout,/min-\[1400px\]:flex/);
-  assert.match(vendorLayout,/min-\[1400px\]:hidden/);
+  assert.match(vendorLayout,/min-\[1600px\]:flex/);
+  assert.match(vendorLayout,/min-\[1600px\]:hidden/);
   assert.match(vendorLayout,/aria-expanded=\{openMenu==='tools'\}/);
   assert.match(vendorLayout,/aria-expanded=\{openMenu==='account'\}/);
   assert.match(vendorLayout,/setOpenMenu\(open=>open==='tools'\?null:'tools'\)/);
