@@ -50,6 +50,8 @@ jobs:
         run: node --experimental-strip-types --test tests/p2CampaignPlannerManualShare.test.mjs
       - name: G1-09 reliable multilingual caption copy regression
         run: node --experimental-strip-types --test tests/p2CampaignPlannerCopy.test.mjs
+      - name: G1-10 Free Campaign Planner caption review
+        run: node --experimental-strip-types --test tests/p2CampaignPlannerCaptionReview.test.mjs
       - name: Typecheck
         run: npx tsc --noEmit
       - name: Production build
