@@ -11,6 +11,7 @@ import {tFor,type CampaignFormat,type CampaignPalette,type CampaignLanguage,type
 import {renderCampaignPoster} from '@/lib/marketing/campaign-poster';
 import {CAMPAIGN_HELP,getCampaignStarterIdeas} from '@/lib/marketing/campaign-starters';
 import {CheckCircle2,Lightbulb,ShieldCheck,ArrowRight} from 'lucide-react';
+import G1PlannerFacts from './G1PlannerFacts';
 
 type Business={id:string;name:string;category:string;city:string|null;status:string|null};
 type CampaignBrief={
@@ -307,6 +308,11 @@ export default function CampaignPlanner(){
                  <span><strong>{business.category}</strong>{business.city?' · '+business.city:''} · {business.status==='approved'?'Published':'Under review'}</span>
                  <Link href={'/vendor/gallery-services?business='+encodeURIComponent(business.id)} className="font-bold text-[#AF6223] hover:underline">Gallery &amp; Services →</Link>
                </div>}
+              {business&&<G1PlannerFacts key={business.id}
+                 businessId={business.id} status={business.status} language={language}
+                 canApply={!offer.trim()}
+                 onUse={message=>setOffer(current=>current.trim()?current:message)}
+              />}
               <div><p className={label}>{copy.objective}</p>
                 <div className="mt-2 grid grid-cols-2 gap-2">
                   {goals.map((g,i)=><button key={g} type="button" aria-pressed={objective===g}
