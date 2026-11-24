@@ -13,6 +13,7 @@ import {CAMPAIGN_HELP,getCampaignStarterIdeas} from '@/lib/marketing/campaign-st
 import {CheckCircle2,Lightbulb,ShieldCheck,ArrowRight} from 'lucide-react';
 import G1PlannerFacts from './G1PlannerFacts';
 import {shareCampaignCaption} from '@/lib/marketing/campaign-manual-share';
+import {reviewCampaignCaption} from '@/lib/marketing/campaign-readiness';
 import {Share2, Copy} from 'lucide-react';
 import {copyCampaignCaption} from '@/lib/marketing/campaign-copy';
 
@@ -84,6 +85,7 @@ export default function CampaignPlanner(){
   const business=businesses.find(b=>b.id===selectedId);
   const brief:CampaignBrief={offer,cta,terms,language,objective,format:posterSize,palette:posterPalette};
   const preview=useMemo(()=>caption(business,brief),[business,offer,cta,terms,language,objective,posterSize,posterPalette]);
+  const captionReview=reviewCampaignCaption({businessName:business?.name||'',message:offer,cta,terms,objective,preview});
   const visible=useMemo(()=>campaigns.filter(c=>c.is_archived===viewArchived)
     .filter(c=>[c.banner_text,c.status,c.platforms?.join(' '),businesses.find(b=>b.id===c.business_id)?.name]
       .join(' ').toLocaleLowerCase().includes(search.toLocaleLowerCase())),[campaigns,viewArchived,search,businesses]);
@@ -400,6 +402,34 @@ export default function CampaignPlanner(){
             </div>
             <div className="space-y-4 p-4 sm:p-5">
               <div className="min-h-[170px] whitespace-pre-wrap break-words rounded-lg border border-[#E9E5E3] bg-[#FCFAF7] p-4 text-[13px] leading-6">{preview}</div>
+               <div data-testid="planner-caption-review" className="rounded-lg border border-[#EEE3D9] bg-[#FFFCF8] p-3.5">
+                 <div className="flex flex-wrap items-start justify-between gap-2">
+                   <div>
+                     <h3 className="text-[12px] font-extrabold text-[#3F3430]">{copy.captionReviewTitle}</h3>
+                     <p className="mt-1 text-[11px] leading-5 text-[#796E6A]">{copy.captionReviewHelp}</p>
+                   </div>
+                   <span data-testid="planner-caption-characters" className="rounded-md bg-white px-2 py-1 text-[10px] font-bold tabular-nums text-[#8A5836]">{captionReview.characters} {copy.captionCharacters}</span>
+                 </div>
+                 <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                   {[
+                     {label:copy.reviewBusiness,passed:captionReview.hasBusiness&&!captionReview.titleTooLong},
+                     {label:copy.reviewMessage,passed:captionReview.hasMessage},
+                     {label:copy.reviewCta,passed:captionReview.hasCta},
+                     ...(objective==='promotion'?[{label:copy.reviewTerms,passed:captionReview.hasTerms}]:[]),
+                   ].map(item=><div key={item.label} className="flex items-center gap-2 text-[11px] text-[#5D5450]">
+                     <CheckCircle2 size={14} aria-hidden className={item.passed?'text-[#A45C23]':'text-[#ADA39C]'}/>
+                     <span>{item.label}</span>
+                   </div>)}
+                 </div>
+                 <p className="mt-3 text-[11px] leading-5 text-[#8A6246]">
+                   {captionReview.exceedsShareLimit?copy.reviewTooLong:
+                     captionReview.titleTooLong?copy.reviewLongName:
+                     !captionReview.hasBusiness?copy.reviewChooseBusiness:
+                     !captionReview.hasMessage?copy.reviewWriteMessage:
+                     !captionReview.hasCta?copy.reviewConsiderCta:
+                     captionReview.needsTermsReview?copy.reviewConsiderTerms:copy.reviewReady}
+                 </p>
+               </div>
                <p className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-[#AC7047]"><ShieldCheck size={13}/>{helper.preview}</p>
               <p className="text-[11px] leading-6 text-[#867D82]">{copy.review}</p>
               <p className="text-[11px] leading-5 text-[#A17A5B]">{copy.shareExplain}</p>
@@ -407,7 +437,7 @@ export default function CampaignPlanner(){
                 <button type="button" data-testid="planner-copy-caption" disabled={!business||(!offer.trim()&&!cta.trim())} className={button+' inline-flex items-center gap-2 border border-[#E9E3DE]'} onClick={()=>void copyCaption(preview)}><Copy size={15}/>{copy.copy}</button>
                 <button type="button" className={button+' border border-[#E9E3DE]'} onClick={()=>exportText('slbi-campaign-'+language+'.txt',preview)}>{copy.exportText}</button>
                 <button type="button" data-testid="planner-manual-share-caption"
-                  onClick={()=>void manualShareCaption()} disabled={!business||(!offer.trim()&&!cta.trim())}
+                  onClick={()=>void manualShareCaption()} disabled={!captionReview.canShare}
                   className={button+' inline-flex items-center gap-2 border border-[#EFA365] bg-[#FFF3E9] text-[#A15216] hover:bg-[#FFE5CD]'}>
                   <Share2 size={15}/>{copy.shareCaption}
                 </button>

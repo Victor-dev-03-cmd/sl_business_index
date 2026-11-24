@@ -38,6 +38,15 @@ export const WORDS = {
     shareSheetClosed:'Share menu closed. Check your chosen app before assuming it was posted.',
     shareFailed:'Unable to share. Try Copy caption or Download text.',
     shareUnavailable:'This browser cannot share or copy automatically. Use Download text.',
+    captionReviewTitle:'Caption review',captionReviewHelp:'Quick checks before you share. Nothing is edited or posted automatically.',
+    captionCharacters:'characters',reviewBusiness:'Business selected',reviewMessage:'Your message',reviewCta:'Contact action',reviewTerms:'Offer terms (if relevant)',
+    reviewTooLong:'Caption is too long for the share menu. Shorten it or use Download text.',
+    reviewLongName:'Business name is too long for the share menu. Use Download text.',
+    reviewChooseBusiness:'Choose your business to enable manual sharing.',
+    reviewWriteMessage:'Add your own factual message. The preview currently includes template text.',
+    reviewConsiderCta:'Consider adding clear contact instructions before publishing.',
+    reviewConsiderTerms:'Check whether this promotion needs an expiry date or offer conditions.',
+    reviewReady:'Basic checks complete. Verify every claim and destination yourself before publishing.',
     goals:['Awareness','Promotion','Enquiries','Announcement']
   },
   'தமிழ்':{
@@ -69,6 +78,15 @@ export const WORDS = {
     shareSheetClosed:'Share menu மூடப்பட்டது. அந்த app-ல் பதிவாகியுள்ளதா சரிபாருங்கள்.',
     shareFailed:'பகிர முடியவில்லை. Copy அல்லது Download பயன்படுத்துங்கள்.',
     shareUnavailable:'இந்த browser-ல் Share அல்லது Copy இயங்கவில்லை. Download text பயன்படுத்துங்கள்.',
+    captionReviewTitle:'விளம்பரச் செய்தி சரிபார்ப்பு',captionReviewHelp:'பகிரும் முன் எளிய சரிபார்ப்பு. உங்கள் எழுத்து தானாக மாற்றப்படாது அல்லது பதிவிடப்படாது.',
+    captionCharacters:'எழுத்துகள்',reviewBusiness:'வணிகம் தேர்வு',reviewMessage:'உங்கள் செய்தி',reviewCta:'தொடர்பு வழிமுறை',reviewTerms:'சலுகை நிபந்தனைகள் (தேவைப்பட்டால்)',
+    reviewTooLong:'Share menu-க்கு எழுத்து அதிகம். சுருக்குங்கள் அல்லது Download text பயன்படுத்துங்கள்.',
+    reviewLongName:'Share menu-க்கு வணிகத்தின் பெயர் மிக நீளம். Download text பயன்படுத்துங்கள்.',
+    reviewChooseBusiness:'பகிர்வதற்கு முதலில் உங்கள் வணிகத்தைத் தேர்ந்தெடுக்கவும்.',
+    reviewWriteMessage:'உண்மையான செய்தியை எழுதுங்கள். முன்னோட்டத்தில் இப்போது மாதிரி எழுத்து உள்ளது.',
+    reviewConsiderCta:'பதிவிடும் முன் தொடர்புகொள்ளும் முறையை தெளிவாகச் சேர்க்கலாம்.',
+    reviewConsiderTerms:'இந்தச் சலுகைக்கு முடிவுத் தேதி அல்லது நிபந்தனைகள் தேவையா என்பதைச் சரிபாருங்கள்.',
+    reviewReady:'அடிப்படை சரிபார்ப்பு முடிந்தது. தகவல்களையும் பகிரும் இடத்தையும் நீங்களே உறுதிப்படுத்துங்கள்.',
     goals:['அறிமுகம்','சலுகை','வாடிக்கையாளர் விசாரணை','அறிவிப்பு']
   },
   'සිංහල':{
@@ -100,6 +118,15 @@ export const WORDS = {
     shareSheetClosed:'Share මෙනුව වැසිණි. පළ වුණාද යන්න app එකේ පරීක්ෂා කරන්න.',
     shareFailed:'බෙදාගැනීම අසාර්ථකයි. Copy හෝ Download භාවිත කරන්න.',
     shareUnavailable:'මෙම browser එකේ Share හෝ Copy නොමැත. Download භාවිත කරන්න.',
+    captionReviewTitle:'ප්‍රචාරණ පණිවිඩ පරීක්ෂාව',captionReviewHelp:'බෙදාගැනීමට පෙර පහසු පරීක්ෂාවක්. ඔබේ පෙළ ස්වයංක්‍රීයව වෙනස් හෝ පළ නොවේ.',
+    captionCharacters:'අක්ෂර',reviewBusiness:'ව්‍යාපාරය තෝරා ඇත',reviewMessage:'ඔබේ පණිවිඩය',reviewCta:'සම්බන්ධ වීමේ ක්‍රමය',reviewTerms:'දීමනා කොන්දේසි (අදාළ නම්)',
+    reviewTooLong:'Share මෙනුවට පෙළ දිග වැඩියි. කෙටි කරන්න හෝ Download text භාවිත කරන්න.',
+    reviewLongName:'Share මෙනුවට ව්‍යාපාර නම දිග වැඩියි. Download text භාවිත කරන්න.',
+    reviewChooseBusiness:'බෙදාගැනීමට පෙර ව්‍යාපාරයක් තෝරන්න.',
+    reviewWriteMessage:'ඔබේ සත්‍ය පණිවිඩය ලියන්න. පෙරදසුනේ දැන් ආදර්ශ පෙළක් ඇත.',
+    reviewConsiderCta:'පළ කිරීමට පෙර පැහැදිලි සම්බන්ධතා ක්‍රමයක් එක් කරන්න.',
+    reviewConsiderTerms:'මෙම දීමනාවට අවසන් දිනයක් හෝ කොන්දේසි අවශ්‍යදැයි බලන්න.',
+    reviewReady:'මූලික පරීක්ෂාව අවසන්. තොරතුරු සහ බෙදාගන්නා තැන ඔබම තහවුරු කරන්න.',
     goals:['හඳුන්වා දීම','දීමනාව','විමසීම්','නිවේදනය']
   }
 } as const;

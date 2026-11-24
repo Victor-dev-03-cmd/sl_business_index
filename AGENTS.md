@@ -1,3 +1,6 @@
+## 2026-11-24 — G1-10 Caption Review after G1-09 Copy main merge
+PR #174 must preserve G1-09 safe Preview + Saved Library Copy while adding Free Planner non-blocking, EN/TA/SI caption review. Update HANDOFF_LATEST in same PR; no SQL, auth writes, AI, credits, new providers or auto-post. Release only after exact-head full CI and matching Vercel READY/www alias. Real signed-in devices still untested.
+
 ## 2026-11-24 — G1-08 free Campaign Planner native manual caption share
 Keep [HANDOFF_LATEST](docs/growth/HANDOFF_LATEST.md) updated in the same PR as each change. Adds user-clicked native OS caption share with desktop clipboard fallback in `/vendor/marketing/campaigns`; never auto-post or activate providers/credits. See [G1-08 note](docs/growth/G1_08_FREE_PLANNER_MANUAL_SHARE_20261124.md). Free/Basic Save/PNG remain. G0 owner acceptance 0/7; real signed-in browser QA remains pending.
 

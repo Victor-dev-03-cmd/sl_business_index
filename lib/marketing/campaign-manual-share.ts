@@ -1,4 +1,6 @@
 /** Free, explicit user-click caption sharing. Never posts, saves or contacts providers. */
+export const SHARE_CAPTION_MAX_TITLE=150;
+export const SHARE_CAPTION_MAX_LENGTH=3000;
 export type ShareResult='sheet_closed'|'copied'|'canceled'|'failed'|'unavailable';
 export type ShareCaption={title:string;text:string};
 export type SharePorts={
@@ -8,7 +10,7 @@ export type SharePorts={
 export async function shareCampaignCaption(input:ShareCaption,ports:SharePorts):Promise<ShareResult>{
   const title=typeof input.title==='string'?input.title.trim():'';
   const text=typeof input.text==='string'?input.text.trim():'';
-  if(!title||title.length>150||!text||text.length>3000)return 'unavailable';
+  if(!title||title.length>SHARE_CAPTION_MAX_TITLE||!text||text.length>SHARE_CAPTION_MAX_LENGTH)return 'unavailable';
   if(ports.share){
     try{
       // Synchronously invoke share() BEFORE the first await to retain mobile user activation.
