@@ -90,6 +90,20 @@ BEGIN
 END
 $positive$;
 
+
+-- The same two participants, initiated in reverse, must reuse the prior room.
+SELECT set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000002',true);
+DO $reverse$
+DECLARE room_id uuid;
+BEGIN
+ room_id := public.get_or_create_direct_room(
+  '00000000-0000-4000-8000-000000000001'::uuid,
+  '10000000-0000-4000-8000-000000000001'::uuid);
+ IF room_id IS NULL THEN RAISE EXCEPTION 'reverse vendor/buyer room missing'; END IF;
+END
+$reverse$;
+SELECT set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000001',true);
+
 DO $negative$
 BEGIN
   BEGIN
