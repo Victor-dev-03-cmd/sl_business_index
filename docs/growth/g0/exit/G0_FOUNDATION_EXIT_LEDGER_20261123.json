@@ -131,5 +131,22 @@
         "New independently encrypted archive and separate physical copy not verified"
       ]
     }
-  ]
+  ],
+  "owner_authorization_20261124": {
+    "owner_instruction": "Approve all G0 foundation work; proceed promptly with updates",
+    "authorization_status": "APPROVED_TO_PROCEED_WITH_G0_ENGINEERING_AND_AUDITS",
+    "acceptance_status": "NOT_YET_EVIDENCE_VERIFIED",
+    "operational_scope": "Code auditing, test development, read-only production inspections, protected staged SQL design, backup runbook preparation and safe tested code PRs",
+    "not_attested": [
+      "fresh independently encrypted archive created on trusted owner workstation",
+      "restore from fresh archive on isolated target",
+      "verified encrypted copy on physically independent owner-controlled device",
+      "real authenticated vendor A/B and physical Android/iOS/desktop QA",
+      "desktop GPS physical repair and retest",
+      "remaining migration/consent/privileged-function/wallet/provider acceptance"
+    ],
+    "production_sql_cutover": "BLOCKED_UNTIL_OPERATOR_BACKUP_RESTORE_EXTERNAL_COPY_EVIDENCE_AND_EXACT_SCOPE_RECOVERY_PREFLIGHT",
+    "financial_provider_expansion": "UNCHANGED_NOT_AUTHORIZED_BY_GENERIC_GATE_APPROVAL",
+    "gate_status_rule": "Do not set any gate ACCEPTED solely because blanket approval was granted; require gate-specific evidence and verified exception disposition"
+  }
 }
