@@ -18,7 +18,7 @@ jobs:
     timeout-minutes: 10
     strategy:
       matrix:
-        domain: [lead, review, review_public, billing, public_rpc, view_counter]
+        domain: [lead, review, review_public, billing, public_rpc, view_counter, chat]
     services:
       postgres:
         image: postgres:17-alpine
@@ -107,6 +107,9 @@ jobs:
         run: |
           psql -v ON_ERROR_STOP=1 -f tests/g0/public_rpc_negative.sql
 
+      - name: G0-03 hardened chat tenant boundary (disposable PG17 only)
+        if: matrix.domain == 'chat'
+        run: psql -v ON_ERROR_STOP=1 -f tests/g0/chat_tenant_boundary.sql
       - name: G0-16 verified view counter with isolated PostgreSQL security boundaries
         if: matrix.domain == 'view_counter'
         run: |
