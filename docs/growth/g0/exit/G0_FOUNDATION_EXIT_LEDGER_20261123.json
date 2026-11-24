@@ -138,7 +138,7 @@
     "acceptance_status": "NOT_YET_EVIDENCE_VERIFIED",
     "operational_scope": "Code auditing, test development, read-only production inspections, protected staged SQL design, backup runbook preparation and safe tested code PRs",
     "not_attested": [
-      "fresh independently encrypted archive created on trusted owner workstation",
+      "new 2026-11-24 archived GPG passphrase independence from workstation login not confirmed",
       "restore from fresh archive on isolated target",
       "verified encrypted copy on physically independent owner-controlled device",
       "real authenticated vendor A/B and physical Android/iOS/desktop QA",
@@ -148,5 +148,23 @@
     "production_sql_cutover": "BLOCKED_UNTIL_OPERATOR_BACKUP_RESTORE_EXTERNAL_COPY_EVIDENCE_AND_EXACT_SCOPE_RECOVERY_PREFLIGHT",
     "financial_provider_expansion": "UNCHANGED_NOT_AUTHORIZED_BY_GENERIC_GATE_APPROVAL",
     "gate_status_rule": "Do not set any gate ACCEPTED solely because blanket approval was granted; require gate-specific evidence and verified exception disposition"
+  },
+  "owner_fresh_encrypted_backup_20261124": {
+    "source": "Owner terminal evidence supplied 2026-11-24; filesystem, bytes and passphrase not independently accessible to connector",
+    "directory_basename": "slbi-20261124T143408Z-bZVxRm8R",
+    "project_ref": "oofxhragafekazwjikae",
+    "client_versions": "PostgreSQL 17.12 pg_dump and pg_restore",
+    "encryption": "GPG AES256.CFB; one passphrase indicated by gpg",
+    "archive_decode": "PASS; owner terminal: gpg decrypted and pg_restore exited successfully",
+    "local_sha256_integrity": "PASS; owner terminal: database.dump.gpg: OK",
+    "script_exit_code": 0,
+    "ciphertext_sha256_value": "NOT_YET_RECORDED",
+    "encrypted_bytes": "NOT_YET_RECORDED",
+    "passphrase_is_independent_from_ubuntu_login": "NOT_ATTESTED",
+    "isolated_pg17_restore_of_this_new_archive": "NOT_RUN",
+    "physical_external_drive_copy": "NOT_VERIFIED",
+    "platform_specific_roles_storage_vault_recovery": "OUTSIDE_LOGICAL_ARCHIVE_SCOPE",
+    "production_security_cutover": "BLOCKED_UNTIL_RECOVERY_AND_SCOPED_RELEASE_PROOF",
+    "meaning": "Fresh encrypted owner workstation archive locally captured and decoded; not an isolated database recovery, independent passphrase attestation, or external physical copy"
   }
 }
