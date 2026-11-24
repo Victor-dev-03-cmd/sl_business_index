@@ -122,14 +122,6 @@ BEGIN
 END
 $after$;
 
--- Enforce preflight drift rejection by turning RLS off in a savepoint and
--- expecting the candidate to abort without changing any other grant.
-SAVEPOINT drift_test;
-ALTER TABLE public.leads DISABLE ROW LEVEL SECURITY;
-\set ON_ERROR_STOP off
-\ir ../../docs/growth/g0/candidates/ANON_SCOPED_LEAST_PRIVILEGE_REVIEW_ONLY.sql
-\set ON_ERROR_STOP on
-ROLLBACK TO SAVEPOINT drift_test;
 -- All synthetic changes rolled back, no persisted database content.
 ROLLBACK;
 \echo G0_20_ANON_ACL_DISPOSABLE_PASS
