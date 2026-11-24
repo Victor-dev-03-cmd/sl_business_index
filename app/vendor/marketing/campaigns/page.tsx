@@ -13,7 +13,8 @@ import {CAMPAIGN_HELP,getCampaignStarterIdeas} from '@/lib/marketing/campaign-st
 import {CheckCircle2,Lightbulb,ShieldCheck,ArrowRight} from 'lucide-react';
 import G1PlannerFacts from './G1PlannerFacts';
 import {shareCampaignCaption} from '@/lib/marketing/campaign-manual-share';
-import {Share2} from 'lucide-react';
+import {Share2, Copy} from 'lucide-react';
+import {copyCampaignCaption} from '@/lib/marketing/campaign-copy';
 
 type Business={id:string;name:string;category:string;city:string|null;status:string|null};
 type CampaignBrief={
@@ -206,6 +207,14 @@ export default function CampaignPlanner(){
     }catch(e){toast.error(e instanceof Error?e.message:copy.archiveError);}
     finally{setSaving(false);}
   };
+  const copyCaption=async(text:string)=>{
+    const writer=typeof navigator.clipboard?.writeText==='function'
+      ?navigator.clipboard.writeText.bind(navigator.clipboard):undefined;
+    const outcome=await copyCampaignCaption(text,writer);
+    if(outcome==='copied')toast.success(copy.copy);
+    else if(outcome==='unavailable')toast.error(copy.shareUnavailable);
+    else toast.error(copy.shareFailed);
+  };
   const manualShareCaption=async()=>{
     if(!business||(!offer.trim()&&!cta.trim())){toast.error(copy.errorMessage);return;}
     // Invoked only by a real click. Never wait before navigator.share is called.
@@ -395,7 +404,7 @@ export default function CampaignPlanner(){
               <p className="text-[11px] leading-6 text-[#867D82]">{copy.review}</p>
               <p className="text-[11px] leading-5 text-[#A17A5B]">{copy.shareExplain}</p>
               <div className="flex flex-wrap gap-2">
-                <button type="button" className={button+' border border-[#E9E3DE]'} onClick={()=>void navigator.clipboard.writeText(preview).then(()=>toast.success(copy.copy)).catch(()=>toast.error(copy.updateConflict))}>{copy.copy}</button>
+                <button type="button" data-testid="planner-copy-caption" disabled={!business||(!offer.trim()&&!cta.trim())} className={button+' inline-flex items-center gap-2 border border-[#E9E3DE]'} onClick={()=>void copyCaption(preview)}><Copy size={15}/>{copy.copy}</button>
                 <button type="button" className={button+' border border-[#E9E3DE]'} onClick={()=>exportText('slbi-campaign-'+language+'.txt',preview)}>{copy.exportText}</button>
                 <button type="button" data-testid="planner-manual-share-caption"
                   onClick={()=>void manualShareCaption()} disabled={!business||(!offer.trim()&&!cta.trim())}
@@ -477,6 +486,7 @@ export default function CampaignPlanner(){
                     className={button+' border border-[#F1C49C] bg-[#FFF5ED] text-[#B45B16]'}>{copy.edit}</button>)}
               {!c.is_archived&&c.banner_color!=='caption-lab-connected-v1'&&c.brief?.createdFrom!=='caption_lab'&&<button type="button" onClick={()=>openCampaign(c,true)} className={button+' border border-[#E8E3E3]'}>{copy.duplicate}</button>}
               {!c.is_archived&&c.banner_color!=='caption-lab-connected-v1'&&c.brief?.createdFrom!=='caption_lab'&&<button type="button" onClick={()=>openCampaign(c)} className={button+' border border-[#E8E3E3]'}>{copy.posterFromLibrary}</button>}
+              <button type="button" data-testid="planner-library-copy-caption" onClick={()=>void copyCaption(c.banner_text)} disabled={!c.banner_text?.trim()} className={button+' border border-[#E8E3E3]'}><Copy size={14} className="mr-1 inline-block"/>{copy.copy}</button>
               <button type="button" onClick={()=>exportText('slbi-campaign-'+c.id.slice(0,8)+'.txt',c.banner_text)} className={button+' border border-[#E8E3E3]'}>{copy.export}</button>
               {c.status!=='posted'&&<button type="button" disabled={saving} onClick={()=>void changeArchive(c)}
                 className={button+' border border-[#E8E3E3] text-[#817780]'}>{c.is_archived?copy.restore:copy.archive}</button>}
