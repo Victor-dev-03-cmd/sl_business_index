@@ -74,7 +74,11 @@ test('one active Studio uses Gemini, Puter, exact Canvas and multilingual review
   assert.match(ui,/puter\.ai\.txt2img/);
   assert.match(composer,/renderPremiumPoster/);
   assert.match(ui,/realMode&&!consent/);
-  assert.match(read('app/vendor/marketing/campaigns/page.tsx'),/dropdownArrowOnDark/);
+  const planner=read('app/vendor/marketing/campaigns/page.tsx');
+  assert.match(planner,/style=\{dropdownArrow\}/);
+  assert.match(planner,/value=\{language\} onChange=\{e=>setLanguage\(/);
+  assert.match(planner,/helper\.free/);
+  assert.doesNotMatch(planner,/dropdownArrowOnDark/);
 });
 test('approved poster image is never fictional and final PNG remains local and precise',()=>{
   const ui=read('app/vendor/marketing/design/puter-lab/page.tsx');
