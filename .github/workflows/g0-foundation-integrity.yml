@@ -18,7 +18,7 @@ jobs:
     timeout-minutes: 10
     strategy:
       matrix:
-        domain: [lead, review, review_public, billing, public_rpc, view_counter, chat, anon_acl]
+        domain: [lead, review, review_public, billing, public_rpc, view_counter, chat, anon_acl, default_acl]
     services:
       postgres:
         image: postgres:17-alpine
@@ -113,6 +113,9 @@ jobs:
       - name: G0-20 anonymous ACL candidate and RLS compatibility in disposable PG17
         if: matrix.domain == 'anon_acl'
         run: psql -v ON_ERROR_STOP=1 -f tests/g0/anon_acl_boundary.sql
+      - name: G0-21 future default ACL guard (disposable PG17)
+        if: matrix.domain == 'default_acl'
+        run: psql -v ON_ERROR_STOP=1 -f tests/g0/future_default_acl.sql
       - name: G0-16 verified view counter with isolated PostgreSQL security boundaries
         if: matrix.domain == 'view_counter'
         run: |
