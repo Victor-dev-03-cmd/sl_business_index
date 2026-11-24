@@ -127,6 +127,8 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: '1.3.11'
+      - name: Validate backup-copy Bash syntax before any owner execution
+        run: bash -n scripts/g0/verify-independent-backup-copy.sh
       - name: Synthetic backup-copy hash and unsafe path tests (no production bytes)
         run: bun test tests/g0/backup-copy.test.mjs tests/location/*.test.mjs
       - name: G0-17 verified view-counter flag and badge regression
