@@ -175,6 +175,8 @@ Current position: [G0 manual backup operator checkpoint](G0_07_MANUAL_BACKUP_OPE
 
 | 2026-11-24 | [G1-07 G1 Knowledge to free Planner](G1_07_PLANNER_OWNED_KNOWLEDGE_20261124.md): owner-approved business service context with user-clicked local multilingual message and [permanent handoff](HANDOFF_LATEST.md) | Candidate until CI/Vercel READY; no AI/provider/auto-post/SQL, G0 0/7 | Real signed-in A/B QA and G0 backup/restore/external copy needed | 
 
+| 2026-11-24 | [G1-08 Free Planner native manual caption sharing](G1_08_FREE_PLANNER_MANUAL_SHARE_20261124.md): click opens OS share sheet or copies caption on unsupported browser, multilingual explanations, [handoff](HANDOFF_LATEST.md) updated | Candidate until exact CI and Vercel READY, no provider/AI/credits/DB; G0 0/7 | Real owner signed-in iOS/Android system share and desktop clipboard tests | 
+
 ### Update protocol
 Add dated checkpoint per work package: exact parent/commit/branch/PR, file paths, schema and migration status, CI commands and counts, app/provider flags, Vercel URL/id/state, owner A/B and device results, costs/approval, blockers and next earliest unchecked item. A checked box requires evidence scoped to that actual acceptance condition. If a regression invalidates a gate, reopen it with reason. No secret values, customer data, invented test outcomes or premature global release. Preserve old checkpoints.
 

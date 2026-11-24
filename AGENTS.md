@@ -1,3 +1,6 @@
+## 2026-11-24 — G1-08 free Campaign Planner native manual caption share
+Keep [HANDOFF_LATEST](docs/growth/HANDOFF_LATEST.md) updated in the same PR as each change. Adds user-clicked native OS caption share with desktop clipboard fallback in `/vendor/marketing/campaigns`; never auto-post or activate providers/credits. See [G1-08 note](docs/growth/G1_08_FREE_PLANNER_MANUAL_SHARE_20261124.md). Free/Basic Save/PNG remain. G0 owner acceptance 0/7; real signed-in browser QA remains pending.
+
 ## 2026-11-24 — Mandatory permanent GitHub handoff + G1-07 owner-scoped Planner service facts
 Owner asked all GitHub changes to leave a handoff document and a complete copy/paste next-chat prompt. **Always maintain [HANDOFF_LATEST](docs/growth/HANDOFF_LATEST.md) in the SAME PR as code, clarify what is live vs candidate and put final production exact SHA/ID in verified PR release description.** G1-07 is a free Planner read-only selected approved business context / opt-in service message, no AI/credits/providers/auto-post/SQL; [G1-07 report](docs/growth/G1_07_PLANNER_OWNED_KNOWLEDGE_20261124.md). G0 acceptance remains 0/7, master 0/10; desktop GPS and encrypted backup/restore/external copy blockers continue.
 
