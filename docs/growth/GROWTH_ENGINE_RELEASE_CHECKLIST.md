@@ -173,6 +173,8 @@ Current position: [G0 manual backup operator checkpoint](G0_07_MANUAL_BACKUP_OPE
 
 | 2026-11-24 | [G1-05 live owner Knowledge panel](G1_05_VENDOR_LIVE_KNOWLEDGE_INTEGRATION_20261124.md): My Businesses + Gallery & Services + Marketing Studio + GET read-only API | After exact CI/Vercel READY: visible read-only G1 info, **not** AI generation context/auto-post; real vendor QA pending; G0 0/7 | Collect signed-in A/B test evidence and backup/restore/external-copy before any G0 production migration |
 
+| 2026-11-24 | [G1-07 G1 Knowledge to free Planner](G1_07_PLANNER_OWNED_KNOWLEDGE_20261124.md): owner-approved business service context with user-clicked local multilingual message and [permanent handoff](HANDOFF_LATEST.md) | Candidate until CI/Vercel READY; no AI/provider/auto-post/SQL, G0 0/7 | Real signed-in A/B QA and G0 backup/restore/external copy needed | 
+
 ### Update protocol
 Add dated checkpoint per work package: exact parent/commit/branch/PR, file paths, schema and migration status, CI commands and counts, app/provider flags, Vercel URL/id/state, owner A/B and device results, costs/approval, blockers and next earliest unchecked item. A checked box requires evidence scoped to that actual acceptance condition. If a regression invalidates a gate, reopen it with reason. No secret values, customer data, invented test outcomes or premature global release. Preserve old checkpoints.
 
