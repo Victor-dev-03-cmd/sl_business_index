@@ -51,7 +51,7 @@ BEGIN
  IF NOT (SELECT prosecdef FROM pg_proc WHERE oid=v_oid) THEN
    RAISE EXCEPTION 'expected SECURITY DEFINER';
  END IF;
- IF NOT (SELECT proconfig @> ARRAY['search_path=']::text[] FROM pg_proc WHERE oid=v_oid) THEN
+ IF NOT (SELECT EXISTS (SELECT 1 FROM unnest(proconfig) AS option WHERE option LIKE 'search_path=%') FROM pg_proc WHERE oid=v_oid) THEN
    RAISE EXCEPTION 'missing pinned path';
  END IF;
  IF has_function_privilege('anon',v_oid,'EXECUTE')
