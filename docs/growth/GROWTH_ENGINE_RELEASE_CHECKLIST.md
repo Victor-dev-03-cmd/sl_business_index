@@ -171,6 +171,8 @@ Current position: [G0 manual backup operator checkpoint](G0_07_MANUAL_BACKUP_OPE
 
 | 2026-11-24 | [G1 code-only release scope update](GROWTH_ENGINE_DEPLOYMENT_STATUS_20261124.md): owner now authorizes merge and Vercel deployment of finished CI-green **inert G1 code only**; no actual My Business/Marketing UI integration or new live G1 data reads | Production code deployment **not equivalent to a live G1 feature**; G0 0/7 and master 0/10 remain OPEN | Confirm exact GitHub SHA, Vercel READY and production aliases; separately gate all SQL, providers, live SSR, refunds and physical GPS tests |
 
+| 2026-11-24 | [G1-05 live owner Knowledge panel](G1_05_VENDOR_LIVE_KNOWLEDGE_INTEGRATION_20261124.md): My Businesses + Gallery & Services + Marketing Studio + GET read-only API | After exact CI/Vercel READY: visible read-only G1 info, **not** AI generation context/auto-post; real vendor QA pending; G0 0/7 | Collect signed-in A/B test evidence and backup/restore/external-copy before any G0 production migration |
+
 ### Update protocol
 Add dated checkpoint per work package: exact parent/commit/branch/PR, file paths, schema and migration status, CI commands and counts, app/provider flags, Vercel URL/id/state, owner A/B and device results, costs/approval, blockers and next earliest unchecked item. A checked box requires evidence scoped to that actual acceptance condition. If a regression invalidates a gate, reopen it with reason. No secret values, customer data, invented test outcomes or premature global release. Preserve old checkpoints.
 

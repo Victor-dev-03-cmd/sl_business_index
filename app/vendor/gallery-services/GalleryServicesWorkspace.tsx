@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import {Images,Store,ArrowUpRight,ChevronDown,ArrowLeft} from 'lucide-react';
 import BusinessProfileEditor from '../my-businesses/[id]/edit/BusinessProfileEditor';
+import G1BusinessKnowledgePanel from '../components/G1BusinessKnowledgePanel';
 type OwnedBusiness={id:string;name:string;slug:string|null;category:string|null;logo_url:string|null;status:string|null};
 export default function GalleryServicesWorkspace({businesses,initialId,unavailable}:{businesses:OwnedBusiness[];initialId:string;unavailable:boolean}){
  const [selectedId,setSelectedId]=useState(initialId);
@@ -30,6 +31,7 @@ export default function GalleryServicesWorkspace({businesses,initialId,unavailab
     <div className="w-full sm:max-w-xs"><label htmlFor="gallery-business" className="mb-1.5 block text-xs font-semibold text-neutral-600">Select business</label><div className="relative"><select id="gallery-business" value={selectedId} disabled={busy} onChange={e=>change(e.target.value)} className="min-h-11 w-full appearance-none rounded-lg border border-neutral-300 bg-white py-2 pl-3 pr-9 text-sm outline-none focus:ring-2 focus:ring-orange-200 disabled:opacity-50">{businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select><ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500"/></div></div>
    </section>
    <BusinessProfileEditor key={business.id} businessId={business.id} onDirtyChange={setDirty} onSavingChange={setBusy}/>
+   <G1BusinessKnowledgePanel location="gallery" businessId={business.id} businesses={[business]}/>
    {business.status!=='approved'&&<p className="text-xs text-neutral-500">You can prepare your profile content now. Public visibility follows your business listing status.</p>}
   </>}
  </div>;

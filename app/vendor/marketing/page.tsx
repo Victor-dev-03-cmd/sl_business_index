@@ -4,6 +4,7 @@ import {getMarketingAccessForUser} from '@/lib/marketing/pro-access-server';
 import {isPosterReviewAccount,isPosterInternalQAAccount} from '@/lib/marketing/poster-review-access-server';
 import IconsaxIcon from '../components/IconsaxIcon';
 import MarketingAppStore from './components/MarketingAppStore';
+import G1BusinessKnowledgePanel from '../components/G1BusinessKnowledgePanel';
 import type {MarketingStudioLaunchStatuses} from '@/lib/marketing/studio-apps';
 
 export const dynamic='force-dynamic';
@@ -37,7 +38,7 @@ export default async function MarketingOverview(){
 
   // Independent, authenticated RLS reads run concurrently.
   const [{data:owned,error:ownedError},access,posterReviewAllowed,posterQaAllowed]=await Promise.all([
-    client.from('businesses').select('id').eq('owner_id',user.id).limit(1000),
+    client.from('businesses').select('id,name,status').eq('owner_id',user.id).limit(1000),
     getMarketingAccessForUser(user.id,client),
     isPosterReviewAccount(user.id,client),
     isPosterInternalQAAccount(user.id,client),
@@ -120,6 +121,7 @@ export default async function MarketingOverview(){
         caption="Planning records — not queued publishing jobs" icon="calendar"/>
     </section>
     {ownedError&&<p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-xs text-red-800">Business records could not be loaded. Campaign counts are hidden rather than guessed.</p>}
+    {!ownedError&&<G1BusinessKnowledgePanel location="marketing" businesses={owned||[]}/>}
     <MarketingAppStore proEnabled={paid} launchStatuses={launchStatuses} posterReviewAllowed={posterReviewAllowed} posterQaAllowed={posterQaAllowed}/>
     <p className="text-[11px] leading-6 text-[#96969D]">
       App cards describe existing workspaces and planned integration capabilities. Provider authorization, real sending and publishing, AI credit usage and background scheduling require separate enablement and review. Growth Credits remain metered independently.
