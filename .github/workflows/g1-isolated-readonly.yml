@@ -1,4 +1,4 @@
-name: G1 isolated read-only contract (NO RELEASE)
+name: G1 read-only code-only production release contract
 on:
   pull_request:
     branches: [main]

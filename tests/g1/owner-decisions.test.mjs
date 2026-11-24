@@ -16,11 +16,15 @@ test("four owner choices are scoped decisions, never G0 7/7 acceptance", () => {
 });
 test("read-only G1 authorization cannot be confused with live release approval", () => {
   const g1=decisions.decisions.g1_engineering;
-  assert.equal(g1.decision,"APPROVED_ISOLATED_READ_ONLY_CODE_ONLY");
-  for(const required of ["main_branch_merge","production_deployment","live_db_migration",
-    "provider_activation","production_data_reads_for_g1","production_writes"]){
+  assert.equal(g1.decision,"APPROVED_PRODUCTION_DEPLOYMENT_OF_FINISHED_G1_INERT_CODE");
+  assert.ok(g1.permitted.includes("main_branch_merge_of_tested_inert_modules"));
+  assert.ok(g1.permitted.includes("automatic_vercel_production_code_only_deployment"));
+  for(const required of ["live_db_migration",
+    "provider_activation","production_data_reads_for_g1","production_writes","g1_live_api_or_page_activation_without_separate_review"]){
     assert.ok(g1.prohibited.includes(required));
   }
+  assert.equal(decisions.decision_history[0].production_release,false);
+  assert.equal(decisions.decision_history[1].production_release,true);
   const code=read("lib/growth/g1/read-only-knowledge.ts");
   assert.match(code,/owner_id !== requesterUserId/);
   assert.match(code,/business.status !== "approved"/);

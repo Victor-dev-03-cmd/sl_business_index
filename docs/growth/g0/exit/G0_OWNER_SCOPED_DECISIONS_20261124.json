@@ -5,23 +5,27 @@
   "decision_type": "scoped_policy_authorization_not_phase_exit",
   "decisions": {
     "g1_engineering": {
-      "decision": "APPROVED_ISOLATED_READ_ONLY_CODE_ONLY",
+      "decision": "APPROVED_PRODUCTION_DEPLOYMENT_OF_FINISHED_G1_INERT_CODE",
       "permitted": [
         "pure_read_only_business_knowledge_contract",
         "synthetic_test_fixtures",
         "isolated_github_branch",
         "draft_pull_request",
-        "non_production_ci"
+        "non_production_ci",
+        "main_branch_merge_of_tested_inert_modules",
+        "automatic_vercel_production_code_only_deployment",
+        "production_release_status_verification"
       ],
       "prohibited": [
-        "main_branch_merge",
-        "production_deployment",
         "live_db_migration",
         "provider_activation",
         "production_data_reads_for_g1",
-        "production_writes"
+        "production_writes",
+        "g1_live_api_or_page_activation_without_separate_review"
       ],
-      "implementation_status": "AUTHORIZED_NOT_RELEASED"
+      "implementation_status": "CODE_ONLY_PRODUCTION_RELEASE_AUTHORIZED",
+      "production_meaning": "Only inert, unconnected G1 read-only libraries, tests, documentation, CI. No live G1 database/API/Marketing integration.",
+      "production_release_safety": "Merge only exact-head all-green CI, check Vercel READY at merged SHA and aliases; no new preview deployment."
     },
     "wallet_refund": {
       "decision": "MANUAL_ADMIN_REVIEW_ONLY",
@@ -54,7 +58,9 @@
     "no_paid_resource_approval",
     "no_backup_restoration_attestation",
     "no_live_provider_expansion",
-    "no_automatic_g0_acceptance"
+    "no_automatic_g0_acceptance",
+    "no_live_g1_data_source_activation",
+    "no_billing_runtime_enforcement_claim"
   ],
   "next_owner_evidence": [
     "fresh_independently_encrypted_backup",
@@ -64,5 +70,20 @@
     "real_vendor_A_B_and_admin_QA",
     "financial_refund_operational_enforcement_audit",
     "consent_and_provenance_review"
+  ],
+  "latest_owner_decision_reference": "conversation:2026-11-24:deploy-finished-safe-work-to-production",
+  "decision_history": [
+    {
+      "date_local": "2026-11-24",
+      "scope": "initial",
+      "decision": "APPROVED_ISOLATED_READ_ONLY_CODE_ONLY",
+      "production_release": false
+    },
+    {
+      "date_local": "2026-11-24",
+      "scope": "superseding_code_only_release",
+      "decision": "APPROVED_PRODUCTION_DEPLOYMENT_OF_FINISHED_G1_INERT_CODE",
+      "production_release": true
+    }
   ]
 }

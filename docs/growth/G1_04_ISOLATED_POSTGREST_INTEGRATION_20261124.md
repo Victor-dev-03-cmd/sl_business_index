@@ -1,3 +1,5 @@
+> **Owner release scope updated 2026-11-24:** Historical no-merge/no-production language below applied to an earlier decision. Owner subsequently authorized **deploying completed, green-tested inert G1 read-only code to main/Vercel**, not live G1 SSR/DB/Marketing activation, SQL migrations, payments, providers or paid resources. For current status use [Production vs code-only ledger](GROWTH_ENGINE_DEPLOYMENT_STATUS_20261124.md). G0 0/7 owner-accepted.
+
 # G1-04 — Isolated Supabase-shaped read-only integration tests
 Date: 2026-11-24. GitHub draft PR #168, G1 branch only.
 

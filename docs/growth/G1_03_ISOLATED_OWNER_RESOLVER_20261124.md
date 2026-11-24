@@ -1,3 +1,5 @@
+> **Owner release scope updated 2026-11-24:** Historical no-merge/no-production language below applied to an earlier decision. Owner subsequently authorized **deploying completed, green-tested inert G1 read-only code to main/Vercel**, not live G1 SSR/DB/Marketing activation, SQL migrations, payments, providers or paid resources. For current status use [Production vs code-only ledger](GROWTH_ENGINE_DEPLOYMENT_STATUS_20261124.md). G0 0/7 owner-accepted.
+
 # G1-03 — Owner-scoped Knowledge Resolver Contract (isolated, no live adapter)
 
 Date: 2026-11-24 (Asia/Colombo). Candidate layered on draft [PR #168](https://github.com/Victor-dev-03-cmd/sl_business_index/pull/168).
