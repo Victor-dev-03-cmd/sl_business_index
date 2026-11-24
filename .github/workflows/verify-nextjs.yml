@@ -46,6 +46,8 @@ jobs:
         run: node --experimental-strip-types --test tests/p2CampaignPlannerFreeUX.test.mjs
       - name: G1-07 free Planner owner facts and privacy regression
         run: node --experimental-strip-types --test tests/p2CampaignPlannerG1Facts.test.mjs
+      - name: G1-08 manual caption share, cancellation and desktop fallback regression
+        run: node --experimental-strip-types --test tests/p2CampaignPlannerManualShare.test.mjs
       - name: Typecheck
         run: npx tsc --noEmit
       - name: Production build

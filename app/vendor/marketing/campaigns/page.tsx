@@ -12,6 +12,8 @@ import {renderCampaignPoster} from '@/lib/marketing/campaign-poster';
 import {CAMPAIGN_HELP,getCampaignStarterIdeas} from '@/lib/marketing/campaign-starters';
 import {CheckCircle2,Lightbulb,ShieldCheck,ArrowRight} from 'lucide-react';
 import G1PlannerFacts from './G1PlannerFacts';
+import {shareCampaignCaption} from '@/lib/marketing/campaign-manual-share';
+import {Share2} from 'lucide-react';
 
 type Business={id:string;name:string;category:string;city:string|null;status:string|null};
 type CampaignBrief={
@@ -204,6 +206,21 @@ export default function CampaignPlanner(){
     }catch(e){toast.error(e instanceof Error?e.message:copy.archiveError);}
     finally{setSaving(false);}
   };
+  const manualShareCaption=async()=>{
+    if(!business||(!offer.trim()&&!cta.trim())){toast.error(copy.errorMessage);return;}
+    // Invoked only by a real click. Never wait before navigator.share is called.
+    const share=typeof navigator.share==='function'?navigator.share.bind(navigator):undefined;
+    const clipboardCopy=typeof navigator.clipboard?.writeText==='function'
+      ?navigator.clipboard.writeText.bind(navigator.clipboard):undefined;
+    const outcome=await shareCampaignCaption({title:business.name,text:preview},{
+      share,copy:clipboardCopy,
+    });
+    if(outcome==='copied')toast.success(copy.shareCopied);
+    else if(outcome==='sheet_closed')toast.message(copy.shareSheetClosed);
+    else if(outcome==='failed')toast.error(copy.shareFailed);
+    else if(outcome==='unavailable')toast.error(copy.shareUnavailable);
+    // AbortError from the user canceling the OS share sheet: no toast or clipboard.
+  };
   const exportBrandedCreative=async()=>{
     if(exporting)return;
     if(!business||!offer.trim()){toast.error(copy.errorMessage);return;}
@@ -376,9 +393,15 @@ export default function CampaignPlanner(){
               <div className="min-h-[170px] whitespace-pre-wrap break-words rounded-lg border border-[#E9E5E3] bg-[#FCFAF7] p-4 text-[13px] leading-6">{preview}</div>
                <p className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-[#AC7047]"><ShieldCheck size={13}/>{helper.preview}</p>
               <p className="text-[11px] leading-6 text-[#867D82]">{copy.review}</p>
+              <p className="text-[11px] leading-5 text-[#A17A5B]">{copy.shareExplain}</p>
               <div className="flex flex-wrap gap-2">
                 <button type="button" className={button+' border border-[#E9E3DE]'} onClick={()=>void navigator.clipboard.writeText(preview).then(()=>toast.success(copy.copy)).catch(()=>toast.error(copy.updateConflict))}>{copy.copy}</button>
                 <button type="button" className={button+' border border-[#E9E3DE]'} onClick={()=>exportText('slbi-campaign-'+language+'.txt',preview)}>{copy.exportText}</button>
+                <button type="button" data-testid="planner-manual-share-caption"
+                  onClick={()=>void manualShareCaption()} disabled={!business||(!offer.trim()&&!cta.trim())}
+                  className={button+' inline-flex items-center gap-2 border border-[#EFA365] bg-[#FFF3E9] text-[#A15216] hover:bg-[#FFE5CD]'}>
+                  <Share2 size={15}/>{copy.shareCaption}
+                </button>
               </div>
               <div className="border-t border-[#EEE8E3] pt-5">
                 <h3 className="text-[15px] font-extrabold">{copy.poster}</h3>

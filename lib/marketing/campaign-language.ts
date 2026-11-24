@@ -33,6 +33,11 @@ export const WORDS = {
     offerLimit:'Longer messages may not fit landscape posters; no export will silently cut text.',
     start:'Start planning',about:'Create business-aware text, plan a date and export a poster for manual sharing.',
     reviewWorkflow:'Draft → Review → Save → Export → Share manually',method:'Basic plan · no Pro subscription needed',
+    shareCaption:'Share caption manually',shareExplain:'Opens the system share menu on supported phones. On other browsers it copies your caption. You choose the destination; nothing is posted automatically.',
+    shareCopied:'Share menu unavailable: caption copied. Paste it in your chosen app.',
+    shareSheetClosed:'Share menu closed. Check your chosen app before assuming it was posted.',
+    shareFailed:'Unable to share. Try Copy caption or Download text.',
+    shareUnavailable:'This browser cannot share or copy automatically. Use Download text.',
     goals:['Awareness','Promotion','Enquiries','Announcement']
   },
   'தமிழ்':{
@@ -59,6 +64,11 @@ export const WORDS = {
     offerLimit:'நீளமான செய்திகள் Landscape படத்தில் அடங்காமல் இருக்கலாம்; எழுத்தை வெட்டிப் பதிவிறக்க மாட்டோம்.',
     start:'விளம்பரம் உருவாக்கு',about:'வணிகத்திற்கான செய்தி எழுதுங்கள்; தேதியைத் திட்டமிட்டு படமாகப் பதிவிறக்கி நீங்களே பகிருங்கள்.',
     reviewWorkflow:'எழுது → சரிபார் → சேமி → பதிவிறக்கு → பகிர்',method:'Basic திட்டம் · Pro கட்டணம் தேவையில்லை',
+    shareCaption:'கைமுறையாகப் பகிர்',shareExplain:'சாதனத்தில் Share menu திறக்கும். இல்லாவிட்டால் செய்தி copy ஆகும். யாருக்கு அனுப்புவது உங்கள் முடிவு; தானாக பதிவிடாது.',
+    shareCopied:'Share menu இல்லை. செய்தி நகலெடுக்கப்பட்டது; உங்கள் app-ல் ஒட்டுங்கள்.',
+    shareSheetClosed:'Share menu மூடப்பட்டது. அந்த app-ல் பதிவாகியுள்ளதா சரிபாருங்கள்.',
+    shareFailed:'பகிர முடியவில்லை. Copy அல்லது Download பயன்படுத்துங்கள்.',
+    shareUnavailable:'இந்த browser-ல் Share அல்லது Copy இயங்கவில்லை. Download text பயன்படுத்துங்கள்.',
     goals:['அறிமுகம்','சலுகை','வாடிக்கையாளர் விசாரணை','அறிவிப்பு']
   },
   'සිංහල':{
@@ -85,6 +95,11 @@ export const WORDS = {
     offerLimit:'දිග පණිවිඩ Landscape රූපයකට නොගැළපිය හැක. පෙළ කපා බාගන්නේ නැත.',
     start:'ප්‍රචාරණය සාදන්න',about:'ව්‍යාපාරයට අදාළ පණිවිඩයක් ලියා, දිනය සැලසුම් කර, රූපයක් බාගෙන ඔබම බෙදාගන්න.',
     reviewWorkflow:'ලියන්න → බලන්න → සුරකින්න → බාගන්න → බෙදාගන්න',method:'Basic සැලසුම · Pro අවශ්‍ය නැත',
+    shareCaption:'අතින් බෙදාගන්න',shareExplain:'සහාය ඇති දුරකථනවල Share මෙනුව විවෘත වේ. නැති විට පණිවිඩය පිටපත් වේ. ඔබ තෝරාගන්නා තැනට පමණක් යවන්න.',
+    shareCopied:'Share මෙනුව නොමැති නිසා පණිවිඩය පිටපත් කළා. ඔබේ app එකට අලවන්න.',
+    shareSheetClosed:'Share මෙනුව වැසිණි. පළ වුණාද යන්න app එකේ පරීක්ෂා කරන්න.',
+    shareFailed:'බෙදාගැනීම අසාර්ථකයි. Copy හෝ Download භාවිත කරන්න.',
+    shareUnavailable:'මෙම browser එකේ Share හෝ Copy නොමැත. Download භාවිත කරන්න.',
     goals:['හඳුන්වා දීම','දීමනාව','විමසීම්','නිවේදනය']
   }
 } as const;
