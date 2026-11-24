@@ -9,6 +9,8 @@ import CampaignFormatSelector from './CampaignFormatSelector';
 import LinkedCaptionPoster from './LinkedCaptionPoster';
 import {tFor,type CampaignFormat,type CampaignPalette,type CampaignLanguage,type CampaignObjective} from '@/lib/marketing/campaign-language';
 import {renderCampaignPoster} from '@/lib/marketing/campaign-poster';
+import {CAMPAIGN_HELP,getCampaignStarterIdeas} from '@/lib/marketing/campaign-starters';
+import {CheckCircle2,Lightbulb,ShieldCheck,ArrowRight} from 'lucide-react';
 
 type Business={id:string;name:string;category:string;city:string|null;status:string|null};
 type CampaignBrief={
@@ -51,7 +53,7 @@ function exportText(name:string,content:string){
 }
 
 export default function CampaignPlanner(){
-  const [section,setSection]=useState<Section>('overview');
+  const [section,setSection]=useState<Section>('social');
   const [language,setLanguage]=useState<CampaignLanguage>('English');
   const [businesses,setBusinesses]=useState<Business[]>([]);
   const [campaigns,setCampaigns]=useState<Campaign[]>([]);
@@ -73,6 +75,8 @@ export default function CampaignPlanner(){
   const [error,setError]=useState('');
   const [userId,setUserId]=useState<string|null>(null);
   const copy=tFor(language);
+  const helper=CAMPAIGN_HELP[language];
+  const quickStarts=getCampaignStarterIdeas(language,objective);
   const business=businesses.find(b=>b.id===selectedId);
   const brief:CampaignBrief={offer,cta,terms,language,objective,format:posterSize,palette:posterPalette};
   const preview=useMemo(()=>caption(business,brief),[business,offer,cta,terms,language,objective,posterSize,posterPalette]);
@@ -81,6 +85,8 @@ export default function CampaignPlanner(){
       .join(' ').toLocaleLowerCase().includes(search.toLocaleLowerCase())),[campaigns,viewArchived,search,businesses]);
   const active=campaigns.filter(c=>!c.is_archived);
   const plannedCount=active.filter(c=>c.status==='scheduled').length;
+  const readiness=[Boolean(business),Boolean(offer.trim()||cta.trim()),channelsSelected.length>0];
+  const readyCount=readiness.filter(Boolean).length;
   const draftCount=active.filter(c=>c.status==='drafted').length;
   const now=localDatetime(new Date().toISOString());
 
@@ -209,60 +215,56 @@ export default function CampaignPlanner(){
     }catch{toast.error(copy.errorExport);}
     finally{setExporting(false);}
   };
-  const button='rounded-xl px-4 py-2.5 text-[12px] font-bold transition disabled:cursor-not-allowed disabled:opacity-50';
-  const field='mt-2 w-full rounded-xl border border-[#E6E3E0] bg-white p-3 text-[13px] text-[#29262B] outline-none focus:border-[#FA890C] focus:ring-2 focus:ring-[#FF7900]/15';
+  const button='rounded-lg px-4 py-2.5 text-[12px] font-bold transition disabled:cursor-not-allowed disabled:opacity-50';
+  const field='mt-2 w-full rounded-lg border border-[#E6E3E0] bg-white p-3 text-[13px] text-[#29262B] outline-none focus:border-[#FA890C] focus:ring-2 focus:ring-[#FF7900]/15';
   const label='block text-[12px] font-bold text-[#393238]';
   // Native select arrows have inconsistent browser spacing; keep a 16px visual inset.
   const dropdownArrow={backgroundImage:'url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22m5%207.5%205%205%205-5%22%20stroke%3D%22%23615A60%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E")',backgroundRepeat:'no-repeat',backgroundPosition:'right 16px center',backgroundSize:'16px 16px'} as const;
-  const dropdownArrowOnDark={...dropdownArrow,backgroundImage:'url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22m5%207.5%205%205%205-5%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E")'} as const;
-  const card='rounded-[19px] border border-[#E8E6E6] bg-white shadow-[0_4px_22px_rgba(20,20,28,.035)]';
+
+  const card='rounded-[15px] border border-[#E8E6E6] bg-white shadow-[0_4px_22px_rgba(20,20,28,.035)]';
   const tabs:ReadonlyArray<[Section,string,string]>=[
     ['overview',copy.overview,'element-4'],['social',copy.editor,'edit'],
     ['calendar',copy.calendar,'calendar'],['library',copy.library,'document-text'],
   ];
-  return <main className="mx-auto w-full max-w-[1440px] space-y-5 pb-12 text-[#242429]">
-    <header className="relative overflow-hidden rounded-[23px] bg-[#1B1B20] px-5 py-7 text-white sm:px-8 sm:py-9">
+  return <main data-testid="campaign-planner-free" className="mx-auto w-full max-w-[1500px] space-y-4 pb-12 text-[#242429]">
+    <header className="relative overflow-hidden rounded-[18px] bg-[#1B1B20] px-5 py-6 text-white sm:px-8 sm:py-7">
       <div aria-hidden className="pointer-events-none absolute -right-20 -top-32 h-80 w-80 rounded-full bg-[#FF7900]/15 blur-3xl"/>
       <div className="relative flex flex-wrap items-start justify-between gap-4">
         <div>
           <Link href="/vendor/marketing" className="inline-flex items-center gap-2 text-[11px] font-bold text-[#FFC18A]">
             <IconsaxIcon name="arrow-left-2" size={15} color="#FFC18A"/> Marketing Studio
           </Link>
-          <p className="mt-5 text-[10px] font-extrabold uppercase tracking-[.2em] text-[#FB9C55]">{copy.subtitle}</p>
+          <p className="mt-4 text-[10px] font-extrabold uppercase tracking-[.2em] text-[#FB9C55]">{copy.subtitle}</p>
           <h1 className="mt-2 text-[29px] font-extrabold tracking-[-.05em] sm:text-[40px]">{copy.title}</h1>
           <p className="mt-2 max-w-[630px] text-[12px] leading-6 text-white/70">{copy.about}</p>
         </div>
         <div className="relative flex flex-wrap items-center gap-2">
-          <label htmlFor="campaign-language" className="sr-only">{copy.language}</label>
-          <select id="campaign-language" value={language} onChange={e=>setLanguage(e.target.value as CampaignLanguage)}
-            className="h-11 appearance-none rounded-xl border border-white/20 bg-[#333138] py-2 pl-4 pr-12 text-[12px] font-semibold text-white outline-none" style={dropdownArrowOnDark}>
-            {languages.map(item=><option key={item} value={item}>{item}</option>)}
-          </select>
+          <span className="inline-flex h-11 items-center gap-2 rounded-lg border border-white/15 bg-white/10 px-3 text-[11px] font-bold text-white/90"><ShieldCheck size={15} className="text-[#FFA45C]"/>{helper.free}</span>
           <button type="button" onClick={reset} className={button+' inline-flex h-11 items-center gap-2 bg-[#FF7900] text-[#211C1B] hover:bg-[#FFA253]'}>
             <IconsaxIcon name="add" size={16}/>{copy.newCampaign}
           </button>
         </div>
       </div>
-      <div className="relative mt-6 flex flex-wrap gap-2">
+      <div className="relative mt-4 flex flex-wrap gap-2">
         <span className="rounded-lg bg-white/10 px-3 py-2 text-[11px] text-white/90">{copy.method}</span>
         <span className="rounded-lg bg-white/10 px-3 py-2 text-[11px] text-white/90">{copy.reviewWorkflow}</span>
       </div>
     </header>
     {error&&<div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-xs text-red-800">{error}</div>}
     {!loading&&!userId&&<div className={card+' p-5 text-sm'}><Link href="/login?redirect=/vendor/marketing/campaigns" className="underline">Sign in to open your campaigns</Link></div>}
-    <section aria-label="Campaign overview" className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+    <section aria-label="Campaign overview" className="grid grid-cols-3 gap-2 sm:gap-3">
       {[
         [copy.saved,active.length,'document-text'],[copy.drafts,draftCount,'edit'],[copy.planned,plannedCount,'calendar']
-      ].map(([name,count,icon])=><div key={name} className={card+' flex items-center justify-between p-5'}>
+      ].map(([name,count,icon])=><div key={name} className={card+' flex min-w-0 items-center justify-between gap-2 p-3 sm:p-4'}>
         <div><p className="text-[11px] font-semibold text-[#817982]">{name}</p>
-          <p className="mt-1 text-[29px] font-extrabold tabular-nums">{loading?'—':count}</p></div>
-        <span className="rounded-xl bg-[#FFF1E6] p-3"><IconsaxIcon name={String(icon)} size={22} color="#D56D18"/></span>
+          <p className="mt-1 text-[24px] font-extrabold tabular-nums">{loading?'—':count}</p></div>
+        <span className="hidden rounded-lg bg-[#FFF1E6] p-2 sm:inline-flex"><IconsaxIcon name={String(icon)} size={22} color="#D56D18"/></span>
       </div>)}
     </section>
-    <div className="grid items-start gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
-      <nav aria-label="Campaign sections" className={card+' flex flex-wrap gap-2 p-3 lg:sticky lg:top-20 lg:flex-col'}>
+    <div className="space-y-4">
+      <nav aria-label="Campaign sections" className={card+' flex items-center gap-2 overflow-x-auto p-2 sm:p-2.5'}>
         {tabs.map(([key,name,icon])=><button type="button" key={key} onClick={()=>setSection(key)} aria-current={section===key?'page':undefined}
-          className={'flex min-h-11 items-center gap-2 rounded-xl px-3 text-left text-[12px] font-bold transition '+(section===key?'bg-[#242326] text-white':'text-[#716C72] hover:bg-[#FFF1E7]')}>
+          className={'flex min-h-10 shrink-0 items-center gap-2 rounded-lg px-4 text-left text-[12px] font-bold transition '+(section===key?'bg-[#242326] text-white':'text-[#716C72] hover:bg-[#FFF1E7]')}>
           <IconsaxIcon name={icon} size={18} color={section===key?'#FFFFFF':'#9E7A60'}/>{name}
         </button>)}
       </nav>
@@ -280,15 +282,20 @@ export default function CampaignPlanner(){
           <button type="button" onClick={reset} className={button+' mt-6 bg-[#242326] text-white'}>{copy.start}</button>
           <p className="mt-5 text-[11px] leading-6 text-[#907960]">{copy.noAuto}</p>
         </section>}
-        {section==='social'&&<div className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(290px,.85fr)]">
-          <section className={card+' min-w-0 p-5 md:p-7'}>
+        {section==='social'&&<div className="grid gap-4 lg:grid-cols-[minmax(0,1.07fr)_minmax(320px,.93fr)] xl:gap-5">
+          <section className={card+' min-w-0 p-4 sm:p-6'}>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div><p className="text-[10px] font-extrabold uppercase tracking-[.13em] text-[#C46B25]">{editingId?copy.editing:copy.newCampaign}</p>
                 <h2 className="mt-1 text-[20px] font-extrabold">{copy.editor}</h2></div>
               {editingId&&<button type="button" onClick={reset} className={button+' border border-[#EDE2D8] text-[#A35C23]'}>{copy.reset}</button>}
             </div>
-            <p className="mt-3 text-[11px] leading-6 text-[#8B7D75]">{copy.captionHelp}</p>
-            <div className="mt-5 space-y-5">
+            <p className="mt-2 text-[11px] leading-6 text-[#8B7D75]">{copy.captionHelp}</p>
+             <div aria-label={helper.readiness} className="mt-4 rounded-lg border border-[#F2E2D6] bg-[#FFF9F3] p-3">
+               <div className="flex items-center justify-between text-[11px] font-bold text-[#A15B22]"><span>{helper.readiness}</span><span>{readyCount}/3</span></div>
+               <div className="mt-2 flex gap-1" aria-hidden="true">{readiness.map((ready,i)=><span key={i} className={'h-1.5 flex-1 rounded-full '+(ready?'bg-[#E87818]':'bg-[#ECD8C9]')}/>)}</div>
+               <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-[#776B66]">{[helper.business,helper.message,helper.channel].map((item,i)=><span key={item} className="inline-flex items-center gap-1"><CheckCircle2 size={12} className={readiness[i]?'text-[#DE791A]':'text-[#C3B4AA]'}/>{item}</span>)}</div>
+             </div>
+            <div className="mt-5 space-y-4">
               <label className={label}>{copy.business}
                 <select className={field+' appearance-none pr-12'} style={dropdownArrow} value={selectedId} disabled={Boolean(editingId)} onChange={e=>setSelectedId(e.target.value)}>
                   <option value="">{copy.selectBusiness}</option>
@@ -296,6 +303,10 @@ export default function CampaignPlanner(){
                 </select>
               </label>
               {!loading&&!businesses.length&&<p className="text-[12px] text-amber-700">{copy.noBusiness}</p>}
+               {business&&<div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[#EEE8E3] bg-[#FCFBFA] px-3 py-2.5 text-[11px] text-[#675E58]">
+                 <span><strong>{business.category}</strong>{business.city?' · '+business.city:''} · {business.status==='approved'?'Published':'Under review'}</span>
+                 <Link href={'/vendor/gallery-services?business='+encodeURIComponent(business.id)} className="font-bold text-[#AF6223] hover:underline">Gallery &amp; Services →</Link>
+               </div>
               <div><p className={label}>{copy.objective}</p>
                 <div className="mt-2 grid grid-cols-2 gap-2">
                   {goals.map((g,i)=><button key={g} type="button" aria-pressed={objective===g}
@@ -314,6 +325,19 @@ export default function CampaignPlanner(){
                   placeholder={copy.messageHint}/>
                 <span className="mt-1 block text-right text-[10px] text-[#89818A]">{offer.length}/240</span>
               </label>
+               {!offer.trim()&&<div aria-label={helper.ideas} className="rounded-xl border border-[#EDE6E0] bg-[#FCFAF8] p-3.5">
+                 <div className="flex items-start gap-2"><Lightbulb size={16} className="mt-0.5 shrink-0 text-[#CB6C23]"/>
+                   <div><p className="text-[12px] font-bold text-[#3B3431]">{helper.ideas}</p>
+                     <p className="mt-1 text-[11px] leading-5 text-[#847A75]">{helper.ideaNote}</p></div>
+                 </div>
+                 <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                   {quickStarts.map((idea,i)=><button type="button" key={idea} onClick={()=>setOffer(idea)}
+                     className="flex min-h-[68px] items-start gap-2 rounded-lg border border-[#EAE0D6] bg-white p-3 text-left text-[11px] leading-5 text-[#51443A] hover:border-[#EDAE80] hover:bg-[#FFF5EB]">
+                     <span className="shrink-0 rounded-md bg-[#FFF0E4] px-1.5 py-0.5 font-bold text-[#B7601D]">{i+1}</span>
+                     <span>{idea}</span><ArrowRight size={13} className="ml-auto mt-0.5 shrink-0 text-[#C47E4D]"/>
+                   </button>)}
+                 </div>
+               </div>
               <label className={label}>{copy.cta}
                 <input className={field} maxLength={130} value={cta} onChange={e=>setCta(e.target.value)} placeholder={copy.ctaHint}/>
               </label>
@@ -337,13 +361,14 @@ export default function CampaignPlanner(){
               <button type="button" onClick={reset} className={button+' border border-[#E3DFE0]'}>{copy.reset}</button>
             </div>
           </section>
-          <aside className={card+' min-w-0 overflow-hidden'}>
+          <aside className={card+' min-w-0 overflow-hidden lg:sticky lg:top-4'}>
             <div className="border-b border-[#E9E4E2] bg-[#FFF7F0] px-5 py-4">
               <p className="text-[10px] font-extrabold uppercase tracking-[.13em] text-[#B96E33]">CREATIVE REVIEW</p>
               <h2 className="mt-1 text-[17px] font-extrabold">{copy.preview}</h2>
             </div>
-            <div className="space-y-5 p-5">
-              <div className="min-h-[190px] whitespace-pre-wrap break-words rounded-xl border border-[#E9E5E3] bg-[#FAFAFA] p-5 text-[13px] leading-7">{preview}</div>
+            <div className="space-y-4 p-4 sm:p-5">
+              <div className="min-h-[170px] whitespace-pre-wrap break-words rounded-lg border border-[#E9E5E3] bg-[#FCFAF7] p-4 text-[13px] leading-6">{preview}</div>
+               <p className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-[#AC7047]"><ShieldCheck size={13}/>{helper.preview}</p>
               <p className="text-[11px] leading-6 text-[#867D82]">{copy.review}</p>
               <div className="flex flex-wrap gap-2">
                 <button type="button" className={button+' border border-[#E9E3DE]'} onClick={()=>void navigator.clipboard.writeText(preview).then(()=>toast.success(copy.copy)).catch(()=>toast.error(copy.updateConflict))}>{copy.copy}</button>
