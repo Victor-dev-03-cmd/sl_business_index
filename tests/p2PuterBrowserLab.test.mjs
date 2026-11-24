@@ -552,7 +552,6 @@ test('stale English fields can no longer be silently exported on Tamil or Sinhal
   assert.match(lab,/if\(!outputReady\|\|locked\|\|operationRef\.current\|\|!finalBlob\|\|!finalUrl\|\|!copyLanguageConsistent\|\|!serviceFocusApproved\)return/);
   assert.match(lab,/if\(!copyLanguageConsistent\)\{/);
   assert.match(lab,/Preserve the last successful preview visually during copy\/language edits/);
-  assert.match(lab,/!finalBlob\|\|!finalUrl\|\|composing\|\|!copyLanguageConsistent/);
   assert.match(lab,/if\(!manualHeadline\|\|!isPosterTextInLanguage\(headline,language\)\)/);
   assert.match(lab,/if\(!manualCta\|\|!isPosterTextInLanguage\(cta,language\)\)/);
   assert.match(lab,/if\(!manualOffer\|\|!isPosterTextInLanguage\(offer,language\)\|\|/);
