@@ -306,7 +306,7 @@ export default function CampaignPlanner(){
                {business&&<div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[#EEE8E3] bg-[#FCFBFA] px-3 py-2.5 text-[11px] text-[#675E58]">
                  <span><strong>{business.category}</strong>{business.city?' · '+business.city:''} · {business.status==='approved'?'Published':'Under review'}</span>
                  <Link href={'/vendor/gallery-services?business='+encodeURIComponent(business.id)} className="font-bold text-[#AF6223] hover:underline">Gallery &amp; Services →</Link>
-               </div>
+               </div>}
               <div><p className={label}>{copy.objective}</p>
                 <div className="mt-2 grid grid-cols-2 gap-2">
                   {goals.map((g,i)=><button key={g} type="button" aria-pressed={objective===g}
@@ -337,7 +337,7 @@ export default function CampaignPlanner(){
                      <span>{idea}</span><ArrowRight size={13} className="ml-auto mt-0.5 shrink-0 text-[#C47E4D]"/>
                    </button>)}
                  </div>
-               </div>
+               </div>}
               <label className={label}>{copy.cta}
                 <input className={field} maxLength={130} value={cta} onChange={e=>setCta(e.target.value)} placeholder={copy.ctaHint}/>
               </label>
