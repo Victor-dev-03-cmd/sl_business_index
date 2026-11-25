@@ -12,11 +12,12 @@ import {
   parseFollowUpInput,
   type LeadFollowUp,
 } from '@/lib/growth/lead-followups';
+import {buildLeadIQQueue} from '@/lib/growth/g5/lead-iq';
 
 type Stage = 'new' | 'contacted' | 'converted' | 'lost';
 type StageFilter = 'all' | Stage;
 type Period = 'all' | '7' | '30' | '90';
-type Sort = 'newest' | 'oldest' | 'name' | 'stage';
+type Sort = 'newest' | 'oldest' | 'name' | 'stage' | 'priority';
 
 type LeadNote = { id: string; note: string; created_at: string };
 type Lead = {
@@ -252,6 +253,11 @@ export default function LeadsPage() {
     return reminder && followUpState(reminder, now) === 'overdue';
   }).length;
 
+  const leadIQQueue=useMemo(()=>buildLeadIQQueue(leads,followUps,followUpReadiness,now),[leads,followUps,followUpReadiness,now]);
+  const leadIQRank=useMemo(()=>new Map(leadIQQueue.map((item,index)=>[item.id,index])),[leadIQQueue]);
+  const leadIQCount=leadIQQueue.filter(item=>item.priority==='urgent').length;
+  const leadIQById=useMemo(()=>new Map(leads.map(lead=>[lead.id,lead])),[leads]);
+
   const filtered = useMemo(() => {
     const needle = search.trim().toLowerCase();
     const earliest = period === 'all' ? null : Date.now() - Number(period) * 24 * 60 * 60 * 1000;
@@ -266,6 +272,7 @@ export default function LeadsPage() {
       return matchesSearch && matchesStage && matchesBusiness && matchesPeriod && matchesDue;
     });
     list.sort((a, b) => {
+      if (sort === 'priority') return (leadIQRank.get(a.id)??Number.MAX_SAFE_INTEGER)-(leadIQRank.get(b.id)??Number.MAX_SAFE_INTEGER);
       if (sort === 'name') return String(a.name || '').localeCompare(String(b.name || ''));
       if (sort === 'stage') return String(a.status || '').localeCompare(String(b.status || ''));
       const left = new Date(a.created_at).getTime() || 0;
@@ -273,7 +280,7 @@ export default function LeadsPage() {
       return sort === 'oldest' ? left - right : right - left;
     });
     return list;
-  }, [leads, search, stageFilter, businessFilter, period, sort, businessNames, dueOnly, followUps, now]);
+  }, [leads, search, stageFilter, businessFilter, period, sort, businessNames, dueOnly, followUps, now, leadIQRank]);
 
   const pageSize = 10;
   const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
@@ -488,6 +495,52 @@ export default function LeadsPage() {
           </div>
         )}
 
+        <section data-g5-leadiq="true" aria-label="LeadIQ priority queue"
+          className="vendor-mobile-safe min-w-0 rounded-xl border border-[#F1E0D2] bg-[#FFFCF9] p-3 sm:p-4">
+          <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="text-[15px] font-extrabold text-[#282429]">LeadIQ · What needs attention</h2>
+              <p className="mt-1 text-[12px] leading-5 text-[#716A66]">
+                Prioritized from recorded CRM stages and saved follow-ups — not an AI sale-probability score.
+              </p>
+            </div>
+            {!loading&&!error&&!leadLimitReached&&<span className="vendor-status-badge rounded-md bg-[#FFF0E1] px-2.5 py-1.5 text-[11px] font-bold text-[#98500D]">
+              {leadIQCount} urgent
+            </span>}
+          </div>
+          {loading?<div className="mt-3 h-16 animate-pulse rounded-lg bg-[#F5EAE2]" role="status" aria-label="Loading LeadIQ priorities"/>:
+            error||leadLimitReached?<p role="status" className="mt-3 text-[12px] text-[#865D48]">
+              Priorities are unavailable because the complete CRM data is not available.
+            </p>:
+            leadIQQueue.length===0?<p className="mt-3 text-[12px] text-[#766E67]">
+              No open enquiry requires prioritization in the recorded CRM.
+            </p>:
+            <div className="mt-3 grid min-w-0 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {leadIQQueue.slice(0,3).map(item=>{
+                const lead=leadIQById.get(item.id);
+                return <button key={item.id} type="button" onClick={()=>openLead(item.id)}
+                  className="flex min-h-24 min-w-0 flex-col items-start justify-between rounded-lg border border-[#EAE0D8] bg-white p-3 text-left transition hover:border-[#F1A76B] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F47A1B]">
+                  <span className="flex w-full min-w-0 flex-wrap items-center justify-between gap-2">
+                    <span className="min-w-0 text-[12px] font-bold leading-5 text-[#2B292B]">
+                      {lead?.name?.trim()||'Unnamed customer'}
+                    </span>
+                    <span className={'vendor-status-badge rounded-md px-2 py-1 text-[11px] font-bold '+
+                      (item.priority==='urgent'?'bg-[#FFF0E3] text-[#B3540C]':'bg-[#F2F0EE] text-[#625954]')}>
+                      {item.priority==='urgent'?'Urgent':'Review'}
+                    </span>
+                  </span>
+                  <span className="mt-2 text-[12px] font-semibold text-[#393035]">{item.title}</span>
+                  <span className="mt-1 text-[11px] leading-4 text-[#746D69]">{item.explanation}</span>
+                  <span className="mt-2 text-[11px] font-bold text-[#D06614]">Open enquiry →</span>
+                </button>;
+              })}
+            </div>}
+          {followUpReadiness==='unavailable'&&!loading&&!error&&!leadLimitReached&&
+            <p className="mt-3 text-[11px] leading-5 text-[#826447]">
+              Saved reminder data is unavailable; LeadIQ uses the recorded enquiry stages only.
+            </p>}
+        </section>
+
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-[13px] font-bold text-[#2C2C32]">Enquiry overview</h2>
           <span className="rounded-md border border-[#e9edf0] bg-white px-2 py-1 text-[10px] font-semibold text-slate-500">All-time records</span>
@@ -587,6 +640,7 @@ export default function LeadsPage() {
               className="h-9 rounded-lg border border-[#e1e6ec] bg-white px-2.5 text-[11px] font-medium text-slate-600">
               <option value="newest">Newest first</option><option value="oldest">Oldest first</option>
               <option value="name">Name A–Z</option><option value="stage">Pipeline status</option>
+              <option value="priority">LeadIQ priority</option>
             </select>
           </div>
           <div className="flex flex-wrap items-center gap-1.5 border-b border-[#edf0f3] px-4 py-2.5 sm:px-5" aria-label="Lead status filters">
