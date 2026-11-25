@@ -65,5 +65,11 @@ jobs:
       - name: G5-01 owner CRM and narrow mobile Settings integration
         run: node --test tests/g5/live-ux-contract.test.mjs
 
+      - name: G5-02 follow-up worklist and trilingual manual guidance domain tests
+        run: bun test tests/g5/followup-response-guidance.test.mjs
+
+      - name: G5-02 real owner CRM and safe review guidance UI contract
+        run: node --test tests/g5/followup-response-live-ux.test.mjs
+
       - name: G1 live three-page SSR read-only integration static security contract
         run: node --test tests/g1/live-page-integration.test.mjs
