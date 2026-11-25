@@ -37,7 +37,7 @@ const email=(id='email_1')=>action(id,'send_email',{
 });
 const plan=(actions=[draft(),social(),email()],extra={})=>({
   planId:PLAN,revision:1,businessId:BUSINESS,
-  expiresAt:new Date(NOW+10*60000).toISOString(),maxTotalCostMinor:0,
+  expiresAt:new Date(NOW+10*60000).toISOString(),currency:'LKR',maxTotalCostMinor:0,
   actions,...extra,
 });
 const build=(a=plan(),ctx=context())=>prepareWA01Manifest(a,ctx,NOW);
@@ -83,6 +83,7 @@ test('one-request Christmas campaign prepares immutable preview, never sends',()
   assert.equal(response.ok,true);
   const {manifest}=response;
   assert.equal(manifest.ownerId,USER);assert.equal(manifest.businessId,BUSINESS);
+  assert.equal(manifest.currency,'LKR');
   assert.match(manifest.digest,/^[a-f0-9]{64}$/);
   assert.equal(manifest.actions.length,3);
   assert.deepEqual(describeWA01Preview(manifest).map(x=>x.requiresFinalApproval),
@@ -147,6 +148,7 @@ test('plan cost ceiling, expiry, schedule, version and unknown hashes are blocke
     'plan_expiry_invalid');
   assert.equal(build(plan([draft()],{expiresAt:new Date(NOW+3600000).toISOString()})).ok,false);
   assert.equal(build(plan([social('fb_1')],{revision:-1})).ok,false);
+  assert.equal(build(plan([social('fb_1')],{currency:'DOGE'})).ok,false);
   assert.equal(build(plan([action('fb_1','publish_facebook',{
     providerAccountRef:'acct:fb-page',scheduledAt:new Date(NOW-1000).toISOString()
   })])).ok,false);
@@ -182,6 +184,8 @@ test('approval binds vendor, business, plan revision, manifest and exact media/c
   assert.equal((await attempt(replaced,'facebook_1',item,final)).ok,false);
   const mediaChanged=build(plan([draft(),{...social(),previewSha256:'e'.repeat(64)},email()])).manifest;
   assert.equal((await attempt(mediaChanged,'facebook_1',item,final)).ok,false);
+  const changedCurrency=build(plan([draft(),social(),email()],{currency:'USD'})).manifest;
+  assert.equal((await attempt(changedCurrency,'facebook_1',item,final)).ok,false);
 });
 test('approval expiry, missing atomic claim, and denied claim fail closed',async()=>{
   const m=build().manifest,item=grant(m,'item','facebook_1').receipt,final=grant(m,'final',null).receipt;
