@@ -36,12 +36,13 @@ export default function MobilePublicDock({role='nav'}:{role?:'nav'|'spacer'}){
   const [portalRoot,setPortalRoot]=useState<HTMLElement|null>(null);
 
   const {user,loading:sessionLoading}=useSession();
-  const [vendorIdentity,setVendorIdentity]=useState<{uid:string;isVendor:boolean}|null>(null);
+  const [vendorIdentity,setVendorIdentity]=useState<{uid:string;isVendor:boolean;href:string}|null>(null);
 
   // The fifth tab stays About for visitors and ordinary users. We do not
   // trust user_metadata/app_metadata or a hard-coded email for vendor status.
-  // A vendor account role or an already-owned listing qualifies; Supabase RLS
-  // still protects the destination's private profile and verification data.
+  // A vendor account role or an already-owned listing qualifies. We link to
+  // the actual owned Business Details page, never the vendor dashboard.
+  // Supabase RLS still protects the underlying business/verification data.
   useEffect(()=>{
     // Root layout mounts a second spacer copy; it must not fetch twice.
     if(role!=='nav'||sessionLoading)return;
@@ -53,16 +54,29 @@ export default function MobilePublicDock({role='nav'}:{role?:'nav'|'spacer'}){
       try{
         const {data:profile}=await supabase.from('profiles')
           .select('role').eq('id',uid).maybeSingle();
-        const role=typeof profile?.role==='string'?profile.role.toLowerCase():'';
-        let isVendor=role==='vendor';
-        if(!isVendor && role!=='admin' && role!=='ceo'){
-          const {data:owned,error}=await supabase.from('businesses')
-            .select('id').eq('owner_id',uid).limit(1);
-          isVendor=!error && Array.isArray(owned) && owned.length>0;
+        const accountRole=typeof profile?.role==='string'?profile.role.toLowerCase():'';
+        // Staff keep the public About tab. They do not impersonate vendors.
+        if(accountRole==='admin'||accountRole==='ceo'){
+          if(active)setVendorIdentity({uid,isVendor:false,href:'/about'});
+          return;
         }
-        if(active)setVendorIdentity({uid,isVendor});
+        // Pick the oldest approved owned listing first, then the oldest other
+        // listing. The public Business Details route supports slug and ID.
+        // Never send the fifth tab to the vendor dashboard/settings.
+        const {data:owned,error}=await supabase.from('businesses')
+          .select('id,slug,status')
+          .eq('owner_id',uid)
+          .order('status',{ascending:true})
+          .order('created_at',{ascending:true})
+          .limit(1);
+        const primary=!error&&Array.isArray(owned)?owned[0]:null;
+        const isVendor=accountRole==='vendor'||Boolean(primary);
+        const href=primary
+          ?'/business/'+encodeURIComponent(String(primary.slug||primary.id))
+          :'/register-business';
+        if(active)setVendorIdentity({uid,isVendor,href});
       }catch{
-        if(active)setVendorIdentity({uid,isVendor:false});
+        if(active)setVendorIdentity({uid,isVendor:false,href:'/about'});
       }
     };
     void checkVendor();
@@ -104,7 +118,7 @@ export default function MobilePublicDock({role='nav'}:{role?:'nav'|'spacer'}){
       className="z-[1200] grid h-[66px] grid-cols-5 items-center gap-0.5 overflow-hidden rounded-[20px] border border-white/30 bg-[#29453E]/95 px-1.5 text-[#E5F1E9] shadow-[0_12px_36px_rgba(7,31,23,.30)] backdrop-blur-xl supports-[backdrop-filter]:bg-[#304D43]/85 sm:hidden">
       {mobilePublicTabs.map((tab,index)=>{
         const destination=index===4 && vendorTab
-          ?{href:'/vendor/settings?tab=profile',label:'My Profile',icon:'profile-circle'}
+          ?{href:vendorIdentity?.href||'/register-business',label:'My Profile',icon:'profile-circle'}
           :tab;
         const active=destination.href==='/'?pathname==='/':
           destination.href==='/category'?pathname==='/category'||pathname.startsWith('/category/'):

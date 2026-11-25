@@ -301,3 +301,18 @@ button, input, select, textarea, option { font-family: inherit; }
 @media (prefers-reduced-motion: reduce) {
   [data-sonner-toast].slbi-toast, [data-sonner-toast].slbi-toast * { animation-duration:.01ms !important; transition-duration:.01ms !important; }
 }
+
+/* Owner-only verification invitation on a public Business Details profile.
+   One composited, soft scale + halo cycle; no motion for reduced-motion users. */
+@keyframes slbi-owner-verification-nudge {
+  0%, 100% { transform:scale(1); box-shadow:0 0 0 0 rgba(234,88,12,.10); }
+  50% { transform:scale(1.055); box-shadow:0 0 0 5px rgba(234,88,12,.17); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .slbi-owner-verify-cta {
+    animation:slbi-owner-verification-nudge 1550ms ease-in-out infinite;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .slbi-owner-verify-cta { animation:none; transform:none; }
+}
