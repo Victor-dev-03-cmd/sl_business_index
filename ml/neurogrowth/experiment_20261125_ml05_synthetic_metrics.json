@@ -1,0 +1,124 @@
+{
+  "experiment": "neurogrowth-ml05-multi-dataset-business-cluster-bootstrap",
+  "date": "2026-11-25",
+  "research_only": true,
+  "real_business_validation": false,
+  "production_promotion_permitted": false,
+  "deepnote": {
+    "workspace": "SLBI",
+    "project_id": "2d7d3e23-f87e-437f-a091-28edaa42ad49",
+    "notebook_id": "824f93744b5a4e4088dd2739c2d58161",
+    "run_id": "22db73ff-b13a-4ce2-9dcb-5612f42a8b82",
+    "status": "success",
+    "completed_at": "2026-11-25T13:03:22.971Z",
+    "full_aggregate_run_sha256": "97b88b380a82f8170abc3db297b279e2afc0189ca15750826a5b65b99a7858b4",
+    "python_tests": "3/3 PASS",
+    "cuda": false
+  },
+  "method": {
+    "dataset_seeds": [
+      11,
+      42,
+      73
+    ],
+    "simulated_businesses_per_seed": 600,
+    "train_businesses": 420,
+    "validation_businesses": 90,
+    "test_businesses": 90,
+    "test_rows": 180,
+    "neural_candidates_per_scenario": 4,
+    "bootstrap_resamples_per_scenario": 400,
+    "model_selection": "validation_only_per_scenario",
+    "confidence_threshold": 0.7
+  },
+  "across_selected_neural": {
+    "accuracy": {
+      "mean": 0.8759,
+      "min": 0.8722,
+      "max": 0.8778,
+      "std_population": 0.0026
+    },
+    "macro_f1": {
+      "mean": 0.7539,
+      "min": 0.6594,
+      "max": 0.8192,
+      "std_population": 0.0684
+    }
+  },
+  "scenarios": [
+    {
+      "dataset_seed": 11,
+      "selected": "small_mlp",
+      "model_seed": 7,
+      "accuracy": 0.8722,
+      "macro_f1": 0.8192,
+      "improve_contact_support": 3,
+      "improve_contact_recall": 1,
+      "fixed_rule_accuracy": 0.8833,
+      "fixed_rule_macro_f1": 0.8311,
+      "boosting_accuracy": 0.8389,
+      "boosting_macro_f1": 0.7285,
+      "paired_95_delta_neural_minus_rules_macro_f1": [
+        -0.0855,
+        0.048
+      ],
+      "paired_95_delta_neural_minus_tree_macro_f1": [
+        -0.0035,
+        0.1762
+      ],
+      "warnings": [
+        "LOW_CLASS_SUPPORT improve_contact 3"
+      ]
+    },
+    {
+      "dataset_seed": 42,
+      "selected": "small_mlp",
+      "model_seed": 42,
+      "accuracy": 0.8778,
+      "macro_f1": 0.7831,
+      "improve_contact_support": 5,
+      "improve_contact_recall": 0.6,
+      "fixed_rule_accuracy": 0.85,
+      "fixed_rule_macro_f1": 0.6917,
+      "boosting_accuracy": 0.8611,
+      "boosting_macro_f1": 0.675,
+      "paired_95_delta_neural_minus_rules_macro_f1": [
+        0.0117,
+        0.1779
+      ],
+      "paired_95_delta_neural_minus_tree_macro_f1": [
+        0.0159,
+        0.2122
+      ],
+      "warnings": [
+        "LOW_CLASS_SUPPORT improve_contact 5"
+      ]
+    },
+    {
+      "dataset_seed": 73,
+      "selected": "residual_mlp",
+      "model_seed": 42,
+      "accuracy": 0.8778,
+      "macro_f1": 0.6594,
+      "improve_contact_support": 1,
+      "improve_contact_recall": 0,
+      "fixed_rule_accuracy": 0.85,
+      "fixed_rule_macro_f1": 0.7711,
+      "boosting_accuracy": 0.8278,
+      "boosting_macro_f1": 0.5832,
+      "paired_95_delta_neural_minus_rules_macro_f1": [
+        -0.1744,
+        0.1437
+      ],
+      "paired_95_delta_neural_minus_tree_macro_f1": [
+        0.0018,
+        0.1473
+      ],
+      "warnings": [
+        "LOW_CLASS_SUPPORT improve_contact 1",
+        "LOW_RECALL improve_contact 0.0000"
+      ]
+    }
+  ],
+  "interpretation": "Accuracy stable across SAME synthetic generator family, but Macro-F1 varies and rare-action support is inadequate; bootstrap paired intervals vs fixed heuristics contain zero in two of three scenarios. No evidence of superior real vendor growth outcomes, no automatic promotion."
+}
