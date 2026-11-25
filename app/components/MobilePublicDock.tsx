@@ -43,7 +43,8 @@ export default function MobilePublicDock({role='nav'}:{role?:'nav'|'spacer'}){
   // A vendor account role or an already-owned listing qualifies; Supabase RLS
   // still protects the destination's private profile and verification data.
   useEffect(()=>{
-    if(sessionLoading)return;
+    // Root layout mounts a second spacer copy; it must not fetch twice.
+    if(role!=='nav'||sessionLoading)return;
     let active=true;
     setVendorIdentity(null);
     if(!user?.id)return;
@@ -66,7 +67,7 @@ export default function MobilePublicDock({role='nav'}:{role?:'nav'|'spacer'}){
     };
     void checkVendor();
     return()=>{active=false};
-  },[user?.id,sessionLoading]);
+  },[role,user?.id,sessionLoading]);
 
   const vendorTab=Boolean(user?.id && vendorIdentity?.uid===user.id && vendorIdentity.isVendor);
 
