@@ -72,7 +72,7 @@ test('Only a brief cold-open logo, and search suggestions use touch and keyboard
   const hero=read('app/components/HeroSearch.tsx');
   assert.match(loader,/setShowIntro\(false\), 160/);
   assert.doesNotMatch(loader,/setShowIntro\(false\), 1000/);
-  assert.match(hero,/onClick=\{\(\)=>handleCategoryClick\(cat.name\)\}/);
-  assert.match(hero,/onClick=\{\(\)=>\s*\{\s*window.dispatchEvent\(/);
+  assert.match(hero,/onClick=\{\(\)\s*=>\s*handleCategoryClick\(cat.name\)\}/);
+  assert.match(hero,/onClick=\{\(\)\s*=>\s*\{\s*window.dispatchEvent\(/);
   assert.doesNotMatch(hero,/onMouseDown=\{\(\)=>router.push/);
 });
