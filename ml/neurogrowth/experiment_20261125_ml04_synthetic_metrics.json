@@ -1,0 +1,98 @@
+{
+  "experiment": "neurogrowth-ml04-identical-panel-neural-benchmark",
+  "date": "2026-11-25",
+  "research_only": true,
+  "real_business_validation": false,
+  "private_customer_data_used": false,
+  "deepnote_run_id": "5ad6680c-9aa5-41fa-813e-b18f944c0eb3",
+  "deepnote_run_status": "success",
+  "deepnote_completed_at": "2026-11-25T12:52:29.059Z",
+  "deepnote_notebook_id": "feaaba272e36462f85b3faa1ff677dc9",
+  "metrics_artifact_sha256": "1dfe35893ec73681fac55e93822d2a25c28b821d6357528c78757f8ffc43cab0",
+  "runtime": {
+    "python": "3.13.18",
+    "torch": "2.12.0+cu130",
+    "numpy": "2.4.6",
+    "sklearn": "1.6.1",
+    "cuda": false
+  },
+  "dataset": {
+    "fully_synthetic": true,
+    "train_businesses": 420,
+    "train_rows": 2520,
+    "validation_businesses": 90,
+    "validation_rows": 90,
+    "test_businesses": 90,
+    "test_rows": 180,
+    "group_split": "business-disjoint",
+    "time_split": "train <=month6; val month7; test >=month8",
+    "seed": 42
+  },
+  "baselines": {
+    "majority": {
+      "accuracy": 0.6167,
+      "macro_f1": 0.1526
+    },
+    "fixed_heuristic": {
+      "accuracy": 0.85,
+      "macro_f1": 0.6917
+    },
+    "hist_gradient_boosting": {
+      "accuracy": 0.8611,
+      "macro_f1": 0.675
+    }
+  },
+  "neural_runs": [
+    {
+      "architecture": "small_mlp",
+      "seed": 7,
+      "validation_macro_f1": 0.7358,
+      "test_accuracy": 0.9056,
+      "test_macro_f1": 0.8082,
+      "best_epoch": 25
+    },
+    {
+      "architecture": "small_mlp",
+      "seed": 42,
+      "validation_macro_f1": 0.7507,
+      "test_accuracy": 0.8778,
+      "test_macro_f1": 0.7831,
+      "best_epoch": 32
+    },
+    {
+      "architecture": "residual_mlp",
+      "seed": 7,
+      "validation_macro_f1": 0.7174,
+      "test_accuracy": 0.8667,
+      "test_macro_f1": 0.7781,
+      "best_epoch": 15
+    },
+    {
+      "architecture": "residual_mlp",
+      "seed": 42,
+      "validation_macro_f1": 0.7264,
+      "test_accuracy": 0.8778,
+      "test_macro_f1": 0.7756,
+      "best_epoch": 13
+    }
+  ],
+  "validation_selected": {
+    "architecture": "small_mlp",
+    "seed": 42,
+    "accuracy": 0.8778,
+    "macro_f1": 0.7831,
+    "top3_hit_rate": 1,
+    "per_action_recall": {
+      "improve_listing": 0.8667,
+      "followup_leads": 0.9009,
+      "reply_reviews": 0.9615,
+      "improve_contact": 0.6,
+      "prepare_campaign": 0.7391
+    },
+    "threshold": 0.7,
+    "coverage": 0.7778,
+    "selective_accuracy": 0.9571,
+    "ece": 0.0751
+  },
+  "note": "No real vendor labels, business ROI, causal lift, or production agent. Seed7 90.56% exploratory test is not validation-selected. Low sample size, synthetic imbalance. Model selection on validation only."
+}
