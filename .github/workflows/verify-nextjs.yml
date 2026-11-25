@@ -38,6 +38,9 @@ jobs:
         run: node --experimental-strip-types --test tests/publicMobileHomeReference.test.mjs
       - name: Low-memory mobile route feedback and streaming regressions
         run: node --test tests/mobileRoutePerformance.test.mjs
+      - name: G5-02 follow-up and reputation guidance owner safety
+        run: node --test tests/g5/followup-response-live-ux.test.mjs
+
       - name: G5 LeadIQ Reputation and Settings mobile visual bug regressions
         run: node --test tests/g5/live-ux-contract.test.mjs
 
