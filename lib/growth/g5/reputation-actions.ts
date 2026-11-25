@@ -7,7 +7,7 @@ export type ReputationReview=Readonly<{
   id:string;
   rating:number|null;
   created_at:string;
-  review_replies:readonly {id:string}|null;
+  review_replies:readonly {id:string}[]|null;
 }>;
 export type ReputationAction=Readonly<{
   id:string;
