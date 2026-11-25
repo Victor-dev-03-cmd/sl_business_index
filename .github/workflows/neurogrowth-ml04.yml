@@ -1,0 +1,33 @@
+name: NeuroGrowth ML-04 neural benchmark safety
+on:
+  pull_request:
+    paths:
+      - 'ml/neurogrowth/ml04_neural_benchmark.py'
+      - 'ml/neurogrowth/tests/test_ml04_benchmark.py'
+      - 'ml/neurogrowth/contracts/ml04_model_selection.json'
+      - 'tests/ml/neurogrowth-ml04-contract.test.mjs'
+      - '.github/workflows/neurogrowth-ml04.yml'
+      - 'docs/growth/HANDOFF_LATEST.md'
+  workflow_dispatch:
+jobs:
+  static-neural-and-privacy-contract:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/ml/neurogrowth-ml04-contract.test.mjs
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: |
+          python - <<'PY'
+          import ast,pathlib
+          for path in ("ml/neurogrowth/ml04_neural_benchmark.py",
+                       "ml/neurogrowth/tests/test_ml04_benchmark.py"):
+              ast.parse(pathlib.Path(path).read_text())
+          print("ML04 source and Python test syntax pass; CPU training verified separately in Deepnote")
+          PY
