@@ -92,6 +92,11 @@ export default async function MarketingOverview(){
             <a href="#marketing-app-store" className="inline-flex h-11 items-center gap-2 rounded-lg bg-[#FF7900] px-5 text-[12px] font-extrabold text-[#1C1A1B] transition hover:bg-[#FFA14D]">
               Explore apps <IconsaxIcon name="arrow-right-2" size={16} color="#1C1A1B"/>
             </a>
+            <Link href="/vendor/marketing/whatsapp"
+              className="inline-flex h-11 items-center gap-2 rounded-lg border border-[#FFAA6B]/40 bg-white/[.08] px-4 text-[11px] font-bold text-white transition hover:bg-white/[.16]">
+              <IconsaxIcon name="message-text" size={16} color="#FFAD74"/>
+              WhatsApp Connection Lab
+            </Link>
             <span className="inline-flex h-11 items-center gap-2 rounded-lg border border-white/[.14] bg-white/[.07] px-4 text-[11px] font-bold text-white/[.85]">
               <IconsaxIcon name={paid?'tick-circle':'shield-tick'} size={15} color="#FFAE76"/>
               {paid?'Verified '+access.plan+' access':access.reason==='unavailable'?'Plan verification unavailable':'Free essentials · Pro app collection'}
