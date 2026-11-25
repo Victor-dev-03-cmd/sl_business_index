@@ -99,7 +99,8 @@ test('Settings layout has responsive Tailwind forms without old stylesheet depen
   assert.match(settings,/data-testid="vendor-settings-studio"/);
   assert.match(settings,/lg:grid-cols-\[250px_minmax\(0,1fr\)\]/);
   assert.match(settings,/aria-label="Settings navigation"/);
-  assert.match(settings,/flex flex-col gap-2 sm:flex-row/);
+  assert.match(settings,/data-testid="vendor-seo-keyword-editor"/);
+  assert.match(settings,/sm:grid-cols-\[minmax\(0,1fr\)_auto\]/);
   assert.match(settings,/Save discovery settings/);
   assert.match(settings,/shadow-\[inset_5px_5px_11px_/);
   assert.doesNotMatch(settings,/settings-studio\.css/);
