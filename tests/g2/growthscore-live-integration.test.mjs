@@ -54,7 +54,7 @@ test('Three existing vendor G1 screens and main dashboard expose same G2 live sc
   assert.match(dashboard,/aria-label="Select business for GrowthScore"/);
   assert.match(dashboard,/<G2GrowthScorePanel businessId=\{growthBusiness\.id\} variant="compact"\/>/);
   assert.match(dashboard,/G3 Growth Command Center/);
-  assert.match(panel,/variant='compact'/);
+  assert.match(panel,/variant==='compact'/);
   assert.match(panel,/api\/vendor\/g2-growthscore\?businessId=/);
   assert.match(panel,/credentials:'same-origin'/);
   assert.match(panel,/cache:'no-store'/);
