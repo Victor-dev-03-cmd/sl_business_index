@@ -1,0 +1,95 @@
+{
+  "contract_version": "neurogrowth-ml02-research-features-v1",
+  "research_only": true,
+  "no_raw_pii_export": true,
+  "model_strategy": "shared_versioned_weights_private_per_vendor_runtime_context",
+  "scope": "synthetic_data_only_until_separate_owner_approved_consented_label_pipeline",
+  "features": [
+    {
+      "name": "listing_gaps",
+      "min": 0,
+      "max": 1,
+      "missing": "explicit_unknown_not_zero"
+    },
+    {
+      "name": "unanswered_lead_ratio",
+      "min": 0,
+      "max": 1,
+      "missing": "explicit_unknown_not_zero"
+    },
+    {
+      "name": "overdue_reminder_ratio",
+      "min": 0,
+      "max": 1,
+      "missing": "explicit_unknown_not_zero"
+    },
+    {
+      "name": "unanswered_review_ratio",
+      "min": 0,
+      "max": 1,
+      "missing": "explicit_unknown_not_zero"
+    },
+    {
+      "name": "recent_views_norm",
+      "min": 0,
+      "max": 1,
+      "missing": "explicit_unknown_not_zero"
+    },
+    {
+      "name": "call_click_rate",
+      "min": 0,
+      "max": 1,
+      "missing": "explicit_unknown_not_zero"
+    },
+    {
+      "name": "recent_enquiries_norm",
+      "min": 0,
+      "max": 1,
+      "missing": "explicit_unknown_not_zero"
+    },
+    {
+      "name": "campaign_staleness",
+      "min": 0,
+      "max": 1,
+      "missing": "explicit_unknown_not_zero"
+    },
+    {
+      "name": "business_age_norm",
+      "min": 0,
+      "max": 1,
+      "missing": "explicit_unknown_not_zero"
+    },
+    {
+      "name": "evidence_coverage",
+      "min": 0,
+      "max": 1,
+      "missing": "explicit_unknown_not_zero"
+    }
+  ],
+  "actions": [
+    "improve_listing",
+    "followup_leads",
+    "reply_reviews",
+    "improve_contact",
+    "prepare_campaign"
+  ],
+  "prohibited_raw_exports": [
+    "customer_name",
+    "email",
+    "phone",
+    "ip_address",
+    "private_messages",
+    "session_tokens",
+    "auth_credentials",
+    "raw_lead_content",
+    "raw_review_text"
+  ],
+  "label_policy": "no_real_labels_without_consent_and_business_time_split",
+  "research_baselines": [
+    "g2_g5_rules",
+    "gradient_boosted_trees",
+    "train_majority"
+  ],
+  "promotion_gate": "real_consented_business_time_heldout_evaluation_and_private_shadow_mode_only_after_independent_authorization",
+  "agent_action_policy": "deny_by_default_exact_owner_business_action_payload_nonce_expiry_approval"
+}
