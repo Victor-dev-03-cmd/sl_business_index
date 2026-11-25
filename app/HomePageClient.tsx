@@ -311,6 +311,7 @@ export default function HomePageClient() {
           params.set("lng", coords.lng.toString());
           params.set("radius", params.get("radius") || "5000");
           params.set("source", "gps");
+          window.dispatchEvent(new Event("slbi:navigation-start"));
           router.push("/nearby?" + params.toString());
         }
       })
