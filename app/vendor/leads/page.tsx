@@ -493,7 +493,7 @@ export default function LeadsPage() {
               <span className="h-1.5 w-1.5 rounded-full bg-[#329368]" /> Vendor CRM
             </span>
             {followUpReadiness === 'available' && (
-              <button type="button" aria-pressed={dueOnly} onClick={() => { setDueOnly(active => !active); setPage(1); }}
+              <button type="button" aria-pressed={dueOnly} onClick={() => { setDueOnly(active => !active);setFollowUpFocus('all');setPage(1); }}
                 className={'inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-[11px] font-semibold ' +
                   (dueOnly ? 'border-amber-500 bg-amber-100 text-amber-900' : 'border-amber-200 bg-amber-50 text-amber-800')}>
                 <IconsaxIcon name="calendar" size={15} /> Due follow-ups: {nfmt(dueCount)}
@@ -597,7 +597,7 @@ export default function LeadsPage() {
               aria-pressed={activeFollowUpFocus===card.focus}
               aria-label={'Filter '+card.label}
               onClick={()=>{
-                setFollowUpFocus(card.focus);setDueOnly(false);setStageFilter('all');setPage(1);
+                setFollowUpFocus(card.focus);setDueOnly(false);setStageFilter('all');setBusinessFilter('all');setPeriod('all');setSearch('');setPage(1);
               }}
               className={'flex min-h-[100px] min-w-0 flex-col items-start rounded-lg border p-3 text-left transition focus-visible:outline-2 focus-visible:outline-[#FF7900] disabled:cursor-not-allowed disabled:opacity-55 '+
                 (activeFollowUpFocus===card.focus?'border-[#EF892D] bg-[#FFF7F0]':'border-[#ECE8E3] bg-[#FBFAF9] hover:border-[#EBAE78]')}>
@@ -753,7 +753,7 @@ export default function LeadsPage() {
             <div className="px-5 py-12 text-center">
               <p className="text-[12px] font-bold text-[#2C2C31]">No matching leads</p>
               <p className="mt-1 text-[11px] text-slate-400">Try a different search or clear the filters.</p>
-              <button type="button" onClick={() => { setSearch(''); setStageFilter('all'); setBusinessFilter('all'); setPeriod('all'); setDueOnly(false); setPage(1); }}
+              <button type="button" onClick={() => { setSearch(''); setStageFilter('all'); setBusinessFilter('all'); setPeriod('all'); setDueOnly(false); setFollowUpFocus('all'); setPage(1); }}
                 className="mt-3 text-[11px] font-bold text-[#2C2C31] hover:underline">Clear filters</button>
             </div>
           ) : (
