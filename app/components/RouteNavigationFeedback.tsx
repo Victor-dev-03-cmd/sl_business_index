@@ -34,7 +34,7 @@ export default function RouteNavigationFeedback(){
       let url:URL;
       try{url=new URL(raw,window.location.href);}catch{return;}
       if(url.origin!==window.location.origin||
-        (url.pathname===window.location.pathname&&url.search===window.location.search))return;
+        url.pathname===window.location.pathname)return;
       setOpening(true);
       window.clearTimeout(timeout);
       // Network failures must never leave a permanently blocked screen.
