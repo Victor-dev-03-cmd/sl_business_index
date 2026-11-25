@@ -10,6 +10,7 @@ const search=read('app/components/HeroSearch.tsx');
 const navbar=read('app/components/Navbar.tsx');
 const root=read('app/RootClientLayout.tsx');
 const dock=read('app/components/MobilePublicDock.tsx');
+const settings=read('app/vendor/settings/page.tsx');
 const styles=read('app/home-mobile.css');
 const globalCss=read('app/globals.css');
 const icons=read('app/components/BrandIcon.tsx');
@@ -231,4 +232,43 @@ test('Homepage-only mobile overflow cannot displace the otherwise-correct fixed 
   assert.match(dock,/import \{createPortal\} from 'react-dom'/);
   assert.match(dock,/position:'fixed'/);
   assert.match(dock,/width:'min\(420px, calc\(100vw - 24px\)\)'/);
+});
+
+
+test('The public fifth mobile tab remains About except for authenticated owned vendors',()=>{
+  // Static public destination list is preserved for visitors and customers.
+  assert.match(dock,/\{href:'\/about',label:'About',icon:'info-circle'\}/);
+  assert.match(dock,/index===4 && vendorTab/);
+  assert.match(dock,/href:'\/vendor\/settings\?tab=profile',label:'My Profile',icon:'profile-circle'/);
+  assert.match(dock,/aria-label=\{destination.label\}/);
+  assert.match(dock,/href=\{destination.href\}/);
+  assert.match(dock,/useSession\(\)/);
+  assert.match(dock,/\.from\('profiles'\)/);
+  assert.match(dock,/\.select\('role'\)\.eq\('id',uid\)/);
+  assert.match(dock,/\.from\('businesses'\)/);
+  assert.match(dock,/\.eq\('owner_id',uid\)\.limit\(1\)/);
+  assert.match(dock,/role!=='admin' && role!=='ceo'/);
+  assert.match(dock,/if\(role!=='nav'\|\|sessionLoading\)return/);
+  assert.match(dock,/if\(!user\?\.id\)return/);
+  assert.doesNotMatch(dock,/user\\.(?:user_metadata|app_metadata)|SUPABASE_SERVICE_ROLE_KEY/);
+  assert.match(dock,/if\(active\)setVendorIdentity\(\{uid,isVendor\}\)/);
+});
+test('Vendor profile contains a reduced-motion-aware verification CTA for each owned unverified business',()=>{
+  assert.match(settings,/useMemo\(\(\)=>businesses\.filter\(b=>/);
+  assert.match(settings,/b\.status==='approved' && b\.is_verified===true/);
+  assert.match(settings,/\['approved','verified'\]\.includes/);
+  assert.match(settings,/latestVerificationStatuses/);
+  assert.match(settings,/\.from\('verifications'\)/);
+  assert.match(settings,/\.in\('business_id',owned\.map\(v=>v\.id\)\)/);
+  assert.match(settings,/const inReview=state==='pending'/);
+  assert.match(settings,/!inReview&&<span aria-hidden="true"/);
+  assert.match(settings,/motion-safe:animate-pulse/);
+  assert.match(settings,/focus-visible:outline-2/);
+  assert.match(settings,/Verify your business/);
+  assert.match(settings,/onClick=\{\(\)=>selectTab\('verification',b\.id\)\}/);
+  assert.match(settings,/next\.searchParams\.set\('business',businessId\)/);
+  assert.match(settings,/owned\.find\(v=>v\.id===fromUrl\)\?\.id/);
+  assert.match(settings,/activeTab==='verification'/);
+  assert.match(settings,/privateDocsReady/);
+  assert.match(settings,/href="\/register-business"/);
 });
