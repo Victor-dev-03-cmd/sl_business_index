@@ -36,6 +36,8 @@ jobs:
         run: node --experimental-strip-types --test tests/geoRank.test.mjs tests/diagnostics.test.mjs tests/smartSearch.test.mjs tests/searchEvaluation.test.mjs tests/hybridSearch.test.mjs tests/searchDictionary.test.mjs tests/searchCorrections.test.mjs tests/semanticSearchV3.test.mjs tests/semanticV3Evaluation.test.mjs tests/semanticBetaV3.test.mjs tests/nearbySemanticDefault.test.mjs tests/growthAttribution.test.mjs tests/growthIngestion.test.mjs tests/growthSecureLeads.test.mjs tests/vendorPortalRelease.test.mjs tests/qrAssignmentRelease.test.mjs tests/vendorSettingsQrMarketing2026.test.mjs tests/vendorNeutralUi.test.mjs
       - name: Public mobile home reference, real navigation and bookmark persistence
         run: node --experimental-strip-types --test tests/publicMobileHomeReference.test.mjs
+      - name: Low-memory mobile route feedback and streaming regressions
+        run: node --test tests/mobileRoutePerformance.test.mjs
       - name: Nearby mobile results, compact cards and single native navigator
         run: node --experimental-strip-types --test tests/nearbyMobileLayout.test.mjs
       - name: SLBI HybridSearch v2 multilingual relevance benchmark (168 cases)
