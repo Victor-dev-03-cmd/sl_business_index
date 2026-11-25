@@ -1,7 +1,7 @@
 'use client';
 import { neo } from '../components/neumorphic';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
@@ -69,6 +69,24 @@ export default function VendorDashboard() {
   const [updatingIds, setUpdatingIds] = useState<string[]>([]);
   const [activityRefreshKey, setActivityRefreshKey] = useState(0);
   const [growthBusinessId, setGrowthBusinessId] = useState('');
+  // Do not mount the heavier timeline and start its analytics read until its
+  // actual chart approaches the viewport. Saves JS/network work on mobile.
+  const timelineRef=useRef<HTMLDivElement|null>(null);
+  const [timelineInView,setTimelineInView]=useState(false);
+  useEffect(()=>{
+    if(timelineInView)return;
+    const node=timelineRef.current;
+    if(!node)return;
+    if(typeof IntersectionObserver==='undefined'){setTimelineInView(true);return;}
+    const observer=new IntersectionObserver(entries=>{
+      if(entries.some(entry=>entry.isIntersecting)){
+        setTimelineInView(true);
+        observer.disconnect();
+      }
+    },{rootMargin:'240px 0px'});
+    observer.observe(node);
+    return()=>observer.disconnect();
+  },[timelineInView]);
 
   const load = useCallback(async (notify = false) => {
     setLoading(true);
@@ -370,8 +388,12 @@ export default function VendorDashboard() {
                 Growth tools <IconsaxIcon name="arrow-right-2" size={13} />
               </Link>
             </div>
-            <div className="p-4 sm:p-5">
-              <VendorAnalytics businessIds={businessIds} refreshKey={activityRefreshKey} embedded />
+            <div ref={timelineRef} className="min-w-0 p-3 sm:p-5" data-g3-deferred-timeline="true">
+              {timelineInView?<VendorAnalytics businessIds={businessIds} refreshKey={activityRefreshKey} embedded />:
+                <div role="status" aria-label="Engagement chart loads when visible"
+                  className="flex min-h-[190px] items-center justify-center rounded-lg bg-[#FBFAF9] px-4 text-center text-[12px] text-[#7B7471]">
+                  Engagement timeline loads when you reach this section
+                </div>}
             </div>
           </section>
 
