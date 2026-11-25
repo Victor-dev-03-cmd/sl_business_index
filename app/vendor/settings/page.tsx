@@ -323,10 +323,26 @@ export default function SettingsPage() {
               <h2 id="ss-profile-heading">Account profile</h2>
               <p>Keep the details associated with your vendor account accurate. Listing details are managed separately.</p>
             </div>
-            <div className="mb-8 flex flex-wrap items-center gap-4 rounded-[22px] bg-[#e9edf4] p-5 shadow-[inset_6px_6px_12px_#cbd0da,inset_-6px_-6px_12px_#ffffff] [&_div:nth-child(2)]:flex [&_div:nth-child(2)]:min-w-0 [&_div:nth-child(2)]:flex-1 [&_div:nth-child(2)]:flex-col [&_div:nth-child(2)]:gap-1 [&_strong]:break-words [&_strong]:text-sm [&_strong]:font-bold [&_span]:text-xs [&_span]:text-[#858b98]">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] bg-[#262a34] text-lg font-extrabold text-white shadow-[5px_5px_12px_#c0c5cf,-5px_-5px_12px_#ffffff]">{initials||'V'}</div>
-              <div className="min-w-0 flex-1"><strong className="block break-words">{profile.full_name||'Complete your profile'}</strong><span className="block max-w-full truncate" title={profile.email||''}>{profile.email||'Signed-in email address'}</span></div>
-              <span className="inline-flex items-center gap-1.5 vendor-status-badge shrink-0 rounded-full bg-[#fff0e3] px-3 py-2 text-[11px] font-bold text-[#b95d13]"><ShieldCheck size={13}/> Account owner</span>
+            <div data-testid="settings-profile-summary"
+              className="mb-7 grid min-w-0 grid-cols-[44px_minmax(0,1fr)] items-center gap-x-3 gap-y-3 rounded-[18px] bg-[#E9EDF4] p-3 shadow-[inset_3px_3px_8px_#cbd0da,inset_-3px_-3px_8px_#ffffff] sm:grid-cols-[56px_minmax(0,1fr)_auto] sm:gap-x-4 sm:p-5">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#262A34] text-[15px] font-extrabold text-white sm:h-14 sm:w-14 sm:text-lg">
+                {initials||'V'}
+              </div>
+              <div className="min-w-0 self-center">
+                <span className="block text-[11px] font-semibold leading-4 text-[#747E8D]">Account name</span>
+                <strong className="mt-0.5 block min-w-0 truncate text-[15px] font-extrabold leading-6 text-[#292D37]" title={profile.full_name||''}>
+                  {profile.full_name||'Complete your profile'}
+                </strong>
+                <span className="block max-w-full truncate text-[12px] leading-5 text-[#727B89]" title={profile.email||''}>
+                  {profile.email||'Signed-in email address'}
+                </span>
+                {selected?.name&&<span className="mt-0.5 block max-w-full truncate text-[11px] leading-5 text-[#8B6A51]" title={selected.name}>
+                  Business: {selected.name}
+                </span>}
+              </div>
+              <span className="vendor-status-badge col-span-2 justify-self-start rounded-full bg-[#FFF0E3] px-3 py-2 text-[11px] font-bold text-[#AD5411] sm:col-span-1 sm:justify-self-end">
+                <ShieldCheck size={14} className="shrink-0"/> Account owner
+              </span>
             </div>
             <div className="grid min-w-0 gap-x-6 gap-y-6 md:grid-cols-2">
               <div className="min-w-0"><label className={label} htmlFor="vendor-name">Full name</label><input className={field} id="vendor-name" type="text" maxLength={100} autoComplete="name" value={profile.full_name} onChange={e=>setProfile(v=>({...v,full_name:e.target.value}))}/></div>
@@ -402,15 +418,31 @@ export default function SettingsPage() {
               <article className="min-w-0 rounded-[24px] bg-[#e9edf4] p-5 shadow-[6px_6px_15px_#c6cbd5,-6px_-6px_15px_#ffffff] sm:p-6">
                 <div className="flex items-center gap-3 [&_div]:min-w-0 [&_div]:flex-1 [&_div_span]:text-[10px] [&_div_span]:font-bold [&_div_span]:tracking-[.11em] [&_div_span]:text-[#dc7525] [&_h3]:mt-1 [&_h3]:text-lg [&_h3]:font-extrabold"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[15px] bg-[#e9edf4] text-[#ec7519] shadow-[4px_4px_9px_#c4c9d2,-4px_-4px_9px_#ffffff]"><Search size={19}/></span><div><span>02 / SEARCH DISCOVERY</span><h3>Search keywords</h3></div><span className="ml-auto rounded-full bg-[#fff0e1] px-2.5 py-1 text-[10px] font-extrabold text-[#c2651d]">{keywords.length}/10</span></div>
                 <p className="my-5 text-xs leading-6 text-[#78808d]">Use specific services and terms customers actually search for.</p>
-                <div className="min-w-0 mt-5"><label className={label} htmlFor="vendor-seo-keyword">Add a keyword</label>
-                  <div className="flex flex-col gap-2 sm:flex-row [&_input]:flex-1">
-                    <input className={field} id="vendor-seo-keyword" type="text" maxLength={50} value={newKeyword} onChange={e=>setNewKeyword(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addKeyword()}}} placeholder="e.g. laptop repair"/>
-                    <button type="button" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-[#292d36] px-5 text-xs font-extrabold text-white transition hover:bg-[#454b57] disabled:opacity-40" disabled={!newKeyword.trim()||keywords.length>=10} aria-label="Add keyword" onClick={addKeyword}><Plus size={16}/> Add</button>
-                  </div>
+                <div className="mt-5 min-w-0" data-testid="vendor-seo-keyword-editor">
+                  <label className="mb-2 block text-[12px] font-bold text-[#4B5360]" htmlFor="vendor-seo-keyword">
+                    Add a search keyword
+                  </label>
+                  <form className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]"
+                    onSubmit={event=>{event.preventDefault();addKeyword();}}>
+                    <input id="vendor-seo-keyword" type="text" maxLength={50}
+                      aria-describedby="seo-keyword-help"
+                      value={newKeyword} onChange={e=>setNewKeyword(e.target.value)}
+                      disabled={!selectedBusinessId||keywords.length>=10}
+                      autoComplete="off" placeholder="e.g. laptop repair"
+                      className="block h-12 w-full min-w-0 rounded-xl border-2 border-[#D4D8E2] bg-white px-3.5 text-[14px] font-medium text-[#252B36] shadow-[inset_0_1px_3px_rgba(20,30,45,.05)] outline-none transition-colors placeholder:text-[#8F97A6] focus:border-[#FF7900] focus:ring-2 focus:ring-[#FF7900]/15 disabled:opacity-55"/>
+                    <button type="submit" disabled={!selectedBusinessId||!newKeyword.trim()||keywords.length>=10}
+                      aria-label="Add search keyword"
+                      className="inline-flex h-12 min-w-24 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-[#262B35] px-4 text-[13px] font-bold text-white transition-colors hover:bg-[#3D4655] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF7900] disabled:opacity-45 sm:w-auto">
+                      <Plus size={17} aria-hidden="true"/> Add keyword
+                    </button>
+                  </form>
+                  <p id="seo-keyword-help" className="mt-2 text-[12px] leading-5 text-[#737D8B]">
+                    Up to 10 terms. Press Enter or Add keyword, then Save discovery settings.
+                  </p>
                 </div>
                 <div className="mt-5 min-h-28 rounded-[18px] bg-[#e9edf4] p-4 shadow-[inset_4px_4px_9px_#cbd0d9,inset_-4px_-4px_9px_#ffffff]">
                   <div className="mb-3 flex justify-between gap-2 text-[10px] font-bold uppercase tracking-[.08em] text-[#818897]"><span>Current keywords</span><span>{keywords.length} of 10</span></div>
-                  <div className="flex flex-wrap gap-2">{keywords.map(k=><span key={k} className="inline-flex items-center gap-2 rounded-full bg-[#fafbfe] px-3 py-1.5 text-[11px] font-semibold text-[#4c5361] shadow-[2px_2px_5px_#cbd0d9,-2px_-2px_5px_#ffffff] [&_button]:text-[#e4771d]"><span>{k}</span><button type="button" onClick={()=>setKeywords(prev=>prev.filter(t=>t!==k))} aria-label={'Remove '+k}><X size={13}/></button></span>)}{keywords.length===0&&<span className="text-xs text-[#969caa]">No keywords yet.</span>}</div>
+                  <div className="flex flex-wrap gap-2">{keywords.map(k=><span key={k} className="inline-flex max-w-full min-w-0 items-center gap-2 rounded-full bg-[#fafbfe] px-3 py-1.5 text-[12px] font-semibold text-[#4c5361] shadow-[2px_2px_5px_#cbd0d9,-2px_-2px_5px_#ffffff] [&_button]:text-[#e4771d]"><span className="min-w-0 max-w-[220px] truncate" title={k}>{k}</span><button className="shrink-0" type="button" onClick={()=>setKeywords(prev=>prev.filter(t=>t!==k))} aria-label={'Remove '+k}><X size={13}/></button></span>)}{keywords.length===0&&<span className="text-xs text-[#969caa]">No keywords yet.</span>}</div>
                 </div>
               </article>
             </div>

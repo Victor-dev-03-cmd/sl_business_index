@@ -5,6 +5,10 @@ on:
     branches: [main]
     paths:
       - 'app/vendor/leads/**'
+      - 'app/vendor/reviews/**'
+      - 'lib/growth/g5/**'
+      - 'tests/g5/**'
+      - 'app/vendor/settings/page.tsx'
       - 'lib/growth/lead-followups.ts'
       - 'docs/growth/p1/P1_VENDOR_LEAD_FOLLOWUPS_REVIEW_ONLY.sql'
       - 'tests/vendorLeadFollowups.test.mjs'
@@ -24,5 +28,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
+      - name: G5 owner CRM, reputation priority and Settings UI integration
+        run: node --test tests/g5/live-ux-contract.test.mjs
+
       - name: Verify follow-up scheduling, strict ownership and source labels
         run: node --test tests/vendorLeadFollowups.test.mjs tests/growthAttribution.test.mjs tests/vendorPortalRelease.test.mjs

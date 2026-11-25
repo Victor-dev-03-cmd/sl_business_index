@@ -50,8 +50,9 @@ test('Settings Studio uses version-free Tailwind neumorphism and responsive cont
   assert.match(settings,/lg:grid-cols-\[250px_minmax\(0,1fr\)\]/);
   assert.match(settings,/xl:grid-cols-2/);
   assert.match(settings,/shadow-\[inset_4px_4px_8px_/);
-  assert.match(settings,/flex flex-col gap-2 sm:flex-row/);
-  assert.match(settings,/onClick=\{addKeyword\}/);
+  assert.match(settings,/data-testid="vendor-seo-keyword-editor"/);
+  assert.match(settings,/sm:grid-cols-\[minmax\(0,1fr\)_auto\]/);
+  assert.match(settings,/onSubmit=\{event=>\{event\.preventDefault\(\);addKeyword\(\);\}\}/);
   assert.match(settings,/onClick=\{\(\)=>void saveOptimization\(\)\}/);
   assert.doesNotMatch(styles,/vendor-settings-v\d+|settings-v\d+-/);
 });
