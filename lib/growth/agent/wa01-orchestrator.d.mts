@@ -10,7 +10,7 @@ export type WA01Action=Readonly<{
   scheduledAt:string|null;estimatedCostMinor:number;
 }>;
 export type WA01PlanProposal=Readonly<{
-  planId:string;revision:number;businessId:string;expiresAt:string;
+  planId:string;revision:number;businessId:string;expiresAt:string;currency:'LKR'|'USD';
   maxTotalCostMinor:number;actions:readonly WA01Action[];
 }>;
 export type WA01ServerContext=Readonly<{
@@ -25,7 +25,7 @@ export type WA01ServerContext=Readonly<{
 }>;
 export type WA01Manifest=Readonly<{
   version:typeof WA01_VERSION;planId:string;revision:number;ownerId:string;
-  businessId:string;channelBindingId:string;expiresAt:string;
+  businessId:string;channelBindingId:string;expiresAt:string;currency:'LKR'|'USD';
   maxTotalCostMinor:number;actions:readonly WA01Action[];digest:string;
 }>;
 export type WA01ApprovalReceipt=Readonly<{
