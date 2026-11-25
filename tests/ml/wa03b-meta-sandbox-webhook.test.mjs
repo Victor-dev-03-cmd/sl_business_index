@@ -68,11 +68,25 @@ test('tampering, wrong WABA phone, status-only events and oversized body',()=>{
  const large=Buffer.alloc(262145,97);
  assert.equal(inspectWA03BInbound(large,sign(large),env,NOW).ok,false);
 });
+test('POST reject diagnostics are bounded categories, never user content',()=>{
+ const raw=sample();
+ const tampered=inspectWA03BInbound(raw,'sha256='+('0'.repeat(64)),env,NOW);
+ assert.equal(tampered.code,'signature_invalid');
+ const malformed=Buffer.from('not JSON');
+ assert.equal(inspectWA03BInbound(malformed,sign(malformed),env,NOW).code,'payload_invalid');
+ const wrong=sample(true,true);
+ assert.equal(inspectWA03BInbound(wrong,sign(wrong),env,NOW).code,'unexpected_number');
+ const missing=inspectWA03BInbound(raw,sign(raw),{...env,SLBI_WA_SANDBOX_WEBHOOK_ENABLED:'false'},NOW);
+ assert.equal(missing.code,'disabled');
+ assert.equal(JSON.stringify([tampered,missing]).includes('private sample'),false);
+});
 test('Next route is no-store, signs before accepting and never logs raw payload',()=>{
  const src=readFileSync(new URL('../../app/api/integrations/whatsapp/webhook/route.ts',import.meta.url),'utf8');
  assert.match(src,/inspectWA03BInbound/);
  assert.match(src,/x-hub-signature-256/);
  assert.match(src,/Cache-Control/);
+ assert.match(src,/SLBI WA sandbox webhook POST rejected:/);
+ assert.doesNotMatch(src,/console\.warn\([^;]*raw|console\.warn\([^;]*signature|console\.warn\([^;]*body/);
  assert.match(src,/body\.byteLength>262144/);
  assert.doesNotMatch(src,/console\.log|console\.error|fetch\(|\.insert\(|\.upsert\(|\.update\(/);
 });
