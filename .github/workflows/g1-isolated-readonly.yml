@@ -60,7 +60,7 @@ jobs:
         run: node --test tests/g3/command-center-responsive.test.mjs
 
       - name: G5-01 deterministic LeadIQ and reputation queue
-        run: bun test tests/g5/intelligence-queues.test.ts
+        run: bun test tests/g5/intelligence-queues.test.mjs
 
       - name: G5-01 owner CRM and narrow mobile Settings integration
         run: node --test tests/g5/live-ux-contract.test.mjs
