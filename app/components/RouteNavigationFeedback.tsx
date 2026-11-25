@@ -40,9 +40,16 @@ export default function RouteNavigationFeedback(){
       // Network failures must never leave a permanently blocked screen.
       timeout=window.setTimeout(clear,9000);
     };
+    const onProgrammaticNavigation=()=>{
+      setOpening(true);
+      window.clearTimeout(timeout);
+      timeout=window.setTimeout(clear,9000);
+    };
+    window.addEventListener('slbi:navigation-start',onProgrammaticNavigation);
     document.addEventListener('click',handleClick,true);
     window.addEventListener('pagehide',clear);
     return()=>{
+      window.removeEventListener('slbi:navigation-start',onProgrammaticNavigation);
       document.removeEventListener('click',handleClick,true);
       window.removeEventListener('pagehide',clear);
       window.clearTimeout(timeout);
