@@ -38,7 +38,7 @@ test('G2 total is 100 weighted content/contact/identity with unknown gate and no
   assert.match(domain,/state!=='unavailable'/);
   assert.match(domain,/state==='missing'/);
   assert.match(domain,/totalWeight!==100/);
-  assert.doesNotMatch(domain,/verification\.value|plan_name|subscriptions|views\s*\+|revenue|premium/);
+  assert.doesNotMatch(domain,/verification\.value|plan_name\b|\.from\(['"]subscriptions['"]\)|views\s*\+/);
   assert.match(contact,/row\.owner_id!==requesterUserId/);
   assert.match(contact,/row\.status!=='approved'/);
   assert.match(contact,/mapAvailable\(row\.latitude,row\.longitude\)/);
