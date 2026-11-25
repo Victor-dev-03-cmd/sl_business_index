@@ -94,7 +94,7 @@ export default function VendorLayout({children}:{children:React.ReactNode}){
 
   return <div className="vendor-workspace vendor-workspace-v6 flex h-[100dvh] min-w-0 flex-col overflow-hidden bg-white text-[#202024]">
     <header className="vendor-topbar relative z-50 shrink-0 border-b border-[#efeff2] bg-white shadow-[0_3px_13px_rgba(28,28,34,0.055)]">
-      <div className="mx-auto flex h-[76px] w-full max-w-[1840px] items-center gap-4 px-4 sm:px-6 xl:gap-6 xl:px-9">
+      <div className="mx-auto flex h-[64px] w-full max-w-[1840px] min-w-0 items-center gap-2 px-3 sm:h-[76px] sm:gap-4 sm:px-6 xl:gap-6 xl:px-9">
         <Link href="/vendor/dashboard" aria-label="SL Business Index owner portal overview" className="flex min-w-0 shrink-0 items-center gap-3">
           <span className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-[#1B1B1D]">
             <img src="/slbi-mark.svg" alt="" className="h-8 w-8 object-contain"/>
@@ -144,13 +144,13 @@ export default function VendorLayout({children}:{children:React.ReactNode}){
           </div>
         </div>
 
-        <div className="ml-auto flex shrink-0 items-center gap-2 ">
+        <div className="ml-auto flex min-w-0 shrink-0 items-center gap-1.5 sm:gap-2 ">
           <button type="button" onClick={()=>setQuickOpen(true)} aria-label="Search actions and tools" title="Search actions (Ctrl+K)"
             className="hidden h-9 items-center gap-2 rounded-[8px] border border-[#ECECEF] bg-[#FAFAFB] px-3 text-[11px] font-medium text-[#8A8B92] hover:border-[#FFCB9B] hover:text-[#D46100] 2xl:inline-flex">
             <IconsaxIcon name="search-normal" size={17}/><span className="hidden min-[1800px]:inline">Search actions</span><span className="rounded border border-[#E9E9ED] bg-white px-1 py-0.5 text-[9px]">⌘K</span>
           </button>
           <button type="button" onClick={()=>setQuickOpen(true)} aria-label="Open quick actions" title="Quick actions (Ctrl+K)"
-            className="inline-flex h-9 items-center gap-1.5 rounded-[8px] bg-[#1C1C1E] px-3 text-[11px] font-semibold text-white transition hover:bg-[#39393D]">
+            className="inline-flex h-9 items-center gap-1.5 rounded-[8px] bg-[#1C1C1E] px-2.5 text-[11px] sm:px-3 font-semibold text-white transition hover:bg-[#39393D]">
             <IconsaxIcon name="flash" size={16} color="#FF7900"/><span className="hidden 2xl:inline">Quick actions</span>
           </button>
           {user?.verification_status==='verified'&&<span className="hidden items-center gap-1 rounded-md border border-[#D6E8DA] bg-[#F0F8F2] px-2 py-1 text-[10px] font-semibold text-[#2B7B4D] 2xl:inline-flex"><VerifiedBadge size={13}/> Verified</span>}
@@ -160,7 +160,7 @@ export default function VendorLayout({children}:{children:React.ReactNode}){
       </div>
 
       {/* On narrower screens navigation remains at the top — horizontally scrollable, never a sidebar. */}
-      <nav aria-label="Vendor compact navigation" className="vendor-topbar-scrollbar flex h-[49px] w-full items-center gap-1 overflow-x-auto border-t border-[#F1F1F2] px-4 sm:px-6 min-[1600px]:hidden">
+      <nav aria-label="Vendor compact navigation" className="vendor-topbar-scrollbar flex h-[44px] min-w-0 w-full items-center gap-1 overflow-x-auto border-t border-[#F1F1F2] px-3 sm:h-[49px] sm:px-6 min-[1600px]:hidden">
         {allItems.map(item=><Link key={item.href} href={item.href} data-testid={item.href==='/vendor/gallery-services'?'gallery-compact-nav':undefined} aria-current={active(item.href)?'page':undefined}
           className={'flex h-9 shrink-0 items-center gap-1.5 rounded-[7px] px-3 text-[11px] font-semibold transition '+(active(item.href)?'bg-[#FF7900] text-[#18181A]':'text-[#73737A] hover:bg-[#FFF3E8] hover:text-[#B45300]')}>
           <IconsaxIcon name={item.icon} size={15} color={active(item.href)?'#18181A':'#888990'}/>{item.name}
@@ -168,7 +168,7 @@ export default function VendorLayout({children}:{children:React.ReactNode}){
         <Link href="/" className="ml-1 shrink-0 border-l border-[#E9E9EB] px-3 py-2 text-[11px] font-medium text-[#73737A]">Visit directory</Link>
       </nav>
     </header>
-    <main id="vendor-main" aria-label={currentPage+' workspace'} className="vendor-content min-h-0 flex-1 overflow-y-auto bg-white px-4 py-6 sm:px-6 sm:py-8 xl:px-9 xl:py-9">
+    <main id="vendor-main" aria-label={currentPage+' workspace'} className="vendor-content min-h-0 min-w-0 flex-1 overflow-x-clip overflow-y-auto bg-white px-3 py-4 sm:px-6 sm:py-8 xl:px-9 xl:py-9">
       <div className="mx-auto w-full max-w-[1760px]">{children}</div>
     </main>
     {/* Dedicated toast layer for vendor actions; public-site notifications keep their own toaster. */}
