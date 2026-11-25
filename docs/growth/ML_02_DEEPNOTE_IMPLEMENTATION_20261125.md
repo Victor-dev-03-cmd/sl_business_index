@@ -16,3 +16,10 @@ Continue SLBusinessIndex GrowthOS in Tamil. First read full main docs/growth/HAN
 - Available machine **lake** CPU Basic (2 vCPU/5 GiB RAM), GPU T4/L4 and higher CPU tiers UNAVAILABLE under current workspace quota/plan. CPU Basic project machine was running; did NOT switch to paid GPU.
 - Started Deepnote detached run `a0f33452-cbea-4ea4-ad52-48579e7ddc54`, `machineType=lake`, status **running as last checked**, with no results yet; re-check run before claiming completion. Notebook URL: https://deepnote.com/workspace/slbi-3adf8d1d-5feb-4e26-8560-c517fd6cbfaa/project/NeuroGrowth-ML-02-SLBI-Growth-Engine-2d7d3e23-f87e-437f-a091-28edaa42ad49/notebook/NeuroGrowth-ML-02-Synthetic-PyTorch-Baseline-250ea44b8b8247e4b4703558c9e8f6e5?utm_content=2d7d3e23-f87e-437f-a091-28edaa42ad49
 - Prior PR #190 initial exact head `9771903a750479f4e739b019122d2e86ba679c47` had all 9/9 check runs completed success. ANY documentation update changes HEAD and must rerun all final-HEAD checks before merge.
+
+## Verified Deepnote completion receipt (2026-11-25)
+- Deepnote detached run `a0f33452-cbea-4ea4-ad52-48579e7ddc54` **SUCCESS**, started 12:39:02Z, completed 12:39:35Z. Native notebook blocks executed, saved snapshot available.
+- Runtime Python 3.13.18, PyTorch 2.12.0+cu130, NumPy 2.4.6, `torch.cuda.is_available() == False`, execution device CPU.
+- Exactly 2,500 fully SYNTHETIC businesses; split train 1,750 / validation 375 / test 375. Training best epoch 27; synthetic val accuracy 0.7867, synthetic test accuracy 0.8000, macro-F1 0.6564. Train-majority baseline synthetic test accuracy 0.5973, macro-F1 0.1496. No real labels, PII, customer records or production DB/API.
+- Exported in isolated Deepnote /tmp synthetic checkpoint SHA256 `0a1e457c915ab6f917ea2b89bd54f0224a172db9f57dac86fb000542890724fa`, matching previous ML-01 synthetic CPU artifact hash, confirming model reproducibility in that environment.
+- This is a REAL DEEPNOTE RUN of SYNTHETIC TRAINING, NOT validation of sales / conversion lift, vendor outcome accuracy or a live autonomous agent.
