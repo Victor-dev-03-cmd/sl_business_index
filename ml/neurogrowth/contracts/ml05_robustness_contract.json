@@ -1,0 +1,38 @@
+{
+  "version": "neurogrowth-ml05-robustness-v1",
+  "scope": "SYNTHETIC_ONLY_MULTI_GENERATOR_SEEDS",
+  "research_only": true,
+  "real_vendor_data": false,
+  "minimum_distinct_data_seeds": 3,
+  "test_partition": "business_disjoint_and_forward_chronological",
+  "model_selection": "validation_metrics_only",
+  "model_start_seeds": [
+    7,
+    42
+  ],
+  "validation_selected_architectures": [
+    "small_mlp",
+    "residual_mlp"
+  ],
+  "bootstrap": "paired_test_business_clusters_400_resamples_each_dataset",
+  "metrics": [
+    "accuracy",
+    "macro_f1",
+    "per_action_recall",
+    "class_support",
+    "top3_hit_rate",
+    "ece",
+    "coverage_at_fixed_0.70_confidence",
+    "paired_95_percent_intervals"
+  ],
+  "action_support_warning_min": 10,
+  "guardrails": [
+    "test scores are report only not model selector",
+    "confidence is probability of simulated action class only",
+    "no causal impact or sales probability",
+    "no automatic production promotion",
+    "no raw PII customer records",
+    "no Supabase/Neon database connection"
+  ],
+  "next_gate": "consent_recorded_aggregated_ground_truth_and_privacy_review_before_real_data"
+}
