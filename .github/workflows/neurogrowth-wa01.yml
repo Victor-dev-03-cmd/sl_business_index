@@ -1,0 +1,26 @@
+name: NeuroGrowth WA-01 secure orchestration (synthetic)
+on:
+  pull_request:
+    paths:
+      - 'lib/growth/agent/wa01-orchestrator.mjs'
+      - 'tests/ml/neurogrowth-wa01-orchestrator.test.mjs'
+      - '.github/workflows/neurogrowth-wa01.yml'
+      - 'docs/growth/HANDOFF_LATEST.md'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  typed-manifest-approval-and-replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Parse the WA-01 coordinator and synthetic test
+        run: |
+          node --check lib/growth/agent/wa01-orchestrator.mjs
+          node --check tests/ml/neurogrowth-wa01-orchestrator.test.mjs
+      - name: Execute all WA-01 permission, tamper, replay, and consent scenarios
+        run: node --test tests/ml/neurogrowth-wa01-orchestrator.test.mjs
