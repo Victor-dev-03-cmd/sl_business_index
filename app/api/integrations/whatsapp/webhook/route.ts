@@ -1,0 +1,25 @@
+import {inspectWA03BInbound,verifyWA03BChallenge} from '@/lib/growth/agent/wa03b-test-webhook.mjs';
+export const runtime='nodejs';
+export const dynamic='force-dynamic';
+const headers={'Cache-Control':'no-store, max-age=0','X-Content-Type-Options':'nosniff'};
+const reply=(body:string,status:number)=>
+ new Response(body,{status,headers:{...headers,'Content-Type':'text/plain; charset=utf-8'}});
+/** For Meta test number. Requires server-only Vercel env and enabled sandbox. */
+export async function GET(request:Request){
+ try{
+  const result=verifyWA03BChallenge(new URL(request.url).search,process.env);
+  return result.ok?reply(result.challenge,200):
+   reply('Verification unavailable',result.code==='disabled'?503:403);
+ }catch{return reply('Verification unavailable',403);}
+}
+/** Meta verifies raw HMAC. No persistence, WhatsApp reply or agent execution. */
+export async function POST(request:Request){
+ try{
+  if(Number(request.headers.get('content-length')||0)>262144)return reply('Payload too large',413);
+  const body=new Uint8Array(await request.arrayBuffer());
+  if(body.byteLength>262144)return reply('Payload too large',413);
+  const result=inspectWA03BInbound(body,request.headers.get('x-hub-signature-256'),process.env,Date.now());
+  if(!result.ok)return reply('Webhook unavailable',result.code==='disabled'?503:403);
+  return reply('EVENT_RECEIVED',200);
+ }catch{return reply('Webhook unavailable',403);}
+}
