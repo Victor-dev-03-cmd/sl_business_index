@@ -16,6 +16,7 @@ test('Fast route transitions give same-tap feedback for link and router.push, wi
   assert.match(indicator,/Opening page…/);
   assert.match(indicator,/pointer-events-none/);
   assert.match(indicator,/usePathname\(\)/);
+  assert.match(indicator,/url\.pathname===window\.location\.pathname/);
   assert.match(indicator,/setOpening\(false\)/);
   assert.match(indicator,/window.setTimeout\(clear,9000\)/);
   assert.match(indicator,/window.addEventListener\('slbi:navigation-start',onProgrammaticNavigation\)/);
