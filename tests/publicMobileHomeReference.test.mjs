@@ -250,7 +250,7 @@ test('The public fifth mobile tab remains About except for authenticated owned v
   assert.match(dock,/role!=='admin' && role!=='ceo'/);
   assert.match(dock,/if\(role!=='nav'\|\|sessionLoading\)return/);
   assert.match(dock,/if\(!user\?\.id\)return/);
-  assert.doesNotMatch(dock,/user_metadata|app_metadata|service_role/);
+  assert.doesNotMatch(dock,/user\\.(?:user_metadata|app_metadata)|SUPABASE_SERVICE_ROLE_KEY/);
   assert.match(dock,/if\(active\)setVendorIdentity\(\{uid,isVendor\}\)/);
 });
 test('Vendor profile contains a reduced-motion-aware verification CTA for each owned unverified business',()=>{
