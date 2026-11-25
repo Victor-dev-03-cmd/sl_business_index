@@ -285,7 +285,7 @@
 }
 
 /* G3-01: Vendor-only narrow-screen layout safeguards.
- * Do not globally set word-break:break-all: that caused single-letter vertical
+ * Do not use per-character word breaking: that caused single-letter vertical
  * labels and status badges on 320px devices, especially in Settings.
  * Preserve long email/URL truncation only in explicit identity fields. */
 .vendor-workspace-v6,
