@@ -7,6 +7,10 @@ on:
       - "lib/growth/g2/**"
       - "tests/g2/**"
       - "app/vendor/components/G2ListingContentChecklist.tsx"
+      - "app/vendor/components/G2GrowthScorePanel.tsx"
+      - "app/api/vendor/g2-growthscore/**"
+      - "app/vendor/dashboard/page.tsx"
+      - "app/vendor/marketing/brand/page.tsx"
       - "app/vendor/components/G1BusinessKnowledgePanel.tsx"
       - "tests/g1/**"
       - "docs/growth/g0/exit/G0_OWNER_SCOPED_DECISIONS_20261124.json"
@@ -32,6 +36,12 @@ jobs:
 
       - name: G2-01 observed listing checklist and next-action contract
         run: bun test tests/g2/listing-content-checklist.test.mjs
+
+      - name: G2-02 deterministic GrowthScore and tenant boundary
+        run: bun test tests/g2/growth-score.test.mjs
+
+      - name: G2-02 real dashboard and SSR owner-only route integration
+        run: node --test tests/g2/growthscore-live-integration.test.mjs
 
       - name: G1 live three-page SSR read-only integration static security contract
         run: node --test tests/g1/live-page-integration.test.mjs
