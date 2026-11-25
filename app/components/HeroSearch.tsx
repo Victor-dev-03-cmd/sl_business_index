@@ -268,6 +268,7 @@ export default function HeroSearch({
       return;
     }
 
+    window.dispatchEvent(new Event("slbi:navigation-start"));
     router.push(`/nearby?${searchParams.toString()}`);
   };
 
@@ -326,7 +327,7 @@ export default function HeroSearch({
                 maxLength={160}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => { setIsSearchFocused(true); setAreaOpen(false); }}
-                onBlur={() => setTimeout(() => setIsSearchFocused(false), 120)}
+                onBlur={() => setTimeout(() => setIsSearchFocused(false), 250)}
                 onKeyDown={(event) => {
                   if (event.key === "Escape") {
                     setIsSearchFocused(false);
@@ -444,7 +445,8 @@ export default function HeroSearch({
                 {categorySuggestions.map((cat) => (
                   <button
                     key={cat.id}
-                    onMouseDown={() => handleCategoryClick(cat.name)}
+                    type="button"
+                    onClick={() => handleCategoryClick(cat.name)}
                     className="w-full px-4 py-2.5 hover:bg-gray-50 active:bg-gray-100 flex items-center gap-3 transition-colors border-b border-gray-50 last:border-0"
                   >
                     <div className="w-8 h-8 rounded-lg bg-brand-gold/10 flex items-center justify-center shrink-0 border border-brand-gold/15">
@@ -470,7 +472,10 @@ export default function HeroSearch({
                 {displayedBusinesses.map((biz) => (
                   <button
                     key={biz.id}
-                    onMouseDown={() => router.push(`/business/${biz.slug || biz.id}`)}
+                    onClick={() => {
+                      window.dispatchEvent(new Event("slbi:navigation-start"));
+                      router.push(`/business/${biz.slug || biz.id}`);
+                    }}
                     className="w-full px-4 py-2.5 hover:bg-gray-50 active:bg-gray-100 flex items-center gap-3 transition-colors border-b border-gray-50 last:border-0"
                   >
                     <div className="w-10 h-10 rounded-xl bg-gray-100 shrink-0 overflow-hidden border border-gray-200">
@@ -524,7 +529,7 @@ export default function HeroSearch({
             {searchQuery.trim() && (
               <div className="border-t border-gray-100 px-4 py-2.5 bg-gray-50/50">
                 <button
-                  onMouseDown={() => handleSearch()}
+                  onClick={() => handleSearch()}
                   className="w-full flex items-center gap-2 text-sm font-medium text-brand-dark hover:text-brand-blue transition-colors group"
                 >
                   <Search
