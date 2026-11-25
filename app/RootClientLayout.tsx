@@ -18,6 +18,7 @@ import { SessionProvider } from "./components/SessionContext";
 import LoadingProvider from "./components/LoadingProvider";
 import IconsaxRegistry from "./components/IconsaxRegistry";
 import MobilePublicDock from "./components/MobilePublicDock";
+import RouteNavigationFeedback from "./components/RouteNavigationFeedback";
 import MobileInstallPrompt from "./components/MobileInstallPrompt";
 import SiteToaster from "./components/SiteToaster";
 import { AppearanceController } from "./components/PublicAppearance";
@@ -67,6 +68,7 @@ export default function RootClientLayout({
                 </NavbarWrapper>
                 {/* Render the viewport dock before potentially streaming page
                     content, not after a long homepage and footer. */}
+                <RouteNavigationFeedback />
                 <MobilePublicDock />
                 <MobileInstallPrompt />
                 <main>{children}</main>
