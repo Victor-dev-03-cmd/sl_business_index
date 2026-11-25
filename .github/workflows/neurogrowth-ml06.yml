@@ -1,0 +1,28 @@
+name: NeuroGrowth ML-06 consent and lineage gate
+on:
+  pull_request:
+    paths:
+      - "ml/neurogrowth/ml06_label_gate.py"
+      - "ml/neurogrowth/tests/test_ml06_label_gate.py"
+      - "ml/neurogrowth/contracts/ml06_observable_label_contract.json"
+      - "ml/neurogrowth/experiment_20261125_ml06_synthetic_gate.json"
+      - "tests/ml/neurogrowth-ml06-contract.test.mjs"
+      - ".github/workflows/neurogrowth-ml06.yml"
+      - "docs/growth/HANDOFF_LATEST.md"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  synthetic-privacy-and-lineage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node --test tests/ml/neurogrowth-ml06-contract.test.mjs
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: PYTHONPATH=ml/neurogrowth python -m unittest discover -s ml/neurogrowth/tests -p test_ml06_label_gate.py -v
+      - run: python ml/neurogrowth/ml06_label_gate.py --synthetic-businesses 500

@@ -1,0 +1,93 @@
+{
+  "version": "neurogrowth-ml06-consent-and-observable-outcome-v1",
+  "status": "RESEARCH_ONLY_NO_LIVE_SOURCE_ENABLED",
+  "use": "synthetic_mock_only",
+  "live_vendor_data_export": false,
+  "production_model_training": false,
+  "production_agent_execution": false,
+  "owner_tenant_boundary": "server verified auth.getUser + approved businesses.owner_id + RLS, never self-asserted row flags",
+  "consent_gate": [
+    "explicit vendor learning opt-in proof in versioned server-side ledger",
+    "purpose=ML model research",
+    "revocation respected with deletion/rebuild workflow",
+    "policy and retention approval",
+    "not inferred from normal website usage or marketing consent"
+  ],
+  "privacy_minimization": [
+    "no raw lead/review/customer messages",
+    "no name, email, phone, IP, precise GPS, payments, identifiers or free text",
+    "no source rows to Deepnote",
+    "no live database credentials to Deepnote",
+    "business pseudonyms remain potential personal data"
+  ],
+  "schema_source_requirements": [
+    {
+      "source": "lib/growth/g2/growth-score.ts",
+      "evidence": "current owner-only listing readiness and coverage",
+      "status": "NO durable historical feature snapshot; do not reconstruct past state"
+    },
+    {
+      "source": "lib/growth/g5/lead-iq.ts",
+      "evidence": "recorded CRM stage and age",
+      "status": "NOT conversion or verified contact and no complete stage transition history"
+    },
+    {
+      "source": "lib/growth/g5/followup-intelligence.ts",
+      "evidence": "saved due/done reminder when available",
+      "status": "optional source; P1 SQL candidate not independently confirmed applied"
+    },
+    {
+      "source": "lib/growth/g5/reputation-actions.ts",
+      "evidence": "published numeric rating and reply presence",
+      "status": "reply completion, not reputation growth or sales"
+    },
+    {
+      "source": "lib/growth/attribution.ts",
+      "evidence": "recorded view/call/location and CRM counters",
+      "status": "legacy data can be untrusted; events are NOT unique customers, verified sales or revenue"
+    },
+    {
+      "source": "supabase/migrations/20260312113000_create_analytics_logs.sql",
+      "evidence": "original analytics logs table schema and permissive insert",
+      "status": "historical migration source only; live RLS/DDL state needs separate read-only verification"
+    }
+  ],
+  "candidate_labels": [
+    {
+      "code": "improve_listing",
+      "evidence": "future before/after immutable G2 snapshots + authenticated vendor edit events",
+      "meaning": "recorded listing completeness improvement only"
+    },
+    {
+      "code": "followup_leads",
+      "evidence": "future timestamped authenticated reminder done event / consented CRM transition",
+      "meaning": "follow-up task completed, not customer response"
+    },
+    {
+      "code": "reply_reviews",
+      "evidence": "future published and authenticated review reply with timestamp",
+      "meaning": "reply was published; not a review-score or reputation lift"
+    },
+    {
+      "code": "improve_contact",
+      "evidence": "future immutable contact-presence snapshot change with timestamp",
+      "meaning": "contact completeness update; not clicks"
+    },
+    {
+      "code": "prepare_campaign",
+      "evidence": "future owner-authored saved draft event with timestamp",
+      "meaning": "draft saved; not social post reach or revenue"
+    }
+  ],
+  "observation_requirements": [
+    "pre-action features timestamped, no future leakage",
+    "complete post-action measurement window <=30days and <=audited extract cutoff",
+    "missing observation is UNKNOWN, never negative",
+    "provenance and consent record validated outside client input",
+    "business-disjoint and forward-time evaluation",
+    "per-class minimum support, calibration, abstention and manual negative/positive labels reviewed"
+  ],
+  "raw_rows_allowed_into_deepnote": false,
+  "active_release_gate": "BLOCKED_AWAITING_OWNER_APPROVED_CONSENT_AND_INDEPENDENT_RLS_AUDIT",
+  "next_phase": "ML-07 source-specific server-only consent ledger and immutable event history candidate, staged tests and explicit owner approval; no production migration until approved"
+}
