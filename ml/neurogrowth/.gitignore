@@ -1,1 +1,10 @@
-# Never commit training data, vendor records, credentials or trained checkpoints.\nmodel_artifacts/\ndatasets/\n*.pt\n*.pth\n*.onnx\n*.csv\n*.parquet\n.env*\n__pycache__/\n
+# Never commit training data, vendor records, credentials or trained checkpoints.
+model_artifacts/
+datasets/
+*.pt
+*.pth
+*.onnx
+*.csv
+*.parquet
+.env*
+__pycache__/
