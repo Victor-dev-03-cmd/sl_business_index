@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabaseClient';
 import IconsaxIcon from '../components/IconsaxIcon';
+import {buildReputationQueue} from '@/lib/growth/g5/reputation-actions';
 
 type ReviewReply = { id: string; reply_text: string; created_at: string };
 type Review = {
@@ -21,7 +22,7 @@ type OwnedBusiness = { id: string; name: string };
 type RatingFilter = 'all' | '1' | '2' | '3' | '4' | '5';
 type ReplyFilter = 'all' | 'pending' | 'replied';
 type PeriodFilter = 'all' | '7' | '30' | '90';
-type Sort = 'newest' | 'oldest' | 'highest' | 'lowest';
+type Sort = 'newest' | 'oldest' | 'highest' | 'lowest' | 'attention';
 
 const panel = neo.card;
 const actionButton = neo.button;
@@ -188,6 +189,11 @@ export default function VendorReviewsPage() {
     ? replyDurationsHours.reduce((sum, h) => sum + h, 0) / replyDurationsHours.length : null;
   const ratingCounts = [5, 4, 3, 2, 1].map(stars => ({ stars, count: rated.filter(v => Math.round(v) === stars).length }));
 
+  const reputationQueue=useMemo(()=>buildReputationQueue(reviews),[reviews]);
+  const reputationRank=useMemo(()=>new Map(reputationQueue.map((item,index)=>[item.id,index])),[reputationQueue]);
+  const reputationPriorityCount=reputationQueue.filter(item=>item.priority==='high').length;
+  const reputationById=useMemo(()=>new Map(reviews.map(review=>[review.id,review])),[reviews]);
+
   const filtered = useMemo(() => {
     const needle = search.trim().toLowerCase();
     const earliest = period === 'all' ? null : Date.now() - Number(period) * 24 * 60 * 60 * 1000;
@@ -200,13 +206,14 @@ export default function VendorReviewsPage() {
       const matchesDate = earliest === null || new Date(r.created_at).getTime() >= earliest;
       return matchesText && matchesRating && matchesReply && matchesBusiness && matchesDate;
     }).sort((a, b) => {
+      if (sort === 'attention') return (reputationRank.get(a.id)??Number.MAX_SAFE_INTEGER)-(reputationRank.get(b.id)??Number.MAX_SAFE_INTEGER);
       if (sort === 'highest') return (validRating(b.rating) || 0) - (validRating(a.rating) || 0);
       if (sort === 'lowest') return (validRating(a.rating) || 0) - (validRating(b.rating) || 0);
       const left = new Date(a.created_at).getTime() || 0;
       const right = new Date(b.created_at).getTime() || 0;
       return sort === 'oldest' ? left - right : right - left;
     });
-  }, [reviews, search, rating, replyFilter, businessId, period, sort, businessNames]);
+  }, [reviews, search, rating, replyFilter, businessId, period, sort, businessNames, reputationRank]);
 
   const pageSize = 10;
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
@@ -364,6 +371,51 @@ export default function VendorReviewsPage() {
           </div>
         )}
 
+        <section data-g5-reputation="true" aria-label="Reputation action queue"
+          className="vendor-mobile-safe min-w-0 rounded-xl border border-[#F1E1D3] bg-[#FFFCFA] p-3 sm:p-4">
+          <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
+            <div className="min-w-0">
+              <h2 className="text-[15px] font-extrabold text-[#28252B]">Reputation Intelligence · Reply priorities</h2>
+              <p className="mt-1 text-[12px] leading-5 text-[#776D68]">
+                Unanswered published reviews, prioritized by actual rating and saved reply status. No AI sentiment inference.
+              </p>
+            </div>
+            {!loading&&!error&&!reviewLimitReached&&<span className="vendor-status-badge rounded-md bg-[#FFF0E4] px-2.5 py-1.5 text-[11px] font-bold text-[#AE5B16]">
+              {reputationPriorityCount} high priority
+            </span>}
+          </div>
+          {loading?<div role="status" aria-label="Loading reputation priorities" className="mt-3 h-16 animate-pulse rounded-lg bg-[#F5E9DF]"/>:
+            error||reviewLimitReached?<p role="status" className="mt-3 text-[12px] text-[#825B43]">
+              Review priorities are unavailable because the complete published review set is not available.
+            </p>:
+            reputationQueue.length===0?<p className="mt-3 text-[12px] text-[#746D69]">
+              No published reviews currently await a recorded public reply.
+            </p>:
+            <div className="mt-3 grid min-w-0 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {reputationQueue.slice(0,3).map(item=>{
+                const review=reputationById.get(item.id);
+                return <button key={item.id} type="button" onClick={()=>openReview(item.id)}
+                  className="flex min-h-24 min-w-0 flex-col items-start rounded-lg border border-[#EEE3DB] bg-white p-3 text-left transition hover:border-[#F0AE7A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F47A1B]">
+                  <span className="flex w-full min-w-0 flex-wrap items-center justify-between gap-2">
+                    <span className="min-w-0 text-[12px] font-bold text-[#312C30]">
+                      {review?.user_name?.trim()||'Anonymous reviewer'}
+                    </span>
+                    <span className={'vendor-status-badge rounded-md px-2 py-1 text-[11px] font-bold '+
+                      (item.priority==='high'?'bg-[#FFF0E3] text-[#AF510F]':'bg-[#F2F0EE] text-[#625B57]')}>
+                      {item.priority==='high'?'High priority':'Needs reply'}
+                    </span>
+                  </span>
+                  <span className="mt-2 text-[12px] font-semibold text-[#322D30]">{item.title}</span>
+                  <span className="mt-1 text-[11px] leading-4 text-[#756B67]">{item.explanation}</span>
+                  <span className="mt-2 text-[11px] font-bold text-[#C75C0C]">Open review →</span>
+                </button>;
+              })}
+            </div>}
+          <p className="mt-3 text-[11px] leading-5 text-[#766E67]">
+            Customer ratings are not verified sales or sentiment analysis. Public replies remain manual and subject to existing policies.
+          </p>
+        </section>
+
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-[13px] font-bold text-[#2C2C32]">Reputation overview</h2>
           <span className="rounded-md border border-[#e9edf0] bg-white px-2 py-1 text-[10px] font-semibold text-slate-500">Published reviews · All-time</span>
@@ -473,6 +525,7 @@ export default function VendorReviewsPage() {
               className="h-9 rounded-lg border border-[#e1e6ec] bg-white px-2.5 text-[11px] font-medium text-slate-600">
               <option value="newest">Newest first</option><option value="oldest">Oldest first</option>
               <option value="highest">Highest rated</option><option value="lowest">Lowest rated</option>
+              <option value="attention">Needs reply first</option>
             </select>
           </div>
           <div className="flex flex-wrap items-center gap-1.5 border-b border-[#edf0f3] px-4 py-2.5 sm:px-5" aria-label="Star rating filters">
