@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync,existsSync} from 'node:fs';
 const read=p=>readFileSync(new URL('../../'+p,import.meta.url),'utf8');
 const model=read('ml/neurogrowth/train.py');
+const infer=read('ml/neurogrowth/predict.py');
 const metrics=JSON.parse(read('ml/neurogrowth/experiment_20261125_synthetic_metrics.json'));
 const notebook=JSON.parse(read('ml/neurogrowth/notebooks/neurogrowth_ml01_colab.ipynb'));
 const agent=read('lib/growth/agent/capabilities.ts');
@@ -23,6 +24,15 @@ test('ML-01 is clearly synthetic-only with train/val/test and non-leaking featur
   assert.equal(metrics.test_accuracy_synthetic,.8);
   assert.equal(metrics.test_macro_f1_synthetic,.6564);
   assert.ok(metrics.sha256_checkpoint.length===64);
+});
+test('Offline inference refuses bad schema, low coverage or unnormalized input and only ranks actions',()=>{
+  assert.match(infer,/features\[-1\] < \.75/);
+  assert.match(infer,/math\.isfinite\(v\)/);
+  assert.match(infer,/obj\.get\("research_only"\) is not True/);
+  assert.match(infer,/model\.load_state_dict/);
+  assert.match(infer,/model\.eval\(\)/);
+  assert.match(infer,/no_vendor_outcome_probability/);
+  assert.doesNotMatch(infer,/supabase|neon|service_role|https?:\/\/|fetch\(|\.update\(/i);
 });
 test('Colab cells are runnable newline-separated source without embedded credentials',()=>{
   assert.equal(notebook.nbformat,4);
