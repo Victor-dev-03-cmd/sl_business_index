@@ -53,7 +53,7 @@ export default function OwnerVerificationPrompt({
     return()=>{active=false};
   },[businessId,business.verification_status,isOwner,user?.id]);
 
-  if(sessionLoading||!isOwner||lookup?.userId!==user?.id||lookup.businessId!==businessId){
+  if(sessionLoading||!isOwner||!lookup||lookup.userId!==user?.id||lookup.businessId!==businessId){
     return <span data-verification-public-status className="inline-flex items-center gap-2 text-xs font-medium text-neutral-500">
       <ShieldAlert size={16} aria-hidden="true"/> Not verified
     </span>;
