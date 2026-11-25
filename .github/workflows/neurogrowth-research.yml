@@ -1,0 +1,36 @@
+name: NeuroGrowth ML-01 research and agent permission contract
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "ml/neurogrowth/**"
+      - "lib/growth/agent/**"
+      - "tests/ml/**"
+      - "docs/growth/ML_01_NEUROGROWTH_RESEARCH_20261125.md"
+      - ".github/workflows/neurogrowth-research.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  model-research-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.11"
+      - name: Python trainer syntax without installing heavy GPU packages in CI
+        run: python -m py_compile ml/neurogrowth/train.py ml/neurogrowth/predict.py
+      - name: Research-only model, reproducible metrics, notebook and safety
+        run: node --test tests/ml/neurogrowth-research-contract.test.mjs
+      - name: Per-vendor agent capability deny-by-default contract
+        run: bun test tests/ml/neurogrowth-capabilities.test.mjs

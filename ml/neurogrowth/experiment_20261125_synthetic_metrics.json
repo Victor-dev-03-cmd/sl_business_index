@@ -1,0 +1,35 @@
+{
+  "research_only": true,
+  "dataset_type": "fully_synthetic_hidden_utility_simulator",
+  "real_business_validation": false,
+  "real_business_accuracy_claim": null,
+  "model_version": "neurogrowth-research-v0.1",
+  "random_seed": 42,
+  "businesses_synthetic": 2500,
+  "train": 1750,
+  "validation": 375,
+  "test": 375,
+  "trained_epochs": 27,
+  "validation_accuracy_synthetic": 0.7867,
+  "test_accuracy_synthetic": 0.8,
+  "majority_baseline_accuracy_synthetic": 0.5973,
+  "device": "cpu",
+  "action_distribution_train": {
+    "improve_listing": 185,
+    "followup_leads": 961,
+    "reply_reviews": 400,
+    "improve_contact": 35,
+    "prepare_campaign": 169
+  },
+  "note": "Research smoke test only; simulated labels are NOT evidence of vendor growth.",
+  "sha256_checkpoint": "0a1e457c915ab6f917ea2b89bd54f0224a172db9f57dac86fb000542890724fa",
+  "test_macro_f1_synthetic": 0.6564,
+  "majority_baseline_macro_f1_synthetic": 0.1496,
+  "test_recall_by_action_synthetic": {
+    "improve_listing": 0.4706,
+    "followup_leads": 0.9196,
+    "reply_reviews": 0.7237,
+    "improve_contact": 0.5,
+    "prepare_campaign": 0.5714
+  }
+}
