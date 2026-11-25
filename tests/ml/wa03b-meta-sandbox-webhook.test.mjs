@@ -34,6 +34,22 @@ test('GET verification allows exact Meta challenge and rejects wrong token',()=>
  assert.equal(verifyWA03BChallenge(url+'&hub.challenge=other',env).ok,false);
  assert.equal(verifyWA03BChallenge(url.replace(env.SLBI_META_VERIFY_TOKEN,'wrong'),env).ok,false);
 });
+test('Meta six-key dotted + underscore challenge mirrors are verified exactly',()=>{
+ const token=env.SLBI_META_VERIFY_TOKEN;
+ const canonical='hub.mode=subscribe&hub.challenge=1871474949&hub.verify_token='+token;
+ const mirror='hub_mode=subscribe&hub_challenge=1871474949&hub_verify_token='+token;
+ assert.deepEqual(verifyWA03BChallenge('?'+canonical+'&'+mirror,env),
+  {ok:true,challenge:'1871474949'});
+ assert.deepEqual(verifyWA03BChallenge('?'+mirror,env),
+  {ok:true,challenge:'1871474949'});
+ assert.equal(verifyWA03BChallenge('?'+canonical+'&hub_mode=subscribe',env).ok,false);
+ assert.equal(verifyWA03BChallenge('?'+canonical+'&'+mirror+'&hub.mode=subscribe',env).ok,false);
+ assert.equal(verifyWA03BChallenge('?'+canonical+'&'+mirror+'&extra=value',env).ok,false);
+ assert.equal(verifyWA03BChallenge('?'+canonical+'&'+mirror.replace('hub_challenge=1871474949','hub_challenge=other'),env).ok,false);
+ assert.equal(verifyWA03BChallenge('?'+canonical+'&'+mirror.replace(token,'wrong'),env).ok,false);
+ assert.equal(verifyWA03BChallenge('?'+canonical+'&'+mirror.replace('hub_mode=subscribe','hub_mode=unsubscribe'),env).ok,false);
+ assert.equal(verifyWA03BChallenge('?'+canonical.replace(token,'wrong')+'&'+mirror.replace(token,'wrong'),env).ok,false);
+});
 test('POST signed incoming event accepted as fingerprint count ONLY, not stored',()=>{
  const body=sample(),r=inspectWA03BInbound(body,sign(body),env,NOW);
  assert.equal(r.ok,true);assert.equal(r.eventCount,1);
