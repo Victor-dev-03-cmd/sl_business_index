@@ -32,7 +32,7 @@ export default function RouteNavigationFeedback(){
       const raw=link.getAttribute('href');
       if(!raw||raw.startsWith('#'))return;
       let url:URL;
-      try{url=new URL(link.href,window.location.href);}catch{return;}
+      try{url=new URL(raw,window.location.href);}catch{return;}
       if(url.origin!==window.location.origin||
         (url.pathname===window.location.pathname&&url.search===window.location.search))return;
       setOpening(true);
