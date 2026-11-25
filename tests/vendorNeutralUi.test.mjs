@@ -29,7 +29,8 @@ test('overview uses real owner metrics, orange chart and truthful published-list
   assert.match(dashboard,/neo\.page/);
   assert.match(dashboard,/neo\.hero/);
   assert.match(dashboard,/Portfolio pulse/);
-  assert.match(dashboard,/Listing readiness/);
+  assert.match(dashboard,/Directory publication/);
+  assert.match(dashboard,/Growth Command Center/);
   assert.match(dashboard,/Export report/);
   assert.match(dashboard,/onClick=\{exportCsv\}/);
   for(const route of ['/vendor/my-businesses','/vendor/leads','/vendor/insights','/vendor/reviews'])
