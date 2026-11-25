@@ -283,3 +283,66 @@
   .vendor-topbar-dropdown-panel {animation:none;}
   .vendor-topbar-dropdown-trigger svg {transition:none;}
 }
+
+/* G3-01: Vendor-only narrow-screen layout safeguards.
+ * Do not globally set word-break:break-all: that caused single-letter vertical
+ * labels and status badges on 320px devices, especially in Settings.
+ * Preserve long email/URL truncation only in explicit identity fields. */
+.vendor-workspace-v6,
+.vendor-workspace-v6 .vendor-content,
+.vendor-workspace-v6 .vendor-content > div,
+.vendor-workspace-v6 .vendor-content :is(.grid,.flex) {
+  min-width:0;
+}
+.vendor-workspace-v6 .vendor-content .grid > * {
+  min-width:0;
+}
+.vendor-workspace-v6 .vendor-content :is(h1,h2,h3,h4,p,label,small) {
+  word-break:normal;
+  overflow-wrap:break-word;
+}
+.vendor-workspace-v6 .vendor-content .vendor-mobile-safe {
+  min-width:0;
+  max-width:100%;
+}
+.vendor-workspace-v6 .vendor-content .vendor-status-badge {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  min-width:0;
+  max-width:100%;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  word-break:normal;
+  flex-shrink:0;
+}
+.vendor-workspace-v6 .vendor-content .vendor-status-badge > svg {
+  flex-shrink:0;
+}
+.vendor-workspace-v6 .vendor-topbar-scrollbar a {
+  white-space:nowrap;
+}
+@media (max-width:639px) {
+  .vendor-workspace-v6 .vendor-content {
+    padding:14px 12px 22px;
+    overflow-x:clip;
+  }
+  .vendor-workspace-v6 .vendor-content :is(button,a) {
+    touch-action:manipulation;
+  }
+  .vendor-workspace-v6 .vendor-content [data-testid="vendor-settings-studio"] {
+    overflow-wrap:break-word;
+  }
+  .vendor-workspace-v6 .vendor-content [data-testid="vendor-settings-studio"] :is(header,aside,section,article) {
+    box-shadow:0 3px 10px rgba(30,30,34,.055) !important;
+  }
+  .vendor-workspace-v6 .vendor-content [data-testid="vendor-settings-studio"] :is(input,select,textarea) {
+    min-width:0;
+    max-width:100%;
+    font-size:14px;
+  }
+  .vendor-workspace-v6 .vendor-content [data-testid="vendor-settings-studio"] :is(p,label) {
+    font-size:max(12px,1em);
+  }
+}
