@@ -1,12 +1,13 @@
 'use client';
 import { neo } from '../components/neumorphic';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import IconsaxIcon from '../components/IconsaxIcon';
 import G2GrowthScorePanel from '../components/G2GrowthScorePanel';
+import G3PortfolioActions from '../components/G3PortfolioActions';
 import dynamic from 'next/dynamic';
 const VendorAnalytics = dynamic(() => import('./VendorAnalytics'), { ssr: false, loading: () => <div aria-live="polite" className="flex h-64 items-center justify-center text-xs text-[#8b909b]">Preparing activity insights…</div> });
 
@@ -68,6 +69,24 @@ export default function VendorDashboard() {
   const [updatingIds, setUpdatingIds] = useState<string[]>([]);
   const [activityRefreshKey, setActivityRefreshKey] = useState(0);
   const [growthBusinessId, setGrowthBusinessId] = useState('');
+  // Do not mount the heavier timeline and start its analytics read until its
+  // actual chart approaches the viewport. Saves JS/network work on mobile.
+  const timelineRef=useRef<HTMLDivElement|null>(null);
+  const [timelineInView,setTimelineInView]=useState(false);
+  useEffect(()=>{
+    if(timelineInView)return;
+    const node=timelineRef.current;
+    if(!node)return;
+    if(typeof IntersectionObserver==='undefined'){setTimelineInView(true);return;}
+    const observer=new IntersectionObserver(entries=>{
+      if(entries.some(entry=>entry.isIntersecting)){
+        setTimelineInView(true);
+        observer.disconnect();
+      }
+    },{rootMargin:'240px 0px'});
+    observer.observe(node);
+    return()=>observer.disconnect();
+  },[timelineInView]);
 
   const load = useCallback(async (notify = false) => {
     setLoading(true);
@@ -230,10 +249,10 @@ export default function VendorDashboard() {
   }
 
   return (
-    <div className={neo.page + " mx-auto min-h-full w-full  space-y-6 pb-9 text-[#232326]"}>
+    <div className={neo.page + " mx-auto min-h-full w-full  space-y-4 pb-7 text-[#232326]"}>
       <div className="space-y-5">
 
-        <header className={neo.hero + " overflow-hidden px-6 py-7 sm:px-8 sm:py-8"}>
+        <header className={neo.hero + " overflow-hidden px-4 py-5 sm:px-7 sm:py-7"}>
           <div className="grid items-center gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(270px,350px)]">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-3">
@@ -241,15 +260,15 @@ export default function VendorDashboard() {
                 <p className="text-[10px] font-extrabold uppercase tracking-[.19em] text-[#9C9CA1]">SLBI / Owner intelligence</p>
                 <span className="rounded-[5px] border border-[#F5D5BD] bg-[#FFF6EF] px-2.5 py-1 text-[10px] font-semibold text-[#BC5E0B]">{plan} plan</span>
               </div>
-              <h1 className="slbi-display-title mt-4 text-[34px] text-[#171719] sm:text-[42px]">Your business. <span className="text-[#FF7900]">In focus.</span></h1>
+              <h1 className="slbi-display-title mt-4 text-[26px] leading-tight text-[#171719] sm:text-[38px]">Your business. <span className="text-[#FF7900]">In focus.</span></h1>
               <p className="mt-3 max-w-[650px] text-[13px] leading-6 text-[#808087]">Manage listings, customer enquiries and recorded business activity from one clear workspace.</p>
-              <div className="mt-6 flex flex-wrap items-center gap-2">
+              <div className="mt-4 flex flex-wrap items-center gap-2">
                 <button type="button" onClick={exportCsv} disabled={loading||!businesses.length} className={neo.button + " inline-flex h-10 items-center gap-2 px-4 text-[11px] font-semibold text-[#343439] hover:border-[#FFBA82] hover:bg-[#FFF8F2] disabled:opacity-50"}><IconsaxIcon name="document-download" size={16}/> Export report</button>
                 <button type="button" onClick={()=>void load(true)} disabled={loading} className="inline-flex h-10 items-center gap-2 rounded-[7px] border border-[#E6E6E8] bg-white px-4 text-[11px] font-semibold text-[#343439] hover:border-[#FFBA82] hover:bg-[#FFF8F2] disabled:opacity-50"><IconsaxIcon name="refresh" size={16}/> Refresh</button>
                 <Link href="/vendor/marketing" className="inline-flex h-10 items-center gap-2 rounded-[7px] bg-[#1D1D20] px-4 text-[11px] font-semibold text-white hover:bg-[#333338]"><IconsaxIcon name="add" size={16} color="#FF7900"/> New campaign</Link>
               </div>
             </div>
-            <div className="relative overflow-hidden rounded-[13px] bg-[#1C1C1F] px-6 py-5 text-white shadow-[0_18px_32px_rgba(26,26,28,.12)]">
+            <div className="relative min-w-0 overflow-hidden rounded-[13px] bg-[#1C1C1F] px-4 py-4 sm:px-5 text-white shadow-[0_18px_32px_rgba(26,26,28,.12)]">
               <span aria-hidden="true" className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full border-[25px] border-[#FF7900]/15"/>
               <p className="text-[10px] font-bold uppercase tracking-[.19em] text-[#B2B2B7]">Portfolio pulse</p>
               <div className="mt-4 flex items-end gap-3"><span className="text-[48px] font-extrabold leading-none tracking-[-.06em] text-white">{loading?'—':number(businesses.length)}</span><span className="pb-1.5 text-[12px] font-medium text-[#B6B6BC]">owned listings</span></div>
@@ -266,30 +285,46 @@ export default function VendorDashboard() {
           </div>
         )}
 
-        <section aria-label="G2 GrowthScore for your approved business" className="space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="text-[14px] font-extrabold text-[#27272A]">GrowthScore &amp; next actions</h2>
-              <p className="mt-1 text-[11px] text-[#74747A]">
-                Read-only readiness guidance for your approved listings
+        <section data-g3-command-center="true" aria-label="G3 Growth Command Center" className="vendor-mobile-safe min-w-0 space-y-3">
+          <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div className="min-w-0">
+              <span className="text-[11px] font-bold uppercase tracking-[.10em] text-[#D76817]">G3 · Owner workspace</span>
+              <h2 className="mt-1 text-[18px] font-extrabold leading-6 tracking-tight text-[#282629] sm:text-[21px]">
+                Growth Command Center
+              </h2>
+              <p className="mt-1 text-[12px] leading-5 text-[#77717A]">
+                Business readiness and recorded customer activity in one place
               </p>
             </div>
-            {approvedForGrowth.length>1&&<label className="flex items-center gap-2 text-[11px] font-bold text-[#4A4A50]">
-              <span>Business</span>
+            {approvedForGrowth.length>1&&<label className="flex min-w-0 flex-col gap-1.5 text-[12px] font-semibold text-[#4A4A50] sm:items-end">
+              <span>Choose approved business</span>
               <select aria-label="Select business for GrowthScore" value={growthBusiness?.id||''}
                 onChange={e=>setGrowthBusinessId(e.target.value)}
-                className="h-10 max-w-[220px] rounded-md border border-[#EBE1D8] bg-white px-2 text-[12px]">
+                className="h-11 w-full min-w-0 rounded-lg border border-[#E9D9CC] bg-white px-3 text-[12px] sm:w-[250px]">
                 {approvedForGrowth.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}
               </select>
             </label>}
           </div>
-          {growthBusiness?<G2GrowthScorePanel businessId={growthBusiness.id}/>:
-            <div role="status" className="rounded-xl border border-[#E9E4DD] bg-white p-4 text-[12px] text-[#77717A]">
-              GrowthScore becomes available when an owned business is approved.
-              <Link href="/vendor/my-businesses" className="ml-2 font-bold text-[#C66416] underline">
-                View your listings
-              </Link>
-            </div>}
+          <div className="grid min-w-0 grid-cols-1 items-start gap-3 lg:grid-cols-2">
+            {growthBusiness?<G2GrowthScorePanel businessId={growthBusiness.id} variant="compact"/>:
+              <div role="status" className="min-w-0 rounded-xl border border-[#E9E4DD] bg-white p-4 text-[12px] leading-5 text-[#77717A]">
+                GrowthScore is available after one of your owned listings is approved.
+                <Link href="/vendor/my-businesses" className="ml-1 font-bold text-[#C66416] underline">View listings</Link>
+              </div>}
+            <G3PortfolioActions
+              snapshot={{
+                views:metrics.views,calls:metrics.calls,leads:metrics.leads,reviews:metrics.reviews,
+                ownedCount:businesses.length,approvedCount:activeCount,
+                pendingCount:businesses.length-activeCount,
+              }}
+              loading={loading}
+              error={Boolean(error)}
+            />
+          </div>
+          <p className="text-[11px] leading-5 text-[#7A7370]">
+            GrowthScore measures selected business listing readiness. Next best actions use all owned listings' recorded
+            activity. Neither measures verified sales or unique visitors.
+          </p>
         </section>
 
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -300,9 +335,9 @@ export default function VendorDashboard() {
           <p className="text-[11px] text-[#6f7078]">Recorded counters · Not unique visitors or verified sales</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+        <div className="grid min-w-0 grid-cols-1 gap-2 min-[390px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
           {kpis.map(kpi => (
-            <div key={kpi.id} className={panel + ' min-w-0 p-4'}>
+            <div key={kpi.id} className={panel + ' min-w-0 p-3 sm:p-4'}>
               <div className="flex items-start justify-between gap-2">
                 <span className="text-[11px] font-semibold text-slate-500">{kpi.title}</span>
                 <span className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ backgroundColor: kpi.tone + '12', color: kpi.tone }}>
@@ -315,7 +350,7 @@ export default function VendorDashboard() {
               <p className="mt-2 text-[11px] leading-5 text-[#6f7078]">{kpi.explanation}</p>
             </div>
           ))}
-          <div className={panel + ' col-span-2 min-w-0 p-4 md:col-span-1'}>
+          <div className={panel + ' min-w-0 p-3 sm:p-4 min-[390px]:col-span-2 md:col-span-1'}>
             <div className="flex items-start justify-between gap-2">
               <span className="text-[11px] font-semibold text-slate-500">Call-click rate</span>
               <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#F8F8FA] text-[#2C2C31]">
@@ -329,7 +364,7 @@ export default function VendorDashboard() {
           </div>
         </div>
 
-        <section aria-label="Owner quick launch actions" className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <section aria-label="Owner quick launch actions" className="grid min-w-0 grid-cols-1 gap-2 min-[390px]:grid-cols-2 lg:grid-cols-4">
           {[
             {label:'Manage listings',detail:'Keep your business details current',href:'/vendor/my-businesses',icon:'shop'},
             {label:'Respond to leads',detail:'Follow up with enquiries',href:'/vendor/leads',icon:'message-text'},
@@ -353,8 +388,12 @@ export default function VendorDashboard() {
                 Growth tools <IconsaxIcon name="arrow-right-2" size={13} />
               </Link>
             </div>
-            <div className="p-4 sm:p-5">
-              <VendorAnalytics businessIds={businessIds} refreshKey={activityRefreshKey} embedded />
+            <div ref={timelineRef} className="min-w-0 p-3 sm:p-5" data-g3-deferred-timeline="true">
+              {timelineInView?<VendorAnalytics businessIds={businessIds} refreshKey={activityRefreshKey} embedded />:
+                <div role="status" aria-label="Engagement chart loads when visible"
+                  className="flex min-h-[190px] items-center justify-center rounded-lg bg-[#FBFAF9] px-4 text-center text-[12px] text-[#7B7471]">
+                  Engagement timeline loads when you reach this section
+                </div>}
             </div>
           </section>
 
@@ -367,7 +406,7 @@ export default function VendorDashboard() {
               <IconsaxIcon name="status-up" size={19} color="#F47A1B" />
             </div>
             <div className="space-y-4 px-5 py-5">
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid min-w-0 grid-cols-3 gap-2">
                 {[
                   { value: businesses.length, label: 'Businesses' },
                   { value: activeCount, label: 'Published' },
@@ -389,8 +428,8 @@ export default function VendorDashboard() {
                   </div>
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[12px] font-bold text-[#2A292D]">Listing readiness</p>
-                  <p className="mt-2 text-[11px] leading-5 text-[#8C8580]">Share of your owned listings approved for directory display. Not a sales or customer conversion metric.</p>
+                  <p className="text-[12px] font-bold text-[#2A292D]">Directory publication</p>
+                  <p className="mt-2 text-[11px] leading-5 text-[#8C8580]">Share of owned listings published in the directory. Separate from GrowthScore and not a sales metric.</p>
                 </div>
               </div>
               <p className="text-[10px] leading-5 text-[#6f7078]">*Open status reflects your manually selected business availability.</p>
@@ -544,7 +583,7 @@ export default function VendorDashboard() {
           </div>
         </section>
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="grid min-w-0 grid-cols-1 items-start gap-4 lg:grid-cols-2">
           <section className={panel + ' overflow-hidden'}>
             <div className="flex items-center justify-between border-b border-[#EEEAEB] px-5 py-4">
               <div><h2 className="text-[13px] font-bold text-[#27272C]">Recent customer activity</h2><p className="mt-1 text-[11px] text-[#6f7078]">Latest reviews on your listings</p></div>

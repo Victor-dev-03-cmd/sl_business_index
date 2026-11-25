@@ -34,7 +34,7 @@ function Dimension({item}:{item:G2ScoreSummary}){
 
 /** Same read-only GrowthScore panel on Dashboard and all three G1 live pages.
  * No raw tenant data, mutations, AI, paid plan checks or background polling. */
-export default function G2GrowthScorePanel({businessId}:{businessId:string}){
+export default function G2GrowthScorePanel({businessId,variant='full'}:{businessId:string;variant?:'full'|'compact'}){
   const {data,isPending,isFetching,error,refetch}=useQuery({
     queryKey:['g2-owner-growthscore',businessId],
     enabled:Boolean(businessId),
@@ -60,6 +60,72 @@ export default function G2GrowthScorePanel({businessId}:{businessId:string}){
       return result;
     },
   });
+  if(variant==='compact'){
+    return <section data-g3-growth-score="compact" aria-label="Business readiness GrowthScore"
+      className="vendor-mobile-safe min-w-0 rounded-xl border border-[#F0DED0] bg-white p-3 sm:p-4">
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <Gauge size={17} className="shrink-0 text-[#D96B0D]" aria-hidden="true"/>
+          <h3 className="min-w-0 text-[14px] font-extrabold text-[#252328]">GrowthScore</h3>
+          <span className="vendor-status-badge rounded-md bg-[#FFF0E2] px-2 py-1 text-[11px] font-semibold text-[#9F4812]">Readiness v1</span>
+        </div>
+        <button type="button" aria-label="Refresh business readiness evidence"
+          onClick={()=>void refetch()} disabled={!businessId||isFetching}
+          className="inline-flex min-h-10 shrink-0 items-center gap-1 rounded-md border border-[#F2E1D3] bg-white px-2.5 text-[12px] font-semibold text-[#765544] hover:bg-[#FFF7EF] disabled:opacity-50">
+          <RefreshCw size={14} className={isFetching?'animate-spin':''} aria-hidden="true"/> Refresh
+        </button>
+      </div>
+      {!businessId||isPending?
+        <div role="status" className="mt-3 h-24 animate-pulse rounded-lg bg-[#F4EDE6]" aria-label="Loading readiness evidence"/>:
+      error||!data?
+        <p role="alert" className="mt-3 rounded-lg bg-[#FFF5EB] p-3 text-[12px] leading-5 text-[#965221]">
+          Readiness evidence is unavailable. Refresh to try again.
+        </p>:
+        <div className="mt-3 space-y-3">
+          <div className="flex min-w-0 flex-wrap items-center gap-3">
+            <span className="shrink-0 text-[34px] font-extrabold leading-none tabular-nums tracking-tight text-[#262226]">
+              {scoreLabel(data.score)}
+              <span className="ml-1 text-[12px] font-semibold text-[#93857A]">/ 100</span>
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[12px] font-semibold leading-5 text-[#363039]">
+                {data.status==='insufficient_data'?'Insufficient evidence':'Observed listing readiness'}
+              </p>
+              <p className="text-[12px] leading-5 text-[#766E67]">
+                {data.evidenceCoveragePercent}% evidence coverage
+                {data.status==='insufficient_data'?' · at least 75% required':''}
+              </p>
+            </div>
+          </div>
+          <div className="grid min-w-0 grid-cols-1 gap-2 min-[390px]:grid-cols-3">
+            {data.dimensions.map(item=><div key={item.dimension} className="min-w-0 rounded-lg bg-[#FBF8F5] px-2.5 py-2">
+              <div className="flex min-w-0 items-center justify-between gap-2">
+                <span className="min-w-0 text-[11px] font-semibold leading-4 text-[#56504D]">{item.label}</span>
+                <span className="shrink-0 text-[11px] font-bold tabular-nums text-[#252327]">
+                  {scoreLabel(item.score)}{item.score===null?'':'%'}
+                </span>
+              </div>
+              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[#EEE2D8]" role="progressbar"
+                aria-label={item.label+' evidence score'}
+                aria-valuemin={0} aria-valuemax={100} aria-valuenow={item.score??undefined}>
+                <div className="h-full rounded-full bg-[#F47A1B]" style={{width:percent(item.score??0)}}/>
+              </div>
+            </div>)}
+          </div>
+          {data.recommendations.length>0?
+            <div className="flex min-w-0 flex-wrap items-center gap-2 border-t border-[#F0E5DA] pt-3">
+              <span className="text-[11px] font-semibold text-[#6A605B]">Improve next:</span>
+              {data.recommendations.slice(0,2).map(action=><Link href={action.href} key={action.key}
+                className="vendor-status-badge inline-flex min-h-10 items-center gap-1 rounded-lg bg-[#292729] px-3 py-2 text-[12px] font-semibold text-white hover:bg-[#D96A11]">
+                {action.actionLabel}<ArrowUpRight size={13} aria-hidden="true"/>
+              </Link>)}
+            </div>:
+            <p className="text-[11px] leading-5 text-[#686158]">
+              All observed listing-readiness tasks are complete.
+            </p>}
+        </div>}
+    </section>;
+  }
   return <section aria-label="GrowthScore and recommended next actions"
     className="min-w-0 rounded-xl border border-[#F2DAC3] bg-[#FFFAF6] p-4 sm:p-5">
     <div className="flex flex-wrap items-start justify-between gap-3">

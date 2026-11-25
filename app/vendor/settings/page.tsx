@@ -283,10 +283,10 @@ export default function SettingsPage() {
   const initials=(profile.full_name||profile.email||'V').trim().split(/\s+/).slice(0,2).map(n=>n[0]?.toUpperCase()||'').join('');
   const submitLabel=verified?'Verified':pending?'Under review':'Submit for review';
   return (
-    <div className="mx-auto w-full max-w-[1440px] min-w-0 px-3 pb-12 pt-3 text-[#252733] sm:px-6 lg:px-8" data-testid="vendor-settings-studio">
-      <header className="flex flex-col gap-6 rounded-[28px] border border-white/70 bg-[#e9edf4] px-6 py-8 shadow-[12px_12px_30px_#c7cbd3,-12px_-12px_30px_#ffffff] md:flex-row md:items-center md:justify-between md:px-10">
-        <div className="min-w-0 [&_h1]:mt-3 [&_h1]:text-3xl [&_h1]:font-extrabold [&_h1]:tracking-[-0.05em] [&_h1]:text-[#222530] sm:[&_h1]:text-4xl [&_p]:mt-2 [&_p]:max-w-[620px] [&_p]:text-sm [&_p]:leading-7 [&_p]:text-[#696d7b]">
-          <div className="flex items-center gap-2 text-[10px] font-extrabold tracking-[.18em] text-[#c26321]"><span className="h-2 w-2 rounded-full bg-[#ff7900] shadow-[0_0_0_5px_#ff79001a]"/> SLBI OWNER PORTAL <span className="px-2 text-[#abaebb]">/</span> ACCOUNT SETTINGS</div>
+    <div className="mx-auto w-full max-w-[1440px] min-w-0 px-0 pb-10 pt-2 sm:px-4 lg:px-8 text-[#252733] sm:px-6 lg:px-8" data-testid="vendor-settings-studio">
+      <header className="flex min-w-0 flex-col gap-4 rounded-[20px] border border-white/70 bg-[#e9edf4] px-3 py-5 sm:rounded-[28px] sm:px-6 sm:py-8 shadow-[12px_12px_30px_#c7cbd3,-12px_-12px_30px_#ffffff] md:flex-row md:items-center md:justify-between md:px-10">
+        <div className="min-w-0 [&_h1]:mt-3 [&_h1]:text-[26px] sm:[&_h1]:text-3xl [&_h1]:font-extrabold [&_h1]:tracking-[-0.05em] [&_h1]:text-[#222530] sm:[&_h1]:text-4xl [&_p]:mt-2 [&_p]:max-w-[620px] [&_p]:text-sm [&_p]:leading-7 [&_p]:text-[#696d7b]">
+          <div className="flex min-w-0 flex-wrap items-center gap-2 text-[11px] font-extrabold tracking-[.08em] sm:tracking-[.18em] text-[#c26321]"><span className="h-2 w-2 rounded-full bg-[#ff7900] shadow-[0_0_0_5px_#ff79001a]"/> SLBI OWNER PORTAL <span className="px-2 text-[#abaebb]">/</span> ACCOUNT SETTINGS</div>
           <h1>Workspace settings</h1>
           <p>Manage your identity, business verification, discoverability and account preferences in one secure workspace.</p>
         </div>
@@ -299,12 +299,12 @@ export default function SettingsPage() {
       {error&&<div role="alert" className="mt-5 flex items-center gap-2 rounded-2xl border px-5 py-4 text-sm leading-6 border-red-200 bg-red-50 text-red-800">{error} <Link href="/login?redirect=/vendor/settings">Sign in</Link></div>}
       {loading&&<div role="status" className="mt-5 flex items-center gap-3 rounded-2xl bg-[#edf0f5] px-5 py-4 text-sm font-medium text-[#606779]"><Loader2 size={18} className="animate-spin"/> Loading your workspace preferences…</div>}
 
-      <div className="mt-8 grid min-w-0 items-start gap-8 lg:grid-cols-[250px_minmax(0,1fr)]">
-        <aside className="min-w-0 rounded-[26px] bg-[#e9edf4] p-4 shadow-[9px_9px_22px_#c9cdd5,-9px_-9px_22px_#ffffff] lg:sticky lg:top-6 [&_nav]:flex [&_nav]:flex-row [&_nav]:gap-2 [&_nav]:overflow-x-auto lg:[&_nav]:flex-col" aria-label="Settings navigation">
+      <div className="mt-5 grid min-w-0 items-start gap-4 lg:mt-8 lg:gap-8 lg:grid-cols-[250px_minmax(0,1fr)]">
+        <aside className="min-w-0 rounded-[20px] bg-[#e9edf4] p-2 sm:rounded-[26px] sm:p-4 shadow-[9px_9px_22px_#c9cdd5,-9px_-9px_22px_#ffffff] lg:sticky lg:top-6 [&_nav]:flex [&_nav]:flex-row [&_nav]:gap-2 [&_nav]:overflow-x-auto lg:[&_nav]:flex-col" aria-label="Settings navigation">
           <div className="mb-4 px-3 pt-2 text-[10px] font-extrabold uppercase tracking-[.17em] text-[#8b91a0]">WORKSPACE SETTINGS</div>
           <nav aria-label="Vendor settings sections">
             {tabList.map(item=><button type="button" key={item.id} aria-current={activeTab===item.id?'page':undefined}
-              onClick={()=>selectTab(item.id)} className={'flex min-w-[175px] flex-1 items-center gap-3 rounded-[17px] px-3 py-3 text-left text-[#626979] transition hover:bg-white/40 lg:min-w-0 lg:w-full lg:flex-none '+(activeTab===item.id?'bg-[#e9edf4] font-bold text-[#ed720d] shadow-[inset_5px_5px_10px_#c7cbd5,inset_-5px_-5px_10px_#ffffff]':'')}>
+              onClick={()=>selectTab(item.id)} className={'flex min-w-[152px] shrink-0 items-center gap-3 rounded-[17px] px-3 py-3 text-left text-[#626979] transition hover:bg-white/40 lg:min-w-0 lg:w-full lg:flex-none '+(activeTab===item.id?'bg-[#e9edf4] font-bold text-[#ed720d] shadow-[inset_5px_5px_10px_#c7cbd5,inset_-5px_-5px_10px_#ffffff]':'')}>
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#e9edf4] text-[#ee791c] shadow-[3px_3px_7px_#c7cbd5,-3px_-3px_7px_#ffffff]"><item.icon size={19}/></span>
               <span className="flex min-w-0 flex-1 flex-col gap-1 [&_strong]:text-xs [&_strong]:font-bold [&_span]:text-[10px] [&_span]:text-[#9298a7]"><strong>{item.name}</strong><span>{item.detail}</span></span>
               <ArrowUpRight size={14} className="hidden shrink-0 opacity-50 xl:block"/>
@@ -323,10 +323,10 @@ export default function SettingsPage() {
               <h2 id="ss-profile-heading">Account profile</h2>
               <p>Keep the details associated with your vendor account accurate. Listing details are managed separately.</p>
             </div>
-            <div className="mb-8 flex flex-wrap items-center gap-4 rounded-[22px] bg-[#e9edf4] p-5 shadow-[inset_6px_6px_12px_#cbd0da,inset_-6px_-6px_12px_#ffffff] [&_div:nth-child(2)]:flex [&_div:nth-child(2)]:min-w-0 [&_div:nth-child(2)]:flex-1 [&_div:nth-child(2)]:flex-col [&_div:nth-child(2)]:gap-1 [&_strong]:break-words [&_strong]:text-sm [&_strong]:font-bold [&_span]:break-all [&_span]:text-xs [&_span]:text-[#858b98]">
+            <div className="mb-8 flex flex-wrap items-center gap-4 rounded-[22px] bg-[#e9edf4] p-5 shadow-[inset_6px_6px_12px_#cbd0da,inset_-6px_-6px_12px_#ffffff] [&_div:nth-child(2)]:flex [&_div:nth-child(2)]:min-w-0 [&_div:nth-child(2)]:flex-1 [&_div:nth-child(2)]:flex-col [&_div:nth-child(2)]:gap-1 [&_strong]:break-words [&_strong]:text-sm [&_strong]:font-bold [&_span]:text-xs [&_span]:text-[#858b98]">
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] bg-[#262a34] text-lg font-extrabold text-white shadow-[5px_5px_12px_#c0c5cf,-5px_-5px_12px_#ffffff]">{initials||'V'}</div>
-              <div><strong>{profile.full_name||'Complete your profile'}</strong><span>{profile.email||'Signed-in email address'}</span></div>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#fff0e3] px-3 py-2 text-[10px] font-bold text-[#b95d13]"><ShieldCheck size={13}/> Account owner</span>
+              <div className="min-w-0 flex-1"><strong className="block break-words">{profile.full_name||'Complete your profile'}</strong><span className="block max-w-full truncate" title={profile.email||''}>{profile.email||'Signed-in email address'}</span></div>
+              <span className="inline-flex items-center gap-1.5 vendor-status-badge shrink-0 rounded-full bg-[#fff0e3] px-3 py-2 text-[11px] font-bold text-[#b95d13]"><ShieldCheck size={13}/> Account owner</span>
             </div>
             <div className="grid min-w-0 gap-x-6 gap-y-6 md:grid-cols-2">
               <div className="min-w-0"><label className={label} htmlFor="vendor-name">Full name</label><input className={field} id="vendor-name" type="text" maxLength={100} autoComplete="name" value={profile.full_name} onChange={e=>setProfile(v=>({...v,full_name:e.target.value}))}/></div>
@@ -343,13 +343,13 @@ export default function SettingsPage() {
               <h2 id="ss-verification-heading">Business verification</h2>
               <p>Submit registration details for manual review. Submission does not automatically grant a verified status.</p>
             </div>
-            <div className="mb-6 flex flex-wrap items-end gap-4 rounded-[22px] bg-[#e9edf4] p-5 shadow-[inset_5px_5px_11px_#cbd0d9,inset_-5px_-5px_11px_#ffffff] [&_.min-w-0]:min-w-[190px] [&_.min-w-0]:flex-1">
+            <div className="mb-6 flex min-w-0 flex-col items-stretch gap-3 rounded-[22px] sm:flex-row sm:flex-wrap sm:items-end bg-[#e9edf4] p-5 shadow-[inset_5px_5px_11px_#cbd0d9,inset_-5px_-5px_11px_#ffffff] [&_.min-w-0]:min-w-0 [&_.min-w-0]:flex-1 sm:[&_.min-w-0]:min-w-[190px]">
               <div className="min-w-0"><label className={label} htmlFor="verification-business">Business to verify</label>
                 <select className={field} id="verification-business" value={selectedBusinessId} onChange={e=>setSelectedBusinessId(e.target.value)} disabled={!businesses.length}>
                   {businesses.length===0?<option value="">No businesses registered</option>:businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}
                 </select>
               </div>
-              <span className={'inline-flex items-center gap-1.5 rounded-full border px-3 py-2 text-[11px] font-bold '+(verified?'border-emerald-200 bg-emerald-50 text-emerald-800':pending?'border-amber-200 bg-amber-50 text-amber-800':'border-[#d5d9e1] bg-[#f6f7fa] text-[#686e7b]')}><FileCheck2 size={15}/>{statusLabel(verificationState)}</span>
+              <span className={'inline-flex items-center gap-1.5 vendor-status-badge self-start rounded-full border px-3 py-2 text-[12px] font-bold '+(verified?'border-emerald-200 bg-emerald-50 text-emerald-800':pending?'border-amber-200 bg-amber-50 text-amber-800':'border-[#d5d9e1] bg-[#f6f7fa] text-[#686e7b]')}><FileCheck2 size={15}/>{statusLabel(verificationState)}</span>
               {verification?.created_at&&<p className="mt-2 text-[11px] leading-5 text-[#838997]">Last request: {new Date(verification.created_at).toLocaleDateString('en-LK')}</p>}
             </div>
             {pending&&<div className="mt-5 flex items-center gap-2 rounded-2xl border px-5 py-4 text-sm leading-6 border-amber-200 bg-amber-50 text-amber-900">A request is under review. New submissions are paused until it is resolved.</div>}
@@ -381,7 +381,7 @@ export default function SettingsPage() {
               <h2 id="ss-optimization-heading">Local reach & SEO</h2>
               <p>Manage your service area and search terms without changing your business profile or guaranteeing rankings.</p>
             </div>
-            <div className="mb-6 flex flex-wrap items-end gap-4 rounded-[22px] bg-[#e9edf4] p-5 shadow-[inset_5px_5px_11px_#cbd0d9,inset_-5px_-5px_11px_#ffffff] [&_.min-w-0]:min-w-[190px] [&_.min-w-0]:flex-1 mb-7">
+            <div className="mb-6 flex min-w-0 flex-col items-stretch gap-3 rounded-[22px] sm:flex-row sm:flex-wrap sm:items-end bg-[#e9edf4] p-5 shadow-[inset_5px_5px_11px_#cbd0d9,inset_-5px_-5px_11px_#ffffff] [&_.min-w-0]:min-w-0 [&_.min-w-0]:flex-1 sm:[&_.min-w-0]:min-w-[190px] mb-7">
               <div className="min-w-0"><label className={label} htmlFor="seo-business">Editing business</label>
                 <select className={field} id="seo-business" value={selectedBusinessId} disabled={!businesses.length} onChange={e=>setSelectedBusinessId(e.target.value)}>{businesses.length===0?<option value="">No businesses registered</option>:businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select>
               </div>

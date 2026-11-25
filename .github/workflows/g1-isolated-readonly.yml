@@ -6,6 +6,12 @@ on:
       - "lib/growth/g1/**"
       - "lib/growth/g2/**"
       - "tests/g2/**"
+      - "lib/growth/g3/**"
+      - "tests/g3/**"
+      - "app/vendor/components/G3PortfolioActions.tsx"
+      - "app/vendor/vendor-workspace.css"
+      - "app/vendor/settings/page.tsx"
+      - "app/vendor/layout.tsx"
       - "app/vendor/components/G2ListingContentChecklist.tsx"
       - "app/vendor/components/G2GrowthScorePanel.tsx"
       - "app/api/vendor/g2-growthscore/**"
@@ -42,6 +48,12 @@ jobs:
 
       - name: G2-02 real dashboard and SSR owner-only route integration
         run: node --test tests/g2/growthscore-live-integration.test.mjs
+
+      - name: G3-01 deterministic portfolio actions and edge cases
+        run: bun test tests/g3/portfolio-actions.test.mjs
+
+      - name: G3-01 command center and mobile viewport CSS contract
+        run: node --test tests/g3/command-center-responsive.test.mjs
 
       - name: G1 live three-page SSR read-only integration static security contract
         run: node --test tests/g1/live-page-integration.test.mjs
