@@ -1,0 +1,66 @@
+{
+  "contract_version": "neurogrowth-ml03-consented-aggregate-label-contract-v0.1",
+  "status": "DESIGN_ONLY_NO_REAL_EXPORT_AUTHORIZED",
+  "explicit_opt_in_required": true,
+  "tenant_context": "server_verified_owner_and_business_id_RLS",
+  "minimum_coverage": 0.75,
+  "features": [
+    "listing_gaps",
+    "unanswered_lead_ratio",
+    "overdue_reminder_ratio",
+    "unanswered_review_ratio",
+    "recent_views_norm",
+    "call_click_rate",
+    "recent_enquiries_norm",
+    "campaign_staleness",
+    "business_age_norm",
+    "evidence_coverage"
+  ],
+  "data_source_allowlist": [
+    "g1_owned_business_knowledge_aggregate",
+    "g2_growthscore_readiness_aggregate",
+    "g3_business_analytics_aggregate",
+    "g5_leadiq_aggregate",
+    "g5_review_reply_aggregate"
+  ],
+  "prohibited_exports": [
+    "raw_customer_names",
+    "phone",
+    "email",
+    "ip_address",
+    "message_content",
+    "review_text",
+    "payment_details",
+    "session_tokens",
+    "secrets",
+    "raw_customer_identifiers"
+  ],
+  "missing_policy": "explicit_unknown_no_zero_imputation_without_validation",
+  "required_label_fields": [
+    "observed_action_type",
+    "event_window_start",
+    "event_window_end",
+    "consent_record",
+    "measurement_evidence",
+    "label_version"
+  ],
+  "label_warning": "Observed actions are not automatically causal growth outcomes; require external validation.",
+  "evaluation": {
+    "split": "business_disjoint_and_forward_time_separation",
+    "baselines": [
+      "majority",
+      "existing_g2_g5_rules",
+      "gradient_boosted_trees"
+    ],
+    "metrics": [
+      "macro_f1",
+      "recall_by_action",
+      "precision_at_k",
+      "abstention_rate",
+      "latency"
+    ],
+    "promotion": "only_after_real_consented_heldout_evaluation_and_owner_approval"
+  },
+  "privacy": "NO live data extraction from production or upload to Deepnote until separate data governance approval",
+  "permissions": "no model-authorized mutation"
+}
