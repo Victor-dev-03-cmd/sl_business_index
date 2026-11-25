@@ -72,7 +72,7 @@ def score(net, x, y, device):
     return float((predictions == y).mean())
 
 
-def train(seed=42, size=2500, epochs=75, output="model_artifacts/neurogrowth-research-v0.1.json"):
+def train(seed=42, size=2500, epochs=75, output="ml/neurogrowth/model_artifacts/neurogrowth-research-v0.1.json"):
     torch.manual_seed(seed)
     np.random.seed(seed)
     random.seed(seed)
@@ -184,6 +184,6 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--size", type=int, default=2500)
     parser.add_argument("--epochs", type=int, default=75)
-    parser.add_argument("--output", default="model_artifacts/neurogrowth-research-v0.1.json")
+    parser.add_argument("--output", default="ml/neurogrowth/model_artifacts/neurogrowth-research-v0.1.json")
     args = parser.parse_args()
     train(args.seed, args.size, args.epochs, args.output)
