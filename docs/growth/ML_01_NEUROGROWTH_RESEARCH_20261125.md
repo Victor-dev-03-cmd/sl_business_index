@@ -1,3 +1,5 @@
+> **Additional ML-01 research inference (2026-11-25):** `ml/neurogrowth/predict.py` now loads the actual trained synthetic JSON state dict and produces reproducible top-3 action logits for an explicit 10-value normalized synthetic feature vector; it rejects malformed schema, feature count/range, and evidence coverage <75%. Tested locally on CPU with input `0.6 0.4 0.2 0.3 0.5 0.05 0.25 0.8 0.6 0.95` giving prepare_campaign > improve_listing > followup_leads. This is NOT prediction of sales, and it DOES NOT call any vendor backend, send customer messages or execute actions. Run only offline: `python ml/neurogrowth/predict.py --features 0.6 0.4 0.2 0.3 0.5 0.05 0.25 0.8 0.6 0.95` after training in root. No real vendor model deployment. Exact-head GitHub CI pending.
+
 # ML-01 — NeuroGrowth proprietary research core and tenant-safe agent design — 2026-11-25
 
 ## Owner's explicit vision
