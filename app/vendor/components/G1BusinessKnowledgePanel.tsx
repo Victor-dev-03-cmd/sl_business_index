@@ -6,6 +6,7 @@ import Link from 'next/link';
 import {BookOpen,CheckCircle2,Images,RefreshCw,ShieldCheck,ArrowUpRight} from 'lucide-react';
 import type {G1ReadOnlyKnowledge,G1Field} from '@/lib/growth/g1/read-only-knowledge';
 import G2ListingContentChecklist from './G2ListingContentChecklist';
+import G2GrowthScorePanel from './G2GrowthScorePanel';
 
 export type G1BusinessChoice={id:string;name:string;status?:string|null};
 type ContextResponse={context:G1ReadOnlyKnowledge};
@@ -99,6 +100,7 @@ export default function G1BusinessKnowledgePanel({
               <><ShieldCheck size={12}/>Verification not confirmed</>}
           </p></div>
       </div>
+      <G2GrowthScorePanel businessId={id}/>
       <G2ListingContentChecklist knowledge={data}/>
       <div className="flex flex-wrap items-start justify-between gap-3 border-t border-[#f0ece9] pt-3">
         <p className="max-w-xl text-[11px] leading-5 text-neutral-500">
