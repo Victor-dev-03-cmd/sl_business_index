@@ -1,0 +1,34 @@
+name: NeuroGrowth ML-05 robustness contract
+on:
+  pull_request:
+    paths:
+      - 'ml/neurogrowth/ml05_stability.py'
+      - 'ml/neurogrowth/tests/test_ml05_stability.py'
+      - 'ml/neurogrowth/contracts/ml05_robustness_contract.json'
+      - 'ml/neurogrowth/experiment_20261125_ml05_synthetic_metrics.json'
+      - 'tests/ml/neurogrowth-ml05-contract.test.mjs'
+      - '.github/workflows/neurogrowth-ml05.yml'
+      - 'docs/growth/HANDOFF_LATEST.md'
+  workflow_dispatch:
+jobs:
+  integrity-and-privacy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/ml/neurogrowth-ml05-contract.test.mjs
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: |
+          python - <<'PY'
+          import ast, pathlib
+          for file in ('ml/neurogrowth/ml05_stability.py',
+                       'ml/neurogrowth/tests/test_ml05_stability.py'):
+              ast.parse(pathlib.Path(file).read_text())
+          print('ML05 source parses; full CPU training runs separately on Deepnote')
+          PY
