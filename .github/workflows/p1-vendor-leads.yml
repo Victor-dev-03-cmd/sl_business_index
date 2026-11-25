@@ -28,6 +28,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
+      - name: G5-02 follow-up worklist and review manual guidance integration
+        run: node --test tests/g5/followup-response-live-ux.test.mjs
+
       - name: G5 owner CRM, reputation priority and Settings UI integration
         run: node --test tests/g5/live-ux-contract.test.mjs
 
