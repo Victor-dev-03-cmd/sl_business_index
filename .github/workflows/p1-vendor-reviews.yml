@@ -21,5 +21,8 @@ jobs:
         with: {persist-credentials: false}
       - uses: actions/setup-node@v4
         with: {node-version: '24'}
+      - name: G5-02 manual review response guidance safety
+        run: node --test tests/g5/followup-response-live-ux.test.mjs
+
       - name: Reviews duplicate/tenant/pagination regression
         run: node --test tests/vendorReviewReliability.test.mjs tests/vendorPortalRelease.test.mjs

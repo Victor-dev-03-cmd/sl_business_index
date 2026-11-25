@@ -1,0 +1,65 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+const read=path=>readFileSync(new URL('../../'+path,import.meta.url),'utf8');
+const leads=read('app/vendor/leads/page.tsx');
+const reviews=read('app/vendor/reviews/page.tsx');
+const worklist=read('lib/growth/g5/followup-intelligence.ts');
+const drafts=read('lib/growth/g5/review-reply-guidance.ts');
+
+test('G5-02 worklist is in the actual owner-scoped Leads CRM with real filters',()=>{
+  assert.match(leads,/data-g5-followup-intelligence="true"/);
+  assert.match(leads,/buildFollowUpWorklist\(leads,followUps,followUpReadiness,now\)/);
+  assert.match(leads,/followUpFocusIds\(followUpWorklist,activeFollowUpFocus\)/);
+  assert.match(leads,/const matchesFocus = focusIds===null\|\|focusIds\.has\(l\.id\)/);
+  assert.match(leads,/matchesDue && matchesFocus/);
+  assert.match(leads,/setFollowUpFocus\(card\.focus\)/);
+  assert.match(leads,/setStageFilter\('all'\)/);
+  assert.match(leads,/aria-pressed=\{activeFollowUpFocus===card\.focus\}/);
+  assert.match(leads,/Reminder data unavailable/);
+  assert.match(leads,/leadLimitReached/);
+  assert.match(leads,/\.eq\('owner_id', user\.id\)/);
+  assert.match(leads,/\.in\('business_id', ownedRows\.map\(b => b\.id\)\)/);
+  assert.match(leads,/Follow-up intelligence needs the complete owner CRM records/);
+});
+test('Follow-up guidance is manual-only, with an explicit second click to schedule',()=>{
+  assert.match(leads,/data-g5-followup-advice="true"/);
+  assert.match(leads,/buildLeadFollowUpAdvice\(selected,followUps\[selected\.id\],followUpReadiness,now\)/);
+  assert.match(leads,/readOnly rows=\{3\}/);
+  assert.match(leads,/navigator\.clipboard\.writeText\(text\)/);
+  assert.match(leads,/Copy only; no email, SMS or WhatsApp is sent/);
+  assert.match(leads,/Choose a time \(not saved yet\)/);
+  assert.match(leads,/setFollowUpDraft\(localFollowUpInput\(/);
+  assert.match(leads,/void saveFollowUp\(\)/);
+  assert.match(leads,/Follow-up scheduling is not available until the reviewed database migration is applied/);
+  assert.match(leads,/supabase\.auth\.getUser\(\)/);
+  assert.match(leads,/\.from\('lead_followups'\)/);
+  assert.match(leads,/\.upsert\(\{/);
+  assert.doesNotMatch(worklist,/\.from\(|\bfetch\(|\.update\(|\.insert\(|\.upsert\(/);
+});
+test('Reputation suggestions are opt-in drafts within existing moderated owner reply workflow',()=>{
+  assert.match(reviews,/data-g5-review-response-guidance="true"/);
+  assert.match(reviews,/buildReviewReplyGuidance\(selected\?\.rating\?\?null,replyLanguage\)/);
+  assert.match(reviews,/Review reply draft language/);
+  assert.match(reviews,/<option value="en">English<\/option>/);
+  assert.match(reviews,/<option value="ta">தமிழ்<\/option>/);
+  assert.match(reviews,/<option value="si">සිංහල<\/option>/);
+  assert.match(reviews,/if\(replyText\.trim\(\)\)/);
+  assert.match(reviews,/setReplyText\(selectedReplyGuidance\.draft\)/);
+  assert.match(reviews,/Only your separate Publish reply action sends a public response/);
+  assert.match(reviews,/onSubmit=\{event => \{ event\.preventDefault\(\); void submitReply\(\); \}\}/);
+  assert.match(reviews,/\.eq\('owner_id', user\.id\)/);
+  assert.match(reviews,/\.eq\('is_approved', true\)/);
+  assert.match(reviews,/reviewHasReply\(current\)/);
+  assert.match(reviews,/\.insert\(\{ review_id: current\.id, vendor_id: user\.id, reply_text: text \}\)/);
+  assert.match(reviews,/caught\.code === '23505'/);
+  assert.doesNotMatch(drafts,/\.from\(|\bfetch\(|\.update\(|\.insert\(|\.upsert\(/);
+});
+test('Only recorded numeric rating determines safe template; no content-derived sentiment',()=>{
+  assert.match(drafts,/rating:number\|null/);
+  assert.match(drafts,/source:'recorded-rating-only'/);
+  assert.match(drafts,/const tone:ReviewReplyTone=/);
+  assert.match(drafts,/Only Publish reply sends it publicly/);
+  assert.doesNotMatch(drafts,/comment\b|sentiment|OpenAI|Anthropic|Gemini|llm\./i);
+  assert.match(worklist,/A missing reminder table is UNKNOWN, not zero/);
+});

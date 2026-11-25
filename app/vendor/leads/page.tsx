@@ -13,6 +13,8 @@ import {
   type LeadFollowUp,
 } from '@/lib/growth/lead-followups';
 import {buildLeadIQQueue} from '@/lib/growth/g5/lead-iq';
+import {buildFollowUpWorklist,buildLeadFollowUpAdvice,followUpFocusIds,type FollowUpFocus}
+  from '@/lib/growth/g5/followup-intelligence';
 
 type Stage = 'new' | 'contacted' | 'converted' | 'lost';
 type StageFilter = 'all' | Stage;
@@ -103,6 +105,7 @@ export default function LeadsPage() {
   const [followUpDraft, setFollowUpDraft] = useState('');
   const [savingFollowUp, setSavingFollowUp] = useState(false);
   const [dueOnly, setDueOnly] = useState(false);
+  const [followUpFocus,setFollowUpFocus]=useState<FollowUpFocus>('all');
   const [now, setNow] = useState(() => Date.now());
   const [leadLimitReached, setLeadLimitReached] = useState(false);
 
@@ -242,6 +245,9 @@ export default function LeadsPage() {
     [businesses]
   );
   const selected = useMemo(() => leads.find(l => l.id === selectedId) || null, [leads, selectedId]);
+  const selectedFollowUpAdvice=useMemo(()=>
+    selected?buildLeadFollowUpAdvice(selected,followUps[selected.id],followUpReadiness,now):null,
+    [selected,followUps,followUpReadiness,now]);
   const total = leads.length;
   const newCount = leads.filter(l => l.status === 'new').length;
   const contactedCount = leads.filter(l => l.status === 'contacted').length;
@@ -257,6 +263,20 @@ export default function LeadsPage() {
   const leadIQRank=useMemo(()=>new Map(leadIQQueue.map((item,index)=>[item.id,index])),[leadIQQueue]);
   const leadIQCount=leadIQQueue.filter(item=>item.priority==='urgent').length;
   const leadIQById=useMemo(()=>new Map(leads.map(lead=>[lead.id,lead])),[leads]);
+  const followUpWorklist=useMemo(()=>buildFollowUpWorklist(leads,followUps,followUpReadiness,now),
+    [leads,followUps,followUpReadiness,now]);
+  const activeFollowUpFocus:FollowUpFocus=followUpReadiness==='available'||followUpFocus==='stalled-new'
+    ?followUpFocus:'all';
+  const focusIds=useMemo(()=>{
+    const ids=followUpFocusIds(followUpWorklist,activeFollowUpFocus);
+    return ids===null?null:new Set(ids);
+  },[followUpWorklist,activeFollowUpFocus]);
+  const followUpFocusCards:{focus:FollowUpFocus;label:string;count:number|null;description:string}[]=[
+    {focus:'overdue',label:'Overdue reminders',count:followUpWorklist.remindersAvailable?followUpWorklist.overdue.length:null,description:'Saved due time has passed'},
+    {focus:'next24',label:'Due in 24 hours',count:followUpWorklist.remindersAvailable?followUpWorklist.next24.length:null,description:'Saved reminder due time is approaching'},
+    {focus:'stalled-new',label:'New for 48+ hours',count:followUpWorklist.stalledNew.length,description:'Still marked New in the CRM'},
+    {focus:'contacted-unplanned',label:'Contacted · no reminder',count:followUpWorklist.remindersAvailable?followUpWorklist.contactedUnplanned.length:null,description:'Contacted stage, no active saved reminder'},
+  ];
 
   const filtered = useMemo(() => {
     const needle = search.trim().toLowerCase();
@@ -267,9 +287,10 @@ export default function LeadsPage() {
       const matchesStage = stageFilter === 'all' || l.status === stageFilter;
       const matchesBusiness = businessFilter === 'all' || String(l.business_id) === businessFilter;
       const matchesPeriod = earliest === null || new Date(l.created_at).getTime() >= earliest;
+      const matchesFocus = focusIds===null||focusIds.has(l.id);
       const matchesDue = !dueOnly || Boolean(followUps[l.id]
         && followUpState(followUps[l.id], now) === 'overdue');
-      return matchesSearch && matchesStage && matchesBusiness && matchesPeriod && matchesDue;
+      return matchesSearch && matchesStage && matchesBusiness && matchesPeriod && matchesDue && matchesFocus;
     });
     list.sort((a, b) => {
       if (sort === 'priority') return (leadIQRank.get(a.id)??Number.MAX_SAFE_INTEGER)-(leadIQRank.get(b.id)??Number.MAX_SAFE_INTEGER);
@@ -280,13 +301,24 @@ export default function LeadsPage() {
       return sort === 'oldest' ? left - right : right - left;
     });
     return list;
-  }, [leads, search, stageFilter, businessFilter, period, sort, businessNames, dueOnly, followUps, now, leadIQRank]);
+  }, [leads, search, stageFilter, businessFilter, period, sort, businessNames, dueOnly, followUps, now, leadIQRank, focusIds]);
 
   const pageSize = 10;
   const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const currentPage = Math.min(page, pages);
   const visible = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
+  async function copyManualFollowUpText(){
+    const text=selectedFollowUpAdvice?.manualMessage;
+    if(!text)return;
+    try{
+      if(!navigator.clipboard?.writeText)throw new Error('Clipboard unavailable');
+      await navigator.clipboard.writeText(text);
+      toast.success('Follow-up wording copied. Nothing was sent.');
+    }catch{
+      toast.error('Clipboard unavailable. Select the suggested wording to copy manually.');
+    }
+  }
   function openLead(id: string) {
     setSelectedId(id);
     setNoteDraft('');
@@ -461,7 +493,7 @@ export default function LeadsPage() {
               <span className="h-1.5 w-1.5 rounded-full bg-[#329368]" /> Vendor CRM
             </span>
             {followUpReadiness === 'available' && (
-              <button type="button" aria-pressed={dueOnly} onClick={() => { setDueOnly(active => !active); setPage(1); }}
+              <button type="button" aria-pressed={dueOnly} onClick={() => { setDueOnly(active => !active);setFollowUpFocus('all');setPage(1); }}
                 className={'inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-[11px] font-semibold ' +
                   (dueOnly ? 'border-amber-500 bg-amber-100 text-amber-900' : 'border-amber-200 bg-amber-50 text-amber-800')}>
                 <IconsaxIcon name="calendar" size={15} /> Due follow-ups: {nfmt(dueCount)}
@@ -539,6 +571,49 @@ export default function LeadsPage() {
             <p className="mt-3 text-[11px] leading-5 text-[#826447]">
               Saved reminder data is unavailable; LeadIQ uses the recorded enquiry stages only.
             </p>}
+        </section>
+
+        <section data-g5-followup-intelligence="true" aria-label="Follow-up intelligence worklist"
+          className="vendor-mobile-safe min-w-0 rounded-xl border border-[#ECE4DC] bg-white p-3 sm:p-4">
+          <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
+            <div className="min-w-0">
+              <h2 className="text-[15px] font-extrabold leading-6 text-[#262329]">Follow-up intelligence</h2>
+              <p className="mt-1 text-[12px] leading-5 text-[#786F69]">
+                Recorded stages and saved in-app due dates. Choose a group to filter matching enquiries.
+              </p>
+            </div>
+            {activeFollowUpFocus!=='all'&&<button type="button" onClick={()=>{
+              setFollowUpFocus('all');setPage(1);
+            }} className="h-9 rounded-lg border border-[#E6D9CE] px-3 text-[12px] font-semibold text-[#9C541E]">
+              Show all
+            </button>}
+          </div>
+          {loading?<div className="mt-3 h-20 animate-pulse rounded-lg bg-[#F7F5F2]" role="status" aria-label="Loading follow-up intelligence"/>:
+          error||leadLimitReached?<p role="status" className="mt-3 text-[12px] text-[#916045]">
+            Follow-up intelligence needs the complete owner CRM records.
+          </p>:<div className="mt-3 grid min-w-0 grid-cols-2 gap-2 lg:grid-cols-4">
+            {followUpFocusCards.map(card=><button type="button" key={card.focus}
+              disabled={card.count===null}
+              aria-pressed={activeFollowUpFocus===card.focus}
+              aria-label={'Filter '+card.label}
+              onClick={()=>{
+                setFollowUpFocus(card.focus);setDueOnly(false);setStageFilter('all');setBusinessFilter('all');setPeriod('all');setSearch('');setPage(1);
+              }}
+              className={'flex min-h-[100px] min-w-0 flex-col items-start rounded-lg border p-3 text-left transition focus-visible:outline-2 focus-visible:outline-[#FF7900] disabled:cursor-not-allowed disabled:opacity-55 '+
+                (activeFollowUpFocus===card.focus?'border-[#EF892D] bg-[#FFF7F0]':'border-[#ECE8E3] bg-[#FBFAF9] hover:border-[#EBAE78]')}>
+              <span className="text-[12px] font-bold leading-5 text-[#484039]">{card.label}</span>
+              <span className="mt-1 text-[24px] font-extrabold tabular-nums leading-8 text-[#29262A]">
+                {card.count===null?'—':nfmt(card.count)}
+              </span>
+              <span className="mt-auto text-[11px] leading-4 text-[#756F69]">
+                {card.count===null?'Reminder data unavailable':card.description}
+              </span>
+            </button>)}
+          </div>}
+          <p className="mt-3 text-[11px] leading-5 text-[#77716B]">
+            An enquiry marked New may have received an offline response. These are CRM worklist counts, not predictions of replies or sales.
+            {!followUpWorklist.remindersAvailable&&' Reminder-based groups require the separately reviewed follow-up table.'}
+          </p>
         </section>
 
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -678,7 +753,7 @@ export default function LeadsPage() {
             <div className="px-5 py-12 text-center">
               <p className="text-[12px] font-bold text-[#2C2C31]">No matching leads</p>
               <p className="mt-1 text-[11px] text-slate-400">Try a different search or clear the filters.</p>
-              <button type="button" onClick={() => { setSearch(''); setStageFilter('all'); setBusinessFilter('all'); setPeriod('all'); setDueOnly(false); setPage(1); }}
+              <button type="button" onClick={() => { setSearch(''); setStageFilter('all'); setBusinessFilter('all'); setPeriod('all'); setDueOnly(false); setFollowUpFocus('all'); setPage(1); }}
                 className="mt-3 text-[11px] font-bold text-[#2C2C31] hover:underline">Clear filters</button>
             </div>
           ) : (
@@ -826,6 +901,37 @@ export default function LeadsPage() {
                 <p className="mt-3 text-[10px] text-slate-400">Changes are saved to the existing lead record. No automatic messages are sent.</p>
               </div>
 
+              <section data-g5-followup-advice="true" aria-label="Manual follow-up guidance"
+                className="min-w-0 rounded-xl border border-[#F0DED0] bg-[#FFFCF8] p-4">
+                <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#B66322]">G5 · Follow-up guide</span>
+                    <h4 className="mt-1 text-[14px] font-bold text-[#2C2931]">{selectedFollowUpAdvice?.heading}</h4>
+                  </div>
+                  {selectedFollowUpAdvice?.evidence==='saved-reminder'&&
+                    <span className="vendor-status-badge rounded-md bg-[#FCE9D8] px-2 py-1 text-[11px] text-[#965012]">Saved due date</span>}
+                </div>
+                <p className="mt-2 text-[12px] leading-5 text-[#615A56]">{selectedFollowUpAdvice?.summary}</p>
+                {Boolean(selectedFollowUpAdvice?.nextSteps.length)&&<ul className="mt-3 list-disc space-y-1 pl-5 text-[11px] leading-5 text-[#625D5A]">
+                  {selectedFollowUpAdvice?.nextSteps.map(step=><li key={step}>{step}</li>)}
+                </ul>}
+                {selectedFollowUpAdvice?.manualMessage&&<>
+                  <label htmlFor="lead-manual-followup-wording" className="mt-3 block text-[12px] font-bold text-[#333035]">
+                    Optional manual follow-up wording
+                  </label>
+                  <textarea id="lead-manual-followup-wording" readOnly rows={3}
+                    value={selectedFollowUpAdvice.manualMessage}
+                    className="mt-2 w-full min-w-0 resize-y rounded-lg border border-[#E8DCD3] bg-white p-3 text-[12px] leading-5 text-[#45403F]"/>
+                  <button type="button" onClick={()=>void copyManualFollowUpText()}
+                    className="mt-2 inline-flex min-h-10 items-center justify-center rounded-lg bg-[#27272B] px-4 text-[12px] font-bold text-white">
+                    Copy wording
+                  </button>
+                  <p className="mt-2 text-[11px] leading-5 text-[#806F60]">
+                    Copy only; no email, SMS or WhatsApp is sent. Review consent and customize manually.
+                  </p>
+                </>}
+              </section>
+
               <div className={panel + ' p-4'}>
                 <h4 className="text-[12px] font-bold text-[#2C2C31]">Next follow-up reminder</h4>
                 <p className="mt-1 text-[10px] leading-5 text-slate-500">
@@ -833,6 +939,15 @@ export default function LeadsPage() {
                 </p>
                 {followUpReadiness === 'available' ? (
                   <form className="mt-3 space-y-3" onSubmit={event => { event.preventDefault(); void saveFollowUp(); }}>
+                    <div className="flex flex-wrap items-center gap-2" aria-label="Quick follow-up date suggestions">
+                      <span className="w-full text-[11px] font-semibold text-[#59524D]">Choose a time (not saved yet)</span>
+                      {([24,72] as const).map(hours=><button type="button" key={hours}
+                        disabled={savingFollowUp}
+                        onClick={()=>setFollowUpDraft(localFollowUpInput(new Date(now+hours*3_600_000).toISOString()))}
+                        className="min-h-10 rounded-lg border border-[#E8DAD0] bg-[#FFFAF6] px-3 text-[12px] font-bold text-[#995313] disabled:opacity-50">
+                        In {hours===24?'24 hours':'3 days'}
+                      </button>)}
+                    </div>
                     <label htmlFor="lead-next-follow-up" className="block text-[11px] font-semibold text-[#2C2C31]">
                       Due date and time (your local time)
                     </label>
