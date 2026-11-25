@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation';
 import { Business } from '@/lib/types';
 import BusinessDetailsClient from './BusinessDetailsClient';
 import { Metadata } from 'next';
+import {cache} from 'react';
 
 export const revalidate = 600
 
@@ -17,7 +18,7 @@ type Props = {
  * 1. Exact slug match
  * 2. ID match (with UUID/Numeric validation)
  */
-async function getBusinessDetails(slugOrId: string): Promise<Business | null> {
+const getBusinessDetails=cache(async (slugOrId: string): Promise<Business | null> => {
   const supabase = await createClient();
   
   // 1. First attempt: Fetch by slug
@@ -45,7 +46,7 @@ async function getBusinessDetails(slugOrId: string): Promise<Business | null> {
   }
 
   return null;
-}
+});
 
 function mapBusinessData(data: any): Business {
   return {

@@ -39,10 +39,11 @@ import Image from "next/image";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X, ChevronLeft, ChevronRight, Images, BriefcaseBusiness } from "lucide-react";
 import Link from "next/link";
-import dynamic from "next/dynamic";
+
 import { supabase } from "@/lib/supabaseClient";
 import VerifiedBadge from "@/app/components/VerifiedBadge";
 import OwnerVerificationPrompt from "./OwnerVerificationPrompt";
+import DeferredBusinessMap from "./DeferredBusinessMap";
 import { isApprovedVerifiedBusiness } from "@/lib/business-verification";
 import BrandIcon from "@/app/components/BrandIcon";
 import {useSavedBusinesses} from "@/lib/public-saved-businesses";
@@ -51,14 +52,6 @@ import { logEvent } from "@/lib/utils";
 import { toast } from "sonner";
 import { Turnstile } from "@marsidev/react-turnstile";
 
-const LeafletMap = dynamic(() => import("@/components/LeafletMap"), {
-  ssr: false,
-  loading: () => (
-    <div className="h-[400px] w-full bg-gray-100 animate-pulse rounded-xl flex items-center justify-center text-gray-400">
-      Loading Map...
-    </div>
-  ),
-});
 
 interface Props {
   business: Business;
@@ -498,7 +491,7 @@ export default function BusinessDetailsClient({ business, galleryUrls, services 
             <section id="location" className="scroll-mt-24 min-w-0">
               <h2 className="flex items-center justify-center gap-2 text-base font-semibold"><MapPin size={20} className="text-neutral-500"/> Location</h2>
               {fullAddress&&<p className="my-3 break-words text-center text-sm leading-5 text-neutral-600">{fullAddress}</p>}
-              {hasCoordinates?<div className="relative isolate z-0 mt-3 h-[250px] w-full overflow-hidden rounded-xl border border-neutral-200"><LeafletMap centerLat={lat} centerLng={lng} businesses={[business]} zoom={15} height="100%" showUserLocation={false} enableClustering={false} wrapperClassName="relative isolate z-0 h-full w-full overflow-hidden" /></div>:<div className="mt-3 grid min-h-40 place-items-center rounded-xl border border-neutral-200 bg-neutral-50 p-5 text-center text-sm text-neutral-500">Precise map location has not been provided.</div>}
+              {hasCoordinates?<DeferredBusinessMap lat={lat} lng={lng} business={business}/>:<div className="mt-3 grid min-h-40 place-items-center rounded-xl border border-neutral-200 bg-neutral-50 p-5 text-center text-sm text-neutral-500">Precise map location has not been provided.</div>}
             </section>
             <section id="enquiry" className="scroll-mt-24 rounded-xl border border-neutral-200 bg-white p-4 xl:p-5">
               <div className="flex items-center gap-3">

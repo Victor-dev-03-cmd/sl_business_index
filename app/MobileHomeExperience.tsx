@@ -105,6 +105,7 @@ export default function MobileHomeExperience({
           </Link>
         </div>
         {categoriesLoading && <span role="status" className="sr-only">Loading categories</span>}
+        {isFetchingLocation&&<p role="status" aria-live="polite" className="px-3 pt-2 text-[12px] font-semibold text-[#8A511C]">Finding your location…</p>}
       </nav>
 
       <section className="slbi-native-nearby" aria-label="Nearby business map">
