@@ -901,6 +901,37 @@ export default function LeadsPage() {
                 <p className="mt-3 text-[10px] text-slate-400">Changes are saved to the existing lead record. No automatic messages are sent.</p>
               </div>
 
+              <section data-g5-followup-advice="true" aria-label="Manual follow-up guidance"
+                className="min-w-0 rounded-xl border border-[#F0DED0] bg-[#FFFCF8] p-4">
+                <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#B66322]">G5 · Follow-up guide</span>
+                    <h4 className="mt-1 text-[14px] font-bold text-[#2C2931]">{selectedFollowUpAdvice?.heading}</h4>
+                  </div>
+                  {selectedFollowUpAdvice?.evidence==='saved-reminder'&&
+                    <span className="vendor-status-badge rounded-md bg-[#FCE9D8] px-2 py-1 text-[11px] text-[#965012]">Saved due date</span>}
+                </div>
+                <p className="mt-2 text-[12px] leading-5 text-[#615A56]">{selectedFollowUpAdvice?.summary}</p>
+                {Boolean(selectedFollowUpAdvice?.nextSteps.length)&&<ul className="mt-3 list-disc space-y-1 pl-5 text-[11px] leading-5 text-[#625D5A]">
+                  {selectedFollowUpAdvice?.nextSteps.map(step=><li key={step}>{step}</li>)}
+                </ul>}
+                {selectedFollowUpAdvice?.manualMessage&&<>
+                  <label htmlFor="lead-manual-followup-wording" className="mt-3 block text-[12px] font-bold text-[#333035]">
+                    Optional manual follow-up wording
+                  </label>
+                  <textarea id="lead-manual-followup-wording" readOnly rows={3}
+                    value={selectedFollowUpAdvice.manualMessage}
+                    className="mt-2 w-full min-w-0 resize-y rounded-lg border border-[#E8DCD3] bg-white p-3 text-[12px] leading-5 text-[#45403F]"/>
+                  <button type="button" onClick={()=>void copyManualFollowUpText()}
+                    className="mt-2 inline-flex min-h-10 items-center justify-center rounded-lg bg-[#27272B] px-4 text-[12px] font-bold text-white">
+                    Copy wording
+                  </button>
+                  <p className="mt-2 text-[11px] leading-5 text-[#806F60]">
+                    Copy only; no email, SMS or WhatsApp is sent. Review consent and customize manually.
+                  </p>
+                </>}
+              </section>
+
               <div className={panel + ' p-4'}>
                 <h4 className="text-[12px] font-bold text-[#2C2C31]">Next follow-up reminder</h4>
                 <p className="mt-1 text-[10px] leading-5 text-slate-500">
@@ -908,6 +939,15 @@ export default function LeadsPage() {
                 </p>
                 {followUpReadiness === 'available' ? (
                   <form className="mt-3 space-y-3" onSubmit={event => { event.preventDefault(); void saveFollowUp(); }}>
+                    <div className="flex flex-wrap items-center gap-2" aria-label="Quick follow-up date suggestions">
+                      <span className="w-full text-[11px] font-semibold text-[#59524D]">Choose a time (not saved yet)</span>
+                      {([24,72] as const).map(hours=><button type="button" key={hours}
+                        disabled={savingFollowUp}
+                        onClick={()=>setFollowUpDraft(localFollowUpInput(new Date(now+hours*3_600_000).toISOString()))}
+                        className="min-h-10 rounded-lg border border-[#E8DAD0] bg-[#FFFAF6] px-3 text-[12px] font-bold text-[#995313] disabled:opacity-50">
+                        In {hours===24?'24 hours':'3 days'}
+                      </button>)}
+                    </div>
                     <label htmlFor="lead-next-follow-up" className="block text-[11px] font-semibold text-[#2C2C31]">
                       Due date and time (your local time)
                     </label>
