@@ -1,12 +1,14 @@
 'use client';
 
-import {useLayoutEffect,useState} from 'react';
+import {useEffect,useLayoutEffect,useState} from 'react';
 import {createPortal} from 'react-dom';
 import Link from 'next/link';
 import {usePathname} from 'next/navigation';
 import BrandIcon from './BrandIcon';
+import {useSession} from './SessionContext';
+import {supabase} from '@/lib/supabaseClient';
 
-/** Exactly the five public destinations in the desktop menu order. */
+/** Five mobile destinations; the last is role-aware after trusted RLS reads. */
 export const mobilePublicTabs=[
   {href:'/',label:'Explore',icon:'home-2'},
   {href:'/category',label:'Categories',icon:'category-2'},
@@ -32,6 +34,41 @@ export const mobilePublicTabs=[
 export default function MobilePublicDock({role='nav'}:{role?:'nav'|'spacer'}){
   const pathname=usePathname();
   const [portalRoot,setPortalRoot]=useState<HTMLElement|null>(null);
+
+  const {user,loading:sessionLoading}=useSession();
+  const [vendorIdentity,setVendorIdentity]=useState<{uid:string;isVendor:boolean}|null>(null);
+
+  // The fifth tab stays About for visitors and ordinary users. We do not
+  // trust user_metadata/app_metadata or a hard-coded email for vendor status.
+  // A vendor account role or an already-owned listing qualifies; Supabase RLS
+  // still protects the destination's private profile and verification data.
+  useEffect(()=>{
+    if(sessionLoading)return;
+    let active=true;
+    setVendorIdentity(null);
+    if(!user?.id)return;
+    const uid=user.id;
+    const checkVendor=async()=>{
+      try{
+        const {data:profile}=await supabase.from('profiles')
+          .select('role').eq('id',uid).maybeSingle();
+        const role=typeof profile?.role==='string'?profile.role.toLowerCase():'';
+        let isVendor=role==='vendor';
+        if(!isVendor && role!=='admin' && role!=='ceo'){
+          const {data:owned,error}=await supabase.from('businesses')
+            .select('id').eq('owner_id',uid).limit(1);
+          isVendor=!error && Array.isArray(owned) && owned.length>0;
+        }
+        if(active)setVendorIdentity({uid,isVendor});
+      }catch{
+        if(active)setVendorIdentity({uid,isVendor:false});
+      }
+    };
+    void checkVendor();
+    return()=>{active=false};
+  },[user?.id,sessionLoading]);
+
+  const vendorTab=Boolean(user?.id && vendorIdentity?.uid===user.id && vendorIdentity.isVendor);
 
   useLayoutEffect(()=>{
     if(role==='nav')setPortalRoot(document.body);
@@ -64,18 +101,21 @@ export default function MobilePublicDock({role='nav'}:{role?:'nav'|'spacer'}){
         transform:'none',
       }}
       className="z-[1200] grid h-[66px] grid-cols-5 items-center gap-0.5 overflow-hidden rounded-[20px] border border-white/30 bg-[#29453E]/95 px-1.5 text-[#E5F1E9] shadow-[0_12px_36px_rgba(7,31,23,.30)] backdrop-blur-xl supports-[backdrop-filter]:bg-[#304D43]/85 sm:hidden">
-      {mobilePublicTabs.map(tab=>{
-        const active=tab.href==='/'?pathname==='/':
-          tab.href==='/category'?pathname==='/category'||pathname.startsWith('/category/'):
-          tab.href==='/business-news'?pathname==='/business-news'||pathname.startsWith('/business-news/'):
-          pathname===tab.href;
-        return <Link key={tab.href} href={tab.href} prefetch={false}
-          aria-label={tab.label}
+      {mobilePublicTabs.map((tab,index)=>{
+        const destination=index===4 && vendorTab
+          ?{href:'/vendor/settings?tab=profile',label:'My Profile',icon:'profile-circle'}
+          :tab;
+        const active=destination.href==='/'?pathname==='/':
+          destination.href==='/category'?pathname==='/category'||pathname.startsWith('/category/'):
+          destination.href==='/business-news'?pathname==='/business-news'||pathname.startsWith('/business-news/'):
+          pathname===destination.href;
+        return <Link key={tab.href} href={destination.href} prefetch={false}
+          aria-label={destination.label}
           aria-current={active?'page':undefined}
-          title={tab.label}
+          title={destination.label}
           className={'relative flex h-[56px] w-full min-w-0 items-center justify-center rounded-[14px] outline-none transition-colors touch-manipulation focus-visible:ring-2 focus-visible:ring-[#F0D19D] '+
             (active?'text-[#F1D39A]':'text-[#CEDCD2] hover:bg-white/10')}>
-          <BrandIcon name={tab.icon} size={23}
+          <BrandIcon name={destination.icon} size={23}
             variant={active?'bulk':'linear'} className="shrink-0"/>
           {active&&<span aria-hidden="true"
             className="absolute bottom-[4px] h-[5px] w-[5px] rounded-full bg-[#F2D79F]"/>}
