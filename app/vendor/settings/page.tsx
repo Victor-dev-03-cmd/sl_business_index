@@ -93,7 +93,6 @@ export default function SettingsPage() {
   const [error,setError]=useState('');
   const [profile,setProfile]=useState<Profile>(defaultProfile);
   const [businesses,setBusinesses]=useState<Business[]>([]);
-  const [latestVerificationStatuses,setLatestVerificationStatuses]=useState<Record<string,string>>({});
   const [selectedBusinessId,setSelectedBusinessId]=useState('');
   const [verification,setVerification]=useState<Verification|null>(null);
   const [documentPreview,setDocumentPreview]=useState<string|null>(null);
@@ -111,12 +110,6 @@ export default function SettingsPage() {
   const [confirmPassword,setConfirmPassword]=useState('');
   const [showPassword,setShowPassword]=useState(false);
   const selected=useMemo(()=>businesses.find(b=>b.id===selectedBusinessId)||null,[businesses,selectedBusinessId]);
-  // The blue seal is business-scoped, not inherited from the account profile.
-  // Never hide a pending/unverified listing just because another is verified.
-  const unverifiedBusinesses=useMemo(()=>businesses.filter(b=>
-    !(b.status==='approved' && b.is_verified===true &&
-      ['approved','verified'].includes(b.verification_status?.trim().toLowerCase()||''))
-  ),[businesses]);
   const privateDocsReady=process.env.NEXT_PUBLIC_VERIFICATION_PRIVATE_READY==='true';
   const verificationState=verification?.status||selected?.verification_status||'none';
   const verified=verificationState==='approved'||verificationState==='verified';
@@ -148,23 +141,6 @@ export default function SettingsPage() {
         owned.find(v=>v.id===fromUrl)?.id ||
         (owned.some(v=>v.id===prev)?prev:owned[0]?.id||'')
       );
-      // Read only the latest owner-visible request statuses. An in-review
-      // request must NOT receive a misleading blinking "submit again" prompt.
-      setLatestVerificationStatuses({});
-      if(owned.length){
-        const {data:statuses,error:statusError}=await supabase.from('verifications')
-          .select('business_id,status,created_at')
-          .in('business_id',owned.map(v=>v.id))
-          .order('created_at',{ascending:false}).limit(500);
-        if(!statusError && statuses){
-          const latest:Record<string,string>={};
-          for(const row of statuses){
-            if(typeof row.business_id==='string' && !(row.business_id in latest))
-              latest[row.business_id]=row.status||'none';
-          }
-          setLatestVerificationStatuses(latest);
-        }
-      }
       if(preference.error){setPrefsAvailable(false);}
       else {
         setPrefsAvailable(true);
@@ -352,29 +328,6 @@ export default function SettingsPage() {
               <div><strong>{profile.full_name||'Complete your profile'}</strong><span>{profile.email||'Signed-in email address'}</span></div>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-[#fff0e3] px-3 py-2 text-[10px] font-bold text-[#b95d13]"><ShieldCheck size={13}/> Account owner</span>
             </div>
-            {!loading&&!!userId&&<div aria-label="Your business verification" className="mb-7 space-y-3">
-              {businesses.length===0?<div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#efd5c2] bg-[#fff9f3] p-4">
-                <p className="text-xs font-medium text-[#6e5140]">You have no business listing yet. Register one to start verification.</p>
-                <Link href="/register-business" className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#242428] px-4 text-xs font-bold text-white hover:bg-[#dc7218]"><Building2 size={15}/> Register business <ArrowUpRight size={14}/></Link>
-              </div>:unverifiedBusinesses.length>0?unverifiedBusinesses.map(b=>{
-                const state=(latestVerificationStatuses[b.id]||b.verification_status||'none').toLowerCase();
-                const inReview=state==='pending';
-                return <div key={b.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#edd7c8] bg-[#fff9f3] p-4 sm:p-5">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 text-[11px] font-bold text-[#ad5216]"><ShieldCheck size={16}/>{inReview?'Verification under review':'Business not verified'}</div>
-                    <p className="mt-1 break-words text-sm font-semibold text-[#292529]">{b.name}</p>
-                    <p className="mt-1 text-[11px] leading-5 text-[#79695e]">{inReview?'Your existing request is being reviewed. Check its status below.':'Verify your business to request a trusted verification badge. Approval is not automatic.'}</p>
-                  </div>
-                  <button type="button" onClick={()=>selectTab('verification',b.id)}
-                    aria-label={(inReview?'Check verification status for ':'Verify your business: ')+b.name}
-                    className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#252427] px-4 py-3 text-[12px] font-bold text-white transition hover:bg-[#db6c15] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ff7900]">
-                    {!inReview&&<span aria-hidden="true" className="h-2.5 w-2.5 rounded-full bg-[#ffa44d] motion-safe:animate-pulse"/>}
-                    <span className={inReview?'':'motion-safe:animate-pulse'}>{inReview?'Review status':'Verify your business'}</span>
-                    <ArrowUpRight size={14}/>
-                  </button>
-                </div>;
-              }):<div role="status" className="flex items-center gap-2 rounded-2xl border border-[#d9e8df] bg-[#f4faf6] p-4 text-xs font-semibold text-[#245d40]"><CheckCircle2 size={17}/> Your listed businesses are verified.</div>}
-            </div>}
             <div className="grid min-w-0 gap-x-6 gap-y-6 md:grid-cols-2">
               <div className="min-w-0"><label className={label} htmlFor="vendor-name">Full name</label><input className={field} id="vendor-name" type="text" maxLength={100} autoComplete="name" value={profile.full_name} onChange={e=>setProfile(v=>({...v,full_name:e.target.value}))}/></div>
               <div className="min-w-0"><label className={label} htmlFor="vendor-email">Account email</label><input className={field} id="vendor-email" type="email" disabled value={profile.email}/><p className="mt-2 text-[11px] leading-5 text-[#838997]">Changing your email requires authentication verification.</p></div>
