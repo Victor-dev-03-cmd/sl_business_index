@@ -14,7 +14,7 @@ Prior G3 PR #186 merged main `d37b19662b2f3fb6471aee72ca4fa368a8ae2895`, 8/8 wor
 - All changes built on Orange/Black/White, existing vendor shell, Inter font, Bun-preferred CI, minimal extra JS/network. No falsified business conversion, sentiment, verified status or published impact.
 
 ## Tests and release gates
-- `tests/g5/intelligence-queues.test.ts` Bun: overdue vs completed reminder, age-based stage urgency, missing follow-up service handling, deterministic ordering/dedupe, ended statuses, review 1–2 star priority vs replied/unknown rating, no PII.
+- `tests/g5/intelligence-queues.test.mjs` Bun: overdue vs completed reminder, age-based stage urgency, missing follow-up service handling, deterministic ordering/dedupe, ended statuses, review 1–2 star priority vs replied/unknown rating, no PII.
 - `tests/g5/live-ux-contract.test.mjs` Node: real owner-scoped Leads/Reviews page wiring, published-only review filters, existing reply mutation safety and 5k pagination guard, Settings Account vs Business summary layout, SEO input accessibility, mobile grid and 10-keyword limit. Wired into standard Verify Next.js Build + G1 read-only + P1 Vendor Leads workflows; Bun model tests into G1.
 - **Release status:** candidate until final exact-head all GitHub CI workflows and jobs PASS, squash merge, Vercel production READY exact merged main SHA/www alias/aliasError null and merged PR release proof. Don't assert merged/released until proof confirmed. Real signed-in physical Android/iOS retest on 320/375/390px still needed; user has confirmed G3 overall phone layout prior to this, but G5+two UI fixes not yet verified.
 
