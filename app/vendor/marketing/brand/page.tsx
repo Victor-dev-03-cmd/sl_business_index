@@ -65,7 +65,11 @@ export default function BusinessBrandProfilePage(){
       if(businessError)throw new Error('Unable to load your businesses.');
       const owned=(data??[]) as OwnedBusiness[];
       setBusinesses(owned);
-      setSelectedId(prev=>owned.some(b=>b.id===prev)?prev:owned[0]?.id??'');
+      // Only accept a deep link after its ID is confirmed in the owned list.
+      // An arbitrary ?business= never grants access to another tenant.
+      const fromUrl=new URLSearchParams(window.location.search).get('business');
+      setSelectedId(prev=>owned.some(b=>b.id===fromUrl)?fromUrl!:
+        owned.some(b=>b.id===prev)?prev:owned[0]?.id??'');
     }catch(e){setError(e instanceof Error?e.message:'Business list unavailable.');}
     finally{setLoadingBusinesses(false);}
   },[]);
