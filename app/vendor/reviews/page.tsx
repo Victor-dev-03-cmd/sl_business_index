@@ -7,6 +7,8 @@ import { toast } from 'sonner';
 import { supabase } from '@/lib/supabaseClient';
 import IconsaxIcon from '../components/IconsaxIcon';
 import {buildReputationQueue} from '@/lib/growth/g5/reputation-actions';
+import {buildReviewReplyGuidance,type ReviewReplyLanguage}
+  from '@/lib/growth/g5/review-reply-guidance';
 
 type ReviewReply = { id: string; reply_text: string; created_at: string };
 type Review = {
@@ -77,6 +79,7 @@ export default function VendorReviewsPage() {
   const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
+  const [replyLanguage,setReplyLanguage]=useState<ReviewReplyLanguage>('en');
   const [submittingId, setSubmittingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -170,6 +173,8 @@ export default function VendorReviewsPage() {
     [businesses]
   );
   const selected = useMemo(() => reviews.find(r => r.id === selectedId) || null, [reviews, selectedId]);
+  const selectedReplyGuidance=useMemo(()=>buildReviewReplyGuidance(selected?.rating??null,replyLanguage),
+    [selected?.rating,replyLanguage]);
   const total = reviews.length;
   const rated = reviews.map(r => validRating(r.rating)).filter((n): n is number => n !== null);
   const average = rated.length ? rated.reduce((sum, n) => sum + n, 0) / rated.length : 0;
@@ -716,7 +721,47 @@ export default function VendorReviewsPage() {
                   </div>
                 ) : (
                   <form className="mt-3 space-y-3" onSubmit={event => { event.preventDefault(); void submitReply(); }}>
-                    <label htmlFor="vendor-review-reply" className="sr-only">Public review reply</label>
+                    <section data-g5-review-response-guidance="true"
+                      aria-label="Optional review response guidance"
+                      className="min-w-0 rounded-xl border border-[#F1DFD0] bg-[#FFFBF7] p-3 sm:p-4">
+                      <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <h5 className="text-[13px] font-bold text-[#302D2E]">Response guidance</h5>
+                          <p className="mt-1 text-[11px] leading-5 text-[#665E57]">
+                            Based on the recorded star rating only; read the full feedback before using this draft.
+                          </p>
+                        </div>
+                        <label className="flex min-w-0 flex-col gap-1 text-[11px] font-semibold text-[#76645A]">
+                          Draft language
+                          <select aria-label="Review reply draft language" value={replyLanguage}
+                            onChange={e=>setReplyLanguage(e.target.value as ReviewReplyLanguage)}
+                            className="h-10 min-w-[120px] rounded-lg border border-[#E7D9CC] bg-white px-2 text-[12px] text-[#383134]">
+                            <option value="en">English</option>
+                            <option value="ta">தமிழ்</option>
+                            <option value="si">සිංහල</option>
+                          </select>
+                        </label>
+                      </div>
+                      <p className="mt-3 text-[12px] font-bold text-[#A3581D]">{selectedReplyGuidance.heading}</p>
+                      <p className="mt-2 whitespace-pre-wrap break-words rounded-lg border border-[#EADDD2] bg-white p-3 text-[12px] leading-5 text-[#474042]">
+                        {selectedReplyGuidance.draft}
+                      </p>
+                      <ul className="mt-3 list-disc space-y-1 pl-5 text-[11px] leading-5 text-[#736A61]">
+                        {selectedReplyGuidance.checklist.map(item=><li key={item}>{item}</li>)}
+                      </ul>
+                      <button type="button" disabled={Boolean(submittingId)}
+                        onClick={()=>{
+                          if(replyText.trim()){toast.info('Clear your current reply before inserting a suggested draft.');return;}
+                          setReplyText(selectedReplyGuidance.draft);
+                        }}
+                        className="mt-3 inline-flex min-h-10 items-center rounded-lg bg-[#27272B] px-4 text-[12px] font-bold text-white disabled:opacity-50">
+                        Use this editable draft
+                      </button>
+                      <p className="mt-2 text-[11px] leading-5 text-[#89796A]">
+                        Draft insertion never publishes. Only your separate Publish reply action sends a public response.
+                      </p>
+                    </section>
+                    <label htmlFor="vendor-review-reply" className="block text-[12px] font-bold text-[#353136]">Your editable public reply</label>
                     <textarea id="vendor-review-reply" value={replyText} maxLength={2000} rows={5}
                       disabled={Boolean(submittingId)}
                       onChange={event => setReplyText(event.target.value)}
