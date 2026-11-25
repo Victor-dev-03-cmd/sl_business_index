@@ -1,0 +1,56 @@
+{
+  "stage": "ML-06",
+  "research_only": true,
+  "real_vendor_data_used": false,
+  "real_world_training_enabled": false,
+  "production_agent_enabled": false,
+  "experiment": "observable-action-label-governance-synthetic-mock",
+  "deepnote": {
+    "workspace": "SLBI",
+    "project_id": "2d7d3e23-f87e-437f-a091-28edaa42ad49",
+    "notebook_id": "4a805b8ec4024d3a8d99b3ea179cb2b0",
+    "run_id": "b7dbac1c-bb94-4109-a695-14f71f95843a",
+    "status": "success",
+    "completed_at": "2026-11-25T13:16:47.773Z",
+    "python_tests": "7/7 PASS",
+    "aggregate_report_sha256": "402c439ef417b9a2ce6522592aa0e897ef41ab77570ef1cc55520dfba866c103",
+    "compute": "Deepnote CPU Basic"
+  },
+  "validation": {
+    "accepted_synthetic_records": 500,
+    "rejected_records": 0,
+    "distinct_synthetic_businesses": 500,
+    "split": {
+      "train": 350,
+      "validation": 75,
+      "test": 75
+    },
+    "observed_completion_count": 375,
+    "observed_non_completion_count": 125,
+    "synthetic_action_test_support": {
+      "followup_leads": 15,
+      "improve_contact": 13,
+      "improve_listing": 14,
+      "prepare_campaign": 17,
+      "reply_reviews": 16
+    },
+    "synthetic_eval_gate": "PASS",
+    "real_production_gate": "BLOCKED_NO_REAL_LABELS_OR_APPROVED_CONSENT_PIPELINE"
+  },
+  "threat_tests": [
+    "reject unknown PII fields",
+    "reject unowned business scope",
+    "reject missing/withdrawn consent",
+    "deny live provenance under mock-only gate",
+    "reject future/leaked features",
+    "reject incomplete observation window as negative",
+    "reject invalid normalized features",
+    "business-disjoint split and minimum per-class support"
+  ],
+  "limitations": [
+    "Mock owner/consent flags are NOT actual server verification and cannot authorize ingestion",
+    "Labels are ACTION completion records only; do not establish sales, customer conversion or causal lift",
+    "No live database audit, no real consent ledger, no training or deployed model",
+    "Source time history and provenance not verified as production-safe"
+  ]
+}
