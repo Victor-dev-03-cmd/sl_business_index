@@ -124,7 +124,8 @@ export default function MobilePublicDock({role='nav'}:{role?:'nav'|'spacer'}){
           destination.href==='/category'?pathname==='/category'||pathname.startsWith('/category/'):
           destination.href==='/business-news'?pathname==='/business-news'||pathname.startsWith('/business-news/'):
           pathname===destination.href;
-        return <Link key={tab.href} href={destination.href} prefetch={false}
+        return <Link key={tab.href} href={destination.href}
+          prefetch={index===4&&vendorTab?null:false}
           aria-label={destination.label}
           aria-current={active?'page':undefined}
           title={destination.label}
