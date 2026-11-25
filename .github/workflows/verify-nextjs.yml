@@ -38,6 +38,8 @@ jobs:
         run: node --experimental-strip-types --test tests/publicMobileHomeReference.test.mjs
       - name: Low-memory mobile route feedback and streaming regressions
         run: node --test tests/mobileRoutePerformance.test.mjs
+      - name: GrowthScore owner-scoped live UI and API safety
+        run: node --test tests/g2/growthscore-live-integration.test.mjs
       - name: Nearby mobile results, compact cards and single native navigator
         run: node --experimental-strip-types --test tests/nearbyMobileLayout.test.mjs
       - name: SLBI HybridSearch v2 multilingual relevance benchmark (168 cases)
