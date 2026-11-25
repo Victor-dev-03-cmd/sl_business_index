@@ -51,3 +51,19 @@ test('WA-03 does not change the official WhatsApp connector into a connected pro
   assert.match(ui,/Meta.*eligibility|eligibility.*Meta/i);
   assert.match(ui,/real linking and sending remain disabled|real WhatsApp connection can be enabled/);
 });
+
+test('WA-03 secure setup button visibly expands an immediate inline four-step walkthrough',()=>{
+  const ui=read('app/vendor/marketing/components/WhatsAppConnectionLab.tsx');
+  assert.match(ui,/const \[setupOpen,setSetupOpen\]=useState\(false\)/);
+  assert.match(ui,/const \[setupStep,setSetupStep\]=useState\(0\)/);
+  assert.match(ui,/aria-expanded=\{setupOpen\} aria-controls="wa03-setup-preview"/);
+  assert.match(ui,/setSetupOpen\(current=>!current\)/);
+  assert.match(ui,/id="wa03-setup-preview" role="region"/);
+  assert.match(ui,/Preview step \{setupStep\+1\} of \{safeguards\.length\}/);
+  assert.match(ui,/setSetupStep\(step=>Math\.min\(safeguards\.length-1,step\+1\)\)/);
+  assert.match(ui,/setSetupStep\(step=>Math\.max\(0,step-1\)\)/);
+  assert.match(ui,/Finish demo/);
+  assert.match(ui,/No verification code is issued here/);
+  assert.match(ui,/Demo only · Not connected/);
+  assert.doesNotMatch(ui,/fetch\(|axios\.|localStorage|sessionStorage|new WebSocket/);
+});

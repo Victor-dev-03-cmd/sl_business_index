@@ -19,6 +19,8 @@ export default function WhatsAppConnectionLab({businesses,ownershipReady}:{
 }){
   const [businessId,setBusinessId]=useState(businesses[0]?.id??'');
   const [demo,setDemo]=useState(false);
+  const [setupOpen,setSetupOpen]=useState(false);
+  const [setupStep,setSetupStep]=useState(0);
   const [request,setRequest]=useState('Christmas offerக்காக ஒரு poster, social captions, email campaign தயார் பண்ணு.');
   const chosen=useMemo(()=>businesses.find(b=>b.id===businessId),[businesses,businessId]);
   const canPreview=ownershipReady&&Boolean(chosen);
@@ -56,7 +58,7 @@ export default function WhatsAppConnectionLab({businesses,ownershipReady}:{
         <p className="mt-2 text-xs leading-6 text-[#74747C]">Businesses are retrieved from your authenticated vendor account and filtered by owner ID on the server. Selecting one does not create a WhatsApp link.</p>
         <label htmlFor="wa03-business" className="mb-2 mt-5 block text-[11px] font-bold text-[#44444B]">Business to connect in the future</label>
         <select id="wa03-business" value={businessId} disabled={!canPreview&&!businesses.length}
-          onChange={e=>{setBusinessId(e.target.value);setDemo(false);}}
+          onChange={e=>{setBusinessId(e.target.value);setDemo(false);setSetupOpen(false);setSetupStep(0);}}
           className="min-h-12 w-full rounded-xl border border-[#DEDEE3] bg-white px-3 text-[12px] font-semibold text-[#242428] focus:border-[#FF7900] focus:outline-none focus:ring-2 focus:ring-[#FF7900]/20">
           {businesses.length===0?<option value="">No owned businesses available</option>:
             businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}
@@ -66,10 +68,54 @@ export default function WhatsAppConnectionLab({businesses,ownershipReady}:{
           <p className="text-[#62626B]">{canPreview?'Owned business found · preview permitted. WhatsApp identity not verified.':
             ownershipReady?'No owned business is available for this preview.':'Business ownership could not be verified. The preview is blocked.'}</p>
         </div>
-        <button type="button" disabled={!canPreview} onClick={()=>setDemo(true)}
+        <button type="button" disabled={!canPreview}
+          aria-expanded={setupOpen} aria-controls="wa03-setup-preview"
+          onClick={()=>{setSetupOpen(current=>!current);setSetupStep(0);}}
           className="mt-5 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#FF7900] px-4 text-[12px] font-extrabold text-[#1B1B20] hover:bg-[#FF9B39] disabled:cursor-not-allowed disabled:bg-[#E7E7EA] disabled:text-[#94949D]">
-          <IconsaxIcon name="eye" size={18}/> Preview secure setup flow
+          <IconsaxIcon name="eye" size={18}/> {setupOpen?'Close setup preview':'Preview secure setup flow'}
         </button>
+        {setupOpen&&canPreview&&<div id="wa03-setup-preview" role="region"
+          aria-label="WhatsApp secure setup preview"
+          className="mt-4 rounded-xl border border-[#F0C7A4] bg-[#FFFAF5] p-4 sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-[10px] font-extrabold uppercase tracking-[.1em] text-[#B35E1D]">
+              Preview step {setupStep+1} of {safeguards.length}
+            </p>
+            <span className="rounded-full border border-[#F3D2B3] bg-white px-2.5 py-1 text-[10px] font-bold text-[#A35F28]">Demo only · Not connected</span>
+          </div>
+          <div aria-live="polite" aria-atomic="true" className="mt-3">
+            <h3 className="text-[15px] font-extrabold text-[#27272D]">{safeguards[setupStep].title}</h3>
+            <p className="mt-2 text-[12px] leading-6 text-[#686870]">{safeguards[setupStep].desc}</p>
+            {setupStep===0&&<p className="mt-2 rounded-lg border border-[#F0DFCE] bg-white px-3 py-2 text-[12px] font-semibold text-[#3D3A3B]">
+              Selected SLBI business: {chosen?.name}
+            </p>}
+            {setupStep===1&&<p className="mt-2 rounded-lg border border-[#F0DFCE] bg-white px-3 py-2 text-[11px] leading-5 text-[#7A6260]">
+              Meta WhatsApp Business Platform onboarding is not enabled in SLBI. An existing WhatsApp app account is not proof of Cloud API eligibility.
+            </p>}
+            {setupStep===2&&<p className="mt-2 rounded-lg border border-[#F0DFCE] bg-white px-3 py-2 text-[11px] leading-5 text-[#7A6260]">
+              A real setup will require a signed Meta webhook, a short-lived owner verification code, and server-side replay protection. No verification code is issued here.
+            </p>}
+            {setupStep===3&&<p className="mt-2 rounded-lg border border-[#F0DFCE] bg-white px-3 py-2 text-[11px] leading-5 text-[#7A6260]">
+              The future agent will prepare images, captions and email drafts and ask for item-by-item approval. Nothing can be published or sent from this demo.
+            </p>}
+          </div>
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[#F0DFCE] pt-4">
+            <button type="button" onClick={()=>setSetupStep(step=>Math.max(0,step-1))}
+              disabled={setupStep===0}
+              className="min-h-10 rounded-lg border border-[#E7D0BC] bg-white px-4 text-[11px] font-bold text-[#82522D] hover:bg-[#FFF1E7] disabled:cursor-not-allowed disabled:opacity-40">
+              Previous
+            </button>
+            {setupStep<safeguards.length-1
+              ?<button type="button" onClick={()=>setSetupStep(step=>Math.min(safeguards.length-1,step+1))}
+                className="min-h-10 rounded-lg bg-[#242428] px-4 text-[11px] font-extrabold text-white hover:bg-[#45434A]">
+                Next preview step
+              </button>
+              :<button type="button" onClick={()=>{setSetupOpen(false);setSetupStep(0);}}
+                className="min-h-10 rounded-lg bg-[#242428] px-4 text-[11px] font-extrabold text-white hover:bg-[#45434A]">
+                Finish demo
+              </button>}
+          </div>
+        </div>}
         <p className="mt-3 text-center text-[10px] leading-5 text-[#898991]">No verification code is issued; no account, database record or WhatsApp message is created.</p>
       </div>
 
