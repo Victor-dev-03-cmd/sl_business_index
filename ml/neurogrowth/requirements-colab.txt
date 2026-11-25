@@ -1,1 +1,3 @@
-# Colab images generally provide these libraries; pin and record actual runtime versions for reproducible experiments.\nnumpy>=1.26,<3\ntorch>=2.4,<3\n
+# Colab images generally provide these libraries; pin and record actual runtime versions for reproducible experiments.
+numpy>=1.26,<3
+torch>=2.4,<3
