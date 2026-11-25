@@ -141,6 +141,19 @@ const FeaturedListingCard = React.memo(function FeaturedListingCard({
 export default function HomePageClient() {
   const router = useRouter();
 
+  // On phones the desktop hero, category grid and carousel are CSS-hidden, yet
+  // their React trees, Iconsax observers and a second HeroSearch were still
+  // mounted. Hydrate the same SSR tree first, then remove those hidden trees
+  // on small screens; desktop SSR and SEO markup stay exactly as before.
+  const [renderDesktopSections,setRenderDesktopSections]=useState(true);
+  useEffect(()=>{
+    const media=window.matchMedia('(min-width: 640px)');
+    const update=()=>setRenderDesktopSections(media.matches);
+    update();
+    media.addEventListener?.('change',update);
+    return()=>media.removeEventListener?.('change',update);
+  },[]);
+
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [isFetchingLocation, setIsFetchingLocation] = useState(false);
   const [locationNotice, setLocationNotice] = useState("");
@@ -209,6 +222,7 @@ export default function HomePageClient() {
   }, []);
 
   useEffect(() => {
+    if(!renderDesktopSections)return;
     const container = scrollContainerRef.current;
     if (!container) return;
     updateScrollControls();
@@ -221,7 +235,7 @@ export default function HomePageClient() {
       observer?.disconnect();
       window.removeEventListener("resize", updateScrollControls);
     };
-  }, [categoriesLoading, categories.length, updateScrollControls]);
+  }, [renderDesktopSections, categoriesLoading, categories.length, updateScrollControls]);
 
   const scroll = (direction: "left" | "right") => {
     const container = scrollContainerRef.current;
@@ -250,6 +264,7 @@ export default function HomePageClient() {
   }, []);
 
   useEffect(() => {
+    if(!renderDesktopSections)return;
     const container = featuredScrollRef.current;
     if (!container) return;
     updateFeaturedScrollControls();
@@ -266,7 +281,7 @@ export default function HomePageClient() {
         featuredFrameRef.current = null;
       }
     };
-  }, [featuredLoading, featuredBusinesses.length, updateFeaturedScrollControls]);
+  }, [renderDesktopSections, featuredLoading, featuredBusinesses.length, updateFeaturedScrollControls]);
 
   const scrollFeatured = (direction: "left" | "right") => {
     const container = featuredScrollRef.current;
@@ -370,6 +385,7 @@ export default function HomePageClient() {
         locationNotice={locationNotice}
       />
 
+      {renderDesktopSections&&<>
       {/* --- PHASE 3: Split editorial hero with accessible SVG product motion --- */}
       <section
         aria-labelledby="homepage-hero-title"
@@ -740,6 +756,8 @@ export default function HomePageClient() {
         </div>
       </section>
 
+
+      </>}
 
       {/* --- HOW DISCOVERY WORKS --- */}
       <section aria-labelledby="discovery-process-heading" className="relative bg-[#F8F7F2] py-20 sm:py-24 lg:py-28">
