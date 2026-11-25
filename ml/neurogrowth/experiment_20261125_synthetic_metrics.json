@@ -22,5 +22,14 @@
     "prepare_campaign": 169
   },
   "note": "Research smoke test only; simulated labels are NOT evidence of vendor growth.",
-  "sha256_checkpoint": "bb5a0691ad0e5077db61627d4d4c5993f9b60e1857ba8bbda4483d7b983e51d2"
+  "sha256_checkpoint": "0a1e457c915ab6f917ea2b89bd54f0224a172db9f57dac86fb000542890724fa",
+  "test_macro_f1_synthetic": 0.6564,
+  "majority_baseline_macro_f1_synthetic": 0.1496,
+  "test_recall_by_action_synthetic": {
+    "improve_listing": 0.4706,
+    "followup_leads": 0.9196,
+    "reply_reviews": 0.7237,
+    "improve_contact": 0.5,
+    "prepare_campaign": 0.5714
+  }
 }
