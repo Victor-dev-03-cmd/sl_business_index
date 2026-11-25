@@ -121,6 +121,24 @@ def train(seed=42, size=2500, epochs=75, output="model_artifacts/neurogrowth-res
     # among TRAIN businesses. Never choose its label from test businesses.
     majority_action = int(np.bincount(y[tr], minlength=len(ACTIONS)).argmax())
     majority_accuracy = float((y[te] == majority_action).mean())
+    net.eval()
+    with torch.no_grad():
+        test_pred = net(torch.tensor(x[te], device=device)).argmax(dim=1).cpu().numpy()
+    baseline_pred = np.full(len(te), majority_action, dtype=np.int64)
+    def macro_f1(pred):
+        f1s = []
+        recalls = {}
+        for index, action in enumerate(ACTIONS):
+            tp = int(((pred == index) & (y[te] == index)).sum())
+            fp = int(((pred == index) & (y[te] != index)).sum())
+            fn = int(((pred != index) & (y[te] == index)).sum())
+            precision = tp / (tp + fp) if tp + fp else 0.0
+            recall = tp / (tp + fn) if tp + fn else 0.0
+            f1s.append(2 * precision * recall / (precision + recall) if precision + recall else 0.0)
+            recalls[action] = round(recall, 4)
+        return round(float(np.mean(f1s)), 4), recalls
+    test_macro_f1, class_recalls = macro_f1(test_pred)
+    baseline_macro_f1, _ = macro_f1(baseline_pred)
     metrics = {
         "research_only": True,
         "dataset_type": "fully_synthetic_hidden_utility_simulator",
@@ -134,6 +152,9 @@ def train(seed=42, size=2500, epochs=75, output="model_artifacts/neurogrowth-res
         "validation_accuracy_synthetic": round(val_accuracy, 4),
         "test_accuracy_synthetic": round(test_accuracy, 4),
         "majority_baseline_accuracy_synthetic": round(majority_accuracy, 4),
+        "test_macro_f1_synthetic": test_macro_f1,
+        "majority_baseline_macro_f1_synthetic": baseline_macro_f1,
+        "test_recall_by_action_synthetic": class_recalls,
         "device": device,
         "action_distribution_train": {
             action: int((y[tr] == idx).sum()) for idx, action in enumerate(ACTIONS)
