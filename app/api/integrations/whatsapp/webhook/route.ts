@@ -19,7 +19,14 @@ export async function POST(request:Request){
   const body=new Uint8Array(await request.arrayBuffer());
   if(body.byteLength>262144)return reply('Payload too large',413);
   const result=inspectWA03BInbound(body,request.headers.get('x-hub-signature-256'),process.env,Date.now());
-  if(!result.ok)return reply('Webhook unavailable',result.code==='disabled'?503:403);
+  if(!result.ok){
+   // Fixed reason code only: never log raw payload, signatures, IDs or secrets.
+   const safeReason=['disabled','signature_invalid','validator_unavailable',
+    'payload_invalid','unexpected_number'].includes(result.code)
+    ?result.code:'rejected';
+   console.warn('SLBI WA sandbox webhook POST rejected:',safeReason);
+   return reply('Webhook unavailable',result.code==='disabled'?503:403);
+  }
   return reply('EVENT_RECEIVED',200);
  }catch{return reply('Webhook unavailable',403);}
 }
