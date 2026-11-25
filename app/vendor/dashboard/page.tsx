@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import IconsaxIcon from '../components/IconsaxIcon';
+import G2GrowthScorePanel from '../components/G2GrowthScorePanel';
 import dynamic from 'next/dynamic';
 const VendorAnalytics = dynamic(() => import('./VendorAnalytics'), { ssr: false, loading: () => <div aria-live="polite" className="flex h-64 items-center justify-center text-xs text-[#8b909b]">Preparing activity insights…</div> });
 
@@ -66,6 +67,7 @@ export default function VendorDashboard() {
   const [page, setPage] = useState(1);
   const [updatingIds, setUpdatingIds] = useState<string[]>([]);
   const [activityRefreshKey, setActivityRefreshKey] = useState(0);
+  const [growthBusinessId, setGrowthBusinessId] = useState('');
 
   const load = useCallback(async (notify = false) => {
     setLoading(true);
@@ -176,6 +178,9 @@ export default function VendorDashboard() {
   }
 
   const businessIds = useMemo(() => businesses.map(b => b.id), [businesses]);
+  const approvedForGrowth=useMemo(()=>businesses.filter(b=>b.status==='approved'),[businesses]);
+  const growthBusiness=approvedForGrowth.find(b=>b.id===growthBusinessId)||approvedForGrowth[0]||null;
+
   const activeCount = businesses.filter(b => b.status === 'approved').length;
   const filtered = useMemo(() => {
     const term = query.trim().toLowerCase();
@@ -260,6 +265,32 @@ export default function VendorDashboard() {
             <button type="button" onClick={() => void load(true)} className="font-bold underline">Retry loading</button>
           </div>
         )}
+
+        <section aria-label="G2 GrowthScore for your approved business" className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-[14px] font-extrabold text-[#27272A]">GrowthScore &amp; next actions</h2>
+              <p className="mt-1 text-[11px] text-[#74747A]">
+                Read-only readiness guidance for your approved listings
+              </p>
+            </div>
+            {approvedForGrowth.length>1&&<label className="flex items-center gap-2 text-[11px] font-bold text-[#4A4A50]">
+              <span>Business</span>
+              <select aria-label="Select business for GrowthScore" value={growthBusiness?.id||''}
+                onChange={e=>setGrowthBusinessId(e.target.value)}
+                className="h-10 max-w-[220px] rounded-md border border-[#EBE1D8] bg-white px-2 text-[12px]">
+                {approvedForGrowth.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}
+              </select>
+            </label>}
+          </div>
+          {growthBusiness?<G2GrowthScorePanel businessId={growthBusiness.id}/>:
+            <div role="status" className="rounded-xl border border-[#E9E4DD] bg-white p-4 text-[12px] text-[#77717A]">
+              GrowthScore becomes available when an owned business is approved.
+              <Link href="/vendor/my-businesses" className="ml-2 font-bold text-[#C66416] underline">
+                View your listings
+              </Link>
+            </div>}
+        </section>
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
