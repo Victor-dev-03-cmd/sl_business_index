@@ -1,0 +1,23 @@
+name: NeuroGrowth WA-02 signed WhatsApp sandbox security
+on:
+  pull_request:
+    paths:
+      - 'lib/growth/agent/wa02-*.mjs'
+      - 'tests/ml/neurogrowth-wa02-security.test.mjs'
+      - '.github/workflows/neurogrowth-wa02.yml'
+      - 'docs/growth/HANDOFF_LATEST.md'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  signed-identity-and-replay-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check lib/growth/agent/wa02-webhook.mjs
+      - run: node --check lib/growth/agent/wa02-linking.mjs
+      - run: node --test tests/ml/neurogrowth-wa02-security.test.mjs
