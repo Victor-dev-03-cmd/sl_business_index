@@ -235,40 +235,71 @@ test('Homepage-only mobile overflow cannot displace the otherwise-correct fixed 
 });
 
 
-test('The public fifth mobile tab remains About except for authenticated owned vendors',()=>{
-  // Static public destination list is preserved for visitors and customers.
-  assert.match(dock,/\{href:'\/about',label:'About',icon:'info-circle'\}/);
+test('The fifth mobile tab opens OWN Business Details for vendors, never dashboard',()=>{
+  const publicTab="{href:'/about',label:'About',icon:'info-circle'}";
+  assert.ok(dock.includes(publicTab),'ordinary users must keep the About destination');
   assert.match(dock,/index===4 && vendorTab/);
-  assert.match(dock,/href:'\/vendor\/settings\?tab=profile',label:'My Profile',icon:'profile-circle'/);
-  assert.match(dock,/aria-label=\{destination.label\}/);
-  assert.match(dock,/href=\{destination.href\}/);
-  assert.match(dock,/useSession\(\)/);
+  assert.match(dock,/label:'My Profile',icon:'profile-circle'/);
+  assert.match(dock,/href:vendorIdentity\?\.href\|\|'\/register-business'/);
   assert.match(dock,/\.from\('profiles'\)/);
   assert.match(dock,/\.select\('role'\)\.eq\('id',uid\)/);
+  assert.match(dock,/accountRole==='admin'\|\|accountRole==='ceo'/);
   assert.match(dock,/\.from\('businesses'\)/);
-  assert.match(dock,/\.eq\('owner_id',uid\)\.limit\(1\)/);
-  assert.match(dock,/role!=='admin' && role!=='ceo'/);
+  assert.match(dock,/\.select\('id,slug,status'\)/);
+  assert.match(dock,/\.eq\('owner_id',uid\)/);
+  assert.match(dock,/\.order\('status',\{ascending:true\}\)/);
+  assert.match(dock,/\.order\('created_at',\{ascending:true\}\)/);
+  assert.match(dock,/\.limit\(1\)/);
+  assert.match(dock,/primary\.slug\|\|primary\.id/);
+  assert.match(dock,/'\/business\/'\+encodeURIComponent/);
+  assert.match(dock,/'\/register-business'/);
+  assert.doesNotMatch(dock,/href:'\/vendor\/settings\?tab=profile'/);
   assert.match(dock,/if\(role!=='nav'\|\|sessionLoading\)return/);
-  assert.match(dock,/if\(!user\?\.id\)return/);
-  assert.doesNotMatch(dock,/user\\.(?:user_metadata|app_metadata)|SUPABASE_SERVICE_ROLE_KEY/);
-  assert.match(dock,/if\(active\)setVendorIdentity\(\{uid,isVendor\}\)/);
+  assert.match(dock,/setVendorIdentity\(null\)/);
+  assert.match(dock,/if\(active\)setVendorIdentity\(\{uid,isVendor,href\}\)/);
+  assert.match(dock,/aria-label=\{destination.label\}/);
+  assert.match(dock,/href=\{destination.href\}/);
 });
-test('Vendor profile contains a reduced-motion-aware verification CTA for each owned unverified business',()=>{
-  assert.match(settings,/useMemo\(\(\)=>businesses\.filter\(b=>/);
-  assert.match(settings,/b\.status==='approved' && b\.is_verified===true/);
-  assert.match(settings,/\['approved','verified'\]\.includes/);
-  assert.match(settings,/latestVerificationStatuses/);
-  assert.match(settings,/\.from\('verifications'\)/);
-  assert.match(settings,/\.in\('business_id',owned\.map\(v=>v\.id\)\)/);
-  assert.match(settings,/const inReview=state==='pending'/);
-  assert.match(settings,/!inReview&&<span aria-hidden="true"/);
-  assert.match(settings,/motion-safe:animate-pulse/);
-  assert.match(settings,/focus-visible:outline-2/);
-  assert.match(settings,/Verify your business/);
-  assert.match(settings,/onClick=\{\(\)=>selectTab\('verification',b\.id\)\}/);
+
+test('Owner-only verification nudge appears at the existing public Business Details badge location',()=>{
+  const prompt=read('app/business/[slug]/OwnerVerificationPrompt.tsx');
+  const page=read('app/business/[slug]/BusinessDetailsClient.tsx');
+  const css=read('app/globals.css');
+  assert.match(page,/isApprovedVerifiedBusiness\(business\)/);
+  assert.match(page,/verified&&<div[^>]*><VerifiedBadge/);
+  assert.match(page,/!verified&&<OwnerVerificationPrompt business=\{business\}/);
+  assert.match(prompt,/useSession\(\)/);
+  assert.match(prompt,/user\.id===business\.owner_id/);
+  assert.match(prompt,/if\(sessionLoading\|\|!isOwner/);
+  assert.match(prompt,/data-verification-public-status/);
+  assert.match(prompt,/Not verified/);
+  assert.match(prompt,/\.from\('verifications'\)/);
+  assert.match(prompt,/\.eq\('business_id',businessId\)/);
+  assert.match(prompt,/\.order\('created_at',\{ascending:false\}\)/);
+  assert.match(prompt,/\.maybeSingle\(\)/);
+  assert.match(prompt,/latest==='pending'\?'pending'/);
+  assert.match(prompt,/state:'unavailable'/);
+  assert.match(prompt,/lookup\.state==='pending'\|\|lookup\.state==='approved'/);
+  assert.match(prompt,/Verification under review/);
+  assert.match(prompt,/Please verify your business/);
+  assert.match(prompt,/data-owner-verification-prompt="true"/);
+  assert.match(prompt,/\/vendor\/settings\?tab=verification&business=/);
+  assert.match(prompt,/encodeURIComponent\(businessId\)/);
+  assert.match(prompt,/slbi-owner-verify-cta/);
+  assert.match(css,/@keyframes slbi-owner-verification-nudge/);
+  assert.match(css,/transform:scale\(1\.055\)/);
+  assert.match(css,/@media \(prefers-reduced-motion: no-preference\)/);
+  assert.match(css,/\.slbi-owner-verify-cta/);
+  assert.match(css,/@media \(prefers-reduced-motion: reduce\)/);
+  assert.doesNotMatch(prompt,/\.insert\(|\.update\(|\.delete\(|service_role/);
+  assert.doesNotMatch(dock,/\/vendor\/settings\?tab=profile/);
+});
+
+test('Verification click deep-link selects only the owned business in existing dashboard tab',()=>{
+  assert.match(settings,/next\.searchParams\.set\('tab',tab\)/);
   assert.match(settings,/next\.searchParams\.set\('business',businessId\)/);
   assert.match(settings,/owned\.find\(v=>v\.id===fromUrl\)\?\.id/);
   assert.match(settings,/activeTab==='verification'/);
   assert.match(settings,/privateDocsReady/);
-  assert.match(settings,/href="\/register-business"/);
+  assert.doesNotMatch(settings,/Your business verification/);
 });
