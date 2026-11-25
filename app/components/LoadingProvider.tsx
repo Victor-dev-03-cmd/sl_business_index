@@ -4,15 +4,15 @@ import { Suspense, useEffect, useState, type ReactNode } from "react";
 import Image from "next/image";
 
 /**
- * White, branded boot transition. One second maximum intentional delay;
- * the actual app mounts immediately behind the overlay so auth, data
- * hydration and navigation can initialize in parallel.
+ * Keep an extremely short initial branded boot. Never deliberately hide
+ * an interactive page behind a one-second splash on slow mobile devices.
+ * Route-to-route loading is handled by streaming skeleton boundaries.
  */
 export default function LoadingProvider({ children }: { children: ReactNode }) {
   const [showIntro, setShowIntro] = useState(true);
 
   useEffect(() => {
-    const timeout = window.setTimeout(() => setShowIntro(false), 1000);
+    const timeout = window.setTimeout(() => setShowIntro(false), 160);
     return () => window.clearTimeout(timeout);
   }, []);
 
