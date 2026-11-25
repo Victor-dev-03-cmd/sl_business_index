@@ -65,7 +65,8 @@ test('Settings mobile verification badge wraps as a whole not one glyph per line
   assert.match(settings,/data-testid="vendor-settings-studio"/);
   assert.match(settings,/min-w-\[152px\] shrink-0 items-center/);
   assert.match(settings,/vendor-status-badge self-start/);
-  assert.match(settings,/vendor-status-badge shrink-0 rounded-full/);
+  assert.match(settings,/vendor-status-badge col-span-2 justify-self-start/);
+  assert.match(settings,/data-testid="settings-profile-summary"/);
   assert.match(settings,/sm:\[&_\.min-w-0\]:min-w-\[190px\]/);
   assert.match(settings,/max-w-full truncate/);
   assert.doesNotMatch(settings,/\[&_span\]:break-all/);
