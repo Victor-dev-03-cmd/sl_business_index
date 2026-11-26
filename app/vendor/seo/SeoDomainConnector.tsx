@@ -217,7 +217,7 @@ export default function SeoDomainConnector({businessId,initialConnection,domainS
         setMethod(savedMethod);
         setError('');setMessage('');
       }}
-      className={button+' ml-2'}>Cancel changes</button>
+      className={button+' ml-2'}>Cancel changes</button>}
 
     {connection&&!hasUnsavedChanges&&<div data-testid="seo-domain-steps" className="space-y-4 rounded-xl border border-[#E5E5E9] bg-[#FCFCFD] p-4 sm:p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
