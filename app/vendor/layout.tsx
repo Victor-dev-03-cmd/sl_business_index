@@ -184,7 +184,7 @@ export default function VendorLayout({children}:{children:React.ReactNode}){
     </div>
     <Toaster id="vendor-portal" position="top-right" offset={90} duration={4300} visibleToasts={2} closeButton
       icons={{success:<CircleCheck size={18} className="text-[#F57807]"/>,error:<CircleAlert size={18} className="text-[#DB3545]"/>,info:<Info size={18} className="text-[#F57807]"/>}}
-      toastOptions={{style:{background:'#fff',color:'#202024',border:'1px solid #e8e8ec',borderLeft:'3px solid #FF7900',borderRadius:'12px',padding:'10px 12px',maxWidth:'min(340px,calc(100vw - 24px))'}}}
+      toastOptions={{style:{background:'#fff',color:'#202024',border:'1px solid #e8e8ec',borderLeft:'3px solid #FF7900',borderRadius:'12px',padding:'10px 12px',maxWidth: 'min(340px, calc(100vw - 24px))'}}}
     />
     {quickOpen&&<VendorQuickActions open={quickOpen} onClose={()=>setQuickOpen(false)}/>}
   </div>;
