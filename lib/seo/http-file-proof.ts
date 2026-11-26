@@ -1,7 +1,7 @@
 import 'server-only';
 
 import {lookup} from 'node:dns/promises';
-import {request as httpsRequest} from 'node:https';
+import {request as httpsRequest,type RequestOptions as HttpsRequestOptions} from 'node:https';
 import {BlockList} from 'node:net';
 
 // Public fixed endpoint; callers never supply a URL, path or port.
@@ -70,7 +70,10 @@ export async function inspectHttpFileProof(hostname:string,expected:string):Prom
       if(deadline)clearTimeout(deadline);
       resolve(result);
     };
-    const req=httpsRequest({
+    // @types/node@20 predates autoSelectFamily in HTTPS RequestOptions, while
+    // the production runtime is Node 24. Use an explicit intersection type:
+    // no runtime shim, and every other Node request option stays typechecked.
+    const requestOptions:HttpsRequestOptions&{autoSelectFamily:boolean}={
       protocol:'https:',hostname,servername:hostname,
       port:443,path:SEO_HTTP_PROOF_PATH,method:'GET',
       // Node.js 20+/24 defaults to family auto-selection and calls custom
@@ -84,7 +87,8 @@ export async function inspectHttpFileProof(hostname:string,expected:string):Prom
       agent:false,
       headers:{'Accept':'text/plain','Accept-Encoding':'identity','User-Agent':'SLBI-Domain-Verification/1.0'},
       timeout:TIMEOUT_MS,
-    },res=>{
+    };
+    const req=httpsRequest(requestOptions,res=>{
       // Reject redirects, Vercel Authentication, missing pages, proxies
       // and even HTTP 206: only an exact plain-text 200 can prove control.
       if(res.statusCode!==200){
