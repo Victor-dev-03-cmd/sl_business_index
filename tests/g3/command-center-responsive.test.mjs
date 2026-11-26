@@ -48,9 +48,11 @@ test('Portfolio tips use actual owner counters, never inferred sales or paid ran
 
 test('Vendor shell fixes 320px topbar and controls without wider-than-screen min width',()=>{
   assert.match(layout,/h-\[64px\]/);
-  assert.match(layout,/h-\[44px\]/);
+  assert.match(layout,/aria-label="Open navigation"/);
+  assert.match(layout,/aria-label="Vendor mobile navigation"/);
   assert.match(layout,/overflow-x-clip overflow-y-auto/);
-  assert.match(layout,/vendor-topbar-scrollbar/);
+  assert.match(layout,/data-slbi-ui="vendor-sidebar"/);
+  assert.doesNotMatch(layout,/vendor-topbar-center absolute left-1\/2/);
   assert.match(layout,/min-w-0 flex-1/);
   assert.match(css,/\.vendor-workspace-v6 \.vendor-content \.grid > \*/);
   assert.match(css,/\.vendor-workspace-v6 \.vendor-content \.vendor-status-badge/);
