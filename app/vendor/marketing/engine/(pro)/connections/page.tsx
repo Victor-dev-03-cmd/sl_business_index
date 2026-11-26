@@ -92,10 +92,10 @@ export default async function MarketingConnections(){
             ?<div className="mt-auto space-y-2 pt-4">
               <Link href="/vendor/marketing/whatsapp"
                 className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#242428] px-3 text-center text-[11px] font-extrabold text-white hover:bg-[#403C3E]">
-                Open WhatsApp setup &amp; UI preview
+                Open WhatsApp setup &amp; GrowthOS operator
                 <IconsaxIcon name="arrow-right-2" size={15}/>
               </Link>
-              <p className="text-[10px] leading-5 text-[#8D8D95]">No Meta account connected. Preview the owner-safe setup; real linking and sending remain disabled.</p>
+              <p className="text-[10px] leading-5 text-[#8D8D95]">Owner-scoped multilingual GrowthOS planning is available. A Meta test webhook is not a vendor link; provider onboarding and sending remain disabled.</p>
             </div>
             :provider.id==='gmail'
             ?<GoogleMailPreviewConnect ready={googleReady} businesses={owned}
