@@ -27,5 +27,17 @@ export default async function VendorSEOEngine(){
       Your business listings could not be verified. SEO information is hidden until access is available. Please refresh or check your account.
     </main>;
   }
-  return <SeoEngineWorkspace listings={(data||[]) as SeoOwnedListing[]}/>;
+  // Live domain states are protected by table RLS and selected owned business.
+  // Fail closed if storage/schema is unavailable; never show a fake connected state.
+  const ids=(data||[]).map(b=>b.id);
+  const domainResult=ids.length
+    ?await client.from('seo_domain_connections')
+      .select('business_id,hostname,provider,state,verification_token,txt_record_name,verified_at,verification_expires_at')
+      .in('business_id',ids).limit(100)
+    :{data:[],error:null};
+  return <SeoEngineWorkspace
+    listings={(data||[]) as SeoOwnedListing[]}
+    connections={domainResult.error?[]:(domainResult.data||[])}
+    domainServiceReady={!domainResult.error}
+  />;
 }
