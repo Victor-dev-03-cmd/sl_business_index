@@ -95,7 +95,7 @@ export default async function MarketingOverview(){
             <Link href="/vendor/marketing/whatsapp"
               className="inline-flex h-11 items-center gap-2 rounded-lg border border-[#FFAA6B]/40 bg-white/[.08] px-4 text-[11px] font-bold text-white transition hover:bg-white/[.16]">
               <IconsaxIcon name="message-text" size={16} color="#FFAD74"/>
-              GrowthOS AI · 12 App Operator
+              WhatsApp Connection Lab · 12 App GrowthOS
             </Link>
             <span className="inline-flex h-11 items-center gap-2 rounded-lg border border-white/[.14] bg-white/[.07] px-4 text-[11px] font-bold text-white/[.85]">
               <IconsaxIcon name={paid?'tick-circle':'shield-tick'} size={15} color="#FFAE76"/>
