@@ -114,7 +114,18 @@ export async function POST(request:Request){
       if(['vercel.app','netlify.app','pages.dev'].includes(hostname))return denied(400,'invalid_domain');
       if(existing&&existing.hostname===hostname&&
         (existing.verification_method||'dns_txt')===method){
-        return Response.json({ok:true,connection:asPublicConnection(existing)},{headers});
+        // Changing the DNS/hosting provider is metadata only: do not revoke
+        // already verified ownership or rotate a valid proof unnecessarily.
+        if(existing.provider===provider){
+          return Response.json({ok:true,connection:asPublicConnection(existing)},{headers});
+        }
+        const {data:updated,error:updateError}=await store.from('seo_domain_connections')
+          .update({provider,updated_at:new Date().toISOString()})
+          .eq('id',existing.id).eq('owner_id',user.id)
+          .select('hostname,provider,verification_method,state,verification_token,txt_record_name,verified_at,verification_expires_at')
+          .single();
+        return updateError?denied(503,'domain_save_failed')
+          :Response.json({ok:true,connection:asPublicConnection(updated as Record<string,unknown>)},{headers});
       }
       if(existing&&Date.now()-Date.parse(existing.created_at)<60_000)return denied(429,'try_later');
       const challenge='slbi-verify='+randomBytes(24).toString('hex');
