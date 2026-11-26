@@ -80,12 +80,38 @@ test('POST reject diagnostics are bounded categories, never user content',()=>{
  assert.equal(missing.code,'disabled');
  assert.equal(JSON.stringify([tampered,missing]).includes('private sample'),false);
 });
+test('signed real-event parser errors expose safe step labels only',()=>{
+ const bad=(value)=>{const bytes=Buffer.from(JSON.stringify(value));
+  return inspectWA03BInbound(bytes,sign(bytes),env,NOW);};
+ const data=JSON.parse(sample().toString('utf8'));
+ const wrongObject=bad({...data,object:'other'});
+ assert.equal(wrongObject.code,'payload_invalid');
+ assert.equal(wrongObject.detail,'unexpected_meta_object');
+ const wrongEntry=structuredClone(data);wrongEntry.entry[0].id='not an id';
+ assert.equal(bad(wrongEntry).detail,'malformed_entry');
+ const wrongChange=structuredClone(data);wrongChange.entry[0].changes[0].field='unrelated';
+ assert.equal(bad(wrongChange).detail,'malformed_change');
+ const wrongMessage=structuredClone(data);
+ wrongMessage.entry[0].changes[0].value.messages[0].timestamp='not-a-timestamp';
+ const messageError=bad(wrongMessage);
+ assert.equal(messageError.detail,'malformed_text_event');
+ assert.equal(JSON.stringify(messageError).includes('private sample'),false);
+ const future=structuredClone(data);
+ future.entry[0].changes[0].value.messages[0].timestamp=
+  String(Math.floor((NOW+120000)/1000));
+ assert.equal(bad(future).detail,'future_message');
+ const wrongSig=inspectWA03BInbound(sample(),'sha256='+('0'.repeat(64)),env,NOW);
+ assert.equal(wrongSig.code,'signature_invalid');
+ assert.equal(wrongSig.detail,undefined);
+});
 test('Next route is no-store, signs before accepting and never logs raw payload',()=>{
  const src=readFileSync(new URL('../../app/api/integrations/whatsapp/webhook/route.ts',import.meta.url),'utf8');
  assert.match(src,/inspectWA03BInbound/);
  assert.match(src,/x-hub-signature-256/);
  assert.match(src,/Cache-Control/);
  assert.match(src,/SLBI WA sandbox webhook POST rejected:/);
+ assert.match(src,/safeDetails/);
+ assert.doesNotMatch(src,/console\.warn\([^;]*request\.|console\.warn\([^;]*await request/);
  assert.doesNotMatch(src,/console\.warn\([^;]*raw|console\.warn\([^;]*signature|console\.warn\([^;]*body/);
  assert.match(src,/body\.byteLength>262144/);
  assert.doesNotMatch(src,/console\.log|console\.error|fetch\(|\.insert\(|\.upsert\(|\.update\(/);
