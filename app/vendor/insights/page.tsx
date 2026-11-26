@@ -302,7 +302,7 @@ export default function GrowthInsightsPage() {
         </div>
       </section>
       <div className="rounded-2xl border border-[#E8E4E0] bg-[#FCFAF8] px-5 py-4 text-[11px] leading-6 text-[#55515A]">
-        <strong className="text-[#2C2C31]">Measurement quality notice:</strong> Existing interaction logs predate secure collection and may contain automated or duplicate requests. This dashboard deliberately does not claim unique visitors, sales, confirmed calls, order value, or conversion revenue. No precise GPS or raw search queries are shown.
+        <strong className="text-[#2C2C31]">Measurement quality notice:</strong> Existing interaction logs predate secure collection and may contain automated or duplicate requests. A CRM record marked converted is not verified payments, completed sales or revenue. This dashboard deliberately does not claim unique visitors, sales, confirmed calls, order value, or conversion revenue. No precise GPS or raw search queries are shown.
       </div>
     </div>
   );
