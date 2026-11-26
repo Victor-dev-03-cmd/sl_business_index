@@ -12,6 +12,7 @@ export const VENDOR_QUICK_ACTIONS = [
   { title:'Customer enquiries', description:'Respond to leads, add notes and track follow-ups', href:'/vendor/leads', icon:'message-text', group:'Customers', keywords:'leads crm pipeline' },
   { title:'Review & reply', description:'Review feedback and manage your reputation', href:'/vendor/reviews', icon:'star', group:'Customers', keywords:'ratings reputation replies' },
   { title:'Growth insights', description:'Views, clicks, enquiries and source attribution', href:'/vendor/insights', icon:'status-up', group:'Growth', keywords:'analytics statistics views' },
+  { title:'SEO Engine', description:'Improve your published listing or follow a guide to connect your own domain', href:'/vendor/seo', icon:'global', group:'Growth', keywords:'seo google ranking search discover website domain business profile optimization' },
   { title:'Growth tools', description:'Credits, eligibility and upcoming growth services', href:'/vendor/growth', icon:'chart', group:'Growth', keywords:'credits allowance tools' },
   { title:'Marketing studio', description:'Open your marketing app collection, campaign planner and plugins', href:'/vendor/marketing', icon:'flash', group:'Growth', keywords:'campaign promotion editor' },
   { title:'Business QR codes', description:'Print or download a code linked to your profile', href:'/vendor/qr-code', icon:'scan-barcode', group:'Tools', keywords:'qr print download scan' },

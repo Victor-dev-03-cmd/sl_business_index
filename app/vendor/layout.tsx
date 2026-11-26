@@ -27,6 +27,7 @@ import './vendor-workspace.css';
 type NavItem = {name:string;href:string;icon:string};
 const primaryNav:NavItem[]=[
   {name:'Overview',href:'/vendor/dashboard',icon:'category'},
+  {name:'SEO Engine',href:'/vendor/seo',icon:'global'},
   {name:'My Businesses',href:'/vendor/my-businesses',icon:'shop'},
   {name:'Gallery & Services',href:'/vendor/gallery-services',icon:'image'},
   {name:'Enquiries',href:'/vendor/leads',icon:'message-text'},

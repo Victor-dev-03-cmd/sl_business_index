@@ -41,7 +41,7 @@ export function getPublicBusinessSEO(business: PublicBusinessSEO): {
   const title = [name,category,'SL Business Index'].filter(Boolean).join(' | ');
   const description = normalize(
     'Discover '+name+(category?' ('+category+')':'')+location+'. '+
-    (snippet || 'View its verified public listing, services and contact details on SL Business Index.'),
+    (snippet || 'View its public business listing, services and contact details on SL Business Index.'),
     160,
   );
   return {title,description,canonical:getPublicBusinessCanonical(business)};

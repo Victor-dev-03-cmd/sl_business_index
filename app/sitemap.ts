@@ -25,8 +25,17 @@ export default async function sitemap():Promise<MetadataRoute.Sitemap>{
       url:getPublicBusinessCanonical({id:b.id,slug:b.slug}),
       ...(b.updated_at?{lastModified:b.updated_at}:{}),
     }));
+  // Distinct category names may normalize to the SAME public URL.
+  // Avoid duplicate entries (for example the historic event-planner rows).
+  const seenCategorySlugs=new Set<string>();
   const categories:MetadataRoute.Sitemap=categoryResult.error?[]:
-    (categoryResult.data||[]).filter(c=>Boolean(c.name))
+    (categoryResult.data||[])
+    .filter(c=>{
+      const key=slugify(c.name||'');
+      if(!key||seenCategorySlugs.has(key))return false;
+      seenCategorySlugs.add(key);
+      return true;
+    })
     .map(c=>({
       url:`${base}/category/${slugify(c.name)}`,
       ...(c.updated_at?{lastModified:c.updated_at}:{}),
