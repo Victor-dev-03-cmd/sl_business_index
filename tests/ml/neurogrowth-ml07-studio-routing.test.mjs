@@ -41,7 +41,7 @@ test('ML-07 a complete 12-app owner request returns all review routes, no execut
  assert.ok(result.actions.filter(a=>a.requiresProviderAuthorization).length>=5);
 });
 test('ML-07 no invented capabilities, unknown requests abstain and sensitive requests reject',()=>{
- for(const text of ['', ' ', 'x'.repeat(501), '\\u0000mail', 42,{},null]){
+ for(const text of ['', ' ', 'x'.repeat(501), String.fromCharCode(0)+'mail', 42,{},null]){
   assert.equal(routeML07StudioRequest(text).ok,false);
  }
  const unknown=routeML07StudioRequest('Good afternoon, how are you today?');
