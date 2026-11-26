@@ -47,6 +47,28 @@ test('Reference mobile hero matches real Home search architecture without breaki
   assert.match(search,/slbi-hero-search-form/);
 });
 
+test('Desktop industry menu is horizontally discoverable on narrow laptops without altering mobile dock',()=>{
+  // The hidden scrollbar previously concealed Retail & Others at 1024–1366px.
+  assert.match(navbar,/data-slbi-ui="industry-bar"/);
+  assert.match(navbar,/ref=\{industryNavRef\}/);
+  assert.match(navbar,/ResizeObserver/);
+  assert.match(navbar,/scrollWidth - nav\.clientWidth/);
+  assert.match(navbar,/data-slbi-ui="industry-scroll-left"/);
+  assert.match(navbar,/data-slbi-ui="industry-scroll-right"/);
+  assert.match(navbar,/aria-label="Scroll industries left"/);
+  assert.match(navbar,/aria-label="Scroll industries right"/);
+  assert.match(navbar,/disabled=\{!industryScroll\.left\}/);
+  assert.match(navbar,/disabled=\{!industryScroll\.right\}/);
+  assert.match(navbar,/nav\.addEventListener\("wheel", onWheel, \{ passive: false \}\)/);
+  assert.match(navbar,/event\.preventDefault\(\)/);
+  assert.match(navbar,/nav\.scrollBy\(/);
+  assert.match(navbar,/prefers-reduced-motion: reduce/);
+  assert.match(navbar,/"Retail & Others"/);
+  assert.match(navbar,/lg:block/);
+  assert.match(navbar,/<CategorySubNavbar/);
+  assert.match(navbar,/<MobileGreeting/);
+});
+
 test('Real mobile Iconsax menu links exist, are accessible and do not replace vendor layout',()=>{
   assert.match(root,/import MobilePublicDock/);
   assert.match(root,/<MobilePublicDock\s*\/>/);
