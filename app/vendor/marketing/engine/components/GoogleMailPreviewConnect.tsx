@@ -1,6 +1,7 @@
 'use client';
 import {useState} from 'react';
 import {useRouter} from 'next/navigation';
+import Link from 'next/link';
 import IconsaxIcon from '@/app/vendor/components/IconsaxIcon';
 import GoogleMailInboxPreview from './GoogleMailInboxPreview';
 
@@ -78,6 +79,10 @@ export default function GoogleMailPreviewConnect({
     }
   };
   return <div className="mt-auto space-y-3 pt-4">
+    {connected.length>0&&<Link href="/vendor/marketing-engine/email"
+      className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#FF7900] px-4 text-[11px] font-semibold text-white hover:bg-[#E86D00]">
+      <IconsaxIcon name="sms" size={18} color="white"/> Continue to Email Marketing
+    </Link>}
     {ready&&<GoogleMailInboxPreview connections={connected} readEnabled={readEnabled}/>}
     {connected.length>0&&<div className="space-y-2 rounded-lg border border-[#D8EBDD] bg-[#F3FAF5] p-3">
       <p className="text-[11px] font-bold text-[#27734A]">
