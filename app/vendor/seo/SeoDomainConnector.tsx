@@ -9,6 +9,8 @@ export type DomainConnection={
   hostname:string;
   provider:string;
   state:string;
+  verification_method?:'dns_txt'|'http_file';
+  verificationMethod?:'dns_txt'|'http_file';
   verification_token?:string;
   txt_record_name?:string;
   verified_at?:string|null;
@@ -26,6 +28,8 @@ type Props={
 
 const providers=['Vercel','Cloudflare','GoDaddy','Namecheap','Hostinger','Other provider'] as const;
 type Provider=(typeof providers)[number];
+type Method='dns_txt'|'http_file';
+const HTTP_PATH='/.well-known/slbi-verification.txt';
 const guides:Record<Provider,string>={
   Vercel:'Vercel dashboard → Domains → choose the domain → DNS Records. If its nameservers are managed elsewhere, add the TXT record at that DNS host instead.',
   Cloudflare:'Cloudflare dashboard → choose your domain → DNS → Records → Add record.',
@@ -44,6 +48,8 @@ const messages:Record<string,string>={
   try_later:'Please allow a minute between changes.',
   verification_rate_limited:'DNS was just checked. Try again in 30 seconds.',
   dns_record_not_found:'TXT record not found yet. Check the name/value at your DNS provider, allow DNS propagation, then retry.',
+  verification_file_not_found:'Verification file is not publicly reachable with the exact value. Check the path, deploy your changes, and retry.',
+  use_http_file_for_hosted_subdomain:'Free hosting subdomains do not allow custom DNS TXT records. Select HTTPS File Verification.',
   domain_storage_unavailable:'Domain database setup is unavailable. Please contact SLBI support.',
   domain_service_not_configured:'The server domain connector is not configured. Please contact SLBI support.',
 };
@@ -55,6 +61,8 @@ export default function SeoDomainConnector({businessId,initialConnection,domainS
   const [hostname,setHostname]=useState(initialConnection?.hostname||'');
   const [provider,setProvider]=useState<Provider>(
     providers.includes(initialConnection?.provider as Provider)?initialConnection!.provider as Provider:'Other provider');
+  const [method,setMethod]=useState<Method>(
+    initialConnection?.verification_method||initialConnection?.verificationMethod||'dns_txt');
   const [busy,setBusy]=useState<'start'|'verify'|'disconnect'|null>(null);
   const [error,setError]=useState('');
   const [message,setMessage]=useState('');
@@ -64,19 +72,23 @@ export default function SeoDomainConnector({businessId,initialConnection,domainS
   const verified=connection?.state==='verified'&&!!expiry&&Date.parse(expiry)>Date.now();
   const name=connection?.txtRecordName||connection?.txt_record_name;
   const value=connection?.txtValue||connection?.verification_token;
+  const currentMethod=connection?.verificationMethod||connection?.verification_method||method;
+  const url=connection?.hostname?'https://'+connection.hostname+HTTP_PATH:null;
+  const isHosted=!!selectedDomain&&(/\.vercel\.app$|\.netlify\.app$|\.pages\.dev$/).test(selectedDomain);
 
   // Different owner businesses never inherit in-progress domain inputs.
   useEffect(()=>{
     setConnection(initialConnection);
     setHostname(initialConnection?.hostname||'');
     setProvider(providers.includes(initialConnection?.provider as Provider)?initialConnection!.provider as Provider:'Other provider');
+    setMethod(initialConnection?.verification_method||initialConnection?.verificationMethod||'dns_txt');
     setError('');setMessage('');setCopied(false);
   },[businessId,initialConnection]);
 
   async function mutate(action:'start'|'verify'|'disconnect'){
     setBusy(action);setError('');setMessage('');
     const payload=action==='start'
-      ?{action,businessId,hostname:selectedDomain||hostname,provider}
+      ?{action,businessId,hostname:selectedDomain||hostname,provider,verificationMethod:method}
       :{action,businessId};
     try{
       const response=await fetch('/api/vendor/seo/domain',{
@@ -95,9 +107,11 @@ export default function SeoDomainConnector({businessId,initialConnection,domainS
       if(action==='disconnect'){
         setHostname('');setMessage('Domain disconnected from SLBI. No DNS records were changed.');
       }else if(action==='verify'){
-        setMessage('DNS ownership verified and saved. Website editing and Google Search Console require separate authorization.');
+        setMessage('Website ownership proof verified and saved. Website editing and Google Search Console require separate authorization.');
       }else{
-        setMessage('Your unique DNS record was saved. Add it in DNS, then select Verify DNS.');
+        setMessage(method==='http_file'
+          ?'Your unique file token was saved. Publish the file on your site, then select Verify HTTPS file.'
+          :'Your unique DNS record was saved. Add it in DNS, then select Verify DNS.');
       }
     }catch{setError('Cannot reach the verification service. Check your connection and retry.')}
     finally{setBusy(null)}
@@ -112,7 +126,7 @@ export default function SeoDomainConnector({businessId,initialConnection,domainS
     <header>
       <h2 className="text-[18px] font-medium text-[#25252A]">Connect a website domain</h2>
       <p className="mt-1 text-[12px] leading-6 text-[#777780]">
-        Enter the domain you control. SLBI verifies ownership using a real DNS TXT record. Your website, hosting and nameservers stay where they are.
+        Enter your website address, choose a verification method, and prove ownership. We never transfer your domain or ask for hosting passwords.
       </p>
     </header>
 
@@ -120,8 +134,8 @@ export default function SeoDomainConnector({businessId,initialConnection,domainS
       {verified?<CheckCircle2 size={17} className="shrink-0 text-[#1F8053]"/>:<LockKeyhole size={17} className="shrink-0 text-[#BF6A17]"/>}
       <span>{verified
         ?'Domain ownership verified. This is not authorization to edit your website or access Google Search Console.'
-        :connection?'DNS verification pending — complete the TXT record step below.'
-        :'No verified domain yet. Start with your domain and DNS provider below.'}</span>
+        :connection?'Ownership verification pending — complete the selected proof step below.'
+        :'No verified domain yet. Choose DNS TXT or HTTPS File Verification below.'}</span>
     </div>
 
     {!domainServiceReady&&<p role="alert" className="rounded-lg border border-[#F4C9C0] bg-[#FFF7F5] p-4 text-[12px] text-[#A13D26]">
@@ -133,34 +147,62 @@ export default function SeoDomainConnector({businessId,initialConnection,domainS
         <label htmlFor="seo-website-address" className="mb-2 block text-[12px] font-medium text-[#393941]">1. Website domain</label>
         <input id="seo-website-address" inputMode="url" autoComplete="url" maxLength={250}
           disabled={!!connection||!!busy} value={hostname}
-          onChange={event=>setHostname(event.target.value)}
+          onChange={event=>{
+            setHostname(event.target.value);
+            const typed=getWebsiteGuideHostname(event.target.value);
+            if(typed&&/\.vercel\.app$/.test(typed)){
+              setMethod('http_file');setProvider('Vercel');
+            }
+          }}
           placeholder="yourbusiness.lk"
           className="min-h-11 w-full rounded-lg border border-[#DCDCE2] bg-white px-3 text-[13px] text-[#29292F] focus:border-[#FF7900] focus:outline-2 focus:outline-[#FF7900]/20 disabled:bg-[#F6F6F8]"/>
-        <p className="mt-1.5 text-[11px] text-[#91919A]">Use the domain, not a page URL (for example, example.lk).</p>
+        <p className="mt-1.5 text-[11px] text-[#91919A]">Example: myshop.lk or laxsan-dev.vercel.app. No page paths.</p>
       </div>
       <div>
-        <label htmlFor="seo-dns-provider" className="mb-2 block text-[12px] font-medium text-[#393941]">2. DNS provider</label>
+        <label htmlFor="seo-dns-provider" className="mb-2 block text-[12px] font-medium text-[#393941]">2. Hosting or DNS provider</label>
         <select id="seo-dns-provider" disabled={!!connection||!!busy}
           value={provider} onChange={event=>setProvider(event.target.value as Provider)}
           className="min-h-11 w-full rounded-lg border border-[#DCDCE2] bg-white px-3 text-[13px] text-[#29292F] focus:border-[#FF7900] focus:outline-2 focus:outline-[#FF7900]/20 disabled:bg-[#F6F6F8]">
           {providers.map(p=><option key={p} value={p}>{p}</option>)}
         </select>
-        <p className="mt-1.5 text-[11px] text-[#91919A]">Choose where you manage DNS, not necessarily where the website runs.</p>
+        <p className="mt-1.5 text-[11px] text-[#91919A]">For TXT use your DNS host; for file verification use your website host.</p>
       </div>
     </div>
 
-    {!connection&&<button type="button" disabled={!domainServiceReady||!selectedDomain||!!busy}
+    <fieldset className="space-y-2" disabled={!!connection||!!busy}>
+      <legend className="text-[12px] font-medium text-[#393941]">3. How would you like to verify ownership?</legend>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className={'flex cursor-pointer items-start gap-3 rounded-xl border px-4 py-3 '+(method==='dns_txt'?'border-[#F6A665] bg-[#FFF7EF]':'border-[#E5E5EA] bg-white')}>
+          <input type="radio" name="seo-verification-method" value="dns_txt" checked={method==='dns_txt'}
+            onChange={()=>setMethod('dns_txt')} className="mt-1 accent-[#FF7900]" />
+          <span><strong className="block text-[12px] font-medium">DNS TXT</strong>
+            <span className="mt-1 block text-[11px] leading-5 text-[#777780]">For a custom domain where you can edit DNS records.</span></span>
+        </label>
+        <label className={'flex cursor-pointer items-start gap-3 rounded-xl border px-4 py-3 '+(method==='http_file'?'border-[#F6A665] bg-[#FFF7EF]':'border-[#E5E5EA] bg-white')}>
+          <input type="radio" name="seo-verification-method" value="http_file" checked={method==='http_file'}
+            onChange={()=>setMethod('http_file')} className="mt-1 accent-[#FF7900]" />
+          <span><strong className="block text-[12px] font-medium">HTTPS File Verification</strong>
+            <span className="mt-1 block text-[11px] leading-5 text-[#777780]">For Vercel free subdomains or any site you can deploy to.</span></span>
+        </label>
+      </div>
+      {isHosted&&method==='dns_txt'&&<p className="text-[11px] text-[#A65719]" role="status">
+        This hosted subdomain does not support your own DNS TXT records. Select HTTPS File Verification.
+      </p>}
+    </fieldset>
+
+    {!connection&&<button type="button" disabled={!domainServiceReady||!selectedDomain||!!busy||(isHosted&&method==='dns_txt')}
       onClick={()=>void mutate('start')} className={primary} data-testid="seo-domain-start">
       {busy==='start'?'Saving domain…':'Start secure verification'}
     </button>}
 
     {connection&&<div data-testid="seo-domain-steps" className="space-y-4 rounded-xl border border-[#E5E5E9] bg-[#FCFCFD] p-4 sm:p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-[15px] font-medium text-[#28282D]">DNS verification for {connection.hostname}</h3>
+        <h3 className="text-[15px] font-medium text-[#28282D]">{currentMethod==='http_file'?'HTTPS file':'DNS TXT'} verification for {connection.hostname}</h3>
         <span className={'rounded-full px-2.5 py-1 text-[11px] font-medium '+(verified?'bg-[#E7F5EC] text-[#236B47]':'bg-[#FFF1E3] text-[#975516]')}>
           {verified?'Ownership verified':'Awaiting DNS record'}
         </span>
       </div>
+      {currentMethod==='dns_txt'?<>
       <p className="text-[12px] leading-6 text-[#777780]">{guides[provider]}</p>
       <p className="text-[11px] text-[#777780]">Add a TXT record; do not change your existing A, CNAME or MX records.</p>
       <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
@@ -179,10 +221,26 @@ export default function SeoDomainConnector({businessId,initialConnection,domainS
           </div>
         </div>
       </div>
+      </>:<>
+        <div className="space-y-3 rounded-lg border border-[#E8E8EB] bg-white p-4">
+          <p className="text-[12px] font-medium text-[#34343A]">Publish a verification file on your website</p>
+          <p className="text-[11px] leading-5 text-[#6E6E77]">1. Create <code className="font-mono">public/.well-known/slbi-verification.txt</code> in your Vercel/Next.js project (or the equivalent public folder for your framework).</p>
+          <p className="text-[11px] leading-5 text-[#6E6E77]">2. Paste the exact one-line value below and deploy the website. The URL must be publicly accessible without login or redirects.</p>
+          <div className="flex min-w-0 gap-2">
+            <input aria-label="HTTP verification file content" readOnly value={value||''}
+              className="min-w-0 flex-1 rounded-lg border border-[#E4E4EA] bg-[#FAFAFC] px-3 py-2 font-mono text-[11px]"/>
+            <button type="button" className={button} onClick={()=>void copy(value||'')} aria-label="Copy HTTP verification file content">
+              {copied?<Check size={16}/>:<Clipboard size={16}/>}
+            </button>
+          </div>
+          <p className="text-[11px] leading-5 text-[#6E6E77]">3. Confirm the file is visible at the exact address below, then click Verify HTTPS file.</p>
+          {url&&<a href={url} target="_blank" rel="noopener noreferrer" className="block break-all text-[12px] text-[#AD560D] underline underline-offset-2">{url}</a>}
+        </div>
+      </>}
       <div className="flex flex-wrap gap-2">
         <button type="button" onClick={()=>void mutate('verify')} disabled={!!busy} className={primary} data-testid="seo-domain-verify">
           {busy==='verify'?<RefreshCw size={16} className="animate-spin"/>:<ShieldCheck size={16}/>}
-          {busy==='verify'?'Checking public DNS…':'Verify DNS ownership'}
+          {busy==='verify'?'Checking ownership proof…':currentMethod==='http_file'?'Verify HTTPS file':'Verify DNS ownership'}
         </button>
         <button type="button" disabled={!!busy}
           onClick={()=>{if(window.confirm('Disconnect this domain from this business in SLBI? This does not alter external DNS records.'))void mutate('disconnect')}}
@@ -191,7 +249,7 @@ export default function SeoDomainConnector({businessId,initialConnection,domainS
         </button>
       </div>
       {verified&&<div className="flex items-start gap-2 rounded-lg border border-[#D5E9DD] bg-[#F4FBF6] p-3 text-[11px] leading-5 text-[#2B714A]">
-        <CheckCircle2 size={17} className="shrink-0"/> Verified for 30 days. SEO recommendations can reference this website, but automatic edits require separate CMS authorization and owner approval.
+        <CheckCircle2 size={17} className="shrink-0"/> Ownership verified for 30 days. SEO recommendations may reference this website, but actual edits need separate CMS authorization and owner approval.
       </div>}
     </div>}
 
@@ -199,7 +257,7 @@ export default function SeoDomainConnector({businessId,initialConnection,domainS
     {message&&<p role="status" className="rounded-lg border border-[#DBEADB] bg-[#F5FBF5] px-4 py-3 text-[12px] text-[#2A7049]">{message}</p>}
 
     <footer className="border-t border-[#EAEAF0] pt-4 text-[11px] leading-5 text-[#888890]">
-      <p className="flex items-start gap-2"><Info size={15} className="shrink-0"/> DNS verification confirms access to the TXT record only. Your domain does not need to be transferred to SLBI. External SEO editing and Google Search Console connection are separate permissions.</p>
+      <p className="flex items-start gap-2"><Info size={15} className="shrink-0"/> DNS TXT or HTTPS file verification proves control of that record or website file only. SLBI does not transfer domains or gain permission to edit your site. Google Search Console and CMS editing remain separate permissions.</p>
       <a href="https://vercel.com/docs/domains/managing-dns-records" target="_blank" rel="noopener noreferrer"
         className="mt-3 inline-flex items-center gap-1 text-[#B65D12] underline underline-offset-2">
         Vercel DNS instructions <ExternalLink size={13}/>

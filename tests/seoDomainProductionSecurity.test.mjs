@@ -27,7 +27,7 @@ test('Real domain claim uses crypto-random token, limited DNS TXT resolver only 
  assert.match(api,/randomBytes\(24\)\.toString\('hex'\)/);
  assert.match(api,/resolveTxt\(name\)/);
  assert.match(api,/hasDnsProof\(existing\.txt_record_name,existing\.verification_token\)/);
- assert.match(api,/!found\)return denied\(409,'dns_record_not_found'\)/);
+ assert.match(api,/method==='http_file'\?'verification_file_not_found':'dns_record_not_found'/);
  assert.match(api,/state:'verified',verified_at/);
  assert.match(api,/verification_expires_at:new Date\(now\.getTime\(\)\+30\*24\*60\*60_000\)/);
  assert.match(api,/verification_rate_limited/);
@@ -76,4 +76,33 @@ test('Compact topbar uses flex navigation and sidebar instead of absolute overla
  assert.match(layout,/min-w-0 flex-1 items-center justify-center/);
  assert.doesNotMatch(layout,/vendor-topbar-center absolute left-1\/2/);
  assert.match(layout,/font/);
+});
+
+
+test('Both SEO verification methods remain persisted and owner-scoped',()=>{
+ const migration=read('supabase/migrations/20261127090000_seo_http_file_verification.sql');
+ const http=read('lib/seo/http-file-proof.ts');
+ const page=read('app/vendor/seo/page.tsx');
+ assert.match(migration,/add column if not exists verification_method text not null default 'dns_txt'/);
+ assert.match(migration,/verification_method in \('dns_txt','http_file'\)/);
+ assert.match(migration,/revoke insert, update, delete/);
+ assert.match(api,/verificationMethod/);
+ assert.match(api,/verification_method:method/);
+ assert.match(api,/method==='http_file'/);
+ assert.match(api,/hasHttpFileProof\(existing.hostname,existing.verification_token\)/);
+ assert.match(api,/use_http_file_for_hosted_subdomain/);
+ assert.match(page,/verification_method/);
+ assert.match(ui,/HTTPS File Verification/);
+ assert.match(ui,/public\/\.well-known\/slbi-verification\.txt/);
+ assert.match(ui,/Verify HTTPS file/);
+ assert.match(ui,/verificationMethod:method/);
+ assert.match(http,/\.well-known\/slbi-verification\.txt/);
+ assert.match(http,/lookup\(hostname,\{all:true,family:4,verbatim:true\}\)/);
+ assert.match(http,/isAllowedPublicIPv4/);
+ assert.match(http,/lookup:\(_host,_options,callback\)=>callback\(null,pinned,4\)/);
+ assert.match(http,/res.statusCode!==200/);
+ assert.match(http,/MAX_BYTES=512/);
+ assert.match(http,/servername:hostname/);
+ assert.match(http,/protocol:'https:'/);
+ assert.doesNotMatch(http,/fetch\(|method:'POST'|redirect:'follow'|http:\/\//);
 });

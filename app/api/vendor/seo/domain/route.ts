@@ -5,6 +5,7 @@ import {createClient} from '@/lib/supabase/server';
 import {getWebsiteGuideHostname} from '@/lib/seo/owner-readiness';
 import {randomBytes} from 'node:crypto';
 import {resolveTxt} from 'node:dns/promises';
+import {hasHttpFileProof} from '@/lib/seo/http-file-proof';
 
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
@@ -12,8 +13,9 @@ export const dynamic='force-dynamic';
 const headers={'Cache-Control':'private, no-store, max-age=0','X-Content-Type-Options':'nosniff'};
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const PROVIDERS=new Set(['Vercel','Cloudflare','GoDaddy','Namecheap','Hostinger','Other provider']);
+type VerificationMethod='dns_txt'|'http_file';
 type Operation='start'|'verify'|'disconnect';
-type Payload={action:Operation;businessId:string;hostname?:string;provider?:string};
+type Payload={action:Operation;businessId:string;hostname?:string;provider?:string;verificationMethod?:VerificationMethod};
 const denied=(status:number,code:string)=>Response.json({ok:false,code},{status,headers});
 
 function safeHostname(value:unknown):string|null {
@@ -39,6 +41,7 @@ function admin(){
 const asPublicConnection=(record:Record<string,unknown>)=>({
   hostname:record.hostname,
   provider:record.provider,
+  verificationMethod:record.verification_method||'dns_txt',
   state:record.state,
   txtRecordName:record.txt_record_name,
   txtValue:record.verification_token,
@@ -73,7 +76,7 @@ export async function POST(request:Request){
     if(typeof body.businessId!=='string'||!UUID.test(body.businessId)||
       !['start','verify','disconnect'].includes(String(body.action)))return denied(400,'invalid_request');
     const action=body.action as Operation;
-    const required=action==='start'?'action,businessId,hostname,provider':'action,businessId';
+    const required=action==='start'?'action,businessId,hostname,provider,verificationMethod':'action,businessId';
     if(Object.keys(body).sort().join(',')!==required.split(',').sort().join(','))return denied(400,'invalid_request');
 
     const userClient=await createClient();
@@ -87,7 +90,7 @@ export async function POST(request:Request){
     const store=admin();
     if(!store)return denied(503,'domain_service_not_configured');
     const {data:existing,error:existingError}=await store.from('seo_domain_connections')
-      .select('id,owner_id,business_id,hostname,provider,state,verification_token,txt_record_name,verified_at,verification_expires_at,last_checked_at,created_at')
+      .select('id,owner_id,business_id,hostname,provider,verification_method,state,verification_token,txt_record_name,verified_at,verification_expires_at,last_checked_at,created_at')
       .eq('business_id',business.id).maybeSingle();
     if(existingError)return denied(503,'domain_storage_unavailable');
     if(existing&&existing.owner_id!==user.id)return denied(409,'ownership_changed');
@@ -100,23 +103,33 @@ export async function POST(request:Request){
     if(action==='start'){
       const hostname=safeHostname(body.hostname);
       const provider=body.provider;
-      if(!hostname||typeof provider!=='string'||!PROVIDERS.has(provider))return denied(400,'invalid_domain');
-      if(existing&&existing.hostname===hostname){
+      const method=body.verificationMethod;
+      if(!hostname||typeof provider!=='string'||!PROVIDERS.has(provider)||
+        (method!=='dns_txt'&&method!=='http_file'))return denied(400,'invalid_domain');
+      // Hosted *.vercel.app names cannot publish their own DNS TXT records.
+      // They can prove control using a static file on the exact deployment.
+      if((hostname.endsWith('.vercel.app')||hostname.endsWith('.netlify.app')||
+          hostname.endsWith('.pages.dev'))&&method==='dns_txt')
+        return denied(400,'use_http_file_for_hosted_subdomain');
+      if(['vercel.app','netlify.app','pages.dev'].includes(hostname))return denied(400,'invalid_domain');
+      if(existing&&existing.hostname===hostname&&
+        (existing.verification_method||'dns_txt')===method){
         return Response.json({ok:true,connection:asPublicConnection(existing)},{headers});
       }
       if(existing&&Date.now()-Date.parse(existing.created_at)<60_000)return denied(429,'try_later');
       const challenge='slbi-verify='+randomBytes(24).toString('hex');
       const fields={
         owner_id:user.id,business_id:business.id,hostname,provider,
+        verification_method:method,
         verification_token:challenge,txt_record_name:'_slbi-verify.'+hostname,
         state:'pending',verified_at:null,verification_expires_at:null,
         last_checked_at:null,updated_at:new Date().toISOString(),created_at:new Date().toISOString(),
       };
       const {data:saved,error}=existing
         ?await store.from('seo_domain_connections').update(fields).eq('id',existing.id).eq('owner_id',user.id)
-          .select('hostname,provider,state,verification_token,txt_record_name,verified_at,verification_expires_at').single()
+          .select('hostname,provider,verification_method,state,verification_token,txt_record_name,verified_at,verification_expires_at').single()
         :await store.from('seo_domain_connections').insert(fields)
-          .select('hostname,provider,state,verification_token,txt_record_name,verified_at,verification_expires_at').single();
+          .select('hostname,provider,verification_method,state,verification_token,txt_record_name,verified_at,verification_expires_at').single();
       if(error)return denied(error.code==='23505'?409:503,error.code==='23505'?'domain_already_claimed':'domain_save_failed');
       return Response.json({ok:true,connection:asPublicConnection(saved as Record<string,unknown>)},{headers});
     }
@@ -140,17 +153,21 @@ export async function POST(request:Request){
     const {data:locked,error:throttleError}=await throttle.select('id').maybeSingle();
     if(throttleError)return denied(503,'verification_unavailable');
     if(!locked)return denied(429,'verification_rate_limited');
+    const method:VerificationMethod=existing.verification_method==='http_file'?'http_file':'dns_txt';
     let found=false;
-    try{found=await hasDnsProof(existing.txt_record_name,existing.verification_token)}
-    catch{/* NXDOMAIN, propagation delays, resolver failures all fail closed. */}
-    if(!found)return denied(409,'dns_record_not_found');
+    try{
+      found=method==='http_file'
+        ?await hasHttpFileProof(existing.hostname,existing.verification_token)
+        :await hasDnsProof(existing.txt_record_name,existing.verification_token);
+    }catch{/* TLS errors, unreachable hosts and DNS failures all fail closed. */}
+    if(!found)return denied(409,method==='http_file'?'verification_file_not_found':'dns_record_not_found');
     const now=new Date();
     const {data:verified,error:saveError}=await store.from('seo_domain_connections').update({
       state:'verified',verified_at:now.toISOString(),
       verification_expires_at:new Date(now.getTime()+30*24*60*60_000).toISOString(),
       updated_at:now.toISOString(),
     }).eq('id',existing.id).eq('owner_id',user.id).eq('verification_token',existing.verification_token)
-      .select('hostname,provider,state,verification_token,txt_record_name,verified_at,verification_expires_at').single();
+      .select('hostname,provider,verification_method,state,verification_token,txt_record_name,verified_at,verification_expires_at').single();
     if(saveError)return denied(503,'verification_save_failed');
     return Response.json({ok:true,connection:asPublicConnection(verified as Record<string,unknown>)},{headers});
   }catch{
