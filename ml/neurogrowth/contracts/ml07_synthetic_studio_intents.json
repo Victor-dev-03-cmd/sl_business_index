@@ -1,0 +1,402 @@
+{
+  "version": "ml07-trilingual-intent-synthetic-v1",
+  "provenance": "synthetic_only",
+  "trainingEligibleRealData": false,
+  "executionsAuthorized": false,
+  "customerContactData": false,
+  "split": "two synthetic training prompts and one disjoint synthetic evaluation prompt per app per language",
+  "classes": [
+    {
+      "app_id": "campaign-planner",
+      "language_examples": {
+        "en": {
+          "train": [
+            "Prepare a festival campaign for my shop",
+            "Make a promotional campaign plan"
+          ],
+          "eval": [
+            "Help schedule my campaign offers"
+          ]
+        },
+        "ta": {
+          "train": [
+            "என் கடைக்கு ஒரு பிரச்சார திட்டம் தயார் செய்",
+            "தீபாவளி சலுகை கேம்பெயின் செய்ய வேண்டும்"
+          ],
+          "eval": [
+            "புதிய சலுகைக்கான பிரச்சாரம் திட்டமிடு"
+          ]
+        },
+        "si": {
+          "train": [
+            "මගේ ව්‍යාපාරය සඳහා ප්‍රචාරණ සැලැස්මක් සකසන්න",
+            "නව වට්ටමකට ප්‍රචාරණයක් සැලසුම් කරන්න"
+          ],
+          "eval": [
+            "උත්සව ප්‍රචාරණ වැඩසටහන සකස් කරන්න"
+          ]
+        }
+      }
+    },
+    {
+      "app_id": "poster-editor",
+      "language_examples": {
+        "en": {
+          "train": [
+            "Design a poster for our weekend sale",
+            "Create a colorful promotional poster"
+          ],
+          "eval": [
+            "Make an artwork poster for my store"
+          ]
+        },
+        "ta": {
+          "train": [
+            "கடைக்கு போஸ்டர் வடிவமைத்து கொடு",
+            "சலுகைக்கு புதிய போஸ்டர் உருவாக்கு"
+          ],
+          "eval": [
+            "பொங்கல் சுவரொட்டி டிசைன் செய்"
+          ]
+        },
+        "si": {
+          "train": [
+            "අලෙවිය සඳහා පෝස්ටරයක් සාදන්න",
+            "අලංකාර පෝස්ටර් නිර්මාණයක් ඕන"
+          ],
+          "eval": [
+            "අලුත් වෙළඳ පෝස්ටරයක් සකස් කරන්න"
+          ]
+        }
+      }
+    },
+    {
+      "app_id": "caption-lab",
+      "language_examples": {
+        "en": {
+          "train": [
+            "Write a caption for my product photo",
+            "Suggest Instagram hashtags and caption"
+          ],
+          "eval": [
+            "Draft a social media caption"
+          ]
+        },
+        "ta": {
+          "train": [
+            "படத்துக்கான கேப்ஷன் எழுதுங்கள்",
+            "சமூக பதிவுக்கு ஹேஷ்டேக் கொடுங்கள்"
+          ],
+          "eval": [
+            "என் பொருளுக்கு கேப்ஷன் தயார் செய்"
+          ]
+        },
+        "si": {
+          "train": [
+            "මගේ ඡායාරූපයට කැප්ෂන් එකක් ලියන්න",
+            "සමාජ පළකිරීමට හෑෂ්ටැග් යෝජනා කරන්න"
+          ],
+          "eval": [
+            "අලුත් නිෂ්පාදනයට කැප්ෂන් සකසන්න"
+          ]
+        }
+      }
+    },
+    {
+      "app_id": "brand-kit",
+      "language_examples": {
+        "en": {
+          "train": [
+            "Set my business brand colors",
+            "Update our brand identity"
+          ],
+          "eval": [
+            "Build a logo palette for the shop"
+          ]
+        },
+        "ta": {
+          "train": [
+            "வணிக பிராண்ட் நிறங்களை அமைக்க",
+            "எங்கள் லோகோ அடையாளத்தை மாற்று"
+          ],
+          "eval": [
+            "கடையின் பிராண்ட் ஸ்டைல் வேண்டும்"
+          ]
+        },
+        "si": {
+          "train": [
+            "අපේ වෙළඳ සන්නාමයේ වර්ණ සකසන්න",
+            "ව්‍යාපාර ලාංඡනය සඳහා වර්ණ පටිපාටියක්"
+          ],
+          "eval": [
+            "නව සන්නාම අනන්‍යතාවයක් හදන්න"
+          ]
+        }
+      }
+    },
+    {
+      "app_id": "social-marketing",
+      "language_examples": {
+        "en": {
+          "train": [
+            "Prepare a Facebook post for review",
+            "Plan Instagram post for my business"
+          ],
+          "eval": [
+            "Organize social marketing content"
+          ]
+        },
+        "ta": {
+          "train": [
+            "பேஸ்புக் பதிவு தயார் செய்யவும்",
+            "இன்ஸ்டாகிராம் வழியாக விளம்பரம்"
+          ],
+          "eval": [
+            "சமூக ஊடகம் பதிவை திட்டமிடு"
+          ]
+        },
+        "si": {
+          "train": [
+            "ෆේස්බුක් පළකිරීමක් සකස් කරන්න",
+            "ඉන්ස්ටග්‍රෑම් ප්‍රචාරණයක් සැලසුම් කරන්න"
+          ],
+          "eval": [
+            "සමාජ මාධ්‍ය පළකිරීමක් සකස් කරන්න"
+          ]
+        }
+      }
+    },
+    {
+      "app_id": "email-marketing",
+      "language_examples": {
+        "en": {
+          "train": [
+            "Draft a consented email campaign",
+            "Prepare a customer newsletter"
+          ],
+          "eval": [
+            "Write a Gmail business email reply"
+          ]
+        },
+        "ta": {
+          "train": [
+            "வாடிக்கையாளருக்கு மின்னஞ்சல் வரைவு",
+            "மெயில் மார்க்கெட்டிங் தயார் செய்"
+          ],
+          "eval": [
+            "செய்திமடல் ஈமெயில் எழுதுங்கள்"
+          ]
+        },
+        "si": {
+          "train": [
+            "පාරිභෝගිකයින්ට ඊමේල් කෙටුම්පතක්",
+            "අලුත් විද්‍යුත් තැපෑලක් ලියන්න"
+          ],
+          "eval": [
+            "පුවත් ලිපි ඊමේල් සැලසුම් කරන්න"
+          ]
+        }
+      }
+    },
+    {
+      "app_id": "voice-agent",
+      "language_examples": {
+        "en": {
+          "train": [
+            "Configure an inbound call agent",
+            "Help draft scripts for phone support"
+          ],
+          "eval": [
+            "Plan a voice agent for customer calls"
+          ]
+        },
+        "ta": {
+          "train": [
+            "கால் ஏஜென்ட் வழிமுறை உருவாக்கு",
+            "தொலைபேசி அழைப்புக்கு பதில் ஸ்கிரிப்ட்"
+          ],
+          "eval": [
+            "குரல் ஏஜென்ட் திட்டம் வேண்டும்"
+          ]
+        },
+        "si": {
+          "train": [
+            "දුරකථන ඇමතුම් සඳහා හඬ නියෝජිතයක්",
+            "පාරිභෝගික ඇමතුම් නියෝජිත සැලසුම"
+          ],
+          "eval": [
+            "ඇමතුම් සහාය කෙටුම්පතක්"
+          ]
+        }
+      }
+    },
+    {
+      "app_id": "workflow-automation",
+      "language_examples": {
+        "en": {
+          "train": [
+            "Plan a workflow automation rule",
+            "Create an auto follow up process"
+          ],
+          "eval": [
+            "Suggest marketing automation steps"
+          ]
+        },
+        "ta": {
+          "train": [
+            "வாடிக்கையாளர் தொடர்புக்கு ஆட்டோமேஷன் திட்டம்",
+            "தானியங்கி பணிப்பாய்வு உருவாக்கு"
+          ],
+          "eval": [
+            "மார்க்கெட்டிங் ஆட்டோமேஷன் வழி கூறு"
+          ]
+        },
+        "si": {
+          "train": [
+            "කාර්ය ප්‍රවාහ ස්වයංක්‍රීයකරණයක්",
+            "ස්වයංක්‍රීය පසු විපරම් රීතිය"
+          ],
+          "eval": [
+            "අලෙවි ස්වයංක්‍රීයකරණ සැලැස්ම"
+          ]
+        }
+      }
+    },
+    {
+      "app_id": "plugin-connectors",
+      "language_examples": {
+        "en": {
+          "train": [
+            "Connect apps through approved OAuth",
+            "Show available plugin connectors"
+          ],
+          "eval": [
+            "Review official app integrations"
+          ]
+        },
+        "ta": {
+          "train": [
+            "ஆப் இணைப்பு அமைப்பைப் பார்ப்போம்",
+            "புதிய கனெக்டர்ஸ் காட்டுங்கள்"
+          ],
+          "eval": [
+            "செயலி இணைப்பு செய்ய உதவி"
+          ]
+        },
+        "si": {
+          "train": [
+            "යෙදුම් සම්බන්ධක පෙන්වන්න",
+            "අනුමත ඒකාබද්ධ කිරීම් මොනවාද"
+          ],
+          "eval": [
+            "වෙනත් යෙදුමක් සම්බන්ධ කරන්න"
+          ]
+        }
+      }
+    },
+    {
+      "app_id": "content-calendar",
+      "language_examples": {
+        "en": {
+          "train": [
+            "Build a content calendar this month",
+            "Review scheduled content dates"
+          ],
+          "eval": [
+            "Organize a campaign calendar"
+          ]
+        },
+        "ta": {
+          "train": [
+            "உள்ளடக்க காலண்டர் உருவாக்கு",
+            "மாதாந்திர நாட்காட்டி தயாரி"
+          ],
+          "eval": [
+            "பதிவு அட்டவணை அமைக்க"
+          ]
+        },
+        "si": {
+          "train": [
+            "අන්තර්ගත දින දර්ශනයක් සාදන්න",
+            "මේ මාසයේ දින දර්ශනය සකස් කරන්න"
+          ],
+          "eval": [
+            "පළකිරීම් කාලසටහන පෙන්වන්න"
+          ]
+        }
+      }
+    },
+    {
+      "app_id": "leads-workspace",
+      "language_examples": {
+        "en": {
+          "train": [
+            "Review marketing leads priority",
+            "Show my lead pipeline insights"
+          ],
+          "eval": [
+            "Prioritize new marketing leads"
+          ]
+        },
+        "ta": {
+          "train": [
+            "மார்க்கெட்டிங் லீட்ஸ் முன்னுரிமை பார்க்க",
+            "விற்பனை வாய்ப்பு பகுப்பாய்வு"
+          ],
+          "eval": [
+            "லீட் முன்னுரிமை தருக"
+          ]
+        },
+        "si": {
+          "train": [
+            "අලෙවි ලීඩ් ප්‍රමුඛතා පෙන්වන්න",
+            "අනාගත පාරිභෝගික ලැයිස්තුව බලන්න"
+          ],
+          "eval": [
+            "ලීඩ් ප්‍රමුඛතා සකස් කරන්න"
+          ]
+        }
+      }
+    },
+    {
+      "app_id": "leads-crm",
+      "language_examples": {
+        "en": {
+          "train": [
+            "Open leads CRM for followups",
+            "Review a customer enquiry"
+          ],
+          "eval": [
+            "Show my CRM contact records"
+          ]
+        },
+        "ta": {
+          "train": [
+            "லீட்ஸ் சிஆர்எம் திற",
+            "வாடிக்கையாளர் விசாரணை பாருங்கள்"
+          ],
+          "eval": [
+            "வாடிக்கையாளர் தொடர்பு பதிவுகள்"
+          ]
+        },
+        "si": {
+          "train": [
+            "පාරිභෝගික විමසීම් බලන්න",
+            "පාරිභෝගික කළමනාකරණය විවෘත කරන්න"
+          ],
+          "eval": [
+            "සීආර්එම් වාර්තා බලන්න"
+          ]
+        }
+      }
+    }
+  ],
+  "unknown_eval": [
+    "Hello and good morning",
+    "I will visit tomorrow",
+    "வணக்கம் எப்படி இருக்கிறீர்கள்",
+    "சும்மா பேச வேண்டும்",
+    "ආයුබෝවන් සුබ උදෑසනක්",
+    "මම හෙට එන්නම්"
+  ]
+}

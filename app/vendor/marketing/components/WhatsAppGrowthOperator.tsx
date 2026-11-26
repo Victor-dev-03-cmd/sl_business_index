@@ -1,6 +1,7 @@
 'use client';
 import {useEffect,useMemo,useState} from 'react';
 import Link from 'next/link';
+import {MARKETING_STUDIO_APPS} from '@/lib/marketing/studio-apps';
 import {ArrowRight,CheckCircle2,Globe2,Loader2,LockKeyhole,MessageSquareText,
  ShieldCheck,AlertTriangle,PlugZap,Workflow,Mail,RefreshCw} from 'lucide-react';
 import type {WhatsAppOwnedBusiness} from './WhatsAppConnectionLab';
@@ -8,6 +9,10 @@ import type {WhatsAppOwnedBusiness} from './WhatsAppConnectionLab';
 type Lang='en'|'ta'|'si';
 type Action={id:string;href:string;title:string;kind:'review_only_external_blocked'|'read_link'|'draft_review';requiresFreshApproval:boolean;executed:false};
 type OperatorPlan={locale:Lang;actions:Action[];summary:string;approved:false;persisted:false;externallyDispatched:false};
+type StudioAction={id:string;href:string;kind:'provider_blocked'|'draft_review';
+ requiresProviderAuthorization:boolean;requiresOwnerReview:true;executed:false;sent:false};
+type StudioPlan={locale:Lang;actions:StudioAction[];abstained:boolean;
+ ownerApprovalGranted:false;providerCallMade:false;saved:false};
 type Status={ok:true;business:{id:string;name:string;approved:boolean};
  sandboxTestWebhookConfigured:boolean;vendorOnboardingAvailable:false;
  vendorOnboardingBlocker:string;providerMetadataReadable:boolean;
@@ -88,6 +93,7 @@ export default function WhatsAppGrowthOperator({businesses,ownershipReady}:{
  const [statusLoading,setStatusLoading]=useState(false);
  const [busy,setBusy]=useState(false);
  const [plan,setPlan]=useState<OperatorPlan|null>(null);
+ const [studio,setStudio]=useState<StudioPlan|null>(null);
  const [error,setError]=useState('');
  const [refresh,setRefresh]=useState(0);
  const words=LOCALE_COPY[locale];
@@ -96,7 +102,7 @@ export default function WhatsAppGrowthOperator({businesses,ownershipReady}:{
  useEffect(()=>{setLocale(readLocale())},[]);
  useEffect(()=>{
   let cancelled=false;
-  setStatus(null);setPlan(null);
+  setStatus(null);setPlan(null);setStudio(null);
   if(!ownershipReady||!businessId)return;
   setStatusLoading(true);
   const controller=new AbortController();
@@ -111,7 +117,7 @@ export default function WhatsAppGrowthOperator({businesses,ownershipReady}:{
  },[businessId,ownershipReady,refresh]);
  async function buildPlan(){
   if(!canPlan||busy||!request.trim())return;
-  setError('');setPlan(null);setBusy(true);
+  setError('');setPlan(null);setStudio(null);setBusy(true);
   try{
    const response=await fetch('/api/vendor/marketing/whatsapp/plan',{
     method:'POST',credentials:'same-origin',
@@ -121,7 +127,9 @@ export default function WhatsAppGrowthOperator({businesses,ownershipReady}:{
    const data:unknown=await response.json();
    if(!response.ok||!data||typeof data!=='object'||!('plan' in data))
     throw new Error('plan_unavailable');
-   setPlan((data as {plan:OperatorPlan}).plan);
+   const payload=data as {plan:OperatorPlan;studio?:StudioPlan};
+   setPlan(payload.plan);
+   setStudio(payload.studio??null);
   }catch{setError(words.error)}
   finally{setBusy(false)}
  }
@@ -135,7 +143,7 @@ export default function WhatsAppGrowthOperator({businesses,ownershipReady}:{
     </div>
     <div aria-label="Select interface language" className="flex gap-1 rounded-xl border border-white/20 bg-white/5 p-1">
      {([['en','English'],['ta','தமிழ்'],['si','සිංහල']] as const).map(([value,label])=>
-      <button key={value} type="button" onClick={()=>{setLocale(value);setPlan(null);setError('')}}
+      <button key={value} type="button" onClick={()=>{setLocale(value);setPlan(null);setStudio(null);setError('')}}
        aria-pressed={locale===value} className={'min-h-10 rounded-lg px-3 text-xs font-bold transition '+(locale===value?'bg-[#FF7900] text-black':'text-white/70 hover:bg-white/10')}>
        {label}</button>)}
     </div>
@@ -153,14 +161,14 @@ export default function WhatsAppGrowthOperator({businesses,ownershipReady}:{
      <Workflow className="h-5 w-5 text-[#D46A10]"/>{words.request}
     </div>
     <label htmlFor="wa04-business" className="mt-5 block text-xs font-bold text-[#52525B]">{words.choose}</label>
-    <select id="wa04-business" value={businessId} onChange={e=>{setBusinessId(e.target.value);setError('')}}
+    <select id="wa04-business" value={businessId} onChange={e=>{setBusinessId(e.target.value);setPlan(null);setStudio(null);setError('')}}
      className="mt-2 min-h-12 w-full rounded-xl border border-[#DDDDE2] bg-white px-3 text-xs text-[#25252C] focus:border-[#FF7900] focus:outline-none">
      {businesses.length===0?<option value="">No owned business</option>:businesses.map(b=>
       <option value={b.id} key={b.id}>{b.name}{b.status!=='approved'?' · pending':''}</option>)}
     </select>
     <label htmlFor="wa04-request" className="mt-4 block text-xs font-bold text-[#52525B]">{words.request}</label>
     <textarea id="wa04-request" value={request} maxLength={500} rows={4}
-     onChange={e=>{setRequest(e.target.value);setPlan(null);setError('')}}
+     onChange={e=>{setRequest(e.target.value);setPlan(null);setStudio(null);setError('')}}
      placeholder={words.placeholder} className="mt-2 min-h-28 w-full resize-y rounded-xl border border-[#DDDDE2] bg-[#FAFAFB] p-3 text-sm leading-6 text-[#242429] focus:border-[#FF7900] focus:outline-none focus:ring-2 focus:ring-[#FF7900]/15"/>
     <p className="mt-2 text-right text-[10px] text-[#96969F]">{request.length}/500</p>
     {!canPlan&&<p className="mt-2 text-xs text-[#985624]">{words.noBusiness}</p>}
@@ -181,6 +189,24 @@ export default function WhatsAppGrowthOperator({businesses,ownershipReady}:{
         {words.open}<ArrowRight className="h-3 w-3"/></Link>
       </div>
      </div>)}
+     {studio&&<div className="space-y-3 border-t border-[#ECD8C2] pt-4">
+      <h4 className="text-xs font-extrabold text-[#8E4B1C]">{locale==='ta'?'Marketing Studio — 12 Apps திட்டம்':locale==='si'?'Marketing Studio — යෙදුම් 12 ක්':'Marketing Studio — 12 app review routes'}</h4>
+      {studio.abstained&&<p className="text-[11px] text-[#8A7A6E]">{locale==='ta'?'தெளிவான App கண்டறியப்படவில்லை; வேலையைச் சற்று விரிவாக எழுதுங்கள்.':locale==='si'?'යෙදුම හඳුනාගත නොහැකි විය. ඉල්ලීම පැහැදිලි කරන්න.':'No matching app; describe the work more specifically.'}</p>}
+      <div className="grid gap-2 sm:grid-cols-2">
+       {studio.actions.map(action=>{
+        const card=MARKETING_STUDIO_APPS.find(app=>app.id===action.id);
+        return <div key={action.id} className="flex min-w-0 flex-col justify-between gap-3 rounded-xl border border-[#EFE1D2] bg-white p-3">
+         <div><p className="text-xs font-bold text-[#25252A]">{card?.title??action.id}</p>
+          <p className="mt-1 text-[10px] leading-5 text-[#88818A]">{action.requiresProviderAuthorization
+           ?(locale==='ta'?'Provider அனுமதி மற்றும் உரிமையாளர் ஒப்புதல் தேவை':locale==='si'?'සේවා අවසරය සහ හිමිකරු අනුමැතිය අවශ්‍යයි':'Provider authorization and owner review required')
+           :(locale==='ta'?'வரைவு / பரிசீலனை மட்டும்':locale==='si'?'කෙටුම්පත / සමාලෝචනය පමණි':'Draft / review only')}</p></div>
+         <Link href={action.href} className="inline-flex min-h-9 items-center justify-center gap-1 rounded-lg border border-[#E8DBCE] px-3 text-[11px] font-bold text-[#9E531A] hover:bg-[#FFF0DF]">
+          {words.open}<ArrowRight className="h-3 w-3"/></Link>
+        </div>;
+       })}
+      </div>
+      <p className="text-[10px] leading-5 text-[#8F7771]">{locale==='ta'?'இது AI செயல்படுத்திய வேலை அல்ல. எதுவும் அனுப்பப்படவில்லை.':locale==='si'?'මෙය ක්‍රියාත්මක වූ කාර්යයක් නොවේ. කිසිවක් යවා නැත.':'Suggestions only. No automation or provider action executed.'}</p>
+     </div>}
      <p className="text-[11px] leading-5 text-[#7C6353]">{plan.summary}</p>
     </div>}
    </div>
