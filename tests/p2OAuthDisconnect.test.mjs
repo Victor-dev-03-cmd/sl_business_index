@@ -6,7 +6,8 @@ const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 test('Google Mail disconnect API requires real SSR owner, exact origin and preview-only runtime',()=>{
   const route=read('app/api/marketing/oauth/google_mail/disconnect/route.ts');
   const runtime=read('lib/marketing/oauth-runtime.ts');
-  assert.match(route,/getGooglePreviewConfig\(\)/);
+  assert.match(route,/getGoogleDisconnectOrigin\(\)/);
+  assert.match(route,/slbi_disconnect_google_mail_connection/);
   assert.match(runtime,/env\.VERCEL_ENV!=='preview'/);
   assert.match(route,/exactOAuthRequestOrigin/);
   assert.match(route,/auth\.getUser\(\)/);

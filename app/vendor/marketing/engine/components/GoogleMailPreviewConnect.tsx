@@ -17,8 +17,12 @@ export type GoogleMailConnectionSummary={
  */
 export default function GoogleMailPreviewConnect({
   ready,businesses,connections,readEnabled=false,
+  deployment='unavailable',oauthNotice=null,
 }:{
-  ready:boolean;readEnabled?:boolean;businesses:readonly GoogleMailOwnedBusiness[];
+  ready:boolean;readEnabled?:boolean;
+  deployment?:'production'|'preview'|'unavailable';
+  oauthNotice?:'connected'|'cancelled'|'failed'|null;
+  businesses:readonly GoogleMailOwnedBusiness[];
   connections:readonly GoogleMailConnectionSummary[];
 }){
   const router=useRouter();
@@ -30,7 +34,7 @@ export default function GoogleMailPreviewConnect({
   const connected=connections.filter(c=>c.status==='connected');
   const enabled=ready&&Boolean(businessId);
   const disconnect=async(connectionId:string,ownedBusinessId:string)=>{
-    if(!ready||disconnectingId||busy)return;
+    if(disconnectingId||busy)return;
     if(!window.confirm('Disconnect this mailbox from SLBI and permanently delete its stored credentials? Google account permissions must be revoked separately.'))return;
     setError('');setDisconnectedNotice('');setDisconnectingId(connectionId);
     try{
@@ -83,19 +87,30 @@ export default function GoogleMailPreviewConnect({
       className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#FF7900] px-4 text-[11px] font-semibold text-white hover:bg-[#E86D00]">
       <IconsaxIcon name="sms" size={18} color="white"/> Continue to Email Marketing
     </Link>}
+    {oauthNotice==='connected'&&connected.length>0&&
+      <p role="status" className="rounded-xl border border-[#F2CDAE] bg-[#FFF3E8] p-3 text-[11px] font-semibold text-[#8A450E]">
+        Gmail connected and verified. You can now use the permitted tools below.
+      </p>}
+    {oauthNotice==='connected'&&connected.length===0&&
+      <p role="alert" className="rounded-xl border border-[#F2CDAE] bg-[#FFF5ED] p-3 text-[11px] text-[#925319]">
+        Google sign-in returned, but no authorized mailbox is visible. Check ownership or reconnect.
+      </p>}
+    {oauthNotice==='cancelled'&&
+      <p role="status" className="rounded-xl border border-[#E7DFDA] bg-[#FAF7F5] p-3 text-[11px] text-[#756E72]">Google authorization was cancelled. Nothing was connected.</p>}
     {ready&&<GoogleMailInboxPreview connections={connected} readEnabled={readEnabled}/>}
-    {connected.length>0&&<div className="space-y-2 rounded-lg border border-[#D8EBDD] bg-[#F3FAF5] p-3">
-      <p className="text-[11px] font-bold text-[#27734A]">
-        {connected.length} verified preview {connected.length===1?'mailbox':'mailboxes'} connected
+
+    {connected.length>0&&<div className="space-y-2 rounded-xl border border-[#F1DAC5] bg-[#FFFAF6] p-3">
+      <p className="text-[11px] font-bold text-[#9E520D]">
+        {connected.length} authorized {connected.length===1?'Gmail account':'Gmail accounts'} connected
       </p>
       {connected.map(c=><div key={c.id} className="flex flex-wrap items-center justify-between gap-2">
-        <p className="min-w-0 flex-1 truncate text-[11px] text-[#426B50]"
-          title="Preview connection metadata only">
+        <p className="min-w-0 flex-1 truncate text-[11px] text-[#625A59]"
+          title="Owner-visible connection metadata only">
           {c.account_display_name||'Verified mailbox'} · {businesses.find(b=>b.id===c.business_id)?.name||'Owned business'}
         </p>
         <button type="button" onClick={()=>void disconnect(c.id,c.business_id)}
-          disabled={!ready||busy||disconnectingId!==null} aria-busy={disconnectingId===c.id}
-          className="shrink-0 rounded-lg border border-[#9ECDB0] bg-white px-3 py-2 text-[11px] font-bold text-[#276B45] hover:bg-[#E5F6EB] disabled:cursor-not-allowed disabled:opacity-50">
+          disabled={busy||disconnectingId!==null} aria-busy={disconnectingId===c.id}
+          className="shrink-0 rounded-lg border border-[#E6C4A4] bg-white px-3 py-2 text-[11px] font-bold text-[#A25416] hover:bg-[#FFF1E3] disabled:cursor-not-allowed disabled:opacity-50">
           {disconnectingId===c.id?'Removing stored credentials…':'Disconnect from SLBI'}
         </button>
       </div>)}
@@ -116,12 +131,19 @@ export default function GoogleMailPreviewConnect({
       (enabled&&!busy?'bg-[#242428] text-white hover:bg-[#3A373C]':'cursor-not-allowed border border-[#E5E5E8] bg-[#F5F5F6] text-[#96969D]')}>
       <IconsaxIcon name={enabled?'sms':'shield-tick'} size={17}/>
       {busy?'Preparing secure Google authorization…':
-        ready?'Connect Google Mail · Preview only':'Google Mail · Preview setup required'}
+        ready?'Connect Gmail securely':'Gmail · Google setup required'}
     </button>
-    {ready&&<p className="text-[10px] leading-5 text-[#827680]">OAuth permissions: Google identity and Gmail send; {readEnabled?'additional Gmail inbox read (restricted Google scope)':'inbox read disabled'}. No automatic AI processing or messages.</p>}
-    {!ready&&<p className="text-[10px] leading-5 text-[#92919A]">
-      Requires a verified Pro test vendor, an approved Google OAuth app and the isolated preview database. Production connection stays disabled.
+    {ready&&<p className="text-[10px] leading-5 text-[#827680]">
+      {deployment==='production'?'Production Google OAuth is configured. ':'Preview-only Google OAuth is configured. '}
+      Google identity + Gmail send are requested; {readEnabled?'read-only inbox access is also requested by Google consent':'AI inbox reading is separately disabled'}. Connecting never permits automatic email marketing or model training.
     </p>}
+    {!ready&&<div role="status" className="rounded-xl border border-[#F2DEC9] bg-[#FFFAF5] p-3 text-[11px] leading-5 text-[#80583C]">
+      <p className="font-bold">Google OAuth setup required</p>
+      <p className="mt-1">{deployment==='production'
+        ?'The SLBI administrator must finish Google Cloud OAuth and the protected Vercel Production settings. Gmail Connect unlocks automatically after secure configuration.'
+        :'A reviewed Google OAuth Preview app and the protected Preview settings are needed.'}</p>
+      <p className="mt-2">No password is requested or stored by SLBI. Previously connected owners can still disconnect below.</p>
+    </div>}
     {disconnectedNotice&&<p role="status" className="rounded-lg border border-[#CAE7D5] bg-[#F5FBF7] p-3 text-[11px] leading-5 text-[#2F7652]">{disconnectedNotice}</p>}
     {error&&<p role="alert" className="rounded-lg border border-[#E8C8C8] bg-[#FFF4F4] p-3 text-[11px] leading-5 text-[#9C3B3B]">{error}</p>}
   </div>;
