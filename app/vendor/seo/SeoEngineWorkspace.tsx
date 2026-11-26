@@ -12,6 +12,13 @@ type Props={listings:SeoOwnedListing[]};
 type View='listing'|'website';
 
 const providers=['GoDaddy','Namecheap','Cloudflare','Hostinger','Other provider'] as const;
+const providerGuide:Record<(typeof providers)[number],string>={
+  GoDaddy:'Sign in to GoDaddy → My Products → select your domain → DNS. You do not need to share the login.',
+  Namecheap:'Sign in to Namecheap → Domain List → Manage → Advanced DNS. Keep your password private.',
+  Cloudflare:'Sign in to Cloudflare → choose your domain → DNS → Records. Keep your account credentials private.',
+  Hostinger:'Sign in to Hostinger hPanel → Domains → choose the domain → DNS / Nameservers.',
+  'Other provider':'Open the account where your domain is managed, then look for DNS settings or DNS Records. Ask your domain provider for help locating that page.',
+};
 
 export default function SeoEngineWorkspace({listings}:Props){
   const [selectedId,setSelectedId]=useState(String(listings[0]?.id??''));
@@ -209,7 +216,7 @@ export default function SeoEngineWorkspace({listings}:Props){
             <h3 className="text-[15px] font-bold text-[#2C2C31]">Your setup guide for {hostname}</h3>
             <p className="text-[11px] text-[#787881]">Domain provider: {provider}. These are preparation instructions, not a completed connection.</p>
             {[
-              {step:'Step 1',title:'Open your domain account',text:'Sign in where you manage this domain. Find “DNS settings” or “Manage DNS”. You do not need to share your password with SLBI.'},
+              {step:'Step 1',title:'Open your domain account',text:providerGuide[provider]},
               {step:'Step 2',title:'Prove the website belongs to you',text:'When SLBI domain verification becomes available, the app will give you a unique DNS TXT value or a website-file option. Add only that issued value, then return here to verify.'},
               {step:'Step 3',title:'Choose what SEO can change',text:'After ownership is verified, connect a supported website platform separately, review suggested SEO updates and approve them. No automatic editing without authorization.'},
             ].map(item=><div key={item.step} className="flex gap-3 rounded-xl bg-white p-4">
