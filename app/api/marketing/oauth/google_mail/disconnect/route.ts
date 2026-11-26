@@ -1,7 +1,7 @@
 import 'server-only';
 import {createClient as createServiceClient} from '@supabase/supabase-js';
 import {createClient} from '@/lib/supabase/server';
-import {exactOAuthRequestOrigin,getGooglePreviewConfig}
+import {exactOAuthRequestOrigin,getGoogleDisconnectOrigin}
   from '@/lib/marketing/oauth-runtime';
 
 export const runtime='nodejs';
@@ -14,16 +14,16 @@ const fail=(status:number,error:string)=>Response.json({error},{
 });
 
 /**
- * Preview-only LOCAL disconnect. Deletes SLBI token ciphertext atomically and
+ * Secure LOCAL disconnect in Preview or Production. Deletes SLBI token ciphertext atomically and
  * marks the account revoked in our DB. It does NOT claim to revoke the Google
  * OAuth grant remotely or delete any unrelated business/customer records.
  *
  * Unlike sending/connecting, an EXPIRED Pro owner can disconnect their data.
  */
 export async function POST(request:Request){
-  const config=getGooglePreviewConfig();
-  if(!config)return fail(503,'Connector disconnect is not enabled in this environment.');
-  if(!exactOAuthRequestOrigin(request.url,request.headers.get('origin'),config.origin))
+  const origin=getGoogleDisconnectOrigin();
+  if(!origin)return fail(503,'Connector disconnect is not available in this environment.');
+  if(!exactOAuthRequestOrigin(request.url,request.headers.get('origin'),origin))
     return fail(403,'Disconnect must be requested from this site.');
   if(!(request.headers.get('content-type')||'').toLowerCase().startsWith('application/json'))
     return fail(415,'JSON body required.');
