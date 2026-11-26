@@ -45,7 +45,9 @@ test('Connectors shows app grid and requirements, without AI command box or fake
  assert.match(grid,/MARKETING_CONNECTORS\.map/);
  assert.match(grid,/onClick=\{\(\)=>setSelected\(item\.id\)\}/);
  assert.match(grid,/current\.requirements/);
- assert.match(grid,/href="\/vendor\/marketing\/whatsapp"/);
+ assert.match(grid,/Dialog.Root/);
+ assert.match(grid,/WhatsAppConnectorSetup/);
+ assert.match(grid,/ProviderLogo/);
  assert.match(grid,/disabled aria-disabled="true"/);
  assert.match(whatsapp,/disabled aria-disabled="true"/);
  assert.doesNotMatch(whatsapp,/WhatsAppGrowthOperator|WhatsAppConnectionLab|<textarea/);
