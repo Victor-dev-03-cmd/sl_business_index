@@ -56,8 +56,10 @@ test('Google consent control is preview-only, business-selected and fails closed
   assert.match(page,/from\('marketing_connections'\)/);
   assert.match(page,/\.eq\('user_id',user\.id\)/);
   assert.match(page,/\.eq\('owner_id',user\.id\)/);
-  assert.match(page,/provider\.id==='gmail'/);
-  assert.match(page,/disabled aria-disabled="true"/);
+  const grid=read('app/vendor/marketing/engine/components/ConnectorGrid.tsx');
+  assert.match(page,/ConnectorGrid/);
+  assert.match(grid,/current\.id==='gmail'/);
+  assert.match(grid,/disabled aria-disabled="true"/);
   assert.match(ui,/JSON\.stringify\(\{businessId\}\)/);
   assert.match(ui,/credentials:'same-origin'/);
   assert.match(ui,/next\.origin!=='https:\/\/accounts\.google\.com'/);
