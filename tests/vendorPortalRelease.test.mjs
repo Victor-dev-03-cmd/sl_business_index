@@ -91,7 +91,8 @@ test('QR Studio provides branded presets and print/download without fake scan co
   assert.match(qr,/printCard/);
   assert.match(qr,/copyLink/);
   assert.match(qr,/qr_inventory/);
-  assert.match(qr,/vendor\/insights/);
+  assert.match(qr,/vendor\/analytics/);
+  assert.match(load('app/vendor/analytics/page.tsx'),/insights\/page/);
   assert.doesNotMatch(qr,/Trackable Scans|fakeScanCount/);
 });
 
