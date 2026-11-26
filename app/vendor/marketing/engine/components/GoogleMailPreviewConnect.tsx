@@ -2,11 +2,12 @@
 import {useState} from 'react';
 import {useRouter} from 'next/navigation';
 import IconsaxIcon from '@/app/vendor/components/IconsaxIcon';
+import GoogleMailInboxPreview from './GoogleMailInboxPreview';
 
 export type GoogleMailOwnedBusiness={id:string;name:string};
 export type GoogleMailConnectionSummary={
   id:string;business_id:string;account_display_name:string|null;
-  status:string;connected_at:string|null;
+  status:string;connected_at:string|null;granted_scopes:string[];
 };
 
 /**
@@ -14,9 +15,9 @@ export type GoogleMailConnectionSummary={
  * or service-role keys. Start state is persisted by the server and one-time.
  */
 export default function GoogleMailPreviewConnect({
-  ready,businesses,connections,
+  ready,businesses,connections,readEnabled=false,
 }:{
-  ready:boolean;businesses:readonly GoogleMailOwnedBusiness[];
+  ready:boolean;readEnabled?:boolean;businesses:readonly GoogleMailOwnedBusiness[];
   connections:readonly GoogleMailConnectionSummary[];
 }){
   const router=useRouter();
@@ -77,6 +78,7 @@ export default function GoogleMailPreviewConnect({
     }
   };
   return <div className="mt-auto space-y-3 pt-4">
+    {ready&&<GoogleMailInboxPreview connections={connected} readEnabled={readEnabled}/>}
     {connected.length>0&&<div className="space-y-2 rounded-lg border border-[#D8EBDD] bg-[#F3FAF5] p-3">
       <p className="text-[11px] font-bold text-[#27734A]">
         {connected.length} verified preview {connected.length===1?'mailbox':'mailboxes'} connected
@@ -111,6 +113,7 @@ export default function GoogleMailPreviewConnect({
       {busy?'Preparing secure Google authorization…':
         ready?'Connect Google Mail · Preview only':'Google Mail · Preview setup required'}
     </button>
+    {ready&&<p className="text-[10px] leading-5 text-[#827680]">OAuth permissions: Google identity and Gmail send; {readEnabled?'additional Gmail inbox read (restricted Google scope)':'inbox read disabled'}. No automatic AI processing or messages.</p>}
     {!ready&&<p className="text-[10px] leading-5 text-[#92919A]">
       Requires a verified Pro test vendor, an approved Google OAuth app and the isolated preview database. Production connection stays disabled.
     </p>}
