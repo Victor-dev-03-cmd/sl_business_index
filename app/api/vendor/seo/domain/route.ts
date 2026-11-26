@@ -5,7 +5,7 @@ import {createClient} from '@/lib/supabase/server';
 import {getWebsiteGuideHostname} from '@/lib/seo/owner-readiness';
 import {randomBytes} from 'node:crypto';
 import {resolveTxt} from 'node:dns/promises';
-import {hasHttpFileProof} from '@/lib/seo/http-file-proof';
+import {inspectHttpFileProof} from '@/lib/seo/http-file-proof';
 
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
@@ -166,12 +166,17 @@ export async function POST(request:Request){
     if(!locked)return denied(429,'verification_rate_limited');
     const method:VerificationMethod=existing.verification_method==='http_file'?'http_file':'dns_txt';
     let found=false;
+    let httpError:string='verification_file_unreachable';
     try{
-      found=method==='http_file'
-        ?await hasHttpFileProof(existing.hostname,existing.verification_token)
-        :await hasDnsProof(existing.txt_record_name,existing.verification_token);
-    }catch{/* TLS errors, unreachable hosts and DNS failures all fail closed. */}
-    if(!found)return denied(409,method==='http_file'?'verification_file_not_found':'dns_record_not_found');
+      if(method==='http_file'){
+        const proof=await inspectHttpFileProof(existing.hostname,existing.verification_token);
+        found=proof.ok;
+        if(!proof.ok)httpError=proof.code;
+      }else{
+        found=await hasDnsProof(existing.txt_record_name,existing.verification_token);
+      }
+    }catch{/* Fail closed; never bypass live DNS/HTTPS ownership proof. */}
+    if(!found)return denied(409,method==='http_file'?httpError:'dns_record_not_found');
     const now=new Date();
     const {data:verified,error:saveError}=await store.from('seo_domain_connections').update({
       state:'verified',verified_at:now.toISOString(),
