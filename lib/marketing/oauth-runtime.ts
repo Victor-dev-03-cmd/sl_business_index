@@ -7,6 +7,8 @@ import {createCipheriv,createDecipheriv,randomBytes} from 'node:crypto';
 import {makeAuthorizationUrl,pkceS256Challenge} from './oauth-provider-contract.ts';
 
 export const GOOGLE_SEND_SCOPE='https://www.googleapis.com/auth/gmail.send';
+/** Restricted Gmail scope: NEVER request without isolated preview flag and owner consent. */
+export const GOOGLE_READ_SCOPE='https://www.googleapis.com/auth/gmail.readonly';
 export const GOOGLE_IDENTITY_SCOPES=['openid','email'] as const;
 export const GOOGLE_CALLBACK_PATH='/api/marketing/oauth/google_mail/callback';
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -14,6 +16,7 @@ const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]
 export type GooglePreviewOAuthConfig={
   origin:string;redirectUri:string;clientId:string;clientSecret:string;
   stateSecret:string;encryptionKey:Buffer;encryptionKeyId:string;
+  gmailReadEnabled:boolean;
 };
 function exactOrigin(raw:string):string|null{
   try {
@@ -38,7 +41,8 @@ export function getGooglePreviewConfig(env:NodeJS.ProcessEnv=process.env):Google
   if(!origin||key.length!==32||stateSecret.length<32||clientId.length<12||
      clientSecret.length<8||!/^[A-Za-z0-9_-]{3,64}$/.test(encryptionKeyId))return null;
   return {origin,redirectUri:origin+GOOGLE_CALLBACK_PATH,clientId,clientSecret,
-    stateSecret,encryptionKey:key,encryptionKeyId};
+    stateSecret,encryptionKey:key,encryptionKeyId,
+    gmailReadEnabled:env.SLBI_MARKETING_OAUTH_GMAIL_READ_PREVIEW_ENABLED==='true'};
 }
 export function validateOAuthStartBody(value:unknown):string|null{
   if(!value||Array.isArray(value)||typeof value!=='object')return null;
@@ -87,7 +91,8 @@ export function makeGooglePreviewAuthUrl(config:GooglePreviewOAuthConfig,state:s
   const u=new URL(makeAuthorizationUrl({
     endpoint:'https://accounts.google.com/o/oauth2/v2/auth',
     clientId:config.clientId,redirectUri:config.redirectUri,state,
-    scope:[...GOOGLE_IDENTITY_SCOPES,GOOGLE_SEND_SCOPE],
+    scope:[...GOOGLE_IDENTITY_SCOPES,GOOGLE_SEND_SCOPE,
+      ...(config.gmailReadEnabled?[GOOGLE_READ_SCOPE]:[])],
     pkceChallenge:pkceS256Challenge(verifier),
   }));
   u.searchParams.set('access_type','offline');
