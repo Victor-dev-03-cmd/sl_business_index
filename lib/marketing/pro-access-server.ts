@@ -1,12 +1,14 @@
 import 'server-only';
 import {createClient} from '@/lib/supabase/server';
 import {evaluateMarketingEntitlement} from '@/lib/marketing/engine-registry';
+import {isApprovedOwnerStudioIdentity} from '@/lib/marketing/owner-studio-identity';
 
 export type MarketingAccess={
   allowed:boolean;
   authenticated:boolean;
   plan:'Professional'|'Enterprise'|null;
-  reason:'active'|'not_authenticated'|'upgrade_required'|'unavailable';
+  reason:'active'|'owner_access'|'not_authenticated'|'upgrade_required'|'unavailable';
+  ownerStudioAccess?:boolean;
 };
 
 /**
@@ -36,6 +38,13 @@ export async function getMarketingAccessForUser(
       .select('plan_name,payment_reference,verified_at,expires_at')
       .eq('user_id',userId).maybeSingle();
     if(error)return {allowed:false,authenticated:true,plan:null,reason:'unavailable'};
+    // Existing trusted, owner-only QA grant. Email metadata from browser is NEVER accepted.
+    // The exact confirmed identity must be freshly fetched from Supabase Auth and match userId.
+    if(data?.payment_reference==='SLBI_INTERNAL_QA_NO_PAYMENT_20261114'){
+      const {data:identity,error:identityError}=await client.auth.getUser();
+      if(!identityError&&identity.user?.id===userId&&isApprovedOwnerStudioIdentity(identity.user))
+        return {allowed:true,authenticated:true,plan:null,reason:'owner_access',ownerStudioAccess:true};
+    }
     if(!evaluateMarketingEntitlement(data))
       return {allowed:false,authenticated:true,plan:null,reason:'upgrade_required'};
     const plan=data!.plan_name as 'Professional'|'Enterprise';
