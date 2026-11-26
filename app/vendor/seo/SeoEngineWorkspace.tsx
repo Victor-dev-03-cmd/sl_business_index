@@ -71,7 +71,7 @@ export default function SeoEngineWorkspace({listings}:Props){
           <span className="rounded-full bg-[#FFF2E7] px-3 py-1.5 text-[11px] font-bold text-[#BA5807]">Free SEO foundation</span>
         </div>
         <label htmlFor="seo-business-select" className="block text-[11px] font-semibold text-[#46464D]">Choose business</label>
-        <select id="seo-business-select" value={String(listing.id)} onChange={event=>{setSelectedId(event.target.value);setCopied(false)}}
+        <select id="seo-business-select" value={String(listing.id)} onChange={event=>{setSelectedId(event.target.value);setCopied(false);setWebsite('');setShowGuide(false);setBadgePreview(false);setView('listing')}}
           className={neo.input} data-testid="seo-business-select">
           {listings.map(item=><option key={String(item.id)} value={String(item.id)}>{item.name||'Unnamed business'} — {item.status==='approved'?'Published':item.status==='rejected'?'Rejected':item.status==='suspended'?'Suspended':'Awaiting review'}</option>)}
         </select>
