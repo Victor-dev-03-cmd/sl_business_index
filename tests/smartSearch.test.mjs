@@ -17,6 +17,16 @@ test("Jaffna Clothings resolves known place and Clothing & Brands",()=>{
  assert.deepEqual(r.categories,["Clothing & Brands"]);
  assert.equal(r.specificService,false);
 });
+test("Romanized Tamil thuni kadai reaches real Clothing & Brands listings",()=>{
+ for(const text of ["thuni kadai","thunikadai","thuni kaday"]){
+  const r=resolveSmartSearch(text,towns,["Clothing & Brands"]);
+  assert.equal(r.intentKey,"clothing",text);
+  assert.equal(r.canonicalQuery,"clothing",text);
+  assert.deepEqual(r.categories,["Clothing & Brands"],text);
+  assert.equal(r.specificService,false,text);
+  assert.equal(r.location,null,text);
+ }
+});
 test("Biryani shop maps to food but stays product-specific",()=>{
  const r=resolveSmartSearch("Biryani shop",towns);
  assert.equal(r.canonicalQuery,"biryani");
