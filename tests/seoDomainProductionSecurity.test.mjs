@@ -133,3 +133,20 @@ test('Only the requesting authenticated owner receives safe, specific HTTP proof
  assert.match(api,/if\(!found\)return denied\(409,method==='http_file'\?httpError:'dns_record_not_found'\)/);
  assert.doesNotMatch(api,/verification_token:existing.verification_token\s*,\s*message:/);
 });
+
+test('HTTPS proof tries multiple individually validated public CDN IPs without weakening ownership',()=>{
+ const http=read('lib/seo/http-file-proof.ts');
+ assert.match(http,/addresses\.some\(record=>record.family!==4\|\|!isAllowedPublicIPv4\(record.address\)\)/);
+ assert.match(http,/new Set\(addresses\.map\(record=>record.address\)\)\]\.slice\(0,3\)/);
+ assert.match(http,/const deadline=Date\.now\(\)\+TIMEOUT_MS/);
+ assert.match(http,/const remaining=deadline-Date\.now\(\)/);
+ assert.match(http,/inspectPublicIp\(hostname,expected,attempts\[index\],budget\)/);
+ assert.match(http,/res.statusCode!==200/);
+ assert.match(http,/text===expected\?\{ok:true\}:failure\('verification_file_token_mismatch'\)/);
+ assert.match(http,/if\(!\['verification_file_unreachable','verification_file_timeout','verification_file_tls_error'\]/);
+ assert.match(http,/lookup:\(_host,_options,callback\)=>callback\(null,pinned,4\)/);
+ assert.match(http,/servername:hostname/);
+ assert.match(http,/port:443,path:SEO_HTTP_PROOF_PATH,method:'GET'/);
+ assert.match(http,/MAX_BYTES=512/);
+ assert.doesNotMatch(http,/redirect:'follow'|rejectUnauthorized:false|agent:new ProxyAgent/);
+});
