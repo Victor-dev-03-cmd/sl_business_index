@@ -41,7 +41,7 @@ export async function POST(request:Request){
  const plan=planWA04OwnerRequest(body.request,locale);
  const studio=routeML07StudioRequest(body.request,locale);
  if(!plan.ok)return reply(400,plan.reason);
- if(!studio.ok)return reply(400,studio.reason);
+ if(!studio.ok)return reply(400,studio.reason ?? 'invalid_request');
  try{
   const supabase=await createClient();
   const {data:{user},error:authError}=await supabase.auth.getUser();
