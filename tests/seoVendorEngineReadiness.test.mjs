@@ -85,20 +85,28 @@ test('Owner SEO route uses fresh auth, RLS owner scope, no Pro/Verified eligibil
  assert.doesNotMatch(page,/getMarketingAccessForUser|subscription_plans|service_role/);
 });
 
-test('SEO engine page clearly distinguishes publication from verification and indexing',()=>{
+test('SEO engine displays real listing status, honest ranking state, and server-backed domain connector',()=>{
  const page=read('app/vendor/seo/SeoEngineWorkspace.tsx');
- assert.match(page,/Verified badge not required/);
- assert.match(page,/badge optional|Badge optional/);
- assert.match(page,/isPublished\?\'Published on SLBI\'/);
+ const domain=read('app/vendor/seo/SeoDomainConnector.tsx');
+ const server=read('app/vendor/seo/page.tsx');
+ assert.match(page,/Ordinary listing · SEO available/);
+ assert.match(page,/is_verified/);
+ assert.match(page,/data-testid="seo-publication-status"/);
  assert.match(page,/Google indexing/);
- assert.match(page,/Not yet verified/);
+ assert.match(page,/Not yet measured/);
  assert.match(page,/getSeoPreparation\(listing\)/);
  assert.match(page,/getPublicBusinessSEO\(listing\)/);
- assert.match(page,/getWebsiteGuideHostname\(website\)/);
- assert.match(page,/Guide preview only — no domain is connected/);
- assert.match(page,/A verification token and a real/);
- assert.match(page,/No external website edits, Google API submissions/);
- assert.match(page,/setWebsite\(''\)/,'Must reset domain inputs when changing vendor context');
+ assert.match(page,/SeoDomainConnector/);
+ assert.match(page,/domainServiceReady=\{domainServiceReady\}/);
+ assert.match(domain,/Vercel/);
+ assert.match(domain,/domain ownership using a real DNS TXT record/);
+ assert.match(domain,/data-testid="seo-domain-verify"/);
+ assert.match(domain,/Start secure verification/);
+ assert.match(domain,/api\/vendor\/seo\/domain/);
+ assert.match(domain,/setConnection\(next/);
+ assert.match(server,/seo_domain_connections/);
+ assert.match(server,/\.in\('business_id',ids\)/);
+ assert.doesNotMatch(page,/badgePreview|Guide preview only/);
 });
 
 test('Easy navigation shows SEO Engine as primary tab and searchable quick action',()=>{
@@ -117,14 +125,14 @@ test('Sitemap continues approved-only discovery and de-duplicates identical cate
  assert.match(sitemap,/seenCategorySlugs\.add\(key\)/);
 });
 
-test('No pretend domain verification or privileged commands in first SEO-01 workspace',()=>{
- const files=[
+test('SEO UI never includes secret credentials, Google indexing spam or direct database writes',()=>{
+ for(const path of [
   'lib/seo/owner-readiness.ts',
   'app/vendor/seo/page.tsx',
   'app/vendor/seo/SeoEngineWorkspace.tsx',
- ];
- for(const path of files){
+  'app/vendor/seo/SeoDomainConnector.tsx',
+ ]){
   const content=read(path);
-  assert.doesNotMatch(content,/SERVICE_ROLE_KEY|googleapis\.com\/indexing|\.insert\(|\.update\(|\.upsert\(|\.delete\(|dns\.resolve|fetch\(website/);
+  assert.doesNotMatch(content,/SERVICE_ROLE_KEY|indexing\.googleapis|\.insert\(|\.upsert\(|dns\.resolve|fetch\(website/);
  }
 });
