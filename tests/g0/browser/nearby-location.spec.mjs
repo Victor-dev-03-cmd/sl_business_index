@@ -101,7 +101,8 @@ test('Denied GPS still navigates Home query to island-wide Nearby results',async
   await expect(page).toHaveURL(url=>{
     const u=new URL(url);
     return u.pathname==='/nearby'
-      && (u.searchParams.get('q')||'').toLowerCase().includes('hospital')
+      && /medical|hospital/.test((u.searchParams.get('q')||'').toLowerCase())
+      && u.searchParams.get('intent')==='medical'
       && u.searchParams.get('locationStatus')==='gps-unavailable'
       && !u.searchParams.has('lat')&&!u.searchParams.has('lng')
       && !u.searchParams.has('source')&&!u.searchParams.has('radius');
@@ -128,7 +129,8 @@ test('Approximate GPS does not block search or pretend a town was detected',asyn
   await expect(page).toHaveURL(url=>{
     const u=new URL(url);
     return u.pathname==='/nearby'
-      && (u.searchParams.get('q')||'').toLowerCase().includes('thuni')
+      && (u.searchParams.get('q')||'').toLowerCase().includes('clothing')
+      && u.searchParams.get('intent')==='clothing'
       && u.searchParams.get('locationStatus')==='gps-unavailable'
       && !u.searchParams.has('lat')&&!u.searchParams.has('lng');
   },{timeout:15000});
