@@ -1,0 +1,41 @@
+name: NeuroGrowth ML-07 12-app multilingual CPU intent training
+on:
+  pull_request:
+    paths:
+      - "lib/growth/agent/ml07-studio-router.mjs"
+      - "ml/neurogrowth/contracts/ml07_synthetic_studio_intents.json"
+      - "ml/neurogrowth/ml07_studio_intent_train.py"
+      - "ml/neurogrowth/tests/test_ml07_studio_intents.py"
+      - "tests/ml/neurogrowth-ml07-studio-routing.test.mjs"
+      - "app/api/vendor/marketing/whatsapp/plan/route.ts"
+      - "app/vendor/marketing/components/WhatsAppGrowthOperator.tsx"
+      - ".github/workflows/neurogrowth-ml07.yml"
+      - "docs/growth/HANDOFF_LATEST.md"
+  push:
+    branches: [main]
+    paths:
+      - "lib/growth/agent/ml07-studio-router.mjs"
+      - "ml/neurogrowth/contracts/ml07_synthetic_studio_intents.json"
+      - "ml/neurogrowth/ml07_studio_intent_train.py"
+      - "tests/ml/neurogrowth-ml07-studio-routing.test.mjs"
+      - ".github/workflows/neurogrowth-ml07.yml"
+permissions:
+  contents: read
+jobs:
+  synthetic-trilingual-intent-benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: 12-app router security and locale tests
+        run: node --test tests/ml/neurogrowth-ml07-studio-routing.test.mjs
+      - name: Synthetic consent and heldout Python tests
+        run: python -m unittest discover -s ml/neurogrowth/tests -p test_ml07_studio_intents.py -v
+      - name: Train CPU-only synthetic classifier and evaluate all three language holdouts
+        run: python ml/neurogrowth/ml07_studio_intent_train.py --json
