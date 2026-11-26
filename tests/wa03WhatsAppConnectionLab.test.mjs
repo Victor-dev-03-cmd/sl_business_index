@@ -10,7 +10,10 @@ test('WA-03 Connection Lab is inside Marketing Studio and accessible from existi
   const grid=read('app/vendor/marketing/engine/components/ConnectorGrid.tsx');
   assert.match(connections,/ConnectorGrid/);
   assert.match(grid,/id==='whatsapp_business'/);
-  assert.match(grid,/href="\/vendor\/marketing\/whatsapp"/);
+  assert.match(grid,/Dialog\.Root/);
+  assert.match(grid,/WhatsAppConnectorSetup/);
+  assert.match(grid,/ProviderLogo/);
+  assert.match(grid,/\/connector-icons\//);
   assert.match(studio,/href="\/vendor\/marketing-engine\/connections"/);
   assert.match(grid,/disabled aria-disabled="true"/); // No fake live OAuth.
 });
