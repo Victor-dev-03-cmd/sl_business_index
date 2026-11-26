@@ -3,10 +3,14 @@ import { neo } from '../components/neumorphic';
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabaseClient';
 import IconsaxIcon from '../components/IconsaxIcon';
 import { summarizeGrowthMetrics } from '@/lib/growth/attribution';
 import { compareGrowthSnapshots, createGrowthWindows, INSIGHT_BATCH_SIZE, INSIGHT_MAX_ROWS, type InsightPeriodDays } from '@/lib/growth/insight-comparison';
+
+const VendorAnalyticsCharts=dynamic(()=>import('./VendorAnalyticsCharts'),{ssr:false,loading:()=>
+  <div role="status" className="rounded-[20px] border border-[#ECEAEC] bg-[#FCFBFA] p-8 text-[12px] text-[#817D83]">Loading interactive charts…</div>});
 
 type Period = '7' | '30' | '90';
 type OwnedBusiness = { id: string; name: string };
@@ -181,9 +185,9 @@ export default function GrowthInsightsPage() {
   if (unauthenticated) return (
     <div className="mx-auto max-w-5xl px-4 py-16">
       <div className={panel + ' p-8'}>
-        <h1 className="text-2xl font-bold text-[#2C2C31]">Sign in to view Growth Insights</h1>
+        <h1 className="text-2xl font-bold text-[#2C2C31]">Sign in to view Analytics Center</h1>
         <p className="mt-2 text-sm text-slate-500">Only the owner can view their business analytics and enquiries.</p>
-        <Link href="/login?redirect=/vendor/insights" className="mt-6 inline-flex rounded-xl bg-[#242428] px-5 py-3 text-xs font-bold text-white">Sign in</Link>
+        <Link href="/login?redirect=/vendor/analytics" className="mt-6 inline-flex rounded-xl bg-[#242428] px-5 py-3 text-xs font-bold text-white">Sign in</Link>
       </div>
     </div>
   );
@@ -192,12 +196,13 @@ export default function GrowthInsightsPage() {
     <div className={neo.page + " mx-auto w-full  space-y-5 pb-7"}>
       <header className={neo.heroDark + " flex flex-col items-start justify-between gap-5 px-6 py-7 sm:px-8 sm:py-9 lg:flex-row lg:items-end"}>
         <div className="relative z-10 max-w-2xl">
-          <p className="text-[10px] font-extrabold uppercase tracking-[.17em] text-[#FFBC82]">Growth intelligence / Owner insights</p>
-          <h1 className="mt-2 text-[30px] font-extrabold tracking-[-.045em] text-white sm:text-[35px]">Know what drives your growth.</h1>
-          <p className="mt-2 text-[12px] leading-6 text-[#D2D2D6]">Understand recorded listing views, customer actions and stored enquiries. Clicks and CRM stages are never presented as verified sales.</p>
+          <p className="text-[10px] font-extrabold uppercase tracking-[.17em] text-[#FFBC82]">Growth intelligence / Analytics Center</p>
+          <h1 className="mt-2 text-[30px] font-extrabold tracking-[-.045em] text-white sm:text-[35px]">Analytics that make sense.</h1>
+          <p className="mt-2 text-[12px] leading-6 text-[#D2D2D6]">Explore daily trends, action comparisons, lead source charts, business performance and your activity calendar — all from owned, recorded data.</p>
           <div className="mt-4 flex flex-wrap gap-2">
             <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-bold text-[#EDEDEF]">Business-scoped metrics</span>
-            <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-bold text-[#EDEDEF]">Transparent attribution</span>
+            <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-bold text-[#EDEDEF]">Visual reporting · UTC</span>
+            <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-bold text-[#EDEDEF]">No estimated revenue</span>
           </div>
         </div>
         <button type="button" onClick={() => setRefreshKey(n => n + 1)} disabled={loading}
@@ -210,7 +215,7 @@ export default function GrowthInsightsPage() {
         <label className="flex min-w-[210px] flex-1 flex-col gap-1 text-[11px] font-bold text-[#62626A]">
           Business
           <select value={businessId} onChange={e => setBusinessId(e.target.value)}
-            className="h-10 rounded-lg border border-[#E7E7EC] bg-[#FBFCF9] px-3 text-[12px] font-medium text-[#34343A]">
+            className="h-10 rounded-lg border border-[#E7E7EC] bg-white px-3 text-[12px] font-medium text-[#34343A]">
             <option value="all">All my approved businesses</option>
             {businesses.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
           </select>
@@ -255,58 +260,23 @@ export default function GrowthInsightsPage() {
         ))}
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[1.45fr_1fr]">
-        <section className={panel + ' p-5 sm:p-6'} aria-labelledby="growth-trend-title">
-          <div className="flex flex-wrap items-start justify-between gap-2">
-            <div>
-              <h2 id="growth-trend-title" className="text-[17px] font-bold text-[#2B2B30]">Recorded interactions</h2>
-              <p className="mt-1 text-[11px] text-slate-500">UTC day · rolling period, boundary days are partial · listing views, calls and directions</p>
-            </div>
-            <span className="text-[10px] font-medium text-[#2C2C31]">{period} days</span>
-          </div>
-          <div className="mt-8 flex h-44 items-end gap-[3px] rounded-lg border-b border-[#E7E7EC] pb-1" role="img" aria-label={error ? 'Interaction chart unavailable' : 'Daily recorded interactions bar chart'}>
-            {daily.map((day, i) => {
-              const views = day.views, contacts = day.calls + day.directions;
-              const size = views + contacts;
-              return (
-                <div key={day.key} className="group flex h-full min-w-0 flex-1 flex-col justify-end" title={day.label + ': ' + size + ' interactions'}>
-                  <div className="flex w-full flex-col justify-end overflow-hidden rounded-t-sm" style={{height: error ? '0%' : Math.max(size > 0 ? 3 : 0, (size/maxVolume)*100) + '%'}}>
-                    <div className="bg-[#FFF2E7]" style={{flex: views || 0}} />
-                    <div className="bg-[#242428]" style={{flex: contacts || 0}} />
-                  </div>
-                  {period === '7' && <span className="absolute hidden text-[8px]">{i}</span>}
-                </div>
-              );
-            })}
-          </div>
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[10px] text-slate-400">
-            <span>{daily[0]?.label ?? '—'}</span>
-            <div className="flex flex-wrap gap-3"><span><span className="mr-1 inline-block h-2 w-2 rounded-full bg-[#FFF2E7]"/>Views</span><span><span className="mr-1 inline-block h-2 w-2 rounded-full bg-[#242428]"/>Call / directions clicks</span></div>
-            <span>{daily[daily.length-1]?.label ?? '—'}</span>
-          </div>
-        </section>
-        <section className={panel + ' p-5 sm:p-6'}>
-          <h2 className="text-[17px] font-bold text-[#2B2B30]">Lead attribution</h2>
-          <p className="mt-1 text-[11px] text-slate-500">Only recorded CRM sources are counted. We do not infer where unknown enquiries originated.</p>
-          <div className="mt-6 space-y-4">
-            {[
-              {name:'Website detail page',value:metrics.leadsFromWebDetail},
-              {name:'Mobile business detail',value:metrics.leadsFromMobileDetail},
-              {name:'Other / unknown source',value:metrics.leadsFromOtherSources},
-            ].map(item => <div key={item.name}>
-              <div className="flex items-center justify-between gap-2 text-[12px]">
-                <span className="font-medium text-[#2C2C31]">{item.name}</span><strong className="tabular-nums text-[#2C2C31]">{loading || error ? '—' : formatNumber(item.value)}</strong>
-              </div>
-              <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#F8F8FA]"><div className="h-full rounded-full bg-[#FFF2E7]" style={{width: (metrics.crmLeadRecords ? item.value / metrics.crmLeadRecords * 100 : 0) + '%'}} /></div>
-            </div>)}
-          </div>
-          <div className="mt-6 rounded-xl bg-[#F4F8F1] p-4">
-            <div className="flex items-center justify-between gap-2"><span className="text-[12px] font-semibold text-[#2C2C31]">CRM marked converted</span><strong className="text-xl font-extrabold tabular-nums text-[#2C2C31]">{loading || error ? '—' : formatNumber(metrics.crmMarkedConverted)}</strong></div>
-            <p className="mt-2 text-[10px] leading-5 text-[#777780]">Vendor-updated CRM status; not verified payments, completed sales or revenue.</p>
-          </div>
-          <Link href="/vendor/leads" className="mt-5 inline-flex items-center gap-2 text-xs font-bold text-[#2C2C31] hover:underline">Manage CRM enquiries <IconsaxIcon name="arrow-right-2" size={14}/></Link>
-        </section>
-      </div>
+      {!loading&&!error&&businesses.length>0&&<VendorAnalyticsCharts
+        daily={daily}
+        origins={[
+          {name:'Website detail page',value:metrics.leadsFromWebDetail},
+          {name:'Mobile business detail',value:metrics.leadsFromMobileDetail},
+          {name:'Other / unknown',value:metrics.leadsFromOtherSources},
+        ]}
+        businesses={byBusiness}/>}
+      {!loading&&!error&&businesses.length===0&&<div className={panel+' p-8 text-[12px] text-[#807B81]'}>No approved owned businesses were found. Publish an eligible listing to start seeing recorded interactions.</div>}
+      <section className={panel+' flex flex-wrap items-center justify-between gap-4 p-5 sm:p-6'}>
+        <div className="max-w-xl"><h2 className="text-[15px] font-semibold text-[#252329]">From insights to action</h2>
+          <p className="mt-1 text-[11px] leading-6 text-[#817E85]">Manage enquiries in your CRM or share your directory profile with a branded QR. This reporting view does not claim QR scan tracking.</p></div>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/vendor/leads" className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-[#222126] px-4 text-[11px] font-semibold text-white"><IconsaxIcon name="message-text" size={16}/> Open Leads CRM</Link>
+          <Link href="/vendor/qr-code" className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-[#E8DCD2] bg-[#FFF5EC] px-4 text-[11px] font-semibold text-[#AD581D]"><IconsaxIcon name="scan-barcode" size={16}/> QR Studio</Link>
+        </div>
+      </section>
 
       <section className={panel + ' overflow-hidden'} aria-labelledby="business-performance-title">
         <div className="border-b border-[#E7E7EC] p-5 sm:px-6">
@@ -315,7 +285,7 @@ export default function GrowthInsightsPage() {
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[590px] text-left">
-            <thead className="bg-[#F8FBF8] text-[10px] font-bold uppercase tracking-wider text-[#777780]">
+            <thead className="bg-[#FAF7F4] text-[10px] font-bold uppercase tracking-wider text-[#777780]">
               <tr><th className="px-5 py-3">Business</th><th className="px-4 py-3 text-right">Views</th><th className="px-4 py-3 text-right">Calls</th><th className="px-4 py-3 text-right">Directions</th><th className="px-5 py-3 text-right">CRM enquiries</th></tr>
             </thead>
             <tbody className="divide-y divide-[#EEF2EF]">
@@ -331,8 +301,8 @@ export default function GrowthInsightsPage() {
           </table>
         </div>
       </section>
-      <div className="rounded-xl border border-[#E7E7EC] bg-[#F8FBF6] px-5 py-4 text-[11px] leading-6 text-[#2C2C31]">
-        <strong className="text-[#2C2C31]">Measurement quality notice:</strong> Existing interaction logs predate secure collection and may contain automated or duplicate requests. This dashboard deliberately does not claim unique visitors, sales, confirmed calls, order value, or conversion revenue. No precise GPS or raw search queries are shown.
+      <div className="rounded-2xl border border-[#E8E4E0] bg-[#FCFAF8] px-5 py-4 text-[11px] leading-6 text-[#55515A]">
+        <strong className="text-[#2C2C31]">Measurement quality notice:</strong> Existing interaction logs predate secure collection and may contain automated or duplicate requests. A CRM record marked converted is not verified payments, completed sales or revenue. This dashboard deliberately does not claim unique visitors, sales, confirmed calls, order value, or conversion revenue. No precise GPS or raw search queries are shown.
       </div>
     </div>
   );

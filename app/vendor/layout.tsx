@@ -30,7 +30,7 @@ const workspaceNav:NavItem[]=[
   {name:'Gallery & Services',href:'/vendor/gallery-services',icon:'image'},
   {name:'Enquiries',href:'/vendor/leads',icon:'message-text'},
   {name:'Reviews',href:'/vendor/reviews',icon:'star'},
-  {name:'Growth Insights',href:'/vendor/insights',icon:'status-up'},
+  {name:'Analytics',href:'/vendor/analytics',icon:'chart'},
 ];
 const growthNav:NavItem[]=[
   {name:'Growth OS',href:'/vendor/growth',icon:'chart'},
@@ -52,7 +52,7 @@ export default function VendorLayout({children}:{children:React.ReactNode}){
   const [mobileOpen,setMobileOpen]=useState(false);
   const mobileFirst=useRef<HTMLAnchorElement>(null);
 
-  const active=(href:string)=>href==='/vendor/marketing'
+  const active=(href:string)=>href==='/vendor/analytics'&&pathname.startsWith('/vendor/insights') ? true : href==='/vendor/marketing'
     ?pathname===href||pathname.startsWith('/vendor/marketing/')||pathname.startsWith('/vendor/marketing-engine/')
     :pathname===href||pathname.startsWith(href+'/');
   const currentPage=[...allItems].sort((a,b)=>b.href.length-a.href.length)

@@ -48,6 +48,8 @@ jobs:
         run: node --test tests/seoDomainSelectionUX.test.mjs
       - name: Vendor Iconsax Bulk and Marketing Studio 12-app sidebar navigation
         run: node --experimental-strip-types --test tests/vendorMarketingBulkNav.test.mjs
+      - name: Vendor QR Studio V2 and real Analytics Center visual regressions
+        run: node --experimental-strip-types --test tests/vendorQrAnalyticsV2.test.mjs tests/vendorGrowthComparison.test.mjs tests/qrAssignmentRelease.test.mjs
       - name: Low-memory mobile route feedback and streaming regressions
         run: node --test tests/mobileRoutePerformance.test.mjs
       - name: G5-02 follow-up and reputation guidance owner safety
