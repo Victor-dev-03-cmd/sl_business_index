@@ -29,8 +29,9 @@ export async function POST(request:Request){
     'malformed_change','too_many_messages','malformed_event',
     'malformed_text_event','future_message','too_many_events',
     'other_payload_invalid'];
-   const detail=safeReason==='payload_invalid'&&safeDetails.includes(result.detail)
-    ?result.detail:'none';
+   const rawStep='detail' in result?result.detail:undefined;
+   const detail=safeReason==='payload_invalid'&&typeof rawStep==='string'
+    &&safeDetails.includes(rawStep)?rawStep:'none';
    console.warn('SLBI WA sandbox webhook POST rejected:',safeReason,detail);
    return reply('Webhook unavailable',result.code==='disabled'?503:403);
   }
