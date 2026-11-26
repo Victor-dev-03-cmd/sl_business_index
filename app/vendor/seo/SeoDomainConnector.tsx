@@ -1,6 +1,6 @@
 'use client';
 
-import {useEffect,useMemo,useState} from 'react';
+import {useEffect,useState} from 'react';
 import {Check,CheckCircle2,Clipboard,ExternalLink,Globe2,Info,LockKeyhole,RefreshCw,ShieldCheck,Trash2} from 'lucide-react';
 import {getWebsiteGuideHostname} from '@/lib/seo/owner-readiness';
 
