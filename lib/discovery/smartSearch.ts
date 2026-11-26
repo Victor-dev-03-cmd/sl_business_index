@@ -53,7 +53,7 @@ const GROUPS: readonly DictionaryGroup[] = [
   {
     key: "clothing", name: "Clothing & Brands",
     categories: ["Clothing & Brands"],
-    general: ["clothing","clothings","clothes","cloth","garment","garments","apparel","fashion","boutique","boutiques","textile","textiles","dress","dresses","shirt","shirts","ஆடைகள்","உடைகள்","துணிக்கடை","ඇඳුම්","රෙදි","ඇඳුම් සාප්පු"],
+    general: ["clothing","clothings","clothes","cloth","garment","garments","apparel","fashion","boutique","boutiques","textile","textiles","dress","dresses","shirt","shirts","thuni kadai","thunikadai","thuni kaday","ஆடைகள்","உடைகள்","துணிக்கடை","ඇඳුම්","රෙදි","ඇඳුම් සාප්පු"],
     specific: [],
   },
   {
