@@ -1,0 +1,126 @@
+/* Privacy & Terms: one shared, scoped dark-mode palette.
+   Only the public legal shell is affected. Never alter policy/terms contents. */
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] {
+  background: #101012 !important;
+  color: #F5F3F3 !important;
+}
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] [data-slbi-legal-hero] {
+  background: radial-gradient(ellipse at 80% 20%, #33251F 0%, #202023 45%, #121214 100%) !important;
+  border-color: #414046 !important;
+}
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] [data-slbi-legal-hero] h1 {
+  color: #FFF9F5 !important;
+}
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] [data-slbi-legal-hero] p:not([class*="rounded-full"]) {
+  color: #CAC4C4 !important;
+}
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] [data-slbi-legal-hero] p[class*="rounded-full"] {
+  background: #38261F !important;
+  border-color: #80533A !important;
+  color: #FFC08D !important;
+}
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] [data-slbi-legal-hero] a,
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] [data-slbi-legal-hero] span {
+  color: #F3B986 !important;
+}
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] [data-slbi-legal-hero] a:hover {
+  color: #FFD0A8 !important;
+}
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] [data-slbi-legal-announcement] {
+  background: #1C1B1E !important;
+  border-color: #39363A !important;
+}
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] [data-slbi-legal-announcement] p {
+  color: #C9C5C7 !important;
+}
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] [data-slbi-legal-announcement] strong {
+  color: #FFF4EB !important;
+}
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] [data-slbi-legal-announcement] a {
+  color: #FFB77B !important;
+}
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] :is([data-slbi-legal-nav],[data-slbi-legal-content]) {
+  background: #202024 !important;
+  border-color: #3E3C41 !important;
+  box-shadow: 0 14px 38px rgba(0,0,0,.20) !important;
+}
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] [data-slbi-legal-nav] :is(p,li,span) {
+  color: #BEB9BF !important;
+}
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] [data-slbi-legal-nav] a {
+  color: #F1B181 !important;
+}
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] [data-slbi-legal-nav] a:hover {
+  background: #352A27 !important;
+  color: #FFD6B5 !important;
+}
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] [data-slbi-legal-nav] a:focus-visible,
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] [data-slbi-legal-content] a:focus-visible {
+  outline: 2px solid #FF973F !important;
+  outline-offset: 3px;
+}
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] [data-slbi-legal-content] > section {
+  border-color: #3D3A3C !important;
+}
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] [data-slbi-legal-content] h2 {
+  color: #FFF6F0 !important;
+}
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] [data-slbi-legal-content] :is(p,ul,li) {
+  color: #CDC8CC !important;
+}
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] [data-slbi-legal-content] strong {
+  color: #F9F6F4 !important;
+}
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] [data-slbi-legal-content] :is(a,a strong) {
+  color: #FFB77C !important;
+}
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] [data-slbi-legal-content] :is(a:hover,a:hover strong) {
+  color: #FFD3AD !important;
+}
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] [data-slbi-legal-content] > div {
+  background: #302620 !important;
+  border-color: #614436 !important;
+}
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] [data-slbi-legal-content] > div > p:first-child {
+  color: #FFBB87 !important;
+}
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] [data-slbi-legal-content] > section > div > span:first-child {
+  background: #382920 !important;
+  border-color: #725039 !important;
+  color: #FFC08C !important;
+}
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] [data-slbi-legal-content] a[href^="mailto:"],
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] [data-slbi-legal-content] a[href="/contact"] {
+  background: #282529 !important;
+  border-color: #4E4140 !important;
+  color: #FFC08F !important;
+}
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] [data-slbi-legal-content] a[href^="mailto:"]:hover,
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] [data-slbi-legal-content] a[href="/contact"]:hover {
+  background: #382C28 !important;
+}
+
+/* The inline legal SVG still uses light-mode green fills in HTML attributes.
+   Recolor the actual art as well as the surrounding banner, without replacing content. */
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] [data-slbi-legal-hero] .legal-vector > rect {
+  fill: #252226 !important;
+}
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] .legal-vector g[stroke="#aacbb0"] {
+  stroke: #87583F !important;
+}
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] .legal-vector g[fill="#d8e9d7"] {
+  fill: #8C644C !important;
+  stroke: #FF9A51 !important;
+}
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] .legal-vector path[fill="#1d5138"],
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] .legal-vector rect[fill="#245d42"],
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] .legal-vector circle[fill="#1f6042"] {
+  fill: #D36E2B !important;
+}
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] .legal-vector rect[fill="#ffffff"] {
+  fill: #29282C !important;
+  stroke: #E89B66 !important;
+}
+html[data-slbi-theme="dark"] body [data-slbi-legal-page] .legal-vector text {
+  fill: #FFBB8D !important;
+}

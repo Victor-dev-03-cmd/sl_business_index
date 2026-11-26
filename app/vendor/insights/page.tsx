@@ -211,27 +211,35 @@ export default function GrowthInsightsPage() {
         </button>
       </header>
 
-      <div className={panel + ' flex flex-wrap items-center gap-3 p-4'}>
-        <label className="flex min-w-[210px] flex-1 flex-col gap-1 text-[11px] font-bold text-[#62626A]">
-          Business
-          <select value={businessId} onChange={e => setBusinessId(e.target.value)}
-            className="h-10 rounded-lg border border-[#E7E7EC] bg-white px-3 text-[12px] font-medium text-[#34343A]">
-            <option value="all">All my approved businesses</option>
-            {businesses.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
-          </select>
-        </label>
-        <label className="flex min-w-[160px] flex-col gap-1 text-[11px] font-bold text-[#62626A]">
-          Reporting period
-          <select value={period} onChange={e => setPeriod(e.target.value as Period)}
-            className="h-10 rounded-lg border border-[#E7E7EC] bg-[#FBFCF9] px-3 text-[12px] font-medium text-[#34343A]">
-            <option value="7">Last 7 days</option>
-            <option value="30">Last 30 days</option>
-            <option value="90">Last 90 days</option>
-          </select>
-        </label>
-        <span className="rounded-full border border-[#E7E7EB] bg-[#F7F7F9] px-3 py-2 text-[10px] font-semibold text-[#6C6C73]">Owner-scoped · RLS protected</span>
-        <span className="text-[10px] text-slate-500">Equal rolling windows · as of {new Date(snapshotEnd).toLocaleString('en-LK')}</span>
-      </div>
+      <section data-testid="vendor-analytics-filters" aria-label="Analytics reporting filters"
+        className={panel+' min-w-0 p-4 sm:p-5'}>
+        <div className="grid min-w-0 grid-cols-1 items-end gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(175px,220px)] lg:grid-cols-[minmax(0,1fr)_220px]">
+          <label htmlFor="analytics-business-select" className="flex min-w-0 flex-col gap-2 text-[11px] font-semibold text-[#62626A]">
+            Business
+            <select id="analytics-business-select" value={businessId} onChange={e=>setBusinessId(e.target.value)}
+              className="h-11 w-full min-w-0 rounded-xl border border-[#E7E7EC] bg-white px-3 text-[12px] font-medium text-[#34343A] focus:border-[#FF7900] focus:outline-none focus:ring-2 focus:ring-[#FF7900]/20">
+              <option value="all">All my approved businesses</option>
+              {businesses.map(item=><option key={item.id} value={item.id}>{item.name}</option>)}
+            </select>
+          </label>
+          <label htmlFor="analytics-period-select" className="flex min-w-0 flex-col gap-2 text-[11px] font-semibold text-[#62626A]">
+            Reporting period
+            <select id="analytics-period-select" value={period} onChange={e=>setPeriod(e.target.value as Period)}
+              className="h-11 w-full min-w-0 rounded-xl border border-[#E7E7EC] bg-white px-3 text-[12px] font-medium text-[#34343A] focus:border-[#FF7900] focus:outline-none focus:ring-2 focus:ring-[#FF7900]/20">
+              <option value="7">Last 7 days</option>
+              <option value="30">Last 30 days</option>
+              <option value="90">Last 90 days</option>
+            </select>
+          </label>
+        </div>
+        <div className="mt-4 flex min-w-0 flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-[#F0ECEA] pt-3 text-[10px] leading-5 text-[#77737A]">
+          <span className="inline-flex items-center gap-1.5 font-medium">
+            <IconsaxIcon name="shield-tick" size={15} color="#B9611E"/>
+            Owner-scoped · RLS protected
+          </span>
+          <span className="min-w-0 tabular-nums">Equal rolling windows · Snapshot {new Date(snapshotEnd).toLocaleString('en-LK')}</span>
+        </div>
+      </section>
 
       {error && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">Could not load insights: {error}</div>}
       {error && !loading && (
