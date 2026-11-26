@@ -1,6 +1,7 @@
 import {redirect} from 'next/navigation';
 import {createClient} from '@/lib/supabase/server';
 import WhatsAppConnectionLab,{type WhatsAppOwnedBusiness} from '../components/WhatsAppConnectionLab';
+import WhatsAppGrowthOperator from '../components/WhatsAppGrowthOperator';
 
 export const dynamic='force-dynamic';
 
@@ -21,7 +22,13 @@ export default async function VendorWhatsAppConnectionPage(){
   }catch{
     // Fail closed. No fallback to client-provided business IDs or service-role.
   }
-  return <main className="mx-auto w-full max-w-[1470px] pb-12 text-[#242428]">
-    <WhatsAppConnectionLab businesses={businesses} ownershipReady={ownershipReady}/>
+  return <main className="mx-auto w-full max-w-[1470px] space-y-7 pb-12 text-[#242428]">
+    <WhatsAppGrowthOperator businesses={businesses} ownershipReady={ownershipReady}/>
+    <details className="rounded-2xl border border-[#E9E9EC] bg-white px-4 pb-4 sm:px-6">
+      <summary className="cursor-pointer py-4 text-xs font-semibold text-[#777780]">
+        Reference: previous WhatsApp setup walkthrough (preview only)
+      </summary>
+      <WhatsAppConnectionLab businesses={businesses} ownershipReady={ownershipReady}/>
+    </details>
   </main>;
 }
