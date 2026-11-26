@@ -24,6 +24,10 @@ export default function WhatsAppConnectorSetup({businesses}:{businesses:readonly
  const [submitting,setSubmitting]=useState(false);
  const [readiness,setReadiness]=useState<Readiness|null>(null);
  const [notice,setNotice]=useState('');
+ const [recipient,setRecipient]=useState('');
+ const [testConsent,setTestConsent]=useState(false);
+ const [testSending,setTestSending]=useState(false);
+ const [testNotice,setTestNotice]=useState('');
  const [error,setError]=useState('');
  const selectedBusiness=businesses.find(b=>b.id===businessId);
  const eligible=selectedBusiness?.status==='approved';
@@ -73,6 +77,22 @@ export default function WhatsAppConnectorSetup({businesses}:{businesses:readonly
    setNotice('Meta setup is being prepared. No connection is confirmed yet.');
   }catch{setError('Could not check Meta onboarding readiness. Please try again.');}
   finally{setSubmitting(false);}
+ }
+ async function sendTest(){
+  if(!testAvailable||testSending||!testConsent||!E164.test(recipient.trim()))return;
+  setTestSending(true);setTestNotice('');
+  try{
+   const res=await fetch('/api/vendor/marketing/whatsapp/test-message',{
+    method:'POST',credentials:'same-origin',cache:'no-store',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({businessId,recipient:recipient.trim(),consent:true}),
+   });
+   const value:unknown=await res.json();
+   const result=value&&typeof value==='object'?value as Record<string,unknown>:{};
+   setTestNotice(res.ok&&result.messageSent===true?'Provider accepted the test message. Check actual delivery status.':
+    'Test messaging is not yet approved for this vendor account. Nothing was sent.');
+  }catch{setTestNotice('Test messaging is unavailable. Nothing was sent.');}
+  finally{setTestSending(false);}
  }
  return <div className="space-y-5 text-[#242429]">
   <div className="rounded-xl border border-[#E5EBE7] bg-[#F7FAF8] p-4 text-xs leading-6 text-[#456556]">
@@ -141,11 +161,24 @@ export default function WhatsAppConnectorSetup({businesses}:{businesses:readonly
     </span>
    </div>
    <p className="mt-2 text-xs leading-6 text-[#73717A]">After Meta confirms your own number and its permitted messaging capability, test an approved message with a opted-in recipient. A template or active 24-hour service window is required where applicable.</p>
-   <button type="button" disabled={!testAvailable} aria-disabled={!testAvailable}
-    className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#E4E4E7] bg-[#F4F4F6] px-4 text-xs font-bold text-[#88858E] disabled:cursor-not-allowed">
-    <LockKeyhole size={16}/> Send test message · not available
+   <div className="mt-3 space-y-2">
+    <label htmlFor="wa-test-recipient" className="block text-xs font-bold text-[#48474E]">Test recipient number</label>
+    <input id="wa-test-recipient" type="tel" inputMode="tel" autoComplete="tel" placeholder="+94771234567"
+     disabled={!testAvailable} maxLength={16} value={recipient} onChange={e=>setRecipient(e.target.value)}
+     className="min-h-11 w-full rounded-xl border border-[#E4E4E8] bg-white px-3 text-sm disabled:bg-[#F8F8F9] disabled:text-[#9A989F]"/>
+    <label className="flex items-start gap-2 text-[11px] leading-5 text-[#77747C]">
+     <input type="checkbox" className="mt-1 accent-[#FF7900]" checked={testConsent}
+      disabled={!testAvailable} onChange={e=>setTestConsent(e.target.checked)}/>
+     I have the recipient's permission to receive a WhatsApp test.
+    </label>
+   </div>
+   <button type="button" onClick={()=>void sendTest()}
+    disabled={!testAvailable||!testConsent||!E164.test(recipient.trim())||testSending}
+    className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#FF7900] px-4 text-xs font-bold text-[#231C16] hover:bg-[#FF9B43] disabled:cursor-not-allowed disabled:border disabled:border-[#E4E4E7] disabled:bg-[#F4F4F6] disabled:text-[#88858E]">
+    <LockKeyhole size={16}/>{testSending?'Checking provider…':testAvailable?'Send test message':'Test message · waiting for connection'}
    </button>
-   <p className="mt-2 text-center text-[11px] text-[#918F96]">No WhatsApp test message has been sent.</p>
+   {testNotice&&<p role="status" className="mt-2 rounded-lg border border-[#EDD9BD] bg-[#FFFAF5] p-3 text-xs text-[#8B5B2A]">{testNotice}</p>}
+   {!testAvailable&&<p className="mt-2 text-center text-[11px] text-[#918F96]">No WhatsApp test message has been sent.</p>}
   </div>
  </div>;
 }
