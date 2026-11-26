@@ -72,7 +72,13 @@ test('ML-07 owner API requires fresh user, same-origin and approved RLS-owned bu
  assert.match(source,/plan,studio/);
  assert.doesNotMatch(source,/SUPABASE_SERVICE_ROLE_KEY|\.insert\(|\.upsert\(|\.delete\(|\.update\(/);
  const component=readFileSync(new URL('../../app/vendor/marketing/components/WhatsAppGrowthOperator.tsx',import.meta.url),'utf8');
- assert.match(component,/studio\.actions\.map/);
- assert.match(component,/Marketing Studio — 12 Apps/);
- assert.match(component,/requiresProviderAuthorization/);
+ assert.match(component,/OwnerPlanPreview/);
+ assert.match(component,/studioActions=\{studio\?\.actions\?\?\[\]\}/);
+ assert.match(component,/ownerActions=\{plan\.actions\}/);
+ const preview=readFileSync(new URL('../../app/vendor/marketing/components/OwnerPlanPreview.tsx',import.meta.url),'utf8');
+ assert.match(preview,/studioActions\.map/);
+ assert.match(preview,/requiresProviderAuthorization/);
+ assert.match(preview,/No AI image was rendered/);
+ assert.match(preview,/notCarried/);
+ assert.match(preview,/Copy example/);
 });
