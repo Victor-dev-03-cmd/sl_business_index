@@ -1,6 +1,7 @@
 import 'server-only';
 import {createClient} from '@/lib/supabase/server';
 import {planWA04OwnerRequest} from '@/lib/growth/agent/wa04-owner-operator.mjs';
+import {routeML07StudioRequest} from '@/lib/growth/agent/ml07-studio-router.mjs';
 
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
@@ -36,8 +37,11 @@ export async function POST(request:Request){
     ||typeof body.request!=='string'
     ||!['auto','en','ta','si'].includes(String(body.locale)))
   return reply(400,'invalid_request');
- const plan=planWA04OwnerRequest(body.request,body.locale as 'auto'|'en'|'ta'|'si');
+ const locale=body.locale as 'auto'|'en'|'ta'|'si';
+ const plan=planWA04OwnerRequest(body.request,locale);
+ const studio=routeML07StudioRequest(body.request,locale);
  if(!plan.ok)return reply(400,plan.reason);
+ if(!studio.ok)return reply(400,studio.reason);
  try{
   const supabase=await createClient();
   const {data:{user},error:authError}=await supabase.auth.getUser();
@@ -51,6 +55,6 @@ export async function POST(request:Request){
   if(business.status!=='approved')return reply(409,'approved_business_required');
   // No DB writes, provider tokens, model invocation, external send, or approval.
   return Response.json({ok:true,business:{id:business.id,name:business.name},
-    plan}, {headers:HEADERS});
+    plan,studio}, {headers:HEADERS});
  }catch{return reply(503,'planning_unavailable');}
 }
