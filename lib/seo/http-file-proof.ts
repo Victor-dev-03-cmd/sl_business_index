@@ -73,6 +73,13 @@ export async function inspectHttpFileProof(hostname:string,expected:string):Prom
     const req=httpsRequest({
       protocol:'https:',hostname,servername:hostname,
       port:443,path:SEO_HTTP_PROOF_PATH,method:'GET',
+      // Node.js 20+/24 defaults to family auto-selection and calls custom
+      // lookup with {all:true}. That expects an ARRAY of addresses, whereas
+      // the pinned IPv4 lookup below supplies (address, family). Without this
+      // option Node throws ERR_INVALID_IP_ADDRESS before any HTTPS request.
+      // We already chose and validated a single public IPv4 above.
+      autoSelectFamily:false,
+      family:4,
       lookup:(_host,_options,callback)=>callback(null,pinned,4),
       agent:false,
       headers:{'Accept':'text/plain','Accept-Encoding':'identity','User-Agent':'SLBI-Domain-Verification/1.0'},
