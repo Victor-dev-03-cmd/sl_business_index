@@ -86,7 +86,7 @@ test('Gmail preview reads exactly a bounded inbox metadata list; never message b
   assert.equal(requested.length,3);
   assert.ok(requested.every(x=>x.url.startsWith('https://gmail.googleapis.com/gmail/v1/users/me/messages')));
   assert.ok(requested.slice(1).every(x=>x.url.includes('format=metadata')&&!x.url.includes('format=full')));
-  await assert.rejects(readGmailPreviewHeaders('synthetic-access-token',async()=>response({messages:[{id:'../untrusted'}]}),));
+  assert.deepEqual(await readGmailPreviewHeaders('synthetic-access-token',async()=>response({messages:[{id:'../untrusted'}]})),[]);
 });
 
 test('Google access token is refreshed server-side with bounded official token exchange',async()=>{
