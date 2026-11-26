@@ -3,7 +3,7 @@ import {createClient as createServiceClient} from '@supabase/supabase-js';
 import {createClient} from '@/lib/supabase/server';
 import {getMarketingAccessForUser,rejectMarketingAccess} from '@/lib/marketing/pro-access-server';
 import {createOAuthState,createPkceVerifier,stateDigest} from '@/lib/marketing/oauth-provider-contract';
-import {encryptPreviewValue,exactOAuthRequestOrigin,getGooglePreviewConfig,
+import {encryptPreviewValue,exactOAuthRequestOrigin,getGoogleConnectorConfig,
   makeGooglePreviewAuthUrl,validateOAuthStartBody} from '@/lib/marketing/oauth-runtime';
 
 export const runtime='nodejs';
@@ -11,7 +11,7 @@ export const dynamic='force-dynamic';
 const reply=(status:number,error:string)=>Response.json({error},{status,
   headers:{'cache-control':'private, no-store','referrer-policy':'no-referrer'}});
 export async function POST(request:Request){
-  const config=getGooglePreviewConfig();
+  const config=getGoogleConnectorConfig();
   if(!config)return reply(503,'OAuth connector is not enabled in this environment.');
   if(!exactOAuthRequestOrigin(request.url,request.headers.get('origin'),config.origin))
     return reply(403,'OAuth connection must start from this site.');
@@ -34,9 +34,10 @@ export async function POST(request:Request){
     const denied=rejectMarketingAccess(await getMarketingAccessForUser(user.id,client));
     if(denied)return denied;
     const {data:business,error:businessError}=await client.from('businesses')
-      .select('id').eq('id',businessId).eq('owner_id',user.id).maybeSingle();
+      .select('id,status').eq('id',businessId).eq('owner_id',user.id).maybeSingle();
     if(businessError)return reply(503,'Business ownership could not be verified.');
     if(!business)return reply(404,'Business is not owned by this vendor.');
+    if(business.status!=='approved')return reply(403,'Approve this business before connecting Gmail.');
     const serviceKey=process.env.SUPABASE_SERVICE_ROLE_KEY;
     const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
     if(!url||!serviceKey)return reply(503,'Connector database is unavailable.');
