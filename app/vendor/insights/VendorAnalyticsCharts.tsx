@@ -109,7 +109,7 @@ export default function VendorAnalyticsCharts({
         <div className="mt-6 flex min-w-0 gap-2.5">
           <div aria-hidden="true" className="grid shrink-0 grid-rows-7 gap-[5px] text-[9px] leading-4 text-[#99949B]">{weekdays.map(w=><span key={w} className="h-3.5">{w.slice(0,1)}</span>)}</div>
           <div className="min-w-0 flex-1 overflow-x-auto pb-2">
-            <div className="grid w-full gap-[5px]" style={{gridAutoFlow:'column',gridTemplateRows:'repeat(7,14px)',gridAutoColumns:'minmax(12px,1fr)'}}>
+            <div className="grid w-max gap-[5px]" style={{gridAutoFlow:'column',gridTemplateRows:'repeat(7,14px)',gridAutoColumns:'14px'}}>
               {calendar.map((day,i)=><div key={day?.key??'pad-'+i} role={day?'img':undefined}
                 aria-label={day?day.key+': '+(day.views+day.calls+day.directions)+' logged interactions':undefined}
                 title={day?day.key+' · '+(day.views+day.calls+day.directions)+' logged interactions':undefined}
