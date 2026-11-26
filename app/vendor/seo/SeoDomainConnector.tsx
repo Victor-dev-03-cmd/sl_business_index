@@ -75,6 +75,12 @@ export default function SeoDomainConnector({businessId,initialConnection,domainS
   const currentMethod=connection?.verificationMethod||connection?.verification_method||method;
   const url=connection?.hostname?'https://'+connection.hostname+HTTP_PATH:null;
   const isHosted=!!selectedDomain&&(/\.vercel\.app$|\.netlify\.app$|\.pages\.dev$/).test(selectedDomain);
+  // An existing DNS claim is NOT a reason to lock all of the form controls.
+  // Changing the method/domain remains a draft until the owner explicitly saves.
+  const savedMethod=connection?.verificationMethod||connection?.verification_method||'dns_txt';
+  const proofChanged=!!connection&&(selectedDomain!==connection.hostname||method!==savedMethod);
+  const providerChanged=!!connection&&provider!==connection.provider;
+  const hasUnsavedChanges=proofChanged||providerChanged;
 
   // Different owner businesses never inherit in-progress domain inputs.
   useEffect(()=>{
@@ -86,6 +92,9 @@ export default function SeoDomainConnector({businessId,initialConnection,domainS
   },[businessId,initialConnection]);
 
   async function mutate(action:'start'|'verify'|'disconnect'){
+    if(action==='start'&&connection&&!hasUnsavedChanges)return;
+    if(action==='start'&&connection&&proofChanged&&verified&&
+      !window.confirm('Changing this verified domain or method will revoke its existing proof and issue a new verification token. Continue?'))return;
     setBusy(action);setError('');setMessage('');
     const payload=action==='start'
       ?{action,businessId,hostname:selectedDomain||hostname,provider,verificationMethod:method}
@@ -109,9 +118,11 @@ export default function SeoDomainConnector({businessId,initialConnection,domainS
       }else if(action==='verify'){
         setMessage('Website ownership proof verified and saved. Website editing and Google Search Console require separate authorization.');
       }else{
-        setMessage(method==='http_file'
-          ?'Your unique file token was saved. Publish the file on your site, then select Verify HTTPS file.'
-          :'Your unique DNS record was saved. Add it in DNS, then select Verify DNS.');
+        setMessage(proofChanged===false&&providerChanged
+          ?'Hosting/DNS provider updated. The existing ownership proof remains valid.'
+          :method==='http_file'
+            ?'Your unique file token was saved. Publish the file on your site, then select Verify HTTPS file.'
+            :'Your unique DNS record was saved. Add it in DNS, then select Verify DNS.');
       }
     }catch{setError('Cannot reach the verification service. Check your connection and retry.')}
     finally{setBusy(null)}
@@ -146,7 +157,7 @@ export default function SeoDomainConnector({businessId,initialConnection,domainS
       <div>
         <label htmlFor="seo-website-address" className="mb-2 block text-[12px] font-medium text-[#393941]">1. Website domain</label>
         <input id="seo-website-address" inputMode="url" autoComplete="url" maxLength={250}
-          disabled={!!connection||!!busy} value={hostname}
+          disabled={!!busy} value={hostname}
           onChange={event=>{
             setHostname(event.target.value);
             const typed=getWebsiteGuideHostname(event.target.value);
@@ -160,7 +171,7 @@ export default function SeoDomainConnector({businessId,initialConnection,domainS
       </div>
       <div>
         <label htmlFor="seo-dns-provider" className="mb-2 block text-[12px] font-medium text-[#393941]">2. Hosting or DNS provider</label>
-        <select id="seo-dns-provider" disabled={!!connection||!!busy}
+        <select id="seo-dns-provider" disabled={!!busy}
           value={provider} onChange={event=>setProvider(event.target.value as Provider)}
           className="min-h-11 w-full rounded-lg border border-[#DCDCE2] bg-white px-3 text-[13px] text-[#29292F] focus:border-[#FF7900] focus:outline-2 focus:outline-[#FF7900]/20 disabled:bg-[#F6F6F8]">
           {providers.map(p=><option key={p} value={p}>{p}</option>)}
@@ -169,7 +180,7 @@ export default function SeoDomainConnector({businessId,initialConnection,domainS
       </div>
     </div>
 
-    <fieldset className="space-y-2" disabled={!!connection||!!busy}>
+    <fieldset data-testid="seo-proof-method-switch" className="space-y-2" disabled={!!busy}>
       <legend className="text-[12px] font-medium text-[#393941]">3. How would you like to verify ownership?</legend>
       <div className="grid gap-3 sm:grid-cols-2">
         <label className={'flex cursor-pointer items-start gap-3 rounded-xl border px-4 py-3 '+(method==='dns_txt'?'border-[#F6A665] bg-[#FFF7EF]':'border-[#E5E5EA] bg-white')}>
@@ -190,16 +201,29 @@ export default function SeoDomainConnector({businessId,initialConnection,domainS
       </p>}
     </fieldset>
 
-    {!connection&&<button type="button" disabled={!domainServiceReady||!selectedDomain||!!busy||(isHosted&&method==='dns_txt')}
+    {connection&&hasUnsavedChanges&&<div role="status" className="rounded-lg border border-[#F3D1AA] bg-[#FFF9F0] px-4 py-3 text-[12px] leading-5 text-[#80531E]">
+      Changes are not saved yet. Your current {savedMethod==='dns_txt'?'DNS TXT':'HTTPS file'} proof remains unchanged until you save.
+      {proofChanged?' Saving a different domain or method creates a new token and requires verification again.':''}
+    </div>}
+    {(!connection||hasUnsavedChanges)&&<button type="button"
+      disabled={!domainServiceReady||!selectedDomain||!!busy||(isHosted&&method==='dns_txt')}
       onClick={()=>void mutate('start')} className={primary} data-testid="seo-domain-start">
-      {busy==='start'?'Saving domain…':'Start secure verification'}
+      {busy==='start'?'Saving…':connection?(proofChanged?'Save new verification method':'Save provider'):'Start secure verification'}
     </button>}
+    {connection&&hasUnsavedChanges&&<button type="button" disabled={!!busy}
+      onClick={()=>{
+        setHostname(connection.hostname);
+        setProvider(providers.includes(connection.provider as Provider)?connection.provider as Provider:'Other provider');
+        setMethod(savedMethod);
+        setError('');setMessage('');
+      }}
+      className={button+' ml-2'}>Cancel changes</button>}
 
-    {connection&&<div data-testid="seo-domain-steps" className="space-y-4 rounded-xl border border-[#E5E5E9] bg-[#FCFCFD] p-4 sm:p-5">
+    {connection&&!hasUnsavedChanges&&<div data-testid="seo-domain-steps" className="space-y-4 rounded-xl border border-[#E5E5E9] bg-[#FCFCFD] p-4 sm:p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-[15px] font-medium text-[#28282D]">{currentMethod==='http_file'?'HTTPS file':'DNS TXT'} verification for {connection.hostname}</h3>
         <span className={'rounded-full px-2.5 py-1 text-[11px] font-medium '+(verified?'bg-[#E7F5EC] text-[#236B47]':'bg-[#FFF1E3] text-[#975516]')}>
-          {verified?'Ownership verified':'Awaiting DNS record'}
+          {verified?'Ownership verified':'Awaiting verification'}
         </span>
       </div>
       {currentMethod==='dns_txt'?<>

@@ -97,18 +97,18 @@ export default function VendorLayout({children}:{children:React.ReactNode}){
     aria-label={compact?item.name:undefined}
     aria-current={active(item.href)?'page':undefined}
     data-testid={item.href==='/vendor/gallery-services'?(mobile?'gallery-compact-nav':'gallery-top-nav'):undefined}
-    className={'flex min-h-11 items-center gap-3 rounded-xl px-3 text-[12px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-[#FF7900] '+(compact?'justify-center ':'')+
+    className={'flex items-center gap-2 rounded-lg px-2 text-[11px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-[#FF7900] '+(mobile?'min-h-11 ':'min-h-[36px] ')+(compact?'justify-center ':'')+
       (active(item.href)?'bg-[#FFF0E5] text-[#AD4D00]':'text-[#62626B] hover:bg-[#F4F4F6] hover:text-[#202024]')}>
-    <span className="shrink-0"><IconsaxIcon name={item.icon} size={19} color={active(item.href)?'#E56F0B':'#777780'}/></span>
+    <span className="shrink-0"><IconsaxIcon name={item.icon} size={mobile?17:16} color={active(item.href)?'#E56F0B':'#777780'}/></span>
     {!compact&&<span className="truncate">{item.name}</span>}
   </Link>;
   const sideSections=(compact=false,mobile=false)=>[
     {title:'Workspace',items:[...mainNav,...workspaceNav]},
     {title:'Growth tools',items:growthNav},
     {title:'Account',items:accountNav},
-  ].map(section=><section key={section.title} className="space-y-1">
-    {!compact&&<p className="px-3 pb-1 pt-4 text-[10px] font-medium uppercase tracking-[.13em] text-[#9A99A2]">{section.title}</p>}
-    {compact&&<div className="my-3 h-px bg-[#ECECEF]"/>}
+  ].map(section=><section key={section.title} className={mobile?'space-y-1':'space-y-0.5'}>
+    {!compact&&<p className="px-2 pb-0.5 pt-2 text-[9px] font-medium uppercase tracking-[.12em] text-[#9A99A2]">{section.title}</p>}
+    {compact&&<div className="my-1.5 h-px bg-[#ECECEF]"/>}
     {section.items.map(item=>navLink(item,compact,mobile))}
   </section>);
 
@@ -153,16 +153,16 @@ export default function VendorLayout({children}:{children:React.ReactNode}){
     <div className="relative flex min-h-0 min-w-0 flex-1">
       <aside aria-label="Vendor sidebar navigation" data-slbi-ui="vendor-sidebar"
         className={'hidden shrink-0 flex-col border-r border-[#EDEDF1] bg-[#FCFCFD] transition-[width] duration-150 lg:flex '+(sidebarCollapsed?'w-[70px]':'w-[226px]')}>
-        <div className={'flex h-14 shrink-0 items-center border-b border-[#EFEFF1] px-3 '+(sidebarCollapsed?'justify-center':'justify-between')}>
+        <div className={'flex h-12 shrink-0 items-center border-b border-[#EFEFF1] px-2 '+(sidebarCollapsed?'justify-center':'justify-between')}>
           {!sidebarCollapsed&&<span className="px-2 text-[11px] font-medium text-[#787881]">Workspace menu</span>}
           <button type="button" aria-label={sidebarCollapsed?'Expand sidebar':'Collapse sidebar'} onClick={()=>setSidebarCollapsed(v=>!v)}
             className="flex h-9 w-9 items-center justify-center rounded-lg text-[#696973] hover:bg-[#F0F0F3]">
             {sidebarCollapsed?<PanelLeftOpen size={18}/>:<PanelLeftClose size={18}/>}
           </button>
         </div>
-        <nav aria-label="Vendor workspace and tools" className="min-h-0 flex-1 space-y-3 overflow-y-auto px-2.5 pb-5 pt-2">
+        <nav aria-label="Vendor workspace and tools" className="min-h-0 flex-1 space-y-1 overflow-y-auto px-2 pb-3 pt-1">
           {sideSections(sidebarCollapsed)}
-          {!sidebarCollapsed&&<Link href="/" className="mt-5 block border-t border-[#ECECF0] px-3 py-4 text-[11px] font-medium text-[#777780] hover:text-[#BB5B05]">Visit public directory</Link>}
+          {!sidebarCollapsed&&<Link href="/" className="mt-2 block border-t border-[#ECECF0] px-2 py-2 text-[11px] font-medium text-[#777780] hover:text-[#BB5B05]">Visit public directory</Link>}
         </nav>
       </aside>
 
@@ -174,7 +174,7 @@ export default function VendorLayout({children}:{children:React.ReactNode}){
             <span className="text-sm font-medium text-[#232326]">Business workspace</span>
             <button type="button" onClick={()=>setMobileOpen(false)} aria-label="Close navigation" className="flex h-10 w-10 items-center justify-center rounded-lg hover:bg-[#F4F4F6]"><X size={20}/></button>
           </div>
-          <nav aria-label="Vendor compact navigation" className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3">{sideSections(false,true)}</nav>
+          <nav aria-label="Vendor compact navigation" className="min-h-0 flex-1 space-y-1.5 overflow-y-auto p-3">{sideSections(false,true)}</nav>
         </aside>
       </div>}
 
