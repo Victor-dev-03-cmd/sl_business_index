@@ -97,18 +97,18 @@ export default function VendorQRStudioPage(){
     if(!source||!assigned||!business)return null;
     // Resolution presets scale the entire exported artwork, not only the QR element.
     const scale=size/256,margin=42;
-    const width=760,height=format==='card'?550:940;
+    const width=760,height=format==='card'?680:940;
     const image=document.createElement('canvas');image.width=width*scale;image.height=height*scale;
     const ctx=image.getContext('2d');if(!ctx)return null;
     ctx.scale(scale,scale);ctx.fillStyle='#ffffff';ctx.fillRect(0,0,width,height);
     ctx.fillStyle=chosenTone.accent;ctx.fillRect(0,0,width,format==='window'?24:12);
     ctx.fillStyle=chosenTone.fg;ctx.textAlign='center';
-    const qrDimension=format==='card'?342:480;
-    let top=format==='card'?96:190;
+    const qrDimension=format==='card'?330:480;
+    let top=format==='card'?110:190;
     if(includeTitle){
       ctx.font='700 34px Arial, sans-serif';
       const name=business.name.length>36?business.name.slice(0,33)+'…':business.name;
-      ctx.fillText(name,width/2,format==='card'?64:115,width-2*margin);
+      ctx.fillText(name,width/2,format==='card'?74:115,width-2*margin);
       if(format!=='card'){ctx.font='16px Arial, sans-serif';ctx.fillStyle='#777780';ctx.fillText('SL BUSINESS INDEX · BUSINESS PROFILE',width/2,151);}
     }
     const destLeft=(width-qrDimension)/2;
