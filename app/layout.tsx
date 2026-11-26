@@ -3,6 +3,7 @@ import RootClientLayout from "./RootClientLayout";
 import "./globals.css";
 import "./public-dark-theme.css";
 import "./info-dark-theme.css";
+import "./legal-dark-theme.css";
 
 const inter = Inter({
   subsets: ["latin"],
