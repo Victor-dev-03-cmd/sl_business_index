@@ -60,8 +60,8 @@ export default function SeoDomainConnector({businessId,initialConnection,domainS
   const [message,setMessage]=useState('');
   const [copied,setCopied]=useState(false);
   const selectedDomain=getWebsiteGuideHostname(hostname);
-  const verified=connection?.state==='verified'&&!!connection?.verification_expires_at
-    &&Date.parse(connection.verification_expires_at)>Date.now();
+  const expiry=connection?.expiresAt||connection?.verification_expires_at;
+  const verified=connection?.state==='verified'&&!!expiry&&Date.parse(expiry)>Date.now();
   const name=connection?.txtRecordName||connection?.txt_record_name;
   const value=connection?.txtValue||connection?.verification_token;
 
