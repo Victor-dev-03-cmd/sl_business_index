@@ -500,10 +500,7 @@ export default function Navbar() {
                   aria-haspopup="true"
                   onMouseEnter={() => handleMouseEnter(group)}
                   onFocus={() => handleMouseEnter(group)}
-                  onClick={() => {
-                    if (selected) closeMegaMenu();
-                    else handleMouseEnter(group);
-                  }}
+                  onClick={() => handleMouseEnter(group)}
                   className={cn(
                     "group relative inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-3 text-[11px] font-semibold tracking-[-0.005em] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500",
                     selected
