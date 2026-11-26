@@ -3,7 +3,7 @@
 import {useMemo,useState} from 'react';
 import Link from 'next/link';
 import {ArrowRight,ArrowUpRight,Check,CheckCircle2,Clipboard,Globe2,Info,Link2,
-  ListChecks,LockKeyhole,Search,ShieldCheck,Sparkles,XCircle} from 'lucide-react';
+  ListChecks,LockKeyhole,Search,ShieldCheck,Sparkles} from 'lucide-react';
 import {getPublicBusinessSEO} from '@/lib/seo/public-business';
 import {getSeoPreparation,getWebsiteGuideHostname,type SeoOwnedListing} from '@/lib/seo/owner-readiness';
 import {neo} from '../components/neumorphic';
