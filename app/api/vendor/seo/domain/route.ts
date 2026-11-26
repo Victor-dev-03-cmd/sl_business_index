@@ -130,10 +130,16 @@ export async function POST(request:Request){
     if(last&&Date.now()-last<30_000)return denied(429,'verification_rate_limited');
     // Durable throttle is committed before any DNS lookup, so 3rd-party DNS
     // failures never turn a check into a success or a hot retry loop.
-    const {error:throttleError}=await store.from('seo_domain_connections').update({
+    // Atomic compare-and-set: concurrent requests cannot all bypass the
+    // 30-second DNS check budget by reading the same old timestamp.
+    let throttle=store.from('seo_domain_connections').update({
       last_checked_at:new Date().toISOString(),
     }).eq('id',existing.id).eq('owner_id',user.id);
+    throttle=last?throttle.lt('last_checked_at',new Date(Date.now()-30_000).toISOString())
+      :throttle.is('last_checked_at',null);
+    const {data:locked,error:throttleError}=await throttle.select('id').maybeSingle();
     if(throttleError)return denied(503,'verification_unavailable');
+    if(!locked)return denied(429,'verification_rate_limited');
     let found=false;
     try{found=await hasDnsProof(existing.txt_record_name,existing.verification_token)}
     catch{/* NXDOMAIN, propagation delays, resolver failures all fail closed. */}
