@@ -18,6 +18,11 @@ export const NEUROGROWTH_CAPABILITIES={
   read_lead_priority_summary:{kind:'read',href:'/vendor/leads'},
   read_review_priority_summary:{kind:'read',href:'/vendor/reviews'},
   read_campaign_drafts:{kind:'read',href:'/vendor/marketing/campaigns'},
+  // Mailbox preview remains a READ CANDIDATE: a future tool executor must
+  // separately enforce owner, approved business, Google read scope and consent.
+  read_gmail_headers_preview:{kind:'read',href:'/vendor/marketing-engine/connections'},
+  propose_gmail_reply_draft:{kind:'draft',href:'/vendor/marketing-engine/email'},
+  propose_email_marketing_draft:{kind:'draft',href:'/vendor/marketing-engine/email'},
   propose_listing_change:{kind:'draft',href:'/vendor/my-businesses'},
   propose_followup_reminder:{kind:'draft',href:'/vendor/leads'},
   propose_review_reply:{kind:'draft',href:'/vendor/reviews'},
@@ -26,6 +31,8 @@ export const NEUROGROWTH_CAPABILITIES={
   request_followup_save:{kind:'mutation',href:'/vendor/leads'},
   request_review_reply_publish:{kind:'mutation',href:'/vendor/reviews'},
   request_campaign_publish:{kind:'mutation',href:'/vendor/marketing/campaigns'},
+  request_send_gmail_message:{kind:'blocked',href:'/vendor/marketing-engine/email'},
+  request_bulk_email_campaign:{kind:'blocked',href:'/vendor/marketing-engine/email'},
   request_billing_change:{kind:'blocked',href:'/vendor/billing'},
   request_account_delete:{kind:'blocked',href:'/vendor/settings'},
   request_verification_approval:{kind:'blocked',href:'/vendor/my-businesses'},
