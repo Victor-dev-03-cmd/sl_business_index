@@ -34,6 +34,21 @@ test('valid Meta challenge requires exact secret and no duplicates',()=>{
  assert.equal(verifyMetaSubscribeQuery('hub.mode=subscribe&hub.challenge=12&hub.verify_token='+VERIFY+'&hub.verify_token=duplicate',VERIFY).ok,false);
  assert.equal(verifyMetaSubscribeQuery('hub.mode=unsubscribe&hub.challenge=12&hub.verify_token='+VERIFY,VERIFY).ok,false);
 });
+test('realistic padded base64 WhatsApp IDs are allowed, malformed IDs rejected',()=>{
+ const base=JSON.parse(payload('hello').toString('utf8'));
+ const msg=base.entry[0].changes[0].value.messages[0];
+ msg.id='wamid.HBgLMTY1MDM4Nzk0MzkVAgASGBQzQUQ0N0VFMDA2MTQ0RkJFNkNDNAA=';
+ const raw=Buffer.from(JSON.stringify(base));
+ const result=inspectSignedWhatsAppWebhook(input(raw));
+ assert.equal(result.ok,true);
+ assert.equal(result.events.length,1);
+ assert.match(result.events[0].messageIdHash,/^[a-f0-9]{64}$/);
+ for(const badId of ['wamid.', 'wamid.bad*id', 'notwamid.xyz', 'wamid.'+'a'.repeat(251)]){
+  msg.id=badId;
+  const bytes=Buffer.from(JSON.stringify(base));
+  assert.equal(inspectSignedWhatsAppWebhook(input(bytes)).reason,'malformed_text_event');
+ }
+});
 test('raw Meta signature validates untampered bytes before JSON parsing',()=>{
  const raw=payload();assert.equal(verifyMetaRawSignature(raw,signature(raw),APP),true);
  assert.equal(verifyMetaRawSignature(Buffer.concat([raw,Buffer.from(' ')]),signature(raw),APP),false);
