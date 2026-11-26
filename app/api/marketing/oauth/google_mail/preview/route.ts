@@ -2,7 +2,7 @@ import 'server-only';
 import {createClient as createServiceClient} from '@supabase/supabase-js';
 import {createClient} from '@/lib/supabase/server';
 import {getMarketingAccessForUser,rejectMarketingAccess} from '@/lib/marketing/pro-access-server';
-import {decryptPreviewValue,exactOAuthRequestOrigin,getGooglePreviewConfig,GOOGLE_READ_SCOPE}
+import {decryptPreviewValue,exactOAuthRequestOrigin,getGoogleConnectorConfig,GOOGLE_READ_SCOPE}
   from '@/lib/marketing/oauth-runtime';
 import {refreshGooglePreviewAccessToken,readGmailPreviewHeaders}
   from '@/lib/marketing/gmail-intelligence';
@@ -19,7 +19,7 @@ const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]
  * Requires Google Restricted Scope consent AND fresh RLS owner verification.
  */
 export async function POST(request:Request){
-  const config=getGooglePreviewConfig();
+  const config=getGoogleConnectorConfig();
   if(!config?.gmailReadEnabled)return reply(503,'Gmail inbox preview is not enabled.');
   if(!exactOAuthRequestOrigin(request.url,request.headers.get('origin'),config.origin))
     return reply(403,'Mailbox preview must be requested from this site.');
