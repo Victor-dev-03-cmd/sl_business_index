@@ -3,7 +3,7 @@ import {createClient as createServiceClient} from '@supabase/supabase-js';
 import {createClient} from '@/lib/supabase/server';
 import {getMarketingAccessForUser,rejectMarketingAccess} from '@/lib/marketing/pro-access-server';
 import {stateDigest} from '@/lib/marketing/oauth-provider-contract';
-import {decryptPreviewValue,encryptPreviewValue,getGooglePreviewConfig,
+import {decryptPreviewValue,encryptPreviewValue,getGoogleConnectorConfig,
   safeGoogleSuccessRedirect} from '@/lib/marketing/oauth-runtime';
 import {exchangeVerifiedGoogleMailbox} from '@/lib/marketing/oauth-google';
 
@@ -14,7 +14,7 @@ const error=(status:number,message:string)=>Response.json({error:message},{
 });
 /** A provider redirects here with a short-lived one-time state, never a credential cookie. */
 export async function GET(request:Request){
-  const config=getGooglePreviewConfig();
+  const config=getGoogleConnectorConfig();
   if(!config)return error(503,'Google Mail connector is not enabled.');
   try{
     const u=new URL(request.url);
@@ -49,9 +49,9 @@ export async function GET(request:Request){
        intent.consumed_at!==null||Date.parse(intent.expires_at)<=Date.now())
       return error(400,'Invalid or expired authorization state.');
     const {data:owned,error:ownedError}=await client.from('businesses')
-      .select('id').eq('id',intent.business_id).eq('owner_id',user.id).maybeSingle();
+      .select('id,status').eq('id',intent.business_id).eq('owner_id',user.id).maybeSingle();
     if(ownedError)return error(503,'Ownership verification unavailable.');
-    if(!owned)return error(403,'Business ownership required.');
+    if(!owned||owned.status!=='approved')return error(403,'Approved business ownership required.');
 
     // Atomically consume state before handling OAuth code. Only service_role
     // may call this function. It independently rechecks owner and verified Pro.
@@ -81,8 +81,8 @@ export async function GET(request:Request){
     const gate=rejectMarketingAccess(current);
     if(gate)return gate;
     const {data:stillOwned,error:againError}=await client.from('businesses')
-      .select('id').eq('id',intent.business_id).eq('owner_id',user.id).maybeSingle();
-    if(againError||!stillOwned)return error(403,'Business ownership could not be confirmed.');
+      .select('id,status').eq('id',intent.business_id).eq('owner_id',user.id).maybeSingle();
+    if(againError||!stillOwned||stillOwned.status!=='approved')return error(403,'Approved business ownership could not be confirmed.');
 
     const ctx={ownerId:user.id,businessId:intent.business_id,provider:'google_mail' as const};
     const accessCipher=encryptPreviewValue(mailbox.accessToken,config.encryptionKey,{
