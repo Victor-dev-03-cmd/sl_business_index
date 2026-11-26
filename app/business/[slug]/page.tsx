@@ -4,6 +4,7 @@ import { Business } from '@/lib/types';
 import BusinessDetailsClient from './BusinessDetailsClient';
 import { Metadata } from 'next';
 import {cache} from 'react';
+import {getPublicBusinessSEO, getPublicBusinessJsonLd, isPublicApprovedBusiness} from '@/lib/seo/public-business';
 
 export const revalidate = 600
 
@@ -85,22 +86,38 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const business = await getBusinessDetails(slug);
 
-  if (!business) return { title: 'Business Not Found' };
+  if (!business) return {
+    title: 'Business Not Found | SL Business Index',
+    robots: {index:false,follow:false},
+  };
 
   // If accessed via ID, redirect to slug for SEO
   if (business.slug && business.slug !== slug) {
     redirect(`/business/${business.slug}`);
   }
 
-  const city = business.address ? business.address.split(',').pop()?.trim() || 'Sri Lanka' : 'Sri Lanka';
+  // Unapproved/private owner previews must not be crawled or treated as
+  // indexed business listings, even if an authenticated owner can view them.
+  if (!isPublicApprovedBusiness(business)) {
+    return {
+      title: 'Business Preview | SL Business Index',
+      robots: {index:false,follow:false,googleBot:{index:false,follow:false}},
+    };
+  }
 
+  const seo = getPublicBusinessSEO(business);
   return {
-    title: business.name,
-    description: `Contact ${business.name} in ${city}. ${(business.description || '').substring(0, 150)}...`,
+    title: seo.title,
+    description: seo.description,
+    alternates: {canonical:seo.canonical},
+    robots: {index:true,follow:true},
     openGraph: {
-      title: `${business.name} | ${business.category}`,
-      description: business.description,
-      images: business.image_url ? [business.image_url] : [],
+      type:'website',
+      url:seo.canonical,
+      title:seo.title,
+      description:seo.description,
+      siteName:'SL Business Index',
+      ...(business.image_url&&/^https:\/\//i.test(business.image_url)?{images:[business.image_url]}:{}),
     },
   };
 }
@@ -120,41 +137,16 @@ export default async function BusinessDetailPage({ params }: Props) {
   const {data:profileContent} = await supabase.from('business_profile_content').select('services,gallery_paths').eq('business_id',business.id).maybeSingle();
   const galleryUrls = [...new Set<string>((profileContent?.gallery_paths || []).filter((path:unknown):path is string=>typeof path==='string'&&path.startsWith(String(business.id)+'/')))].map(path=>supabase.storage.from('business-gallery').getPublicUrl(path).data.publicUrl);
   const services = Array.isArray(profileContent?.services) ? profileContent.services.filter((service:unknown):service is string=>typeof service==='string'&&Boolean(service.trim())) : [];
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'LocalBusiness',
-    name: business.name,
-    image: business.image_url,
-    description: business.description,
-    '@id': `https://slbusinessindex.com/business/${business.slug || business.id}`,
-    url: `https://slbusinessindex.com/business/${business.slug || business.id}`,
-    telephone: business.phone,
-    address: {
-      '@type': 'PostalAddress',
-      streetAddress: business.address || '',
-      addressLocality: business.address ? business.address.split(',').pop()?.trim() || 'Sri Lanka' : 'Sri Lanka',
-      addressCountry: 'LK',
-    },
-    geo: {
-      '@type': 'GeoCoordinates',
-      latitude: business.latitude,
-      longitude: business.longitude,
-    },
-    aggregateRating: (business.reviews_count || 0) > 0 ? {
-      '@type': 'AggregateRating',
-      ratingValue: business.rating || 0,
-      reviewCount: business.reviews_count || 0,
-    } : undefined,
-    category: business.category,
-    // Working hours come from business-provided text. Do not invent hours from defaults.
-  };
+  // Only publicly approved businesses may emit search-engine structured data.
+  // No unverified self-claimed ratings, domains, geo or opening hours.
+  const jsonLd = getPublicBusinessJsonLd(business);
 
   return (
     <>
-      <script
+      {jsonLd && <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
-      />
+      />}
       <BusinessDetailsClient business={business} galleryUrls={galleryUrls} services={services} />
     </>
   );
