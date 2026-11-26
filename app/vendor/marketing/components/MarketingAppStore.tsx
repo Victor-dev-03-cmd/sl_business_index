@@ -17,13 +17,14 @@ const tones:Record<StudioTone,{background:string;ink:string;outline:string;glow:
   amber:{background:'bg-[#FFF4DD]',ink:'text-[#A6711E]',outline:'border-[#F3DDB4]',glow:'from-[#FFE9BC] to-[#FFFCF5]'},
 };
 
-const AppTile=memo(function AppTile({app,proEnabled,launchStatus,posterReviewAllowed,posterQaAllowed}:{
-  app:MarketingStudioApp;proEnabled:boolean;launchStatus:MarketingAppLaunchStatus;posterReviewAllowed:boolean;posterQaAllowed:boolean;
+const AppTile=memo(function AppTile({app,proEnabled,launchStatus,posterReviewAllowed,posterQaAllowed,ownerStudioAccess}:{
+  app:MarketingStudioApp;proEnabled:boolean;launchStatus:MarketingAppLaunchStatus;posterReviewAllowed:boolean;posterQaAllowed:boolean;ownerStudioAccess:boolean;
 }){
   const style=tones[app.tone];
   const review=posterReviewAllowed&&app.id==='poster-editor'&&launchStatus==='coming_soon';
   const qa=posterQaAllowed&&['poster-editor','caption-lab'].includes(app.id)&&launchStatus==='coming_soon';
-  const launched=launchStatus==='live'||review||qa;
+  const launched=launchStatus==='live'||review||qa||ownerStudioAccess;
+  const premiumBadge=app.pro&&!ownerStudioAccess;
   return <article
     id={'marketing-app-'+app.id}
     aria-label={app.title+(qa?' — owner QA preview':review?' — private staff review':launched?' — available app':' — coming soon')}
@@ -35,9 +36,9 @@ const AppTile=memo(function AppTile({app,proEnabled,launchStatus,posterReviewAll
         <IconsaxIcon name={app.icon} size={33} variant="bulk"/>
       </div>
       <span className={'inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-bold '+
-        (app.pro?'border-[#E7D7CB] bg-[#FFF6ED] text-[#AA581C]':'border-[#DCEBE4] bg-[#F0F9F4] text-[#38805A]')}>
-        {app.pro?<IconsaxIcon name="shield-tick" size={12}/>:<IconsaxIcon name="tick-circle" size={12}/>}
-        {app.pro?'PRO':'INCLUDED'}
+        (premiumBadge?'border-[#E7D7CB] bg-[#FFF6ED] text-[#AA581C]':'border-[#E4E5E8] bg-[#F6F6F7] text-[#55565B]')}>
+        {premiumBadge?<IconsaxIcon name="shield-tick" size={12}/>:<IconsaxIcon name="tick-circle" size={12}/>}
+        {premiumBadge?'PRO':'INCLUDED'}
       </span>
     </div>
     <div className="relative mt-5">
@@ -48,26 +49,26 @@ const AppTile=memo(function AppTile({app,proEnabled,launchStatus,posterReviewAll
     <div className="relative mt-auto flex items-end justify-between gap-2 pt-5">
       <div className="space-y-1">
         <p className="text-[10px] font-extrabold uppercase tracking-[.08em] text-[#B75F19]">
-          {qa?'Private QA':review?'Staff review':launched?'Available now':'Coming soon'}
+          {ownerStudioAccess?'Workspace access':qa?'Private QA':review?'Staff review':launched?'Available now':'Coming soon'}
         </p>
-        <p className="text-[10px] text-[#95959C]">{qa?'Pro test grant · release pending':review?'Temporary evaluation · Pro not unlocked':launched?app.note:'Release pending verification'}</p>
+        <p className="text-[10px] text-[#95959C]">{ownerStudioAccess?(launchStatus==='live'?app.note:'Workspace opens · features still in development'):qa?'Pro test grant · release pending':review?'Temporary evaluation · Pro not unlocked':launched?app.note:'Release pending verification'}</p>
       </div>
       {launched
         ?<Link href={app.href} prefetch={false}
           aria-label={'Open '+app.title}
           className="inline-flex h-9 items-center gap-1 rounded-lg bg-[#242326] px-3 text-[11px] font-bold text-white hover:bg-[#FF7900]">
-          {qa?'Test':review?'Preview':'Open'} <IconsaxIcon name="arrow-right-2" size={13} color="white"/>
+          {ownerStudioAccess?'Open':qa?'Test':review?'Preview':'Open'} <IconsaxIcon name="arrow-right-2" size={13} color="white"/>
         </Link>
         :<span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#E8E7E9] bg-[#FAFAFB] text-[#A18B80]">
           <IconsaxIcon name="clock" size={16}/>
         </span>}
     </div>
-    {app.pro&&!proEnabled&&!review&&!qa&&<span className="sr-only">Will require verified Professional or Enterprise access when launched.</span>}
+    {app.pro&&!proEnabled&&!review&&!qa&&!ownerStudioAccess&&<span className="sr-only">Will require verified Professional or Enterprise access when launched.</span>}
   </article>;
 });
 
-export default function MarketingAppStore({proEnabled,launchStatuses,posterReviewAllowed=false,posterQaAllowed=false}:{
-  proEnabled:boolean;launchStatuses:MarketingStudioLaunchStatuses;posterReviewAllowed?:boolean;posterQaAllowed?:boolean;
+export default function MarketingAppStore({proEnabled,launchStatuses,posterReviewAllowed=false,posterQaAllowed=false,ownerStudioAccess=false}:{
+  proEnabled:boolean;launchStatuses:MarketingStudioLaunchStatuses;posterReviewAllowed?:boolean;posterQaAllowed?:boolean;ownerStudioAccess?:boolean;
 }){
   const [category,setCategory]=useState<StudioFilter>('All apps');
   const [search,setSearch]=useState('');
@@ -109,7 +110,7 @@ export default function MarketingAppStore({proEnabled,launchStatuses,posterRevie
     </div>
     {filtered.length?<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
       {filtered.map(app=><AppTile key={app.id} app={app} proEnabled={proEnabled}
-        launchStatus={launchStatuses[app.id]??'coming_soon'} posterReviewAllowed={posterReviewAllowed} posterQaAllowed={posterQaAllowed}/>)}
+        launchStatus={launchStatuses[app.id]??'coming_soon'} posterReviewAllowed={posterReviewAllowed} posterQaAllowed={posterQaAllowed} ownerStudioAccess={ownerStudioAccess}/>)}
     </div>:<div className="rounded-[18px] border border-dashed border-[#E6E1E4] bg-[#FAFAFB] px-5 py-14 text-center">
       <IconsaxIcon name="search-normal" size={30} color="#A19AA0"/>
       <h3 className="mt-3 text-[16px] font-bold text-[#2D2B31]">No apps match your search</h3>
@@ -119,10 +120,10 @@ export default function MarketingAppStore({proEnabled,launchStatuses,posterRevie
     </div>}
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#F0E1D5] bg-[#FFF9F3] p-4 sm:px-6">
       <div>
-        <p className="text-[12px] font-bold text-[#544030]">{proEnabled?'Verified Pro plan · app releases coming soon.':'Marketing Studio global launch is preparing.'}</p>
+        <p className="text-[12px] font-bold text-[#544030]">{ownerStudioAccess?'All 12 workspaces are available to open.':proEnabled?'Verified access · app releases coming soon.':'Marketing Studio global launch is preparing.'}</p>
         <p className="mt-1 text-[11px] leading-5 text-[#8E7A6D]">All 12 app cards start as Coming Soon. Existing manual Campaign Planner and Leads CRM remain accessible in their original vendor pages. Google OAuth, email sends and automatic posts are OFF.</p>
       </div>
-      {!proEnabled&&<Link href="/vendor/billing"
+      {!proEnabled&&!ownerStudioAccess&&<Link href="/vendor/billing"
         className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#252225] px-4 text-[11px] font-bold text-white transition hover:bg-[#43372F]">
         Explore Pro plans <IconsaxIcon name="arrow-right-2" size={14} color="white"/>
       </Link>}
