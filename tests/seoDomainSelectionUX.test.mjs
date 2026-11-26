@@ -44,8 +44,8 @@ test('Provider-only changes do not invalidate a valid domain verification',()=>{
 
 test('Sidebar is compact on desktop but keeps 44px tap targets on mobile',()=>{
   assert.match(layout,/mobile\?'min-h-11 ':'min-h-\[36px\] '/);
-  assert.match(layout,/size=\{mobile\?17:16\}/);
-  assert.match(layout,/gap-2 rounded-lg px-2 text-\[11px\]/);
+  assert.match(layout,/size=\{mobile\?19:18\}/);
+  assert.match(layout,/gap-2 rounded-lg px-1\.5 text-\[11px\]/);
   assert.match(layout,/mobile\?'space-y-1':'space-y-0\.5'/);
   assert.match(layout,/space-y-1 overflow-y-auto px-2 pb-3 pt-1/);
   assert.match(layout,/sideSections\(sidebarCollapsed\)/);
