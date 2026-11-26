@@ -46,11 +46,12 @@ test('Marketing Studio avoids sequential entitlement fetches and expensive prefe
   assert.match(store,/href=\{app\.href\}/);
 });
 
-test('Google consent control is preview-only, business-selected and fails closed',()=>{
+test('Google consent control is explicitly gated in production, business-selected and fails closed',()=>{
   const page=read('app/vendor/marketing/engine/(pro)/connections/page.tsx');
   const ui=read('app/vendor/marketing/engine/components/GoogleMailPreviewConnect.tsx');
   const api=read('app/api/marketing/oauth/google_mail/start/route.ts');
-  assert.match(page,/getGooglePreviewConfig\(\)/);
+  assert.match(page,/getGoogleConnectorConfig\(\)/);
+  assert.match(page,/getGoogleConnectorReadiness\(\)/);
   assert.match(page,/process\.env\.SUPABASE_SERVICE_ROLE_KEY/);
   assert.match(page,/auth\.getUser\(\)/);
   assert.match(page,/from\('marketing_connections'\)/);
