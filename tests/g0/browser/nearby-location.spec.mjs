@@ -84,7 +84,7 @@ test('Home Hero Enter obtains fresh GPS before carrying search query to Nearby',
   await expect(page.getByText('Location from recent GPS search').first()).toBeVisible();
 });
 
-test('Hero search fails visibly on denied GPS; never fabricates Colombo or drops query',async({page},testInfo)=>{
+test('Denied GPS still navigates Home query to island-wide Nearby results',async({page},testInfo)=>{
   await page.addInitScript(()=>{
     Object.defineProperty(navigator,'geolocation',{configurable:true,value:{
       getCurrentPosition:(_success,onError)=>setTimeout(()=>onError({
@@ -98,9 +98,59 @@ test('Hero search fails visibly on denied GPS; never fabricates Colombo or drops
   await expect(input).toBeVisible();
   await input.fill('Hospital');
   await input.press('Enter');
-  await expect(page.getByText(/Location permission is blocked/).first()).toBeVisible({timeout:15000});
-  expect(new URL(page.url()).pathname).toBe('/');
-  await expect(input).toHaveValue('Hospital');
+  await expect(page).toHaveURL(url=>{
+    const u=new URL(url);
+    return u.pathname==='/nearby'
+      && (u.searchParams.get('q')||'').toLowerCase().includes('hospital')
+      && u.searchParams.get('locationStatus')==='gps-unavailable'
+      && !u.searchParams.has('lat')&&!u.searchParams.has('lng')
+      && !u.searchParams.has('source')&&!u.searchParams.has('radius');
+  },{timeout:15000});
+  await expect(page.getByText(/GPS unavailable — showing matching businesses across Sri Lanka/)).toBeVisible();
+});
+
+test('Approximate GPS does not block search or pretend a town was detected',async({page},testInfo)=>{
+  await page.addInitScript(()=>{
+    Object.defineProperty(navigator,'geolocation',{configurable:true,value:{
+      getCurrentPosition:(success)=>setTimeout(()=>success({
+        coords:{latitude:6.9271,longitude:79.8612,accuracy:50000},
+        timestamp:Date.now(),
+      }),20),
+      // Coarse provider with no watchPosition -> shared GPS helper fails closed.
+    }});
+  });
+  await page.goto('/',{waitUntil:'domcontentloaded'});
+  const id=testInfo.project.name==='desktop-chromium'?'hero-business-query':'mobile-home-business-query';
+  const input=page.locator('#'+id);
+  await expect(input).toBeVisible();
+  await input.fill('thuni kadai');
+  await input.press('Enter');
+  await expect(page).toHaveURL(url=>{
+    const u=new URL(url);
+    return u.pathname==='/nearby'
+      && (u.searchParams.get('q')||'').toLowerCase().includes('thuni')
+      && u.searchParams.get('locationStatus')==='gps-unavailable'
+      && !u.searchParams.has('lat')&&!u.searchParams.has('lng');
+  },{timeout:15000});
+});
+
+test('Stalled browser geolocation cannot trap Home search indefinitely',async({page},testInfo)=>{
+  await page.addInitScript(()=>{
+    Object.defineProperty(navigator,'geolocation',{configurable:true,value:{
+      getCurrentPosition:()=>{},watchPosition:()=>1,clearWatch:()=>{},
+    }});
+  });
+  await page.goto('/',{waitUntil:'domcontentloaded'});
+  const id=testInfo.project.name==='desktop-chromium'?'hero-business-query':'mobile-home-business-query';
+  const input=page.locator('#'+id);
+  await input.fill('Hotels');
+  await input.press('Enter');
+  await expect(page).toHaveURL(url=>{
+    const u=new URL(url);
+    return u.pathname==='/nearby'
+      && u.searchParams.get('locationStatus')==='gps-unavailable'
+      && (u.searchParams.get('q')||'').toLowerCase().includes('hotel');
+  },{timeout:14500});
 });
 
 
