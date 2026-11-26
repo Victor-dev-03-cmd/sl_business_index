@@ -53,5 +53,5 @@ test('Connectors shows app grid and requirements, without AI command box or fake
  assert.doesNotMatch(whatsapp,/WhatsAppGrowthOperator|WhatsAppConnectionLab|<textarea/);
  assert.doesNotMatch(page,/WhatsAppGrowthOperator|<textarea/);
  assert.doesNotMatch(grid,/OAuth.*window\.location\.assign|sendMessage\(|sendEmail\(/);
- assert.match(page,/getGooglePreviewConfig\(\)/);
+ assert.match(page,/getGoogleConnectorConfig\(\)/);
 });
