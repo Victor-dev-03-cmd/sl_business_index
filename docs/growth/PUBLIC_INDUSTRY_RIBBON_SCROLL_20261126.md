@@ -17,7 +17,7 @@
 
 ## Regression tests
 - `tests/publicMobileHomeReference.test.mjs`: source contract checks arrow presence, dynamic measurement, bounded wheel scrolling, reduced motion and unchanged mobile/header linkage. Included by `verify-nextjs.yml` normal CI.
-- `tests/g0/browser/industry-ribbon-scroll.spec.mjs`: isolated desktop-width Chromium/WebKit tests for overflow at 1024px, arrow-controlled ability to reveal and click `Retail & Others` (mega menu opens), horizontal wheel at 1100px and no document-level horizontal overflow. This test file triggers G0-09 browser workflow under `tests/g0/browser/**`.
+- `tests/g0/browser/industry-ribbon-scroll.spec.mjs`: isolated 1024px Android Chromium, iOS WebKit and desktop Chromium viewport tests for overflow, arrow click movement, last-group visibility/click and mega-menu. End-of-track state is set deterministically after one real arrow movement to avoid racing CSS smooth animations. 1100px mouse-wheel/no-document-overflow is exercised in Chromium only, because iPhone WebKit's mobile browser emulation does not support desktop mouse-wheel events. This file triggers the G0-09 browser workflow under `tests/g0/browser/**`.
 - Browser tests use fake/public backend and headless viewport emulation, NOT a real customer laptop. Manual actual laptop check at 1024/1280/1366 and browser zoom remains pending.
 
 ## Release status (fill after verification)
