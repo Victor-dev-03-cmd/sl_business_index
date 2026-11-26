@@ -22,62 +22,102 @@ for(const [address,mask] of [
 
 export const isAllowedPublicIPv4=(address:string)=>!blocked.check(address,'ipv4');
 
-export async function hasHttpFileProof(hostname:string,expected:string):Promise<boolean>{
-  // The hostname is already validated by the route, but repeat an invariant
-  // here to prevent future callers accidentally reaching arbitrary endpoints.
+
+type HttpProofFailureCode =
+  | 'verification_file_bad_hostname'
+  | 'verification_file_dns_error'
+  | 'verification_file_unsafe_dns'
+  | 'verification_file_unreachable'
+  | 'verification_file_redirect'
+  | 'verification_file_http_status'
+  | 'verification_file_content_type'
+  | 'verification_file_too_large'
+  | 'verification_file_token_mismatch'
+  | 'verification_file_tls_error'
+  | 'verification_file_timeout';
+
+export type HttpProofCheck =
+  | {ok:true}
+  | {ok:false;code:HttpProofFailureCode};
+
+const failure=(code:HttpProofFailureCode):HttpProofCheck=>({ok:false,code});
+
+/** Exact public HTTP proof, with safe non-secret diagnostics for the owner. */
+export async function inspectHttpFileProof(hostname:string,expected:string):Promise<HttpProofCheck>{
+  // Never fetch any URL, path, port or IP furnished by the web client.
   if(!/^[a-z0-9.-]{4,253}$/.test(hostname)||hostname.startsWith('.')||
      hostname.endsWith('.')||hostname.includes('..')||
-     !/^slbi-verify=[a-f0-9]{48}$/.test(expected))return false;
+     !/^slbi-verify=[a-f0-9]{48}$/.test(expected))return failure('verification_file_bad_hostname');
 
-  // Resolve BEFORE the request and pin the approved IP in the socket lookup.
-  // This removes DNS rebinding between validation and the actual connection.
-  // IPv6-only hosts fail safely rather than risking complex mapped IP ranges.
+  // Resolve the domain once, reject private addresses and pin the public IP
+  // to the TLS socket while validating the original hostname certificate.
   let addresses;
   try{addresses=await Promise.race([
     lookup(hostname,{all:true,family:4,verbatim:true}),
     new Promise<never>((_,reject)=>setTimeout(()=>reject(new Error('resolver_timeout')),3500)),
-  ])}catch{return false}
+  ])}catch{return failure('verification_file_dns_error')}
   if(!addresses.length||addresses.length>20||
-    addresses.some(record=>record.family!==4||!isAllowedPublicIPv4(record.address)))return false;
+    addresses.some(record=>record.family!==4||!isAllowedPublicIPv4(record.address)))
+    return failure('verification_file_unsafe_dns');
 
   const pinned=addresses[0].address;
-  return new Promise<boolean>(resolve=>{
+  return new Promise<HttpProofCheck>(resolve=>{
     let finished=false;
     let deadline:ReturnType<typeof setTimeout>|undefined;
-    const done=(value:boolean)=>{if(!finished){finished=true;if(deadline)clearTimeout(deadline);resolve(value)}};
+    const done=(result:HttpProofCheck)=>{
+      if(finished)return;
+      finished=true;
+      if(deadline)clearTimeout(deadline);
+      resolve(result);
+    };
     const req=httpsRequest({
       protocol:'https:',hostname,servername:hostname,
       port:443,path:SEO_HTTP_PROOF_PATH,method:'GET',
-      // HTTPS hostname validation and SNI remain bound to the user's host,
-      // while the actual TCP connection uses only our approved IP.
       lookup:(_host,_options,callback)=>callback(null,pinned,4),
       agent:false,
       headers:{'Accept':'text/plain','Accept-Encoding':'identity','User-Agent':'SLBI-Domain-Verification/1.0'},
       timeout:TIMEOUT_MS,
     },res=>{
-      // No redirects, auth screens, status 206 or CDN fallbacks accepted.
-      if(res.statusCode!==200){res.resume();done(false);return}
+      // Reject redirects, Vercel Authentication, missing pages, proxies
+      // and even HTTP 206: only an exact plain-text 200 can prove control.
+      if(res.statusCode!==200){
+        res.resume();
+        done(failure(res.statusCode&&res.statusCode>=300&&res.statusCode<400
+          ?'verification_file_redirect':'verification_file_http_status'));
+        return;
+      }
       const contentType=String(res.headers['content-type']||'');
       if(contentType&&!/^(text\/plain|application\/octet-stream)(;|$)/i.test(contentType)){
-        res.resume();done(false);return;
+        res.resume();done(failure('verification_file_content_type'));return;
       }
       let size=0;
       const chunks:Buffer[]=[];
       res.on('data',(chunk:Buffer)=>{
         size+=chunk.length;
-        if(size>MAX_BYTES){req.destroy();done(false);return}
+        if(size>MAX_BYTES){
+          req.destroy();
+          done(failure('verification_file_too_large'));
+          return;
+        }
         chunks.push(chunk);
       });
       res.on('end',()=>{
         const text=Buffer.concat(chunks).toString('utf8').trim();
-        done(text===expected);
+        done(text===expected?{ok:true}:failure('verification_file_token_mismatch'));
       });
-      res.on('error',()=>done(false));
+      res.on('error',()=>done(failure('verification_file_unreachable')));
     });
-    req.on('timeout',()=>{req.destroy();done(false)});
-    req.on('error',()=>done(false));
+    req.on('timeout',()=>{req.destroy();done(failure('verification_file_timeout'))});
+    req.on('error',(err:NodeJS.ErrnoException)=>{
+      done(failure(err.code&&/(CERT|TLS|SSL|ALTNAME|SELF_SIGNED)/i.test(err.code)
+        ?'verification_file_tls_error':'verification_file_unreachable'));
+    });
     req.end();
-    deadline=setTimeout(()=>{req.destroy();done(false)},TIMEOUT_MS+500);
+    deadline=setTimeout(()=>{req.destroy();done(failure('verification_file_timeout'))},TIMEOUT_MS+500);
     deadline.unref?.();
   });
+}
+
+export async function hasHttpFileProof(hostname:string,expected:string):Promise<boolean>{
+  return (await inspectHttpFileProof(hostname,expected)).ok;
 }

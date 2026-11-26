@@ -27,7 +27,7 @@ test('Real domain claim uses crypto-random token, limited DNS TXT resolver only 
  assert.match(api,/randomBytes\(24\)\.toString\('hex'\)/);
  assert.match(api,/resolveTxt\(name\)/);
  assert.match(api,/hasDnsProof\(existing\.txt_record_name,existing\.verification_token\)/);
- assert.match(api,/method==='http_file'\?'verification_file_not_found':'dns_record_not_found'/);
+ assert.match(api,/method==='http_file'\?httpError:'dns_record_not_found'/);
  assert.match(api,/state:'verified',verified_at/);
  assert.match(api,/verification_expires_at:new Date\(now\.getTime\(\)\+30\*24\*60\*60_000\)/);
  assert.match(api,/verification_rate_limited/);
@@ -89,7 +89,7 @@ test('Both SEO verification methods remain persisted and owner-scoped',()=>{
  assert.match(api,/verificationMethod/);
  assert.match(api,/verification_method:method/);
  assert.match(api,/method==='http_file'/);
- assert.match(api,/hasHttpFileProof\(existing.hostname,existing.verification_token\)/);
+ assert.match(api,/inspectHttpFileProof\(existing.hostname,existing.verification_token\)/);
  assert.match(api,/use_http_file_for_hosted_subdomain/);
  assert.match(page,/verification_method/);
  assert.match(ui,/HTTPS File Verification/);
@@ -105,4 +105,31 @@ test('Both SEO verification methods remain persisted and owner-scoped',()=>{
  assert.match(http,/servername:hostname/);
  assert.match(http,/protocol:'https:'/);
  assert.doesNotMatch(http,/fetch\(|method:'POST'|redirect:'follow'|http:\/\//);
+});
+
+test('Only the requesting authenticated owner receives safe, specific HTTP proof diagnostics',()=>{
+ const http=read('lib/seo/http-file-proof.ts');
+ const client=read('app/vendor/seo/SeoDomainConnector.tsx');
+ assert.match(http,/inspectHttpFileProof\(hostname:string,expected:string\):Promise<HttpProofCheck>/);
+ assert.match(http,/verification_file_token_mismatch/);
+ assert.match(http,/verification_file_unreachable/);
+ assert.match(http,/verification_file_redirect/);
+ assert.match(http,/verification_file_content_type/);
+ assert.match(http,/verification_file_too_large/);
+ assert.match(http,/verification_file_tls_error/);
+ assert.match(http,/verification_file_timeout/);
+ assert.match(http,/text===expected\?\{ok:true\}:failure\('verification_file_token_mismatch'\)/);
+ assert.match(http,/res.statusCode!==200/);
+ assert.match(http,/MAX_BYTES=512/);
+ assert.match(http,/isAllowedPublicIPv4/);
+ assert.match(http,/lookup:\(_host,_options,callback\)=>callback\(null,pinned,4\)/);
+ assert.doesNotMatch(http,/rejectUnauthorized:false|redirect:'follow'|fetch\(hostname\)/);
+ assert.match(client,/verification_file_token_mismatch:'The website file is reachable/);
+ assert.match(client,/CURRENT SLBI verification value/);
+ assert.match(client,/verification_file_http_status/);
+ assert.match(client,/verification_file_dns_error/);
+ assert.match(api,/if\(authError\|\|!user\|\|user.is_anonymous\)/);
+ assert.match(api,/\.eq\('id',body.businessId\)\.eq\('owner_id',user.id\)/);
+ assert.match(api,/if\(!found\)return denied\(409,method==='http_file'\?httpError:'dns_record_not_found'\)/);
+ assert.doesNotMatch(api,/verification_token:existing.verification_token\s*,\s*message:/);
 });
