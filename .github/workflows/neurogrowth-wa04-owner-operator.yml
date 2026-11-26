@@ -1,0 +1,34 @@
+name: NeuroGrowth WA-04 multilingual owner operator safety
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'lib/growth/agent/wa04-owner-operator.*'
+      - 'app/api/vendor/marketing/whatsapp/**'
+      - 'app/vendor/marketing/components/WhatsAppGrowthOperator.tsx'
+      - 'app/vendor/marketing/whatsapp/page.tsx'
+      - 'tests/wa04-growth-operator-safety.test.mjs'
+      - '.github/workflows/neurogrowth-wa04-owner-operator.yml'
+  pull_request:
+    paths:
+      - 'lib/growth/agent/wa04-owner-operator.*'
+      - 'app/api/vendor/marketing/whatsapp/**'
+      - 'app/vendor/marketing/components/WhatsAppGrowthOperator.tsx'
+      - 'app/vendor/marketing/whatsapp/page.tsx'
+      - 'tests/wa04-growth-operator-safety.test.mjs'
+      - '.github/workflows/neurogrowth-wa04-owner-operator.yml'
+permissions:
+  contents: read
+jobs:
+  owner-operator:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Pure multilingual, tenant isolation and no-send contracts
+        run: node --test tests/wa04-growth-operator-safety.test.mjs
+      - name: Syntax check
+        run: node --check lib/growth/agent/wa04-owner-operator.mjs
