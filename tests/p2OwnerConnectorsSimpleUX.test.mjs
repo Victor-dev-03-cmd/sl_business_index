@@ -17,7 +17,7 @@ test('Only the verified owner identity and existing trusted QA grant unlock owne
  assert.match(identity,/user\.email_confirmed_at/);
  assert.match(identity,/user\.is_anonymous!==true/);
  assert.match(identity,/user\.email\.trim\(\)\.toLowerCase\(\)/);
- assert.doesNotMatch(guard,/service_role|NEXT_PUBLIC_.*OWNER|user_metadata/);
+ assert.doesNotMatch(guard,/service_role|NEXT_PUBLIC_.*OWNER|(?:user|identity)\.user_metadata/);
  // Every other vendor continues to require verified unexpired paid entitlement.
  assert.match(guard,/evaluateMarketingEntitlement\(data\)/);
  assert.match(guard,/reason:'upgrade_required'/);

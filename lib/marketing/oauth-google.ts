@@ -2,7 +2,7 @@
  * Official Google OAuth code exchange + OIDC UserInfo verification (preview only).
  * Do not import into browser components; no email-send endpoint is implemented.
  */
-import {GOOGLE_SEND_SCOPE,type GooglePreviewOAuthConfig} from './oauth-runtime.ts';
+import {GOOGLE_SEND_SCOPE,GOOGLE_READ_SCOPE,type GooglePreviewOAuthConfig} from './oauth-runtime.ts';
 export type VerifiedGoogleMailbox={
   sub:string;email:string;scopes:string[];accessToken:string;refreshToken:string|null;expiresAt:string;
 };
@@ -25,7 +25,8 @@ export async function exchangeVerifiedGoogleMailbox(
   const scopes=typeof data.scope==='string'?data.scope.split(/\s+/).filter(Boolean):[];
   if(data.token_type!=='Bearer'||typeof data.access_token!=='string'||
      data.access_token.length<10||data.access_token.length>16000||
-     !scopes.includes(GOOGLE_SEND_SCOPE)||!scopes.includes('openid')||
+     !scopes.includes(GOOGLE_SEND_SCOPE)||
+     (config.gmailReadEnabled&&!scopes.includes(GOOGLE_READ_SCOPE))||!scopes.includes('openid')||
      !(scopes.includes('email')||scopes.includes('https://www.googleapis.com/auth/userinfo.email')))
     throw new Error('OAuth token scopes incomplete');
   const accessToken=data.access_token;
