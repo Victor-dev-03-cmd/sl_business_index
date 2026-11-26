@@ -18,6 +18,11 @@
 2. `app/nearby/NearbyExplorer.tsx` shows a **neutral informational bar** only for `locationStatus=gps-unavailable` with a query/category. It states "GPS unavailable — showing matching businesses across Sri Lanka. Choose a town or use GPS to narrow results." Nearby search/map still avoid pretending default coordinates are the user's position.
 3. Preserves exact selected city/town routing, valid GPS radius filtering, and user-triggered Nearby "Use my location"; no silent GPS bypass.
 
+## Customer's exact keyword: Romanized Tamil clothes shop
+- Additional production **read-only** verification: `get_nearby_businesses_v3` island-wide returned 0 for literal `thuni kadai`, but existing `Clothing & Brands` has **1 approved listing** (the broad RPC itself is operational: `hotel` returned 2).
+- Small, deterministic SmartSearch built-in synonym group now recognizes exact `thuni kadai`, `thunikadai`, `thuni kaday` as the **general Clothing & Brands category**, canonical `clothing`. This keeps non-specific category intent and never invents a merchant or asserts any particular product is stocked. New parser tests cover all three Latin spellings.
+- Nearby's reviewed `get_nearby_businesses_v2` clamps radius to **500,000m**; the existing no-coordinate island-wide route therefore really can retrieve across Sri Lanka. No schema changes.
+
 ## Regression coverage
 - Browser Playwright: fresh accurate GPS still obtains exact coordinates, denied GPS now navigates with original "Hospital" query and NO coordinates, coarse-only mock "thuni kadai" reaches Nearby, permanently stalled geolocation reaches Nearby within timeout, and explicit Colombo/Jaffna queries remain independent of device GPS.
 - Unit source contract asserts data separation, preserved query, 7s deadline, island-wide search without GPS, and existing accurate GPS radius/map.
