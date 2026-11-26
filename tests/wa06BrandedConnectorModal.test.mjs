@@ -79,13 +79,13 @@ test('WhatsApp onboarding and test messaging APIs verify same-origin, Supabase a
  assert.doesNotMatch(send,/messageSent:true/);
 });
 
-test('Existing Meta sandbox webhook stays independent; Google preview unchanged and production-disabled',()=>{
+test('Existing Meta sandbox webhook stays independent; Google production OAuth needs explicit config',()=>{
  const hook=read('app/api/integrations/whatsapp/webhook/route.ts');
  assert.match(hook,/inspectWA03BInbound/);
  assert.match(hook,/verifyWA03BChallenge/);
  const runtime=read('lib/marketing/oauth-runtime.ts');
  assert.match(runtime,/env.VERCEL_ENV!=='preview'/);
  const page=read('app/vendor/marketing/engine/(pro)/connections/page.tsx');
- assert.match(page,/getGooglePreviewConfig\(\)/);
+ assert.match(page,/getGoogleConnectorConfig\(\)/);
  assert.match(page,/GoogleMailPreviewConnect/);
 });
