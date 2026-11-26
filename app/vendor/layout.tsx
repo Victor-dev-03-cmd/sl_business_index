@@ -32,6 +32,7 @@ const primaryNav:NavItem[]=[
   {name:'Enquiries',href:'/vendor/leads',icon:'message-text'},
   {name:'Reviews',href:'/vendor/reviews',icon:'star'},
   {name:'Growth Insights',href:'/vendor/insights',icon:'status-up'},
+  {name:'SEO Engine',href:'/vendor/seo',icon:'global'},
 ];
 const growthNav:NavItem[]=[
   {name:'Growth OS',href:'/vendor/growth',icon:'chart'},
