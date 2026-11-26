@@ -1,7 +1,7 @@
 'use client';
 import {useEffect,useMemo,useState} from 'react';
 import Link from 'next/link';
-import {MARKETING_STUDIO_APPS} from '@/lib/marketing/studio-apps';
+import OwnerPlanPreview from './OwnerPlanPreview';
 import {ArrowRight,CheckCircle2,Globe2,Loader2,LockKeyhole,MessageSquareText,
  ShieldCheck,AlertTriangle,PlugZap,Workflow,Mail,RefreshCw} from 'lucide-react';
 import type {WhatsAppOwnedBusiness} from './WhatsAppConnectionLab';
@@ -33,7 +33,7 @@ const LOCALE_COPY={
  open:'Open tool to review',approval:'Separate approval and recipient consent required before any sending',
  saved:'No content saved, no message sent and no account changed.',
  warning:'The current Meta test-number connection belongs to the SLBI sandbox, not to this vendor.',
- provider:'Provider channels',whatsapp:'WhatsApp · test-only',email:'Email · connect and review',meta:'Facebook / Instagram · permissions required',
+ provider:'Provider channels',whatsapp:'WhatsApp · test-only',email:'Email · not connected',meta:'Facebook / Instagram · permissions required',
  noBusiness:'No approved business selected. Draft planning is available only to approved owners.',
  error:'Could not prepare the plan. Review your business and try again.',
  draft:'Draft or review only', noPlans:'Nothing was published or sent.',
@@ -51,7 +51,7 @@ const LOCALE_COPY={
  open:'பரிசீலிக்க கருவியைத் திற',approval:'Message அனுப்ப தனி ஒப்புதலும் பெறுநர் சம்மதமும் அவசியம்',
  saved:'எதுவும் சேமிக்கப்படவில்லை; Message அனுப்பப்படவில்லை; Account மாற்றப்படவில்லை.',
  warning:'SLBI-ன் Meta Test Number இணைப்பு இந்த Vendor-ன் தனிப்பட்ட இணைப்பு அல்ல.',
- provider:'இணைக்கக்கூடிய சேனல்கள்',whatsapp:'WhatsApp · சோதனை மட்டும்',email:'மின்னஞ்சல் · இணைத்து பரிசீலிக்க',meta:'Facebook / Instagram · அனுமதி தேவை',
+ provider:'இணைக்கக்கூடிய சேனல்கள்',whatsapp:'WhatsApp · சோதனை மட்டும்',email:'மின்னஞ்சல் · இன்னும் இணைக்கப்படவில்லை',meta:'Facebook / Instagram · அனுமதி தேவை',
  noBusiness:'அங்கீகரிக்கப்பட்ட வணிகத்தைத் தேர்ந்தெடுக்கவும். அதன் உரிமையாளருக்கே plan அனுமதி.',
  error:'திட்டம் தயாரிக்க முடியவில்லை. வணிகத்தைச் சரிபார்த்து மீண்டும் முயலுங்கள்.',
  draft:'வரைவு / பரிசீலனை மட்டும்',noPlans:'எதுவும் வெளியிடப்படவோ அனுப்பப்படவோ இல்லை.',
@@ -69,7 +69,7 @@ const LOCALE_COPY={
  open:'සමාලෝචනයට මෙවලම විවෘත කරන්න',approval:'යැවීමට පෙර වෙනම අනුමැතිය සහ ලබන්නාගේ කැමැත්ත අවශ්‍යයි',
  saved:'දත්ත සුරක්ෂිත කර නැත; පණිවිඩ යවා නැත; ගිණුම වෙනස් වී නැත.',
  warning:'SLBI Meta පරීක්ෂණ අංකය මෙම Vendorගේ පෞද්ගලික සම්බන්ධතාව නොවේ.',
- provider:'සම්බන්ධක නාලිකා',whatsapp:'WhatsApp · පරීක්ෂණ පමණි',email:'ඊමේල් · සම්බන්ධ කර සමාලෝචනය',meta:'Facebook / Instagram · අවසර අවශ්‍යයි',
+ provider:'සම්බන්ධක නාලිකා',whatsapp:'WhatsApp · පරීක්ෂණ පමණි',email:'ඊමේල් · තවම සම්බන්ධ වී නැත',meta:'Facebook / Instagram · අවසර අවශ්‍යයි',
  noBusiness:'අනුමත ව්‍යාපාරයක් තෝරන්න. සැලසුම් කිරීමට හිමිකම අවශ්‍යයි.',
  error:'සැලැස්ම සකස් කළ නොහැකි විය. ව්‍යාපාරය පරීක්ෂා කර නැවත උත්සාහ කරන්න.',
  draft:'කෙටුම්පත / සමාලෝචනය පමණි',noPlans:'කිසිවක් පළ හෝ යවා නැත.',
@@ -87,6 +87,7 @@ export default function WhatsAppGrowthOperator({businesses,ownershipReady}:{
  businesses:readonly WhatsAppOwnedBusiness[];ownershipReady:boolean;
 }){
  const [locale,setLocale]=useState<Lang>('en');
+ const [languagePinned,setLanguagePinned]=useState(false);
  const [businessId,setBusinessId]=useState(businesses[0]?.id??'');
  const [request,setRequest]=useState('');
  const [status,setStatus]=useState<Status|null>(null);
@@ -143,7 +144,7 @@ export default function WhatsAppGrowthOperator({businesses,ownershipReady}:{
     </div>
     <div aria-label="Select interface language" className="flex gap-1 rounded-xl border border-white/20 bg-white/5 p-1">
      {([['en','English'],['ta','தமிழ்'],['si','සිංහල']] as const).map(([value,label])=>
-      <button key={value} type="button" onClick={()=>{setLocale(value);setPlan(null);setStudio(null);setError('')}}
+      <button key={value} type="button" onClick={()=>{setLocale(value);setLanguagePinned(true);setPlan(null);setStudio(null);setError('')}}
        aria-pressed={locale===value} className={'min-h-10 rounded-lg px-3 text-xs font-bold transition '+(locale===value?'bg-[#FF7900] text-black':'text-white/70 hover:bg-white/10')}>
        {label}</button>)}
     </div>
@@ -168,7 +169,8 @@ export default function WhatsAppGrowthOperator({businesses,ownershipReady}:{
     </select>
     <label htmlFor="wa04-request" className="mt-4 block text-xs font-bold text-[#52525B]">{words.request}</label>
     <textarea id="wa04-request" value={request} maxLength={500} rows={4}
-     onChange={e=>{setRequest(e.target.value);setPlan(null);setStudio(null);setError('')}}
+     onChange={e=>{const next=e.target.value;setRequest(next);setPlan(null);setStudio(null);setError('');
+      if(!languagePinned){if(/[\u0B80-\u0BFF]/u.test(next))setLocale('ta');else if(/[\u0D80-\u0DFF]/u.test(next))setLocale('si');}}}
      placeholder={words.placeholder} className="mt-2 min-h-28 w-full resize-y rounded-xl border border-[#DDDDE2] bg-[#FAFAFB] p-3 text-sm leading-6 text-[#242429] focus:border-[#FF7900] focus:outline-none focus:ring-2 focus:ring-[#FF7900]/15"/>
     <p className="mt-2 text-right text-[10px] text-[#96969F]">{request.length}/500</p>
     {!canPlan&&<p className="mt-2 text-xs text-[#985624]">{words.noBusiness}</p>}
@@ -178,37 +180,8 @@ export default function WhatsAppGrowthOperator({businesses,ownershipReady}:{
     </button>
     <p className="mt-3 text-center text-xs text-[#85858F]">{words.saved}</p>
     {error&&<p role="alert" className="mt-3 text-xs font-semibold text-[#B13B21]">{error}</p>}
-    {plan&&<div aria-live="polite" className="mt-6 space-y-3 rounded-xl border border-[#F0D7BB] bg-[#FFFAF5] p-4">
-     <h3 className="text-sm font-bold text-[#6D3E17]">{words.plans}</h3>
-     {plan.actions.length===0&&<p className="text-xs text-[#6D5649]">{plan.summary}</p>}
-     {plan.actions.map(a=><div key={a.id} className="rounded-xl border border-[#F0E4DA] bg-white p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-       <div><p className="text-xs font-bold text-[#27252B]">{a.title}</p>
-       <p className="mt-1 text-[10px] text-[#7D7D85]">{a.requiresFreshApproval?words.approval:words.draft}</p></div>
-       <Link href={a.href} className="flex min-h-9 items-center gap-1 rounded-lg border border-[#E8DBCE] px-3 text-[11px] font-bold text-[#9E531A] hover:bg-[#FFF0DF]">
-        {words.open}<ArrowRight className="h-3 w-3"/></Link>
-      </div>
-     </div>)}
-     {studio&&<div className="space-y-3 border-t border-[#ECD8C2] pt-4">
-      <h4 className="text-xs font-extrabold text-[#8E4B1C]">{locale==='ta'?'Marketing Studio — 12 Apps திட்டம்':locale==='si'?'Marketing Studio — යෙදුම් 12 ක්':'Marketing Studio — 12 app review routes'}</h4>
-      {studio.abstained&&<p className="text-[11px] text-[#8A7A6E]">{locale==='ta'?'தெளிவான App கண்டறியப்படவில்லை; வேலையைச் சற்று விரிவாக எழுதுங்கள்.':locale==='si'?'යෙදුම හඳුනාගත නොහැකි විය. ඉල්ලීම පැහැදිලි කරන්න.':'No matching app; describe the work more specifically.'}</p>}
-      <div className="grid gap-2 sm:grid-cols-2">
-       {studio.actions.map(action=>{
-        const card=MARKETING_STUDIO_APPS.find(app=>app.id===action.id);
-        return <div key={action.id} className="flex min-w-0 flex-col justify-between gap-3 rounded-xl border border-[#EFE1D2] bg-white p-3">
-         <div><p className="text-xs font-bold text-[#25252A]">{card?.title??action.id}</p>
-          <p className="mt-1 text-[10px] leading-5 text-[#88818A]">{action.requiresProviderAuthorization
-           ?(locale==='ta'?'Provider அனுமதி மற்றும் உரிமையாளர் ஒப்புதல் தேவை':locale==='si'?'සේවා අවසරය සහ හිමිකරු අනුමැතිය අවශ්‍යයි':'Provider authorization and owner review required')
-           :(locale==='ta'?'வரைவு / பரிசீலனை மட்டும்':locale==='si'?'කෙටුම්පත / සමාලෝචනය පමණි':'Draft / review only')}</p></div>
-         <Link href={action.href} className="inline-flex min-h-9 items-center justify-center gap-1 rounded-lg border border-[#E8DBCE] px-3 text-[11px] font-bold text-[#9E531A] hover:bg-[#FFF0DF]">
-          {words.open}<ArrowRight className="h-3 w-3"/></Link>
-        </div>;
-       })}
-      </div>
-      <p className="text-[10px] leading-5 text-[#8F7771]">{locale==='ta'?'இது AI செயல்படுத்திய வேலை அல்ல. எதுவும் அனுப்பப்படவில்லை.':locale==='si'?'මෙය ක්‍රියාත්මක වූ කාර්යයක් නොවේ. කිසිවක් යවා නැත.':'Suggestions only. No automation or provider action executed.'}</p>
-     </div>}
-     <p className="text-[11px] leading-5 text-[#7C6353]">{plan.summary}</p>
-    </div>}
+    {plan&&<OwnerPlanPreview locale={locale} businessName={current?.name??''} request={request}
+     studioActions={studio?.actions??[]} ownerActions={plan.actions}/>}
    </div>
    <aside className="rounded-[20px] border border-[#E7E7EB] bg-white p-5 shadow-sm sm:p-7">
     <div className="flex items-center justify-between gap-3">
