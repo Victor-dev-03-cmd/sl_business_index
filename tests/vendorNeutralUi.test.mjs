@@ -18,10 +18,13 @@ test('owner portal keeps Inter and uses luxury orange/charcoal top navigation',(
   assert.match(vendorLayout,/vendor-workspace-v6/);
   assert.match(vendorLayout,/aria-label="Vendor primary navigation"/);
   assert.match(vendorLayout,/aria-label="Vendor compact navigation"/);
-  assert.match(vendorLayout,/aria-label="Growth and marketing tools"/);
-  assert.match(vendorLayout,/aria-label="Vendor account pages"/);
-  assert.doesNotMatch(vendorLayout,/vendor-sidebar|Collapse sidebar|Expand sidebar|Vendor mobile navigation/);
-  assert.match(vendorLayout,/bg-\[#FF7900\]/);
+  assert.match(vendorLayout,/aria-label="Vendor workspace and tools"/);
+  assert.match(vendorLayout,/title:'Account',items:accountNav/);
+  assert.match(vendorLayout,/data-slbi-ui="vendor-sidebar"/);
+  assert.match(vendorLayout,/aria-label="Vendor mobile navigation"/);
+  assert.match(vendorLayout,/Expand sidebar/);
+  assert.match(vendorLayout,/Collapse sidebar/);
+  assert.match(vendorLayout,/bg-\[#FFF0E5\]/);
   assert.match(styles,/\.vendor-workspace-v6 \.vendor-content/);
 });
 
@@ -56,19 +59,17 @@ test('Settings Studio uses version-free Tailwind neumorphism and responsive cont
   assert.match(settings,/onClick=\{\(\)=>void saveOptimization\(\)\}/);
   assert.doesNotMatch(styles,/vendor-settings-v\d+|settings-v\d+-/);
 });
-test('centered desktop top navigation exposes reversible, dismissible dropdowns with restrained corners',()=>{
-  assert.match(vendorLayout,/vendor-topbar-center absolute left-1\/2 hidden -translate-x-1\/2/);
-  assert.match(vendorLayout,/min-\[1600px\]:flex/);
-  assert.match(vendorLayout,/min-\[1600px\]:hidden/);
-  assert.match(vendorLayout,/aria-expanded=\{openMenu==='tools'\}/);
-  assert.match(vendorLayout,/aria-expanded=\{openMenu==='account'\}/);
-  assert.match(vendorLayout,/setOpenMenu\(open=>open==='tools'\?null:'tools'\)/);
-  assert.match(vendorLayout,/setOpenMenu\(open=>open==='account'\?null:'account'\)/);
-  assert.match(vendorLayout,/addEventListener\('pointerdown',onPointerDown\)/);
-  assert.match(vendorLayout,/event\.key==='Escape'/);
-  assert.doesNotMatch(vendorLayout,/<details|<summary/);
-  assert.match(styles,/\.vendor-topbar-dropdown-panel \{/);
-  assert.match(styles,/\.vendor-topbar-dropdown-link \{border-radius:6px;\}/);
+test('flex topbar never overlaps and sidebar offers keyboard-safe compact navigation',()=>{
+  assert.match(vendorLayout,/nav aria-label="Vendor primary navigation"/);
+  assert.match(vendorLayout,/min-w-0 flex-1 items-center justify-center/);
+  assert.match(vendorLayout,/data-slbi-ui="vendor-sidebar"/);
+  assert.match(vendorLayout,/w-\[226px\]/);
+  assert.match(vendorLayout,/w-\[70px\]/);
+  assert.match(vendorLayout,/onClick=\{\(\)=>setSidebarCollapsed\(v=>!v\)\}/);
+  assert.match(vendorLayout,/aria-label="Open navigation"/);
+  assert.match(vendorLayout,/aria-modal="true"/);
+  assert.match(vendorLayout,/event.key==='Escape'/);
+  assert.doesNotMatch(vendorLayout,/vendor-topbar-center absolute left-1\/2/);
 });
 
 test('owner workspace pages share restrained V7 shell without losing independent page flows',()=>{

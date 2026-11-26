@@ -24,14 +24,14 @@ test('every major owner portal page is reachable and uses a shared premium shell
   assert.match(layout,/VendorQuickActions/);
   assert.match(layout,/vendor-workspace\.css/);
   assert.match(layout,/vendor-topbar/);
-  assert.doesNotMatch(layout,/vendor-sidebar/);
+  assert.match(layout,/data-slbi-ui="vendor-sidebar"/);
   assert.match(layout,/ctrlKey/);
   assert.match(layout,/metaKey/);
   assert.match(layout,/aria-label="Vendor compact navigation"/);
   for(const link of [
     '/vendor/dashboard','/vendor/my-businesses','/vendor/leads','/vendor/reviews',
     '/vendor/insights','/vendor/growth','/vendor/marketing','/vendor/qr-code',
-    '/vendor/billing','/vendor/settings',
+    '/vendor/billing','/vendor/settings','/vendor/seo',
   ]) {
     assert.ok(layout.includes(link),'missing page in nav: '+link);
     assert.ok(actions.includes(link),'missing real quick action: '+link);

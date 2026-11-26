@@ -6,14 +6,16 @@ const read = path => readFileSync(new URL('../'+path,import.meta.url),'utf8');
 const nav=read('app/vendor/layout.tsx');
 const planner=read('app/vendor/marketing/campaigns/page.tsx');
 
-test('Gallery & Services appears directly in primary desktop and compact mobile navigation, not Tools',()=>{
- const primary=nav.slice(nav.indexOf('const primaryNav:'),nav.indexOf('const growthNav:'));
+test('Gallery & Services stays immediately accessible from desktop sidebar and mobile drawer, not hidden in Tools',()=>{
+ const workspace=nav.slice(nav.indexOf('const workspaceNav:'),nav.indexOf('const growthNav:'));
  const tools=nav.slice(nav.indexOf('const growthNav:'),nav.indexOf('const accountNav:'));
- assert.match(primary,/name:'Gallery & Services',href:'\/vendor\/gallery-services'/);
+ assert.match(workspace,/name:'Gallery & Services',href:'\/vendor\/gallery-services'/);
  assert.doesNotMatch(tools,/gallery-services/);
  assert.match(nav,/gallery-top-nav/);
  assert.match(nav,/gallery-compact-nav/);
- assert.equal((primary.match(/gallery-services/g)||[]).length,1);
+ assert.match(nav,/aria-label="Vendor workspace and tools"/);
+ assert.match(nav,/aria-label="Vendor compact navigation"/);
+ assert.equal((workspace.match(/gallery-services/g)||[]).length,1);
 });
 test('Free Campaign Planner is editor-first with clean horizontal tabs and responsive wider live preview',()=>{
  assert.match(planner,/data-testid="campaign-planner-free"/);
