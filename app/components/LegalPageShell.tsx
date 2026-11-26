@@ -29,7 +29,7 @@ function LegalVector({ mode }: { mode: "privacy" | "terms" }) {
   const privacy = mode === "privacy";
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 450 320" role="img"
-      aria-labelledby={"legal-svg-title-" + mode} className="h-auto w-full">
+      aria-labelledby={"legal-svg-title-" + mode} className="legal-vector h-auto w-full">
       <title id={"legal-svg-title-" + mode}>{privacy ? "Illustrated security shield representing responsible data handling" : "Illustrated policy document representing clear user agreements"}</title>
       <defs>
         <linearGradient id={"legal-glow-" + mode} x1="0" y1="0" x2="1" y2="1">
@@ -89,8 +89,8 @@ export default function LegalPageShell({
   children: ReactNode;
 }) {
   return (
-    <main className="min-h-screen bg-[#fbfcf8] font-[family-name:var(--font-inter)] text-[#213e2d]">
-      <header className="relative isolate overflow-hidden border-b border-[#e2eadf] bg-[radial-gradient(ellipse_at_80%_20%,#eaf3e8_0%,#fbfcf8_62%)]">
+    <main data-slbi-legal-page={kind} className="min-h-screen bg-[#fbfcf8] font-[family-name:var(--font-inter)] text-[#213e2d]">
+      <header data-slbi-legal-hero className="relative isolate overflow-hidden border-b border-[#e2eadf] bg-[radial-gradient(ellipse_at_80%_20%,#eaf3e8_0%,#fbfcf8_62%)]">
         <div className="mx-auto grid max-w-[1450px] items-center gap-10 px-5 pb-16 pt-12 sm:px-8 sm:pt-16 lg:grid-cols-[1fr_.67fr] lg:px-12 lg:py-20">
           <div className="max-w-[770px]">
             <Link href="/about" className="inline-flex items-center gap-2 text-[12px] font-semibold text-[#548469] transition-colors hover:text-[#24583d]">
@@ -111,7 +111,7 @@ export default function LegalPageShell({
         </div>
       </header>
 
-      <section className="border-b border-[#e3eae0] bg-white">
+      <section data-slbi-legal-announcement className="border-b border-[#e3eae0] bg-white">
         <div className="mx-auto flex max-w-[1450px] flex-wrap items-center justify-between gap-3 px-5 py-5 text-[12px] sm:px-8 lg:px-12">
           <p className="max-w-[780px] leading-6 text-[#6b7e70]">
             <strong className="text-[#24563b]">Introducing SLBI 2.0:</strong> our next chapter in business discovery and the Growth &amp; Security OS roadmap. Planned features roll out in phases; this announcement does not change the effective date of this policy.
@@ -121,7 +121,7 @@ export default function LegalPageShell({
       </section>
 
       <div className="mx-auto grid max-w-[1450px] gap-8 px-5 py-14 sm:px-8 sm:py-20 lg:grid-cols-[268px_minmax(0,1fr)] lg:gap-16 lg:px-12">
-        <nav aria-label={title + " sections"} className="h-fit rounded-[17px] border border-[#e0e9de] bg-white p-5 lg:sticky lg:top-[105px]">
+        <nav data-slbi-legal-nav aria-label={title + " sections"} className="h-fit rounded-[17px] border border-[#e0e9de] bg-white p-5 lg:sticky lg:top-[105px]">
           <p className="mb-4 text-[10px] font-extrabold uppercase tracking-[.17em] text-[#a18659]">On this page</p>
           <ol className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-1">
             {sections.map((item, index) => (
@@ -138,7 +138,7 @@ export default function LegalPageShell({
             <Link href="/contact" className="inline-flex items-center gap-2 text-[12px] font-bold text-[#3c8057] hover:underline"><Mail size={15}/> Ask us a question <ArrowUpRight size={14}/></Link>
           </div>
         </nav>
-        <article className="min-w-0 max-w-[900px] rounded-[21px] border border-[#e2eae0] bg-white px-5 py-7 shadow-[0_12px_30px_rgba(31,75,40,.035)] sm:px-9 sm:py-10 lg:px-12">
+        <article data-slbi-legal-content className="min-w-0 max-w-[900px] rounded-[21px] border border-[#e2eae0] bg-white px-5 py-7 shadow-[0_12px_30px_rgba(31,75,40,.035)] sm:px-9 sm:py-10 lg:px-12">
           {children}
           <div className="mt-10 rounded-[16px] border border-[#dce8dc] bg-[#f3f8f1] p-6 sm:p-7">
             <p className="text-[10px] font-extrabold uppercase tracking-[.18em] text-[#a28250]">Need more clarity?</p>
