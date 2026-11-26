@@ -100,7 +100,7 @@ export default function ConnectorGrid({googleReady,googleConnected,gmailPreview,
           Sign in with your official provider account, choose the business asset you manage, and approve only the requested permissions. SLBI will show a verified connection status after provider authorization is complete.
          </p>
          <p className="mt-3 text-[11px] font-medium text-[#8A6A56]">
-          {current.id==='gmail'?'Google Cloud OAuth setup is the next integration milestone.':
+          {current.id==='gmail'?'Gmail uses isolated preview OAuth only. Inbox reading requires separate Google restricted-scope consent; production activation and marketing sends remain disabled.':
            'This provider still requires its official integration and permissions.'}
          </p>
         </div>
@@ -109,7 +109,7 @@ export default function ConnectorGrid({googleReady,googleConnected,gmailPreview,
           className="flex min-h-12 w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl border border-[#E6E6E9] bg-[#F4F4F6] px-4 text-xs font-bold text-[#87858E]">
           <LockKeyhole size={17}/>Connect · approval required
          </button>}
-        <p className="text-center text-[11px] text-[#949198]">No account is connected and no message is sent by opening this setup.</p>
+        <p className="text-center text-[11px] text-[#949198]">{current.id==='gmail'&&googleReady&&googleConnected?'A verified preview link may exist. No message is sent by opening this setup.':'No account is connected and no message is sent by opening this setup.'}</p>
        </div>}
      </div>
     </Dialog.Content>}
