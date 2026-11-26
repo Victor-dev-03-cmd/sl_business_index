@@ -341,7 +341,7 @@ export default function VendorDashboard() {
               <div className="flex items-start justify-between gap-2">
                 <span className="text-[11px] font-semibold text-slate-500">{kpi.title}</span>
                 <span className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ backgroundColor: kpi.tone + '12', color: kpi.tone }}>
-                  <IconsaxIcon name={kpi.icon} variant="linear" size={18} />
+                  <IconsaxIcon name={kpi.icon} variant="bulk" size={18} />
                 </span>
               </div>
               <p className="mt-1.5 text-[26px] font-bold tabular-nums tracking-[-0.04em] text-[#2C2C31]">
