@@ -27,7 +27,9 @@ export async function POST(request:Request){
    // The detail is a small internal allowlist of parser stages, never user data.
    const safeDetails=['invalid_json','unexpected_meta_object','malformed_entry',
     'malformed_change','too_many_messages','malformed_event',
-    'malformed_text_event','future_message','too_many_events',
+    'malformed_text_event','malformed_text_event_id',
+    'malformed_text_event_sender','malformed_text_event_timestamp',
+    'malformed_text_event_body','future_message','too_many_events',
     'other_payload_invalid'];
    const rawStep='detail' in result?result.detail:undefined;
    const detail=safeReason==='payload_invalid'&&typeof rawStep==='string'

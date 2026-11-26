@@ -80,6 +80,31 @@ test('POST reject diagnostics are bounded categories, never user content',()=>{
  assert.equal(missing.code,'disabled');
  assert.equal(JSON.stringify([tampered,missing]).includes('private sample'),false);
 });
+test('Meta padded wamid succeeds without relaxing sender or timestamp validation',()=>{
+ const data=JSON.parse(sample().toString('utf8'));
+ const msg=data.entry[0].changes[0].value.messages[0];
+ msg.id='wamid.HBgLMTY1MDM4Nzk0MzkVAgASGBQzQUQ0N0VFMDA2MTQ0RkJFNkNDNAA=';
+ const signed=(body)=>{const raw=Buffer.from(JSON.stringify(body));
+  return inspectWA03BInbound(raw,sign(raw),env,NOW);};
+ const success=signed(data);
+ assert.equal(success.ok,true);
+ assert.equal(success.eventCount,1);
+ assert.equal(success.messageStored,false);
+ for(const [key,badValue,expectDetail] of [
+   ['id','wamid.bad*id','malformed_text_event_id'],
+   ['from','invalid-sender','malformed_text_event_sender'],
+   ['timestamp','not-numeric','malformed_text_event_timestamp'],
+ ]) {
+  const tampered=structuredClone(data);
+  tampered.entry[0].changes[0].value.messages[0][key]=badValue;
+  const rejected=signed(tampered);
+  assert.equal(rejected.code,'payload_invalid');
+  assert.equal(rejected.detail,expectDetail);
+ }
+ const bodyBroken=structuredClone(data);
+ bodyBroken.entry[0].changes[0].value.messages[0].text.body={text:'do not log'};
+ assert.equal(signed(bodyBroken).detail,'malformed_text_event_body');
+});
 test('signed real-event parser errors expose safe step labels only',()=>{
  const bad=(value)=>{const bytes=Buffer.from(JSON.stringify(value));
   return inspectWA03BInbound(bytes,sign(bytes),env,NOW);};
@@ -94,7 +119,7 @@ test('signed real-event parser errors expose safe step labels only',()=>{
  const wrongMessage=structuredClone(data);
  wrongMessage.entry[0].changes[0].value.messages[0].timestamp='not-a-timestamp';
  const messageError=bad(wrongMessage);
- assert.equal(messageError.detail,'malformed_text_event');
+ assert.equal(messageError.detail,'malformed_text_event_timestamp');
  assert.equal(JSON.stringify(messageError).includes('private sample'),false);
  const future=structuredClone(data);
  future.entry[0].changes[0].value.messages[0].timestamp=
