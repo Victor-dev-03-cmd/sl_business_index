@@ -5,7 +5,7 @@
 export const SLBI_PUBLIC_ORIGIN = 'https://www.slbusinessindex.com' as const;
 
 export interface PublicBusinessSEO {
-  id: string;
+  id: string | number;
   slug?: string | null;
   name?: string | null;
   category?: string | null;
@@ -22,7 +22,7 @@ export const isPublicApprovedBusiness = (business: Pick<PublicBusinessSEO,'statu
   business?.status === 'approved';
 
 export function getPublicBusinessCanonical(business: Pick<PublicBusinessSEO,'id'|'slug'>): string {
-  const identifier = business.slug?.trim() || business.id;
+  const identifier = business.slug?.trim() || String(business.id);
   return SLBI_PUBLIC_ORIGIN + '/business/' + encodeURIComponent(identifier);
 }
 
