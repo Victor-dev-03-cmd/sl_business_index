@@ -1,10 +1,10 @@
 {
-  "version": "ml07-trilingual-intent-synthetic-v1",
+  "version": "ml07-trilingual-intent-synthetic-v2-gmail-read-and-email-review",
   "provenance": "synthetic_only",
   "trainingEligibleRealData": false,
   "executionsAuthorized": false,
   "customerContactData": false,
-  "split": "two synthetic training prompts and one disjoint synthetic evaluation prompt per app per language",
+  "split": "two synthetic training prompts and one disjoint synthetic evaluation prompt per app per language; Gmail and Email Marketing synthetic intents revised",
   "classes": [
     {
       "app_id": "campaign-planner",
@@ -171,29 +171,29 @@
       "language_examples": {
         "en": {
           "train": [
-            "Draft a consented email campaign",
-            "Prepare a customer newsletter"
+            "Draft a consented Gmail newsletter for my customers",
+            "Prepare a reviewed email reply to a business enquiry"
           ],
           "eval": [
-            "Write a Gmail business email reply"
+            "Create an opt-in email marketing campaign"
           ]
         },
         "ta": {
           "train": [
-            "வாடிக்கையாளருக்கு மின்னஞ்சல் வரைவு",
-            "மெயில் மார்க்கெட்டிங் தயார் செய்"
+            "அனுமதி பெற்ற வாடிக்கையாளருக்கான மின்னஞ்சல் பிரச்சாரம் தயார் செய்",
+            "கூகுள் மெயிலில் வந்த விசாரணைக்கு பதில் வரைவு"
           ],
           "eval": [
-            "செய்திமடல் ஈமெயில் எழுதுங்கள்"
+            "ஈமெயில் மார்க்கெட்டிங் செய்திமடல் எழுதுங்கள்"
           ]
         },
         "si": {
           "train": [
-            "පාරිභෝගිකයින්ට ඊමේල් කෙටුම්පතක්",
-            "අලුත් විද්‍යුත් තැපෑලක් ලියන්න"
+            "අවසර දුන් පාරිභෝගිකයන්ට ඊමේල් ප්‍රචාරණ කෙටුම්පතක්",
+            "ජීමේල් විමසීමකට පිළිතුරු කෙටුම්පතක් සකසන්න"
           ],
           "eval": [
-            "පුවත් ලිපි ඊමේල් සැලසුම් කරන්න"
+            "අනුමැතිය ඇති ඊමේල් පුවත් ලිපියක් සකසන්න"
           ]
         }
       }
@@ -267,29 +267,29 @@
       "language_examples": {
         "en": {
           "train": [
-            "Connect apps through approved OAuth",
-            "Show available plugin connectors"
+            "Connect Gmail using verified Google OAuth",
+            "Review Gmail connector access permissions"
           ],
           "eval": [
-            "Review official app integrations"
+            "Set up Google Mail app connector"
           ]
         },
         "ta": {
           "train": [
-            "ஆப் இணைப்பு அமைப்பைப் பார்ப்போம்",
-            "புதிய கனெக்டர்ஸ் காட்டுங்கள்"
+            "கூகுள் OAuth வழியாக ஜிமெயில் கனெக்டர் இணைக்கவும்",
+            "ஜிமெயில் அணுகல் அனுமதிகளை சரிபார்க்கவும்"
           ],
           "eval": [
-            "செயலி இணைப்பு செய்ய உதவி"
+            "கூகுள் மெயில் ஆப் கனெக்டர் செட் பண்ணு"
           ]
         },
         "si": {
           "train": [
-            "යෙදුම් සම්බන්ධක පෙන්වන්න",
-            "අනුමත ඒකාබද්ධ කිරීම් මොනවාද"
+            "ගූගල් OAuth මගින් ජීමේල් සම්බන්ධ කරන්න",
+            "ජීමේල් සම්බන්ධක අවසර පරීක්ෂා කරන්න"
           ],
           "eval": [
-            "වෙනත් යෙදුමක් සම්බන්ධ කරන්න"
+            "ගූගල් තැපැල් සම්බන්ධකය සකස් කරන්න"
           ]
         }
       }
