@@ -73,6 +73,7 @@ export default async function MarketingOverview(){
   const [total,drafts,planned]=await Promise.all([count(),count('drafted'),count('scheduled')]);
   const show=(v:number|null)=>v===null?'—':new Intl.NumberFormat('en-LK').format(v);
   const paid=access.allowed;
+  const ownerStudioAccess=access.ownerStudioAccess===true;
   return <main className="mx-auto w-full max-w-[1540px] space-y-6 pb-12 text-[#202024]">
     <header className="relative isolate overflow-hidden rounded-[22px] border border-[#2B292E] bg-[#1D1D20] p-6 text-white shadow-[0_24px_55px_rgba(24,24,30,.13)] sm:p-9 lg:p-10">
       <div className="pointer-events-none absolute -right-16 -top-24 h-[340px] w-[340px] rounded-full bg-[#FF7900]/[.15] blur-[90px]" aria-hidden="true"/>
@@ -92,14 +93,14 @@ export default async function MarketingOverview(){
             <a href="#marketing-app-store" className="inline-flex h-11 items-center gap-2 rounded-lg bg-[#FF7900] px-5 text-[12px] font-extrabold text-[#1C1A1B] transition hover:bg-[#FFA14D]">
               Explore apps <IconsaxIcon name="arrow-right-2" size={16} color="#1C1A1B"/>
             </a>
-            <Link href="/vendor/marketing/whatsapp"
+            <Link href="/vendor/marketing-engine/connections"
               className="inline-flex h-11 items-center gap-2 rounded-lg border border-[#FFAA6B]/40 bg-white/[.08] px-4 text-[11px] font-bold text-white transition hover:bg-white/[.16]">
               <IconsaxIcon name="message-text" size={16} color="#FFAD74"/>
-              WhatsApp Connection Lab · 12 App GrowthOS
+              Connect your apps
             </Link>
             <span className="inline-flex h-11 items-center gap-2 rounded-lg border border-white/[.14] bg-white/[.07] px-4 text-[11px] font-bold text-white/[.85]">
               <IconsaxIcon name={paid?'tick-circle':'shield-tick'} size={15} color="#FFAE76"/>
-              {paid?'Verified '+access.plan+' access':access.reason==='unavailable'?'Plan verification unavailable':'Free essentials · Pro app collection'}
+              {ownerStudioAccess?'Owner workspace access':paid?'Verified '+access.plan+' access':access.reason==='unavailable'?'Plan verification unavailable':'Free essentials · Pro app collection'}
             </span>
           </div>
         </div>
@@ -127,7 +128,7 @@ export default async function MarketingOverview(){
     </section>
     {ownedError&&<p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-xs text-red-800">Business records could not be loaded. Campaign counts are hidden rather than guessed.</p>}
     {!ownedError&&<G1BusinessKnowledgePanel location="marketing" businesses={owned||[]}/>}
-    <MarketingAppStore proEnabled={paid} launchStatuses={launchStatuses} posterReviewAllowed={posterReviewAllowed} posterQaAllowed={posterQaAllowed}/>
+    <MarketingAppStore proEnabled={paid} launchStatuses={launchStatuses} posterReviewAllowed={posterReviewAllowed} posterQaAllowed={posterQaAllowed} ownerStudioAccess={ownerStudioAccess}/>
     <p className="text-[11px] leading-6 text-[#96969D]">
       App cards describe existing workspaces and planned integration capabilities. Provider authorization, real sending and publishing, AI credit usage and background scheduling require separate enablement and review. Growth Credits remain metered independently.
     </p>

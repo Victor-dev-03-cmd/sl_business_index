@@ -66,8 +66,8 @@ test('Marketing Engine is its own page with all requested Pro modules and truthf
   assert.ok(MARKETING_CONNECTORS.some(x=>x.id==='gmail'));
   assert.ok(MARKETING_CONNECTORS.some(x=>x.id==='outlook'));
   assert.ok(MARKETING_CONNECTORS.some(x=>x.id==='voice'));
-  assert.match(read('app/vendor/marketing/engine/(pro)/connections/page.tsx'),
-    /disabled aria-disabled="true"/);
+  assert.match(read('app/vendor/marketing/engine/(pro)/connections/page.tsx'),/ConnectorGrid/);
+  assert.match(read('app/vendor/marketing/engine/components/ConnectorGrid.tsx'),/disabled aria-disabled="true"/);
 });
 test('Pro server access protects all premium routes and authenticated APIs, not just UI buttons',()=>{
   const server=read('lib/marketing/pro-access-server.ts');

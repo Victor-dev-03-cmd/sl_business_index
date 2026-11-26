@@ -68,5 +68,6 @@ test('WA-04 exposes three languages but never represents test webhook as vendor 
   assert.ok(src.includes(marker),marker);
  }
  assert.match(src,/No content saved, no message sent/);
- assert.match(page,/WhatsAppGrowthOperator/);
+ assert.doesNotMatch(page,/WhatsAppGrowthOperator|WhatsAppConnectionLab/);
+ assert.match(page,/Connect · awaiting official approval/);
 });
