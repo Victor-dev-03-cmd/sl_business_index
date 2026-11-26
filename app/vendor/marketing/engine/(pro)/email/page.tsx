@@ -2,6 +2,10 @@ import Link from 'next/link';
 import MarketingModuleFrame from '@/app/vendor/marketing/engine/components/MarketingModuleFrame';
 import IconsaxIcon from '@/app/vendor/components/IconsaxIcon';
 import {MARKETING_CONNECTORS} from '@/lib/marketing/engine-registry';
+import EmailMarketingWorkbench from '@/app/vendor/marketing/engine/components/EmailMarketingWorkbench';
+import GoogleMailInboxPreview,{type GmailMailboxPreviewConnection} from '@/app/vendor/marketing/engine/components/GoogleMailInboxPreview';
+import {getGooglePreviewConfig} from '@/lib/marketing/oauth-runtime';
+import {createClient} from '@/lib/supabase/server';
 
 const phases=[
  {title:'Connect a mailbox',desc:'Sign in through Google/Microsoft OAuth; request the fewest necessary permissions.',ready:false},
@@ -10,19 +14,52 @@ const phases=[
  {title:'Review and queue',desc:'Vendor reviews content and audience. Durable sending and retries use a real server-side worker.',ready:false},
  {title:'Observe real delivery',desc:'Use provider message IDs, bounces and complaints; do not invent delivery statistics.',ready:false},
 ] as const;
-export default function MarketingEmail(){
+export const dynamic='force-dynamic';
+export default async function MarketingEmail(){
   const providers=MARKETING_CONNECTORS.filter(c=>c.group==='email');
+  // Only RLS-visible, owner-approved preview metadata. Production OAuth stays off.
+  const config=getGooglePreviewConfig();
+  let connections:GmailMailboxPreviewConnection[]=[];
+  if(config){
+    try{
+      const client=await createClient();
+      const {data:{user},error:authError}=await client.auth.getUser();
+      if(user&&!authError){
+        const {data:owned,error:ownerError}=await client.from('businesses')
+          .select('id').eq('owner_id',user.id).eq('status','approved').limit(50);
+        if(!ownerError){
+          const ids=(owned||[]).map(b=>b.id);
+          if(ids.length){
+            const {data:linked,error}=await client.from('marketing_connections')
+              .select('id,business_id,status,account_display_name,granted_scopes')
+              .eq('user_id',user.id).eq('provider','google_mail').eq('status','connected')
+              .in('business_id',ids).limit(25);
+            if(!error)connections=(linked||[]).map(c=>({
+              id:c.id,business_id:c.business_id,status:c.status,
+              account_display_name:c.account_display_name,
+              granted_scopes:Array.isArray(c.granted_scopes)?c.granted_scopes:[],
+            }));
+          }
+        }
+      }
+    }catch{/* Fail closed. Do not imply a linked mailbox. */}
+  }
   return <MarketingModuleFrame module="email"
     description="Plug-and-play business mail integration with explicit OAuth consent, AI-assisted drafting and opt-in campaign delivery. No mailbox is accessed until that mailbox owner authorizes it.">
+    <EmailMarketingWorkbench mailboxConnected={connections.length>0}/>
+    {Boolean(config?.gmailReadEnabled)&&<GoogleMailInboxPreview
+      connections={connections} readEnabled={Boolean(config?.gmailReadEnabled)}/>}
     <section className="grid gap-4 lg:grid-cols-[minmax(0,1.3fr)_minmax(300px,.8fr)]">
       <div className="rounded-xl border border-[#EBEBF0] bg-white p-5 sm:p-7">
         <h2 className="text-[16px] font-extrabold">Email provider plugins</h2>
-        <p className="mt-2 text-xs leading-6 text-[#808089]">Official OAuth and verified-domain sending are different adapters. The plugin catalogue is informational until callback, credential storage, scopes and audited sending are implemented.</p>
+        <p className="mt-2 text-xs leading-6 text-[#808089]">Official OAuth and verified-domain sending are separate adapters. Preview Gmail authorization may be available in a reviewed staging environment. Bulk sending and inbox AI uploads are not enabled.</p>
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
           {providers.map(provider=><div key={provider.id} className="rounded-xl border border-[#EAEAF0] bg-[#FCFCFD] p-4">
             <div className="flex items-start justify-between">
               <span className="rounded-lg bg-[#FFF1E5] p-2.5 text-[#B65E16]"><IconsaxIcon name="sms" size={19}/></span>
-              <span className="rounded-full bg-[#EFEFF2] px-2.5 py-1 text-[10px] font-bold text-[#85858D]">Not connected</span>
+              <span className="rounded-full bg-[#EFEFF2] px-2.5 py-1 text-[10px] font-bold text-[#85858D]">
+                {provider.id==='gmail'&&connections.length>0?'Preview linked':'Not connected'}
+              </span>
             </div>
             <h3 className="mt-4 text-sm font-bold">{provider.name}</h3>
             <p className="mt-1 text-[11px] leading-6 text-[#7D7D86]">{provider.requirements}</p>
