@@ -2,7 +2,7 @@
 
 import { createElement, useEffect, useRef, useState } from 'react';
 import {
-  ChevronDown, ChevronUp, Building2, CalendarClock, Phone, ChartNoAxesCombined,
+  ChevronDown, ChevronUp, Building2, CalendarClock, Phone, ChartNoAxesCombined, Info, Clock3, Pencil,
   CheckCircle2, ChevronLeft, ChevronRight, CirclePlus, Coins, Download,
   Eye, Zap, Globe, House, Mail, Menu, MessageSquareText, Users, RefreshCw, FileText,
   Search, Settings2, ShieldCheck, Store, PanelLeft, Star, Sparkles, Mic, ImagePlus,
@@ -10,6 +10,8 @@ import {
 } from 'lucide-react';
 
 // Iconsax is a custom element. Register it once on the client.
+// The owner portal consistently defaults to Iconsax Bulk; callers may override
+// the variant for unusual UI controls while keeping an accessible SVG fallback.
 // A Lucide SVG fallback guarantees navigation and action controls remain visible
 // if a browser, chunk, or the icon name prevents Iconsax from drawing.
 let registration: Promise<unknown> | undefined;
@@ -49,11 +51,14 @@ const fallbacks: Record<string, LucideIcon> = {
   'global': Globe,
   'sms': Mail,
   'tick-circle': CheckCircle2,
+  'info-circle': Info,
+  'clock': Clock3,
+  'edit-2': Pencil,
 };
 export type IconsaxName = string;
 
 export default function IconsaxIcon({
-  name, size = 18, variant = 'linear', className = '', color = 'currentColor',
+  name, size = 18, variant = 'bulk', className = '', color = 'currentColor',
 }: {
   name: IconsaxName;
   size?: number;
