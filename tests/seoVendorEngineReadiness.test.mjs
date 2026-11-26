@@ -99,7 +99,9 @@ test('SEO engine displays real listing status, honest ranking state, and server-
  assert.match(page,/SeoDomainConnector/);
  assert.match(page,/domainServiceReady=\{domainServiceReady\}/);
  assert.match(domain,/Vercel/);
- assert.match(domain,/verifies ownership using a real DNS TXT record/);
+ assert.match(domain,/HTTPS File Verification/);
+ assert.match(domain,/DNS TXT/);
+ assert.match(domain,/SLBI|website address/);
  assert.match(domain,/data-testid="seo-domain-verify"/);
  assert.match(domain,/Start secure verification/);
  assert.match(domain,/api\/vendor\/seo\/domain/);
