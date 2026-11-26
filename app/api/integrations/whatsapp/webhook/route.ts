@@ -24,7 +24,15 @@ export async function POST(request:Request){
    const safeReason=['disabled','signature_invalid','validator_unavailable',
     'payload_invalid','unexpected_number'].includes(result.code)
     ?result.code:'rejected';
-   console.warn('SLBI WA sandbox webhook POST rejected:',safeReason);
+   // The detail is a small internal allowlist of parser stages, never user data.
+   const safeDetails=['invalid_json','unexpected_meta_object','malformed_entry',
+    'malformed_change','too_many_messages','malformed_event',
+    'malformed_text_event','future_message','too_many_events',
+    'other_payload_invalid'];
+   const rawStep='detail' in result?result.detail:undefined;
+   const detail=safeReason==='payload_invalid'&&typeof rawStep==='string'
+    &&safeDetails.includes(rawStep)?rawStep:'none';
+   console.warn('SLBI WA sandbox webhook POST rejected:',safeReason,detail);
    return reply('Webhook unavailable',result.code==='disabled'?503:403);
   }
   return reply('EVENT_RECEIVED',200);
