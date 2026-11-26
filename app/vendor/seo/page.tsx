@@ -32,7 +32,7 @@ export default async function VendorSEOEngine(){
   const ids=(data||[]).map(b=>b.id);
   const domainResult=ids.length
     ?await client.from('seo_domain_connections')
-      .select('business_id,hostname,provider,state,verification_token,txt_record_name,verified_at,verification_expires_at')
+      .select('business_id,hostname,provider,verification_method,state,verification_token,txt_record_name,verified_at,verification_expires_at')
       .in('business_id',ids).limit(100)
     :{data:[],error:null};
   return <SeoEngineWorkspace
