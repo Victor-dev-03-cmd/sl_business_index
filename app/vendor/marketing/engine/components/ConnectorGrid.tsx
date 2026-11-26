@@ -30,11 +30,13 @@ function ProviderLogo({provider,size='card'}:{
  </span>;
 }
 
-export default function ConnectorGrid({googleReady,googleConnected,gmailPreview,businesses}:{
+export default function ConnectorGrid({googleReady,googleConnected,gmailPreview,businesses,oauthNotice=null}:{
  googleReady:boolean;googleConnected:boolean;gmailPreview:ReactNode;
+ oauthNotice?:'connected'|'cancelled'|'failed'|null;
  businesses:readonly ConnectorBusiness[];
 }){
- const [selected,setSelected]=useState<MarketingConnector['id']|null>(null);
+ // Google redirects to this page: reopen the Gmail dialog after callback.
+ const [selected,setSelected]=useState<MarketingConnector['id']|null>(oauthNotice?'gmail':null);
  const current=MARKETING_CONNECTORS.find(item=>item.id===selected);
  return <section aria-label="Connect business apps" className="space-y-6">
   <header className="flex items-start gap-3">
@@ -48,7 +50,7 @@ export default function ConnectorGrid({googleReady,googleConnected,gmailPreview,
   </header>
   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4" aria-label="Available connector apps">
    {MARKETING_CONNECTORS.map(item=>{
-    const previewLinked=item.id==='gmail'&&googleReady&&googleConnected;
+    const previewLinked=item.id==='gmail'&&googleConnected;
     return <button key={item.id} type="button" onClick={()=>setSelected(item.id)}
      aria-label={'Open '+item.name+' connection setup'}
      className="group flex min-h-[196px] min-w-0 flex-col items-start rounded-[19px] border border-[#E8E8EC] bg-white p-4 text-left shadow-[0_7px_20px_rgba(20,20,24,.045)] transition duration-200 hover:-translate-y-1 hover:border-[#FEB978] hover:shadow-[0_14px_32px_rgba(30,23,17,.11)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF7900] motion-reduce:transform-none motion-reduce:transition-none">
@@ -56,7 +58,7 @@ export default function ConnectorGrid({googleReady,googleConnected,gmailPreview,
      <span className="mt-4 break-words text-[13px] font-extrabold leading-5 text-[#222126]">{item.name}</span>
      <span className="mt-1 text-[10px] font-medium text-[#95949A]">{labels[item.group]}</span>
      <span className="mt-auto flex w-full items-center justify-between gap-2 pt-4 text-[11px] font-bold text-[#B65E13]">
-      {previewLinked?'Preview linked':'Set up'}<ArrowRight size={15} className="transition group-hover:translate-x-0.5"/>
+      {previewLinked?'Gmail connected':item.id==='gmail'&&googleReady?'Connect':'Set up'}<ArrowRight size={15} className="transition group-hover:translate-x-0.5"/>
      </span>
     </button>;
    })}
@@ -100,7 +102,7 @@ export default function ConnectorGrid({googleReady,googleConnected,gmailPreview,
           Sign in with your official provider account, choose the business asset you manage, and approve only the requested permissions. SLBI will show a verified connection status after provider authorization is complete.
          </p>
          <p className="mt-3 text-[11px] font-medium text-[#8A6A56]">
-          {current.id==='gmail'?'Gmail uses isolated preview OAuth only. Inbox reading requires separate Google restricted-scope consent; production activation and marketing sends remain disabled.':
+          {current.id==='gmail'?'Gmail uses the official Google authorization screen. It can connect when verified Google Cloud settings are completed. Optional inbox reading needs an additional restricted Google permission; sending campaigns and AI training are not automatically enabled.':
            'This provider still requires its official integration and permissions.'}
          </p>
         </div>
@@ -109,7 +111,7 @@ export default function ConnectorGrid({googleReady,googleConnected,gmailPreview,
           className="flex min-h-12 w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl border border-[#E6E6E9] bg-[#F4F4F6] px-4 text-xs font-bold text-[#87858E]">
           <LockKeyhole size={17}/>Connect · approval required
          </button>}
-        <p className="text-center text-[11px] text-[#949198]">{current.id==='gmail'&&googleReady&&googleConnected?'A verified preview link may exist. No message is sent by opening this setup.':'No account is connected and no message is sent by opening this setup.'}</p>
+        <p className="text-center text-[11px] text-[#949198]">{current.id==='gmail'&&googleConnected?'The connected Gmail account appears above. No message is sent by opening this setup.':'No account is connected by opening this setup. No marketing message is sent.'}</p>
        </div>}
      </div>
     </Dialog.Content>}
