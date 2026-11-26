@@ -16,6 +16,24 @@ test('Hero search passes full keyword/category intent to fresh GPS before routin
   assert.match(home,/new URLSearchParams\(nextSearch\?\.toString\(\)\)/);
   assert.match(home,/params\.set\("source",\s*"gps"\)/);
 });
+test('Home GPS failures always preserve user search and navigate to Nearby',()=>{
+  assert.match(home,/const openResults = \(coords\?/);
+  assert.match(home,/params\.set\("locationStatus", "gps-unavailable"\)/);
+  assert.match(home,/params\.delete\("lat"\)/);
+  assert.match(home,/params\.delete\("lng"\)/);
+  assert.match(home,/params\.delete\("radius"\)/);
+  assert.match(home,/params\.delete\("source"\)/);
+  assert.match(home,/if \(autoSearch\) \{/);
+  assert.match(home,/searchDeadline = setTimeout/);
+  assert.match(home,/controller\.abort\(\)/);
+  assert.match(home,/initialTimeoutMs: autoSearch \? 4800/);
+  assert.match(home,/refinementTimeoutMs: autoSearch \? 1700/);
+  assert.match(home,/openResults\(\);\s+return;\s+\}\s+const message = locationError/);
+  assert.match(nearby,/\[500000\]/);
+  assert.match(nearby,/enabled: location\.kind !== "default" \|\| Boolean\(normalizedSearch\)/);
+  assert.match(nearby,/GPS unavailable — showing matching businesses across Sri Lanka/);
+});
+
 test('Nearby only searches an accepted radius for GPS, including map listings',()=>{
   assert.match(nearby,/\(location\.kind === "gps" \|\| location\.kind === "coordinates"\)\s*\?\s*\[radius\]/);
   assert.match(nearby,/withinGpsRadius\(/);

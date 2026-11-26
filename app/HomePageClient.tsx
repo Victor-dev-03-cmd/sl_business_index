@@ -294,34 +294,73 @@ export default function HomePageClient() {
   };
 
   const handleUseCurrentLocation = (autoSearch: boolean = false, nextSearch?: URLSearchParams) => {
-    // Begin native permission request synchronously on the user's click.
+    // GPS is optional for SEARCH, never a prerequisite for reaching results.
+    // Start high-accuracy permission request on the user gesture; bound the wait.
     locationController.current?.abort();
     const controller = new AbortController();
     locationController.current = controller;
+    let navigated = false;
+    let searchDeadline: ReturnType<typeof setTimeout> | null = null;
     setIsFetchingLocation(true);
     setLocationNotice("");
-    void requestPreciseLocation({ signal: controller.signal })
-      .then(fix => {
+
+    const openResults = (coords?: { lat: number; lng: number }) => {
+      if (!autoSearch || navigated || locationController.current !== controller) return;
+      navigated = true;
+      const params = new URLSearchParams(nextSearch?.toString());
+      if (coords) {
+        params.set("lat", coords.lat.toString());
+        params.set("lng", coords.lng.toString());
+        params.set("radius", params.get("radius") || "5000");
+        params.set("source", "gps");
+        params.delete("locationStatus");
+      } else {
+        // No IP-derived origin, no guessed town and no misleading GPS radius.
+        // Nearby already supports an island-wide keyword search without coords.
+        params.delete("lat");
+        params.delete("lng");
+        params.delete("radius");
+        params.delete("source");
+        params.set("locationStatus", "gps-unavailable");
+      }
+      window.dispatchEvent(new Event("slbi:navigation-start"));
+      router.push("/nearby?" + params.toString());
+    };
+
+    if (autoSearch) {
+      // Some desktop/mobile geolocation providers never call either callback.
+      // The search must still navigate, even when the browser stalls.
+      searchDeadline = setTimeout(() => {
         if (locationController.current !== controller) return;
+        openResults();
+        controller.abort();
+      }, 7000);
+    }
+    void requestPreciseLocation({
+      signal: controller.signal,
+      initialTimeoutMs: autoSearch ? 4800 : undefined,
+      refinementTimeoutMs: autoSearch ? 1700 : undefined,
+    })
+      .then(fix => {
+        if (locationController.current !== controller || controller.signal.aborted) return;
         const coords = { lat: fix.lat, lng: fix.lng };
         setUserCoords(coords);
-        if (autoSearch) {
-          const params = new URLSearchParams(nextSearch?.toString());
-          params.set("lat", coords.lat.toString());
-          params.set("lng", coords.lng.toString());
-          params.set("radius", params.get("radius") || "5000");
-          params.set("source", "gps");
-          window.dispatchEvent(new Event("slbi:navigation-start"));
-          router.push("/nearby?" + params.toString());
-        }
+        openResults(coords);
       })
       .catch(error => {
         if (locationController.current !== controller || controller.signal.aborted) return;
+        if (autoSearch) {
+          // Denied, coarse-only, unavailable or timed-out GPS must never strand
+          // a customer's keyword/category query on the Home page.
+          openResults();
+          return;
+        }
         const message = locationError(error).message;
         setLocationNotice(message);
         toast.error(message, { duration: 8000 });
       })
       .finally(() => {
+        if (searchDeadline !== null) clearTimeout(searchDeadline);
         if (locationController.current === controller) {
           locationController.current = null;
           setIsFetchingLocation(false);

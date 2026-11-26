@@ -1062,7 +1062,7 @@ export default function NearbyExplorer() {
           <div role="status" className="mx-auto flex max-w-[1800px] items-center justify-between gap-3 border-t border-[#EBF0F4] bg-[#F2F8FC] px-3 py-2 text-[11px] text-[#4B7694] sm:px-6 lg:px-8">
             <span className="inline-flex min-w-0 items-center gap-2">
               <MapPin size={14} className="shrink-0" />
-              {locationLoading ? "Finding a precise GPS fix…" : "Location not set. Use GPS to find businesses near you, or choose a town."}
+              {locationLoading ? "Finding a precise GPS fix…" : searchParams.get("locationStatus") === "gps-unavailable" && Boolean(appliedQuery.trim() || category) ? "GPS unavailable — showing matching businesses across Sri Lanka. Choose a town or use GPS to narrow results." : "Location not set. Use GPS to find businesses near you, or choose a town."}
             </span>
             <button type="button" onClick={locateMe} disabled={locationLoading} className="inline-flex shrink-0 items-center gap-1.5 font-semibold text-[#195C89] hover:text-[#0C3554] disabled:opacity-60">
               <LocateFixed size={14}/><span className="hidden sm:inline">Use my location</span>
