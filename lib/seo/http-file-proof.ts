@@ -43,7 +43,8 @@ export async function hasHttpFileProof(hostname:string,expected:string):Promise<
   const pinned=addresses[0].address;
   return new Promise<boolean>(resolve=>{
     let finished=false;
-    const done=(value:boolean)=>{if(!finished){finished=true;resolve(value)}};
+    let deadline:ReturnType<typeof setTimeout>|undefined;
+    const done=(value:boolean)=>{if(!finished){finished=true;if(deadline)clearTimeout(deadline);resolve(value)}};
     const req=httpsRequest({
       protocol:'https:',hostname,servername:hostname,
       port:443,path:SEO_HTTP_PROOF_PATH,method:'GET',
@@ -76,11 +77,7 @@ export async function hasHttpFileProof(hostname:string,expected:string):Promise<
     req.on('timeout',()=>{req.destroy();done(false)});
     req.on('error',()=>done(false));
     req.end();
-    const timer=setTimeout(()=>{req.destroy();done(false)},TIMEOUT_MS+500);
-    // Avoid dangling event loop references after the HTTP operation.
-    void Promise.resolve().then(()=>undefined).finally(()=>{ /* timer cleared below */ });
-    const originalDone=done;
-    void originalDone; // timer is always bounded; request is destroyed on expiry
-    timer.unref?.();
+    deadline=setTimeout(()=>{req.destroy();done(false)},TIMEOUT_MS+500);
+    deadline.unref?.();
   });
 }
