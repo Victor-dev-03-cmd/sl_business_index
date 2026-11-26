@@ -115,7 +115,7 @@ test('Subject classifier recognizes EN/TA/SI while ignoring unknown contents for
 test('Gmail preview API is strictly auth/Pro/RLS/scope gated and never sends mail',()=>{
   const api=read('app/api/marketing/oauth/google_mail/preview/route.ts');
   for(const fragment of [
-    'getGooglePreviewConfig()', 'config?.gmailReadEnabled',
+    'getGoogleConnectorConfig()', 'config?.gmailReadEnabled',
     'exactOAuthRequestOrigin', 'auth.getUser()','getMarketingAccessForUser',
     ".eq('owner_id',user.id)",".eq('status','connected')",
     'GOOGLE_READ_SCOPE','decryptPreviewValue',
@@ -134,7 +134,7 @@ test('Email Marketing draft workbench remains review-only and Gmail connection i
   const connections=read('app/vendor/marketing/engine/(pro)/connections/page.tsx');
   assert.match(page,/EmailMarketingWorkbench mailboxConnected=\{connections\.length>0\}/);
   assert.match(page,/GoogleMailInboxPreview/);
-  assert.match(page,/getGooglePreviewConfig\(\)/);
+  assert.match(page,/getGoogleConnectorConfig\(\)/);
   assert.match(page,/auth\.getUser\(\)/);
   assert.match(composer,/data-testid="email-marketing-workbench"/);
   assert.match(composer,/Unsubscribe link — required before any marketing send/);
