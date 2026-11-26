@@ -1,5 +1,6 @@
 import MarketingModuleFrame from '@/app/vendor/marketing/engine/components/MarketingModuleFrame';
 import ConnectorGrid from '@/app/vendor/marketing/engine/components/ConnectorGrid';
+import type {ConnectorBusiness} from '@/app/vendor/marketing/engine/components/WhatsAppConnectorSetup';
 import {createClient} from '@/lib/supabase/server';
 import {getGooglePreviewConfig} from '@/lib/marketing/oauth-runtime';
 import GoogleMailPreviewConnect,{
@@ -11,6 +12,18 @@ export const dynamic='force-dynamic';
 export default async function MarketingConnections(){
  // Preserve existing preview-only Google OAuth. It must NOT activate on production.
  const previewConfig=getGooglePreviewConfig();
+ // Scope the setup selector to the authenticated, RLS-owned businesses.
+ // This is not a provider onboarding entitlement or a verified WhatsApp link.
+ let connectorBusinesses:ConnectorBusiness[]=[];
+ try{
+  const ownerClient=await createClient();
+  const {data:{user},error:authError}=await ownerClient.auth.getUser();
+  if(user&&!authError){
+   const {data,error}=await ownerClient.from('businesses')
+    .select('id,name,status').eq('owner_id',user.id).order('name').limit(50);
+   if(!error)connectorBusinesses=(data||[]).map(b=>({id:b.id,name:b.name,status:b.status}));
+  }
+ }catch{/* Owner verification unavailable: fail closed with no selectable business. */}
  let googleReady=false;
  let owned:GoogleMailOwnedBusiness[]=[];
  let connectionSummaries:GoogleMailConnectionSummary[]=[];
@@ -38,7 +51,7 @@ export default async function MarketingConnections(){
  const googleConnected=googleReady&&connectionSummaries.some(c=>c.status==='connected');
  return <MarketingModuleFrame module="connections"
   description="Choose the app you want to connect. Check the requirements, then authorize it when its official connection is available.">
-  <ConnectorGrid googleReady={googleReady} googleConnected={googleConnected}
+  <ConnectorGrid googleReady={googleReady} googleConnected={googleConnected} businesses={connectorBusinesses}
    gmailPreview={<GoogleMailPreviewConnect ready={googleReady} businesses={owned}
     connections={connectionSummaries}/>}/>
  </MarketingModuleFrame>;
