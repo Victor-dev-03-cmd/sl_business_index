@@ -15,7 +15,7 @@ import BrandIcon from "./BrandIcon";
 import { AppearanceControl, HeaderThemeToggle } from "./PublicAppearance";
 import NotificationBell from "./NotificationBell";
 import LiveCounter from "./LiveCounter";
-import { X, ChevronDown, ChevronRight, ArrowUpRight } from "lucide-react";
+import { X, ChevronDown, ChevronLeft, ChevronRight, ArrowUpRight } from "lucide-react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
@@ -54,6 +54,62 @@ export default function Navbar() {
   const [hasNewNews, setHasNewNews] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const headerRootRef = useRef<HTMLDivElement>(null);
+  const industryNavRef = useRef<HTMLElement>(null);
+  const [industryScroll, setIndustryScroll] = useState({ overflow: false, left: false, right: false });
+
+  // On laptops, a visually hidden scrollbar previously concealed the last
+  // industries. Observe the real scrolling width rather than a breakpoint.
+  useEffect(() => {
+    const nav = industryNavRef.current;
+    if (!nav) return;
+    let active = true;
+    const refresh = () => {
+      if (!active) return;
+      const max = Math.max(0, nav.scrollWidth - nav.clientWidth);
+      const next = { overflow: max > 3, left: nav.scrollLeft > 2, right: nav.scrollLeft < max - 2 };
+      setIndustryScroll(previous =>
+        previous.overflow === next.overflow && previous.left === next.left && previous.right === next.right
+          ? previous : next);
+    };
+    const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(refresh) : null;
+    observer?.observe(nav);
+    window.addEventListener("resize", refresh, { passive: true });
+    nav.addEventListener("scroll", refresh, { passive: true });
+
+    // Mouse wheel moves sideways while overflow is available. At an edge,
+    // vertical page scrolling works as usual. Trackpad deltaX and touch
+    // swiping retain the browser's native horizontal scrolling behavior.
+    const onWheel = (event: WheelEvent) => {
+      if (Math.abs(event.deltaX) >= Math.abs(event.deltaY)) return;
+      const max = nav.scrollWidth - nav.clientWidth;
+      if (max <= 3) return;
+      const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? nav.clientWidth : 1;
+      const target = Math.max(0, Math.min(max, nav.scrollLeft + event.deltaY * unit));
+      if (Math.abs(target - nav.scrollLeft) <= 1) return;
+      event.preventDefault();
+      nav.scrollLeft = target;
+    };
+    nav.addEventListener("wheel", onWheel, { passive: false });
+    const frame = window.requestAnimationFrame(refresh);
+    void document.fonts?.ready.then(refresh);
+    return () => {
+      active = false;
+      window.cancelAnimationFrame(frame);
+      observer?.disconnect();
+      window.removeEventListener("resize", refresh);
+      nav.removeEventListener("scroll", refresh);
+      nav.removeEventListener("wheel", onWheel);
+    };
+  }, []);
+
+  const scrollIndustries = (direction: -1 | 1) => {
+    const nav = industryNavRef.current;
+    if (!nav) return;
+    nav.scrollBy({
+      left: direction * Math.max(240, Math.round(nav.clientWidth * 0.65)),
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+    });
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -408,8 +464,28 @@ export default function Navbar() {
 
       {/* Refined industry ribbon — hover, click and keyboard focus open mega menu. */}
       <div data-slbi-ui="industry-bar" className="hidden border-b border-stone-200 bg-[#F2EFE7] lg:block">
-        <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8 2xl:px-10">
-          <nav aria-label="Business industries" className="flex h-12 items-center gap-1 overflow-x-auto whitespace-nowrap xl:gap-1.5 2xl:gap-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="relative mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8 2xl:px-10">
+          {industryScroll.overflow && (
+            <button
+              type="button"
+              data-slbi-ui="industry-scroll-left"
+              aria-label="Scroll industries left"
+              disabled={!industryScroll.left}
+              onClick={() => scrollIndustries(-1)}
+              className="absolute left-4 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-stone-200 bg-[#FCFAF6] text-[#1B3430] shadow-md transition-opacity hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#36785E] disabled:pointer-events-none disabled:opacity-0 lg:left-8 2xl:left-10"
+            >
+              <ChevronLeft size={18} />
+            </button>
+          )}
+          <nav
+            ref={industryNavRef}
+            aria-label="Business industries"
+            data-slbi-ui="industry-scroll-track"
+            className={cn(
+              "flex h-12 min-w-0 items-center gap-1 overflow-x-auto overscroll-x-contain whitespace-nowrap scroll-smooth xl:gap-1.5 2xl:gap-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden motion-reduce:scroll-auto",
+              industryScroll.overflow && "px-9"
+            )}
+          >
             <span className="mr-2 inline-flex shrink-0 items-center gap-2 border-r border-stone-200 pr-4 text-[10px] font-bold uppercase tracking-[0.14em] text-[#36785E]">
               <BrandIcon name="category-2" size={16} /> Industries
             </span>
@@ -455,6 +531,18 @@ export default function Navbar() {
               );
             })}
           </nav>
+          {industryScroll.overflow && (
+            <button
+              type="button"
+              data-slbi-ui="industry-scroll-right"
+              aria-label="Scroll industries right"
+              disabled={!industryScroll.right}
+              onClick={() => scrollIndustries(1)}
+              className="absolute right-4 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-stone-200 bg-[#FCFAF6] text-[#1B3430] shadow-md transition-opacity hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#36785E] disabled:pointer-events-none disabled:opacity-0 lg:right-8 2xl:right-10"
+            >
+              <ChevronRight size={18} />
+            </button>
+          )}
         </div>
       </div>
 
