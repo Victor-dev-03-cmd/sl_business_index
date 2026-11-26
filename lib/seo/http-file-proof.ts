@@ -60,7 +60,29 @@ export async function inspectHttpFileProof(hostname:string,expected:string):Prom
     addresses.some(record=>record.family!==4||!isAllowedPublicIPv4(record.address)))
     return failure('verification_file_unsafe_dns');
 
-  const pinned=addresses[0].address;
+  // CDN-backed hosts (including Vercel) can resolve to several public IPs.
+  // A first-edge TCP error must not automatically mean the proof is missing.
+  // Keep the original hostname/SNI and pin each HTTPS attempt independently.
+  const attempts=[...new Set(addresses.map(record=>record.address))].slice(0,3);
+  const deadline=Date.now()+TIMEOUT_MS;
+  let lastFailure:HttpProofCheck=failure('verification_file_unreachable');
+  for(let index=0;index<attempts.length;index++){
+    const remaining=deadline-Date.now();
+    if(remaining<350)break;
+    const budget=Math.min(remaining,Math.max(1200,Math.floor(remaining/(attempts.length-index))));
+    const result=await inspectPublicIp(hostname,expected,attempts[index],budget);
+    if(result.ok)return result;
+    lastFailure=result;
+    // Do NOT treat a direct HTTP response as an unavailable connection.
+    // A mismatched token must never be mistaken for a successful proof.
+    if(!['verification_file_unreachable','verification_file_timeout','verification_file_tls_error'].includes(result.code))
+      return result;
+  }
+  return lastFailure;
+}
+
+/** One bounded TLS request to a DNS-validated, pinned public address. */
+function inspectPublicIp(hostname:string,expected:string,pinned:string,timeoutMs:number):Promise<HttpProofCheck>{
   return new Promise<HttpProofCheck>(resolve=>{
     let finished=false;
     let deadline:ReturnType<typeof setTimeout>|undefined;
@@ -76,10 +98,8 @@ export async function inspectHttpFileProof(hostname:string,expected:string):Prom
       lookup:(_host,_options,callback)=>callback(null,pinned,4),
       agent:false,
       headers:{'Accept':'text/plain','Accept-Encoding':'identity','User-Agent':'SLBI-Domain-Verification/1.0'},
-      timeout:TIMEOUT_MS,
+      timeout:timeoutMs,
     },res=>{
-      // Reject redirects, Vercel Authentication, missing pages, proxies
-      // and even HTTP 206: only an exact plain-text 200 can prove control.
       if(res.statusCode!==200){
         res.resume();
         done(failure(res.statusCode&&res.statusCode>=300&&res.statusCode<400
@@ -95,8 +115,8 @@ export async function inspectHttpFileProof(hostname:string,expected:string):Prom
       res.on('data',(chunk:Buffer)=>{
         size+=chunk.length;
         if(size>MAX_BYTES){
-          req.destroy();
           done(failure('verification_file_too_large'));
+          req.destroy();
           return;
         }
         chunks.push(chunk);
@@ -105,16 +125,18 @@ export async function inspectHttpFileProof(hostname:string,expected:string):Prom
         const text=Buffer.concat(chunks).toString('utf8').trim();
         done(text===expected?{ok:true}:failure('verification_file_token_mismatch'));
       });
+      res.on('aborted',()=>done(failure('verification_file_unreachable')));
       res.on('error',()=>done(failure('verification_file_unreachable')));
     });
-    req.on('timeout',()=>{req.destroy();done(failure('verification_file_timeout'))});
+    req.on('timeout',()=>{done(failure('verification_file_timeout'));req.destroy()});
     req.on('error',(err:NodeJS.ErrnoException)=>{
       done(failure(err.code&&/(CERT|TLS|SSL|ALTNAME|SELF_SIGNED)/i.test(err.code)
         ?'verification_file_tls_error':'verification_file_unreachable'));
     });
-    req.end();
-    deadline=setTimeout(()=>{req.destroy();done(failure('verification_file_timeout'))},TIMEOUT_MS+500);
+    // Timeout covers TLS handshake, response headers and full text body.
+    deadline=setTimeout(()=>{done(failure('verification_file_timeout'));req.destroy()},timeoutMs);
     deadline.unref?.();
+    req.end();
   });
 }
 
