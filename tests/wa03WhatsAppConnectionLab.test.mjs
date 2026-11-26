@@ -7,12 +7,12 @@ const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 test('WA-03 Connection Lab is inside Marketing Studio and accessible from existing connectors',()=>{
   const connections=read('app/vendor/marketing/engine/(pro)/connections/page.tsx');
   const studio=read('app/vendor/marketing/page.tsx');
-  assert.match(connections,/provider\.id==='whatsapp_business'/);
-  assert.match(connections,/href="\/vendor\/marketing\/whatsapp"/);
-  assert.match(connections,/Open WhatsApp setup/);
-  assert.match(studio,/href="\/vendor\/marketing\/whatsapp"/);
-  assert.match(studio,/WhatsApp Connection Lab/);
-  assert.match(connections,/disabled aria-disabled="true"/); // Other provider connections stay off.
+  const grid=read('app/vendor/marketing/engine/components/ConnectorGrid.tsx');
+  assert.match(connections,/ConnectorGrid/);
+  assert.match(grid,/id==='whatsapp_business'/);
+  assert.match(grid,/href="\/vendor\/marketing\/whatsapp"/);
+  assert.match(studio,/href="\/vendor\/marketing-engine\/connections"/);
+  assert.match(grid,/disabled aria-disabled="true"/); // No fake live OAuth.
 });
 test('WA-03 must read authenticated owner business scope on the SERVER, not trust browser business IDs',()=>{
   const route=read('app/vendor/marketing/whatsapp/page.tsx');
@@ -21,8 +21,8 @@ test('WA-03 must read authenticated owner business scope on the SERVER, not trus
   assert.match(route,/redirect\('\/login\?redirect=\/vendor\/marketing\/whatsapp'\)/);
   assert.match(route,/from\('businesses'\)/);
   assert.match(route,/\.eq\('owner_id',user\.id\)/);
-  assert.match(route,/ownershipReady=true/);
-  assert.match(route,/ownershipReady=\{ownershipReady\}/);
+  assert.match(route,/status==='approved'/);
+  assert.doesNotMatch(route,/WhatsAppGrowthOperator|WhatsAppConnectionLab/);
   assert.doesNotMatch(route,/SUPABASE_SERVICE_ROLE_KEY|createAdminClient|service_role|cookies\(\).*businessId/);
 });
 test('WA-03 offers honest, interactive, browser-only visual preview and keeps WhatsApp disconnected',()=>{
