@@ -1,7 +1,7 @@
 import 'server-only';
 
 import {lookup} from 'node:dns/promises';
-import {request as httpsRequest} from 'node:https';
+import {request as httpsRequest,type RequestOptions as HttpsRequestOptions} from 'node:https';
 import {BlockList} from 'node:net';
 
 // Public fixed endpoint; callers never supply a URL, path or port.
@@ -92,14 +92,22 @@ function inspectPublicIp(hostname:string,expected:string,pinned:string,timeoutMs
       if(deadline)clearTimeout(deadline);
       resolve(result);
     };
-    const req=httpsRequest({
+    // Node 20+/24 calls custom DNS lookup with {all:true} when automatic
+    // address-family selection is enabled. That expects an ADDRESS ARRAY,
+    // but our safe IPv4-pinned lookup deliberately returns (IP, family).
+    // Without this flag Node emits ERR_INVALID_IP_ADDRESS before TLS.
+    // @types/node@20 predates the flag: intersect to preserve type safety.
+    const requestOptions:HttpsRequestOptions&{autoSelectFamily:boolean}={
       protocol:'https:',hostname,servername:hostname,
       port:443,path:SEO_HTTP_PROOF_PATH,method:'GET',
+      autoSelectFamily:false,
+      family:4,
       lookup:(_host,_options,callback)=>callback(null,pinned,4),
       agent:false,
       headers:{'Accept':'text/plain','Accept-Encoding':'identity','User-Agent':'SLBI-Domain-Verification/1.0'},
       timeout:timeoutMs,
-    },res=>{
+    };
+    const req=httpsRequest(requestOptions,res=>{
       if(res.statusCode!==200){
         res.resume();
         done(failure(res.statusCode&&res.statusCode>=300&&res.statusCode<400
