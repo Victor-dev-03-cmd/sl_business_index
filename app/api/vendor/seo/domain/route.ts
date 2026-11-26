@@ -110,7 +110,7 @@ export async function POST(request:Request){
         owner_id:user.id,business_id:business.id,hostname,provider,
         verification_token:challenge,txt_record_name:'_slbi-verify.'+hostname,
         state:'pending',verified_at:null,verification_expires_at:null,
-        last_checked_at:null,updated_at:new Date().toISOString(),
+        last_checked_at:null,updated_at:new Date().toISOString(),created_at:new Date().toISOString(),
       };
       const {data:saved,error}=existing
         ?await store.from('seo_domain_connections').update(fields).eq('id',existing.id).eq('owner_id',user.id)
