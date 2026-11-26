@@ -114,7 +114,7 @@ export default function OwnerPlanPreview({locale,businessName,request,studioActi
   const element=document.getElementById('owner-plan-result');
   if(element){
    const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-   element.scrollIntoView({block:'start',behavior:reduced?'instant':'smooth'});
+   element.scrollIntoView({block:'start',behavior:reduced?'auto':'smooth'});
   }
  },[]);
  async function copySample(id:string,content:string){
