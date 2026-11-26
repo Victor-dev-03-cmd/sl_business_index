@@ -34,7 +34,7 @@ export default async function MarketingConnections(){
    if(user&&!authError){
     const [businesses,connections]=await Promise.all([
      client.from('businesses').select('id,name').eq('owner_id',user.id).order('name').limit(50),
-     client.from('marketing_connections').select('id,business_id,account_display_name,status,connected_at')
+     client.from('marketing_connections').select('id,business_id,account_display_name,status,connected_at,granted_scopes')
       .eq('user_id',user.id).eq('provider','google_mail').limit(25),
     ]);
     if(!businesses.error&&!connections.error){
@@ -42,7 +42,7 @@ export default async function MarketingConnections(){
      const ids=new Set(owned.map(b=>b.id));
      connectionSummaries=(connections.data||[]).filter(c=>ids.has(c.business_id))
       .map(c=>({id:c.id,business_id:c.business_id,account_display_name:c.account_display_name,
-       status:c.status,connected_at:c.connected_at}));
+       status:c.status,connected_at:c.connected_at,granted_scopes:Array.isArray(c.granted_scopes)?c.granted_scopes:[]}));
      googleReady=owned.length>0;
     }
    }
@@ -52,7 +52,7 @@ export default async function MarketingConnections(){
  return <MarketingModuleFrame module="connections"
   description="Choose the app you want to connect. Check the requirements, then authorize it when its official connection is available.">
   <ConnectorGrid googleReady={googleReady} googleConnected={googleConnected} businesses={connectorBusinesses}
-   gmailPreview={<GoogleMailPreviewConnect ready={googleReady} businesses={owned}
+   gmailPreview={<GoogleMailPreviewConnect ready={googleReady} readEnabled={Boolean(previewConfig?.gmailReadEnabled)} businesses={owned}
     connections={connectionSummaries}/>}/>
  </MarketingModuleFrame>;
 }
