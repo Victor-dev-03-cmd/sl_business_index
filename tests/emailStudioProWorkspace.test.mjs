@@ -1,0 +1,95 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {
+  EMAIL_CAMPAIGNS,EMAIL_LANGUAGES,EMAIL_MERGE_TAGS,
+  defaultEmailDraft,emailContentChecks,escapeEmailHtml,hexColor,httpsLink,
+  parseAudienceCsv,countPastedEmails,subjectSuggestions,
+} from '../lib/marketing/email-studio.ts';
+const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
+const ui=read('app/vendor/marketing/engine/components/EmailMarketingWorkbench.tsx');
+const page=read('app/vendor/marketing/engine/(pro)/email/page.tsx');
+const frame=read('app/vendor/marketing/engine/components/MarketingModuleFrame.tsx');
+const brand={name:'கடல் Food',slogan:'',primaryColor:'#242424',
+  accentColor:'#ff7900',logoUrl:null,address:'Main Road',city:'Jaffna',
+  profileUrl:'https://www.slbusinessindex.com/business/sample'};
+
+test('Email Studio renders responsive three-column Pro workspace with real brand and sender data',()=>{
+  assert.match(ui,/xl:grid-cols-\[minmax\(0,30fr\)_minmax\(0,42fr\)_minmax\(0,28fr\)\]/);
+  assert.match(ui,/01 \/ SETUP/);
+  assert.match(ui,/02 \/ LIVE PREVIEW/);
+  assert.match(ui,/03 \/ INTELLIGENCE/);
+  assert.match(ui,/connections\.filter\(c=>c\.businessId===businessId&&c\.status==='connected'\)/);
+  assert.match(ui,/currentSender\?'Connected: '/);
+  assert.match(page,/auth\.getUser\(\)/);
+  assert.match(page,/\.eq\('owner_id',user\.id\)/);
+  assert.match(page,/\.eq\('user_id',user\.id\)/);
+  assert.match(page,/\.eq\('provider','google_mail'\)/);
+  assert.match(page,/\.eq\('status','connected'\)/);
+  assert.match(page,/from\('social_brand_profiles'\)/);
+  assert.match(ui,/\/api\/marketing\/poster\/saved\?businessId=/);
+  assert.match(ui,/Poster Studio/);
+  assert.match(frame,/module!=='email'/);
+  assert.doesNotMatch(ui,/Integration planned|Draft only · No send|Marketing safety: Preview/);
+});
+test('Device & dark mode preview and clickable HTTPS CTA are honest and local',()=>{
+  for(const x of ['Desktop Gmail','Mobile Inbox','Dark check','Inbox preview','Unsubscribe — not active in preview'])assert.ok(ui.includes(x),x);
+  assert.match(ui,/emailContentChecks\(draft\)/);
+  assert.match(ui,/subjectSuggestions\(draft,brand\)/);
+  assert.match(ui,/httpsLink\(draft\.ctaUrl\)/);
+  assert.match(ui,/rel="noopener noreferrer"/);
+  assert.equal(httpsLink('https://www.slbusinessindex.com/contact'),'https://www.slbusinessindex.com/contact');
+  for(const value of ['javascript:alert(1)','http://test.com','https://u:p@test.com','/relative'])assert.equal(httpsLink(value),null);
+  assert.equal(hexColor('#ff7900'),'#FF7900');
+  assert.equal(hexColor('red'),'#FF7900');
+  assert.equal(escapeEmailHtml('<a onclick="x">'), '&lt;a onclick=&quot;x&quot;&gt;');
+});
+test('English/Tamil/Sinhala draft composer preserves scripts and campaign categories',()=>{
+  assert.deepEqual(EMAIL_LANGUAGES.map(x=>x.value),['en','ta','si']);
+  assert.deepEqual(EMAIL_CAMPAIGNS.map(x=>x.value),['offer','launch','followup','newsletter']);
+  for(const lang of ['en','ta','si']){
+    const draft=defaultEmailDraft(lang,'offer',brand,'Approved opening on 30 November');
+    assert.match(draft.body,/Approved opening on 30 November/);
+    assert.ok(draft.subject.includes(brand.name));
+    assert.ok(draft.ctaUrl.startsWith('https://'));
+    assert.ok(subjectSuggestions(draft,brand).length>=2);
+    assert.equal(emailContentChecks(draft).length,4);
+  }
+  assert.ok(defaultEmailDraft('ta','offer',brand).subject.startsWith('சலுகை'));
+  assert.ok(defaultEmailDraft('si','newsletter',brand).subject.startsWith('අලුත්'));
+  assert.deepEqual(EMAIL_MERGE_TAGS,['{{Customer_Name}}','{{Business_Name}}','{{City}}','{{SLBI_Profile_Link}}']);
+});
+test('CSV and paste are 100% local preview; never assume import equals marketing opt-in',()=>{
+  const csv=['email,marketing_opt_in,consented_at,name',
+    'a@example.com,yes,2026-11-20,"A, Customer"',
+    'b@example.com,no,2026-11-20, B',
+    'a@example.com,yes,2026-11-20,Duplicate',
+    'not_an_email,yes,2026-11-20,Invalid'].join('\r\n');
+  assert.deepEqual(parseAudienceCsv(csv),{valid:2,invalid:2,declaredOptIn:1,truncated:false});
+  assert.deepEqual(countPastedEmails('a@example.com\nb@example.com,a@example.com BAD'),
+    {valid:2,invalid:1});
+  assert.throws(()=>parseAudienceCsv('name,value\nx,y'),/email column/);
+  assert.throws(()=>parseAudienceCsv('a'.repeat(1_000_001)),/smaller than 1 MB/);
+  assert.match(ui,/0 verified for sending/);
+  assert.match(ui,/No addresses uploaded/);
+  assert.match(ui,/An enquiry does not establish marketing opt-in/);
+  assert.doesNotMatch(ui,/from\('leads'\)|new FormData\(.*email|\/api\/leads\/submit/);
+  assert.doesNotMatch(page,/from\('leads'\)/);
+});
+test('Unsafe outbound operations are visibly gated, not misrepresented as live',()=>{
+  for(const item of ['Send campaign · gated','Schedule · gated','No message is sent from this workspace',
+    'No verified email delivery telemetry','Unsubscribe — not active in preview','plan proposals']){ 
+    // The UI copy should not quietly become an autonomous sender.
+    if(item==='plan proposals')assert.match(ui,/Plan proposals only/);
+    else assert.ok(ui.includes(item),item);
+  }
+  assert.match(ui,/Gemini generation requires a separate approved/);
+  assert.match(ui,/disabled className="min-h-10 cursor-not-allowed/);
+  assert.match(ui,/Copy reviewed draft/);
+  assert.match(ui,/Export HTML preview/);
+  assert.match(ui,/UNSUBSCRIBE NOT CONFIGURED — DO NOT SEND/);
+  assert.doesNotMatch(ui,/gmail\.send|messages\/send|fetch\('https:\/\/gmail|sendMail\(|api\/marketing\/email\/send/);
+  assert.match(page,/getGoogleConnectorConfig\(\)/);
+  assert.match(page,/GoogleMailInboxPreview/);
+  assert.match(ui,/No verified email delivery telemetry/);
+});
