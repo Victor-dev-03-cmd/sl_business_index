@@ -107,8 +107,7 @@ export default function ConnectorGrid({googleReady,googleConnected,gmailPreview,
           Sign in with your official provider account, choose the business asset you manage, and approve only the requested permissions. SLBI will show a verified connection status after provider authorization is complete.
          </p>
          <p className="mt-3 text-[11px] font-medium text-[#8A6A56]">
-          {current.id==='gmail'?'Gmail uses the official Google authorization screen. It can connect when verified Google Cloud settings are completed. Optional inbox reading needs an additional restricted Google permission; sending campaigns and AI training are not automatically enabled.':
-           'This provider still requires its official integration and permissions.'}
+          This provider still requires its official integration and permissions.
          </p>
         </div>
         <button type="button" disabled aria-disabled="true"
