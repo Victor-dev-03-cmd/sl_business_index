@@ -48,7 +48,7 @@ test('Preview connection card requests confirmation and reports remote grant sep
   assert.match(ui,/api\/marketing\/oauth\/google_mail\/disconnect/);
   assert.match(ui,/JSON\.stringify\(\{businessId:ownedBusinessId,connectionId\}\)/);
   assert.match(ui,/router\.refresh\(\)/);
-  assert.match(ui,/SLBI stored credentials removed/);
+  assert.match(ui,/Disconnected from SLBI/);
   assert.match(ui,/Google Account security settings/);
   assert.match(page,/\.select\('id,business_id,account_display_name,status,connected_at,granted_scopes'\)/);
   assert.match(read('app/vendor/marketing-engine\/(pro)\/layout.tsx'),/MarketingProOnly/);

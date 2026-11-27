@@ -56,6 +56,8 @@ jobs:
         run: node --experimental-strip-types --test tests/gmailGrowthAiPreview.test.mjs tests/p2OAuthFlow.test.mjs tests/p2OAuthConnectors.test.mjs tests/p2OAuthDisconnect.test.mjs tests/p2OwnerConnectorsSimpleUX.test.mjs
       - name: Gmail production release gates, canonical OAuth, callbacks and revocation
         run: node --experimental-strip-types --test tests/gmailProductionConnectorRelease.test.mjs tests/wa06BrandedConnectorModal.test.mjs
+      - name: Compact Gmail connector exclusive connect or disconnect states
+        run: node --test tests/gmailConnectorCompactUX.test.mjs
       - name: Low-memory mobile route feedback and streaming regressions
         run: node --test tests/mobileRoutePerformance.test.mjs
       - name: G5-02 follow-up and reputation guidance owner safety

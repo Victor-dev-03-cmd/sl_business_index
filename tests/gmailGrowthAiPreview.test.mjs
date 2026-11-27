@@ -143,7 +143,7 @@ test('Email Marketing draft workbench remains review-only and Gmail connection i
   assert.match(inbox,/onClick=\{\(\)=>void preview\(\)\}/);
   assert.match(inbox,/Clear preview/);
   assert.match(inbox,/\/api\/marketing\/oauth\/google_mail\/preview/);
-  assert.match(connector,/GoogleMailInboxPreview/);
+  assert.doesNotMatch(connector,/GoogleMailInboxPreview/);
   assert.match(connections,/granted_scopes/);
 });
 

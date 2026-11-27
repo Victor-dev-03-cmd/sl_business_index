@@ -67,18 +67,21 @@ export default function ConnectorGrid({googleReady,googleConnected,gmailPreview,
    <Dialog.Portal>
     <Dialog.Overlay className="fixed inset-0 z-[1000] bg-[#101013]/65 backdrop-blur-[3px] data-[state=open]:animate-in data-[state=closed]:animate-out"/>
     {current&&<Dialog.Content
-     className="fixed left-1/2 top-1/2 z-[1001] flex max-h-[min(92dvh,900px)] w-[calc(100vw-24px)] max-w-[680px] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-[22px] border border-[#E9E9ED] bg-white shadow-[0_28px_85px_rgba(0,0,0,.28)] focus:outline-none sm:w-[calc(100vw-48px)]"
+     className={'fixed left-1/2 top-1/2 z-[1001] flex w-[calc(100vw-24px)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-[22px] border border-[#E9E9ED] bg-white shadow-[0_28px_85px_rgba(0,0,0,.28)] focus:outline-none sm:w-[calc(100vw-48px)] '+
+      (current.id==='gmail'?'max-h-[min(85dvh,570px)] max-w-[460px]':'max-h-[min(92dvh,900px)] max-w-[680px]')}
      aria-describedby="connector-dialog-description">
-     <div className="flex shrink-0 items-start gap-4 border-b border-[#F0EFF1] bg-[#FEFEFF] p-5 sm:p-7">
-      <ProviderLogo provider={current} size="dialog"/>
+     <div className={'flex shrink-0 items-start border-b border-[#F0EFF1] bg-[#FEFEFF] '+
+       (current.id==='gmail'?'gap-3 p-4 sm:p-5':'gap-4 p-5 sm:p-7')}>
+      <ProviderLogo provider={current} size={current.id==='gmail'?'card':'dialog'}/>
       <div className="min-w-0 flex-1">
-       <p className="text-[10px] font-extrabold uppercase tracking-[.14em] text-[#B35E19]">Plugin & App Connectors</p>
-       <Dialog.Title className="mt-1 text-xl font-extrabold tracking-tight text-[#232329] sm:text-2xl">
+       {current.id!=='gmail'&&<p className="text-[10px] font-extrabold uppercase tracking-[.14em] text-[#B35E19]">Plugin & App Connectors</p>}
+       <Dialog.Title className={'font-extrabold tracking-tight text-[#232329] '+
+         (current.id==='gmail'?'text-lg sm:text-xl':'mt-1 text-xl sm:text-2xl')}>
         {current.name}
        </Dialog.Title>
        <Dialog.Description id="connector-dialog-description" className="mt-1 text-xs leading-5 text-[#797781]">
         {current.id==='whatsapp_business'?'Connect your business WhatsApp through Meta':
-         'Connect your official business account'}
+         current.id==='gmail'?'Google account':'Connect your official business account'}
        </Dialog.Description>
       </div>
       <Dialog.Close aria-label="Close connection popup"
@@ -86,9 +89,11 @@ export default function ConnectorGrid({googleReady,googleConnected,gmailPreview,
        <X size={19}/>
       </Dialog.Close>
      </div>
-     <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 sm:px-7 sm:py-6">
+     <div className={'min-h-0 flex-1 overflow-y-auto overscroll-contain '+
+      (current.id==='gmail'?'p-4 sm:p-5':'px-5 py-5 sm:px-7 sm:py-6')}>
       {current.id==='whatsapp_business'
        ?<WhatsAppConnectorSetup key="whatsapp-setup" businesses={businesses}/>
+       :current.id==='gmail'?gmailPreview
        :<div className="space-y-5">
         <div className="rounded-xl border border-[#EEE9E4] bg-[#FFFAF5] p-4">
          <h3 className="flex items-center gap-2 text-sm font-extrabold text-[#2B2725]">
@@ -102,16 +107,14 @@ export default function ConnectorGrid({googleReady,googleConnected,gmailPreview,
           Sign in with your official provider account, choose the business asset you manage, and approve only the requested permissions. SLBI will show a verified connection status after provider authorization is complete.
          </p>
          <p className="mt-3 text-[11px] font-medium text-[#8A6A56]">
-          {current.id==='gmail'?'Gmail uses the official Google authorization screen. It can connect when verified Google Cloud settings are completed. Optional inbox reading needs an additional restricted Google permission; sending campaigns and AI training are not automatically enabled.':
-           'This provider still requires its official integration and permissions.'}
+          This provider still requires its official integration and permissions.
          </p>
         </div>
-        {current.id==='gmail'?<div>{gmailPreview}</div>:
-         <button type="button" disabled aria-disabled="true"
+        <button type="button" disabled aria-disabled="true"
           className="flex min-h-12 w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl border border-[#E6E6E9] bg-[#F4F4F6] px-4 text-xs font-bold text-[#87858E]">
           <LockKeyhole size={17}/>Connect · approval required
-         </button>}
-        <p className="text-center text-[11px] text-[#949198]">{current.id==='gmail'&&googleConnected?'The connected Gmail account appears above. No message is sent by opening this setup.':'No account is connected by opening this setup. No marketing message is sent.'}</p>
+        </button>
+        <p className="text-center text-[11px] text-[#949198]">No account is connected by opening this setup. No marketing message is sent.</p>
        </div>}
      </div>
     </Dialog.Content>}
