@@ -51,7 +51,7 @@ test('Google consent control is explicitly gated in production, business-selecte
   const ui=read('app/vendor/marketing/engine/components/GoogleMailPreviewConnect.tsx');
   const api=read('app/api/marketing/oauth/google_mail/start/route.ts');
   assert.match(page,/getGoogleConnectorConfig\(\)/);
-  assert.match(page,/getGoogleConnectorReadiness\(\)/);
+  assert.match(page,/connectionSummaries/);
   assert.match(page,/process\.env\.SUPABASE_SERVICE_ROLE_KEY/);
   assert.match(page,/auth\.getUser\(\)/);
   assert.match(page,/from\('marketing_connections'\)/);
