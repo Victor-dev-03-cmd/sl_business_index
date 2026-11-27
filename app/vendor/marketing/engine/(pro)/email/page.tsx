@@ -1,102 +1,72 @@
-import Link from 'next/link';
 import MarketingModuleFrame from '@/app/vendor/marketing/engine/components/MarketingModuleFrame';
-import IconsaxIcon from '@/app/vendor/components/IconsaxIcon';
-import {MARKETING_CONNECTORS} from '@/lib/marketing/engine-registry';
-import EmailMarketingWorkbench from '@/app/vendor/marketing/engine/components/EmailMarketingWorkbench';
+import EmailMarketingWorkbench,{
+  type EmailStudioBusiness,type EmailStudioConnection,
+} from '@/app/vendor/marketing/engine/components/EmailMarketingWorkbench';
 import GoogleMailInboxPreview,{type GmailMailboxPreviewConnection} from '@/app/vendor/marketing/engine/components/GoogleMailInboxPreview';
 import {getGoogleConnectorConfig} from '@/lib/marketing/oauth-runtime';
 import {createClient} from '@/lib/supabase/server';
 
-const phases=[
- {title:'Connect a mailbox',desc:'Sign in through Google/Microsoft OAuth; request the fewest necessary permissions.',ready:false},
- {title:'Verify consent',desc:'Marketing contacts need recorded opt-in, unsubscribe and suppression before a campaign.',ready:false},
- {title:'Prepare AI suggestions',desc:'Classify inbound business enquiries with rules first. Ask a model for optional draft wording.',ready:false},
- {title:'Review and queue',desc:'Vendor reviews content and audience. Durable sending and retries use a real server-side worker.',ready:false},
- {title:'Observe real delivery',desc:'Use provider message IDs, bounces and complaints; do not invent delivery statistics.',ready:false},
-] as const;
 export const dynamic='force-dynamic';
+
+/**
+ * Email Studio is an owner-scoped, read-only composition workspace. Never return
+ * lead email addresses, OAuth credentials or marketing recipients in page props.
+ * Existing Pro route layout enforces entitlement; this query additionally
+ * scopes every business, brand and sender to the authenticated user.
+ */
 export default async function MarketingEmail(){
-  const providers=MARKETING_CONNECTORS.filter(c=>c.group==='email');
-  // Only RLS-visible owner metadata; do not hide disconnection after OAuth is disabled.
+  const client=await createClient();
+  const {data:{user},error:authError}=await client.auth.getUser();
   const config=getGoogleConnectorConfig();
-  let connections:GmailMailboxPreviewConnection[]=[];
-  {
-    try{
-      const client=await createClient();
-      const {data:{user},error:authError}=await client.auth.getUser();
-      if(user&&!authError){
-        const {data:owned,error:ownerError}=await client.from('businesses')
-          .select('id').eq('owner_id',user.id).eq('status','approved').limit(50);
-        if(!ownerError){
-          const ids=(owned||[]).map(b=>b.id);
-          if(ids.length){
-            const {data:linked,error}=await client.from('marketing_connections')
-              .select('id,business_id,status,account_display_name,granted_scopes')
-              .eq('user_id',user.id).eq('provider','google_mail').eq('status','connected')
-              .in('business_id',ids).limit(25);
-            if(!error)connections=(linked||[]).map(c=>({
-              id:c.id,business_id:c.business_id,status:c.status,
-              account_display_name:c.account_display_name,
-              granted_scopes:Array.isArray(c.granted_scopes)?c.granted_scopes:[],
-            }));
-          }
-        }
+  let businesses:EmailStudioBusiness[]=[];
+  let connections:EmailStudioConnection[]=[];
+  let previews:GmailMailboxPreviewConnection[]=[];
+  if(user&&!authError){
+    const owned=await client.from('businesses')
+      .select('id,name,logo_url,city,address,slug,website_url,status')
+      .eq('owner_id',user.id).eq('status','approved').order('name').limit(50);
+    const rows=owned.error?[]:owned.data||[];
+    const ids=rows.map(b=>b.id);
+    if(ids.length){
+      const [profiles,linked]=await Promise.all([
+        client.from('social_brand_profiles')
+          .select('business_id,brand_name,slogan,primary_color,accent_color')
+          .eq('owner_id',user.id).in('business_id',ids).limit(50),
+        client.from('marketing_connections')
+          .select('id,business_id,account_display_name,provider,status,granted_scopes')
+          .eq('user_id',user.id).eq('provider','google_mail').eq('status','connected')
+          .in('business_id',ids).limit(25),
+      ]);
+      const brandMap=new Map((profiles.error?[]:profiles.data||[]).map(p=>[p.business_id,p]));
+      businesses=rows.map(b=>{
+        const brand=brandMap.get(b.id);
+        return {id:b.id,name:b.name,logoUrl:b.logo_url,city:b.city||'',
+          address:b.address||'',slug:b.slug,websiteUrl:b.website_url||null,
+          brandName:brand?.brand_name||null,slogan:brand?.slogan||null,
+          primaryColor:brand?.primary_color||null,accentColor:brand?.accent_color||null};
+      });
+      if(!linked.error){
+        const ownerIds=new Set(ids);
+        const verified=(linked.data||[]).filter(c=>ownerIds.has(c.business_id)&&
+          c.provider==='google_mail'&&c.status==='connected');
+        connections=verified.map(c=>({id:c.id,businessId:c.business_id,
+          accountDisplayName:c.account_display_name||'Connected Gmail',
+          provider:'google_mail',status:'connected'}));
+        previews=verified.map(c=>({id:c.id,business_id:c.business_id,
+          account_display_name:c.account_display_name,
+          status:c.status,granted_scopes:Array.isArray(c.granted_scopes)?c.granted_scopes:[]}));
       }
-    }catch{/* Fail closed. Do not imply a linked mailbox. */}
+    }
   }
   return <MarketingModuleFrame module="email"
-    description="Plug-and-play business mail integration with explicit OAuth consent, AI-assisted drafting and opt-in campaign delivery. No mailbox is accessed until that mailbox owner authorizes it.">
-    <EmailMarketingWorkbench mailboxConnected={connections.length>0}/>
-    {Boolean(config?.gmailReadEnabled)&&<GoogleMailInboxPreview
-      connections={connections} readEnabled={Boolean(config?.gmailReadEnabled)}/>}
-    <section className="grid gap-4 lg:grid-cols-[minmax(0,1.3fr)_minmax(300px,.8fr)]">
-      <div className="rounded-xl border border-[#EBEBF0] bg-white p-5 sm:p-7">
-        <h2 className="text-[16px] font-extrabold">Email provider plugins</h2>
-        <p className="mt-2 text-xs leading-6 text-[#808089]">Official OAuth and verified-domain sending are separate adapters. Google Mail authorization depends on verified Google Cloud settings and owner consent. Bulk sending and inbox AI uploads are not enabled.</p>
-        <div className="mt-5 grid gap-3 sm:grid-cols-2">
-          {providers.map(provider=><div key={provider.id} className="rounded-xl border border-[#EAEAF0] bg-[#FCFCFD] p-4">
-            <div className="flex items-start justify-between">
-              <span className="rounded-lg bg-[#FFF1E5] p-2.5 text-[#B65E16]"><IconsaxIcon name="sms" size={19}/></span>
-              <span className="rounded-full bg-[#EFEFF2] px-2.5 py-1 text-[10px] font-bold text-[#85858D]">
-                {provider.id==='gmail'&&connections.length>0?'Gmail linked':'Not connected'}
-              </span>
-            </div>
-            <h3 className="mt-4 text-sm font-bold">{provider.name}</h3>
-            <p className="mt-1 text-[11px] leading-6 text-[#7D7D86]">{provider.requirements}</p>
-            <p className="mt-3 text-[10px] font-bold text-[#9B5925]">{provider.api}</p>
-          </div>)}
-        </div>
-        <Link href="/vendor/marketing-engine/connections" className="mt-5 inline-flex h-11 items-center gap-2 rounded-lg bg-[#202024] px-5 text-xs font-bold text-white">
-          View connector requirements <IconsaxIcon name="arrow-right-2" color="white" size={15}/>
-        </Link>
-      </div>
-      <aside className="space-y-4">
-        <div className="rounded-xl border border-[#ECECF0] bg-white p-5 sm:p-6">
-          <p className="text-[10px] font-extrabold uppercase tracking-[.1em] text-[#BC671C]">Cost-aware intelligence</p>
-          <h2 className="mt-2 text-[17px] font-extrabold">Algorithms before LLMs</h2>
-          <p className="mt-2 text-xs leading-6 text-[#777781]">Deterministic tags, consent filters, priority scores and message templates can run without a paid model. An LLM is an optional bounded drafting fallback for complex messages.</p>
-          <div className="mt-4 space-y-2 text-[11px] text-[#676770]">
-            <p>01 · Identify and classify the enquiry</p>
-            <p>02 · Match business facts and verified offers</p>
-            <p>03 · Draft a safe reply for human approval</p>
-            <p>04 · Schedule according to consent and quiet hours</p>
-          </div>
-        </div>
-        <div className="rounded-xl border border-[#F0D6BE] bg-[#FFF9F2] p-5">
-          <h3 className="text-xs font-bold text-[#A45A21]">Consent is mandatory</h3>
-          <p className="mt-2 text-[11px] leading-6 text-[#8B6E56]">Reading inbox messages does not imply permission to market to the contacts. Subscription consent, unsubscribe, suppression lists, sender authentication and provider complaint processing must be built first.</p>
-        </div>
-      </aside>
-    </section>
-    <section className="rounded-xl border border-[#ECECF0] bg-white p-5 sm:p-7">
-      <h2 className="text-[16px] font-extrabold">Email automation release gates</h2>
-      <div className="mt-4 grid gap-3 md:grid-cols-5">
-        {phases.map((item,index)=><div key={item.title} className="rounded-xl border border-[#EBEBEF] p-4">
-          <span className="text-[11px] font-extrabold text-[#B76629]">{String(index+1).padStart(2,'0')}</span>
-          <h3 className="mt-3 text-xs font-bold">{item.title}</h3>
-          <p className="mt-2 text-[11px] leading-5 text-[#888890]">{item.desc}</p>
-        </div>)}
-      </div>
-    </section>
+    description="A branded workspace to plan, review and preview multilingual email campaigns, with your verified Google sender and approved business assets.">
+    <EmailMarketingWorkbench businesses={businesses} connections={connections}/>
+    {Boolean(config?.gmailReadEnabled)&&<details className="rounded-xl border border-[#E9E6E5] bg-white p-4">
+      <summary className="cursor-pointer text-[12px] font-semibold text-[#A15B2D]">
+        Gmail Inbox intelligence · optional authorized headers preview
+      </summary>
+      <div className="mt-4"><GoogleMailInboxPreview
+        connections={previews} readEnabled={Boolean(config?.gmailReadEnabled)}/></div>
+    </details>}
   </MarketingModuleFrame>;
 }
