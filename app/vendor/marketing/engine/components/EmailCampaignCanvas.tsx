@@ -230,11 +230,11 @@ export default function EmailCampaignCanvas({
       max={3000} multiline onChange={next=>updateBlock(b.id,{text:next})}
       className="min-h-[80px] whitespace-pre-wrap break-words rounded p-1 text-[13px] leading-7 text-[#374151]"/>}
     {b.type==='button'&&<div className="py-3 text-center">
-      <InlineText value={b.text} label="CTA button label — edit directly" max={90}
-        onChange={next=>updateBlock(b.id,{text:next})}
-        className="mx-auto inline-block min-h-11 max-w-full rounded-xl px-6 py-3 text-center text-[12px] font-bold text-white"
-        />
-      <style>{''}</style>
+      <div style={{backgroundColor:buttonColor}} className="mx-auto inline-block max-w-full rounded-xl">
+        <InlineText value={b.text} label="CTA button label — edit directly" max={90}
+          onChange={next=>updateBlock(b.id,{text:next})}
+          className="inline-block min-h-11 max-w-full rounded-xl px-6 py-3 text-center text-[12px] font-bold text-white"/>
+      </div>
       <span className="sr-only">Button color can be changed in the Blocks and Brand panel.</span>
     </div>}
     {b.type==='divider'&&<hr className="my-4 border-[#E5E7EB]"/>}
