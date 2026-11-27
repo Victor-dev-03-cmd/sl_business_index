@@ -48,6 +48,8 @@ test('Google consent URL uses exact callback and minimum send + OIDC scopes',()=
   assert.equal(u.searchParams.get('redirect_uri'),config.redirectUri);
   assert.equal(u.searchParams.get('code_challenge_method'),'S256');
   assert.equal(u.searchParams.get('access_type'),'offline');
+  assert.deepEqual(u.searchParams.get('prompt')?.split(' ').sort(),['consent','select_account'].sort());
+  assert.equal(u.searchParams.has('login_hint'),false);
   assert.deepEqual(u.searchParams.get('scope').split(' ').sort(),['openid','email',GOOGLE_SEND_SCOPE].sort());
 });
 const response=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json'}});
