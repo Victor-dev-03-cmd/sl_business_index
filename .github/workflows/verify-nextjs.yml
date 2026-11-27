@@ -58,6 +58,8 @@ jobs:
         run: node --experimental-strip-types --test tests/gmailProductionConnectorRelease.test.mjs tests/wa06BrandedConnectorModal.test.mjs
       - name: Compact Gmail connector exclusive connect or disconnect states
         run: node --test tests/gmailConnectorCompactUX.test.mjs
+      - name: Email Marketing Pro 3-column Studio, local CSV consent safety and HTML preview
+        run: node --experimental-strip-types --test tests/emailStudioProWorkspace.test.mjs
       - name: Low-memory mobile route feedback and streaming regressions
         run: node --test tests/mobileRoutePerformance.test.mjs
       - name: G5-02 follow-up and reputation guidance owner safety
