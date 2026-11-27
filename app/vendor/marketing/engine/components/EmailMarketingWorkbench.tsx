@@ -71,7 +71,7 @@ export default function EmailMarketingWorkbench({businesses,connections,verified
   emailAiEnabled?:boolean;
   testSendEnabled?:boolean;
 }){
-  const [businessId,setBusinessId]=useState(businesses[0]?.id||'');
+  const [businessId,setBusinessId]=useState(connections.find(c=>c.status==='connected'&&businesses.some(b=>b.id===c.businessId))?.businessId||businesses[0]?.id||'');
   const [senderId,setSenderId]=useState('');
   const [language,setLanguage]=useState<EmailLanguage>('en');
   const [kind,setKind]=useState<EmailCampaignType>('offer');
