@@ -21,9 +21,9 @@ export default function MarketingModuleFrame({module,description,children}:{
           <h1 className="mt-2 text-[26px] font-extrabold tracking-tight sm:text-[32px]">{info.title}</h1>
           <p className="mt-2 max-w-[740px] text-xs leading-6 text-[#7D7D85]">{description}</p>
         </div>
-        <span className="inline-flex items-center gap-2 rounded-full border border-[#E7E7E9] bg-[#FAFAFB] px-3 py-1.5 text-[10px] font-bold text-[#72727B]">
+        {module!=='email'&&<span className="inline-flex items-center gap-2 rounded-full border border-[#E7E7E9] bg-[#FAFAFB] px-3 py-1.5 text-[10px] font-bold text-[#72727B]">
           <span className="h-1.5 w-1.5 rounded-full bg-[#FF7900]"/> {info.state==='catalogue'?'Connector catalogue':info.state==='foundation'?'Foundation in development':'Integration planned'}
-        </span>
+        </span>}
       </div>
     </header>
     {module!=='connections'&&<nav aria-label="Marketing Engine module navigation" className="flex flex-wrap gap-2">
@@ -34,6 +34,6 @@ export default function MarketingModuleFrame({module,description,children}:{
       </Link>)}
     </nav>}
     {children}
-    <p className="text-[11px] leading-6 text-[#8F8F97]">Provider accounts are never connected automatically. External messages and publishing require approved account permissions, cost controls, human review, and a verified provider receipt.</p>
+    {module!=='email'&&<p className="text-[11px] leading-6 text-[#8F8F97]">Provider accounts are never connected automatically. External messages and publishing require approved account permissions, cost controls, human review, and a verified provider receipt.</p>}
   </main>;
 }
