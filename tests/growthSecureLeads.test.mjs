@@ -29,6 +29,10 @@ test('web lead validation requires consent, business UUID and bounded contact de
   assert.equal(validateLeadSubmission({...good,name:'a'}).ok,false);
   assert.equal(validateLeadSubmission({...good,message:'x'.repeat(3001)}).ok,false);
   assert.equal(validateLeadSubmission({...good,turnstile_token:''}).ok,false);
+  assert.equal(validateLeadSubmission({...good,marketing_opt_in:'yes'}).ok,false);
+  const subscribed=validateLeadSubmission({...good,marketing_opt_in:true});
+  assert.equal(subscribed.ok,true);
+  if(subscribed.ok)assert.equal(subscribed.value.marketingOptIn,true);
 });
 
 test('customer enquiry UI preserves existing mobile-era fallback until migration',()=>{
@@ -55,7 +59,8 @@ test('secure lead endpoint fails closed and validates real Turnstile server-side
   assert.match(endpoint,/error\.code==='22023'&&error\.message==='lead-request-conflict'\)return reply\(409/);
   assert.match(form,/response\.status === 409 && result\.error === 'lead-request-conflict'/);
   assert.match(form,/finally \{\s*\/\/ Turnstile tokens expire[\s\S]*?setTurnstileReset/);
-  assert.match(endpoint,/supabase\.rpc\('slbi_submit_verified_lead'/);
+  assert.match(endpoint,/slbi_submit_verified_lead/);
+  assert.match(endpoint,/slbi_submit_verified_lead_optin/);
   assert.match(endpoint,/SUPABASE_SECRET_KEY\|\|process\.env\.SUPABASE_SERVICE_ROLE_KEY/);
   assert.doesNotMatch(endpoint,/NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY/);
 });
