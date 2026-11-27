@@ -2,7 +2,7 @@ import MarketingModuleFrame from '@/app/vendor/marketing/engine/components/Marke
 import ConnectorGrid from '@/app/vendor/marketing/engine/components/ConnectorGrid';
 import type {ConnectorBusiness} from '@/app/vendor/marketing/engine/components/WhatsAppConnectorSetup';
 import {createClient} from '@/lib/supabase/server';
-import {getGoogleConnectorConfig,getGoogleConnectorReadiness} from '@/lib/marketing/oauth-runtime';
+import {getGoogleConnectorConfig} from '@/lib/marketing/oauth-runtime';
 import GoogleMailPreviewConnect,{
  type GoogleMailOwnedBusiness,type GoogleMailConnectionSummary,
 } from '@/app/vendor/marketing/engine/components/GoogleMailPreviewConnect';
@@ -14,7 +14,6 @@ export default async function MarketingConnections({searchParams}:{
 }){
  // Explicit OFF-by-default production Google OAuth, with separate restricted read gate.
  const config=getGoogleConnectorConfig();
- const readiness=getGoogleConnectorReadiness();
  const oauthResult=(await searchParams)?.oauth;
  const oauthNotice=oauthResult==='connected'?'connected':
    oauthResult==='cancelled'?'cancelled':oauthResult==='failed'?'failed':null;
@@ -64,7 +63,6 @@ export default async function MarketingConnections({searchParams}:{
   <ConnectorGrid googleReady={googleReady} googleConnected={googleConnected}
    oauthNotice={oauthNotice} businesses={connectorBusinesses}
    gmailPreview={<GoogleMailPreviewConnect ready={googleReady}
-    deployment={readiness.environment} readEnabled={readiness.gmailReadEnabled}
     oauthNotice={oauthNotice} businesses={approvedOwned} connections={connectionSummaries}/>}/>
  </MarketingModuleFrame>;
 }
