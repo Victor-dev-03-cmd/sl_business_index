@@ -1,7 +1,9 @@
 import MarketingModuleFrame from '@/app/vendor/marketing/engine/components/MarketingModuleFrame';
-import EmailMarketingWorkbench,{
-  type EmailStudioBusiness,type EmailStudioConnection,
+import EmailMarketingWorkbench from '@/app/vendor/marketing/engine/components/EmailMarketingHub';
+import type {
+  EmailStudioBusiness,EmailStudioConnection,
 } from '@/app/vendor/marketing/engine/components/EmailMarketingWorkbench';
+import {isPosterInternalQAAccount} from '@/lib/marketing/poster-review-access-server';
 import GoogleMailInboxPreview,{type GmailMailboxPreviewConnection} from '@/app/vendor/marketing/engine/components/GoogleMailInboxPreview';
 import {getGoogleConnectorConfig} from '@/lib/marketing/oauth-runtime';
 import {createClient} from '@/lib/supabase/server';
@@ -22,7 +24,15 @@ export default async function MarketingEmail(){
   let connections:EmailStudioConnection[]=[];
   let previews:GmailMailboxPreviewConnection[]=[];
   let verifiedCounts:Record<string,number>={};
+  let emailAiAllowed=false;
   if(user&&!authError){
+    if(process.env.SLBI_MARKETING_AI_ENABLED==='true'&&
+       process.env.SLBI_MARKETING_EMAIL_AI_ENABLED==='true'&&
+       Boolean(process.env.GEMINI_API_KEY)){
+      // The endpoint is still owner-only internal QA. Do not expose a
+      // broken Generate button to all paying vendors.
+      emailAiAllowed=await isPosterInternalQAAccount(user.id,client);
+    }
     const owned=await client.from('businesses')
       .select('id,name,logo_url,city,address,slug,website_url,status')
       .eq('owner_id',user.id).eq('status','approved').order('name').limit(50);
@@ -76,16 +86,10 @@ export default async function MarketingEmail(){
   return <MarketingModuleFrame module="email"
     description="A branded workspace to plan, review and preview multilingual email campaigns, with your verified Google sender and approved business assets.">
     <EmailMarketingWorkbench businesses={businesses} connections={connections}
-      verifiedCounts={verifiedCounts}
-      emailAiEnabled={process.env.SLBI_MARKETING_AI_ENABLED==='true'&&
-        process.env.SLBI_MARKETING_EMAIL_AI_ENABLED==='true'&&
-        Boolean(process.env.GEMINI_API_KEY)}/>
-    {Boolean(config?.gmailReadEnabled)&&<details className="rounded-xl border border-[#E9E6E5] bg-white p-4">
-      <summary className="cursor-pointer text-[12px] font-semibold text-[#A15B2D]">
-        Gmail Inbox intelligence · optional authorized headers preview
-      </summary>
-      <div className="mt-4"><GoogleMailInboxPreview
-        connections={previews} readEnabled={Boolean(config?.gmailReadEnabled)}/></div>
-    </details>}
+      ownerScope={user?.id||''} verifiedCounts={verifiedCounts}
+      emailAiEnabled={emailAiAllowed}
+      inboxPreview={Boolean(config?.gmailReadEnabled)?
+        <GoogleMailInboxPreview connections={previews}
+          readEnabled={Boolean(config?.gmailReadEnabled)}/>:undefined}/>
   </MarketingModuleFrame>;
 }
