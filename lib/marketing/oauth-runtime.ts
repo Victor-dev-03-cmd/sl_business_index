@@ -151,7 +151,11 @@ export function makeGooglePreviewAuthUrl(config:GooglePreviewOAuthConfig,state:s
     pkceChallenge:pkceS256Challenge(verifier),
   }));
   u.searchParams.set('access_type','offline');
-  u.searchParams.set('prompt','consent');
+  // Always let the vendor select the mailbox they intend to connect. Without
+  // select_account, Google may silently reuse the browser's developer account.
+  // Consent remains explicit so a fresh offline refresh token can be requested.
+  // Never send login_hint: the SLBI login identity is not the Gmail mailbox.
+  u.searchParams.set('prompt','select_account consent');
   return u.href;
 }
 export function safeGoogleSuccessRedirect(config:GooglePreviewOAuthConfig,result:'connected'|'cancelled'|'failed'):string{
