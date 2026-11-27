@@ -60,6 +60,8 @@ jobs:
         run: node --test tests/gmailConnectorCompactUX.test.mjs
       - name: Email Marketing Pro 3-column Studio, local CSV consent safety and HTML preview
         run: node --experimental-strip-types --test tests/emailStudioProWorkspace.test.mjs
+      - name: Email V3 branded layouts, Gemini AI quota and consent-ledger contracts
+        run: node --experimental-strip-types --test tests/emailStudioV3.test.mjs
       - name: Low-memory mobile route feedback and streaming regressions
         run: node --test tests/mobileRoutePerformance.test.mjs
       - name: G5-02 follow-up and reputation guidance owner safety

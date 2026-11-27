@@ -3,7 +3,7 @@ const uuid=/^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]
 const emailPattern=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export type ValidLead = {
   requestId:string;businessId:string;name:string;email:string;phone:string;
-  message:string;turnstileToken:string;consent:true;
+  message:string;turnstileToken:string;consent:true;marketingOptIn:boolean;
 };
 export type LeadCheck = {ok:true;value:ValidLead}|{ok:false;reason:string};
 export function validateLeadSubmission(input:unknown):LeadCheck{
@@ -17,9 +17,11 @@ export function validateLeadSubmission(input:unknown):LeadCheck{
   if(typeof raw.phone!=='string'||raw.phone.trim().length<5||raw.phone.trim().length>24||!/^[+\d\s().-]+$/.test(raw.phone.trim()))return {ok:false,reason:'invalid-phone'};
   if(typeof raw.message!=='string'||raw.message.trim().length<3||raw.message.trim().length>3000)return {ok:false,reason:'invalid-message'};
   if(typeof raw.turnstile_token!=='string'||raw.turnstile_token.length<10||raw.turnstile_token.length>2048)return {ok:false,reason:'invalid-challenge'};
+  if(raw.marketing_opt_in!==undefined&&typeof raw.marketing_opt_in!=='boolean')return {ok:false,reason:'invalid-marketing-opt-in'};
   return {ok:true,value:{
     requestId:raw.request_id,businessId:raw.business_id,name:raw.name.trim(),
     email:raw.email.trim().toLowerCase(),phone:raw.phone.trim(),message:raw.message.trim(),
     turnstileToken:raw.turnstile_token,consent:true,
+    marketingOptIn:raw.marketing_opt_in===true,
   }};
 }

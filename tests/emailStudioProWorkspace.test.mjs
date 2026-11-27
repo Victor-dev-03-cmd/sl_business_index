@@ -72,21 +72,21 @@ test('CSV and paste are 100% local preview; never assume import equals marketing
   assert.throws(()=>parseAudienceCsv('a'.repeat(1_000_001)),/smaller than 1 MB/);
   assert.match(ui,/0 verified for sending/);
   assert.match(ui,/No addresses uploaded/);
-  assert.match(ui,/An enquiry does not establish marketing opt-in/);
+  assert.match(ui,/An enquiry or QR scan alone does not count/);
   assert.doesNotMatch(ui,/from\('leads'\)|new FormData\(.*email|\/api\/leads\/submit/);
   assert.doesNotMatch(page,/from\('leads'\)/);
 });
 test('Unsafe outbound operations are visibly gated, not misrepresented as live',()=>{
-  for(const item of ['Send campaign · gated','Schedule · gated','No message is sent from this workspace',
+  for(const item of ['Connect Gmail to Send','Review Campaign for Sending','No recipient message is silently sent',
     'No verified email delivery telemetry','Unsubscribe — not active in preview','plan proposals']){ 
     // The UI copy should not quietly become an autonomous sender.
     if(item==='plan proposals')assert.match(ui,/Plan proposals only/);
     else assert.ok(ui.includes(item),item);
   }
-  assert.match(ui,/Gemini generation requires a separate approved/);
-  assert.match(ui,/disabled className="min-h-10 cursor-not-allowed/);
+  assert.match(ui,/Generate Multilingual Email with Gemini/);
+  assert.match(ui,/disabled=\{!emailAiEnabled\|\|aiBusy\|\|!businessId\}/);
   assert.match(ui,/Copy reviewed draft/);
-  assert.match(ui,/Export HTML preview/);
+  assert.match(ui,/Export basic HTML preview/);
   assert.match(ui,/UNSUBSCRIBE NOT CONFIGURED — DO NOT SEND/);
   assert.doesNotMatch(ui,/gmail\.send|messages\/send|fetch\('https:\/\/gmail|sendMail\(|api\/marketing\/email\/send/);
   assert.match(page,/getGoogleConnectorConfig\(\)/);

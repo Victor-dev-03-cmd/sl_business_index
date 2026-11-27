@@ -10,6 +10,8 @@ import {
   type EmailBrand,type EmailCampaignType,type EmailLanguage,type EmailDraft,
   type InboxDevice,
 } from '@/lib/marketing/email-studio';
+import {EMAIL_TEMPLATE_LAYOUTS,safeCustomPreviewDocument,type EmailTemplateLayout}
+  from '@/lib/marketing/email-template-contract';
 
 export type EmailStudioBusiness={
   id:string;name:string;logoUrl:string|null;city:string;address:string;
@@ -62,11 +64,14 @@ function htmlExport(draft:EmailDraft,brand:EmailBrand):string{
     '</td></tr></table></body></html>';
 }
 
-export default function EmailMarketingWorkbench({businesses,connections}:{
+export default function EmailMarketingWorkbench({businesses,connections,verifiedCounts={},emailAiEnabled=false,testSendEnabled=false}:{
   businesses:readonly EmailStudioBusiness[];
   connections:readonly EmailStudioConnection[];
+  verifiedCounts?:Record<string,number>;
+  emailAiEnabled?:boolean;
+  testSendEnabled?:boolean;
 }){
-  const [businessId,setBusinessId]=useState(businesses[0]?.id||'');
+  const [businessId,setBusinessId]=useState(connections.find(c=>c.status==='connected'&&businesses.some(b=>b.id===c.businessId))?.businessId||businesses[0]?.id||'');
   const [senderId,setSenderId]=useState('');
   const [language,setLanguage]=useState<EmailLanguage>('en');
   const [kind,setKind]=useState<EmailCampaignType>('offer');
@@ -84,6 +89,12 @@ export default function EmailMarketingWorkbench({businesses,connections}:{
   const [notice,setNotice]=useState('');
   const [error,setError]=useState('');
   const [rules,setRules]=useState<string[]>([]);
+  const [template,setTemplate]=useState<EmailTemplateLayout>('minimal');
+  const [offerOne,setOfferOne]=useState('');
+  const [offerTwo,setOfferTwo]=useState('');
+  const [customHtml,setCustomHtml]=useState('<h2>Welcome to our business</h2><p>Latest news and offers.</p>');
+  const [savedTemplateName,setSavedTemplateName]=useState('My Brand Template');
+  const [aiBusy,setAiBusy]=useState(false);
   const fileRef=useRef<HTMLInputElement>(null);
   const business=businesses.find(b=>b.id===businessId)||null;
   const brand=useMemo(()=>createBrand(business),[business]);
@@ -101,7 +112,18 @@ export default function EmailMarketingWorkbench({businesses,connections}:{
   },[businessId,language,kind,businesses]);
   useEffect(()=>{
     setPosterId(null);setPosters([]);setPosterPanel(false);setAudienceReport(null);setPaste('');
-    setSenderId('');
+    setSenderId('');setTemplate('minimal');setOfferOne('');setOfferTwo('');
+    try{
+      const v=window.localStorage.getItem('slbi.email.brand-template.'+businessId);
+      if(v){
+        const parsed:unknown=JSON.parse(v);
+        if(parsed&&typeof parsed==='object'&&!Array.isArray(parsed)){
+          const o=parsed as Record<string,unknown>;
+          if(typeof o.name==='string')setSavedTemplateName(o.name.slice(0,70));
+          if(typeof o.html==='string')setCustomHtml(o.html.slice(0,12000));
+        }
+      }
+    }catch{/* A saved local draft must never block the composer. */}
   },[businessId]);
   const change=<K extends keyof EmailDraft>(key:K,value:EmailDraft[K])=>{
     setDraft(p=>({...p,[key]:value}));setNotice('');
@@ -161,6 +183,42 @@ export default function EmailMarketingWorkbench({businesses,connections}:{
   };
   const insertTag=(tag:string)=>change('body',(draft.body+'\n'+tag).slice(0,3000));
   const flipRule=(key:string)=>setRules(old=>old.includes(key)?old.filter(x=>x!==key):[...old,key]);
+  const saveCustomTemplate=()=>{
+    try{
+      window.localStorage.setItem('slbi.email.brand-template.'+businessId,JSON.stringify({
+        name:savedTemplateName.slice(0,70),html:customHtml.slice(0,12000),
+      }));
+      setNotice('Brand template saved on this browser only. No HTML is sent or uploaded.');
+      setError('');
+    }catch{setError('Unable to save the browser-only custom template.');}
+  };
+  const generateGeminiDraft=async()=>{
+    if(aiBusy||!businessId||!emailAiEnabled)return;
+    setAiBusy(true);setError('');setNotice('');
+    try{
+      const key=crypto.randomUUID();
+      const r=await fetch('/api/marketing/email/generate',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        credentials:'same-origin',body:JSON.stringify({
+          businessId,requestKey:key,language,kind,brief:draft.body,ctaUrl:draft.ctaUrl,
+        }),
+      });
+      const body:unknown=await r.json();
+      if(!body||typeof body!=='object'||Array.isArray(body))throw Error('Invalid Gemini response.');
+      const result=body as {error?:unknown;draft?:unknown;chargedCredits?:unknown};
+      if(!r.ok)throw Error(typeof result.error==='string'?result.error:'Gemini draft unavailable.');
+      const o=result.draft;
+      if(!o||typeof o!=='object'||Array.isArray(o))throw Error('Invalid generated draft.');
+      const d=o as Record<string,unknown>;
+      if(!['subject','preheader','body','ctaLabel'].every(k=>typeof d[k]==='string'))
+        throw Error('Incomplete generated email.');
+      setDraft(prev=>({...prev,subject:String(d.subject).slice(0,140),
+        preheader:String(d.preheader).slice(0,180),body:String(d.body).slice(0,3000),
+        ctaLabel:String(d.ctaLabel).slice(0,90)}));
+      setNotice('Gemini created a draft using shared Marketing AI credits. Review every fact and wording before sending.');
+    }catch(e){setError(e instanceof Error?e.message:'Gemini email draft failed.');}
+    finally{setAiBusy(false);}
+  };
   return <div data-testid="email-marketing-workbench" data-studio-theme="light" className="w-full min-w-0 space-y-4 text-[#242126]" style={{colorScheme:'light'}}>
     <section className={panel+' flex flex-wrap items-center justify-between gap-3 p-4 sm:p-5'}>
       <div>
@@ -216,8 +274,9 @@ export default function EmailMarketingWorkbench({businesses,connections}:{
               </button>)}
           </div>
           {audience==='crm'&&<div className="mt-2 rounded-xl bg-[#F8F6F6] p-3 text-[11px] leading-5 text-[#6F676C]">
-            <p className="font-bold">Leads CRM · consent not recorded</p>
-            <p className="mt-1">An enquiry does not establish marketing opt-in. Verified audience count is unavailable until consent records are implemented.</p>
+            <p className="font-bold">{verifiedCounts[businessId]!==undefined?
+              verifiedCounts[businessId]+' Confirmed Email Subscribers':'Consent registry not activated'}</p>
+            <p className="mt-1">Only confirmed, non-revoked marketing opt-ins qualify. An enquiry or QR scan alone does not count.</p>
             <Link href="/vendor/leads" className="mt-2 inline-flex text-[#AA5B20] underline">Review Leads CRM</Link>
           </div>}
           {audience==='csv'&&<div className="mt-2 rounded-xl border border-dashed border-[#E6D8CE] p-3">
@@ -305,6 +364,43 @@ export default function EmailMarketingWorkbench({businesses,connections}:{
           <h3 className="mt-1 text-[15px] font-extrabold text-[#252229]">Inbox simulator</h3>
           <p className={sub+' mt-1'}>Email client approximation · changes live as you edit</p>
         </div>
+        <div data-testid="email-template-switcher" className="space-y-2">
+          <p className={label}>Email template layout</p>
+          <div className="grid grid-cols-2 gap-2">
+            {EMAIL_TEMPLATE_LAYOUTS.map(item=><button key={item.id} type="button"
+              aria-pressed={template===item.id} onClick={()=>setTemplate(item.id)}
+              className={'min-h-12 rounded-xl border p-2 text-left transition '+
+                (template===item.id?'border-[#F4AD77] bg-[#FFF2E7] text-[#A44F16]':'border-[#E8E5E7] bg-white text-[#524B51]')}>
+              <span className="block text-[11px] font-bold">{item.label}</span>
+              <span className="mt-1 block text-[9px] leading-4 opacity-75">{item.description}</span>
+            </button>)}
+          </div>
+          {template==='offers'&&<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <label className={label}>Offer / service 1
+              <textarea className={field} rows={3} maxLength={320} value={offerOne}
+                onChange={e=>setOfferOne(e.target.value)} placeholder="Verified offer one"/>
+            </label>
+            <label className={label}>Offer / service 2
+              <textarea className={field} rows={3} maxLength={320} value={offerTwo}
+                onChange={e=>setOfferTwo(e.target.value)} placeholder="Verified offer two"/>
+            </label>
+          </div>}
+          {template==='custom'&&<div className="space-y-2 rounded-xl border border-[#EADBD1] bg-[#FFFBF8] p-3">
+            <label className={label}>Saved Brand Template name
+              <input className={field} maxLength={70} value={savedTemplateName}
+                onChange={e=>setSavedTemplateName(e.target.value)}/>
+            </label>
+            <label className={label}>Custom HTML source (isolated preview)
+              <textarea className={field+' font-mono'} rows={6} maxLength={12000} spellCheck={false}
+                value={customHtml} onChange={e=>setCustomHtml(e.target.value)}/>
+            </label>
+            <button type="button" onClick={saveCustomTemplate}
+              className="min-h-9 rounded-lg bg-[#262126] px-3 text-[11px] font-bold text-white">
+              Save Brand Template on this browser
+            </button>
+            <p className={sub}>HTML is previewed only inside a script-free sandbox with no network access. It is not transmitted as a marketing email.</p>
+          </div>}
+        </div>
         <div className="flex flex-wrap items-center gap-2">
           {(['desktop','mobile'] as const).map(mode=><button key={mode} type="button" onClick={()=>setDevice(mode)}
             aria-pressed={device===mode} className={'rounded-lg px-3 py-2 text-[11px] font-bold '+(device===mode?'bg-[#232126] text-white':'border border-[#E9E5E6] text-[#686269]')}>
@@ -352,8 +448,29 @@ export default function EmailMarketingWorkbench({businesses,connections}:{
                   <p className="mt-1 break-words text-[11px] leading-4 text-[#817A81]">{brand.slogan||brand.city||'Official business update'}</p>
                 </div>
               </div>
-              {selectedPosterSrc&&<img src={selectedPosterSrc} alt="Selected private Poster Studio preview" className="max-h-[320px] w-full object-contain"/>}
-              <div className="px-5 py-6">
+              {selectedPosterSrc&&template!=='custom'&&<div className={template==='hero'?'bg-[#FAF5F1] p-1':'bg-white'}>
+                <img src={selectedPosterSrc} alt="Selected private Poster Studio preview"
+                  className={template==='hero'?'max-h-[520px] w-full object-contain':'max-h-[320px] w-full object-contain'}/>
+              </div>}
+              {template==='hero'&&!selectedPosterSrc&&<div className="border-b border-dashed border-[#EDC9B0] bg-[#FFF8F1] px-5 py-12 text-center text-[12px] font-semibold text-[#AA6128]">
+                Choose a saved Poster Studio design to feature here
+              </div>}
+              {template==='custom'?<div className="p-3">
+                <iframe title="Sandboxed owner HTML template preview" sandbox="" referrerPolicy="no-referrer"
+                  className="min-h-[310px] w-full rounded-lg border border-[#E9E4E3] bg-white"
+                  srcDoc={safeCustomPreviewDocument(customHtml)}/>
+              </div>:<div className="px-5 py-6">
+                {template==='offers'&&<div className="mb-5 grid grid-cols-2 gap-2">
+                  {[offerOne,offerTwo].map((offer,i)=><div key={i}
+                    className="min-w-0 rounded-xl border border-[#ECDDD2] bg-[#FFF8F2] p-3">
+                    <span className="text-[10px] font-bold uppercase tracking-wide text-[#BB692F]">
+                      {i===0?'Offer 01':'Offer 02'}
+                    </span>
+                    <p className="mt-2 whitespace-pre-wrap break-words text-[11px] leading-5 text-[#312930]">
+                      {offer||'Add a verified offer above'}
+                    </p>
+                  </div>)}
+                </div>}
                 <p className="whitespace-pre-wrap break-words text-[12px] leading-[1.9] text-[#343038]">{draft.body||'Email message preview'}</p>
                 <div className="pt-5 text-center">
                   {ctaHref?<a href={ctaHref} target="_blank" rel="noopener noreferrer"
@@ -361,7 +478,7 @@ export default function EmailMarketingWorkbench({businesses,connections}:{
                     style={{background:brand.accentColor}}>{draft.ctaLabel||'Learn more'}</a>:
                     <span className="inline-flex min-h-10 items-center rounded-lg bg-[#E9E6E7] px-5 text-[12px] text-[#777078]">Valid HTTPS CTA required</span>}
                 </div>
-              </div>
+              </div>}
               <footer className="border-t border-[#ECE9EB] bg-[#FAF9F9] px-5 py-4 text-center text-[10px] leading-5 text-[#807980]">
                 {[brand.address,brand.city].filter(Boolean).join(' · ')||brand.name}
                 <p className="mt-2 underline">Unsubscribe — not active in preview</p>
@@ -370,25 +487,38 @@ export default function EmailMarketingWorkbench({businesses,connections}:{
           </div>
         </div>
         <div className="grid gap-2">
+          {!currentSender?
+            <Link href="/vendor/marketing-engine/connections"
+              className="flex min-h-11 items-center justify-center rounded-xl bg-[#FF7900] px-3 text-[12px] font-bold text-white">
+              Connect Gmail to Send →
+            </Link>:
+            <>
+              <button type="button" onClick={()=>setNotice(
+                'Campaign delivery requires a confirmed opt-in audience, working one-click unsubscribe, approved provider queue and per-send review. Gmail connection alone does not authorize bulk sends.')}
+                className="min-h-11 rounded-xl bg-[#FF7900] px-3 text-[12px] font-bold text-white">
+                Review Campaign for Sending
+              </button>
+              <div className="grid grid-cols-2 gap-2">
+                <button type="button" onClick={()=>setNotice('Schedule draft selected. Automated sending is unavailable until the approved delivery worker and unsubscribe system are live.')}
+                  className="min-h-10 rounded-xl border border-[#E7D1C1] px-2 text-[11px] font-semibold text-[#9E5520]">
+                  Plan Schedule
+                </button>
+                <button type="button" disabled={!testSendEnabled}
+                  title={testSendEnabled?'Self-test is enabled for this sender':'Self-test provider launch is not active'}
+                  className="min-h-10 rounded-xl bg-[#262126] px-2 text-[11px] font-semibold text-white disabled:opacity-50">
+                  Send Test Email to Me
+                </button>
+              </div>
+            </>}
           <div className="grid grid-cols-2 gap-2">
-            <button type="button" disabled className="min-h-10 cursor-not-allowed rounded-xl bg-[#ECE9EB] px-2 text-[11px] font-semibold text-[#979099]"
-              title="Requires consent/suppression list, sending worker and an approved Gmail sender">Send campaign · gated</button>
-            <button type="button" disabled className="min-h-10 cursor-not-allowed rounded-xl border border-[#E7E3E5] px-2 text-[11px] font-semibold text-[#918990]"
-              title="Requires a durable owner-approved scheduling worker">Schedule · gated</button>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <button type="button" onClick={()=>void copyDraft()} className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-[#242126] px-2 text-[11px] font-semibold text-white">
+            <button type="button" onClick={()=>void copyDraft()}
+              className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-[#242126] px-2 text-[11px] font-semibold text-white">
               <IconsaxIcon name="copy" size={16} color="white"/>Copy reviewed draft</button>
-            <button type="button" onClick={exportPreview} className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-[#E6D0C0] px-2 text-[11px] font-semibold text-[#A75920]">
-              <IconsaxIcon name="document-download" size={16}/>Export HTML preview</button>
+            <button type="button" onClick={exportPreview}
+              className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-[#E6D0C0] px-2 text-[11px] font-semibold text-[#A75920]">
+              <IconsaxIcon name="document-download" size={16}/>Export basic HTML preview</button>
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <button type="button" disabled title="Requires a separately authorized Gmail drafts.create permission"
-              className="min-h-10 cursor-not-allowed rounded-xl border border-[#E7E3E5] px-2 text-[11px] text-[#918990]">Save Gmail Draft · gated</button>
-            <button type="button" disabled title="A rate-limited self-test endpoint is not yet approved"
-              className="min-h-10 cursor-not-allowed rounded-xl border border-[#E7E3E5] px-2 text-[11px] text-[#918990]">Send test to me · gated</button>
-          </div>
-          <p className={sub}>Gmail Draft/Test Send require separately approved API execution. No message is sent from this workspace.</p>
+          <p className={sub}>Full campaign and schedule sending requires a verified consent/subscription pipeline and approval. No recipient message is silently sent.</p>
         </div>
       </section>
 
@@ -408,7 +538,14 @@ export default function EmailMarketingWorkbench({businesses,connections}:{
               <span className="mr-2 text-[#C07542]">{String(i+1).padStart(2,'0')}</span>{line}
             </button>)}
           </div>
-          <p className={sub+' mt-2'}>Gemini generation requires a separate approved, metered email-generation endpoint; it is not yet activated.</p>
+          <button type="button" disabled={!emailAiEnabled||aiBusy||!businessId}
+            onClick={()=>void generateGeminiDraft()}
+            className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#FF7900] px-3 text-[11px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-50">
+            {aiBusy?'Generating review draft…':'✨ Generate Multilingual Email with Gemini'}
+          </button>
+          <p className={sub+' mt-2'}>{emailAiEnabled?
+            'Uses shared Marketing AI credits; output is a human-review draft, never auto-sent.':
+            'Gemini Email AI requires approved QA budget and environment activation.'}</p>
         </div>
         <div className="border-t border-[#EFEAEC] pt-3">
           <p className={label}>Content readiness checks</p>
@@ -443,7 +580,7 @@ export default function EmailMarketingWorkbench({businesses,connections}:{
               aria-pressed={rules.includes(id)}
               className="flex min-h-12 w-full items-center justify-between gap-3 rounded-xl border border-[#E8E4E6] px-3 text-left">
               <span><span className="block text-[11px] font-semibold text-[#302C32]">{title}</span>
-                <span className={sub}>{delay} · planned only</span></span>
+                <span className={sub}>{delay} · saved as draft intent only</span></span>
               <span aria-hidden="true" className={'relative h-5 w-9 shrink-0 rounded-full transition '+(rules.includes(id)?'bg-[#EF8937]':'bg-[#D8D3D7]')}>
                 <span className={'absolute top-[3px] h-3.5 w-3.5 rounded-full bg-white transition '+(rules.includes(id)?'left-[19px]':'left-[3px]')}/>
               </span>

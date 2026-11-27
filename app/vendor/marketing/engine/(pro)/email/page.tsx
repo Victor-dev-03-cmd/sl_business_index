@@ -21,6 +21,7 @@ export default async function MarketingEmail(){
   let businesses:EmailStudioBusiness[]=[];
   let connections:EmailStudioConnection[]=[];
   let previews:GmailMailboxPreviewConnection[]=[];
+  let verifiedCounts:Record<string,number>={};
   if(user&&!authError){
     const owned=await client.from('businesses')
       .select('id,name,logo_url,city,address,slug,website_url,status')
@@ -46,6 +47,19 @@ export default async function MarketingEmail(){
           primaryColor:brand?.primary_color||null,accentColor:brand?.accent_color||null,
           tone:brand?.tone||null};
       });
+      // Exact verified recipient counts are shown only if the reviewed
+      // opt-in ledger actually exists and responds under authenticated RLS.
+      // Missing tables fail closed (no invented zero or subscriber total).
+      const optins=await client.from('marketing_email_optins')
+        .select('business_id').in('business_id',ids)
+        .eq('confirmation_status','confirmed').is('revoked_at',null).limit(5001);
+      if(!optins.error&&optins.data&&optins.data.length<5001){
+        verifiedCounts=Object.fromEntries(ids.map(id=>[id,0]));
+        for(const row of optins.data){
+          if(typeof row.business_id==='string'&&ids.includes(row.business_id))
+            verifiedCounts[row.business_id]=(verifiedCounts[row.business_id]||0)+1;
+        }
+      }
       if(!linked.error){
         const ownerIds=new Set(ids);
         const verified=(linked.data||[]).filter(c=>ownerIds.has(c.business_id)&&
@@ -61,7 +75,11 @@ export default async function MarketingEmail(){
   }
   return <MarketingModuleFrame module="email"
     description="A branded workspace to plan, review and preview multilingual email campaigns, with your verified Google sender and approved business assets.">
-    <EmailMarketingWorkbench businesses={businesses} connections={connections}/>
+    <EmailMarketingWorkbench businesses={businesses} connections={connections}
+      verifiedCounts={verifiedCounts}
+      emailAiEnabled={process.env.SLBI_MARKETING_AI_ENABLED==='true'&&
+        process.env.SLBI_MARKETING_EMAIL_AI_ENABLED==='true'&&
+        Boolean(process.env.GEMINI_API_KEY)}/>
     {Boolean(config?.gmailReadEnabled)&&<details className="rounded-xl border border-[#E9E6E5] bg-white p-4">
       <summary className="cursor-pointer text-[12px] font-semibold text-[#A15B2D]">
         Gmail Inbox intelligence · optional authorized headers preview
