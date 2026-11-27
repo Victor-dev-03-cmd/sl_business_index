@@ -27,7 +27,7 @@ export const EMAIL_BLOCK_TYPES:readonly {type:EmailBlockType;title:string;descri
   {type:'offers',title:'Two offers',description:'Show two services side by side'},
   {type:'divider',title:'Divider',description:'Separate content sections'},
 ] as const;
-const ID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{12}$/i;
+const ID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 export const newEmailBlock=(type:EmailBlockType,body=''):EmailVisualBlock=>({
   id:crypto.randomUUID(),type,
   text:type==='headline'?'A new update':type==='body'?body:
