@@ -1,5 +1,5 @@
-import {httpsLink,type EmailLanguage,type EmailCampaignType} from './email-studio';
-import {EMAIL_CAMPAIGNS,EMAIL_LANGUAGES} from './email-studio';
+import {httpsLink,type EmailLanguage,type EmailCampaignType} from './email-studio.ts';
+import {EMAIL_CAMPAIGNS,EMAIL_LANGUAGES} from './email-studio.ts';
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 export type EmailAiRequest={
   businessId:string;requestKey:string;language:EmailLanguage;kind:EmailCampaignType;
