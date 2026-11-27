@@ -30,7 +30,7 @@ export default async function MarketingEmail(){
     if(ids.length){
       const [profiles,linked]=await Promise.all([
         client.from('social_brand_profiles')
-          .select('business_id,brand_name,slogan,primary_color,accent_color')
+          .select('business_id,brand_name,slogan,primary_color,accent_color,tone')
           .eq('owner_id',user.id).in('business_id',ids).limit(50),
         client.from('marketing_connections')
           .select('id,business_id,account_display_name,provider,status,granted_scopes')
@@ -43,7 +43,8 @@ export default async function MarketingEmail(){
         return {id:b.id,name:b.name,logoUrl:b.logo_url,city:b.city||'',
           address:b.address||'',slug:b.slug,websiteUrl:b.website_url||null,
           brandName:brand?.brand_name||null,slogan:brand?.slogan||null,
-          primaryColor:brand?.primary_color||null,accentColor:brand?.accent_color||null};
+          primaryColor:brand?.primary_color||null,accentColor:brand?.accent_color||null,
+          tone:brand?.tone||null};
       });
       if(!linked.error){
         const ownerIds=new Set(ids);
