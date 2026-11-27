@@ -365,6 +365,12 @@ export default function EmailMarketingWorkbench({businesses,connections}:{
             <button type="button" onClick={exportPreview} className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-[#E6D0C0] px-2 text-[11px] font-semibold text-[#A75920]">
               <IconsaxIcon name="document-download" size={16}/>Export HTML preview</button>
           </div>
+          <div className="grid grid-cols-2 gap-2">
+            <button type="button" disabled title="Requires a separately authorized Gmail drafts.create permission"
+              className="min-h-10 cursor-not-allowed rounded-xl border border-[#E7E3E5] px-2 text-[11px] text-[#918990]">Save Gmail Draft · gated</button>
+            <button type="button" disabled title="A rate-limited self-test endpoint is not yet approved"
+              className="min-h-10 cursor-not-allowed rounded-xl border border-[#E7E3E5] px-2 text-[11px] text-[#918990]">Send test to me · gated</button>
+          </div>
           <p className={sub}>Gmail Draft/Test Send require separately approved API execution. No message is sent from this workspace.</p>
         </div>
       </section>
