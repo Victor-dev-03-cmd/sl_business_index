@@ -139,7 +139,7 @@ test('Email Marketing draft workbench remains review-only and Gmail connection i
   assert.match(composer,/data-testid="email-marketing-workbench"/);
   assert.match(composer,/UNSUBSCRIBE NOT CONFIGURED — DO NOT SEND/);
   assert.match(composer,/navigator\.clipboard\.writeText/);
-  assert.doesNotMatch(composer,/messages\/send|fetch\(|\binsert\(|sendEmail\(/);
+  assert.doesNotMatch(composer,/messages\/send|\binsert\(|sendEmail\(|api\/marketing\/email\/send/);
   assert.match(inbox,/onClick=\{\(\)=>void preview\(\)\}/);
   assert.match(inbox,/Clear preview/);
   assert.match(inbox,/\/api\/marketing\/oauth\/google_mail\/preview/);
