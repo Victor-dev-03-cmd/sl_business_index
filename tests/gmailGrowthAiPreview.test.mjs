@@ -132,12 +132,12 @@ test('Email Marketing draft workbench remains review-only and Gmail connection i
   const inbox=read('app/vendor/marketing/engine/components/GoogleMailInboxPreview.tsx');
   const connector=read('app/vendor/marketing/engine/components/GoogleMailPreviewConnect.tsx');
   const connections=read('app/vendor/marketing/engine/(pro)/connections/page.tsx');
-  assert.match(page,/EmailMarketingWorkbench mailboxConnected=\{connections\.length>0\}/);
+  assert.match(page,/<EmailMarketingWorkbench businesses=\{businesses\} connections=\{connections\}\}/);
   assert.match(page,/GoogleMailInboxPreview/);
   assert.match(page,/getGoogleConnectorConfig\(\)/);
   assert.match(page,/auth\.getUser\(\)/);
   assert.match(composer,/data-testid="email-marketing-workbench"/);
-  assert.match(composer,/Unsubscribe link — required before any marketing send/);
+  assert.match(composer,/UNSUBSCRIBE NOT CONFIGURED — DO NOT SEND/);
   assert.match(composer,/navigator\.clipboard\.writeText/);
   assert.doesNotMatch(composer,/messages\/send|fetch\(|\binsert\(|sendEmail\(/);
   assert.match(inbox,/onClick=\{\(\)=>void preview\(\)\}/);
