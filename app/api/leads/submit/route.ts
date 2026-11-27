@@ -74,10 +74,12 @@ export async function POST(request:Request){
     const supabase=createClient(supabaseUrl,privateKey,{
       auth:{autoRefreshToken:false,persistSession:false,detectSessionInUrl:false},
     });
-    const {data,error}=await supabase.rpc('slbi_submit_verified_lead',{
+    const {data,error}=await supabase.rpc(lead.marketingOptIn?
+      'slbi_submit_verified_lead_optin':'slbi_submit_verified_lead',{
       p_request_id:lead.requestId,p_business_id:lead.businessId,
       p_name:lead.name,p_email:lead.email,p_phone:lead.phone,p_message:lead.message,
       p_rate_bucket:rateBucket,p_business_bucket:businessBucket,
+      ...(lead.marketingOptIn?{p_marketing_opt_in:true}:{}),
     });
     if(error){
       if(error.code==='22023'&&error.message==='lead-request-conflict')return reply(409,'lead-request-conflict');
@@ -86,7 +88,9 @@ export async function POST(request:Request){
       return reply(503,'submission-unavailable');
     }
     if(typeof data!=='string')return reply(429,'request-limit-or-ineligible-business');
-    return Response.json({success:true,recorded:true},{status:201,headers:{'Cache-Control':'no-store'}});
+    return Response.json({success:true,recorded:true,
+      marketingConsent:lead.marketingOptIn?'pending_email_confirmation':'not_requested'},
+      {status:201,headers:{'Cache-Control':'no-store'}});
   }catch{return reply(503,'submission-unavailable');}
 }
 
