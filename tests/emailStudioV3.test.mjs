@@ -79,7 +79,7 @@ test('Marketing opt-in is optional, explicit, separately stored, pending until v
  assert.match(form,/marketing_opt_in:emailOptInEnabled&&marketingOptIn/);
  assert.match(submit,/slbi_submit_verified_lead_optin/);
  assert.match(submit,/checkedToken\.success/);
- assert.match(submit,/consent/);
+ assert.match(submit,/marketingConsent/);
  assert.match(migration,/ENABLE ROW LEVEL SECURITY/);
  assert.match(migration,/confirmation_status IN \('pending','confirmed','revoked'\)/);
  assert.match(migration,/consented_at/);
