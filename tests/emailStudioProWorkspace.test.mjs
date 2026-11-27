@@ -93,3 +93,36 @@ test('Unsafe outbound operations are visibly gated, not misrepresented as live',
   assert.match(page,/GoogleMailInboxPreview/);
   assert.match(ui,/No verified email delivery telemetry/);
 });
+
+test('Email Studio stays white/light even when the dashboard uses a dark root theme',()=>{
+  assert.match(ui,/data-studio-theme="light"/);
+  assert.match(ui,/colorScheme:'light'/);
+  assert.match(ui,/const panel='[^']*bg-white text-\[#242126\]/);
+  assert.match(ui,/const field='[^']*bg-white/);
+  assert.doesNotMatch(ui,/dark:(?:bg|text|border|ring)-/);
+  assert.match(ui,/grid w-full min-w-0 grid-cols-1 items-start gap-4 xl:grid-cols-\[minmax\(0,30fr\)_minmax\(0,42fr\)_minmax\(0,28fr\)\]/);
+  assert.match(ui,/min-h-\[680px\]/);
+  assert.match(frame,/module==='email'\?'max-w-\[1680px\]'/);
+  assert.match(frame,/module!=='email'/);
+});
+
+test('Live Gmail-style branded preview uses a left circular logo and right aligned name',()=>{
+  const marker=ui.indexOf('data-testid="email-preview-brand-identity"');
+  const headerEnd=ui.indexOf('{selectedPosterSrc&&',marker);
+  assert.ok(marker>0&&headerEnd>marker);
+  const block=ui.slice(marker,headerEnd);
+  assert.match(block,/className="flex min-w-0 items-center gap-3/);
+  assert.match(block,/bg-white/);
+  assert.match(block,/borderLeftColor:brand.accentColor/);
+  assert.match(block,/rounded-full/);
+  assert.match(block,/h-14 w-14 shrink-0/);
+  assert.match(block,/className="min-w-0 flex-1 text-left"/);
+  assert.match(block,/\{brand.name\}/);
+  assert.ok(block.indexOf('aria-label="Business brand avatar"')<block.indexOf('className="min-w-0 flex-1 text-left"'));
+  assert.doesNotMatch(block,/text-center|color:'#FFFFFF'|background:brand.primaryColor/);
+  const exportHeader=ui.slice(ui.indexOf('function htmlExport'),ui.indexOf('export default function EmailMarketingWorkbench'));
+  assert.match(exportHeader,/border-radius:50%/);
+  assert.match(exportHeader,/vertical-align:middle/);
+  assert.match(exportHeader,/border-left:4px solid/);
+  assert.doesNotMatch(exportHeader,/background:'\+\s*hexColor\(brand.primaryColor/);
+});

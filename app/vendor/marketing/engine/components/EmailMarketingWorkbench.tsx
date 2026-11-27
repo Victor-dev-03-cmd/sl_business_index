@@ -23,10 +23,10 @@ export type EmailStudioConnection={
 };
 type AudienceMode='crm'|'csv'|'paste'|'self';
 type Asset={id:string;createdAt:string|null};
-const panel='min-w-0 rounded-[19px] border border-[#E9E7E8] bg-white shadow-[0_7px_25px_rgba(29,25,29,.045)] dark:border-[#38343A] dark:bg-[#222126]';
-const field='mt-1.5 min-h-10 w-full min-w-0 rounded-xl border border-[#E5E1E2] bg-white px-3 py-2 text-[12px] text-[#26232A] outline-none focus:border-[#F47B24] focus:ring-2 focus:ring-[#F47B24]/15 dark:border-[#50484F] dark:bg-[#302C31] dark:text-white';
-const label='block text-[11px] font-semibold text-[#5E575D] dark:text-[#DAD5D8]';
-const sub='text-[10px] leading-[1.6] text-[#89828A] dark:text-[#B6ACB3]';
+const panel='min-w-0 w-full rounded-[19px] border border-[#E9E7E8] bg-white text-[#242126] shadow-[0_7px_25px_rgba(29,25,29,.045)]';
+const field='mt-1.5 min-h-10 w-full min-w-0 rounded-xl border border-[#E5E1E2] bg-white px-3 py-2 text-[12px] text-[#26232A] outline-none focus:border-[#F47B24] focus:ring-2 focus:ring-[#F47B24]/15';
+const label='block text-[11px] font-semibold text-[#5E575D]';
+const sub='text-[10px] leading-[1.6] text-[#89828A]';
 const clean=(v:string,n:number)=>textLimit(v,n);
 function createBrand(b:EmailStudioBusiness|null):EmailBrand{
   const slug=b?.slug;
@@ -44,11 +44,16 @@ function htmlExport(draft:EmailDraft,brand:EmailBrand):string{
   const c=hexColor(brand.accentColor);
   const link=httpsLink(draft.ctaUrl);
   const txt=escapeEmailHtml(draft.body).replace(/\n/g,'<br>');
+  const safeLogo=httpsLink(brand.logoUrl);
+  const logo=safeLogo?'<img src="'+escapeEmailHtml(safeLogo)+'" alt="Business logo" width="56" height="56" style="height:56px;width:56px;border-radius:50%;object-fit:cover;border:2px solid #f0e2d8">':
+    '<div style="height:56px;width:56px;line-height:56px;text-align:center;border-radius:50%;background:#fff4eb;color:#af6226;font-size:23px;font-weight:bold">'+escapeEmailHtml(Array.from(brand.name.trim())[0]||'B')+'</div>';
   return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>'+
     '<body style="margin:0;background:#f6f5f4;padding:24px;font-family:Arial,sans-serif">'+
-    '<table role="presentation" style="width:100%;max-width:600px;margin:auto;background:#fff;border-collapse:collapse"><tr><td style="padding:25px;color:#fff;background:'+
-    hexColor(brand.primaryColor,'#202024')+';font-size:22px;font-weight:bold">'+escapeEmailHtml(brand.name)+
-    '</td></tr><tr><td style="padding:26px;color:#29252a;font-size:15px;line-height:1.7">'+txt+
+    '<table role="presentation" style="width:100%;max-width:600px;margin:auto;background:#fff;border-collapse:collapse"><tr><td style="padding:20px;border-bottom:1px solid #eee8e7;border-left:4px solid '+
+    c+'"><table role="presentation"><tr><td style="vertical-align:middle;padding-right:15px">'+logo+
+    '</td><td style="vertical-align:middle"><strong style="display:block;color:#272329;font-size:19px">'+escapeEmailHtml(brand.name)+
+    '</strong><span style="display:block;color:#807981;font-size:12px">'+escapeEmailHtml(brand.slogan||brand.city)+
+    '</span></td></tr></table></td></tr><tr><td style="padding:26px;color:#29252a;font-size:15px;line-height:1.7">'+txt+
     (link?'<p><a href="'+escapeEmailHtml(link)+'" style="display:inline-block;background:'+c+
       ';color:#fff;padding:12px 20px;border-radius:9px;text-decoration:none">'+escapeEmailHtml(draft.ctaLabel)+'</a></p>':'')+
     '</td></tr><tr><td style="padding:20px;font-size:12px;color:#787178;border-top:1px solid #e7e7e7">'+
@@ -156,11 +161,11 @@ export default function EmailMarketingWorkbench({businesses,connections}:{
   };
   const insertTag=(tag:string)=>change('body',(draft.body+'\n'+tag).slice(0,3000));
   const flipRule=(key:string)=>setRules(old=>old.includes(key)?old.filter(x=>x!==key):[...old,key]);
-  return <div data-testid="email-marketing-workbench" className="space-y-4">
+  return <div data-testid="email-marketing-workbench" data-studio-theme="light" className="w-full min-w-0 space-y-4 text-[#242126]" style={{colorScheme:'light'}}>
     <section className={panel+' flex flex-wrap items-center justify-between gap-3 p-4 sm:p-5'}>
       <div>
         <p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#B96822]">GrowthOS / Email Marketing</p>
-        <h2 className="mt-1 text-[19px] font-extrabold text-[#242126] dark:text-white">Email Campaign Studio</h2>
+        <h2 className="mt-1 text-[19px] font-extrabold text-[#242126]">Email Campaign Studio</h2>
         <p className={sub+' mt-1'}>Connected Brand Kit · Live inbox preview · Review-first campaign design</p>
       </div>
       <div className="flex max-w-full flex-wrap items-center gap-2">
@@ -173,7 +178,7 @@ export default function EmailMarketingWorkbench({businesses,connections}:{
           <IconsaxIcon name="link" size={15}/>Manage
         </Link>
         <details className="relative">
-          <summary className="flex min-h-9 cursor-pointer items-center gap-1.5 rounded-full border border-[#E7DFD8] px-3 text-[11px] font-semibold text-[#625C60] dark:text-white">
+          <summary className="flex min-h-9 cursor-pointer items-center gap-1.5 rounded-full border border-[#E7DFD8] px-3 text-[11px] font-semibold text-[#625C60]">
             <IconsaxIcon name="info-circle" size={15}/> Compliance &amp; Consent
           </summary>
           <div className="absolute right-0 top-10 z-30 w-[min(330px,85vw)] rounded-xl border border-[#E9E1DE] bg-white p-4 text-[11px] leading-5 text-[#5A5458] shadow-xl">
@@ -183,10 +188,10 @@ export default function EmailMarketingWorkbench({businesses,connections}:{
       </div>
     </section>
 
-    <div className="grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,30fr)_minmax(0,42fr)_minmax(0,28fr)]">
-      <section aria-label="01 Campaign and Audience" className={panel+' space-y-4 p-4 sm:p-5'}>
+    <div className="grid w-full min-w-0 grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,30fr)_minmax(0,42fr)_minmax(0,28fr)]">
+      <section aria-label="01 Campaign and Audience" className={panel+' min-h-[680px] space-y-4 p-4 sm:p-5'}>
         <div className="border-b border-[#EFEAEC] pb-3"><p className="text-[10px] font-bold tracking-[.15em] text-[#C46D29]">01 / SETUP</p>
-          <h3 className="mt-1 text-[15px] font-extrabold text-[#252229] dark:text-white">Campaign &amp; Audience</h3>
+          <h3 className="mt-1 text-[15px] font-extrabold text-[#252229]">Campaign &amp; Audience</h3>
         </div>
         <label className={label}>Business &amp; Brand Kit
           <select value={businessId} onChange={e=>setBusinessId(e.target.value)} className={field}>
@@ -294,10 +299,10 @@ export default function EmailMarketingWorkbench({businesses,connections}:{
         {isDraftEmpty&&<p className={sub} role="status">Register an approved business to prepare a branded campaign.</p>}
       </section>
 
-      <section aria-label="02 Live Inbox Preview" className={panel+' min-w-0 space-y-4 p-4 sm:p-5 xl:sticky xl:top-24'}>
+      <section aria-label="02 Live Inbox Preview" className={panel+' min-h-[680px] min-w-0 space-y-4 p-4 sm:p-5 xl:sticky xl:top-24'}>
         <div className="border-b border-[#EFEAEC] pb-3">
           <p className="text-[10px] font-bold tracking-[.15em] text-[#C46D29]">02 / LIVE PREVIEW</p>
-          <h3 className="mt-1 text-[15px] font-extrabold text-[#252229] dark:text-white">Inbox simulator</h3>
+          <h3 className="mt-1 text-[15px] font-extrabold text-[#252229]">Inbox simulator</h3>
           <p className={sub+' mt-1'}>Email client approximation · changes live as you edit</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -329,11 +334,23 @@ export default function EmailMarketingWorkbench({businesses,connections}:{
           </div>
           <div className="px-3 pb-4 sm:px-4">
             <div className="overflow-hidden rounded-[15px] border border-[#E7E6E7] bg-white text-[#242126]">
-              <div className="px-5 py-6 text-center" style={{background:brand.primaryColor,color:'#FFFFFF'}}>
-                {brand.logoUrl&&<img alt="Business logo preview" src={brand.logoUrl} loading="lazy"
-                  className="mx-auto mb-3 h-12 max-w-[180px] object-contain"/>}
-                <h4 className="break-words text-[19px] font-extrabold">{brand.name}</h4>
-                {brand.slogan&&<p className="mt-1 text-[11px] opacity-90">{brand.slogan}</p>}
+              <div data-testid="email-preview-brand-identity"
+                className="flex min-w-0 items-center gap-3 border-b border-[#EFEAEC] border-l-4 bg-white px-4 py-4 sm:gap-4 sm:px-5"
+                style={{borderLeftColor:brand.accentColor}}>
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-[#F3E4D9] bg-[#FFF4EB] shadow-[0_3px_10px_rgba(28,23,27,.07)]"
+                  aria-label="Business brand avatar">
+                  {brand.logoUrl?
+                    <img alt={brand.name+' logo'} src={brand.logoUrl} loading="lazy"
+                      className="h-full w-full rounded-full object-cover"/>:
+                    <span aria-hidden="true" className="text-xl font-extrabold text-[#B96826]">
+                      {Array.from(brand.name.trim())[0]||'B'}
+                    </span>}
+                </div>
+                <div className="min-w-0 flex-1 text-left">
+                  <p className="text-[9px] font-bold uppercase tracking-[.11em] text-[#B7672A]">Your business</p>
+                  <h4 className="mt-1 break-words text-[17px] font-extrabold leading-tight text-[#272329]">{brand.name}</h4>
+                  <p className="mt-1 break-words text-[11px] leading-4 text-[#817A81]">{brand.slogan||brand.city||'Official business update'}</p>
+                </div>
               </div>
               {selectedPosterSrc&&<img src={selectedPosterSrc} alt="Selected private Poster Studio preview" className="max-h-[320px] w-full object-contain"/>}
               <div className="px-5 py-6">
@@ -375,10 +392,10 @@ export default function EmailMarketingWorkbench({businesses,connections}:{
         </div>
       </section>
 
-      <aside aria-label="03 AI Polish and Automation" className={panel+' min-w-0 space-y-4 p-4 sm:p-5'}>
+      <aside aria-label="03 AI Polish and Automation" className={panel+' min-h-[680px] min-w-0 space-y-4 p-4 sm:p-5'}>
         <div className="border-b border-[#EFEAEC] pb-3">
           <p className="text-[10px] font-bold tracking-[.15em] text-[#C46D29]">03 / INTELLIGENCE</p>
-          <h3 className="mt-1 text-[15px] font-extrabold text-[#252229] dark:text-white">Polish &amp; Automation</h3>
+          <h3 className="mt-1 text-[15px] font-extrabold text-[#252229]">Polish &amp; Automation</h3>
         </div>
         <div>
           <p className={label}>Subject line alternatives</p>
