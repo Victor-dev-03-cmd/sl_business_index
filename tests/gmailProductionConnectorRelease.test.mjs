@@ -46,6 +46,8 @@ test('Production OAuth uses only the exact canonical redirect URI; no arbitrary 
  assert.equal(url.searchParams.get('redirect_uri'),config.redirectUri);
  assert.equal(url.searchParams.get('code_challenge_method'),'S256');
  assert.equal(url.searchParams.get('access_type'),'offline');
+ assert.deepEqual(url.searchParams.get('prompt')?.split(' ').sort(),['consent','select_account'].sort());
+ assert.equal(url.searchParams.has('login_hint'),false);
  assert.equal(url.searchParams.get('scope').includes(GOOGLE_SEND_SCOPE),true);
  assert.equal(url.searchParams.get('scope').includes(GOOGLE_READ_SCOPE),false);
  assert.equal(exactOAuthRequestOrigin(config.origin+'/api/marketing/oauth/google_mail/start',
