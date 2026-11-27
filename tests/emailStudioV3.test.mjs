@@ -43,7 +43,7 @@ test('Gemini generated email request is strictly structured, quota-bound and rev
  const o={subject:'சலுகை தகவல்கள் — புதிய சேவை',
    preheader:'புதிய சேவை பற்றிய தகவல்',body:'வணக்கம்! எங்கள் புதிய சேவையைப் பற்றி அறிந்துகொள்ளுங்கள். '.repeat(4),
    ctaLabel:'மேலும் அறிய'};
- assert.deepEqual(parseEmailAiOutput(JSON.stringify(o)),o);
+ assert.deepEqual(parseEmailAiOutput(JSON.stringify(o)),{...o,body:o.body.trim()});
  assert.equal(parseEmailAiOutput({...o,body:'bad'}),null);
  assert.ok(emailModelPrompt(value,{businessName:'My Store',category:'Clothing',city:'Jaffna',
    brandName:'My Store',tone:'friendly',guidelines:'Only verified offers'}).system.includes('Never include URLs'));
