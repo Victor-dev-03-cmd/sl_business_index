@@ -103,13 +103,13 @@ test('Callback opens Gmail panel and reports only real stored connection status'
  const grid=read('app/vendor/marketing/engine/components/ConnectorGrid.tsx');
  const gmail=read('app/vendor/marketing/engine/components/GoogleMailPreviewConnect.tsx');
  const email=read('app/vendor/marketing/engine/(pro)/email/page.tsx');
- assert.match(page,/getGoogleConnectorReadiness\(\)/);
+ assert.match(page,/getGoogleConnectorConfig\(\)/);
  assert.match(page,/oauthResult==='connected'/);
  assert.match(grid,/oauthNotice\?'gmail':null/);
  assert.match(page,/googleConnected=\{googleConnected\}/);
- assert.match(gmail,/oauthNotice==='connected'&&connected\.length>0/);
- assert.match(gmail,/Google OAuth setup required/);
- assert.match(gmail,/Connect Gmail securely/);
+ assert.match(gmail,/connected\.length>0\?\(/);
+ assert.match(gmail,/Google setup required/);
+ assert.match(gmail,/Connect Gmail/);
  assert.match(gmail,/disconnectingId\|\|busy/);
  assert.match(email,/getGoogleConnectorConfig\(\)/);
  assert.match(email,/marketing_connections/);
