@@ -14,6 +14,7 @@ export type LocalEmailCampaign={
   layout:EmailTemplateLayout;
   blocks:EmailVisualBlock[];
   posterId:string|null;
+  buttonColor?:string;logoSize?:number;
   createdAt:string;updatedAt:string;
   status:'local_draft';
 };
@@ -65,6 +66,8 @@ export function normalizeLocalCampaign(raw:unknown,owner:string,approvedBusiness
     typeof v.updatedAt!=='string'||!Number.isFinite(Date.parse(v.updatedAt))||
     !Array.isArray(v.blocks)||v.blocks.length>20||!v.blocks.length)return null;
   if(v.posterId!==null&&(typeof v.posterId!=='string'||!ID.test(v.posterId)))return null;
+  if(v.buttonColor!==undefined&&(typeof v.buttonColor!=='string'||!/^#[0-9a-f]{6}$/i.test(v.buttonColor)))return null;
+  if(v.logoSize!==undefined&&(typeof v.logoSize!=='number'||!Number.isFinite(v.logoSize)||v.logoSize<40||v.logoSize>100))return null;
   const blocks:EmailVisualBlock[]=[];
   const used=new Set<string>();
   for(const block of v.blocks){
@@ -83,6 +86,8 @@ export function normalizeLocalCampaign(raw:unknown,owner:string,approvedBusiness
     language:v.language as EmailLanguage,kind:v.kind as EmailCampaignType,
     layout:v.layout as EmailTemplateLayout,
     blocks,posterId:v.posterId as string|null,
+    ...(typeof v.buttonColor==='string'?{buttonColor:v.buttonColor}:{}),
+    ...(typeof v.logoSize==='number'?{logoSize:v.logoSize}:{}),
     createdAt:v.createdAt,updatedAt:v.updatedAt,status:'local_draft'};
 }
 export function briefFromBlocks(blocks:EmailVisualBlock[]):string{
