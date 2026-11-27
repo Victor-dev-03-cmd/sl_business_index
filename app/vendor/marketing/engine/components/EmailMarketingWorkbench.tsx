@@ -10,6 +10,8 @@ import {
   type EmailBrand,type EmailCampaignType,type EmailLanguage,type EmailDraft,
   type InboxDevice,
 } from '@/lib/marketing/email-studio';
+import {EMAIL_TEMPLATE_LAYOUTS,safeCustomPreviewDocument,type EmailTemplateLayout}
+  from '@/lib/marketing/email-template-contract';
 
 export type EmailStudioBusiness={
   id:string;name:string;logoUrl:string|null;city:string;address:string;
@@ -62,9 +64,12 @@ function htmlExport(draft:EmailDraft,brand:EmailBrand):string{
     '</td></tr></table></body></html>';
 }
 
-export default function EmailMarketingWorkbench({businesses,connections}:{
+export default function EmailMarketingWorkbench({businesses,connections,verifiedCounts={},emailAiEnabled=false,testSendEnabled=false}:{
   businesses:readonly EmailStudioBusiness[];
   connections:readonly EmailStudioConnection[];
+  verifiedCounts?:Record<string,number>;
+  emailAiEnabled?:boolean;
+  testSendEnabled?:boolean;
 }){
   const [businessId,setBusinessId]=useState(businesses[0]?.id||'');
   const [senderId,setSenderId]=useState('');
@@ -84,6 +89,12 @@ export default function EmailMarketingWorkbench({businesses,connections}:{
   const [notice,setNotice]=useState('');
   const [error,setError]=useState('');
   const [rules,setRules]=useState<string[]>([]);
+  const [template,setTemplate]=useState<EmailTemplateLayout>('minimal');
+  const [offerOne,setOfferOne]=useState('');
+  const [offerTwo,setOfferTwo]=useState('');
+  const [customHtml,setCustomHtml]=useState('<h2>Welcome to our business</h2><p>Latest news and offers.</p>');
+  const [savedTemplateName,setSavedTemplateName]=useState('My Brand Template');
+  const [aiBusy,setAiBusy]=useState(false);
   const fileRef=useRef<HTMLInputElement>(null);
   const business=businesses.find(b=>b.id===businessId)||null;
   const brand=useMemo(()=>createBrand(business),[business]);
@@ -101,7 +112,18 @@ export default function EmailMarketingWorkbench({businesses,connections}:{
   },[businessId,language,kind,businesses]);
   useEffect(()=>{
     setPosterId(null);setPosters([]);setPosterPanel(false);setAudienceReport(null);setPaste('');
-    setSenderId('');
+    setSenderId('');setTemplate('minimal');setOfferOne('');setOfferTwo('');
+    try{
+      const v=window.localStorage.getItem('slbi.email.brand-template.'+businessId);
+      if(v){
+        const parsed:unknown=JSON.parse(v);
+        if(parsed&&typeof parsed==='object'&&!Array.isArray(parsed)){
+          const o=parsed as Record<string,unknown>;
+          if(typeof o.name==='string')setSavedTemplateName(o.name.slice(0,70));
+          if(typeof o.html==='string')setCustomHtml(o.html.slice(0,12000));
+        }
+      }
+    }catch{/* A saved local draft must never block the composer. */}
   },[businessId]);
   const change=<K extends keyof EmailDraft>(key:K,value:EmailDraft[K])=>{
     setDraft(p=>({...p,[key]:value}));setNotice('');
@@ -161,6 +183,42 @@ export default function EmailMarketingWorkbench({businesses,connections}:{
   };
   const insertTag=(tag:string)=>change('body',(draft.body+'\n'+tag).slice(0,3000));
   const flipRule=(key:string)=>setRules(old=>old.includes(key)?old.filter(x=>x!==key):[...old,key]);
+  const saveCustomTemplate=()=>{
+    try{
+      window.localStorage.setItem('slbi.email.brand-template.'+businessId,JSON.stringify({
+        name:savedTemplateName.slice(0,70),html:customHtml.slice(0,12000),
+      }));
+      setNotice('Brand template saved on this browser only. No HTML is sent or uploaded.');
+      setError('');
+    }catch{setError('Unable to save the browser-only custom template.');}
+  };
+  const generateGeminiDraft=async()=>{
+    if(aiBusy||!businessId||!emailAiEnabled)return;
+    setAiBusy(true);setError('');setNotice('');
+    try{
+      const key=crypto.randomUUID();
+      const r=await fetch('/api/marketing/email/generate',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        credentials:'same-origin',body:JSON.stringify({
+          businessId,requestKey:key,language,kind,brief:draft.body,ctaUrl:draft.ctaUrl,
+        }),
+      });
+      const body:unknown=await r.json();
+      if(!body||typeof body!=='object'||Array.isArray(body))throw Error('Invalid Gemini response.');
+      const result=body as {error?:unknown;draft?:unknown;chargedCredits?:unknown};
+      if(!r.ok)throw Error(typeof result.error==='string'?result.error:'Gemini draft unavailable.');
+      const o=result.draft;
+      if(!o||typeof o!=='object'||Array.isArray(o))throw Error('Invalid generated draft.');
+      const d=o as Record<string,unknown>;
+      if(!['subject','preheader','body','ctaLabel'].every(k=>typeof d[k]==='string'))
+        throw Error('Incomplete generated email.');
+      setDraft(prev=>({...prev,subject:String(d.subject).slice(0,140),
+        preheader:String(d.preheader).slice(0,180),body:String(d.body).slice(0,3000),
+        ctaLabel:String(d.ctaLabel).slice(0,90)}));
+      setNotice('Gemini created a draft using shared Marketing AI credits. Review every fact and wording before sending.');
+    }catch(e){setError(e instanceof Error?e.message:'Gemini email draft failed.');}
+    finally{setAiBusy(false);}
+  };
   return <div data-testid="email-marketing-workbench" data-studio-theme="light" className="w-full min-w-0 space-y-4 text-[#242126]" style={{colorScheme:'light'}}>
     <section className={panel+' flex flex-wrap items-center justify-between gap-3 p-4 sm:p-5'}>
       <div>
