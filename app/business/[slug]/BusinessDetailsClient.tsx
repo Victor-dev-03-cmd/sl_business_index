@@ -102,12 +102,14 @@ export default function BusinessDetailsClient({ business, galleryUrls, services 
   const [submittingEnquiry, setSubmittingEnquiry] = useState(false);
   const [whatsappReadyUrl, setWhatsappReadyUrl] = useState<string | null>(null);
   const [leadConsent, setLeadConsent] = useState(false);
+  const [marketingOptIn,setMarketingOptIn]=useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
   const [turnstileReset, setTurnstileReset] = useState(0);
   // Retry the same submitted payload with the same UUID. A changed form gets a
   // fresh UUID so an earlier successful request cannot mask new enquiry data.
   const enquiryRequestRef = useRef<{ fingerprint: string; id: string } | null>(null);
   const secureLeadsEnabled = process.env.NEXT_PUBLIC_SECURE_LEADS_ENABLED === "true";
+  const emailOptInEnabled=secureLeadsEnabled&&process.env.NEXT_PUBLIC_EMAIL_OPTIN_ENABLED==='true';
   const turnstileSiteKey = process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY || "";
   const [showReportModal, setShowReportModal] = useState(false);
 
@@ -263,7 +265,7 @@ export default function BusinessDetailsClient({ business, galleryUrls, services 
     setSubmittingEnquiry(true);
     try {
       if (secureLeadsEnabled) {
-        const fingerprint = JSON.stringify({ businessId: business.id, ...enquiryForm });
+        const fingerprint = JSON.stringify({ businessId: business.id, ...enquiryForm, marketingOptIn:marketingOptIn&&emailOptInEnabled });
         if (!enquiryRequestRef.current || enquiryRequestRef.current.fingerprint !== fingerprint) {
           enquiryRequestRef.current = { fingerprint, id: crypto.randomUUID() };
         }
@@ -278,6 +280,7 @@ export default function BusinessDetailsClient({ business, galleryUrls, services 
             phone: enquiryForm.phone,
             message: enquiryForm.message,
             consent: true,
+            marketing_opt_in:emailOptInEnabled&&marketingOptIn,
             turnstile_token: turnstileToken,
           }),
         });
@@ -325,6 +328,7 @@ export default function BusinessDetailsClient({ business, galleryUrls, services 
 
       setEnquiryForm({ name: "", email: "", phone: "", message: "" });
       setLeadConsent(false);
+      setMarketingOptIn(false);
       setTurnstileToken("");
       setTurnstileReset(v => v + 1);
       toast.success("Enquiry submitted", {
@@ -527,6 +531,15 @@ export default function BusinessDetailsClient({ business, galleryUrls, services 
                   <input type="checkbox" checked={leadConsent} onChange={e => setLeadConsent(e.target.checked)} required
                     className="mt-1 h-4 w-4 shrink-0 accent-[#262626]" />
                   <span>I agree to send my name, email, phone and message to this business for responding to my enquiry. Please do not send sensitive IDs or payment details.</span>
+                </label>
+                <label className="flex items-start gap-2 rounded-xl border border-[#F1DECE] bg-[#FFFAF7] p-3 text-[11px] leading-5 text-[#5B4A3D]">
+                  <input type="checkbox" checked={marketingOptIn} disabled={!emailOptInEnabled}
+                    onChange={e=>setMarketingOptIn(e.target.checked)}
+                    className="mt-1 h-4 w-4 shrink-0 accent-[#FF7900]"/>
+                  <span>Receive occasional offers &amp; updates from <strong>{business.name}</strong>.
+                    Optional and separate from this enquiry. A confirmation email and an unsubscribe option are required before promotional sending.
+                    {!emailOptInEnabled&&<span className="block text-[#B36B3D]">Subscription registration is being prepared; enquiries still work without this option.</span>}
+                  </span>
                 </label>
                 {secureLeadsEnabled && turnstileSiteKey && (
                   <div ref={turnstileContainerRef} data-enquiry-turnstile className="flex w-full min-w-0 max-w-full items-center justify-center py-1">
