@@ -17,7 +17,7 @@ type Props={
   campaign:LocalEmailCampaign;business:EmailStudioBusiness;
   sender:EmailStudioConnection|null;verifiedCount:number|undefined;
   emailAiEnabled:boolean;
-  onSave:(campaign:LocalEmailCampaign)=>void;onClose:()=>void;
+  onSave:(campaign:LocalEmailCampaign)=>Promise<'server'|'browser'|'failed'>;onClose:()=>void;
 };
 const input='min-h-10 w-full min-w-0 rounded-xl border border-[#E5E7EB] bg-white px-3 py-2 text-[12px] text-[#111827] outline-none focus:border-[#F97316] focus:ring-2 focus:ring-[#F97316]/10';
 const label='mb-1 block text-[11px] font-bold text-[#374151]';
@@ -66,6 +66,8 @@ export default function EmailCampaignCanvas({
   const [darkCheck,setDarkCheck]=useState(false);
   const [mounted,setMounted]=useState(false);
   const [dirty,setDirty]=useState(false);
+  const [saving,setSaving]=useState(false);
+  const campaignRef=useRef(campaign);
   const [selectedId,setSelectedId]=useState<string|null>(null);
   const [dragId,setDragId]=useState<string|null>(null);
   const [posterPanel,setPosterPanel]=useState(false);
@@ -80,6 +82,7 @@ export default function EmailCampaignCanvas({
   const [plannedAt,setPlannedAt]=useState('');
   const [customHtml,setCustomHtml]=useState('<h2>Your business update</h2><p>Write your email layout here.</p>');
   const [customName,setCustomName]=useState('My Brand Template');
+  useEffect(()=>{campaignRef.current=campaign;},[campaign]);
   const selected=campaign.blocks.find(b=>b.id===selectedId)||null;
   const brandName=business.brandName||business.name;
   const profileUrl='https://www.slbusinessindex.com/business/'+
@@ -136,17 +139,42 @@ export default function EmailCampaignCanvas({
     });
     setSelectedId(null);setDirty(true);
   };
-  const save=()=>{
+  const save=async()=>{
+    if(saving)return;
+    const snapshot=campaign;
     const version={...campaign,title:campaign.title.trim().slice(0,100)||'Untitled campaign',
       updatedAt:new Date().toISOString(),status:'local_draft' as const};
-    setCampaign(version);onSave(version);setDirty(false);setNotice('Saved on this browser.');
+    setSaving(true);setError('');
+    try{
+      const outcome=await onSave(version);
+      if(outcome==='failed'){
+        setError('Could not save this campaign. Your current editor remains open.');
+        return;
+      }
+      if(JSON.stringify(campaignRef.current)===JSON.stringify(snapshot)){
+        setCampaign(version);setDirty(false);
+      }
+      setNotice(outcome==='server'?'Saved to your SLBI account.':'Saved in this browser; cloud sync unavailable.');
+    }catch{
+      setError('Campaign could not be saved. Check your connection and retry.');
+    }finally{setSaving(false);}
   };
+  useEffect(()=>{
+    if(!dirty||saving)return;
+    const handle=setTimeout(()=>{void save();},2500);
+    return()=>clearTimeout(handle);
+  },[campaign,dirty,saving]);
   const close=()=>{
     if(dirty&&!window.confirm('Discard unsaved changes to this campaign?'))return;
     onClose();
   };
   useEffect(()=>{
-    const handler=(e:KeyboardEvent)=>{if(e.key==='Escape'&&!reviewOpen)close();};
+    const handler=(e:KeyboardEvent)=>{
+      if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){
+        e.preventDefault();void save();return;
+      }
+      if(e.key==='Escape'&&!reviewOpen)close();
+    };
     window.addEventListener('keydown',handler);
     return()=>window.removeEventListener('keydown',handler);
     // Closing is always explicit; updated state is captured on each render.
@@ -279,7 +307,7 @@ export default function EmailCampaignCanvas({
           <input value={campaign.title} maxLength={100} aria-label="Campaign name"
             onChange={e=>updateCampaign({title:e.target.value})}
             className="w-full min-w-0 max-w-[310px] border-0 bg-transparent text-[16px] font-extrabold tracking-tight outline-none focus:underline sm:text-[19px]"/>
-          <p className="text-[10px] text-[#6B7280]">{brandName} · Browser draft{dirty?' · Unsaved changes':''}</p>
+          <p className="text-[10px] text-[#6B7280]">{brandName} · Auto-save enabled{dirty?' · Editing…':''}{saving?' · Syncing…':''}</p>
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-1 rounded-xl bg-[#F3F4F6] p-1">
@@ -291,8 +319,8 @@ export default function EmailCampaignCanvas({
           className={'rounded-lg px-3 py-2 text-[11px] font-bold '+(darkCheck?'bg-[#111827] text-white':'text-[#6B7280]')}>Dark</button>
       </div>
       <div className="flex items-center gap-2">
-        <button type="button" onClick={save}
-          className="min-h-10 rounded-xl border border-[#D1D5DB] bg-white px-4 text-[12px] font-bold text-[#111827] hover:bg-[#F9FAFB]">Save draft</button>
+        <button type="button" onClick={()=>void save()} disabled={saving}
+          className="min-h-10 rounded-xl border border-[#D1D5DB] bg-white px-4 text-[12px] font-bold text-[#111827] hover:bg-[#F9FAFB] disabled:opacity-50">{saving?'Saving…':'Save draft'}</button>
         <button type="button" onClick={()=>setReviewOpen(true)}
           className="min-h-10 rounded-xl bg-[#F97316] px-4 text-[12px] font-bold text-white hover:bg-[#EA580C]">
           {sender?'Review to send':'Connect to send'}
@@ -535,7 +563,7 @@ export default function EmailCampaignCanvas({
           Your design is editable and can be saved. Connecting Gmail alone cannot activate bulk email sending.
         </p>
         <div className="mt-5 flex gap-2">
-          <button type="button" onClick={()=>{save();setReviewOpen(false);}}
+          <button type="button" onClick={()=>{void save();setReviewOpen(false);}}
             className="min-h-11 flex-1 rounded-xl bg-[#111827] px-3 text-[12px] font-bold text-white">Save draft</button>
           {!sender&&<Link href="/vendor/marketing-engine/connections"
             className="flex min-h-11 flex-1 items-center justify-center rounded-xl bg-[#F97316] px-3 text-[11px] font-bold text-white">Connect Gmail</Link>}
