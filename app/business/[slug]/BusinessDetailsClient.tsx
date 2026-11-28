@@ -440,7 +440,7 @@ export default function BusinessDetailsClient({ business, galleryUrls, services 
               </div>
               <div className="min-w-0 space-y-2">
                 {business.category&&<p className="break-words text-xs font-medium text-neutral-600 sm:text-sm">{business.category}</p>}
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-2"><h1 id="business-profile-title" className="min-w-0 break-words text-[clamp(1.45rem,2.1vw,2.15rem)] font-semibold leading-tight tracking-tight">{business.name}</h1>{business.status==="approved"&&<BusinessAudienceControls businessId={String(business.id)} businessName={business.name}/>}</div>
+                <div data-slbi-profile-title-row className="grid min-w-0 grid-cols-[minmax(0,max-content)_auto] items-center justify-start gap-x-2 gap-y-1.5 sm:flex sm:flex-wrap sm:gap-x-3 sm:gap-y-2"><h1 id="business-profile-title" className="min-w-0 [overflow-wrap:anywhere] text-[clamp(1.45rem,2.1vw,2.15rem)] font-semibold leading-tight tracking-tight">{business.name}</h1>{business.status==="approved"&&<BusinessAudienceControls businessId={String(business.id)} businessName={business.name}/>}</div>
                 <div className="space-y-1.5 text-sm">
                   <a href="#reviews" className="flex min-w-0 flex-wrap items-center gap-1.5 text-sm text-neutral-700 hover:underline">
                     <Star size={17} aria-hidden="true" className={"shrink-0 "+(hasRating?"fill-amber-400 text-amber-500":"text-neutral-400")}/>
