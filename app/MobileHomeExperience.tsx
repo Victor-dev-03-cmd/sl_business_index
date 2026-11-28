@@ -139,7 +139,7 @@ export default function MobileHomeExperience({
           <div className="slbi-native-listing-track" role="region" aria-label="Swipe featured business cards">
             {featuredBusinesses.map(business => (
               <Link key={business.id} href={"/business/" + (business.slug || business.id)}
-                className="slbi-native-card" prefetch={false}
+                className="slbi-native-card" prefetch={null}
                 aria-label={"View " + business.name + " business profile"}>
                 <div className="slbi-native-card-photo">
                   {business.image_url ? (
