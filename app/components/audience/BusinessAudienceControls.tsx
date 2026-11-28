@@ -17,20 +17,22 @@ export default function BusinessAudienceControls({businessId,businessName,initia
  const [state,setState]=useState<BusinessAudienceState|null>(initial||null);
  const [signedIn,setSignedIn]=useState(Boolean(initial));
  const [resolvedAccount,setResolvedAccount]=useState<string|null>(null);
+ const [retry,setRetry]=useState(0);
+ const scope=accountKey+':'+businessId;
  const [busy,setBusy]=useState(false);
  const [error,setError]=useState('');
  const [ring,setRing]=useState(false);
  useEffect(()=>{
    if(!active||sessionLoading)return;
-   if(initial){setState(initial);setSignedIn(true);setResolvedAccount(accountKey);return;}
+   if(initial){setState(initial);setSignedIn(true);setResolvedAccount(scope);return;}
    const ctrl=new AbortController();
    setState(null);setResolvedAccount(null);setError('');
    void fetch('/api/audience?businessId='+encodeURIComponent(businessId),{signal:ctrl.signal,cache:'no-store'}).then(async res=>{
      const data=await res.json();if(!res.ok)throw Error(data.error||'Updates unavailable.');
-     if(!ctrl.signal.aborted){if(data.signedIn!==Boolean(user))throw Error('Account status is syncing. Refresh to retry.');setState(data.state);setSignedIn(data.signedIn);setResolvedAccount(accountKey);}
+     if(!ctrl.signal.aborted){if(data.signedIn!==Boolean(user))throw Error('Account status is syncing. Refresh to retry.');setState(data.state);setSignedIn(data.signedIn);setResolvedAccount(scope);}
    }).catch(e=>{if(!ctrl.signal.aborted)setError(e.message||'Updates unavailable.');});
    return()=>ctrl.abort();
- },[businessId,initial,user?.id,active,sessionLoading,accountKey]);
+ },[businessId,initial,user?.id,active,sessionLoading,scope,retry]);
  const change=async(action:string)=>{
    if(busy)return;
    setBusy(true);setError('');
@@ -53,7 +55,7 @@ export default function BusinessAudienceControls({businessId,businessName,initia
    finally{setBusy(false);}
  };
  if(!active)return null;
- if(sessionLoading||resolvedAccount!==accountKey||!state)return <div aria-busy={!error} aria-label="Loading follow status" className={mobile?'min-h-[66px] rounded-xl border border-neutral-200 p-3':'min-w-[92px]'}>{error?<span role="alert" className="text-xs text-neutral-600">{error}</span>:<div className={mobile?'grid grid-cols-2 gap-3':'flex gap-2'}><span className="h-9 min-w-[72px] animate-pulse rounded-full bg-neutral-200 dark:bg-neutral-700"/>{mobile&&<span className="h-9 animate-pulse rounded-full bg-neutral-200 dark:bg-neutral-700"/>}</div>}</div>;
+ if(sessionLoading||resolvedAccount!==scope||!state)return <div aria-busy={!error} aria-label="Loading follow status" className={mobile?'min-h-[66px] rounded-xl border border-neutral-200 p-3':'min-w-[92px]'}>{error?<button type="button" onClick={()=>{setError('');setRetry(n=>n+1)}} className="text-xs text-neutral-600">Unable to load status · Retry</button>:<div className={mobile?'grid grid-cols-2 gap-3':'flex gap-2'}><span className="h-9 min-w-[72px] animate-pulse rounded-full bg-neutral-200 dark:bg-neutral-700"/>{mobile&&<span className="h-9 animate-pulse rounded-full bg-neutral-200 dark:bg-neutral-700"/>}</div>}</div>;
  const button=(mobile?'w-full min-h-10 text-sm ':'min-h-9 text-xs ')+'inline-flex shrink-0 items-center justify-center gap-1 rounded-full border px-3 sm:gap-1.5 font-semibold transition-colors disabled:opacity-40 focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-[#EA580C]';
  return <div data-testid="business-audience-controls" className={mobile?"rounded-xl border border-orange-200 bg-white p-3 text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900":"hidden min-w-0 flex-col items-start gap-1 text-neutral-900 sm:inline-flex"}>
    <div data-slbi-profile-follow-row className={mobile?"grid grid-cols-2 items-start gap-3":"flex flex-wrap items-center gap-1.5"}>
