@@ -44,6 +44,11 @@ test('Suppression API is owner/Pro checked, no bulk delivery and no public expor
 });
 test('Audience UI fails closed and reports correct manual exclusion state',()=>{
   assert.match(hub,/email-v6-suppressions/);
+  assert.match(hub,/title:'Analytics'/);
+  assert.match(hub,/title:'Sender Settings'/);
+  assert.match(hub,/Delivery reporting not active/);
+  assert.match(hub,/No fabricated engagement rates/);
+  assert.match(hub,/Sender & brand/);
   assert.match(hub,/exclusionState==='unavailable'/);
   assert.match(hub,/exclusionState!=='ready'/);
   assert.match(hub,/Do-not-email registry/);
