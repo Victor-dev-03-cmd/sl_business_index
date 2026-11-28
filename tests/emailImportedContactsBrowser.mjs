@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
-import {readFileSync,writeFileSync,mkdtempSync,rmSync} from 'node:fs';
+import {readFileSync,mkdtempSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import {spawnSync} from 'node:child_process';
+import {spawn,spawnSync} from 'node:child_process';
 import {deflateRawSync} from 'node:zlib';
 import {stripTypeScriptTypes} from 'node:module';
-import {pathToFileURL} from 'node:url';
+import {setTimeout as delay} from 'node:timers/promises';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 function crc32(data){let c=0xffffffff;for(const b of data){c^=b;for(let i=0;i<8;i++)c=(c>>>1)^((c&1)?0xedb88320:0);}return (c^0xffffffff)>>>0;}
 function zip(entries){
@@ -27,14 +27,28 @@ const workbook=zip([
 ]);
 const invalid=zip([['xl/worksheets/sheet1.xml','<!DOCTYPE worksheet [<!ENTITY x "fake@example.invalid">]><worksheet/>']]);
 const code=stripTypeScriptTypes(read('lib/marketing/email-import-contract.ts')).replaceAll('export ','')+'\n'+stripTypeScriptTypes(read('lib/marketing/email-import-xlsx.ts')).replace(/^import[^\n]*\n/,'').replaceAll('export ','');
-const html='<!doctype html><body>RUNNING<script>'+code+'\n(async()=>{try{const decode=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0)).buffer;const p=await parseContactXlsx(decode('+JSON.stringify(workbook)+'));let rejected=false;try{await parseContactXlsx(decode('+JSON.stringify(invalid)+'))}catch(e){rejected=e.message==="Unsupported Excel XML."}document.body.textContent=JSON.stringify({emails:p.emails,duplicates:p.duplicates,invalid:p.invalid,rejected});}catch(e){document.body.textContent="FAIL "+e.message;}})();</script>';
+const expression=code+'\n(async()=>{const decode=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0)).buffer;const p=await parseContactXlsx(decode('+JSON.stringify(workbook)+'));let rejected=false;try{await parseContactXlsx(decode('+JSON.stringify(invalid)+'))}catch(e){rejected=e.message==="Unsupported Excel XML."}return {emails:p.emails,duplicates:p.duplicates,invalid:p.invalid,rejected};})()';
 const executable=process.env.CHROME_BIN||['google-chrome','chromium','chromium-browser'].find(x=>spawnSync('which',[x]).status===0);
 assert.ok(executable,'Chrome/Chromium is required for real Excel browser acceptance');
 const dir=mkdtempSync(join(tmpdir(),'slbi-import-browser-'));
+const profile=join(dir,'profile');
+const chrome=spawn(executable,['--headless','--no-sandbox','--disable-dev-shm-usage','--disable-gpu','--no-first-run','--remote-debugging-port=0','--user-data-dir='+profile,'about:blank'],{stdio:'ignore'});
+let ws;
 try{
- const file=join(dir,'test.html');writeFileSync(file,html);
- const r=spawnSync(executable,['--headless','--no-sandbox','--disable-dev-shm-usage','--disable-gpu','--no-first-run','--user-data-dir='+join(dir,'profile'),'--virtual-time-budget=8000','--dump-dom',pathToFileURL(file).href],{encoding:'utf8',timeout:30000,maxBuffer:1024*1024});
- assert.equal(r.status,0,r.stderr);const body=r.stdout.match(/<body>(.*?)<\/body>/s)?.[1];assert.ok(body, r.stdout);
- assert.deepEqual(JSON.parse(body),{emails:['one@example.invalid','two@example.invalid'],duplicates:1,invalid:1,rejected:true});
+ let port;
+ for(let i=0;i<100&&!port;i++){
+   try{port=Number(readFileSync(join(profile,'DevToolsActivePort'),'utf8').split('\n')[0]);}catch{await delay(100);}
+ }
+ assert.ok(port,'Browser DevTools did not start');
+ const targets=await (await fetch('http://127.0.0.1:'+port+'/json/list',{signal:AbortSignal.timeout(5000)})).json();
+ const target=targets.find(t=>t.type==='page');assert.ok(target?.webSocketDebuggerUrl);
+ ws=new WebSocket(target.webSocketDebuggerUrl);
+ await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('Browser connect timeout')),5000);ws.addEventListener('open',()=>{clearTimeout(timer);resolve()},{once:true});ws.addEventListener('error',()=>{clearTimeout(timer);reject(Error('Browser connect failed'))},{once:true});});
+ const result=await new Promise((resolve,reject)=>{
+  const timer=setTimeout(()=>reject(Error('Browser parser timed out')),10000);
+  ws.addEventListener('message',e=>{const d=JSON.parse(e.data);if(d.id!==1)return;clearTimeout(timer);if(d.error||d.result?.exceptionDetails)reject(Error(JSON.stringify(d)));else resolve(d.result.result.value);});
+  ws.send(JSON.stringify({id:1,method:'Runtime.evaluate',params:{expression,awaitPromise:true,returnByValue:true}}));
+ });
+ assert.deepEqual(result,{emails:['one@example.invalid','two@example.invalid'],duplicates:1,invalid:1,rejected:true});
  console.log('Actual Chromium XLSX shared/inline, deduplication, formula skip and XML rejection PASS');
-}finally{rmSync(dir,{recursive:true,force:true});}
+}finally{ws?.close();chrome.kill();await delay(250);rmSync(dir,{recursive:true,force:true,maxRetries:3,retryDelay:100});}
