@@ -52,7 +52,7 @@ export async function POST(request:Request){
   if(!raw||typeof raw!=='object'||Array.isArray(raw))
     return reply(400,{error:'Invalid campaign payload.'});
   const body=raw as Record<string,unknown>;
-  if(!Number.isInteger(body.expectedRevision)||Number(body.expectedRevision)<0||Number(body.expectedRevision)>1e9)
+  if(typeof body.expectedRevision!=='number'||!Number.isInteger(body.expectedRevision)||body.expectedRevision<0||body.expectedRevision>1e9)
     return reply(400,{error:'Invalid campaign revision.'});
   const {client,user,denied}=await ownerContext();
   if(denied)return denied;
