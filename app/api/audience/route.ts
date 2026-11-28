@@ -2,7 +2,7 @@ import {createClient} from '@/lib/supabase/server';
 import {isSameOrigin} from '@/lib/growth/ingestion-contract';
 import {audienceService,audienceReply as reply,UUID} from '@/lib/audience/server';
 export const dynamic='force-dynamic';
-const businessActions=['follow','unfollow','news_on','news_off','push_on','push_off','subscribe','unsubscribe'];
+const businessActions=['follow','unfollow','news_on','news_off','push_on','push_off','unsubscribe'];
 const networkActions=['network_subscribe','network_unsubscribe'];
 export async function GET(request:Request){
  const businessId=new URL(request.url).searchParams.get('businessId');
@@ -30,7 +30,7 @@ export async function POST(request:Request){
  if(typeof action!=='string'||typeof language!=='string'||!['en','ta','si'].includes(language)||
    !(businessActions.includes(action)&&typeof businessId==='string'&&UUID.test(businessId)||networkActions.includes(action)&&businessId===null))return reply(400,{error:'Invalid preference.'});
  if(action==='follow'&&v.consentVersion!=='slbi-follow-email-v3')return reply(409,{error:'Refresh to review the updated Follow terms.'});
- if(['subscribe','network_subscribe'].includes(action)&&v.consentVersion!=='slbi-audience-sharing-v2')return reply(400,{error:'Review and accept the current email sharing terms.'});
+ if(action==='network_subscribe'&&v.consentVersion!=='slbi-audience-sharing-v2')return reply(400,{error:'Review and accept the current email sharing terms.'});
  const client=await createClient();
  const {data:{user},error}=await client.auth.getUser();
  if(error||!user)return reply(401,{error:'Sign in to manage your preferences.'});
