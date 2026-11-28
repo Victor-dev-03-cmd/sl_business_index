@@ -114,7 +114,8 @@ test('P3 shared cache contains only anonymous category data',()=>{
  assert.match(read('app/page.tsx'),/queryFn:getPublicCategories/);
  assert.match(read('app/HomePageClient.tsx'),/useQuery\(publicCategoryQuery\)/);
  assert.match(read('app/components/Navbar.tsx'),/useQuery\(publicCategoryQuery\)/);
- assert.match(read('app/api/public/categories/route.ts'),/status:503/);
+ assert.match(read('app/api/public/categories/route.ts'),/createCategoryApi\(getPublicCategories\)/);
+ assert.match(read('lib/discovery/category-http.ts'),/503/);
  assert.doesNotMatch(read('app/business/[slug]/page.tsx'),/unstable_cache/);
 });
 
@@ -136,4 +137,20 @@ test('P4 notification list is demand-loaded and stale account responses are reje
  assert.match(bell,/void load\(true\)/);
  assert.match(bell,/currentUid.current===uid&&generation.current===epoch&&request.current===version/);
  assert.match(bell,/\.eq\('user_id',uid\)/);
+});
+
+test('P5 Hono public endpoint preserves success, failure and isolation',async()=>{
+ const {createCategoryApi}=await import('../lib/discovery/category-http.ts');
+ const snapshot={rows:[{id:'fixture',name:'Dining'}],fetchedAt:123};
+ const app=createCategoryApi(async()=>snapshot);
+ const response=await app.request('/api/public/categories');
+ assert.equal(response.status,200);
+ assert.equal(response.headers.get('cache-control'),'no-store');
+ assert.deepEqual(await response.json(),snapshot);
+ for(const path of ['/api/admin','/api/vendor','/api/auth/session-status'])assert.equal((await app.request(path)).status,404);
+ assert.equal((await app.request('/api/public/categories',{method:'POST'})).status,404);
+ const failed=await createCategoryApi(async()=>{throw Error('private fixture')}).request('/api/public/categories');
+ assert.equal(failed.status,503);
+ assert.equal(failed.headers.get('cache-control'),'no-store');
+ assert.deepEqual(await failed.json(),{error:'Categories unavailable'});
 });
