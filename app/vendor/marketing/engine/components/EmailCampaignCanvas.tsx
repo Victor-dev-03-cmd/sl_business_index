@@ -73,7 +73,7 @@ function CompactColour({label:caption,value,onCommit}:{label:string;value:string
     locate();
     const handle=(e:PointerEvent)=>{if(!popup.current?.contains(e.target as Node)&&!button.current?.contains(e.target as Node))setOpen(false);};
     const key=(e:KeyboardEvent)=>{if(e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();close();}};
-    const scroll=(e:Event)=>{if(!popup.current?.contains(e.target as Node))locate();};
+    const scroll=(e:Event)=>{if(!(e.target instanceof Node)||!popup.current?.contains(e.target))locate();};
     document.addEventListener('pointerdown',handle);document.addEventListener('keydown',key,true);
     window.addEventListener('resize',locate);window.addEventListener('scroll',scroll,true);
     popup.current?.querySelector<HTMLInputElement>('input')?.focus();
@@ -408,7 +408,7 @@ export default function EmailCampaignCanvas({
     {b.type==='image'&&<div style={{textAlign:b.imageAlign||'center'}} className="py-2">
       {b.imageId?<button type="button" aria-label="Replace uploaded image" disabled={imageBusy} onClick={e=>{e.stopPropagation();setSelectedId(b.id);chooseImage(b.id);}} className="inline-block max-w-full overflow-hidden rounded-md" style={{width:(b.imageWidth||100)+'%'}}>
         <img src={'/api/marketing/email/images?businessId='+encodeURIComponent(business.id)+'&assetId='+encodeURIComponent(b.imageId)} alt={b.text||'Uploaded email image'} loading="lazy" decoding="async" className="block h-auto w-full"/>
-      </button>:<button type="button" disabled={imageBusy} onClick={e=>{e.stopPropagation();setSelectedId(b.id);chooseImage(b.id);}} className="flex min-h-32 w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#FDBA74] bg-[#FFF7ED] text-sm font-semibold text-[#C2410C]">{icon('image',28)}{imageBusy?'Uploading…':'Upload an image'}<span className="text-xs font-normal">JPG, PNG, WebP · up to 3 MB</span></button>}
+      </button>:<button type="button" disabled={imageBusy} onClick={e=>{e.stopPropagation();setSelectedId(b.id);chooseImage(b.id);}} className="flex min-h-32 w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-[#FDBA74] bg-[#FFF7ED] text-sm font-semibold text-[#C2410C]">{icon('image',28)}{imageBusy?'Uploading…':'Upload an image'}<span className="text-xs font-normal">JPG, PNG, WebP · up to 3 MB</span></button>}
     </div>}
     {b.type==='spacer'&&<div aria-label="Adjustable spacer" style={{height:b.spacing||24}} className="flex items-center justify-center rounded border border-dashed border-[#E5E7EB] text-[10px] text-[#9CA3AF]">{b.spacing||24}px</div>}
     {b.type==='quote'&&<div className="border-l-4 border-[#F97316] bg-[#FFF7ED] px-3 py-2"><InlineText value={b.text} label="Quote — edit directly" max={3000} multiline style={previewTypography(b)} onChange={next=>updateBlock(b.id,{text:next})} className="min-h-12 whitespace-pre-wrap break-words rounded p-1"/></div>}
