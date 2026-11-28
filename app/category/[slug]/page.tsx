@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { type Metadata } from "next";
 import Link from "next/link";
 import { cache } from "react";
+import {getPublicCategories} from "@/lib/discovery/public-cache";
 import { ArrowUpRight, ChevronRight, Compass, MapPin, Search, ShieldCheck } from "lucide-react";
 import CategoryIcon from "@/app/components/CategoryIcon";
 import CategoryContent, { type CategoryInfo } from "./CategoryContent";
@@ -15,16 +16,8 @@ const slugify = (name: string) =>
   name.toLowerCase().trim().replace(/ & /g, "-").replace(/ /g, "-").replace(/,/g, "").replace(/[^\w-]+/g, "");
 
 const loadCategories = cache(async (): Promise<CategoryInfo[]> => {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("categories")
-    .select("id, name, icon, parent_id")
-    .order("name", { ascending: true });
-  if (error) {
-    console.error("Unable to read categories:", error.message);
-    return [];
-  }
-  return (data ?? []) as CategoryInfo[];
+  const snapshot=await getPublicCategories();
+  return snapshot.rows as CategoryInfo[];
 });
 
 async function getCategory(slug: string): Promise<CategoryInfo | null> {
