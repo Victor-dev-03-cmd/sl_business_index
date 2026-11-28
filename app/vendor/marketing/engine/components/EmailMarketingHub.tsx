@@ -101,7 +101,8 @@ export default function EmailMarketingHub({
     const items=next.slice(0,LOCAL_EMAIL_CAMPAIGN_LIMIT);
     try{
       localStorage.setItem(emailLocalStorageKey(ownerScope),JSON.stringify(items));
-      setDrafts(items);return true;
+      // Only bound the browser backup; never hide older cloud drafts after a save.
+      setDrafts(next);return true;
     }catch{setError('Could not save to this browser. Try freeing browser storage.');return false;}
   };
   const saveDraft=async(campaign:LocalEmailCampaign):Promise<'server'|'browser'|'failed'>=>{
