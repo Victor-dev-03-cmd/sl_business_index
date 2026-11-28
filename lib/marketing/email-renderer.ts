@@ -1,6 +1,6 @@
 import {randomBytes} from 'node:crypto';
 import type {LocalEmailCampaign} from './email-hub-contract.ts';
-import {isSafeEmailCta} from './email-hub-contract.ts';
+import {isSafeEmailCta,emailTypographyCss,emailBlockTypography,validEmailCanvasWidth} from './email-hub-contract.ts';
 export type EmailRenderIdentity={name:string;logoUrl?:string|null;address?:string|null;city?:string|null;accentColor?:string|null};
 export type EmailRenderOptions={mode:'self_test'|'marketing';unsubscribeUrl?:string;posterPublicUrl?:string};
 export type EmailRenderResult={html:string;text:string;warnings:string[]};
@@ -20,31 +20,35 @@ export function renderEmailMarkup(
   if(options.mode==='marketing'&&(!options.unsubscribeUrl||!isSafeEmailCta(options.unsubscribeUrl)))
     throw Error('Marketing email requires a working HTTPS unsubscribe link');
   const accent=color(campaign.buttonColor||brand.accentColor);
+  const canvasWidth=validEmailCanvasWidth(campaign.canvasWidth)?campaign.canvasWidth:600;
+  const logoSize=typeof campaign.logoSize==='number'&&Number.isFinite(campaign.logoSize)&&campaign.logoSize>=40&&campaign.logoSize<=100?Math.round(campaign.logoSize):56;
   const name=txt(brand.name).slice(0,120)||'Your business';
   const address=[brand.address,brand.city].filter(Boolean).join(', ').slice(0,320);
   const logo=brand.logoUrl&&isSafeEmailCta(brand.logoUrl)?brand.logoUrl:null;
-  const logoHtml=logo?'<img src="'+escapeEmailText(logo)+'" alt="'+escapeEmailText(name)+' logo" width="56" height="56" style="display:block;width:56px;height:56px;border-radius:50%;border:2px solid #FED7AA">':
-    '<span style="display:block;width:56px;height:56px;line-height:56px;text-align:center;border-radius:50%;background:#FFF7ED;color:#C2410C;font-size:20px;font-weight:bold">'+escapeEmailText(name[0])+'</span>';
+  const logoHtml=logo?'<img src="'+escapeEmailText(logo)+'" alt="'+escapeEmailText(name)+' logo" width="'+logoSize+'" height="'+logoSize+'" style="display:block;width:'+logoSize+'px;height:'+logoSize+'px;border-radius:50%;border:2px solid #FED7AA">':
+    '<span style="display:block;width:'+logoSize+'px;height:'+logoSize+'px;line-height:'+logoSize+'px;text-align:center;border-radius:50%;background:#FFF7ED;color:#C2410C;font-size:20px;font-weight:bold">'+escapeEmailText(name[0])+'</span>';
   const out:string[]=[];const text:string[]=[];const warnings:string[]=[];
   for(const block of campaign.blocks.slice(0,20)){
     const value=txt(block.text);
+    const typography=emailTypographyCss(block);
+    const align=emailBlockTypography(block).align;
     if(block.type==='headline'){
-      out.push('<tr><td style="padding:14px 28px 6px;color:#111827;font-size:23px;line-height:1.3;font-weight:bold">'+lines(value)+'</td></tr>');
+      out.push('<tr><td style="padding:14px 28px 6px;'+typography+'">'+lines(value)+'</td></tr>');
       text.push(value);
     }else if(block.type==='body'){
-      out.push('<tr><td style="padding:13px 28px;color:#374151;font-size:14px;line-height:1.8">'+lines(value)+'</td></tr>');
+      out.push('<tr><td style="padding:13px 28px;'+typography+'">'+lines(value)+'</td></tr>');
       text.push(value);
     }else if(block.type==='offers'){
       const second=txt(block.secondText||'');
       out.push('<tr><td style="padding:12px 24px"><table role="presentation" width="100%" cellpadding="0" cellspacing="4"><tr>'+
-        '<td width="50%" valign="top" style="padding:12px;background:#FFF7ED;border:1px solid #FED7AA;color:#374151;font-size:12px;line-height:1.5">'+lines(value)+'</td>'+
-        '<td width="50%" valign="top" style="padding:12px;background:#FFF7ED;border:1px solid #FED7AA;color:#374151;font-size:12px;line-height:1.5">'+lines(second)+'</td>'+
+        '<td width="50%" valign="top" style="padding:12px;background:#FFF7ED;border:1px solid #FED7AA;'+typography+'">'+lines(value)+'</td>'+
+        '<td width="50%" valign="top" style="padding:12px;background:#FFF7ED;border:1px solid #FED7AA;'+typography+'">'+lines(second)+'</td>'+
         '</tr></table></td></tr>');
       text.push(value,second);
     }else if(block.type==='button'){
-      out.push('<tr><td align="center" style="padding:18px 28px"><a href="'+escapeEmailText(campaign.ctaUrl)+
+      out.push('<tr><td align="'+(align==='justify'?'left':align)+'" style="padding:18px 28px"><a href="'+escapeEmailText(campaign.ctaUrl)+
         '" rel="noopener noreferrer" style="display:inline-block;padding:13px 25px;border-radius:8px;background:'+accent+
-        ';color:#fff;font-weight:bold;font-size:13px;text-decoration:none">'+escapeEmailText(value||'View offer')+'</a></td></tr>');
+        ';'+typography+'">'+escapeEmailText(value||'View offer')+'</a></td></tr>');
       text.push((value||'View offer')+': '+campaign.ctaUrl);
     }else if(block.type==='divider'){
       out.push('<tr><td style="padding:10px 28px"><div style="border-top:1px solid #E5E7EB"></div></td></tr>');
@@ -64,7 +68,7 @@ export function renderEmailMarkup(
   const html='<!doctype html><html lang="'+(campaign.language==='ta'?'ta':campaign.language==='si'?'si':'en')+
     '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>'+
     '<body style="margin:0;padding:24px;background:#F3F4F6;font-family:Arial,Helvetica,sans-serif">'+
-    '<table role="presentation" align="center" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:auto;border-collapse:collapse;background:#fff;border:1px solid #E5E7EB">'+
+    '<table role="presentation" align="center" width="100%" cellpadding="0" cellspacing="0" style="max-width:'+canvasWidth+'px;margin:auto;border-collapse:collapse;background:#fff;border:1px solid #E5E7EB">'+
     '<tr><td style="padding:24px 28px;border-top:5px solid '+accent+
     ';border-bottom:1px solid #E5E7EB"><table role="presentation"><tr><td style="padding-right:15px">'+logoHtml+'</td>'+
     '<td><strong style="color:#111827;font-size:18px">'+escapeEmailText(name)+'</strong><br><span style="color:#6B7280;font-size:11px">'+

@@ -105,3 +105,26 @@ test('UI does not silently send; explicit vendor confirmation and flag gate',()=
   assert.match(canvas,/testBusy\|\|campaign\.layout==='custom'/);
   assert.match(canvas,/No subscribers or customers will receive/);
 });
+
+test('V8 typography persists in normalized drafts and matches email HTML',async()=>{
+  const {normalizeLocalCampaign,defaultEmailTypography,emailTypographyStyle,emailTypographyCss}=await import('../lib/marketing/email-hub-contract.ts');
+  const typography={...defaultEmailTypography('headline'),font:'georgia',fontSize:32,fontWeight:700,italic:true,underline:true,color:'#123456',align:'right',lineHeight:1.6,letterSpacing:1.5};
+  const styled={...draft,canvasWidth:640,logoSize:80,blocks:draft.blocks.map((b,i)=>i===0?{...b,typography}:b)};
+  const validated=normalizeLocalCampaign(styled,draft.ownerScope,[draft.businessId]);
+  assert.ok(validated);
+  assert.deepEqual(validated.blocks[0].typography,typography);
+  assert.equal(validated.canvasWidth,640);
+  assert.equal(emailTypographyStyle(validated.blocks[0]).fontSize,32);
+  const rendered=renderEmailMarkup(validated,brand,{mode:'self_test'});
+  assert.ok(rendered.html.includes(emailTypographyCss(validated.blocks[0])));
+  for(const needle of ['font-family:Georgia, Times New Roman, serif','font-size:32px','font-weight:700','font-style:italic','text-decoration:underline','color:#123456','text-align:right','line-height:1.6','letter-spacing:1.5px','max-width:640px','width="80" height="80"'])assert.ok(rendered.html.includes(needle),needle);
+  assert.equal(normalizeLocalCampaign({...styled,canvasWidth:10000},draft.ownerScope,[draft.businessId]),null);
+  for(const patch of [{font:'url(https://evil.invalid)'},{color:'#fff;display:none'},{fontSize:1000},{fontWeight:900},{align:'left;position:fixed'},{lineHeight:Infinity},{letterSpacing:-100}]){
+    const invalid={...styled,blocks:[{...styled.blocks[0],typography:{...typography,...patch}},...styled.blocks.slice(1)]};
+    assert.equal(normalizeLocalCampaign(invalid,draft.ownerScope,[draft.businessId]),null);
+    assert.doesNotMatch(renderEmailMarkup(invalid,brand,{mode:'self_test'}).html,/evil\.invalid|display:none|position:fixed/);
+  }
+  assert.ok(normalizeLocalCampaign(draft,draft.ownerScope,[draft.businessId]));
+  assert.ok(renderEmailMarkup(draft,brand,{mode:'self_test'}).html.includes('max-width:600px'));
+  for(const needle of ['email-v8-typography','Block font family','Block font size','Block text colour','Align ','Letter spacing','Line height','email-v8-canvas-settings','Desktop canvas width','variant="bulk"','style={emailTypographyStyle(b)}'])assert.ok(canvas.includes(needle),needle);
+});

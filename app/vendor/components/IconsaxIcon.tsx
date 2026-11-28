@@ -6,7 +6,7 @@ import {
   CheckCircle2, ChevronLeft, ChevronRight, CirclePlus, Coins, Download,
   Eye, Zap, Globe, House, Mail, Menu, MessageSquareText, Users, RefreshCw, FileText,
   Search, Settings2, ShieldCheck, Store, PanelLeft, Star, Sparkles, Mic, ImagePlus,
-  TrendingUp, CircleX, type LucideIcon
+  TrendingUp, CircleX, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, AlignJustify, type LucideIcon
 } from 'lucide-react';
 
 // Iconsax is a custom element. Register it once on the client.
@@ -54,6 +54,13 @@ const fallbacks: Record<string, LucideIcon> = {
   'info-circle': Info,
   'clock': Clock3,
   'edit-2': Pencil,
+  'text-bold': Bold,
+  'text-italic': Italic,
+  'text-underline': Underline,
+  'textalign-left': AlignLeft,
+  'textalign-center': AlignCenter,
+  'textalign-right': AlignRight,
+  'textalign-justifycenter': AlignJustify,
 };
 export type IconsaxName = string;
 

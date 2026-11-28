@@ -4,8 +4,60 @@ import type {EmailTemplateLayout} from './email-template-contract';
 /** No recipients, OAuth tokens, tracking pixels or PII are ever stored by this contract.
  * Persisted browser drafts are convenience previews, NOT server campaigns. */
 export type EmailBlockType='headline'|'body'|'poster'|'button'|'offers'|'divider';
+export const EMAIL_FONT_FAMILIES={
+  arial:'Arial, Helvetica, sans-serif',
+  georgia:'Georgia, Times New Roman, serif',
+  verdana:'Verdana, Geneva, sans-serif',
+  tahoma:'Tahoma, Arial, sans-serif',
+  times:'Times New Roman, Times, serif',
+  courier:'Courier New, Courier, monospace',
+  unicode:'Arial, Noto Sans Tamil, Noto Sans Sinhala, sans-serif',
+} as const;
+export type EmailFontFamily=keyof typeof EMAIL_FONT_FAMILIES;
+export type EmailTypography={
+  font:EmailFontFamily;fontSize:number;fontWeight:400|700;
+  italic:boolean;underline:boolean;color:string;
+  align:'left'|'center'|'right'|'justify';lineHeight:number;letterSpacing:number;
+};
+const fontKeys=Object.keys(EMAIL_FONT_FAMILIES);
+export function normalizeEmailTypography(raw:unknown):EmailTypography|null{
+  if(!raw||typeof raw!=='object'||Array.isArray(raw))return null;
+  const v=raw as Record<string,unknown>;
+  if(typeof v.font!=='string'||!fontKeys.includes(v.font)||
+    typeof v.fontSize!=='number'||!Number.isInteger(v.fontSize)||v.fontSize<10||v.fontSize>64||
+    (v.fontWeight!==400&&v.fontWeight!==700)||typeof v.italic!=='boolean'||typeof v.underline!=='boolean'||
+    typeof v.color!=='string'||!/^#[0-9a-f]{6}$/i.test(v.color)||
+    typeof v.align!=='string'||!['left','center','right','justify'].includes(v.align)||
+    typeof v.lineHeight!=='number'||!Number.isFinite(v.lineHeight)||v.lineHeight<1||v.lineHeight>2.5||
+    typeof v.letterSpacing!=='number'||!Number.isFinite(v.letterSpacing)||v.letterSpacing<0||v.letterSpacing>4)return null;
+  return {font:v.font as EmailFontFamily,fontSize:v.fontSize,fontWeight:v.fontWeight,italic:v.italic,underline:v.underline,
+    color:v.color,align:v.align as EmailTypography['align'],lineHeight:v.lineHeight,letterSpacing:v.letterSpacing};
+}
+export function defaultEmailTypography(type:EmailBlockType):EmailTypography{
+  return {font:'arial',fontSize:type==='headline'?23:type==='body'?14:type==='button'?13:12,
+    fontWeight:type==='headline'||type==='button'?700:400,italic:false,underline:false,
+    color:type==='button'?'#FFFFFF':type==='headline'?'#111827':'#374151',
+    align:type==='button'?'center':'left',lineHeight:type==='headline'?1.3:type==='body'?1.8:1.5,letterSpacing:0};
+}
+export function emailBlockTypography(block:EmailVisualBlock):EmailTypography{
+  return normalizeEmailTypography(block.typography)||defaultEmailTypography(block.type);
+}
+export function emailTypographyStyle(block:EmailVisualBlock){
+  const t=emailBlockTypography(block);
+  return {fontFamily:EMAIL_FONT_FAMILIES[t.font],fontSize:t.fontSize,fontWeight:t.fontWeight,
+    fontStyle:t.italic?'italic' as const:'normal' as const,textDecoration:t.underline?'underline':'none',
+    color:t.color,textAlign:t.align,lineHeight:t.lineHeight,letterSpacing:t.letterSpacing};
+}
+export function emailTypographyCss(block:EmailVisualBlock):string{
+  const t=emailTypographyStyle(block);
+  return 'font-family:'+t.fontFamily+';font-size:'+t.fontSize+'px;font-weight:'+t.fontWeight+
+    ';font-style:'+t.fontStyle+';text-decoration:'+t.textDecoration+';color:'+t.color+
+    ';text-align:'+t.textAlign+';line-height:'+t.lineHeight+';letter-spacing:'+t.letterSpacing+'px';
+}
+export const validEmailCanvasWidth=(value:unknown):value is number=>
+  typeof value==='number'&&Number.isInteger(value)&&value>=480&&value<=720;
 export type EmailVisualBlock={
-  id:string;type:EmailBlockType;text:string;secondText?:string;
+  id:string;type:EmailBlockType;text:string;secondText?:string;typography?:EmailTypography;
 };
 export type LocalEmailCampaign={
   id:string;ownerScope:string;businessId:string;title:string;
@@ -14,7 +66,7 @@ export type LocalEmailCampaign={
   layout:EmailTemplateLayout;
   blocks:EmailVisualBlock[];
   posterId:string|null;
-  buttonColor?:string;logoSize?:number;
+  buttonColor?:string;logoSize?:number;canvasWidth?:number;
   createdAt:string;updatedAt:string;
   status:'local_draft';
 };
@@ -74,6 +126,7 @@ export function normalizeLocalCampaign(raw:unknown,owner:string,approvedBusiness
   if(v.posterId!==null&&(typeof v.posterId!=='string'||!ID.test(v.posterId)))return null;
   if(v.buttonColor!==undefined&&(typeof v.buttonColor!=='string'||!/^#[0-9a-f]{6}$/i.test(v.buttonColor)))return null;
   if(v.logoSize!==undefined&&(typeof v.logoSize!=='number'||!Number.isFinite(v.logoSize)||v.logoSize<40||v.logoSize>100))return null;
+  if(v.canvasWidth!==undefined&&!validEmailCanvasWidth(v.canvasWidth))return null;
   const blocks:EmailVisualBlock[]=[];
   const used=new Set<string>();
   for(const block of v.blocks){
@@ -83,9 +136,12 @@ export function normalizeLocalCampaign(raw:unknown,owner:string,approvedBusiness
       !EMAIL_BLOCK_TYPES.some(x=>x.type===b.type)||
       typeof b.text!=='string'||b.text.length>3000||
       (b.secondText!==undefined&&(typeof b.secondText!=='string'||b.secondText.length>1000)))return null;
+    const typography=b.typography===undefined?undefined:normalizeEmailTypography(b.typography);
+    if(b.typography!==undefined&&!typography)return null;
     used.add(b.id);
     blocks.push({id:b.id,type:b.type as EmailBlockType,text:b.text,
-      ...(typeof b.secondText==='string'?{secondText:b.secondText}:{})});
+      ...(typeof b.secondText==='string'?{secondText:b.secondText}:{}),
+      ...(typography?{typography}:{})});
   }
   return {id:v.id,ownerScope:owner,businessId:v.businessId,
     title:v.title,subject:v.subject,preheader:v.preheader,ctaUrl:v.ctaUrl,
@@ -94,6 +150,7 @@ export function normalizeLocalCampaign(raw:unknown,owner:string,approvedBusiness
     blocks,posterId:v.posterId as string|null,
     ...(typeof v.buttonColor==='string'?{buttonColor:v.buttonColor}:{}),
     ...(typeof v.logoSize==='number'?{logoSize:v.logoSize}:{}),
+    ...(validEmailCanvasWidth(v.canvasWidth)?{canvasWidth:v.canvasWidth}:{}),
     createdAt:v.createdAt,updatedAt:v.updatedAt,status:'local_draft'};
 }
 export function briefFromBlocks(blocks:EmailVisualBlock[]):string{
