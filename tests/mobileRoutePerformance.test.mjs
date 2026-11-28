@@ -117,3 +117,23 @@ test('P3 shared cache contains only anonymous category data',()=>{
  assert.match(read('app/api/public/categories/route.ts'),/status:503/);
  assert.doesNotMatch(read('app/business/[slug]/page.tsx'),/unstable_cache/);
 });
+
+test('P4 request-scoped business embedding preserves slug precedence and no persistent private cache',()=>{
+ const page=read('app/business/[slug]/page.tsx');
+ assert.match(page,/const getBusinessDetails=cache\(/);
+ assert.match(page,/business_profile_content\(services,gallery_paths\)/);
+ assert.match(page,/isUUID\?query\.or/);
+ assert.match(page,/find\(item=>item.slug===slugOrId\)/);
+ assert.doesNotMatch(page,/\.select\('\*'\)|unstable_cache|\.from\('business_profile_content'\)/);
+ assert.match(page,/isPublicApprovedBusiness\(business\)/);
+ assert.match(read('app/category/[slug]/page.tsx'),/const getCategory=cache\(/);
+ assert.match(read('app/components/MobilePublicDock.tsx'),/\[profileResult,ownedResult\]=await Promise.all/);
+});
+test('P4 notification list is demand-loaded and stale account responses are rejected',()=>{
+ const bell=read('app/components/NotificationBell.tsx');
+ assert.match(bell,/void load\(false\)/);
+ assert.match(bell,/full\?supabase.from\('notifications'\)/);
+ assert.match(bell,/void load\(true\)/);
+ assert.match(bell,/currentUid.current===uid&&generation.current===epoch&&request.current===version/);
+ assert.match(bell,/\.eq\('user_id',uid\)/);
+});
