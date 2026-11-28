@@ -196,7 +196,7 @@ export default function EmailMarketingHub({
     .filter(d=>filter==='all'||d.status==='local_draft')
     .sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt)),[drafts,businessId,search,filter]);
   useEffect(()=>{
-    if(tab!=='audience'||!businessId){return;}
+    if(!['audience','analytics','settings'].includes(tab)||!businessId){return;}
     let live=true;
     setExclusionState('loading');setExclusionCount(null);setExclusions([]);
     setExclusionNotice('');
