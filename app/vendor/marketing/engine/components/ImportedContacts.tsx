@@ -11,7 +11,7 @@ export default function ImportedContacts({businessId}:{businessId:string}){
  const [preview,setPreview]=useState<ImportPreview|null>(null),[attested,setAttested]=useState(false);
  const [busy,setBusy]=useState(false),[error,setError]=useState(''),[success,setSuccess]=useState('');
  const fileRef=useRef<HTMLInputElement>(null),generation=useRef(0);
- useEffect(()=>{generation.current++;setPreview(null);setName('');setText('');setAttested(false);setSelected('');setOffset(0);setLists([]);setContacts([]);setSuccess('');setError('');},[businessId]);
+ useEffect(()=>{generation.current++;setPreview(null);setName('');setText('');setAttested(false);setSelected('');setOffset(0);setBusy(false);setLists([]);setContacts([]);setSuccess('');setError('');},[businessId]);
  useEffect(()=>{
    const c=new AbortController();if(!businessId)return;
    const params=new URLSearchParams({businessId,offset:String(offset)});if(selected)params.set('listId',selected);
