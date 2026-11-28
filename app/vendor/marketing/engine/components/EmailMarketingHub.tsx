@@ -99,19 +99,21 @@ export default function EmailMarketingHub({
 
   const persist=(next:LocalEmailCampaign[])=>{
     const items=next.slice(0,LOCAL_EMAIL_CAMPAIGN_LIMIT);
+    // Browser storage is a backup, not the source of truth for cloud campaigns.
+    setDrafts(next);
     try{
       localStorage.setItem(emailLocalStorageKey(ownerScope),JSON.stringify(items));
-      // Only bound the browser backup; never hide older cloud drafts after a save.
-      setDrafts(next);return true;
-    }catch{setError('Could not save to this browser. Try freeing browser storage.');return false;}
+      return true;
+    }catch{setError('Browser backup could not be saved. Account sync may still work.');return false;}
   };
   const saveDraft=async(campaign:LocalEmailCampaign):Promise<'server'|'browser'|'failed'>=>{
     if(!ownerScope||campaign.ownerScope!==ownerScope||!businesses.some(b=>b.id===campaign.businessId))
       return 'failed';
     const next=[campaign,...drafts.filter(d=>d.id!==campaign.id)]
       .sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt));
-    if(!persist(next))return 'failed';
+    const localSaved=persist(next);
     if(!serverStorageReady){
+      if(!localSaved)return 'failed';
       setNotice('Saved on this browser. Server campaign sync is unavailable.');
       return 'browser';
     }
@@ -130,12 +132,14 @@ export default function EmailMarketingHub({
         throw Error(message);
       }
       setServerVersions(prev=>({...prev,[campaign.id]:Number(result.revision)}));
-      setNotice('Campaign saved securely to your SLBI account.');
+      setNotice(localSaved?'Campaign saved securely to your SLBI account.':
+        'Campaign saved to your SLBI account, but browser backup is unavailable.');
       setError('');return 'server';
     }catch(e){
       const message=e instanceof Error?e.message:'Server unavailable.';
-      setError(message+' Your browser backup is preserved.');
-      return 'browser';
+      setError(message+(localSaved?' Your browser backup is preserved.':
+        ' Browser backup also failed; keep the editor open.'));
+      return localSaved?'browser':'failed';
     }finally{setSyncBusy(false);}
   };
   const openHistory=async(id:string)=>{
