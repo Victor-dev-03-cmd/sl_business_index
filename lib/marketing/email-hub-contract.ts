@@ -19,6 +19,12 @@ export type LocalEmailCampaign={
   status:'local_draft';
 };
 export const LOCAL_EMAIL_CAMPAIGN_LIMIT=30;
+export function isSafeEmailCta(text:string):boolean{
+  try{
+    const url=new URL(text);
+    return url.protocol==='https:'&&Boolean(url.hostname)&&!url.username&&!url.password;
+  }catch{return false}
+}
 export const EMAIL_BLOCK_TYPES:readonly {type:EmailBlockType;title:string;description:string}[]=[
   {type:'headline',title:'Heading',description:'Lead with a clear message'},
   {type:'body',title:'Text',description:'Write paragraphs directly on the email'},
@@ -58,7 +64,7 @@ export function normalizeLocalCampaign(raw:unknown,owner:string,approvedBusiness
     typeof v.title!=='string'||v.title.length>100||
     typeof v.subject!=='string'||v.subject.length>140||
     typeof v.preheader!=='string'||v.preheader.length>180||
-    typeof v.ctaUrl!=='string'||v.ctaUrl.length>600||
+    typeof v.ctaUrl!=='string'||v.ctaUrl.length>600||!isSafeEmailCta(v.ctaUrl)||
     !['en','ta','si'].includes(String(v.language))||
     !['offer','launch','followup','newsletter'].includes(String(v.kind))||
     !['minimal','hero','offers','custom'].includes(String(v.layout))||
