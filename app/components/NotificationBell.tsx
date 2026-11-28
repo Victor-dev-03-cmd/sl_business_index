@@ -29,7 +29,7 @@ export default function NotificationBell(){
     const right=Math.max(12,Math.min(window.innerWidth-r.right,window.innerWidth-panelWidth-12));
     setPosition({top:r.bottom+10,right});
   };
-  useEffect(()=>{if(!open)return;const close=()=>setOpen(false);window.addEventListener('resize',close);return()=>window.removeEventListener('resize',close)},[open]);
+  useEffect(()=>{if(!open)return;const close=()=>{opened.current=false;setOpen(false)};window.addEventListener('resize',close);return()=>window.removeEventListener('resize',close)},[open]);
   const [items,setItems]=useState<Item[]>([]);
   const [unread,setUnread]=useState(0);
   const [filter,setFilter]=useState<'all'|'unread'>('all');
@@ -92,7 +92,7 @@ export default function NotificationBell(){
     if(currentUid.current!==uid||generation.current!==epoch)return;
     if(writeError)setError('Could not mark as read. Please retry.');
     else await load();
-    setBusy(false);
+    if(currentUid.current===uid&&generation.current===epoch)setBusy(false);
   }
   const visible=filter==='all'?safeItems:safeItems.filter(n=>!n.is_read);
   if(!uid&&!sessionLoading)return <Link href="/notifications" aria-label="Notifications" className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-[#244238] hover:bg-stone-100"><Bell size={20} strokeWidth={1.7}/></Link>;
@@ -120,14 +120,14 @@ export default function NotificationBell(){
         </div>
         {error&&<div role="alert" className="flex items-center justify-between gap-2 px-4 py-3 text-xs text-red-700">{error}<button type="button" aria-label="Retry" onClick={()=>void load()}><RefreshCw size={16}/></button></div>}
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-          {loading||sessionLoading||loadedFor!==uid?<p className="p-6 text-center text-xs text-stone-500">Loading notifications…</p>:visible.length?visible.map(n=>{
+          {loading||sessionLoading||(!error&&loadedFor!==uid)?<p className="p-6 text-center text-xs text-stone-500">Loading notifications…</p>:visible.length?visible.map(n=>{
             const Icon=n.type==='success'?Check:n.type==='warning'||n.type==='error'?AlertTriangle:Info;
             return <button type="button" key={n.id} onClick={()=>void mark(n.id)} disabled={busy||n.is_read} className={'flex w-full items-start gap-3 border-b border-stone-100 px-4 py-3.5 text-left last:border-0 hover:bg-stone-50 disabled:cursor-default sm:px-5 '+(n.is_read?'bg-white':'bg-[#F2F8F3]')}>
               <span className={'mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-xl '+(n.type==='error'?'bg-red-100 text-red-600':n.type==='warning'?'bg-amber-100 text-amber-700':'bg-[#E5F0E8] text-[#3A785B]')}><Icon size={17}/></span>
               <span className="min-w-0 flex-1"><span className="block break-words text-[13px] font-semibold leading-[1.4]">{n.title}</span><span className="mt-1 block line-clamp-2 break-words text-xs leading-[1.5] text-stone-600">{n.message}</span><span className="mt-2 flex items-center gap-1 text-[10px] text-stone-500"><Clock size={11}/>{formatTime(n.created_at)}</span></span>
               {!n.is_read&&<span aria-label="Unread" className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[#3E8C65]"/>}
             </button>
-          }):<div className="px-6 py-9 text-center"><Bell size={27} className="mx-auto text-stone-300"/><p className="mt-3 text-sm font-semibold">You're all caught up</p><p className="mt-1 text-xs text-stone-500">New updates appear here.</p></div>}
+          }):error?<p className="p-6 text-center text-xs text-stone-500">Updates unavailable.</p>:<div className="px-6 py-9 text-center"><Bell size={27} className="mx-auto text-stone-300"/><p className="mt-3 text-sm font-semibold">You're all caught up</p><p className="mt-1 text-xs text-stone-500">New updates appear here.</p></div>}
         </div>
         <Link href="/notifications" onClick={()=>setOpen(false)} className="flex min-h-12 shrink-0 items-center justify-center gap-2 border-t border-stone-100 text-xs font-semibold text-[#2C684D] hover:bg-stone-50">View all notifications <ArrowRight size={15}/></Link>
       </Dialog.Content>
