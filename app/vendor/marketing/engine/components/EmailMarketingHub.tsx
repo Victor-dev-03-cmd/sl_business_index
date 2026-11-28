@@ -29,6 +29,7 @@ type Props={
   ownerScope:string;
   verifiedCounts?:Record<string,number>;
   emailAiEnabled?:boolean;
+  testSendEnabled?:boolean;
   serverDrafts?:readonly {draft:LocalEmailCampaign;revision:number}[];
   serverStorageReady?:boolean;
   inboxPreview?:React.ReactNode;
@@ -48,7 +49,7 @@ const niceDate=(date:string)=>{
 const short=(v:string,max=90)=>v.length>max?v.slice(0,max-1)+'…':v;
 export default function EmailMarketingHub({
   businesses,connections,ownerScope,verifiedCounts={},emailAiEnabled=false,
-  serverDrafts=[],serverStorageReady=false,inboxPreview,
+  testSendEnabled=false,serverDrafts=[],serverStorageReady=false,inboxPreview,
 }:Props){
   const preferred=connections.find(c=>c.status==='connected'&&businesses.some(b=>b.id===c.businessId))?.businessId;
   const [businessId,setBusinessId]=useState(preferred||businesses[0]?.id||'');
@@ -499,7 +500,7 @@ export default function EmailMarketingHub({
         business={businesses.find(b=>b.id===editor.businessId)!}
         sender={connections.find(c=>c.businessId===editor.businessId&&c.status==='connected')||null}
         verifiedCount={verifiedCounts[editor.businessId]}
-        emailAiEnabled={emailAiEnabled}
+        emailAiEnabled={emailAiEnabled} testSendEnabled={testSendEnabled}
         onSave={saveDraft} onClose={()=>setEditor(null)}/>}
     {historyId&&<div role="presentation"
       className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4"
