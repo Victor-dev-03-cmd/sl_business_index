@@ -6,8 +6,8 @@ Owner approved sequential P0 through P9 (10 phases). **Performance takes priorit
 
 | Phase | Scope and exit gate | Status |
 |---|---|---|
-| P0 | Session/auth stability across shared public header, mobile dock, follow, login/signup, admin/vendor identity and account switch. No false guest/member states, stale account data or pre-captcha requests; test slow hydration, sign-out, switch, autofill. | IN PROGRESS; #248 baseline live; current candidate query-cache switch protection |
-| P1 | Instant client navigation: audit Links/router, full reloads, loading boundaries, Home to Business Details, Categories/Nearby and protected navigation. Measure click-to-shell and content. | NEXT after P0 acceptance |
+| P0 | Session/auth stability across shared public header, mobile dock, follow, login/signup, admin/vendor identity and account switch. No false guest/member states, stale account data or pre-captcha requests; test slow hydration, sign-out, switch, autofill. | IN PROGRESS; #249 merged f27dbd1d398cb2ceb47bf8423c048c3725141d0f, 14/14 CI PASS; owner device acceptance pending |
+| P1 | Instant client navigation: audit Links/router, full reloads, loading boundaries, Home to Business Details, Categories/Nearby and protected navigation. Measure click-to-shell and content. | IN PROGRESS; owner authorized overlapping P1 implementation while testing P0 |
 | P2 | Bounded intent/viewport prefetch; mobile data saver/slow connections respected; no blanket private page prefetch. | Pending |
 | P3 | Public-only cache/revalidation, approved listing freshness and invalidation, separate owner/private previews and per-account data. | Pending |
 | P4 | Parallelize independent database requests; eliminate redundant slug/ID lookups and waterfalls, inspect query/index evidence before migrations. | Pending |
@@ -20,6 +20,8 @@ Owner approved sequential P0 through P9 (10 phases). **Performance takes priorit
 Targets (not measured): zero false auth/follow flash, zero premature captcha requests; API p95 <300 ms where feasible, LCP <=2.5s, INP <=200ms, CLS <=0.1. Record real baseline and route timings; distinguish immediate shell feedback from real data latency. Preserve SEO and authenticated route checks. Current source evidence: business detail slug then ID fallback and gallery/service waterfall; Home revalidate=0; protected proxy validates claims and database role. Existing route skeletons do not guarantee fast content.
 
 **Future plans after P9:** Growth AI and SEO AI advanced Deepnote experiments with authorized de-identified datasets and tenant isolation; no raw contacts or tokens. Brevo REST provider planned only, verify consent/suppression, quota and sender identity before activation; no email delivery approved. Imported contacts already live #244, no duplicate migration. Continue device push acceptance separately, iOS release/design deferred. Keep this handoff current with actual commit/CI/deployment status.
+
+**P1 candidate:** Restore default Next.js partial prefetch on Home featured business links and public mobile dock (Nearby remains on-demand); no blanket private route prefetch. Match mobile business route loading skeleton to approved 50/50 profile and two-action row. Existing auth/SEO/data visibility unchanged. P0 #249 merged and production status at this check: READY 4d67f8767e18096752baca7922bbf82c5f725cea. P1 actual click-to-shell/content timing, broader route audit and physical device acceptance pending. P2 bounded prefetch, P3 public cache, P4 DB waterfall remain separate gates. No migration, provider or runtime changes.
 
 ---
 
