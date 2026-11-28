@@ -30,6 +30,8 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
+      - name: Global onboarding, presence and announcement UX
+        run: node --test tests/globalOnboardingUx.test.mjs
       - name: Profile follow controls and Firebase device recovery
         run: node --experimental-strip-types --test tests/profileFollowPush.test.mjs
       - name: Synthetic SSR multi-chunk cookie round-trip
