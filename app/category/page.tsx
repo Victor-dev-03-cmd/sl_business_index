@@ -1,7 +1,7 @@
-import { createClient } from "@/lib/supabase/server";
+import {getPublicCategories} from "@/lib/discovery/public-cache";
 import CategoryExplorer, { type CategoryRecord } from "./CategoryExplorer";
 
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: "Explore Business Categories in Sri Lanka | SL Business Index",
@@ -10,18 +10,8 @@ export const metadata = {
 };
 
 async function getCategories(): Promise<CategoryRecord[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("categories")
-    .select("id, name, icon, parent_id")
-    .order("name", { ascending: true });
-
-  if (error) {
-    console.error("Unable to load categories:", error.message);
-    return [];
-  }
-
-  return (data ?? []) as CategoryRecord[];
+  const snapshot=await getPublicCategories();
+  return snapshot.rows as CategoryRecord[];
 }
 
 export default async function CategoriesPage() {

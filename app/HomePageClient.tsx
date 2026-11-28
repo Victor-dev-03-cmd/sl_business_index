@@ -11,6 +11,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useQuery } from "@tanstack/react-query";
+import {publicCategoryQuery} from "@/lib/discovery/category-query";
 import {
   ChevronLeft,
   ChevronRight,
@@ -168,18 +169,8 @@ export default function HomePageClient() {
   const [canFeaturedScrollLeft, setCanFeaturedScrollLeft] = useState(false);
   const [canFeaturedScrollRight, setCanFeaturedScrollRight] = useState(false);
 
-  const { data: categories = EMPTY_ARRAY, isLoading: categoriesLoading } = useQuery({
-    queryKey: ["categories-home"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("categories")
-        .select('id, name, icon, parent_id')
-        .order("name", { ascending: true });
-      if (error) throw error;
-      return data;
-    },
-    staleTime: 5 * 60 * 1000,
-  });
+  const { data: categorySnapshot, isLoading: categoriesLoading } = useQuery(publicCategoryQuery);
+  const categories = categorySnapshot?.rows ?? EMPTY_ARRAY;
 
   const {
     data: featuredBusinesses = EMPTY_ARRAY,
@@ -210,7 +201,9 @@ export default function HomePageClient() {
         .map((item) => item.businesses)
         .filter((b) => b && b.status === "approved") as any[];
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 15000,
+    refetchOnWindowFocus: true,
+    refetchInterval: 30000,
   });
 
   // Browse Categories uses manual navigation only: no perpetual animation loop.
