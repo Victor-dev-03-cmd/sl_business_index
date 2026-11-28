@@ -103,3 +103,17 @@ test('P2 bounded prefetch respects network and route boundaries',async()=>{
  assert.match(link,/observer.disconnect\(\)/);
  assert.match(link,/canPrefetch\(net,navigator.onLine,document.visibilityState/);
 });
+
+test('P3 shared cache contains only anonymous category data',()=>{
+ const source=read('lib/discovery/public-cache.ts');
+ assert.match(source,/unstable_cache/);
+ assert.match(source,/persistSession:false/);
+ assert.doesNotMatch(source,/cookies\(|SERVICE_ROLE|createServerClient/);
+ assert.match(source,/revalidate:120/);
+ assert.match(source,/\.eq\('businesses.status','approved'\)/);
+ assert.match(read('app/page.tsx'),/queryFn:getPublicCategories/);
+ assert.match(read('app/HomePageClient.tsx'),/useQuery\(publicCategoryQuery\)/);
+ assert.match(read('app/components/Navbar.tsx'),/useQuery\(publicCategoryQuery\)/);
+ assert.match(read('app/api/public/categories/route.ts'),/status:503/);
+ assert.doesNotMatch(read('app/business/[slug]/page.tsx'),/unstable_cache/);
+});
