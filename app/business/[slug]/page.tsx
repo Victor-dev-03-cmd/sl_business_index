@@ -14,39 +14,20 @@ type Props = {
   }>;
 };
 
-/**
- * Robust business details fetcher that handles:
- * 1. Exact slug match
- * 2. ID match (with UUID/Numeric validation)
- */
-const getBusinessDetails=cache(async (slugOrId: string): Promise<Business | null> => {
-  const supabase = await createClient();
-  
-  // 1. First attempt: Fetch by slug
-  const { data: slugData } = await supabase
-    .from('businesses')
-    .select('*')
-    .eq('slug', slugOrId)
-    .single();
-
-  if (slugData) return mapBusinessData(slugData);
-
-  // 2. Second attempt: Fallback to ID
-  // Validate if input is a valid UUID or Integer to prevent Postgres casting errors
-  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slugOrId);
-  const isNumeric = /^\d+$/.test(slugOrId);
-
-  if (isUUID || isNumeric) {
-    const { data: idData } = await supabase
-      .from('businesses')
-      .select('*')
-      .eq('id', slugOrId)
-      .single();
-    
-    if (idData) return mapBusinessData(idData);
-  }
-
-  return null;
+// Same request-scoped RLS client for metadata and page, never shared across users.
+const getBusinessDetails=cache(async (slugOrId: string) => {
+  const supabase=await createClient();
+  const columns='id,slug,name,category,description,address,phone,email,website_name,website_url,rating,reviews_count,image_url,latitude,longitude,status,created_at,owner_name,owner_id,logo_url,registration_number,is_registered,is_verified,verification_status,can_show_badge,working_hours,facilities,detailed_address,business_profile_content(services,gallery_paths)';
+  const isUUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slugOrId);
+  // Only validated UUIDs enter PostgREST OR syntax. Exact slug wins collisions.
+  const query=supabase.from('businesses').select(columns);
+  const {data,error}=await (isUUID?query.or('slug.eq.'+slugOrId+',id.eq.'+slugOrId).limit(2):query.eq('slug',slugOrId).limit(1));
+  if(error)throw new Error('Business details temporarily unavailable');
+  const row=data?.find(item=>item.slug===slugOrId)??data?.[0];
+  if(!row)return null;
+  const nested=row.business_profile_content;
+  const profileContent=Array.isArray(nested)?nested[0]:nested;
+  return {business:mapBusinessData(row),profileContent,supabase};
 });
 
 function mapBusinessData(data: any): Business {
@@ -84,7 +65,8 @@ function mapBusinessData(data: any): Business {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const business = await getBusinessDetails(slug);
+  const details = await getBusinessDetails(slug);
+  const business = details?.business;
 
   if (!business) return {
     title: 'Business Not Found | SL Business Index',
@@ -124,7 +106,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function BusinessDetailPage({ params }: Props) {
   const { slug } = await params;
-  const business = await getBusinessDetails(slug);
+  const details = await getBusinessDetails(slug);
+  const business = details?.business;
 
   if (!business) notFound();
 
@@ -133,8 +116,7 @@ export default async function BusinessDetailPage({ params }: Props) {
     redirect(`/business/${business.slug}`);
   }
 
-  const supabase = await createClient();
-  const {data:profileContent} = await supabase.from('business_profile_content').select('services,gallery_paths').eq('business_id',business.id).maybeSingle();
+  const {supabase,profileContent}=details!;
   const galleryUrls = [...new Set<string>((profileContent?.gallery_paths || []).filter((path:unknown):path is string=>typeof path==='string'&&path.startsWith(String(business.id)+'/')))].map(path=>supabase.storage.from('business-gallery').getPublicUrl(path).data.publicUrl);
   const services = Array.isArray(profileContent?.services) ? profileContent.services.filter((service:unknown):service is string=>typeof service==='string'&&Boolean(service.trim())) : [];
   // Only publicly approved businesses may emit search-engine structured data.
