@@ -2,7 +2,7 @@
 
 import {useEffect,useRef,useState,type CSSProperties} from 'react';
 import {createPortal} from 'react-dom';
-import {Poppins,Outfit} from 'next/font/google';
+import {emailEditorFontClasses} from './email-editor-fonts';
 import Link from 'next/link';
 import IconsaxIcon from '@/app/vendor/components/IconsaxIcon';
 import type {EmailStudioBusiness,EmailStudioConnection} from './EmailMarketingWorkbench';
@@ -22,8 +22,6 @@ type Props={
   emailAiEnabled:boolean;testSendEnabled:boolean;
   onSave:(campaign:LocalEmailCampaign)=>Promise<'server'|'browser'|'failed'>;onClose:()=>void;
 };
-const poppins=Poppins({weight:['400','700'],subsets:['latin'],display:'swap',preload:false,variable:'--email-poppins'});
-const outfit=Outfit({weight:['400','700'],subsets:['latin'],display:'swap',preload:false,variable:'--email-outfit'});
 const previewTypography=(block:EmailVisualBlock)=>{const style=emailTypographyStyle(block);const font=emailBlockTypography(block).font;return {...style,fontFamily:font==='poppins'?'var(--email-poppins), Arial, sans-serif':font==='outfit'?'var(--email-outfit), Arial, sans-serif':font==='inter'?'var(--font-inter), Arial, sans-serif':style.fontFamily};};
 const input='min-h-8 w-full min-w-0 rounded-md border border-[#DDE1E6] bg-white px-2 py-1 text-[12px] text-[#111827] outline-none focus:border-[#F97316] focus:ring-1 focus:ring-[#F97316]/20';
 const label='mb-1 block text-[11px] font-semibold text-[#374151]';
@@ -445,7 +443,7 @@ export default function EmailCampaignCanvas({
     </div>
   </div>;
   const screen=<div role="dialog" aria-modal="true" aria-label="Email campaign visual editor"
-    data-testid="email-v4-focus-builder" data-email-v7="designer" className={poppins.variable+' '+outfit.variable+' fixed inset-0 z-[9999] flex h-[100dvh] w-screen flex-col overflow-hidden bg-[#F8FAFC] text-[#111827]'}
+    data-testid="email-v4-focus-builder" data-email-v7="designer" className={emailEditorFontClasses+' fixed inset-0 z-[9999] flex h-[100dvh] w-screen flex-col overflow-hidden bg-[#F8FAFC] text-[#111827]'}
     style={{colorScheme:'light'}}>
     <input ref={imageInput} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={e=>{const file=e.target.files?.[0]||null;e.target.value='';void uploadImage(file);}}/>
     <header className="flex min-h-[70px] shrink-0 flex-wrap items-center justify-between gap-3 border-b border-[#E5E7EB] bg-white px-3 py-3 shadow-[0_1px_5px_rgba(17,24,39,.03)] sm:px-6">
