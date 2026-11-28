@@ -1,6 +1,5 @@
 import {getPublicCategories} from '@/lib/discovery/public-cache';
+import {createCategoryApi} from '@/lib/discovery/category-http';
 export const dynamic='force-dynamic';
-export async function GET(){
- try{return Response.json(await getPublicCategories(),{headers:{'Cache-Control':'no-store'}});}
- catch{return Response.json({error:'Categories unavailable'},{status:503,headers:{'Cache-Control':'no-store'}});}
-}
+const api=createCategoryApi(getPublicCategories);
+export const GET=(request:Request)=>api.fetch(request);
