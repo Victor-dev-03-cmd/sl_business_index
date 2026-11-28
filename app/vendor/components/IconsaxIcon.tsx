@@ -6,7 +6,7 @@ import {
   CheckCircle2, ChevronLeft, ChevronRight, CirclePlus, Coins, Download,
   Eye, Zap, Globe, House, Mail, Menu, MessageSquareText, Users, RefreshCw, FileText,
   Search, Settings2, ShieldCheck, Store, PanelLeft, Star, Sparkles, Mic, ImagePlus,
-  TrendingUp, CircleX, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, AlignJustify, Type, Text, Image, MousePointer2, LayoutGrid, Minus, Rows2, Columns2, Link2, Copy, Trash2, Monitor, type LucideIcon
+  TrendingUp, CircleX, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, AlignJustify, Type, Text, Image, MousePointer2, LayoutGrid, Minus, Rows2, Columns2, Link2, Copy, Trash2, Monitor, Gift, Quote, ImagePlus as UploadImageIcon, type LucideIcon
 } from 'lucide-react';
 
 // Iconsax is a custom element. Register it once on the client.
@@ -73,6 +73,12 @@ const fallbacks: Record<string, LucideIcon> = {
   'copy': Copy,
   'trash': Trash2,
   'monitor': Monitor,
+  'document-text': Text,
+  'gift': Gift,
+  'gallery-add': UploadImageIcon,
+  'paragraphspacing': Rows2,
+  'quote-up': Quote,
+  'grid-2': Columns2,
 };
 export type IconsaxName = string;
 

@@ -6,6 +6,11 @@ import type {EmailTemplateLayout} from './email-template-contract';
 export type EmailBlockType='headline'|'body'|'poster'|'button'|'offers'|'divider'|'image'|'spacer'|'quote'|'link'|'columns';
 export const EMAIL_FONT_FAMILIES={
   arial:'Arial, Helvetica, sans-serif',
+  poppins:'Poppins, Arial, Helvetica, sans-serif',
+  outfit:'Outfit, Arial, Helvetica, sans-serif',
+  inter:'Inter, Arial, Helvetica, sans-serif',
+  monospace:'Courier New, Courier, monospace',
+  // Legacy drafts remain readable; these older families are not offered in the new editor.
   georgia:'Georgia, Times New Roman, serif',
   verdana:'Verdana, Geneva, sans-serif',
   tahoma:'Tahoma, Arial, sans-serif',
@@ -14,6 +19,7 @@ export const EMAIL_FONT_FAMILIES={
   unicode:'Arial, Noto Sans Tamil, Noto Sans Sinhala, sans-serif',
 } as const;
 export type EmailFontFamily=keyof typeof EMAIL_FONT_FAMILIES;
+export const EMAIL_EDITOR_FONTS=[{id:'arial',label:'Arial'},{id:'poppins',label:'Poppins'},{id:'outfit',label:'Outfit'},{id:'inter',label:'Inter'},{id:'monospace',label:'Monospace'}] as const;
 export type EmailTypography={
   font:EmailFontFamily;fontSize:number;fontWeight:400|700;
   italic:boolean;underline:boolean;color:string;

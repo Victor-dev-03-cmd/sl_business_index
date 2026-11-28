@@ -2,6 +2,7 @@
 
 import {useEffect,useRef,useState,type CSSProperties} from 'react';
 import {createPortal} from 'react-dom';
+import {loadEditorFont} from './email-editor-fonts';
 import Link from 'next/link';
 import IconsaxIcon from '@/app/vendor/components/IconsaxIcon';
 import type {EmailStudioBusiness,EmailStudioConnection} from './EmailMarketingWorkbench';
@@ -10,7 +11,7 @@ import {EMAIL_TEMPLATE_LAYOUTS,safeCustomPreviewDocument,type EmailTemplateLayou
   from '@/lib/marketing/email-template-contract';
 import {
   EMAIL_BLOCK_TYPES,newEmailBlock,moveEmailBlock,briefFromBlocks,
-  EMAIL_FONT_FAMILIES,emailBlockTypography,emailTypographyStyle,defaultEmailTypography,
+  EMAIL_EDITOR_FONTS,emailBlockTypography,emailTypographyStyle,defaultEmailTypography,
   type EmailTypography,type EmailFontFamily,
   type EmailVisualBlock,type EmailBlockType,type LocalEmailCampaign,
 } from '@/lib/marketing/email-hub-contract';
@@ -21,12 +22,13 @@ type Props={
   emailAiEnabled:boolean;testSendEnabled:boolean;
   onSave:(campaign:LocalEmailCampaign)=>Promise<'server'|'browser'|'failed'>;onClose:()=>void;
 };
+const previewTypography=(block:EmailVisualBlock)=>{const style=emailTypographyStyle(block);const font=emailBlockTypography(block).font;return {...style,fontFamily:font==='inter'?'var(--font-inter), Arial, sans-serif':style.fontFamily};};
 const input='min-h-8 w-full min-w-0 rounded-md border border-[#DDE1E6] bg-white px-2 py-1 text-[12px] text-[#111827] outline-none focus:border-[#F97316] focus:ring-1 focus:ring-[#F97316]/20';
 const label='mb-1 block text-[11px] font-semibold text-[#374151]';
 const muted='text-[11px] leading-5 text-[#6B7280]';
 const icon=(name:string,size=16)=><IconsaxIcon name={name} size={size} variant="bulk"/>;
 const toolButton='inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-[#374151] hover:bg-[#F3F4F6] focus-visible:outline-2 focus-visible:outline-[#F97316] disabled:opacity-35';
-const blockIcons:Record<EmailBlockType,string>={headline:'text',body:'text-block',poster:'gallery',button:'mouse-square',offers:'element-3',divider:'minus',image:'image',spacer:'row-vertical',quote:'message-text',link:'link',columns:'row-horizontal'};
+const blockIcons:Record<EmailBlockType,string>={headline:'text',body:'document-text',poster:'gallery',button:'mouse-square',offers:'gift',divider:'minus',image:'gallery-add',spacer:'paragraphspacing',quote:'quote-up',link:'link',columns:'grid-2'};
 /** Commit only a valid value on blur/Enter. Typing intermediate digits does not
  * rerender the campaign or queue an autosave. Native number controls stay keyboard accessible. */
 function CompactNumber({label:caption,value,min,max,step=1,unit='',onCommit}:{label:string;value:number;min:number;max:number;step?:number;unit?:string;onCommit:(n:number)=>void}){
@@ -48,6 +50,43 @@ function CompactNumber({label:caption,value,min,max,step=1,unit='',onCommit}:{la
     </span>
   </label>;
 }
+const PALETTE=['#111827','#374151','#6B7280','#D1D5DB','#FFFFFF','#F97316','#EA580C','#F59E0B','#FACC15','#EF4444','#DC2626','#DB2777','#EC4899','#A855F7','#7C3AED','#4F46E5','#2563EB','#0EA5E9','#06B6D4','#14B8A6','#059669','#16A34A','#84CC16','#92400E'];
+/** Portal popup stays inside the visual viewport instead of using the OS-native
+ * colour dialog, which may open beyond the screen on Linux/Chromium. */
+function CompactColour({label:caption,value,onCommit}:{label:string;value:string;onCommit:(v:string)=>void}){
+  const button=useRef<HTMLButtonElement>(null);
+  const popup=useRef<HTMLDivElement>(null);
+  const [open,setOpen]=useState(false);
+  const [hex,setHex]=useState(value);
+  const [position,setPosition]=useState({left:0,top:0,width:248,maxHeight:320});
+  const close=()=>{setOpen(false);button.current?.focus();};
+  const locate=()=>{
+    const anchor=button.current?.getBoundingClientRect();if(!anchor)return;
+    const vw=window.innerWidth,vh=window.innerHeight;
+    const width=Math.min(248,vw-16),maxHeight=Math.max(80,Math.min(320,vh-16));
+    setPosition({width,maxHeight,left:Math.max(8,Math.min(anchor.right-width,vw-width-8)),top:Math.max(8,Math.min(anchor.bottom+6,vh-maxHeight-8))});
+  };
+  useEffect(()=>{
+    if(!open)return;
+    locate();
+    const handle=(e:PointerEvent)=>{if(!popup.current?.contains(e.target as Node)&&!button.current?.contains(e.target as Node))setOpen(false);};
+    const key=(e:KeyboardEvent)=>{if(e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();close();}};
+    const scroll=(e:Event)=>{if(!(e.target instanceof Node)||!popup.current?.contains(e.target))locate();};
+    document.addEventListener('pointerdown',handle);document.addEventListener('keydown',key,true);
+    window.addEventListener('resize',locate);window.addEventListener('scroll',scroll,true);
+    popup.current?.querySelector<HTMLInputElement>('input')?.focus();
+    return()=>{document.removeEventListener('pointerdown',handle);document.removeEventListener('keydown',key,true);window.removeEventListener('resize',locate);window.removeEventListener('scroll',scroll,true);};
+  },[open]);
+  const valid=/^#[0-9a-f]{6}$/i.test(hex);
+  const apply=(colour:string)=>{onCommit(colour.toUpperCase());close();};
+  return <><button ref={button} type="button" title={caption} aria-label={caption} aria-expanded={open} aria-haspopup="dialog" onClick={()=>{if(open){close();return;}setHex(value);locate();setOpen(true);}} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-[#DDE1E6] bg-white p-1 focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#F97316]"><span className="h-5 w-5 rounded-sm border border-black/10" style={{backgroundColor:value}}/></button>
+    {open&&createPortal(<div ref={popup} role="dialog" aria-label={caption+' picker'} data-testid="email-viewport-colour-picker" className="fixed z-[10002] overflow-auto rounded-lg border border-[#DDE1E6] bg-white p-3 text-[#111827] shadow-lg" style={position}>
+      <div className="mb-2 flex items-center justify-between"><strong className="text-xs">{caption}</strong><button type="button" aria-label="Close colour picker" onClick={close} className={toolButton}>{icon('close-circle',16)}</button></div>
+      <div className="grid grid-cols-6 gap-1.5">{PALETTE.map(colour=><button key={colour} type="button" aria-label={'Set colour '+colour} title={colour} onClick={()=>apply(colour)} className="aspect-square rounded-sm border border-black/10 focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#F97316]" style={{backgroundColor:colour}}/>)}</div>
+      <label className="mt-3 block text-[11px] font-semibold">Custom HEX<span className="mt-1 flex items-center gap-2"><span className="h-7 w-7 shrink-0 rounded border border-[#DDE1E6]" style={{backgroundColor:valid?hex:value}}/><input aria-label="Custom HEX colour" value={hex} maxLength={7} onChange={e=>setHex(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&valid){e.preventDefault();apply(hex);}}} className={input}/></span></label>
+      <button type="button" disabled={!valid} onClick={()=>apply(hex)} className="mt-2 min-h-8 w-full rounded-md bg-[#F97316] text-xs font-semibold text-white disabled:opacity-40">Apply colour</button>
+    </div>,document.body)}</>;
+}
 type InlineProps={
   value:string;onChange:(next:string)=>void;label:string;max:number;
   className:string;multiline?:boolean;style?:CSSProperties;
@@ -64,7 +103,7 @@ function InlineText({value,onChange,label,max,className,multiline=false,style}:I
     aria-multiline={multiline} tabIndex={0} spellCheck
     data-inline-editable={label}
     style={style}
-    className={className+' cursor-text outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] focus-visible:ring-offset-2'}
+    className={className+' cursor-text outline-none focus-visible:ring-0'}
     onInput={e=>onChange(e.currentTarget.innerText.slice(0,max))}
     onKeyDown={e=>{if(!multiline&&e.key==='Enter')e.preventDefault();}}
     onPaste={e=>{
@@ -82,12 +121,15 @@ function InlineText({value,onChange,label,max,className,multiline=false,style}:I
       onChange(ref.current.innerText.slice(0,max));
     }}/>;
 }
-const selectionBorder='border-2 border-transparent transition hover:border-[#FDBA74] focus-within:border-[#F97316]';
+const selectionBorder='border border-transparent transition-colors hover:border-[#FDBA74] focus-within:border-[#F97316]';
 
 export default function EmailCampaignCanvas({
   campaign:initial,business,sender,verifiedCount,emailAiEnabled,testSendEnabled,onSave,onClose,
 }:Props){
   const [campaign,setCampaign]=useState<LocalEmailCampaign>(initial);
+  const usesPoppins=campaign.blocks.some(b=>b.typography?.font==='poppins');
+  const usesOutfit=campaign.blocks.some(b=>b.typography?.font==='outfit');
+  useEffect(()=>{if(usesPoppins)loadEditorFont('poppins');if(usesOutfit)loadEditorFont('outfit');},[usesPoppins,usesOutfit]);
   const [device,setDevice]=useState<'desktop'|'mobile'>('desktop');
   const [darkCheck,setDarkCheck]=useState(false);
   const [mounted,setMounted]=useState(false);
@@ -184,6 +226,11 @@ export default function EmailCampaignCanvas({
     setSelectedId(block.id);setDirty(true);setNotice('');
     if(type==='image')chooseImage(block.id);
     // Selection is immediately visible in the compact inspector.
+  };
+  const insertSection=(types:EmailBlockType[])=>{
+    if(campaign.blocks.length+types.length>20)return;
+    const blocks=types.map(type=>newEmailBlock(type,type==='body'?'Add your message here.':''));
+    setCampaign(old=>({...old,blocks:[...old.blocks,...blocks]}));setSelectedId(blocks[0].id);setDirty(true);setNotice('');
   };
   const duplicateBlock=(id:string)=>{
     const source=campaign.blocks.find(b=>b.id===id);
@@ -346,14 +393,14 @@ export default function EmailCampaignCanvas({
       (dragId===b.id?' opacity-50':'')}>
     <span className="pointer-events-none absolute -left-2 top-1/2 z-10 hidden -translate-y-1/2 rounded bg-[#111827] px-1.5 py-1 text-[9px] font-bold text-white group-hover:block" aria-hidden="true">⋮⋮</span>
     {b.type==='headline'&&<InlineText value={b.text} label="Headline — edit directly"
-      max={200} style={emailTypographyStyle(b)} onChange={next=>updateBlock(b.id,{text:next})}
+      max={200} style={previewTypography(b)} onChange={next=>updateBlock(b.id,{text:next})}
       className="min-h-9 break-words rounded p-1 text-[23px] font-bold leading-tight text-[#111827]"/>}
     {b.type==='body'&&<InlineText value={b.text} label="Email body — edit directly"
-      max={3000} multiline style={emailTypographyStyle(b)} onChange={next=>updateBlock(b.id,{text:next})}
+      max={3000} multiline style={previewTypography(b)} onChange={next=>updateBlock(b.id,{text:next})}
       className="min-h-[80px] whitespace-pre-wrap break-words rounded p-1 text-[13px] leading-7 text-[#374151]"/>}
     {b.type==='button'&&<div className="py-3" style={{textAlign:emailBlockTypography(b).align==='justify'?'left':emailBlockTypography(b).align}}>
       <div style={{backgroundColor:buttonColor}} className="mx-auto inline-block max-w-full rounded-xl">
-        <InlineText value={b.text} label="CTA button label — edit directly" max={90} style={emailTypographyStyle(b)}
+        <InlineText value={b.text} label="CTA button label — edit directly" max={90} style={previewTypography(b)}
           onChange={next=>updateBlock(b.id,{text:next})}
           className="inline-block min-h-11 max-w-full rounded-xl px-6 py-3 text-center text-[12px] font-bold text-white"/>
       </div>
@@ -362,12 +409,12 @@ export default function EmailCampaignCanvas({
     {b.type==='image'&&<div style={{textAlign:b.imageAlign||'center'}} className="py-2">
       {b.imageId?<button type="button" aria-label="Replace uploaded image" disabled={imageBusy} onClick={e=>{e.stopPropagation();setSelectedId(b.id);chooseImage(b.id);}} className="inline-block max-w-full overflow-hidden rounded-md" style={{width:(b.imageWidth||100)+'%'}}>
         <img src={'/api/marketing/email/images?businessId='+encodeURIComponent(business.id)+'&assetId='+encodeURIComponent(b.imageId)} alt={b.text||'Uploaded email image'} loading="lazy" decoding="async" className="block h-auto w-full"/>
-      </button>:<button type="button" disabled={imageBusy} onClick={e=>{e.stopPropagation();setSelectedId(b.id);chooseImage(b.id);}} className="flex min-h-32 w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#FDBA74] bg-[#FFF7ED] text-sm font-semibold text-[#C2410C]">{icon('image',28)}{imageBusy?'Uploading…':'Upload an image'}<span className="text-xs font-normal">JPG, PNG, WebP · up to 3 MB</span></button>}
+      </button>:<button type="button" disabled={imageBusy} onClick={e=>{e.stopPropagation();setSelectedId(b.id);chooseImage(b.id);}} className="flex min-h-32 w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-[#FDBA74] bg-[#FFF7ED] text-sm font-semibold text-[#C2410C]">{icon('image',28)}{imageBusy?'Uploading…':'Upload an image'}<span className="text-xs font-normal">JPG, PNG, WebP · up to 3 MB</span></button>}
     </div>}
     {b.type==='spacer'&&<div aria-label="Adjustable spacer" style={{height:b.spacing||24}} className="flex items-center justify-center rounded border border-dashed border-[#E5E7EB] text-[10px] text-[#9CA3AF]">{b.spacing||24}px</div>}
-    {b.type==='quote'&&<div className="border-l-4 border-[#F97316] bg-[#FFF7ED] px-3 py-2"><InlineText value={b.text} label="Quote — edit directly" max={3000} multiline style={emailTypographyStyle(b)} onChange={next=>updateBlock(b.id,{text:next})} className="min-h-12 whitespace-pre-wrap break-words rounded p-1"/></div>}
-    {b.type==='link'&&<InlineText value={b.text} label="Link text — edit directly" max={90} style={{...emailTypographyStyle(b),textDecoration:'underline'}} onChange={next=>updateBlock(b.id,{text:next})} className="min-h-8 break-words rounded p-1"/>}
-    {b.type==='columns'&&<div className="grid grid-cols-2 gap-2">{[b.text,b.secondText||''].map((value,i)=><div key={i} className="min-w-0 rounded-lg border border-dashed border-[#E5E7EB] p-2"><InlineText value={value} label={'Column '+(i+1)+' — edit directly'} max={400} multiline style={emailTypographyStyle(b)} onChange={next=>updateBlock(b.id,i===0?{text:next}:{secondText:next})} className="min-h-16 whitespace-pre-wrap break-words"/></div>)}</div>}
+    {b.type==='quote'&&<div className="border-l-4 border-[#F97316] bg-[#FFF7ED] px-3 py-2"><InlineText value={b.text} label="Quote — edit directly" max={3000} multiline style={previewTypography(b)} onChange={next=>updateBlock(b.id,{text:next})} className="min-h-12 whitespace-pre-wrap break-words rounded p-1"/></div>}
+    {b.type==='link'&&<InlineText value={b.text} label="Link text — edit directly" max={90} style={{...previewTypography(b),textDecoration:'underline'}} onChange={next=>updateBlock(b.id,{text:next})} className="min-h-8 break-words rounded p-1"/>}
+    {b.type==='columns'&&<div className="grid grid-cols-2 gap-2">{[b.text,b.secondText||''].map((value,i)=><div key={i} className="min-w-0 rounded-lg border border-dashed border-[#E5E7EB] p-2"><InlineText value={value} label={'Column '+(i+1)+' — edit directly'} max={400} multiline style={previewTypography(b)} onChange={next=>updateBlock(b.id,i===0?{text:next}:{secondText:next})} className="min-h-16 whitespace-pre-wrap break-words"/></div>)}</div>}
     {b.type==='divider'&&<hr className="my-4 border-[#E5E7EB]"/>}
     {b.type==='poster'&&<button type="button" onClick={e=>{e.stopPropagation();void loadPosters();}}
       className="block w-full overflow-hidden rounded-xl border border-dashed border-[#FED7AA] bg-[#FFF7ED]">
@@ -381,7 +428,7 @@ export default function EmailCampaignCanvas({
       {[b.text,b.secondText||''].map((offer,i)=><div key={i}
         className="rounded-xl border border-[#F1DAC9] bg-[#FFF7ED] p-3">
         <span className="text-[10px] font-bold uppercase text-[#C16C2A]">Offer {i+1}</span>
-        <InlineText value={offer} label={'Offer '+(i+1)+' — edit directly'} max={400} multiline style={emailTypographyStyle(b)}
+        <InlineText value={offer} label={'Offer '+(i+1)+' — edit directly'} max={400} multiline style={previewTypography(b)}
           onChange={next=>updateBlock(b.id,i===0?{text:next}:{secondText:next})}
           className="mt-2 min-h-16 whitespace-pre-wrap break-words rounded p-1 text-[12px] leading-5 text-[#292524]"/>
       </div>)}
@@ -466,6 +513,12 @@ export default function EmailCampaignCanvas({
                 <span className="text-[#EA580C]">{icon(blockIcons[item.type],17)}</span>
                 {item.title}
               </button>)}
+            </div>
+          </div>
+          <div className="border-t border-[#E5E7EB] pt-3">
+            <p className={label}>Quick sections</p>
+            <div className="space-y-1">
+              {([{name:'Promotion',iconName:'gift',types:['headline','body','button']},{name:'Newsletter',iconName:'document-text',types:['headline','body','divider','columns']},{name:'Testimonial',iconName:'quote-up',types:['headline','quote','button']}] satisfies {name:string;iconName:string;types:EmailBlockType[]}[]).map(s=><button key={s.name} type="button" disabled={campaign.blocks.length+s.types.length>20} onClick={()=>insertSection(s.types)} className="flex min-h-8 w-full items-center gap-2 rounded-md border border-[#E5E7EB] px-2 text-left text-[11px] font-medium hover:border-[#FDBA74] hover:bg-[#FFF7ED] disabled:opacity-40"><span className="text-[#EA580C]">{icon(s.iconName,17)}</span><span className="flex-1">{s.name}</span>{icon('add',14)}</button>)}
             </div>
           </div>
           <div className="border-t border-[#E5E7EB] pt-3">
@@ -558,11 +611,12 @@ export default function EmailCampaignCanvas({
           {selected&&typography&&!['poster','divider','image','spacer'].includes(selected.type)&&<section data-testid="email-v8-typography" aria-label="Typography controls" className="space-y-2 border-t border-[#E5E7EB] pt-2">
             <div className="flex items-center justify-between gap-2"><h3 className="text-sm font-bold">Typography</h3><button type="button" onClick={()=>updateBlock(selected.id,{typography:defaultEmailTypography(selected.type)})} title="Reset typography" aria-label="Reset typography" className={toolButton+' text-[#C2410C]'}>{icon('refresh',16)}</button></div>
             <label className={label}>Font family<select aria-label="Block font family" value={typography.font} onChange={e=>updateTypography({font:e.target.value as EmailFontFamily})} className={input}>
-              {Object.keys(EMAIL_FONT_FAMILIES).map(font=><option key={font} value={font}>{({arial:'Arial',georgia:'Georgia',verdana:'Verdana',tahoma:'Tahoma',times:'Times New Roman',courier:'Courier New',unicode:'Multilingual fallback'})[font as EmailFontFamily]}</option>)}
+              {!EMAIL_EDITOR_FONTS.some(font=>font.id===typography.font)&&<option hidden value={typography.font}>Previous font</option>}
+              {EMAIL_EDITOR_FONTS.map(font=><option key={font.id} value={font.id}>{font.label}</option>)}
             </select></label>
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0 flex-1"><CompactNumber key={selected.id+'-font'} label="Block font size" value={typography.fontSize} min={10} max={64} unit="px" onCommit={fontSize=>updateTypography({fontSize})}/></div>
-              <input type="color" title="Text colour" aria-label="Block text colour" value={typography.color} onChange={e=>updateTypography({color:e.target.value})} className="h-8 w-8 shrink-0 cursor-pointer rounded-md border border-[#DDE1E6] bg-white p-1"/>
+              <CompactColour label="Block text colour" value={typography.color} onCommit={color=>updateTypography({color})}/>
             </div>
             <div className="flex flex-wrap items-center gap-0.5 rounded-md border border-[#E5E7EB] p-0.5">
               {([{name:'Bold',iconName:'text-bold',active:typography.fontWeight===700,patch:{fontWeight:typography.fontWeight===700?400:700}},{name:'Italic',iconName:'text-italic',active:typography.italic,patch:{italic:!typography.italic}},{name:'Underline',iconName:'text-underline',active:typography.underline,patch:{underline:!typography.underline}}] satisfies {name:string;iconName:string;active:boolean;patch:Partial<EmailTypography>}[]).map(t=><button key={t.name} type="button" title={t.name} aria-label={t.name} aria-pressed={t.active} onClick={()=>updateTypography(t.patch)} className={toolButton+(t.active?' bg-[#FFF1E6] text-[#C2410C]':'')}>{icon(t.iconName,16)}</button>)}
@@ -588,7 +642,7 @@ export default function EmailCampaignCanvas({
           <CompactNumber label="Desktop canvas width" value={canvasWidth} min={480} max={720} unit="px" onCommit={canvasWidth=>updateCampaign({canvasWidth})}/>
           <CompactNumber label="Brand logo size" value={logoSize} min={40} max={100} unit="px" onCommit={logoSize=>updateCampaign({logoSize})}/>
           <label className="flex min-h-8 items-center justify-between gap-2 text-[11px] font-medium text-[#374151]">Button colour
-            <input type="color" aria-label="Email button accent color" value={/^#[0-9a-f]{6}$/i.test(buttonColor)?buttonColor:'#F97316'} onChange={e=>updateCampaign({buttonColor:e.target.value})} className="h-8 w-8 cursor-pointer rounded-md border border-[#DDE1E6] bg-white p-1"/>
+            <CompactColour label="Email button accent color" value={/^#[0-9a-f]{6}$/i.test(buttonColor)?buttonColor:'#F97316'} onCommit={buttonColor=>updateCampaign({buttonColor})}/>
           </label>
         </div>
         {selected?.type==='poster'&&<button type="button" onClick={()=>void loadPosters()}
