@@ -14,12 +14,14 @@ import type {EmailStudioBusiness,EmailStudioConnection} from './EmailMarketingWo
 import EmailCampaignCanvas from './EmailCampaignCanvas';
 import {normalizeSuppressionEmail} from '@/lib/marketing/email-suppression-contract';
 
-type HubTab='campaigns'|'audience'|'templates'|'automations';
+type HubTab='campaigns'|'audience'|'templates'|'automations'|'analytics'|'settings';
 const TABS:{id:HubTab;title:string;icon:string}[]=[
   {id:'campaigns',title:'Campaigns',icon:'document'},
   {id:'audience',title:'Audience & Lists',icon:'people'},
   {id:'templates',title:'Templates',icon:'image'},
   {id:'automations',title:'Automations',icon:'flash'},
+  {id:'analytics',title:'Analytics',icon:'chart'},
+  {id:'settings',title:'Sender Settings',icon:'setting-2'},
 ];
 const panel='rounded-2xl border border-[#E5E7EB] bg-white shadow-[0_6px_20px_rgba(17,24,39,.035)]';
 const secondary='text-[12px] leading-6 text-[#6B7280]';
@@ -590,6 +592,87 @@ export default function EmailMarketingHub({
         Open Marketing Automations {icon('arrow-right-2',15)}
       </Link>
       <p className={secondary}>No workflow in this tab silently schedules or sends email.</p>
+    </section>}
+
+    {tab==='analytics'&&<section aria-label="Email Analytics" className="space-y-4">
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <div><p className="text-[10px] font-bold uppercase tracking-wider text-[#EA580C]">Reporting</p>
+          <h2 className="mt-1 text-[20px] font-extrabold">Email performance</h2>
+          <p className={secondary+' mt-1'}>Live account and preparation data. Delivery reporting begins after a verified provider is connected.</p>
+        </div>
+        <span className="rounded-full border border-[#FED7AA] bg-[#FFF7ED] px-3 py-2 text-[11px] font-bold text-[#9A3412]">Delivery reporting not active</span>
+      </div>
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        {[
+          {label:'Saved campaigns',number:String(drafts.filter(d=>d.businessId===businessId).length),note:'Real saved drafts'},
+          {label:'Cloud-synced',number:String(drafts.filter(d=>d.businessId===businessId&&Boolean(serverVersions[d.id])).length),note:'Server draft records'},
+          {label:'Confirmed opt-ins',number:verifiedCount===undefined?'—':String(verifiedCount),note:verifiedCount===undefined?'Ledger not activated':'Verified ledger records'},
+          {label:'Manual exclusions',number:exclusionCount===null?'—':String(exclusionCount),note:exclusionState==='ready'?'Private do-not-email registry':'Registry unavailable'},
+        ].map(item=><div key={item.label} className={panel+' p-5'}>
+          <p className="text-[11px] font-semibold text-[#6B7280]">{item.label}</p>
+          <p className="mt-3 text-[28px] font-extrabold tabular-nums">{item.number}</p>
+          <p className="mt-1 text-[10px] text-[#9CA3AF]">{item.note}</p>
+        </div>)}
+      </div>
+      <div className={panel+' p-5 sm:p-7'}>
+        <h3 className="text-[15px] font-extrabold">Delivery funnel</h3>
+        <p className={secondary+' mt-2'}>Sent, delivered, bounced, opened, clicked and unsubscribed events require an authenticated provider event stream. No fabricated engagement rates are displayed.</p>
+        <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          {['Delivery & bounces','Opens & clicks','Unsubscribes & complaints'].map(name=>
+            <div key={name} className="rounded-xl border border-dashed border-[#D1D5DB] bg-[#FAFAFA] p-4">
+              <p className="text-[11px] font-bold">{name}</p>
+              <p className="mt-2 text-[23px] font-extrabold text-[#9CA3AF]">—</p>
+              <p className="mt-1 text-[10px] text-[#9CA3AF]">Not connected</p>
+            </div>)}
+        </div>
+      </div>
+    </section>}
+
+    {tab==='settings'&&<section aria-label="Email Sender Settings" className="grid gap-4 lg:grid-cols-2">
+      <div className={panel+' space-y-5 p-5 sm:p-7'}>
+        <div><p className="text-[10px] font-bold uppercase tracking-wider text-[#EA580C]">Account</p>
+          <h2 className="mt-1 text-[20px] font-extrabold">Sender & brand</h2>
+          <p className={secondary+' mt-1'}>Live business identity, connection and reusable brand assets.</p>
+        </div>
+        <div className="space-y-2 rounded-xl border border-[#E5E7EB] p-4">
+          <p className="text-[11px] font-bold text-[#6B7280]">Selected business</p>
+          <p className="text-[14px] font-extrabold">{business?.brandName||business?.name||'No approved business'}</p>
+          <p className={secondary}>Gmail: {sender?sender.accountDisplayName:'Not connected'}</p>
+          <p className={secondary}>Cloud drafts: {serverStorageReady?'Available':'Not available'}</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/vendor/marketing-engine/connections"
+            className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-[#111827] px-4 text-[11px] font-bold text-white">
+            {sender?'Manage connected Gmail':'Connect Gmail'} {icon('arrow-right-2',15)}
+          </Link>
+          <Link href="/vendor/marketing/brand"
+            className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-[#FDBA74] px-4 text-[11px] font-bold text-[#C2410C]">
+            Edit Brand Kit {icon('arrow-right-2',15)}
+          </Link>
+        </div>
+      </div>
+      <div className={panel+' space-y-4 p-5 sm:p-7'}>
+        <div><p className="text-[10px] font-bold uppercase tracking-wider text-[#EA580C]">Delivery</p>
+          <h2 className="mt-1 text-[20px] font-extrabold">Launch readiness</h2>
+          <p className={secondary+' mt-1'}>Required safeguards before a marketing campaign can be sent.</p>
+        </div>
+        {[
+          {label:'Approved SLBI business',ready:Boolean(business),detail:'Required owner-bound identity'},
+          {label:'Gmail account linked',ready:Boolean(sender),detail:'Gmail alone is not bulk sender authorization'},
+          {label:'Confirmed opt-in ledger',ready:verifiedCount!==undefined,detail:'A verified count alone does not activate sending'},
+          {label:'Manual suppression registry',ready:exclusionState==='ready',detail:'Independent provider exclusion list'},
+        ].map(step=><div key={step.label} className="flex items-start gap-3 rounded-xl border border-[#E5E7EB] p-3">
+          <span className={'mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full '+
+            (step.ready?'bg-[#DCFCE7] text-[#166534]':'bg-[#F3F4F6] text-[#6B7280]')}>
+            {icon(step.ready?'tick-circle':'clock',14)}
+          </span>
+          <div><p className="text-[12px] font-bold">{step.label}</p><p className={secondary}>{step.detail}</p></div>
+        </div>)}
+        <p className="rounded-xl border border-[#FED7AA] bg-[#FFF7ED] p-3 text-[11px] leading-5 text-[#9A3412]">
+          Bulk provider/domain verification, double-opt-in, one-click unsubscribe, rate-limited worker
+          and signed delivery events are still required. Sending and scheduling remain unavailable.
+        </p>
+      </div>
     </section>}
 
     {(notice||error)&&<p role={error?'alert':'status'} className={'rounded-xl border px-4 py-3 text-[12px] '+
