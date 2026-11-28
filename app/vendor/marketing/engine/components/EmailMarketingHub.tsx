@@ -214,6 +214,10 @@ export default function EmailMarketingHub({
           <p className="text-[10px] font-extrabold uppercase tracking-[.18em] text-[#EA580C]">GrowthOS · Marketing Suite</p>
           <h1 className="mt-1 text-[25px] font-extrabold tracking-[-.04em] text-[#111827] sm:text-[31px]">Email Marketing Studio</h1>
           <p className={secondary+' mt-1'}>Design campaigns. Build your audience. Grow customer relationships.</p>
+          <p className="mt-2 inline-flex items-center gap-2 text-[10px] font-semibold text-[#6B7280]">
+            <span className={'h-2 w-2 rounded-full '+(serverStorageReady?'bg-[#22C55E]':'bg-[#D97706]')}/>
+            {serverStorageReady?'Account-synced drafts with version history':'Browser draft backup · cloud sync not active'}
+          </p>
         </div>
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           {businesses.length>1&&<select aria-label="Choose your business" value={businessId}
@@ -321,7 +325,9 @@ export default function EmailMarketingHub({
                 <p className="mt-1 truncate text-[11px] text-[#6B7280]">{short(d.subject,140)}</p>
               </div>
               <div className="text-[10px] text-[#6B7280] sm:w-32">
-                <span className="rounded-full border border-[#E5E7EB] bg-[#F9FAFB] px-2 py-1 font-bold">Browser draft</span>
+                <span className="rounded-full border border-[#E5E7EB] bg-[#F9FAFB] px-2 py-1 font-bold">
+                  {serverVersions[d.id]?'Cloud draft · v'+serverVersions[d.id]:'Browser draft'}
+                </span>
                 <p className="mt-2">Edited {niceDate(d.updatedAt)}</p>
               </div>
               <div className="flex items-center gap-2">
@@ -329,13 +335,25 @@ export default function EmailMarketingHub({
                   className="inline-flex min-h-10 items-center gap-1 rounded-lg border border-[#FDBA74] bg-[#FFF7ED] px-3 text-[11px] font-bold text-[#C2410C]">
                   Continue editing {icon('arrow-right-2',14)}
                 </button>
-                <button type="button" onClick={()=>removeDraft(d.id)} aria-label={'Delete '+d.title}
+                {!serverVersions[d.id]&&serverStorageReady&&<button type="button" disabled={syncBusy}
+                  onClick={()=>void saveDraft(d)}
+                  className="min-h-10 rounded-lg border border-[#E5E7EB] px-3 text-[11px] font-semibold text-[#EA580C] disabled:opacity-40">
+                  Sync
+                </button>}
+                {Boolean(serverVersions[d.id])&&<button type="button" onClick={()=>void openHistory(d.id)}
+                  className="min-h-10 rounded-lg border border-[#E5E7EB] px-3 text-[11px] font-semibold text-[#6B7280]">
+                  History
+                </button>}
+                <button type="button" onClick={()=>void removeDraft(d.id)} aria-label={'Delete '+d.title}
                   className="min-h-10 rounded-lg border border-[#E5E7EB] px-3 text-[11px] font-bold text-[#6B7280]">Delete</button>
               </div>
             </div>)}
           </div>}
         <div className="border-t border-[#F3F4F6] bg-[#FAFAFB] px-6 py-3 text-[10px] text-[#6B7280]">
-          Drafts here are saved on this browser only. Sent, opened and clicked figures appear only when verified delivery reporting is available.
+          {serverStorageReady?
+            'Cloud drafts sync to your SLBI account; offline browser backups remain available.':
+            'Drafts are saved in this browser until cloud sync is available.'}
+          {' '}Sent, opened and clicked figures appear only when verified delivery reporting is available.
         </div>
       </div>
     </section>}
