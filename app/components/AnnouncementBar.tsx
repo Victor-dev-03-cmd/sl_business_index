@@ -9,10 +9,10 @@ const DISMISS_KEY = "slbusinessindex-announcement-dismissed";
 export default function AnnouncementBar() {
   const [visible, setVisible] = useState(true);
 
-  // Respect a dismissal for the current browser session only.
+  // Respect a dismissal for the this browser across reloads and sessions.
   useEffect(() => {
     try {
-      if (sessionStorage.getItem(DISMISS_KEY) === "yes") setVisible(false);
+      if (localStorage.getItem(DISMISS_KEY) === "yes") setVisible(false);
     } catch {
       // Private browsing / storage disabled: the banner remains dismissible.
     }
@@ -21,7 +21,7 @@ export default function AnnouncementBar() {
   const dismiss = () => {
     setVisible(false);
     try {
-      sessionStorage.setItem(DISMISS_KEY, "yes");
+      localStorage.setItem(DISMISS_KEY, "yes");
     } catch {
       // Storage is optional; hiding the banner still works.
     }

@@ -59,14 +59,14 @@ let registeredFor:string|null=null;
 let lastSuccess=0;
 let generation=0;
 export function devicePushReady(uid:string){return registeredFor===uid&&readPushRegistration()?.uid===uid&&supportsPush()&&Notification.permission==='granted'}
-function optedOut(uid:string){try{return localStorage.getItem(optOutKey+':'+uid)==='1'}catch{return true}}
+export function devicePushOptedOut(uid:string){try{return localStorage.getItem(optOutKey+':'+uid)==='1'}catch{return true}}
 function markOptOut(uid:string,disabled:boolean){try{if(disabled)localStorage.setItem(optOutKey+':'+uid,'1');else localStorage.removeItem(optOutKey+':'+uid)}catch{}}
 async function registerGranted(uid:string){
   if(registration){await registration.catch(()=>{});if(devicePushReady(uid))return;}
   if(devicePushReady(uid)&&Date.now()-lastSuccess<300000)return;
   const current=generation;
   const task=(async()=>{
-    if(!supportsPush()||Notification.permission!=='granted'||optedOut(uid))return;
+    if(!supportsPush()||Notification.permission!=='granted'||devicePushOptedOut(uid))return;
     const saved=readPushRegistration();
     if(saved&&saved.uid!==uid)throw new Error('Device account changed. Reopen Notifications.');
     const c=await config();
@@ -75,11 +75,11 @@ async function registerGranted(uid:string){
     const m=await messaging();
     const token=await m.getToken({vapidKey:c.vapidKey,serviceWorkerRegistration:reg});
     if(!token)throw new Error('No device registration token was received.');
-    if(current!==generation||optedOut(uid))return;
+    if(current!==generation||devicePushOptedOut(uid))return;
     const response=await fetch('/api/push/device',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({token,expectedUid:uid})});
     if(!response.ok)throw new Error('Could not register this device. Try again.');
-    if(current!==generation||optedOut(uid)){
-      if(optedOut(uid))await fetch('/api/push/device',{method:'DELETE',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({token,expectedUid:uid})}).catch(()=>undefined);
+    if(current!==generation||devicePushOptedOut(uid)){
+      if(devicePushOptedOut(uid))await fetch('/api/push/device',{method:'DELETE',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({token,expectedUid:uid})}).catch(()=>undefined);
       return;
     }
     localStorage.setItem(key,JSON.stringify({token,uid}));
@@ -126,7 +126,7 @@ export async function clearLocalPush(){
 export async function refreshPush(uid:string){
   const saved=readPushRegistration();
   if(saved&&saved.uid!==uid){await clearLocalPush();}
-  if(!supportsPush()||Notification.permission!=='granted'||optedOut(uid)||(isIosDevice()&&!isInstalled()))return;
+  if(!supportsPush()||Notification.permission!=='granted'||devicePushOptedOut(uid)||(isIosDevice()&&!isInstalled()))return;
   // Recover missing local registration, missing worker, stale token or renewed auth session.
   // No requestPermission here: only recover an already granted browser permission.
   await registerGranted(uid);
