@@ -49,9 +49,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if(loading)return;
     const saved=readPushRegistration();
-    if(!saved)return;
-    if(!user||saved.uid!==user.id){void clearLocalPush();return;}
-    void refreshPush(user.id).catch(()=>{});
+    if(!user){if(saved)void clearLocalPush();return;}
+    const uid=user.id;
+    let last=0;
+    const recover=()=>{if(document.visibilityState!=='visible'||Date.now()-last<30000)return;last=Date.now();void refreshPush(uid).catch(()=>{});};
+    recover();
+    document.addEventListener('visibilitychange',recover);
+    window.addEventListener('online',recover);
+    window.addEventListener('focus',recover);
+    return()=>{document.removeEventListener('visibilitychange',recover);window.removeEventListener('online',recover);window.removeEventListener('focus',recover);};
   },[loading,user?.id]);
 
   return (
