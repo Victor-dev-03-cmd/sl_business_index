@@ -20,7 +20,6 @@ import {
   Fingerprint,
 } from "lucide-react";
 import VerifiedBadge from "./VerifiedBadge";
-import IconsaxIcon from "@/app/vendor/components/IconsaxIcon";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // The user prop is now the single source of truth, passed from Navbar.
@@ -133,8 +132,6 @@ export default function AuthButton({ user }: { user?: AuthUser | null }) {
             </Link>
           </DropdownMenuItem>
 
-          <DropdownMenuItem asChild className="cursor-pointer py-3">
-          </DropdownMenuItem>
           <DropdownMenuItem asChild className="cursor-pointer py-3">
             <Link href="/auth/passkeys" className="flex items-center w-full min-h-[44px]">
               <Fingerprint className="mr-3 h-5 w-5 opacity-70" />
