@@ -51,7 +51,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     if(!user){void clearLocalPush();return;}
     const uid=user.id;
     let last=0;
-    const recover=()=>{if(document.visibilityState!=='visible'||Date.now()-last<30000)return;last=Date.now();void refreshPush(uid).catch(()=>{});};
+    const recover=()=>{if(document.visibilityState!=='visible'||Date.now()-last<30000)return;last=Date.now();void refreshPush(uid).catch(()=>{window.dispatchEvent(new CustomEvent('slbi-push-recovery-failed',{detail:uid}));});};
     recover();
     document.addEventListener('visibilitychange',recover);
     window.addEventListener('online',recover);
