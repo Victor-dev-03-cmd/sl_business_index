@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
 import { usePathname } from "next/navigation";
+import {useQuery} from "@tanstack/react-query";
+import {publicCategoryQuery} from "@/lib/discovery/category-query";
 import { supabase } from "@/lib/supabaseClient";
 import { useSession } from "./SessionContext";
 import CategoriesMenu from "./CategoriesMenu";
@@ -43,7 +45,8 @@ export default function Navbar() {
   const [fullUserData, setFullUserData] = useState<
     UserProfile | null | undefined
   >(undefined);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const {data:categorySnapshot}=useQuery(publicCategoryQuery);
+  const categories=categorySnapshot?.rows??[];
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [categOpen, setCategOpen] = useState(false);
@@ -264,22 +267,6 @@ export default function Navbar() {
     }
   }, [pathname, user?.id]);
 
-  useEffect(() => {
-    const fetchInitialData = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("categories")
-          .select("*")
-          .order("name", { ascending: true });
-        if (!error) {
-          setCategories(data || []);
-        }
-      } catch (err) {
-        console.error("Error fetching categories in Navbar:", err);
-      }
-    };
-    fetchInitialData();
-  }, []);
 
   useEffect(() => {
     let active = true;
