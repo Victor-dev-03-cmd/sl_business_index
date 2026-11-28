@@ -116,10 +116,13 @@ BEGIN
   END IF;
   -- Serialize changes by account. Explicit withdrawal is always available.
   PERFORM pg_advisory_xact_lock(hashtextextended(p_user::text,92741));
+  -- Withdrawal is never rate-limited; throttle only additions/enabling.
+  IF p_action NOT IN ('unfollow','unsubscribe','network_unsubscribe','news_off','push_off') THEN
   INSERT INTO slbi_audience_private.action_limits(user_id,minute_bucket,used) VALUES(p_user,date_trunc('minute',now()),1)
   ON CONFLICT(user_id) DO UPDATE SET minute_bucket=EXCLUDED.minute_bucket,used=CASE WHEN action_limits.minute_bucket=EXCLUDED.minute_bucket THEN action_limits.used+1 ELSE 1 END
     WHERE action_limits.minute_bucket<>EXCLUDED.minute_bucket OR action_limits.used<30;
   IF NOT FOUND THEN RAISE EXCEPTION 'PREFERENCE_RATE_LIMIT'; END IF;
+  END IF;
   IF p_action IN ('network_subscribe','network_unsubscribe') THEN
     IF p_business IS NOT NULL OR p_language NOT IN ('en','ta','si') THEN RAISE EXCEPTION 'INVALID_REQUEST'; END IF;
     SELECT * INTO network_row FROM slbi_audience_private.network_preferences WHERE user_id=p_user;
@@ -167,13 +170,14 @@ BEGIN
   IF p_language NOT IN ('all','en','ta','si') OR NOT EXISTS(SELECT 1 FROM public.businesses WHERE id=p_business AND owner_id=p_owner AND status='approved') THEN RETURN NULL; END IF;
   SELECT count(*) FILTER(WHERE m.followed_at IS NOT NULL),count(*) FILTER(WHERE m.followed_at IS NOT NULL AND m.news AND m.push),
     count(*) FILTER(WHERE m.email_consent_at IS NOT NULL AND u.email_confirmed_at IS NOT NULL AND m.email_digest=extensions.digest(lower(trim(u.email)),'sha256')
-      AND NOT EXISTS(SELECT 1 FROM public.marketing_email_suppressions s WHERE s.business_id=p_business AND s.email=lower(trim(u.email))))
+      )
   INTO followers,pushes,subscribers FROM slbi_audience_private.memberships m JOIN auth.users u ON u.id=m.user_id WHERE m.business_id=p_business;
   SELECT enabled INTO network_enabled FROM slbi_audience_private.network_control WHERE singleton;
   IF network_enabled THEN
     SELECT count(*) INTO network_count FROM slbi_audience_private.network_preferences n JOIN auth.users u ON u.id=n.user_id
     WHERE n.consent_at IS NOT NULL AND (p_language='all' OR n.language=p_language) AND u.email_confirmed_at IS NOT NULL AND n.email_digest=extensions.digest(lower(trim(u.email)),'sha256')
-      AND NOT EXISTS(SELECT 1 FROM public.marketing_email_suppressions s WHERE s.business_id=p_business AND s.email=lower(trim(u.email)));
+      ;
+    -- No vendor-specific suppression delta or exact recipient count: prevents probing the network by blocking known addresses.
     network_count:=CASE WHEN network_count<20 THEN NULL ELSE (network_count/10)*10 END;
   END IF;
   RETURN jsonb_build_object('followers',followers,'subscribers',subscribers,'pushPreferences',pushes,'networkEnabled',network_enabled,'networkReach',network_count);
@@ -184,11 +188,22 @@ RETURNS jsonb LANGUAGE sql SECURITY DEFINER SET search_path='' AS $
  FROM (
   SELECT b.id,count(m.user_id) FILTER(WHERE m.email_consent_at IS NOT NULL AND u.email_confirmed_at IS NOT NULL
     AND m.email_digest=extensions.digest(lower(trim(u.email)),'sha256')
-    AND NOT EXISTS(SELECT 1 FROM public.marketing_email_suppressions s WHERE s.business_id=b.id AND s.email=lower(trim(u.email)))) AS subscribers
+    ) AS subscribers
   FROM public.businesses b LEFT JOIN slbi_audience_private.memberships m ON m.business_id=b.id
   LEFT JOIN auth.users u ON u.id=m.user_id WHERE b.owner_id=p_owner AND b.status='approved' GROUP BY b.id
  ) owned
 $;
+-- Internal, non-exposed eligibility primitive for future provider stage.
+-- Never expose its suppression-adjusted result or recipient identities to vendors.
+CREATE FUNCTION slbi_audience_private.business_eligible_count(p_business uuid)
+RETURNS bigint LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $
+ SELECT count(*) FROM slbi_audience_private.memberships m JOIN auth.users u ON u.id=m.user_id
+ WHERE m.business_id=p_business AND m.email_consent_at IS NOT NULL AND u.email_confirmed_at IS NOT NULL
+ AND m.email_digest=extensions.digest(lower(trim(u.email)),'sha256')
+ AND NOT EXISTS(SELECT 1 FROM public.marketing_email_suppressions s WHERE s.business_id=p_business AND s.email=lower(trim(u.email)))
+ AND EXISTS(SELECT 1 FROM public.businesses b WHERE b.id=p_business AND b.status='approved')
+$;
+REVOKE ALL ON FUNCTION slbi_audience_private.business_eligible_count(uuid) FROM PUBLIC,anon,authenticated;
 CREATE FUNCTION public.slbi_audience_admin_control(p_actor uuid,p_enabled boolean DEFAULT NULL)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $
 DECLARE current_enabled boolean; total bigint;
