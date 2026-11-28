@@ -36,6 +36,8 @@ export async function POST(request:Request){
  const {data,error:writeError}=await service.rpc('slbi_audience_change',{p_user:user.id,p_business:businessId,p_action:action,p_language:language});
  if(writeError){
    if(writeError.message.includes('VERIFIED_EMAIL_REQUIRED'))return reply(409,{error:'Verify your account email before subscribing.'});
+   if(writeError.message.includes('PREFERENCE_RATE_LIMIT'))return reply(429,{error:'Too many preference changes. Try again shortly.'});
+   if(writeError.message.includes('MEMBERSHIP_LIMIT'))return reply(409,{error:'Manage your existing 200 business subscriptions before adding another.'});
    if(writeError.message.includes('FOLLOW_REQUIRED'))return reply(409,{error:'Follow this business first.'});
    if(writeError.message.includes('BUSINESS_UNAVAILABLE'))return reply(404,{error:'Business unavailable.'});
    return reply(503,{error:'Could not save preferences. Please retry.'});
