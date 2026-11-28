@@ -23,7 +23,7 @@ export default function BusinessAudienceControls({businessId,businessName,initia
    if(busy)return;
    setBusy(true);setError('');
    try{
-     const res=await fetch('/api/audience',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({businessId,action})});
+     const res=await fetch('/api/audience',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({businessId,action,consentVersion:'slbi-audience-sharing-v2'})});
      const data=await res.json();if(!res.ok)throw Error(data.error||'Could not save.');
      if(typeof data.state?.following==='boolean')setState(data.state);
      else if(initial)setState({...initial,following:false,news:false,push:false,email:false});
@@ -43,8 +43,8 @@ export default function BusinessAudienceControls({businessId,businessName,initia
      {!signedIn?<Link href="/login" className="font-semibold text-[#C2410C]">Sign in to manage subscriptions</Link>:<>
        <label className="flex items-center justify-between gap-3"><span>Business news in-app</span><input type="checkbox" checked={state.news} disabled={busy||!state.following||state.approved===false} onChange={e=>void change(e.target.checked?'news_on':'news_off')} className="accent-[#F97316]"/></label>
        <label className="flex items-center justify-between gap-3"><span>Device push for business news</span><input type="checkbox" checked={state.push} disabled={busy||!state.following||state.approved===false} onChange={e=>void change(e.target.checked?'push_on':'push_off')} className="accent-[#F97316]"/></label>
-       <label className="flex items-start justify-between gap-3"><span>Receive promotional emails from {businessName} at my verified account email.<small className="mt-1 block text-neutral-500">Optional. Withdraw here at any time. Email delivery is not activated.</small></span><input type="checkbox" checked={state.email} disabled={busy||state.approved===false&&!state.email} onChange={e=>void change(e.target.checked?'subscribe':'unsubscribe')} className="mt-1 accent-[#F97316]"/></label>
-       {state.email&&state.emailEligible===false&&<div className="text-neutral-600">Account email changed. <button type="button" disabled={busy||state.approved===false} onClick={()=>void change('subscribe')} className="font-semibold text-[#C2410C] underline">Confirm subscription for the current verified email</button>.</div>}
+       <label className="flex items-start justify-between gap-3"><span>Subscribe to {businessName} and share my verified email address with this business for its marketing emails.<small className="mt-1 block text-neutral-500">Optional. Your email appears in this vendor's subscriber list. Withdraw any time to stop future access in SLBI.</small></span><input type="checkbox" checked={state.email} disabled={busy||state.approved===false&&!state.email} onChange={e=>void change(e.target.checked?'subscribe':'unsubscribe')} className="mt-1 accent-[#F97316]"/></label>
+       {state.email&&state.emailEligible===false&&<div className="text-neutral-600">Account email or business ownership changed. <button type="button" disabled={busy||state.approved===false} onClick={()=>void change('subscribe')} className="font-semibold text-[#C2410C] underline">Confirm subscription for the current verified email</button>.</div>}
        <Link href="/following" className="inline-flex font-semibold text-[#C2410C]">Manage all subscriptions</Link>
      </>}
    </div>}
