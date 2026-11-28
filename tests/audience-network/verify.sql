@@ -6,7 +6,7 @@ BEGIN
  ASSERT NOT has_function_privilege('authenticated','public.slbi_audience_change(uuid,uuid,text,text)','EXECUTE');
  ASSERT NOT has_function_privilege('anon','public.slbi_audience_read(uuid,uuid)','EXECUTE');
  ASSERT NOT has_function_privilege('authenticated','public.slbi_audience_owner_summary(uuid,uuid,text)','EXECUTE');
- ASSERT NOT has_function_privilege('authenticated','public.slbi_audience_admin_control(uuid,boolean)','EXECUTE');
+ ASSERT NOT has_function_privilege('authenticated','public.slbi_audience_admin_control(uuid,uuid,text)','EXECUTE');
  ASSERT has_function_privilege('service_role','public.slbi_audience_change(uuid,uuid,text,text)','EXECUTE');
  ASSERT (SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='slbi_audience_private' AND c.relkind='r' AND NOT c.relrowsecurity)=0;
 END $$;
@@ -25,10 +25,12 @@ BEGIN
  s:=public.slbi_audience_owner_summary(own,a,'all'); ASSERT s->>'followers'='2' AND s->>'subscribers'='2' AND s->>'pushPreferences'='1' AND s->>'networkEnabled'='false';
  ASSERT public.slbi_audience_owner_summary(own,b,'all') IS NULL;
  ASSERT public.slbi_audience_owner_summary(own,'cccccccc-cccc-4ccc-8ccc-cccccccccccc','all') IS NULL;
- ASSERT public.slbi_audience_admin_control(own,true) IS NULL;
+ ASSERT public.slbi_audience_admin_control(own,NULL,NULL) IS NULL;
+ ASSERT public.slbi_audience_lists(own,b,0) IS NULL;
+ ASSERT jsonb_array_length(public.slbi_audience_lists(own,a,0)->'direct')=2;
+ ASSERT jsonb_array_length(public.slbi_audience_lists(own,a,0)->'network')=0;
  PERFORM public.slbi_audience_change(fa,NULL,'network_subscribe','ta');
- ASSERT public.slbi_audience_admin_control(admin,true)->>'enabled'='true';
- s:=public.slbi_audience_owner_summary(own,a,'ta'); ASSERT s->>'networkEnabled'='true' AND s->>'networkReach' IS NULL;
+ s:=public.slbi_audience_owner_summary(own,a,'ta'); ASSERT s->>'networkEnabled'='false' AND s->>'networkReach' IS NULL;
  ASSERT public.slbi_audience_read(fa,NULL)->>'network'='true';
  ASSERT public.slbi_audience_read(fb,NULL)->>'network'='false';
  ASSERT public.slbi_audience_read(fa,NULL)::text NOT LIKE '%example.invalid%';
@@ -78,17 +80,28 @@ SET ROLE service_role;
 SELECT public.slbi_audience_change('33333333-3333-4333-8333-333333333333','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','unsubscribe');
 SELECT public.slbi_audience_change('33333333-3333-4333-8333-333333333333',NULL,'network_unsubscribe');
 RESET ROLE;
--- 20 explicit synthetic network opt-ins; exact recipient identities never returned to owner.
+-- Only explicit opt-ins enter a fixed, owner-scoped, approved allocation.
 INSERT INTO auth.users(id,email,email_confirmed_at) SELECT md5('audience-fixture-'||i)::uuid,'synthetic-'||i||'@example.invalid',now() FROM generate_series(1,20) i;
-DO $$ DECLARE account record; s jsonb;
+DO $$
+DECLARE account record; s jsonb; q uuid; a uuid:='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'; b uuid:='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'; own uuid:='11111111-1111-4111-8111-111111111111'; admin uuid:='77777777-7777-4777-8777-777777777777'; recipient uuid;
 BEGIN
  FOR account IN SELECT id FROM auth.users WHERE email LIKE 'synthetic-%' LOOP
-   PERFORM public.slbi_audience_change(account.id,NULL,'network_subscribe','si');
+  PERFORM public.slbi_audience_change(account.id,NULL,'network_subscribe','si');
  END LOOP;
- s:=public.slbi_audience_owner_summary('11111111-1111-4111-8111-111111111111','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','si');
- ASSERT s->>'networkReach'='20';
- ASSERT public.slbi_audience_owner_summary('11111111-1111-4111-8111-111111111111','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','ta')->>'networkReach' IS NULL;
- ASSERT public.slbi_audience_admin_control('77777777-7777-4777-8777-777777777777',false)->>'deliveryEnabled'='false';
- ASSERT public.slbi_audience_owner_summary('11111111-1111-4111-8111-111111111111','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','all')->>'networkReach' IS NULL;
+ ASSERT public.slbi_audience_request(own,b,5,'si','Summer offers') IS NULL;
+ q:=(public.slbi_audience_request(own,a,5,'si','Summer offers')->>'id')::uuid;
+ ASSERT jsonb_array_length(public.slbi_audience_lists(own,a,0)->'network')=0;
+ ASSERT public.slbi_audience_admin_control(own,q,'approved') IS NULL;
+ ASSERT public.slbi_audience_admin_control(admin,q,'approved')->>'deliveryEnabled'='false';
+ ASSERT jsonb_array_length(public.slbi_audience_lists(own,a,0)->'network')=5;
+ ASSERT public.slbi_audience_owner_summary(own,a,'si')->>'networkReach'='5';
+ SELECT user_id INTO recipient FROM slbi_audience_private.network_grants WHERE request_id=q LIMIT 1;
+ PERFORM public.slbi_audience_change(recipient,NULL,'network_unsubscribe');
+ ASSERT jsonb_array_length(public.slbi_audience_lists(own,a,0)->'network')=4;
+ PERFORM public.slbi_audience_change(recipient,NULL,'network_subscribe','si');
+ ASSERT jsonb_array_length(public.slbi_audience_lists(own,a,0)->'network')=4;
+ PERFORM public.slbi_audience_admin_control(admin,q,'revoked');
+ ASSERT jsonb_array_length(public.slbi_audience_lists(own,a,0)->'network')=0;
+ ASSERT public.slbi_audience_owner_summary(own,a,'all')->>'networkEnabled'='false';
 END $$;
 SELECT 'Audience SQL fixture PASS' AS result;
