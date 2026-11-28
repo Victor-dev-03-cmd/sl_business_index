@@ -1,6 +1,6 @@
 import {randomBytes} from 'node:crypto';
-import type {LocalEmailCampaign} from './email-hub-contract';
-import {isSafeEmailCta} from './email-hub-contract';
+import type {LocalEmailCampaign} from './email-hub-contract.ts';
+import {isSafeEmailCta} from './email-hub-contract.ts';
 export type EmailRenderIdentity={name:string;logoUrl?:string|null;address?:string|null;city?:string|null;accentColor?:string|null};
 export type EmailRenderOptions={mode:'self_test'|'marketing';unsubscribeUrl?:string;posterPublicUrl?:string};
 export type EmailRenderResult={html:string;text:string;warnings:string[]};
