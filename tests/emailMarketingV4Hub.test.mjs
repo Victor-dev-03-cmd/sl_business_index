@@ -84,8 +84,8 @@ test('Owner-scoped local drafts never import contact email lists, provider token
 });
 test('Current security-gated Gmail, approved business and optional QA Gemini survive architecture update',()=>{
  for(const s of [".eq('owner_id',user.id)",".eq('provider','google_mail')",
-   ".eq('status','connected')","marketing_email_optins",
-   ".eq('confirmation_status','confirmed')","emailAiAllowed=await isPosterInternalQAAccount",
+   ".eq('status','connected')","slbi_audience_owner_counts",
+   "p_owner:user.id","emailAiAllowed=await isPosterInternalQAAccount",
    'getGoogleConnectorConfig']){
    assert.ok(page.includes(s),s);
  }
@@ -155,4 +155,34 @@ test('Compact editor uses precise input fields and small Bulk icon tools, not sl
  assert.match(canvas,/title="Duplicate selected block"/);
  assert.match(canvas,/title="Remove selected block"/);
  assert.match(canvas,/initial\.blocks\.find\(b=>b\.type==='headline'\)/);
+});
+
+test('Audience plans persist as provider-free source and language, never recipient data',()=>{
+ const d=draft();
+ const plan={source:'network',language:'ta'};
+ assert.deepEqual(normalizeLocalCampaign({...d,audiencePlan:plan},owner,[business])?.audiencePlan,plan);
+ assert.ok(normalizeLocalCampaign(d,owner,[business]));
+ for(const bad of [{source:'all_registered_users',language:'all'},{source:'network',language:'invalid'},{source:'business',language:'ta'},{source:'network',language:'all',recipients:['test@example.invalid']}])
+   assert.equal(normalizeLocalCampaign({...d,audiencePlan:bad},owner,[business]),null);
+ const api=read('app/api/audience/route.ts');
+ const vendor=read('app/api/marketing/email/audience/route.ts');
+ const admin=read('app/api/admin/audience-network/route.ts');
+ const sql=read('docs/growth/AUDIENCE_NETWORK_FOUNDATION_REVIEW.sql');
+ const profile=read('app/business/[slug]/BusinessDetailsClient.tsx');
+ const centre=read('app/following/page.tsx');
+ for(const token of ['auth.getUser()','isSameOrigin','p_user:user.id','slbi_audience_change','PREFERENCE_RATE_LIMIT'])assert.ok(api.includes(token),token);
+ for(const token of ['auth.getUser()','getMarketingAccessForUser','p_owner:user.id','slbi_audience_owner_summary'])assert.ok(vendor.includes(token),token);
+ for(const token of ['auth.getUser()',"['admin','ceo']", 'p_actor:user.id','isSameOrigin'])assert.ok(admin.includes(token),token);
+ assert.match(profile,/BusinessAudienceControls/);assert.match(centre,/network_subscribe/);
+ assert.match(hub,/AudienceNetworkSummary/);assert.match(canvas,/AudiencePlanPicker/);
+ assert.match(sql,/REVOKE ALL ON SCHEMA slbi_audience_private FROM PUBLIC,anon,authenticated/);
+ assert.match(sql,/FOR UPDATE SKIP LOCKED/);
+ assert.match(sql,/LIMIT 250 FOR SHARE/);
+ assert.match(sql,/requested_count BETWEEN 1 AND 100/);
+ assert.match(sql,/slbi_audience_lists/);
+ assert.match(sql,/network_grants/);
+ assert.match(sql,/q\.owner_id=p_owner AND q\.status='approved'/);
+ assert.match(api,/slbi-audience-sharing-v2/);
+ assert.match(sql,/deliveryEnabled',false/);
+ assert.doesNotMatch(vendor,/\.from\('profiles'\)|\.select\('email'\)|recipients:/);
 });

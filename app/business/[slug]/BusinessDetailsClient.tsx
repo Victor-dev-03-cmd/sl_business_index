@@ -46,6 +46,7 @@ import OwnerVerificationPrompt from "./OwnerVerificationPrompt";
 import DeferredBusinessMap from "./DeferredBusinessMap";
 import { isApprovedVerifiedBusiness } from "@/lib/business-verification";
 import BrandIcon from "@/app/components/BrandIcon";
+import BusinessAudienceControls from "@/app/components/audience/BusinessAudienceControls";
 import {useSavedBusinesses} from "@/lib/public-saved-businesses";
 import ReportModal from "@/app/components/ReportModal";
 import { logEvent } from "@/lib/utils";
@@ -464,6 +465,7 @@ export default function BusinessDetailsClient({ business, galleryUrls, services 
               </div>
             </section>
 
+            {business.status==="approved"&&<div className="mt-4"><BusinessAudienceControls businessId={String(business.id)} businessName={business.name}/></div>}
             <div className="grid items-start gap-y-7 pt-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.45fr)] lg:gap-x-6 xl:gap-x-8">
               <div className="min-w-0 space-y-8">
                 <section id="overview" className="scroll-mt-24 min-w-0">

@@ -12,6 +12,7 @@ import {
 } from '@/lib/marketing/email-hub-contract';
 import type {EmailStudioBusiness,EmailStudioConnection} from './EmailMarketingWorkbench';
 import EmailCampaignCanvas from './EmailCampaignCanvas';
+import AudienceNetworkSummary from './AudienceNetworkSummary';
 import {normalizeSuppressionEmail} from '@/lib/marketing/email-suppression-contract';
 
 type HubTab='overview'|'campaigns'|'audience'|'templates'|'automations'|'analytics'|'settings';
@@ -377,7 +378,7 @@ export default function EmailMarketingHub({
         {[
           {name:'Campaign drafts',value:ready?String(businessDrafts.length):'—',hint:'Saved designs',iconName:'document'},
           {name:'Cloud drafts',value:ready?String(cloudCount):'—',hint:'Account-synced',iconName:'document'},
-          {name:'Subscribers',value:verifiedCount===undefined?'—':String(verifiedCount),hint:'Confirmed opt-ins',iconName:'people'},
+          {name:'Subscribers',value:verifiedCount===undefined?'—':String(verifiedCount),hint:'Verified-account opt-ins',iconName:'people'},
           {name:'Sender',value:sender?'Connected':'Not linked',hint:'Mailbox status only',iconName:'sms'},
         ].map(k=><div key={k.name} className={panel+' p-4 sm:p-5'}>
           <div className="flex items-center gap-2 text-xs font-semibold text-[#6B7280]"><span className="text-[#EA580C]">{icon(k.iconName,19)}</span>{k.name}</div>
@@ -395,7 +396,7 @@ export default function EmailMarketingHub({
             {name:'Business identity',ok:Boolean(business),detail:business?'Approved business selected':'Select an approved business',target:'settings' as HubTab},
             {name:'Cloud draft storage',ok:serverStorageReady,detail:serverStorageReady?'Ready':'Browser backup only',target:'campaigns' as HubTab},
             {name:'Connected mailbox',ok:Boolean(sender),detail:sender?'Connected':'Connect your Gmail account',target:'settings' as HubTab},
-            {name:'Audience consent',ok:typeof verifiedCount==='number'&&verifiedCount>0,detail:'Confirmed subscribers only',target:'audience' as HubTab},
+            {name:'Audience consent',ok:typeof verifiedCount==='number'&&verifiedCount>0,detail:'Verified-account opt-ins only',target:'audience' as HubTab},
             {name:'Delivery provider',ok:false,detail:'Not configured',target:'settings' as HubTab},
           ].map(s=><button key={s.name} type="button" onClick={()=>navigate(s.target)} className="mt-3 flex w-full items-center gap-3 rounded-lg border border-[#E5E7EB] p-3 text-left hover:border-[#FDBA74]"><span className={'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold '+(s.ok?'bg-[#DCFCE7] text-[#166534]':'bg-[#F3F4F6] text-[#6B7280]')}>{s.ok?'✓':'○'}</span><span className="min-w-0 flex-1"><strong className="block text-xs">{s.name}</strong><span className="block text-xs text-[#6B7280]">{s.detail}</span></span>{icon('arrow-right-2',14)}</button>)}
         </div>
@@ -409,7 +410,7 @@ export default function EmailMarketingHub({
           {name:'Cloud drafts',value:ready?String(cloudCount):'—',hint:'Saved to account',iconName:'document'},
           {name:'Browser drafts',value:ready?String(businessDrafts.length-cloudCount):'—',hint:'Local backup only',iconName:'document'},
           {name:'Subscribers',value:verifiedCount===undefined?'—':String(verifiedCount),
-            hint:verifiedCount===undefined?'List not activated':'Confirmed opt-ins',iconName:'people'},
+            hint:verifiedCount===undefined?'List not activated':'Verified-account opt-ins',iconName:'people'},
         ].map(k=> <div key={k.name} className={panel+' min-h-[130px] p-4 sm:p-5'}>
           <div className="flex items-center justify-between gap-2">
             <p className="text-[11px] font-bold text-[#6B7280]">{k.name}</p>
@@ -501,7 +502,7 @@ export default function EmailMarketingHub({
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-xl bg-[#F9FAFB] p-4">
-            <p className="text-[11px] font-bold text-[#6B7280]">Confirmed subscribers</p>
+            <p className="text-[11px] font-bold text-[#6B7280]">Verified-account opt-ins</p>
             <p className="mt-2 text-[27px] font-extrabold">{verifiedCount===undefined?'—':verifiedCount}</p>
           </div>
           <div className="rounded-xl bg-[#F9FAFB] p-4">
@@ -515,11 +516,12 @@ export default function EmailMarketingHub({
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FFF7ED] text-[#EA580C]">{icon('people',20)}</span>
             <div className="min-w-0 flex-1">
               <h3 className="text-[13px] font-extrabold">Leads CRM</h3>
-              <p className={secondary+' mt-1'}>Review enquiries and follow-ups. Only separately confirmed subscribers qualify for marketing campaigns.</p>
+              <p className={secondary+' mt-1'}>Review enquiries and follow-ups. Account-verified opt-ins are collected separately; delivery still requires provider and recipient verification gates.</p>
               <Link href="/vendor/leads" className="mt-3 inline-flex items-center gap-1 text-[12px] font-bold text-[#C2410C]">Open Leads CRM {icon('arrow-right-2',14)}</Link>
             </div>
           </div>
         </div>
+        <AudienceNetworkSummary businessId={businessId}/>
         <div className="rounded-xl border border-[#E5E7EB] p-4">
           <h3 className="text-[13px] font-extrabold">Customer segments</h3>
           <p className={secondary+' mt-2'}>VIP, inactive customers and purchase-based groups need confirmed subscriber records and campaign events. No unsupported segments are shown.</p>
@@ -676,7 +678,7 @@ export default function EmailMarketingHub({
         {[
           {label:'Saved campaigns',number:String(drafts.filter(d=>d.businessId===businessId).length),note:'Real saved drafts'},
           {label:'Cloud-synced',number:String(drafts.filter(d=>d.businessId===businessId&&Boolean(serverVersions[d.id])).length),note:'Server draft records'},
-          {label:'Confirmed opt-ins',number:verifiedCount===undefined?'—':String(verifiedCount),note:verifiedCount===undefined?'Ledger not activated':'Verified ledger records'},
+          {label:'Verified-account opt-ins',number:verifiedCount===undefined?'—':String(verifiedCount),note:verifiedCount===undefined?'Ledger not activated':'Verified ledger records'},
           {label:'Manual exclusions',number:exclusionCount===null?'—':String(exclusionCount),note:exclusionState==='ready'?'Private do-not-email registry':'Registry unavailable'},
         ].map(item=><div key={item.label} className={panel+' p-5'}>
           <p className="text-[11px] font-semibold text-[#6B7280]">{item.label}</p>
@@ -729,7 +731,7 @@ export default function EmailMarketingHub({
         {[
           {label:'Approved SLBI business',ready:Boolean(business),detail:'Required owner-bound identity'},
           {label:'Gmail account linked',ready:Boolean(sender),detail:'Gmail alone is not bulk sender authorization'},
-          {label:'Confirmed opt-in ledger',ready:verifiedCount!==undefined,detail:'A verified count alone does not activate sending'},
+          {label:'Account-verified consent registry',ready:verifiedCount!==undefined,detail:'A verified count alone does not activate sending'},
           {label:'Manual suppression registry',ready:exclusionState==='ready',detail:'Independent provider exclusion list'},
         ].map(step=><div key={step.label} className="flex items-start gap-3 rounded-xl border border-[#E5E7EB] p-3">
           <span className={'mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full '+

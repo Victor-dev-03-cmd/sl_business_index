@@ -3,6 +3,7 @@
 import {useEffect,useRef,useState,type CSSProperties} from 'react';
 import {createPortal} from 'react-dom';
 import {loadEditorFont} from './email-editor-fonts';
+import AudiencePlanPicker from './AudiencePlanPicker';
 import Link from 'next/link';
 import IconsaxIcon from '@/app/vendor/components/IconsaxIcon';
 import type {EmailStudioBusiness,EmailStudioConnection} from './EmailMarketingWorkbench';
@@ -669,10 +670,11 @@ export default function EmailCampaignCanvas({
           </Link>}
           <p className={muted+' mt-2'}>Use your authorized business account.</p>
         </div>
+        <AudiencePlanPicker businessId={business.id} plan={campaign.audiencePlan||{source:'business',language:'all'}} onChange={audiencePlan=>updateCampaign({audiencePlan})}/>
         <div className="rounded-xl border border-[#E5E7EB] p-3">
-          <p className={label}>Verified audience</p>
+          <p className={label}>Verified-account business opt-ins</p>
           <strong className="block text-[24px] font-extrabold">{verifiedCount===undefined?'—':verifiedCount}</strong>
-          <p className={muted}>{verifiedCount===undefined?'Subscriber registry not available':'Confirmed subscribers'}</p>
+          <p className={muted}>{verifiedCount===undefined?'Subscriber registry not available':'Account-verified opt-ins, not send-ready recipients'}</p>
           <Link href="/vendor/leads" className="mt-3 inline-flex items-center gap-1 text-[11px] font-bold text-[#C65F12] hover:underline">
             View Leads CRM {icon('arrow-right-2',14)}
           </Link>
@@ -746,7 +748,8 @@ export default function EmailCampaignCanvas({
         </div>
         <div className="mt-5 space-y-3 text-[12px]">
           <p className="flex items-center gap-2">{sender?'✓':'○'} Connected sender: {sender?.accountDisplayName||'Not connected'}</p>
-          <p className="flex items-center gap-2">{verifiedCount&&verifiedCount>0?'✓':'○'} Confirmed audience: {verifiedCount===undefined?'unavailable':verifiedCount}</p>
+          <p className="flex items-center gap-2">○ Audience plan: {campaign.audiencePlan?.source==='network'?'SLBI Audience Network · '+campaign.audiencePlan.language:'Business email opt-ins'}</p>
+          <p>Business account-verified opt-ins: {verifiedCount===undefined?'unavailable':verifiedCount}. No send-ready recipient list.</p>
           <p>○ Unsubscribe handling and delivery provider — not active</p>
           <p>○ Verified send authorization and campaign queue — not active</p>
           {testSendEnabled&&sender?.sendCapable&&<div className="space-y-2 rounded-xl border border-[#FED7AA] bg-[#FFF7ED] p-3">

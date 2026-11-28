@@ -90,8 +90,11 @@ test('Marketing opt-in is optional, explicit, separately stored, pending until v
  assert.match(migration,/GRANT EXECUTE ON FUNCTION public\.slbi_submit_verified_lead_optin/);
  assert.match(migration,/DO NOT apply/);
  assert.doesNotMatch(migration,/DEFAULT 'confirmed'|SET confirmation_status='confirmed'/);
- assert.match(page,/\.eq\('confirmation_status','confirmed'\)/);
- assert.match(page,/\.is\('revoked_at',null\)/);
+ assert.match(page,/slbi_audience_owner_counts/);
+ assert.match(page,/p_owner:user\.id/);
+ assert.doesNotMatch(page,/\.from\('leads'\)|\.select\('email'\)/);
+ assert.match(read('docs/growth/AUDIENCE_NETWORK_FOUNDATION_REVIEW.sql'),/u\.email_confirmed_at IS NOT NULL/);
+ assert.match(read('docs/growth/AUDIENCE_NETWORK_FOUNDATION_REVIEW.sql'),/email_consent_at=NULL,email_digest=NULL/);
  assert.match(ui,/Confirmed Email Subscribers/);
  assert.doesNotMatch(ui,/42 Verified Subscribers/);
 });
