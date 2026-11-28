@@ -61,6 +61,10 @@ test('profile inline controls and main notification refresh retain consent and a
  assert.match(control,/state\?\.following&&<button/);
  // The disclosure must not participate in the mobile title/button width calculation.
  assert.match(profile,/grid-cols-\[minmax\(0,max-content\)_auto\]/);
+ assert.match(profile,/data-slbi-mobile-profile-header className="grid grid-cols-\[auto_minmax\(0,1fr\)\]/);
+ assert.match(profile,/data-slbi-profile-details className="min-w-0/);
+ assert.match(profile,/data-slbi-business-actions="true"[^>]*className="col-span-2 grid/);
+ assert.match(profile,/w-\[64px\].*min-\[350px\]:w-\[76px\].*sm:w-full/);
  assert.match(control,/contents text-neutral-900 sm:inline-flex/);
  assert.match(control,/col-start-2 row-start-1 flex shrink-0/);
  assert.match(control,/col-span-2 row-start-2 min-w-0/);
