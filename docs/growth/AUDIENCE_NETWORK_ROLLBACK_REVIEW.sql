@@ -14,5 +14,5 @@ BEGIN
   RETURN NEW;
 END $$;
 -- Default to disabling network reach if a rollback is needed.
-UPDATE slbi_audience_private.network_control SET enabled=false WHERE singleton;
+UPDATE slbi_audience_private.network_requests SET status='revoked',expires_at=NULL WHERE status='approved';
 COMMIT;
