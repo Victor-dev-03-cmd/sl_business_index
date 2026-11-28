@@ -433,16 +433,16 @@ export default function BusinessDetailsClient({ business, galleryUrls, services 
         </nav>
         <div className="grid items-start gap-y-7 lg:grid-cols-[minmax(0,2.7fr)_minmax(0,1fr)] lg:gap-x-8 xl:gap-x-12">
           <div className="min-w-0">
-            <section aria-labelledby="business-profile-title" className="grid items-center gap-4 border-b border-neutral-200 pb-6 sm:grid-cols-[minmax(100px,144px)_minmax(0,1fr)] lg:gap-5 xl:grid-cols-[minmax(112px,148px)_minmax(0,1fr)_310px]">
-              <div data-profile-logo className="relative aspect-square w-[104px] overflow-hidden rounded-xl border border-neutral-100 bg-neutral-50 sm:w-full">
-                {business.logo_url?<Image src={business.logo_url} alt={business.name+" logo"} fill priority sizes="(max-width:639px) 104px, 148px" className="object-contain p-2"/>:
-                  <div className="flex h-full flex-col items-center justify-center gap-2 text-neutral-400"><Building2 size={36} strokeWidth={1.4}/><span className="text-[11px]">No logo</span></div>}
+            <section aria-labelledby="business-profile-title" data-slbi-mobile-profile-header className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-3 gap-y-4 border-b border-neutral-200 pb-6 sm:grid-cols-[minmax(100px,144px)_minmax(0,1fr)] sm:items-center sm:gap-4 lg:gap-5 xl:grid-cols-[minmax(112px,148px)_minmax(0,1fr)_310px]">
+              <div data-profile-logo className="relative aspect-square w-[64px] shrink-0 overflow-hidden rounded-xl border border-neutral-100 bg-neutral-50 min-[350px]:w-[76px] min-[390px]:w-[88px] min-[440px]:w-[104px] sm:w-full">
+                {business.logo_url?<Image src={business.logo_url} alt={business.name+" logo"} fill priority sizes="(max-width:349px) 64px, (max-width:389px) 76px, (max-width:439px) 88px, (max-width:639px) 104px, 148px" className="object-contain p-1.5 sm:p-2"/>:
+                  <div className="flex h-full flex-col items-center justify-center gap-2 text-neutral-400"><Building2 size={36} strokeWidth={1.4} className="max-sm:h-6 max-sm:w-6"/><span className="text-[10px] sm:text-[11px]">No logo</span></div>}
               </div>
-              <div className="min-w-0 space-y-2">
+              <div data-slbi-profile-details className="min-w-0 space-y-1.5 sm:space-y-2">
                 {business.category&&<p className="break-words text-xs font-medium text-neutral-600 sm:text-sm">{business.category}</p>}
-                <div data-slbi-profile-title-row className="grid min-w-0 grid-cols-[minmax(0,max-content)_auto] items-center justify-start gap-x-2 gap-y-1.5 sm:flex sm:flex-wrap sm:gap-x-3 sm:gap-y-2"><h1 id="business-profile-title" className="min-w-0 [overflow-wrap:anywhere] text-[clamp(1.45rem,2.1vw,2.15rem)] font-semibold leading-tight tracking-tight">{business.name}</h1>{business.status==="approved"&&<BusinessAudienceControls businessId={String(business.id)} businessName={business.name}/>}</div>
-                <div className="space-y-1.5 text-sm">
-                  <a href="#reviews" className="flex min-w-0 flex-wrap items-center gap-1.5 text-sm text-neutral-700 hover:underline">
+                <div data-slbi-profile-title-row className="grid min-w-0 grid-cols-[minmax(0,max-content)_auto] items-center justify-start gap-x-1.5 gap-y-1.5 sm:flex sm:flex-wrap sm:gap-x-3 sm:gap-y-2"><h1 id="business-profile-title" className="min-w-0 [overflow-wrap:anywhere] text-[18px] min-[420px]:text-xl sm:text-[clamp(1.45rem,2.1vw,2.15rem)] font-semibold leading-tight tracking-tight">{business.name}</h1>{business.status==="approved"&&<BusinessAudienceControls businessId={String(business.id)} businessName={business.name}/>}</div>
+                <div className="space-y-1.5 text-xs sm:text-sm">
+                  <a href="#reviews" className="flex min-w-0 flex-wrap items-center gap-1.5 text-xs text-neutral-700 hover:underline sm:text-sm">
                     <Star size={17} aria-hidden="true" className={"shrink-0 "+(hasRating?"fill-amber-400 text-amber-500":"text-neutral-400")}/>
                     {reviewsLoading?<span className="text-neutral-500">Loading reviews…</span>:reviewSummary===null?<span className="text-neutral-500">Reviews unavailable</span>:reviewSummary.count===0?<span>No reviews yet</span>:<>
                       {reviewSummary.average!==null&&<span className="font-semibold tabular-nums text-neutral-900">{reviewSummary.average.toFixed(1)}</span>}
@@ -452,10 +452,10 @@ export default function BusinessDetailsClient({ business, galleryUrls, services 
                   {business.is_registered&&!verified&&<p className="flex items-center gap-2 text-neutral-600"><Building2 size={16} className="shrink-0"/> Registration provided</p>}
                   {verified&&<div className="flex items-center gap-2 text-slate-800 font-semibold"><VerifiedBadge size={15}/> <span>Verified Business</span></div>}
                   {!verified&&<OwnerVerificationPrompt business={business}/>}
-                  {business.owner_name&&<p className="flex items-center gap-2 pt-1 text-base font-medium"><UserRound size={19} className="shrink-0 text-neutral-500"/><span className="break-words">{business.owner_name}</span></p>}
+                  {business.owner_name&&<p className="flex min-w-0 items-center gap-1.5 pt-1 text-xs font-medium sm:gap-2 sm:text-base"><UserRound size={19} className="shrink-0 text-neutral-500 max-sm:h-4 max-sm:w-4"/><span className="break-words">{business.owner_name}</span></p>}
                 </div>
               </div>
-              <div data-slbi-business-actions="true" aria-label="Business actions" className="grid w-full min-w-0 grid-cols-3 auto-rows-fr gap-2 sm:col-span-2 xl:col-span-1">
+              <div data-slbi-business-actions="true" aria-label="Business actions" className="col-span-2 grid w-full min-w-0 grid-cols-3 auto-rows-fr gap-2 xl:col-span-1">
                 {whatsappHref&&<a href={whatsappHref} target="_blank" rel="noopener noreferrer" className={action}><Image src="/business-actions/whatsapp.svg" alt="" width={23} height={23} unoptimized className="h-6 w-6 shrink-0 object-contain"/><span className="whitespace-nowrap">WhatsApp</span></a>}
                 {canCall&&<a href={"tel:"+business.phone} onClick={recordCall} className={action}><span data-slbi-action-icon="call" className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[#16A34A] text-white"><Phone size={15} strokeWidth={2.5} aria-hidden="true"/></span><span className="whitespace-nowrap">Call me</span></a>}
                 {directionsHref&&<a href={directionsHref} target="_blank" rel="noopener noreferrer" onClick={logDirections} className={action}><Image src="/business-actions/google-maps.svg" alt="" width={24} height={24} unoptimized className="h-6 w-6 shrink-0 object-contain"/><span className="whitespace-nowrap">Directions</span></a>}
