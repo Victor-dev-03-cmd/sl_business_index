@@ -1,3 +1,28 @@
+# Current priority: SLBI Performance Modernization (owner approved 2026-11-28)
+
+**Resume here in the next chat.** Production baseline PR #248 merged at `4d67f8767e18096752baca7922bbf82c5f725cea`, exact candidate 14/14 CI PASS, Vercel www READY verified `dpl_6qChmDphTTooA5GWA6LMVH7GvA7J`. Prior #247 balanced mobile photo/details and separate Follow/Bell row remains live. #248 fixes false Sign In/Follow state during hydration, account-scoped dashboard identity, premature email login submission before Turnstile, autofill FormData, and duplicate initial session read. Actual physical-device acceptance and measured latency improvement pending.
+
+Owner approved sequential P0 through P9 (10 phases). **Performance takes priority over AI training.** Preserve mobile/desktop UI and SEO, tenant isolation, RLS, server authentication, Turnstile, existing notification consent and data. Bun-first preference; Hono is already installed; no blind Next.js replacement or blanket Node runtime removal. Each phase needs exact-head CI, approved merge, production READY and verified live commit; record evidence and remaining defects here. No unapproved DB/provider changes or customer sends.
+
+| Phase | Scope and exit gate | Status |
+|---|---|---|
+| P0 | Session/auth stability across shared public header, mobile dock, follow, login/signup, admin/vendor identity and account switch. No false guest/member states, stale account data or pre-captcha requests; test slow hydration, sign-out, switch, autofill. | IN PROGRESS; #248 baseline live; current candidate query-cache switch protection |
+| P1 | Instant client navigation: audit Links/router, full reloads, loading boundaries, Home to Business Details, Categories/Nearby and protected navigation. Measure click-to-shell and content. | NEXT after P0 acceptance |
+| P2 | Bounded intent/viewport prefetch; mobile data saver/slow connections respected; no blanket private page prefetch. | Pending |
+| P3 | Public-only cache/revalidation, approved listing freshness and invalidation, separate owner/private previews and per-account data. | Pending |
+| P4 | Parallelize independent database requests; eliminate redundant slug/ID lookups and waterfalls, inspect query/index evidence before migrations. | Pending |
+| P5 | Bun + Hono vs existing Next route benchmark: warm/cold p50/p95, throughput, errors, auth parity, Vercel runtime compatibility; no unsupported runtime switch. | Pending |
+| P6 | Bundle and rendering audit: route chunks, lazy heavy maps/editor, image payloads, hydration and re-render profiling. | Pending |
+| P7 | Admin/vendor dashboard request dedup, query keys, deferred panels, stable navigation; audit Growth OS, Marketing, SEO, billing, leads, reviews, gallery and settings. | Pending |
+| P8 | Android Chrome, iOS browser, desktop, throttled network, cold/warm, signed-in and guest, role switching; record measured results, no fabricated device passes. | Pending |
+| P9 | Production validation, regressions, before/after performance report, security and owner acceptance; rollback plan. | Pending |
+
+Targets (not measured): zero false auth/follow flash, zero premature captcha requests; API p95 <300 ms where feasible, LCP <=2.5s, INP <=200ms, CLS <=0.1. Record real baseline and route timings; distinguish immediate shell feedback from real data latency. Preserve SEO and authenticated route checks. Current source evidence: business detail slug then ID fallback and gallery/service waterfall; Home revalidate=0; protected proxy validates claims and database role. Existing route skeletons do not guarantee fast content.
+
+**Future plans after P9:** Growth AI and SEO AI advanced Deepnote experiments with authorized de-identified datasets and tenant isolation; no raw contacts or tokens. Brevo REST provider planned only, verify consent/suppression, quota and sender identity before activation; no email delivery approved. Imported contacts already live #244, no duplicate migration. Continue device push acceptance separately, iOS release/design deferred. Keep this handoff current with actual commit/CI/deployment status.
+
+---
+
 > **2026-11-28 AUTH/FOLLOW INITIAL STATE — CANDIDATE:** Owner reports false Sign In and Follow flashes on refresh. Navbar now waits for session hydration, uses authenticated identity immediately instead of waiting for profile query, ignores stale cross-account profile data and cancels obsolete profile reads. Session uses INITIAL_SESSION rather than competing initial getSession read; revision guards manual refresh. Follow waits for resolved session, scopes result to user/business, shows neutral skeleton and retry on failure rather than incorrect Follow, checks server signed-in parity. Mobile greeting pending skeleton. No persistent private cache or auth bypass. Actual latency metrics and device acceptance pending. Prior #247 production verified READY at 366ffacaa8b81314bb01b8bc3acb8e97b32a43d9. No DB migration or provider changes. CI and production verification required.
 
 > **2026-11-28 BALANCED MOBILE PROFILE — CANDIDATE:** Owner approved reference mockup with equal photo/details columns, separate equal Follow and Enable updates action row below, before About; existing contact actions retained between subscription row and About. Desktop inline controls retained. Responsive control variants only fetch when active; unique disclosure IDs; email consent disclosure remains visible, bell disabled until following, no changes to database or push rules. Prior #246 production verified READY at cc7e1cfdb28217d04a6a6deecc70dcc44182a8b1. Candidate CI and production verification pending, physical mobile visual acceptance pending. No provider activation.
