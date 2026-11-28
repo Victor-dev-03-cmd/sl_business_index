@@ -3,6 +3,7 @@
 import {useEffect,useLayoutEffect,useState} from 'react';
 import {createPortal} from 'react-dom';
 import Link from 'next/link';
+import SmartPrefetchLink from './SmartPrefetchLink';
 import {usePathname} from 'next/navigation';
 import BrandIcon from './BrandIcon';
 import {useSession} from './SessionContext';
@@ -124,8 +125,9 @@ export default function MobilePublicDock({role='nav'}:{role?:'nav'|'spacer'}){
           destination.href==='/category'?pathname==='/category'||pathname.startsWith('/category/'):
           destination.href==='/business-news'?pathname==='/business-news'||pathname.startsWith('/business-news/'):
           pathname===destination.href;
-        return <Link key={tab.href} href={destination.href}
-          prefetch={destination.href==='/nearby'||destination.href==='/register-business'?false:null}
+        const DockLink=index===4&&vendorTab||destination.href==='/nearby'||destination.href==='/'?Link:SmartPrefetchLink;
+        return <DockLink key={tab.href} href={destination.href}
+          {...(DockLink===Link?{prefetch:false}:{})}
           aria-label={destination.label}
           aria-current={active?'page':undefined}
           title={destination.label}
@@ -135,7 +137,7 @@ export default function MobilePublicDock({role='nav'}:{role?:'nav'|'spacer'}){
             variant={active?'bulk':'linear'} className="shrink-0"/>
           {active&&<span aria-hidden="true"
             className="absolute bottom-[4px] h-[5px] w-[5px] rounded-full bg-[#F2D79F]"/>}
-        </Link>;
+        </DockLink>;
       })}
     </nav>,
     portalRoot
