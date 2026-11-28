@@ -440,7 +440,7 @@ export default function BusinessDetailsClient({ business, galleryUrls, services 
               </div>
               <div className="min-w-0 space-y-2">
                 {business.category&&<p className="break-words text-xs font-medium text-neutral-600 sm:text-sm">{business.category}</p>}
-                <h1 id="business-profile-title" className="break-words text-[clamp(1.45rem,2.1vw,2.15rem)] font-semibold leading-tight tracking-tight">{business.name}</h1>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2"><h1 id="business-profile-title" className="min-w-0 break-words text-[clamp(1.45rem,2.1vw,2.15rem)] font-semibold leading-tight tracking-tight">{business.name}</h1>{business.status==="approved"&&<BusinessAudienceControls businessId={String(business.id)} businessName={business.name}/>}</div>
                 <div className="space-y-1.5 text-sm">
                   <a href="#reviews" className="flex min-w-0 flex-wrap items-center gap-1.5 text-sm text-neutral-700 hover:underline">
                     <Star size={17} aria-hidden="true" className={"shrink-0 "+(hasRating?"fill-amber-400 text-amber-500":"text-neutral-400")}/>
@@ -465,7 +465,6 @@ export default function BusinessDetailsClient({ business, galleryUrls, services 
               </div>
             </section>
 
-            {business.status==="approved"&&<div className="mt-4"><BusinessAudienceControls businessId={String(business.id)} businessName={business.name}/></div>}
             <div className="grid items-start gap-y-7 pt-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.45fr)] lg:gap-x-6 xl:gap-x-8">
               <div className="min-w-0 space-y-8">
                 <section id="overview" className="scroll-mt-24 min-w-0">
@@ -534,7 +533,7 @@ export default function BusinessDetailsClient({ business, galleryUrls, services 
                     className="mt-1 h-4 w-4 shrink-0 accent-[#262626]" />
                   <span>I agree to send my name, email, phone and message to this business for responding to my enquiry. Please do not send sensitive IDs or payment details.</span>
                 </label>
-                <label className="flex items-start gap-2 rounded-xl border border-[#F1DECE] bg-[#FFFAF7] p-3 text-[11px] leading-5 text-[#5B4A3D]">
+                {emailOptInEnabled&&<label className="flex items-start gap-2 rounded-xl border border-[#F1DECE] bg-[#FFFAF7] p-3 text-[11px] leading-5 text-[#5B4A3D]">
                   <input type="checkbox" checked={marketingOptIn} disabled={!emailOptInEnabled}
                     onChange={e=>setMarketingOptIn(e.target.checked)}
                     className="mt-1 h-4 w-4 shrink-0 accent-[#FF7900]"/>
@@ -542,7 +541,7 @@ export default function BusinessDetailsClient({ business, galleryUrls, services 
                     Optional and separate from this enquiry. A confirmation email and an unsubscribe option are required before promotional sending.
                     {!emailOptInEnabled&&<span className="block text-[#B36B3D]">Subscription registration is being prepared; enquiries still work without this option.</span>}
                   </span>
-                </label>
+                </label>}
                 {secureLeadsEnabled && turnstileSiteKey && (
                   <div ref={turnstileContainerRef} data-enquiry-turnstile className="flex w-full min-w-0 max-w-full items-center justify-center py-1">
                     {turnstileSize!==null&&<Turnstile key={turnstileReset+"-"+turnstileSize} siteKey={turnstileSiteKey}

@@ -24,7 +24,14 @@ export default function PublicNotificationsPage(){
     else setEntries((data||[]) as Item[]);
     setLoading(false);
   },[user?.id]);
-  useEffect(()=>{void load();},[load]);
+  useEffect(()=>{
+    void load();if(!user?.id)return;
+    const uid=user.id;
+    const channel=supabase.channel('notifications-page:'+uid).on('postgres_changes',{event:'INSERT',schema:'public',table:'notifications',filter:'user_id=eq.'+uid},()=>void load()).on('postgres_changes',{event:'UPDATE',schema:'public',table:'notifications',filter:'user_id=eq.'+uid},()=>void load()).subscribe();
+    const refresh=()=>{if(document.visibilityState==='visible')void load();};
+    document.addEventListener('visibilitychange',refresh);window.addEventListener('slbi-push-received',refresh);
+    return()=>{document.removeEventListener('visibilitychange',refresh);window.removeEventListener('slbi-push-received',refresh);void supabase.removeChannel(channel);};
+  },[load,user?.id]);
   const markRead=async(id:string)=>{
     if(!user?.id||working)return;
     setWorking(true);

@@ -1,24 +1,29 @@
 'use client';
 import {useEffect,useState} from 'react';
 import Link from 'next/link';
-import IconsaxIcon from '@/app/vendor/components/IconsaxIcon';
+import {Bell,BellRing,Check,Plus,Mail} from 'lucide-react';
+import {useSession} from '@/app/components/SessionContext';
+import {enablePush,devicePushReady} from '@/lib/push/client';
+import {toast} from 'sonner';
+
 export type BusinessAudienceState={following:boolean;news:boolean;push:boolean;email:boolean;emailEligible?:boolean;followers?:number;approved?:boolean};
 export default function BusinessAudienceControls({businessId,businessName,initial,onChanged}:{businessId:string;businessName:string;initial?:BusinessAudienceState;onChanged?:()=>void}){
+ const {user}=useSession();
  const [state,setState]=useState<BusinessAudienceState|null>(initial||null);
  const [signedIn,setSignedIn]=useState(Boolean(initial));
  const [busy,setBusy]=useState(false);
  const [error,setError]=useState('');
- const [expanded,setExpanded]=useState(Boolean(initial));
+ const [ring,setRing]=useState(false);
  useEffect(()=>{
    if(initial){setState(initial);setSignedIn(true);return;}
    const ctrl=new AbortController();
    setState(null);setError('');
    void fetch('/api/audience?businessId='+encodeURIComponent(businessId),{signal:ctrl.signal,cache:'no-store'}).then(async res=>{
      const data=await res.json();if(!res.ok)throw Error(data.error||'Updates unavailable.');
-     setState(data.state);setSignedIn(data.signedIn);
+     if(!ctrl.signal.aborted){setState(data.state);setSignedIn(data.signedIn);}
    }).catch(e=>{if(!ctrl.signal.aborted)setError(e.message||'Updates unavailable.');});
    return()=>ctrl.abort();
- },[businessId,initial]);
+ },[businessId,initial,user?.id]);
  const change=async(action:string)=>{
    if(busy)return;
    setBusy(true);setError('');
@@ -30,24 +35,26 @@ export default function BusinessAudienceControls({businessId,businessName,initia
      onChanged?.();
    }catch(e){setError(e instanceof Error?e.message:'Could not save.');}finally{setBusy(false);}
  };
- const icon=(name:string)=><IconsaxIcon name={name} size={17} variant="bulk"/>;
- return <div data-testid="business-audience-controls" className="rounded-xl border border-neutral-200 bg-white p-3 text-neutral-900 sm:p-4">
-   <div className="flex flex-wrap items-center justify-between gap-2">
-     <div className="min-w-0"><p className="text-sm font-semibold">Stay connected</p><p className="text-xs text-neutral-500">{typeof state?.followers==='number'?state.followers+' followers':'Business updates'}</p></div>
-     <div className="flex items-center gap-2">
-       {!signedIn&&state?<Link href={'/login?next='+encodeURIComponent('/business/'+businessId)} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-[#EA580C] px-3 text-xs font-semibold text-white">{icon('people')} Follow</Link>:<button type="button" disabled={!state||busy||state.approved===false&&!state.following} aria-pressed={Boolean(state?.following)} onClick={()=>void change(state?.following?'unfollow':'follow')} className={'inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-3 text-xs font-semibold disabled:opacity-40 '+(state?.following?'border-neutral-200 text-neutral-800':'border-[#EA580C] bg-[#EA580C] text-white')}>{icon(state?.following?'tick-circle':'people')}{state?.following?'Following · Unfollow':'Follow'}</button>}
-       <button type="button" aria-expanded={expanded} aria-label="Update preferences" onClick={()=>setExpanded(x=>!x)} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-neutral-200 px-3 text-xs font-medium">{icon('setting-2')} Updates</button>
-     </div>
+ const toggleBell=async()=>{
+   if(!state?.following||busy||!user)return;
+   if(state.push){await change('push_off');return;}
+   // Start browser permission directly in the click handler, before any network await.
+   // In-app preference is independent; if native delivery is unavailable, do not claim it works.
+   setBusy(true);setRing(true);
+   try{if(!devicePushReady(user.id))await enablePush(user.id);await change('push_on');}
+   catch(e){toast.error(e instanceof Error?e.message:'Device alerts unavailable. In-app updates still work.');}
+   finally{setBusy(false);}
+ };
+ const button='inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition-colors disabled:opacity-40 focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-[#EA580C]';
+ return <div data-testid="business-audience-controls" className="inline-flex min-w-0 flex-col items-start gap-1 text-neutral-900">
+   <div className="flex flex-wrap items-center gap-1.5">
+     {!signedIn&&state?<Link href={'/login?next='+encodeURIComponent('/business/'+businessId)} className={button+' border-[#EA580C] bg-[#EA580C] text-white'}><Plus size={15}/>Follow</Link>:<button type="button" disabled={!state||busy||state.approved===false&&!state.following} aria-pressed={Boolean(state?.following)} aria-label={state?.following?'Unfollow '+businessName:'Follow '+businessName} onClick={()=>void change(state?.following?'unfollow':'follow')} className={button+(state?.following?' border-neutral-200 bg-neutral-50 text-neutral-800':' border-[#EA580C] bg-[#EA580C] text-white')}>{state?.following?<Check size={15}/>:<Plus size={15}/>} {state?.following?'Following':'Follow'}</button>}
+     {state?.following&&<button type="button" disabled={busy||state.approved===false} aria-pressed={state.push} aria-label={state.push?'Turn off business push notifications':'Turn on all business notifications'} title={state.push?'All notifications on':'Enable all notifications'} onClick={()=>void toggleBell()} className={'grid h-9 w-9 shrink-0 place-items-center rounded-full border transition-colors focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#EA580C] '+(state.push?'border-orange-200 bg-orange-50 text-[#EA580C]':'border-neutral-200 bg-white text-neutral-600')}><span onAnimationEnd={()=>setRing(false)} className={ring?'motion-safe:animate-[slbi-bell-ring_.4s_ease-in-out_2]':''}>{state.push?<BellRing size={18}/>:<Bell size={18}/>}</span></button>}
+     {initial&&state&&signedIn&&<button type="button" disabled={busy||state.approved===false&&!state.email} onClick={()=>void change(state.email?'unsubscribe':'subscribe')} className={button+' border-neutral-200 bg-white text-neutral-700'}><Mail size={15}/>{state.email?'Unsubscribe email':'Subscribe email'}</button>}
    </div>
-   {expanded&&state&&<div className="mt-3 space-y-2 border-t border-neutral-100 pt-3 text-xs">
-     {!signedIn?<Link href="/login" className="font-semibold text-[#C2410C]">Sign in to manage subscriptions</Link>:<>
-       <label className="flex items-center justify-between gap-3"><span>Business news in-app</span><input type="checkbox" checked={state.news} disabled={busy||!state.following||state.approved===false} onChange={e=>void change(e.target.checked?'news_on':'news_off')} className="accent-[#F97316]"/></label>
-       <label className="flex items-center justify-between gap-3"><span>Device push for business news</span><input type="checkbox" checked={state.push} disabled={busy||!state.following||state.approved===false} onChange={e=>void change(e.target.checked?'push_on':'push_off')} className="accent-[#F97316]"/></label>
-       <label className="flex items-start justify-between gap-3"><span>Subscribe to {businessName} and share my verified email address with this business for its marketing emails.<small className="mt-1 block text-neutral-500">Optional. Your email appears in this vendor's subscriber list. Withdraw any time to stop future access in SLBI. Copies already made cannot be recalled.</small></span><input type="checkbox" checked={state.email} disabled={busy||state.approved===false&&!state.email} onChange={e=>void change(e.target.checked?'subscribe':'unsubscribe')} className="mt-1 accent-[#F97316]"/></label>
-       {state.email&&state.emailEligible===false&&<div className="text-neutral-600">Account email or business ownership changed. <button type="button" disabled={busy||state.approved===false} onClick={()=>void change('subscribe')} className="font-semibold text-[#C2410C] underline">Confirm subscription for the current verified email</button>.</div>}
-       <Link href="/following" className="inline-flex font-semibold text-[#C2410C]">Manage all subscriptions</Link>
-     </>}
-   </div>}
-   {error&&<p role="alert" className="mt-2 text-xs text-red-700">{error}</p>}
+   {initial&&state?.email&&state.emailEligible===false&&<button type="button" disabled={busy||state.approved===false} onClick={()=>void change('subscribe')} className="text-xs font-semibold text-[#C2410C] underline">Confirm current email for {businessName}</button>}
+   {initial&&state&&<p className="max-w-sm text-[11px] text-neutral-500">{state.email?'Email subscription is optional. Withdrawal stops future access; copies cannot be recalled.':'Subscribe email shares your verified email with '+businessName+' for its marketing. You can unsubscribe anytime.'}</p>}
+   {error&&<span role="alert" className="text-[11px] text-red-700">{error}</span>}
+   <style jsx global>{`@keyframes slbi-bell-ring {0%,100%{transform:rotate(0)}25%{transform:rotate(15deg)}75%{transform:rotate(-15deg)}}`}</style>
  </div>;
 }
