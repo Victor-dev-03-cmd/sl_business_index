@@ -66,6 +66,8 @@ jobs:
         run: node --experimental-strip-types --test tests/emailMarketingV4Hub.test.mjs
       - name: Email V5 Server Campaigns, Owner RLS and Autosave
         run: node --experimental-strip-types --test tests/emailMarketingV5Server.test.mjs
+      - name: Email V6 Gmail Self-Test, MIME and Recipient-Only Gates
+        run: node --experimental-strip-types --test tests/emailMarketingV6SelfTest.test.mjs
       - name: Email V6 Immutable Owner-Scoped Suppressions and Audience Safety
         run: node --experimental-strip-types --test tests/emailMarketingV6Suppression.test.mjs
       - name: Low-memory mobile route feedback and streaming regressions

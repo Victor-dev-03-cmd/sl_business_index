@@ -5,7 +5,7 @@ import type {
 } from '@/app/vendor/marketing/engine/components/EmailMarketingWorkbench';
 import {isPosterInternalQAAccount} from '@/lib/marketing/poster-review-access-server';
 import GoogleMailInboxPreview,{type GmailMailboxPreviewConnection} from '@/app/vendor/marketing/engine/components/GoogleMailInboxPreview';
-import {getGoogleConnectorConfig} from '@/lib/marketing/oauth-runtime';
+import {getGoogleConnectorConfig,GOOGLE_SEND_SCOPE} from '@/lib/marketing/oauth-runtime';
 import {createClient} from '@/lib/supabase/server';
 import {normalizeLocalCampaign,type LocalEmailCampaign} from '@/lib/marketing/email-hub-contract';
 
@@ -91,7 +91,8 @@ export default async function MarketingEmail(){
           c.provider==='google_mail'&&c.status==='connected');
         connections=verified.map(c=>({id:c.id,businessId:c.business_id,
           accountDisplayName:c.account_display_name||'Connected Gmail',
-          provider:'google_mail',status:'connected'}));
+          provider:'google_mail',status:'connected',
+          sendCapable:Array.isArray(c.granted_scopes)&&c.granted_scopes.includes(GOOGLE_SEND_SCOPE)}));
         previews=verified.map(c=>({id:c.id,business_id:c.business_id,
           account_display_name:c.account_display_name,
           status:c.status,granted_scopes:Array.isArray(c.granted_scopes)?c.granted_scopes:[]}));
@@ -104,6 +105,7 @@ export default async function MarketingEmail(){
       ownerScope={user?.id||''} verifiedCounts={verifiedCounts}
       serverDrafts={serverDrafts} serverStorageReady={serverStorageReady}
       emailAiEnabled={emailAiAllowed}
+      testSendEnabled={Boolean(config)&&process.env.SLBI_EMAIL_GMAIL_TEST_ENABLED==='true'}
       inboxPreview={Boolean(config?.gmailReadEnabled)?
         <GoogleMailInboxPreview connections={previews}
           readEnabled={Boolean(config?.gmailReadEnabled)}/>:undefined}/>
