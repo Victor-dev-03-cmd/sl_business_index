@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
+import { useSession } from '@/app/components/SessionContext';
 import { supabase } from '@/lib/supabaseClient';
 import { X, Bell, Megaphone, Info, AlertCircle, Gift } from 'lucide-react';
 
@@ -11,45 +13,52 @@ interface Announcement {
   type: 'info' | 'success' | 'warning' | 'promotion';
 }
 
+// Reuse the same in-flight claim under React Strict Mode; render at most once.
+const claims=new Map<string,Promise<Announcement|null>>();
+const shown=new Set<string>();
+async function claim(uid:string|null):Promise<Announcement|null>{
+ const key=uid||'guest';
+ const pending=claims.get(key);if(pending)return pending;
+ const task=(async()=>{
+   if(uid){
+     const {data,error}=await supabase.rpc('slbi_claim_announcement');
+     if(error)return null;
+     return data as Announcement|null;
+   }
+   const now=new Date().toISOString();
+   const {data}=await supabase.from('announcements').select('id,title,message,type').eq('target_role','all').eq('is_active',true).lte('starts_at',now).or('ends_at.is.null,ends_at.gt.'+now).order('created_at',{ascending:false}).limit(1).maybeSingle();
+   return data as Announcement|null;
+ })();
+ claims.set(key,task);
+ try{return await task}finally{if(claims.get(key)===task)claims.delete(key)}
+}
 export default function GlobalAnnouncement() {
-  const [announcement, setAnnouncement] = useState<Announcement | null>(null);
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    fetchAnnouncement();
-  }, []);
-
-  const fetchAnnouncement = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('announcements')
-        .select('*')
-        .eq('is_active', true)
-        .lte('starts_at', new Date().toISOString())
-        .or(`ends_at.is.null,ends_at.gt.${new Date().toISOString()}`)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (data) {
-        // Check if user already dismissed this specific announcement
-        const dismissedId = localStorage.getItem(`dismissed_announcement_${data.id}`);
-        if (!dismissedId) {
-          setAnnouncement(data);
-          setIsVisible(true);
-        }
-      }
-    } catch (err) {
-      console.error('Error fetching announcements:', err);
-    }
-  };
-
-  const dismiss = () => {
-    if (announcement) {
-      localStorage.setItem(`dismissed_announcement_${announcement.id}`, 'true');
-    }
-    setIsVisible(false);
-  };
+ const {user,loading}=useSession();
+ const path=usePathname()||'/';
+ const uid=user?.id||null;
+ const allowed=!/^\\/(auth|login|signup|reset-password|forgot-password)(?:\\/|$|-)/.test(path);
+ const [announcement,setAnnouncement]=useState<Announcement|null>(null);
+ const [isVisible,setIsVisible]=useState(false);
+ useEffect(()=>{
+   setAnnouncement(null);setIsVisible(false);
+   if(loading||!allowed)return;
+   let alive=true;
+   void claim(uid).then(data=>{
+     if(!alive||!data)return;
+     const key='dismissed_announcement_'+data.id;
+     const displayKey=(uid||'guest')+':'+data.id;
+     if(shown.has(displayKey))return;
+     try{
+       if(localStorage.getItem(key))return;
+       // Mark at presentation, not dismissal, so refresh does not repeat it.
+       localStorage.setItem(key,'true');
+     }catch{}
+     shown.add(displayKey);
+     setAnnouncement(data);setIsVisible(true);
+   }).catch(()=>{});
+   return()=>{alive=false};
+ },[uid,loading,allowed]);
+ const dismiss=()=>setIsVisible(false);
 
   if (!isVisible || !announcement) return null;
 
