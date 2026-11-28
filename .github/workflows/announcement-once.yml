@@ -1,0 +1,38 @@
+name: Announcement once — isolated account receipts
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docs/growth/ANNOUNCEMENT_ONCE_REVIEW.sql'
+      - 'tests/announcement-once/**'
+      - 'components/GlobalAnnouncement.tsx'
+      - '.github/workflows/announcement-once.yml'
+permissions:
+  contents: read
+jobs:
+  isolated:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: announcement_fixture
+          POSTGRES_PASSWORD: fixture-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: fixture-only
+      PGDATABASE: announcement_fixture
+    steps:
+      - uses: actions/checkout@v4
+      - run: psql -v ON_ERROR_STOP=1 -f tests/announcement-once/fixture.sql
+      - run: psql -v ON_ERROR_STOP=1 -f docs/growth/ANNOUNCEMENT_ONCE_REVIEW.sql
+      - run: psql -v ON_ERROR_STOP=1 -f tests/announcement-once/verify.sql
