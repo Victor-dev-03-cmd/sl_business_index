@@ -1,7 +1,7 @@
 'use client';
 import {useEffect,useState} from 'react';
 import {useSession} from '@/app/components/SessionContext';
-type State={network:boolean;networkEligible?:boolean;language:'en'|'ta'|'si';businesses:{id:string;name:string;slug:string|null;following:boolean;email:boolean}[]};
+type State={network:boolean;networkEligible?:boolean;language:'en'|'ta'|'si';businesses:{id:string;name:string;slug:string|null;following:boolean;email:boolean;approved?:boolean}[]};
 export default function NetworkEmailPreferences(){
  const {user,loading}=useSession();
  const [state,setState]=useState<State|null>(null);
@@ -31,7 +31,7 @@ export default function NetworkEmailPreferences(){
    {state&&<><label className="flex flex-wrap items-center gap-2">Preferred language <select className="rounded border px-2 py-1" value={language} disabled={busy} onChange={e=>setLanguage(e.target.value as State['language'])}><option value="en">English</option><option value="ta">Tamil</option><option value="si">Sinhala</option></select></label>
      <div className="flex flex-wrap items-center gap-2"><button type="button" disabled={busy} onClick={()=>void update(state.network?'network_unsubscribe':'network_subscribe')} className="rounded-md border px-3 py-2 font-medium">{state.network?'Disable partner emails':'Allow partner emails'}</button>
      {state.network&&(state.networkEligible===false||state.language!==language)&&<button type="button" disabled={busy} onClick={()=>void update('network_subscribe')} className="underline">Confirm email preference</button>}</div>
-     {state.businesses.filter(b=>b.email&&!b.following).map(b=><div key={b.id} className="flex flex-wrap items-center gap-2"><span>{b.name} — legacy email subscription</span><button type="button" disabled={busy} className="underline" onClick={()=>void update('unsubscribe',b.id)}>Unsubscribe</button></div>)}
+     {state.businesses.filter(b=>b.email&&(!b.following||b.approved===false)).map(b=><div key={b.id} className="flex flex-wrap items-center gap-2"><span>{b.name} — email subscription</span><button type="button" disabled={busy} className="underline" onClick={()=>void update('unsubscribe',b.id)}>Unsubscribe</button></div>)}
    </>}
    {error&&<p role="alert" className="text-xs text-red-700">{error}</p>}
  </section>;
