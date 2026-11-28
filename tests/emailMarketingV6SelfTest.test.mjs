@@ -128,3 +128,26 @@ test('V8 typography persists in normalized drafts and matches email HTML',async(
   assert.ok(renderEmailMarkup(draft,brand,{mode:'self_test'}).html.includes('max-width:600px'));
   for(const needle of ['email-v8-typography','Block font family','Block font size','Block text colour','Align ','Letter spacing','Line height','email-v8-canvas-settings','Desktop canvas width','variant="bulk"','style={emailTypographyStyle(b)}'])assert.ok(canvas.includes(needle),needle);
 });
+
+test('V9 advanced content renders safely and uploaded image stays private until approved',()=>{
+  const imageId='99999999-9999-4999-8999-999999999999';
+  const advanced={...draft,blocks:[
+    {id:imageId,type:'image',imageId,text:'Product <photo>',imageWidth:75,imageAlign:'right'},
+    {id:'11111111-1111-4111-8111-111111111111',type:'spacer',text:'',spacing:32},
+    {id:'22222222-2222-4222-8222-222222222222',type:'quote',text:'Quoted text'},
+    {id:'33333333-3333-4333-8333-333333333333',type:'columns',text:'Column one',secondText:'Column two'},
+    {id:'44444444-4444-4444-8444-444444444444',type:'link',text:'View shop',linkUrl:'https://example.com/shop'},
+  ]};
+  const preview=renderEmailMarkup(advanced,brand,{mode:'self_test'});
+  assert.match(preview.html,/Private image preview: Product &lt;photo&gt;/);
+  assert.match(preview.html,/height:32px/);
+  assert.match(preview.html,/Quoted text/);
+  assert.match(preview.html,/Column two/);
+  assert.match(preview.html,/https:\/\/example.com\/shop/);
+  assert.equal(preview.warnings.length,1);
+  assert.doesNotMatch(preview.html,/\/api\/marketing\/email\/images/);
+  assert.throws(()=>renderEmailMarkup(advanced,brand,{mode:'marketing',unsubscribeUrl:'https://example.com/unsub'}),/approved public delivery asset/);
+  const delivery=renderEmailMarkup(advanced,brand,{mode:'marketing',unsubscribeUrl:'https://example.com/unsub',imagePublicUrls:{[imageId]:'https://example.com/image.png'}});
+  assert.match(delivery.html,/https:\/\/example.com\/image.png/);
+  assert.match(delivery.html,/alt="Product &lt;photo&gt;"/);
+});

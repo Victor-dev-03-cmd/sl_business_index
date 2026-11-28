@@ -3,7 +3,7 @@ import type {EmailTemplateLayout} from './email-template-contract';
 
 /** No recipients, OAuth tokens, tracking pixels or PII are ever stored by this contract.
  * Persisted browser drafts are convenience previews, NOT server campaigns. */
-export type EmailBlockType='headline'|'body'|'poster'|'button'|'offers'|'divider';
+export type EmailBlockType='headline'|'body'|'poster'|'button'|'offers'|'divider'|'image'|'spacer'|'quote'|'link'|'columns';
 export const EMAIL_FONT_FAMILIES={
   arial:'Arial, Helvetica, sans-serif',
   georgia:'Georgia, Times New Roman, serif',
@@ -34,7 +34,7 @@ export function normalizeEmailTypography(raw:unknown):EmailTypography|null{
     color:v.color,align:v.align as EmailTypography['align'],lineHeight:v.lineHeight,letterSpacing:v.letterSpacing};
 }
 export function defaultEmailTypography(type:EmailBlockType):EmailTypography{
-  return {font:'arial',fontSize:type==='headline'?23:type==='body'?14:type==='button'?13:12,
+  return {font:'arial',fontSize:type==='headline'?23:type==='body'||type==='quote'||type==='columns'?14:type==='button'?13:12,
     fontWeight:type==='headline'||type==='button'?700:400,italic:false,underline:false,
     color:type==='button'?'#FFFFFF':type==='headline'?'#111827':'#374151',
     align:type==='button'?'center':'left',lineHeight:type==='headline'?1.3:type==='body'?1.8:1.5,letterSpacing:0};
@@ -58,6 +58,7 @@ export const validEmailCanvasWidth=(value:unknown):value is number=>
   typeof value==='number'&&Number.isInteger(value)&&value>=480&&value<=720;
 export type EmailVisualBlock={
   id:string;type:EmailBlockType;text:string;secondText?:string;typography?:EmailTypography;
+  imageId?:string;imageWidth?:number;imageAlign?:'left'|'center'|'right';linkUrl?:string;spacing?:number;
 };
 export type LocalEmailCampaign={
   id:string;ownerScope:string;businessId:string;title:string;
@@ -84,13 +85,20 @@ export const EMAIL_BLOCK_TYPES:readonly {type:EmailBlockType;title:string;descri
   {type:'button',title:'Button',description:'Add a linked call to action'},
   {type:'offers',title:'Two offers',description:'Show two services side by side'},
   {type:'divider',title:'Divider',description:'Separate content sections'},
+  {type:'image',title:'Upload image',description:'Choose a local JPG, PNG or WebP'},
+  {type:'spacer',title:'Spacer',description:'Adjust whitespace between blocks'},
+  {type:'quote',title:'Quote',description:'Highlight a testimonial or message'},
+  {type:'link',title:'Text link',description:'Add an independent HTTPS link'},
+  {type:'columns',title:'Two columns',description:'Two editable text columns'},
 ] as const;
 const ID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 export const newEmailBlock=(type:EmailBlockType,body=''):EmailVisualBlock=>({
   id:crypto.randomUUID(),type,
   text:type==='headline'?'A new update':type==='body'?body:
-    type==='button'?'View our business':type==='offers'?'Offer or service one':'',
-  ...(type==='offers'?{secondText:'Offer or service two'}:{}),
+    type==='button'?'View our business':type==='offers'?'Offer or service one':type==='quote'?'Add your quote':type==='link'?'Learn more':type==='columns'?'First column':'',
+  ...(type==='offers'?{secondText:'Offer or service two'}:type==='columns'?{secondText:'Second column'}:{}),
+  ...(type==='image'?{imageWidth:100,imageAlign:'center' as const}:{}),
+  ...(type==='spacer'?{spacing:24}:{}),
 });
 export function initialEmailBlocks(layout:EmailTemplateLayout,body:string):EmailVisualBlock[]{
   const blocks:EmailVisualBlock[]=[
@@ -138,10 +146,20 @@ export function normalizeLocalCampaign(raw:unknown,owner:string,approvedBusiness
       (b.secondText!==undefined&&(typeof b.secondText!=='string'||b.secondText.length>1000)))return null;
     const typography=b.typography===undefined?undefined:normalizeEmailTypography(b.typography);
     if(b.typography!==undefined&&!typography)return null;
+    if(b.imageId!==undefined&&(b.type!=='image'||typeof b.imageId!=='string'||!ID.test(b.imageId)))return null;
+    if(b.imageWidth!==undefined&&(b.type!=='image'||typeof b.imageWidth!=='number'||!Number.isInteger(b.imageWidth)||b.imageWidth<25||b.imageWidth>100))return null;
+    if(b.imageAlign!==undefined&&(b.type!=='image'||typeof b.imageAlign!=='string'||!['left','center','right'].includes(b.imageAlign)))return null;
+    if(b.linkUrl!==undefined&&(!['image','link','button'].includes(String(b.type))||typeof b.linkUrl!=='string'||b.linkUrl.length>600||!isSafeEmailCta(b.linkUrl)))return null;
+    if(b.spacing!==undefined&&(b.type!=='spacer'||typeof b.spacing!=='number'||!Number.isInteger(b.spacing)||b.spacing<8||b.spacing>80))return null;
     used.add(b.id);
     blocks.push({id:b.id,type:b.type as EmailBlockType,text:b.text,
       ...(typeof b.secondText==='string'?{secondText:b.secondText}:{}),
-      ...(typography?{typography}:{})});
+      ...(typography?{typography}:{}),
+      ...(typeof b.imageId==='string'?{imageId:b.imageId}:{}),
+      ...(typeof b.imageWidth==='number'?{imageWidth:b.imageWidth}:{}),
+      ...(typeof b.imageAlign==='string'?{imageAlign:b.imageAlign as EmailVisualBlock['imageAlign']}:{}),
+      ...(typeof b.linkUrl==='string'?{linkUrl:b.linkUrl}:{}),
+      ...(typeof b.spacing==='number'?{spacing:b.spacing}:{})});
   }
   return {id:v.id,ownerScope:owner,businessId:v.businessId,
     title:v.title,subject:v.subject,preheader:v.preheader,ctaUrl:v.ctaUrl,
@@ -154,7 +172,7 @@ export function normalizeLocalCampaign(raw:unknown,owner:string,approvedBusiness
     createdAt:v.createdAt,updatedAt:v.updatedAt,status:'local_draft'};
 }
 export function briefFromBlocks(blocks:EmailVisualBlock[]):string{
-  return blocks.filter(b=>b.type==='headline'||b.type==='body'||b.type==='offers')
+  return blocks.filter(b=>b.type==='headline'||b.type==='body'||b.type==='offers'||b.type==='columns'||b.type==='quote')
     .flatMap(b=>[b.text,...(b.secondText?[b.secondText]:[])])
     .map(x=>x.trim()).filter(Boolean).join('\n').slice(0,1600);
 }

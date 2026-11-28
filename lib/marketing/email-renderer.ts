@@ -2,7 +2,7 @@ import {randomBytes} from 'node:crypto';
 import type {LocalEmailCampaign} from './email-hub-contract.ts';
 import {isSafeEmailCta,emailTypographyCss,emailBlockTypography,validEmailCanvasWidth} from './email-hub-contract.ts';
 export type EmailRenderIdentity={name:string;logoUrl?:string|null;address?:string|null;city?:string|null;accentColor?:string|null};
-export type EmailRenderOptions={mode:'self_test'|'marketing';unsubscribeUrl?:string;posterPublicUrl?:string};
+export type EmailRenderOptions={mode:'self_test'|'marketing';unsubscribeUrl?:string;posterPublicUrl?:string;imagePublicUrls?:Readonly<Record<string,string>>};
 export type EmailRenderResult={html:string;text:string;warnings:string[]};
 const email=/^[a-z0-9][a-z0-9._%+\-]{0,63}@[a-z0-9](?:[a-z0-9.-]{0,180}[a-z0-9])?\.[a-z]{2,30}$/i;
 export const isSafeSenderAddress=(v:string)=>v.length<=220&&email.test(v)&&!/\s/.test(v);
@@ -50,6 +50,36 @@ export function renderEmailMarkup(
         '" rel="noopener noreferrer" style="display:inline-block;padding:13px 25px;border-radius:8px;background:'+accent+
         ';'+typography+'">'+escapeEmailText(value||'View offer')+'</a></td></tr>');
       text.push((value||'View offer')+': '+campaign.ctaUrl);
+    }else if(block.type==='quote'){
+      out.push('<tr><td style="padding:14px 28px"><div style="border-left:3px solid '+accent+';padding:12px;'+typography+'">'+lines(value)+'</div></td></tr>');
+      text.push(value);
+    }else if(block.type==='columns'){
+      const second=txt(block.secondText||'');
+      out.push('<tr><td style="padding:12px 24px"><table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr>'+
+        '<td width="50%" valign="top" style="padding:8px;'+typography+'">'+lines(value)+'</td>'+
+        '<td width="50%" valign="top" style="padding:8px;'+typography+'">'+lines(second)+'</td></tr></table></td></tr>');
+      text.push(value,second);
+    }else if(block.type==='link'){
+      const url=block.linkUrl&&isSafeEmailCta(block.linkUrl)?block.linkUrl:campaign.ctaUrl;
+      out.push('<tr><td style="padding:12px 28px;'+typography+'"><a href="'+escapeEmailText(url)+'" style="'+typography+';text-decoration:underline">'+lines(value||'Learn more')+'</a></td></tr>');
+      text.push((value||'Learn more')+': '+url);
+    }else if(block.type==='spacer'){
+      const height=Number.isInteger(block.spacing)&&block.spacing!>=8&&block.spacing!<=80?block.spacing:24;
+      out.push('<tr><td height="'+height+'" style="height:'+height+'px;font-size:1px;line-height:1px">&nbsp;</td></tr>');
+    }else if(block.type==='image'){
+      const url=block.imageId?options.imagePublicUrls?.[block.imageId]:undefined;
+      const width=Number.isInteger(block.imageWidth)&&block.imageWidth!>=25&&block.imageWidth!<=100?block.imageWidth!:100;
+      const imageAlign=block.imageAlign==='left'||block.imageAlign==='right'?block.imageAlign:'center';
+      if(url&&isSafeEmailCta(url)){
+        const image='<img src="'+escapeEmailText(url)+'" alt="'+escapeEmailText(value.slice(0,200))+'" width="'+Math.round((canvasWidth-56)*width/100)+'" style="display:block;max-width:100%;height:auto;border:0">';
+        const linked=block.linkUrl&&isSafeEmailCta(block.linkUrl)?'<a href="'+escapeEmailText(block.linkUrl)+'">'+image+'</a>':image;
+        out.push('<tr><td align="'+imageAlign+'" style="padding:8px 28px">'+linked+'</td></tr>');
+      }else{
+        if(options.mode==='marketing')throw Error('Uploaded image requires an approved public delivery asset');
+        warnings.push('Private uploaded image omitted from email test; approved public delivery asset required.');
+        out.push('<tr><td style="padding:12px 28px;color:#6B7280">Private image preview: '+escapeEmailText(value.slice(0,200)||'Uploaded image')+'</td></tr>');
+      }
+      if(value)text.push(value);
     }else if(block.type==='divider'){
       out.push('<tr><td style="padding:10px 28px"><div style="border-top:1px solid #E5E7EB"></div></td></tr>');
     }else if(block.type==='poster'){
