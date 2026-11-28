@@ -160,6 +160,9 @@ test('Compact editor uses precise input fields and small Bulk icon tools, not sl
 test('Audience plans persist as provider-free source and language, never recipient data',()=>{
  const d=draft();
  const plan={source:'network',language:'ta'};
+ const imported={source:'imported',language:'all',listId:crypto.randomUUID()};
+ assert.deepEqual(normalizeLocalCampaign({...d,audiencePlan:imported},owner,[business])?.audiencePlan,imported);
+ for(const bad of [{...imported,listId:'wrong'},{...imported,language:'ta'},{...imported,emails:['test@example.invalid']}])assert.equal(normalizeLocalCampaign({...d,audiencePlan:bad},owner,[business]),null);
  assert.deepEqual(normalizeLocalCampaign({...d,audiencePlan:plan},owner,[business])?.audiencePlan,plan);
  assert.ok(normalizeLocalCampaign(d,owner,[business]));
  for(const bad of [{source:'all_registered_users',language:'all'},{source:'network',language:'invalid'},{source:'business',language:'ta'},{source:'network',language:'all',recipients:['test@example.invalid']}])
