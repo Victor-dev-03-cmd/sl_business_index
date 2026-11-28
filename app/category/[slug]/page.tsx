@@ -20,7 +20,7 @@ const loadCategories = cache(async (): Promise<CategoryInfo[]> => {
   return snapshot.rows as CategoryInfo[];
 });
 
-async function getCategory(slug: string): Promise<CategoryInfo | null> {
+const getCategory=cache(async (slug: string): Promise<CategoryInfo | null> => {
   const categories = await loadCategories();
   const knownCategory = categories.find((item) => slugify(item.name) === slug);
   if (knownCategory) return knownCategory;
@@ -36,7 +36,7 @@ async function getCategory(slug: string): Promise<CategoryInfo | null> {
   const matched = Array.from(new Set((businesses ?? []).map((item) => item.category).filter(Boolean)))
     .find((name) => slugify(String(name)) === slug);
   return matched ? { id: null, name: String(matched), icon: null, parent_id: null } : null;
-}
+});
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
