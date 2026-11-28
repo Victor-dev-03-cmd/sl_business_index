@@ -12,6 +12,7 @@ import {
 } from '@/lib/marketing/email-hub-contract';
 import type {EmailStudioBusiness,EmailStudioConnection} from './EmailMarketingWorkbench';
 import EmailCampaignCanvas from './EmailCampaignCanvas';
+import AudienceNetworkSummary from './AudienceNetworkSummary';
 import {normalizeSuppressionEmail} from '@/lib/marketing/email-suppression-contract';
 
 type HubTab='overview'|'campaigns'|'audience'|'templates'|'automations'|'analytics'|'settings';
@@ -520,6 +521,7 @@ export default function EmailMarketingHub({
             </div>
           </div>
         </div>
+        <AudienceNetworkSummary businessId={businessId}/>
         <div className="rounded-xl border border-[#E5E7EB] p-4">
           <h3 className="text-[13px] font-extrabold">Customer segments</h3>
           <p className={secondary+' mt-2'}>VIP, inactive customers and purchase-based groups need confirmed subscriber records and campaign events. No unsupported segments are shown.</p>
