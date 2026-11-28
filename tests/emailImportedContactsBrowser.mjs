@@ -27,8 +27,7 @@ const workbook=zip([
 ]);
 const invalid=zip([['xl/worksheets/sheet1.xml','<!DOCTYPE worksheet [<!ENTITY x "fake@example.invalid">]><worksheet/>']]);
 const code=stripTypeScriptTypes(read('lib/marketing/email-import-contract.ts')).replaceAll('export ','')+'\n'+stripTypeScriptTypes(read('lib/marketing/email-import-xlsx.ts')).replace(/^import[^\n]*\n/,'').replaceAll('export ','');
-const html='<!doctype html><body>RUNNING<script>'+code+'
-(async()=>{try{const decode=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0)).buffer;const p=await parseContactXlsx(decode('+JSON.stringify(workbook)+'));let rejected=false;try{await parseContactXlsx(decode('+JSON.stringify(invalid)+'))}catch(e){rejected=e.message==="Unsupported Excel XML."}document.body.textContent=JSON.stringify({emails:p.emails,duplicates:p.duplicates,invalid:p.invalid,rejected});}catch(e){document.body.textContent="FAIL "+e.message;}})();</script>';
+const html='<!doctype html><body>RUNNING<script>'+code+'\n(async()=>{try{const decode=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0)).buffer;const p=await parseContactXlsx(decode('+JSON.stringify(workbook)+'));let rejected=false;try{await parseContactXlsx(decode('+JSON.stringify(invalid)+'))}catch(e){rejected=e.message==="Unsupported Excel XML."}document.body.textContent=JSON.stringify({emails:p.emails,duplicates:p.duplicates,invalid:p.invalid,rejected});}catch(e){document.body.textContent="FAIL "+e.message;}})();</script>';
 const executable=process.env.CHROME_BIN||['google-chrome','chromium','chromium-browser'].find(x=>spawnSync('which',[x]).status===0);
 assert.ok(executable,'Chrome/Chromium is required for real Excel browser acceptance');
 const dir=mkdtempSync(join(tmpdir(),'slbi-import-browser-'));
