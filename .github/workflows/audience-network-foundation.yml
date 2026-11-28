@@ -1,0 +1,43 @@
+name: Audience Network — isolated PostgreSQL consent and notification gates
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docs/growth/AUDIENCE_NETWORK*'
+      - 'tests/audience-network/**'
+      - 'app/api/audience/**'
+      - 'app/api/marketing/email/audience/**'
+      - 'app/api/admin/audience-network/**'
+      - '.github/workflows/audience-network-foundation.yml'
+permissions:
+  contents: read
+jobs:
+  isolated-audience-sql:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: audience_fixture
+          POSTGRES_PASSWORD: fixture-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: fixture-only
+      PGDATABASE: audience_fixture
+    steps:
+      - uses: actions/checkout@v4
+      - name: Seed disposable baseline
+        run: psql -v ON_ERROR_STOP=1 -f tests/audience-network/fixture.sql
+      - name: Apply exact reviewed audience SQL to disposable database
+        run: psql -v ON_ERROR_STOP=1 -f docs/growth/AUDIENCE_NETWORK_FOUNDATION_REVIEW.sql
+      - name: Verify consent, tenant isolation, fanout, push, suppression and network gates
+        run: psql -v ON_ERROR_STOP=1 -f tests/audience-network/verify.sql
