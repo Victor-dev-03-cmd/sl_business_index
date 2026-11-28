@@ -21,7 +21,8 @@ export function LivePresenceProvider({children}:{children:ReactNode}){
     let connected=false,alive=true
     let geo:CoarseLocation|null=null,attempted=false,version=0
     const controller=new AbortController()
-    const optedIn=()=>{try{return localStorage.getItem(analyticsConsentKey)==='allow'}catch{return false}}
+    // First-party ephemeral aggregate presence does not use GA or GPS. Preserve explicit prior area denial.
+    const areaAllowed=()=>{try{return localStorage.getItem(analyticsConsentKey)!=='deny'}catch{return false}}
     const channel=supabase.channel('slbi-online-v2',{config:{presence:{key:crypto.randomUUID()}}})
     const active=()=>alive&&connected&&enabled&&document.visibilityState==='visible'
     let lastPayload=''
@@ -31,21 +32,21 @@ export function LivePresenceProvider({children}:{children:ReactNode}){
         if(lastPayload!==''){lastPayload='';void channel.untrack()}
         return
       }
-      const payload={active:true,...(optedIn()&&geo?geo:{})}
+      const payload={active:true,...(areaAllowed()&&geo?geo:{})}
       const serialized=JSON.stringify(payload)
       if(serialized===lastPayload)return
       lastPayload=serialized
       void channel.track(payload).then(status=>{if(status!=='ok'&&lastPayload===serialized)lastPayload=''})
     }
     const refresh=()=>{
-      if(!optedIn()){version++;geo=null;attempted=false}
+      if(!areaAllowed()){version++;geo=null;attempted=false}
       publish()
-      if(!active()||!optedIn()||attempted)return
+      if(!active()||!areaAllowed()||attempted)return
       attempted=true
       const current=++version
       void fetch('/api/live-area',{cache:'no-store',signal:controller.signal})
         .then(r=>r.ok?r.json():null).then(body=>{
-          if(!alive||version!==current||!optedIn())return
+          if(!alive||version!==current||!areaAllowed())return
           geo=coarseLocation(body?.location?.country,body?.location?.province)
           publish()
         }).catch(()=>{/* Count remains available with unknown area. */})
