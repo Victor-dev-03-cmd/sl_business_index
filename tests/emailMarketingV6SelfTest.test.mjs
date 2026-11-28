@@ -163,10 +163,12 @@ test('Editor offers five professional fonts and preserves legacy drafts',async()
  }
  assert.match(canvas,/EMAIL_EDITOR_FONTS\.map/);
  const fonts=read('app/vendor/marketing/engine/components/email-editor-fonts.ts');
- assert.match(fonts,/const poppins = Poppins\(\{/);
- assert.match(fonts,/const outfit = Outfit\(\{/);
- assert.match(fonts,/preload: false/);
- assert.match(canvas,/emailEditorFontClasses/);
+ assert.match(fonts,/family=Poppins:wght@400;700&display=swap/);
+ assert.match(fonts,/family=Outfit:wght@400;700&display=swap/);
+ assert.match(fonts,/referrerPolicy='no-referrer'/);
+ assert.doesNotMatch(fonts,/next\/font\/google|text=/);
+ assert.match(canvas,/if\(usesPoppins\)loadEditorFont\('poppins'\)/);
+ assert.match(canvas,/if\(usesOutfit\)loadEditorFont\('outfit'\)/);
  assert.doesNotMatch(canvas,/type="color"/);
  assert.match(canvas,/data-testid="email-viewport-colour-picker"/);
  assert.match(canvas,/Math\.min\(anchor\.right-width,vw-width-8\)/);
