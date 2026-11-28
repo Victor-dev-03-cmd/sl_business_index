@@ -12,7 +12,7 @@ export default function PushOnboarding(){
  const uid=user?.id;
  const [visible,setVisible]=useState(false);
  const [busy,setBusy]=useState(false);
- const allowedRoute=!/^\/(auth|login|signup|register|reset-password|forgot-password|notifications)(?:\/|$|-)/.test(path);
+ const allowedRoute=!['auth','login','signup','register','reset-password','forgot-password','notifications'].includes(path.split('/')[1]||'');
  useEffect(()=>{
    setVisible(false);
    if(loading||!uid||!allowedRoute||!supportsPush()||isIosDevice())return;
