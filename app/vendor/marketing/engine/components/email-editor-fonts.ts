@@ -1,20 +1,18 @@
-import { Poppins, Outfit } from "next/font/google";
-
-// Editor-only font classes; no global preload or remote browser font requests.
-const poppins = Poppins({
-  weight: ["400", "700"],
-  subsets: ["latin"],
-  display: "swap",
-  preload: false,
-  variable: "--email-poppins",
-});
-
-const outfit = Outfit({
-  weight: ["400", "700"],
-  subsets: ["latin"],
-  display: "swap",
-  preload: false,
-  variable: "--email-outfit",
-});
-
-export const emailEditorFontClasses = `${poppins.variable} ${outfit.variable}`;
+// Fixed, allowlisted font stylesheets. No campaign content is sent to the font service.
+// Load only when an editor draft actually uses the font; never on the public site.
+export const EMAIL_FONT_STYLESHEETS={
+  poppins:'https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap',
+  outfit:'https://fonts.googleapis.com/css2?family=Outfit:wght@400;700&display=swap',
+} as const;
+export type RemoteEditorFont=keyof typeof EMAIL_FONT_STYLESHEETS;
+export function loadEditorFont(font:RemoteEditorFont){
+  const id='slbi-email-font-'+font;
+  if(document.getElementById(id))return;
+  const link=document.createElement('link');
+  link.id=id;
+  link.rel='stylesheet';
+  link.href=EMAIL_FONT_STYLESHEETS[font];
+  link.referrerPolicy='no-referrer';
+  link.addEventListener('error',()=>link.remove(),{once:true});
+  document.head.appendChild(link);
+}
