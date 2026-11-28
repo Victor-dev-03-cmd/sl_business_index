@@ -14,7 +14,7 @@ export default function AudienceNetworkSummary({businessId}:{businessId:string})
  return <section data-testid="audience-network-summary" className="space-y-3 rounded-xl border border-[#E5E7EB] p-4">
    <div className="flex items-center gap-2"><IconsaxIcon name="people" size={20} variant="bulk"/><h3 className="text-sm font-semibold">Business audience</h3></div>
    <div className="grid grid-cols-3 gap-2">{[{name:'Followers',value:summary?.followers},{name:'Email opt-ins',value:summary?.subscribers},{name:'Push preferences',value:summary?.pushPreferences}].map(s=><div key={s.name} className="rounded-md bg-[#F9FAFB] p-2"><p className="text-xl font-semibold">{s.value??'—'}</p><p className="text-[11px] text-[#6B7280]">{s.name}</p></div>)}</div>
-   <div className="border-t border-[#E5E7EB] pt-3"><p className="text-sm font-semibold">SLBI Audience Network</p><p className="mt-1 text-xs text-[#6B7280]">{summary?.networkEnabled?(summary.networkReach===null?'Reach withheld for privacy.':'Approximate eligible reach: '+summary.networkReach):'Network activation pending.'} Recipient identities remain private. Email delivery is not enabled.</p></div>
+   <div className="border-t border-[#E5E7EB] pt-3"><p className="text-sm font-semibold">SLBI Audience Network</p><p className="mt-1 text-xs text-[#6B7280]">{summary?.networkEnabled?(summary.networkReach===null?'Reach withheld for privacy.':'Approximate opted-in reach: '+summary.networkReach):'Network activation pending.'} Pre-suppression estimates only. Recipient identities remain private. Email delivery is not enabled.</p></div>
    {error&&<p role="status" className="text-xs text-[#92400E]">{error}</p>}
  </section>;
 }
