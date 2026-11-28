@@ -29,6 +29,7 @@ export async function POST(request:Request){
  const language=v.language??'en';
  if(typeof action!=='string'||typeof language!=='string'||!['en','ta','si'].includes(language)||
    !(businessActions.includes(action)&&typeof businessId==='string'&&UUID.test(businessId)||networkActions.includes(action)&&businessId===null))return reply(400,{error:'Invalid preference.'});
+ if(['subscribe','network_subscribe'].includes(action)&&v.consentVersion!=='slbi-audience-sharing-v2')return reply(400,{error:'Review and accept the current email sharing terms.'});
  const client=await createClient();
  const {data:{user},error}=await client.auth.getUser();
  if(error||!user)return reply(401,{error:'Sign in to manage your preferences.'});
