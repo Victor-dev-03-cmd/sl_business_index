@@ -36,7 +36,7 @@ export default function GlobalAnnouncement() {
  const {user,loading}=useSession();
  const path=usePathname()||'/';
  const uid=user?.id||null;
- const allowed=!/^\\/(auth|login|signup|reset-password|forgot-password)(?:\\/|$|-)/.test(path);
+ const allowed=!['auth','login','signup','reset-password','forgot-password'].includes(path.split('/')[1]||'');
  const [announcement,setAnnouncement]=useState<Announcement|null>(null);
  const [isVisible,setIsVisible]=useState(false);
  useEffect(()=>{
@@ -45,7 +45,7 @@ export default function GlobalAnnouncement() {
    let alive=true;
    void claim(uid).then(data=>{
      if(!alive||!data)return;
-     const key='dismissed_announcement_'+data.id;
+     const key=uid?'slbi-announcement-shown:'+uid+':'+data.id:'dismissed_announcement_'+data.id;
      const displayKey=(uid||'guest')+':'+data.id;
      if(shown.has(displayKey))return;
      try{
@@ -72,7 +72,7 @@ export default function GlobalAnnouncement() {
   };
 
   return (
-    <div className="fixed bottom-6 left-6 right-6 md:left-auto md:right-6 md:w-96 z-[100] animate-in slide-in-from-bottom-10 duration-500">
+    <div className="fixed bottom-[88px] left-3 right-3 sm:bottom-6 sm:left-6 sm:right-6 md:left-auto md:right-6 md:w-96 z-[100] animate-in slide-in-from-bottom-10 duration-500">
       <div className="bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden">
         <div className={`h-1 w-full ${
           announcement.type === 'promotion' ? 'bg-brand-gold' : 
@@ -90,7 +90,7 @@ export default function GlobalAnnouncement() {
             </div>
             <button 
               onClick={dismiss}
-              className="text-gray-400 hover:text-gray-600 p-1"
+              aria-label="Close announcement" className="text-gray-400 hover:text-gray-600 p-1"
             >
               <X size={18} />
             </button>
