@@ -53,8 +53,13 @@ export default function MobilePublicDock({role='nav'}:{role?:'nav'|'spacer'}){
     const uid=user.id;
     const checkVendor=async()=>{
       try{
-        const {data:profile}=await supabase.from('profiles')
-          .select('role').eq('id',uid).maybeSingle();
+        const [profileResult,ownedResult]=await Promise.all([
+          supabase.from('profiles').select('role').eq('id',uid).maybeSingle(),
+          supabase.from('businesses').select('id,slug,status').eq('owner_id',uid)
+            .order('status',{ascending:true}).order('created_at',{ascending:true}).limit(1),
+        ]);
+        if(profileResult.error||ownedResult.error)throw new Error('Account lookup unavailable');
+        const {data:profile}=profileResult;
         const accountRole=typeof profile?.role==='string'?profile.role.toLowerCase():'';
         // Staff keep the public About tab. They do not impersonate vendors.
         if(accountRole==='admin'||accountRole==='ceo'){
@@ -64,12 +69,7 @@ export default function MobilePublicDock({role='nav'}:{role?:'nav'|'spacer'}){
         // Pick the oldest approved owned listing first, then the oldest other
         // listing. The public Business Details route supports slug and ID.
         // Never send the fifth tab to the vendor dashboard/settings.
-        const {data:owned,error}=await supabase.from('businesses')
-          .select('id,slug,status')
-          .eq('owner_id',uid)
-          .order('status',{ascending:true})
-          .order('created_at',{ascending:true})
-          .limit(1);
+        const {data:owned,error}=ownedResult;
         const primary=!error&&Array.isArray(owned)?owned[0]:null;
         const isVendor=accountRole==='vendor'||Boolean(primary);
         const href=primary
