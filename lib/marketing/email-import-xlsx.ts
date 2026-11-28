@@ -9,11 +9,11 @@ function entries(buffer:ArrayBuffer):Entry[]{
  let end=-1;
  for(let i=n-22;i>=Math.max(0,n-65557);i--)if(v.getUint32(i,true)===0x06054b50&&i+22+v.getUint16(i+20,true)===n){end=i;break;}
  if(end<0||v.getUint16(end+4,true)||v.getUint16(end+6,true))throw Error('Unsupported Excel archive.');
- const count=v.getUint16(end+10,true),size=v.getUint32(end+12,true),start=v.getUint32(end+16,true);
- if(count>1000||start+size>end)throw Error('Invalid Excel directory.');
+ const count=v.getUint16(end+10,true),directorySize=v.getUint32(end+12,true),start=v.getUint32(end+16,true);
+ if(count>1000||start+directorySize>end)throw Error('Invalid Excel directory.');
  const out:Entry[]=[];let p=start,total=0;
  for(let i=0;i<count;i++){
-   if(p+46>start+size||v.getUint32(p,true)!==0x02014b50)throw Error('Invalid Excel directory.');
+   if(p+46>start+directorySize||v.getUint32(p,true)!==0x02014b50)throw Error('Invalid Excel directory.');
    const flags=v.getUint16(p+8,true),method=v.getUint16(p+10,true),compressed=v.getUint32(p+20,true),size=v.getUint32(p+24,true),nameLen=v.getUint16(p+28,true),extra=v.getUint16(p+30,true),comment=v.getUint16(p+32,true),offset=v.getUint32(p+42,true);
    const next=p+46+nameLen+extra+comment;if(next>start+v.getUint32(end+12,true))throw Error('Invalid Excel entry.');
    const name=decoder.decode(bytes.subarray(p+46,p+46+nameLen));p=next;
