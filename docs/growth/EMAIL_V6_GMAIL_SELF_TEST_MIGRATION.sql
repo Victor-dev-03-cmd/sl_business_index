@@ -75,5 +75,23 @@ revoke all on function slbi_internal.reserve_email_self_test(uuid,uuid,uuid,uuid
 grant execute on function slbi_internal.reserve_email_self_test(uuid,uuid,uuid,uuid,text)
  to service_role;
 
+-- Public Data API wrapper exposed only to the server service_role.
+-- slbi_internal is deliberately *not* a PostgREST exposed schema.
+create or replace function public.slbi_reserve_email_self_test(
+  p_owner_id uuid,p_business_id uuid,p_connection_id uuid,
+  p_request_key uuid,p_recipient text
+) returns uuid
+language sql
+security invoker
+set search_path=''
+as $
+  select slbi_internal.reserve_email_self_test(
+    p_owner_id,p_business_id,p_connection_id,p_request_key,p_recipient);
+$;
+revoke all on function public.slbi_reserve_email_self_test(uuid,uuid,uuid,uuid,text)
+ from public,anon,authenticated;
+grant execute on function public.slbi_reserve_email_self_test(uuid,uuid,uuid,uuid,text)
+ to service_role;
+
 -- Note: Future retention job should purge old self-test rows after 30 days;
 -- do not add unreviewed automatic purge or public APIs now.
