@@ -42,6 +42,7 @@ const adminMenuItems = [
   { name: "Verifications", href: "/admin/verifications", icon: ShieldCheck },
   { name: "Featured", href: "/admin/featured", icon: Star },
   { name: "Business News", href: "/admin/business-news", icon: Newspaper },
+  { name: "Audience Network", href: "/admin/audience-network", icon: Users },
   { name: "Billing", href: "/admin/billing", icon: CreditCard },
   { name: "Categories", href: "/admin/categories", icon: Tags },
   { name: "Users", href: "/admin/users", icon: Users },
@@ -73,7 +74,7 @@ export default function AdminLayout({
   // server page and database RLS independently verify the protected admin role.
   // Do not hide the link simply because the general profile query is stale.
   const officialEditor = user?.role === "admin" || user?.role === "ceo";
-  const visibleMenuItems = adminMenuItems.filter(item => item.href !== "/admin/business-news" || officialEditor);
+  const visibleMenuItems = adminMenuItems.filter(item => !["/admin/business-news","/admin/audience-network"].includes(item.href) || officialEditor);
 
   useEffect(() => {
     setMounted(true);
