@@ -7,6 +7,7 @@ import {isPosterInternalQAAccount} from '@/lib/marketing/poster-review-access-se
 import GoogleMailInboxPreview,{type GmailMailboxPreviewConnection} from '@/app/vendor/marketing/engine/components/GoogleMailInboxPreview';
 import {getGoogleConnectorConfig} from '@/lib/marketing/oauth-runtime';
 import {createClient} from '@/lib/supabase/server';
+import {normalizeLocalCampaign,type LocalEmailCampaign} from '@/lib/marketing/email-hub-contract';
 
 export const dynamic='force-dynamic';
 
@@ -25,6 +26,8 @@ export default async function MarketingEmail(){
   let previews:GmailMailboxPreviewConnection[]=[];
   let verifiedCounts:Record<string,number>={};
   let emailAiAllowed=false;
+  let serverDrafts:Array<{draft:LocalEmailCampaign;revision:number}>=[];
+  let serverStorageReady=false;
   if(user&&!authError){
     if(process.env.SLBI_MARKETING_AI_ENABLED==='true'&&
        process.env.SLBI_MARKETING_EMAIL_AI_ENABLED==='true'&&
@@ -70,6 +73,18 @@ export default async function MarketingEmail(){
             verifiedCounts[row.business_id]=(verifiedCounts[row.business_id]||0)+1;
         }
       }
+      const stored=await client.from('marketing_email_campaign_drafts')
+        .select('draft,revision').eq('owner_id',user.id)
+        .in('business_id',ids)
+        .order('updated_at',{ascending:false}).limit(150);
+      serverStorageReady=!stored.error;
+      if(!stored.error){
+        serverDrafts=(stored.data||[]).flatMap(row=>{
+          const valid=normalizeLocalCampaign(row.draft,user.id,ids);
+          return valid&&Number.isInteger(row.revision)?
+            [{draft:valid,revision:row.revision}]:[];
+        });
+      }
       if(!linked.error){
         const ownerIds=new Set(ids);
         const verified=(linked.data||[]).filter(c=>ownerIds.has(c.business_id)&&
@@ -87,6 +102,7 @@ export default async function MarketingEmail(){
     description="A branded workspace to plan, review and preview multilingual email campaigns, with your verified Google sender and approved business assets.">
     <EmailMarketingWorkbench businesses={businesses} connections={connections}
       ownerScope={user?.id||''} verifiedCounts={verifiedCounts}
+      serverDrafts={serverDrafts} serverStorageReady={serverStorageReady}
       emailAiEnabled={emailAiAllowed}
       inboxPreview={Boolean(config?.gmailReadEnabled)?
         <GoogleMailInboxPreview connections={previews}
