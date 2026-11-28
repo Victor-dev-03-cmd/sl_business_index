@@ -30,6 +30,10 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
+      - name: Email imported contacts parser and ownership integration
+        run: node --experimental-strip-types --test tests/emailImportedContacts.test.mjs
+      - name: Actual Chromium XLSX import regression
+        run: node --experimental-strip-types tests/emailImportedContactsBrowser.mjs
       - name: Global onboarding, presence and announcement UX
         run: node --test tests/globalOnboardingUx.test.mjs
       - name: Profile follow controls and Firebase device recovery

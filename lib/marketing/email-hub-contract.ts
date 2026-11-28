@@ -74,7 +74,7 @@ export type LocalEmailCampaign={
   blocks:EmailVisualBlock[];
   posterId:string|null;
   buttonColor?:string;logoSize?:number;canvasWidth?:number;
-  audiencePlan?:{source:'business'|'network';language:'all'|'en'|'ta'|'si'};
+  audiencePlan?:{source:'business'|'network';language:'all'|'en'|'ta'|'si'}|{source:'imported';language:'all';listId:string};
   createdAt:string;updatedAt:string;
   status:'local_draft';
 };
@@ -146,8 +146,13 @@ export function normalizeLocalCampaign(raw:unknown,owner:string,approvedBusiness
   if(v.audiencePlan!==undefined){
     if(!v.audiencePlan||typeof v.audiencePlan!=='object'||Array.isArray(v.audiencePlan))return null;
     const p=v.audiencePlan as Record<string,unknown>;
-    if(Object.keys(p).some(k=>!['source','language'].includes(k))||!(p.source==='business'||p.source==='network')||typeof p.language!=='string'||!['all','en','ta','si'].includes(p.language)||(p.source==='business'&&p.language!=='all'))return null;
-    audiencePlan={source:p.source,language:p.language as NonNullable<LocalEmailCampaign['audiencePlan']>['language']};
+    if(p.source==='imported'){
+      if(Object.keys(p).some(k=>!['source','language','listId'].includes(k))||p.language!=='all'||typeof p.listId!=='string'||!ID.test(p.listId))return null;
+      audiencePlan={source:'imported',language:'all',listId:p.listId};
+    }else{
+      if(Object.keys(p).some(k=>!['source','language'].includes(k))||!(p.source==='business'||p.source==='network')||typeof p.language!=='string'||!['all','en','ta','si'].includes(p.language)||(p.source==='business'&&p.language!=='all'))return null;
+      audiencePlan={source:p.source,language:p.language as 'all'|'en'|'ta'|'si'};
+    }
   }
   const blocks:EmailVisualBlock[]=[];
   const used=new Set<string>();

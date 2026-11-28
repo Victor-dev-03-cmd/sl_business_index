@@ -3,6 +3,7 @@ import {createClient} from '@/lib/supabase/server';
 import {isSameOrigin} from '@/lib/growth/ingestion-contract';
 import {getMarketingAccessForUser,rejectMarketingAccess} from '@/lib/marketing/pro-access-server';
 import {normalizeLocalCampaign} from '@/lib/marketing/email-hub-contract';
+import {audienceService} from '@/lib/audience/server';
 import {httpsLink} from '@/lib/marketing/email-studio';
 
 export const dynamic='force-dynamic';
@@ -72,6 +73,12 @@ export async function POST(request:Request){
   const valid=normalizeLocalCampaign(source,user.id,[business.id]);
   if(!valid||!valid.title.trim()||!httpsLink(valid.ctaUrl))
     return reply(400,{error:'Review your campaign title, content, and secure CTA link.'});
+  if(valid.audiencePlan?.source==='imported'){
+    const service=audienceService();if(!service)return reply(503,{error:'Contact lists unavailable.'});
+    const {data,error}=await service.rpc('slbi_email_import_lists',{p_owner:user.id,p_business:business.id,p_list:valid.audiencePlan.listId,p_offset:0});
+    if(error)return reply(503,{error:'Could not verify imported contact list.'});
+    if(!data)return reply(400,{error:'Select an imported contact list owned by this business.'});
+  }
   // Only pass a whitelisted data contract to SQL. No recipient emails, tokens
   // or private correspondence can be smuggled into campaign JSON.
   const {data,error}=await client.rpc('slbi_email_save_draft',{
