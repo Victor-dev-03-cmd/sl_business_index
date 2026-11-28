@@ -77,7 +77,7 @@ test('API self-test authorizes the actual connection and only submits to itself'
   assert.match(api,/const ownMailbox=connection\.account_display_name/);
   assert.match(api,/acceptedByGoogle:true,testOnly:true,recipient:ownMailbox/);
   assert.match(api,/campaignSent:false,deliveryNotGuaranteed:true/);
-  assert.match(api,/No automated/i);
+  assert.match(api,/no automatic retry/i);
   assert.doesNotMatch(api,/body\.to|body\.recipient|body\.emails|body\.audience|\/api\/marketing\/email\/campaigns\/send/);
 });
 test('Database cap and one-time request key are service-only, per-owner and per-business',()=>{
