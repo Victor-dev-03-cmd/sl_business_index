@@ -27,7 +27,7 @@ export function normalizeEmailTypography(raw:unknown):EmailTypography|null{
     typeof v.fontSize!=='number'||!Number.isInteger(v.fontSize)||v.fontSize<10||v.fontSize>64||
     (v.fontWeight!==400&&v.fontWeight!==700)||typeof v.italic!=='boolean'||typeof v.underline!=='boolean'||
     typeof v.color!=='string'||!/^#[0-9a-f]{6}$/i.test(v.color)||
-    !['left','center','right','justify'].includes(String(v.align))||
+    typeof v.align!=='string'||!['left','center','right','justify'].includes(v.align)||
     typeof v.lineHeight!=='number'||!Number.isFinite(v.lineHeight)||v.lineHeight<1||v.lineHeight>2.5||
     typeof v.letterSpacing!=='number'||!Number.isFinite(v.letterSpacing)||v.letterSpacing<0||v.letterSpacing>4)return null;
   return {font:v.font as EmailFontFamily,fontSize:v.fontSize,fontWeight:v.fontWeight,italic:v.italic,underline:v.underline,
