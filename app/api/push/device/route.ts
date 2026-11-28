@@ -12,8 +12,9 @@ async function handle(request:Request,remove:boolean){
   const {data:claims}=await client.auth.getClaims()
   const sid=claims?.claims.session_id
   if(typeof sid!=='string')return reply(401,{error:'Session not verified'})
-  let token:unknown
-  try{const raw=await request.text();if(raw.length>4096)return reply(413,{error:'Request too large'});token=JSON.parse(raw).token}catch{return reply(400,{error:'Invalid request'})}
+  let token:unknown;let expectedUid:unknown
+  try{const raw=await request.text();if(raw.length>4096)return reply(413,{error:'Request too large'});const body=JSON.parse(raw);token=body.token;expectedUid=body.expectedUid}catch{return reply(400,{error:'Invalid request'})}
+  if(expectedUid!==undefined&&expectedUid!==user.id)return reply(409,{error:'Device account changed'})
   if(typeof token!=='string'||token.length<20||token.length>2048||!/^[A-Za-z0-9:_-]+$/.test(token))return reply(400,{error:'Invalid device token'})
   try{
     const admin=serviceClient()
