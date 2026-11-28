@@ -149,6 +149,7 @@ BEGIN
       ON CONFLICT(user_id) DO UPDATE SET consent_at=CASE WHEN network_preferences.email_digest=EXCLUDED.email_digest THEN network_preferences.consent_at ELSE now() END,email_digest=EXCLUDED.email_digest,language=EXCLUDED.language;
       IF network_row.email_digest IS DISTINCT FROM digest_value THEN INSERT INTO slbi_audience_private.consent_events(user_id,action) VALUES(p_user,p_action); END IF;
     ELSE
+      DELETE FROM slbi_audience_private.network_grants WHERE user_id=p_user;
       UPDATE slbi_audience_private.network_preferences SET consent_at=NULL,email_digest=NULL WHERE user_id=p_user AND consent_at IS NOT NULL;
       IF FOUND THEN INSERT INTO slbi_audience_private.consent_events(user_id,action) VALUES(p_user,p_action); END IF;
     END IF;
