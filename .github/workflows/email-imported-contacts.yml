@@ -1,0 +1,42 @@
+name: Email imported contacts — isolated storage and owner gates
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docs/growth/EMAIL_IMPORTED_CONTACTS_REVIEW.sql'
+      - 'tests/audience-network/imported-contacts.sql'
+      - 'app/api/marketing/email/imports/**'
+      - 'lib/marketing/email-import*'
+      - '.github/workflows/email-imported-contacts.yml'
+permissions:
+  contents: read
+jobs:
+  isolated:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: import_fixture
+          POSTGRES_PASSWORD: fixture-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: fixture-only
+      PGDATABASE: import_fixture
+    steps:
+      - uses: actions/checkout@v4
+      - run: psql -v ON_ERROR_STOP=1 -f tests/audience-network/fixture.sql
+      - run: psql -v ON_ERROR_STOP=1 -f docs/growth/AUDIENCE_NETWORK_FOUNDATION_REVIEW.sql
+      - run: psql -v ON_ERROR_STOP=1 -f tests/audience-network/verify.sql
+      - run: psql -v ON_ERROR_STOP=1 -f docs/growth/AUDIENCE_NETWORK_UNIFIED_FOLLOW_REVIEW.sql
+      - run: psql -v ON_ERROR_STOP=1 -f docs/growth/EMAIL_IMPORTED_CONTACTS_REVIEW.sql
+      - run: psql -v ON_ERROR_STOP=1 -f tests/audience-network/imported-contacts.sql
