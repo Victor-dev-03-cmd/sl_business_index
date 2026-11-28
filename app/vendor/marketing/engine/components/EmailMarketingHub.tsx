@@ -14,8 +14,9 @@ import type {EmailStudioBusiness,EmailStudioConnection} from './EmailMarketingWo
 import EmailCampaignCanvas from './EmailCampaignCanvas';
 import {normalizeSuppressionEmail} from '@/lib/marketing/email-suppression-contract';
 
-type HubTab='campaigns'|'audience'|'templates'|'automations'|'analytics'|'settings';
+type HubTab='overview'|'campaigns'|'audience'|'templates'|'automations'|'analytics'|'settings';
 const TABS:{id:HubTab;title:string;icon:string}[]=[
+  {id:'overview',title:'Overview',icon:'chart'},
   {id:'campaigns',title:'Campaigns',icon:'document'},
   {id:'audience',title:'Audience & Lists',icon:'people'},
   {id:'templates',title:'Templates',icon:'image'},
@@ -56,7 +57,7 @@ export default function EmailMarketingHub({
 }:Props){
   const preferred=connections.find(c=>c.status==='connected'&&businesses.some(b=>b.id===c.businessId))?.businessId;
   const [businessId,setBusinessId]=useState(preferred||businesses[0]?.id||'');
-  const [tab,setTab]=useState<HubTab>('campaigns');
+  const [tab,setTab]=useState<HubTab>('overview');
   const [drafts,setDrafts]=useState<LocalEmailCampaign[]>([]);
   const [serverVersions,setServerVersions]=useState<Record<string,number>>({});
   const [syncBusy,setSyncBusy]=useState(false);
@@ -66,6 +67,7 @@ export default function EmailMarketingHub({
   const [editor,setEditor]=useState<LocalEmailCampaign|null>(null);
   const [ready,setReady]=useState(false);
   const [search,setSearch]=useState('');
+  const [sort,setSort]=useState<'recent'|'name'>('recent');
   const [filter,setFilter]=useState<'all'|'drafts'>('all');
   const [csvReport,setCsvReport]=useState<{valid:number;invalid:number;declaredOptIn:number}|null>(null);
   const [pasteReport,setPasteReport]=useState<{valid:number;invalid:number}|null>(null);
@@ -197,10 +199,18 @@ export default function EmailMarketingHub({
     }
     if(persist(drafts.filter(d=>d.id!==id)))setNotice('Campaign draft removed.');
   };
+  const businessDrafts=useMemo(()=>drafts.filter(d=>d.businessId===businessId),[drafts,businessId]);
+  const cloudCount=businessDrafts.filter(d=>Boolean(serverVersions[d.id])).length;
+  const duplicateDraft=(d:LocalEmailCampaign)=>{
+    if(d.businessId!==businessId||!canCreate)return;
+    const stamp=new Date().toISOString();
+    setEditor({...d,id:crypto.randomUUID(),title:('Copy of '+d.title).slice(0,100),createdAt:stamp,updatedAt:stamp});
+  };
+  const navigate=(next:HubTab)=>{setTab(next);setNotice('');setError('');};
   const shown=useMemo(()=>drafts.filter(d=>d.businessId===businessId)
     .filter(d=>!search.trim()||[d.title,d.subject].some(x=>x.toLowerCase().includes(search.trim().toLowerCase())))
     .filter(d=>filter==='all'||d.status==='local_draft')
-    .sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt)),[drafts,businessId,search,filter]);
+    .sort((a,b)=>sort==='name'?a.title.localeCompare(b.title):b.updatedAt.localeCompare(a.updatedAt)),[drafts,businessId,search,filter,sort]);
   useEffect(()=>{
     if(!['audience','analytics','settings'].includes(tab)||!businessId){return;}
     let live=true;
@@ -278,13 +288,13 @@ export default function EmailMarketingHub({
     }catch(e){setError(e instanceof Error?e.message:'Email list is invalid.');}
   };
 
-  return <div data-testid="email-v4-marketing-hub" className="w-full min-w-0 space-y-5 pb-10 text-[#111827]"
+  return <div data-testid="email-v4-marketing-hub" data-email-v7="workspace" className="email-v7-workspace w-full min-w-0 space-y-6 pb-10 text-[#111827]"
     style={{colorScheme:'light'}}>
-    <header className={panel+' overflow-hidden'}>
-      <div className="flex flex-col justify-between gap-5 border-b border-[#F3F4F6] px-5 py-5 sm:flex-row sm:items-center sm:px-7 sm:py-6">
+    <header className="email-v7-header overflow-hidden rounded-2xl border border-[#E5E7EB] bg-white">
+      <div className="flex flex-col justify-between gap-5 border-b border-[#E5E7EB] px-5 py-6 sm:flex-row sm:items-center sm:px-7">
         <div className="min-w-0">
-          <p className="text-[10px] font-extrabold uppercase tracking-[.18em] text-[#EA580C]">GrowthOS · Marketing Suite</p>
-          <h1 className="mt-1 text-[25px] font-extrabold tracking-[-.04em] text-[#111827] sm:text-[31px]">Email Marketing Studio</h1>
+          <Link href="/vendor/marketing" className="inline-flex items-center gap-2 text-xs font-semibold text-[#6B7280] hover:text-[#EA580C]">{icon('arrow-left-2',14)} Marketing Studio <span aria-hidden="true">/</span> Email</Link>
+          <h1 className="mt-3 text-2xl font-bold tracking-tight text-[#111827] sm:text-[32px]">Email Marketing Studio</h1>
           <p className={secondary+' mt-1'}>Design campaigns. Build your audience. Grow customer relationships.</p>
           <p className="mt-2 inline-flex items-center gap-2 text-[10px] font-semibold text-[#6B7280]">
             <span className={'h-2 w-2 rounded-full '+(serverStorageReady?'bg-[#22C55E]':'bg-[#D97706]')}/>
@@ -311,11 +321,11 @@ export default function EmailMarketingHub({
           </button>
         </div>
       </div>
-      <nav aria-label="Email Marketing Studio tabs" className="flex w-full gap-1 overflow-x-auto px-3 pt-2 sm:px-5">
+      <nav role="tablist" aria-label="Email Marketing Studio tabs" className="flex w-full gap-1 overflow-x-auto px-3 py-2 sm:px-5">
         {TABS.map(t=><button key={t.id} type="button" role="tab" aria-selected={tab===t.id}
-          onClick={()=>{setTab(t.id);setNotice('');setError('');}}
-          className={'inline-flex min-h-12 shrink-0 items-center gap-2 border-b-[3px] px-3 text-[12px] font-bold transition sm:px-5 '+
-            (tab===t.id?'border-[#F97316] text-[#C2410C]':'border-transparent text-[#6B7280] hover:text-[#111827]')}>
+          onClick={()=>navigate(t.id)}
+          className={'inline-flex min-h-11 shrink-0 items-center gap-2 rounded-lg px-3 text-[13px] font-semibold transition sm:px-4 '+
+            (tab===t.id?'bg-[#111827] text-white':'text-[#6B7280] hover:bg-[#F3F4F6] hover:text-[#111827]')}>
           {icon(t.icon,17)}{t.title}
           {t.id==='campaigns'&&drafts.filter(d=>d.businessId===businessId).length>0&&
             <span className="rounded-full bg-[#FFF7ED] px-2 py-0.5 text-[10px] text-[#C2410C]">
@@ -325,7 +335,7 @@ export default function EmailMarketingHub({
       </nav>
     </header>
 
-    {!sender&&business&&<section className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[#FED7AA] bg-[#FFF7ED] p-4 sm:p-5">
+    {!sender&&business&&tab==='settings'&&<section className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[#FED7AA] bg-[#FFF7ED] p-4 sm:p-5">
       <div className="flex items-center gap-3">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#FFEDD5] text-[#C2410C]">{icon('sms',22)}</div>
         <div><p className="text-[13px] font-extrabold">Connect your business email</p>
@@ -342,12 +352,62 @@ export default function EmailMarketingHub({
       <Link href="/vendor/my-businesses" className="mt-4 inline-flex min-h-10 items-center rounded-xl bg-[#F97316] px-4 text-[12px] font-bold text-white">My Businesses</Link>
     </section>}
 
+    {tab==='overview'&&<section aria-label="Email workspace overview" data-testid="email-v7-overview" className="space-y-6">
+      <div className="relative overflow-hidden rounded-2xl bg-[#111827] p-6 text-white sm:p-9">
+        <div aria-hidden="true" className="pointer-events-none absolute -right-12 -top-20 h-72 w-72 rounded-full border-[44px] border-[#F97316]/15"/>
+        <div aria-hidden="true" className="pointer-events-none absolute -bottom-24 right-24 h-64 w-64 rounded-full border-[36px] border-white/5"/>
+        <div className="relative grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
+          <div className="max-w-xl">
+            <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-[#FDBA74]">{icon('sms',17)} Email workspace</span>
+            <h2 className="mt-3 text-2xl font-bold tracking-tight sm:text-4xl">Make every message matter.</h2>
+            <p className="mt-3 max-w-md text-sm leading-6 text-[#D1D5DB]">Build branded emails, organize your campaigns and prepare your audience for {business?.name||'your business'}.</p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <button type="button" disabled={!canCreate} onClick={()=>start('minimal')} className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-[#F97316] px-5 text-sm font-bold text-white hover:bg-[#EA580C] disabled:opacity-40">{icon('add',18)} Create campaign</button>
+              <button type="button" onClick={()=>navigate('templates')} className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-white/25 px-5 text-sm font-semibold text-white hover:bg-white/10">{icon('image',18)} Browse templates</button>
+            </div>
+          </div>
+          <div aria-hidden="true" className="hidden w-64 rotate-3 rounded-xl border border-white/10 bg-white p-4 shadow-2xl lg:block">
+            <div className="flex items-center gap-2"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#FFEDD5] text-[#EA580C]">{icon('sms',18)}</span><div className="h-2 w-20 rounded bg-[#111827]"/></div>
+            <div className="mt-4 rounded-lg bg-[#FFF1E6] p-4 text-[#111827]"><p className="text-[10px] font-bold uppercase tracking-wider text-[#C2410C]">New campaign</p><p className="mt-2 text-xl font-bold">Your next big idea.</p><div className="mt-3 h-2 w-32 rounded bg-[#FDBA74]"/><div className="mt-2 h-2 w-24 rounded bg-[#FED7AA]"/></div>
+            <div className="mt-4 h-2 w-full rounded bg-[#E5E7EB]"/><div className="mt-2 h-2 w-2/3 rounded bg-[#E5E7EB]"/><div className="mt-4 h-7 w-24 rounded bg-[#F97316]"/>
+          </div>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        {[
+          {name:'Campaign drafts',value:ready?String(businessDrafts.length):'—',hint:'Saved designs',iconName:'document'},
+          {name:'Cloud drafts',value:ready?String(cloudCount):'—',hint:'Account-synced',iconName:'document'},
+          {name:'Subscribers',value:verifiedCount===undefined?'—':String(verifiedCount),hint:'Confirmed opt-ins',iconName:'people'},
+          {name:'Sender',value:sender?'Connected':'Not linked',hint:'Mailbox status only',iconName:'sms'},
+        ].map(k=><div key={k.name} className={panel+' p-4 sm:p-5'}>
+          <div className="flex items-center gap-2 text-xs font-semibold text-[#6B7280]"><span className="text-[#EA580C]">{icon(k.iconName,19)}</span>{k.name}</div>
+          <p className="mt-4 break-words text-xl font-bold tracking-tight sm:text-2xl">{k.value}</p><p className="mt-1 text-xs text-[#6B7280]">{k.hint}</p>
+        </div>)}
+      </div>
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+        <div className={panel+' overflow-hidden'}>
+          <div className="flex items-center justify-between gap-3 border-b border-[#E5E7EB] p-5"><div><h3 className="text-base font-bold">Recent campaigns</h3><p className="mt-1 text-xs text-[#6B7280]">Pick up where you left off.</p></div><button type="button" onClick={()=>navigate('campaigns')} className="inline-flex items-center gap-1 text-sm font-semibold text-[#C2410C]">View all {icon('arrow-right-2',15)}</button></div>
+          {!ready?<p className="p-6 text-sm text-[#6B7280]">Loading campaigns…</p>:businessDrafts.length===0?<div className="p-8 text-center"><p className="font-semibold">Start with your first email</p><p className="mt-2 text-sm text-[#6B7280]">Choose a template or build your own design.</p><button type="button" disabled={!canCreate} onClick={()=>start('minimal')} className="mt-4 rounded-lg border border-[#FDBA74] px-4 py-2 text-sm font-semibold text-[#C2410C] disabled:opacity-40">Create a draft</button></div>:businessDrafts.slice(0,5).map(d=><button type="button" key={d.id} onClick={()=>setEditor(d)} className="flex w-full items-center gap-3 border-b border-[#F3F4F6] p-4 text-left last:border-0 hover:bg-[#FFF7ED]"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#FFF1E6] text-[#EA580C]">{icon('document',20)}</span><span className="min-w-0 flex-1"><strong className="block truncate text-sm">{d.title}</strong><span className="block truncate text-xs text-[#6B7280]">{niceDate(d.updatedAt)} · {serverVersions[d.id]?'Cloud draft':'Browser draft'}</span></span>{icon('arrow-right-2',16)}</button>)}
+        </div>
+        <div className={panel+' p-5'}>
+          <h3 className="text-base font-bold">Workspace setup</h3><p className="mt-1 text-xs text-[#6B7280]">Prepare your account before delivery.</p>
+          {[
+            {name:'Business identity',ok:Boolean(business),detail:business?'Approved business selected':'Select an approved business',target:'settings' as HubTab},
+            {name:'Cloud draft storage',ok:serverStorageReady,detail:serverStorageReady?'Ready':'Browser backup only',target:'campaigns' as HubTab},
+            {name:'Connected mailbox',ok:Boolean(sender),detail:sender?'Connected':'Connect your Gmail account',target:'settings' as HubTab},
+            {name:'Audience consent',ok:typeof verifiedCount==='number'&&verifiedCount>0,detail:'Confirmed subscribers only',target:'audience' as HubTab},
+            {name:'Delivery provider',ok:false,detail:'Not configured',target:'settings' as HubTab},
+          ].map(s=><button key={s.name} type="button" onClick={()=>navigate(s.target)} className="mt-3 flex w-full items-center gap-3 rounded-lg border border-[#E5E7EB] p-3 text-left hover:border-[#FDBA74]"><span className={'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold '+(s.ok?'bg-[#DCFCE7] text-[#166534]':'bg-[#F3F4F6] text-[#6B7280]')}>{s.ok?'✓':'○'}</span><span className="min-w-0 flex-1"><strong className="block text-xs">{s.name}</strong><span className="block text-xs text-[#6B7280]">{s.detail}</span></span>{icon('arrow-right-2',14)}</button>)}
+        </div>
+      </div>
+    </section>}
+
     {tab==='campaigns'&&<section className="space-y-5" aria-label="Email campaign overview">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
-          {name:'Total sent',value:'—',hint:'Delivery data unavailable',iconName:'sms'},
-          {name:'Open rate',value:'—',hint:'No verified tracking',iconName:'eye'},
-          {name:'Click rate',value:'—',hint:'No verified tracking',iconName:'status-up'},
+          {name:'Draft campaigns',value:ready?String(businessDrafts.length):'—',hint:'Selected business',iconName:'document'},
+          {name:'Cloud drafts',value:ready?String(cloudCount):'—',hint:'Saved to account',iconName:'document'},
+          {name:'Browser drafts',value:ready?String(businessDrafts.length-cloudCount):'—',hint:'Local backup only',iconName:'document'},
           {name:'Subscribers',value:verifiedCount===undefined?'—':String(verifiedCount),
             hint:verifiedCount===undefined?'List not activated':'Confirmed opt-ins',iconName:'people'},
         ].map(k=> <div key={k.name} className={panel+' min-h-[130px] p-4 sm:p-5'}>
@@ -363,7 +423,7 @@ export default function EmailMarketingHub({
         <div className="flex flex-col justify-between gap-3 border-b border-[#F3F4F6] p-5 sm:flex-row sm:items-center sm:px-6">
           <div><h2 className="text-[16px] font-extrabold">Your campaigns</h2>
             <p className={secondary+' mt-1'}>Continue designing your saved drafts.</p></div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <label className="relative min-w-0">
               <span className="sr-only">Search campaigns</span>
               <input type="search" value={search} onChange={e=>setSearch(e.target.value)}
@@ -375,13 +435,14 @@ export default function EmailMarketingHub({
               className="min-h-10 rounded-xl border border-[#E5E7EB] bg-white px-3 text-[11px] font-bold">
               <option value="all">All</option><option value="drafts">Drafts</option>
             </select>
+            <select aria-label="Sort campaigns" value={sort} onChange={e=>setSort(e.target.value as 'recent'|'name')} className="min-h-10 min-w-0 rounded-lg border border-[#E5E7EB] bg-white px-3 text-xs"><option value="recent">Recently edited</option><option value="name">Name A–Z</option></select>
           </div>
         </div>
         {!ready?<p className="p-8 text-center text-[12px] text-[#6B7280]">Loading your saved designs…</p>:
           shown.length===0?<div className="flex flex-col items-center gap-3 px-5 py-14 text-center">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#FFF7ED] text-[#EA580C]">{icon('document',27)}</div>
-            <h3 className="text-[16px] font-extrabold">{drafts.length?'No matching campaigns':'Your first great campaign starts here'}</h3>
-            <p className="max-w-[390px] text-[12px] leading-6 text-[#6B7280]">{drafts.length?
+            <h3 className="text-[16px] font-extrabold">{businessDrafts.length?'No matching campaigns':'Your first great campaign starts here'}</h3>
+            <p className="max-w-[390px] text-[12px] leading-6 text-[#6B7280]">{businessDrafts.length?
               'Try another search or select a different business.':
               'Choose a design and write your message. Save a draft before sending anything.'}</p>
             <button type="button" disabled={!canCreate} onClick={()=>start('hero')}
@@ -390,6 +451,7 @@ export default function EmailMarketingHub({
             </button>
           </div>:
           <div className="divide-y divide-[#F3F4F6]" data-testid="email-v4-draft-list">
+            <div className="hidden grid-cols-[minmax(0,1fr)_9rem_17rem] gap-3 bg-[#F9FAFB] px-6 py-3 text-xs font-semibold uppercase tracking-wide text-[#6B7280] lg:grid"><span>Campaign</span><span>Status & updated</span><span>Actions</span></div>
             {shown.map(d=><div key={d.id} className="flex flex-wrap items-center gap-3 px-4 py-4 hover:bg-[#FCFCFD] sm:px-6">
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#FFF7ED] text-[#EA580C]">{icon('document',20)}</div>
               <div className="min-w-[150px] flex-1">
@@ -416,6 +478,7 @@ export default function EmailMarketingHub({
                   className="min-h-10 rounded-lg border border-[#E5E7EB] px-3 text-[11px] font-semibold text-[#6B7280]">
                   History
                 </button>}
+                <button type="button" onClick={()=>duplicateDraft(d)} aria-label={'Duplicate '+d.title} className="min-h-10 rounded-lg border border-[#E5E7EB] px-3 text-[11px] font-semibold text-[#6B7280]">Duplicate</button>
                 <button type="button" onClick={()=>void removeDraft(d.id)} aria-label={'Delete '+d.title}
                   className="min-h-10 rounded-lg border border-[#E5E7EB] px-3 text-[11px] font-bold text-[#6B7280]">Delete</button>
               </div>
@@ -543,8 +606,8 @@ export default function EmailMarketingHub({
       </div>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {EMAIL_TEMPLATE_LAYOUTS.map((item,i)=><div className={panel+' overflow-hidden'} key={item.id}>
-          <div className="flex h-[190px] items-center justify-center border-b border-[#E5E7EB] bg-[#F9FAFB] p-5">
-            <div className="h-full w-[165px] overflow-hidden rounded-lg border border-[#E5E7EB] bg-white p-3 shadow-sm">
+          <div className="flex h-[250px] items-center justify-center overflow-hidden border-b border-[#E5E7EB] bg-[#F3F4F6] p-5">
+            <div className="h-full w-[190px] overflow-hidden rounded-lg border border-[#E5E7EB] bg-white p-3 shadow-lg">
               <div className="mb-3 flex items-center gap-1.5">
                 <div className="h-5 w-5 rounded-full bg-[#F97316]"/>
                 <div className="h-2.5 w-20 rounded bg-[#111827]"/>
@@ -552,10 +615,11 @@ export default function EmailMarketingHub({
               {i===1&&<div className="mb-3 h-14 rounded bg-gradient-to-tr from-[#FB923C] to-[#FFEDD5]"/>}
               {i===2&&<div className="mb-3 grid grid-cols-2 gap-2"><div className="h-14 rounded bg-[#FFF1E6]"/><div className="h-14 rounded bg-[#FEE2CE]"/></div>}
               {i===3&&<div className="mb-3 h-9 rounded border border-dashed border-[#F97316] bg-[#FFF7ED] p-1 text-[8px] text-[#EA580C]">Custom HTML</div>}
+              <p className="mb-2 text-[12px] font-bold leading-tight text-[#111827]">{['A fresh update','Your exclusive offer','Two offers. More value.','Create your own design'][i]||item.label}</p>
               <div className="mb-2 h-2 w-full rounded bg-[#E5E7EB]"/>
               <div className="mb-2 h-2 w-4/5 rounded bg-[#E5E7EB]"/>
               <div className="mb-3 h-2 w-3/5 rounded bg-[#E5E7EB]"/>
-              <div className="mx-auto h-5 w-20 rounded bg-[#F97316]"/>
+              <div className="mx-auto flex h-6 w-24 items-center justify-center rounded bg-[#F97316] text-[8px] font-bold text-white">Discover more</div>
             </div>
           </div>
           <div className="space-y-2 p-4">
@@ -586,7 +650,7 @@ export default function EmailMarketingHub({
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FFF7ED] text-[#F97316]">{icon('flash',24)}</div>
           <h3 className="text-[15px] font-extrabold">{a.name}</h3>
           <p className={secondary}>{a.desc}</p>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-[#9CA3AF]">{a.delay}</p>
+          <div className="rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] p-3 text-xs"><div className="flex items-center gap-2 font-semibold">{icon('flash',15)} {a.delay}</div><div className="my-1 ml-2 h-5 w-px bg-[#D1D5DB]"/><div className="flex items-center gap-2 font-semibold">{icon('sms',15)} Prepare email draft</div><p className="mt-2 text-[#6B7280]">Preview journey · not active</p></div>
           <button type="button" disabled={!canCreate} onClick={()=>start('minimal',a.kind)}
             className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-[#111827] px-4 text-[11px] font-bold text-white disabled:opacity-40">
             Design message {icon('arrow-right-2',15)}

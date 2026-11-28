@@ -125,7 +125,15 @@ export default function EmailCampaignCanvas({
     setCampaign(old=>({...old,blocks:[...old.blocks,block].slice(0,20)}));
     setSelectedId(block.id);setDirty(true);setNotice('');
   };
+  const duplicateBlock=(id:string)=>{
+    const source=campaign.blocks.find(b=>b.id===id);
+    if(!source||campaign.blocks.length>=20)return;
+    const copy={...source,id:crypto.randomUUID()};
+    setCampaign(old=>({...old,blocks:old.blocks.flatMap(b=>b.id===id?[b,copy]:[b])}));
+    setSelectedId(copy.id);setDirty(true);setNotice('');
+  };
   const deleteBlock=(id:string)=>{
+    if(campaign.blocks.length<=1){setError('Keep at least one content block in the campaign.');return;}
     setCampaign(old=>({...old,blocks:old.blocks.filter(b=>b.id!==id)}));
     setSelectedId(null);setDirty(true);
   };
@@ -309,20 +317,20 @@ export default function EmailCampaignCanvas({
           className="mt-2 min-h-16 whitespace-pre-wrap break-words rounded p-1 text-[12px] leading-5 text-[#292524]"/>
       </div>)}
     </div>}
-    <div className="absolute right-1 top-1 hidden items-center gap-1 rounded-lg border bg-white p-0.5 shadow-sm group-hover:flex group-focus-within:flex">
+    <div className={'absolute right-1 top-1 items-center gap-1 rounded-lg border bg-white p-0.5 shadow-sm group-hover:flex group-focus-within:flex '+(selectedId===b.id?'flex':'hidden')}>
       <button type="button" aria-label={'Move '+b.type+' up'} disabled={index===0}
         onClick={e=>{e.stopPropagation();reorder(b.id,-1);}}
         className="rounded p-1 text-[#4B5563] hover:bg-orange-50 disabled:opacity-25">{icon('arrow-up-2',15)}</button>
       <button type="button" aria-label={'Move '+b.type+' down'} disabled={index===campaign.blocks.length-1}
         onClick={e=>{e.stopPropagation();reorder(b.id,1);}}
         className="rounded p-1 text-[#4B5563] hover:bg-orange-50 disabled:opacity-25">{icon('arrow-down-2',15)}</button>
-      <button type="button" aria-label={'Remove '+b.type}
+      <button type="button" aria-label={'Remove '+b.type} disabled={campaign.blocks.length<=1}
         onClick={e=>{e.stopPropagation();deleteBlock(b.id);}}
         className="rounded p-1 font-bold text-red-600 hover:bg-red-50">×</button>
     </div>
   </div>;
   const screen=<div role="dialog" aria-modal="true" aria-label="Email campaign visual editor"
-    data-testid="email-v4-focus-builder" className="fixed inset-0 z-[9999] flex h-[100dvh] w-screen flex-col overflow-hidden bg-[#F8FAFC] text-[#111827]"
+    data-testid="email-v4-focus-builder" data-email-v7="designer" className="fixed inset-0 z-[9999] flex h-[100dvh] w-screen flex-col overflow-hidden bg-[#F8FAFC] text-[#111827]"
     style={{colorScheme:'light'}}>
     <header className="flex min-h-[70px] shrink-0 flex-wrap items-center justify-between gap-3 border-b border-[#E5E7EB] bg-white px-3 py-3 shadow-[0_1px_5px_rgba(17,24,39,.03)] sm:px-6">
       <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -349,67 +357,65 @@ export default function EmailCampaignCanvas({
           className="min-h-10 rounded-xl border border-[#D1D5DB] bg-white px-4 text-[12px] font-bold text-[#111827] hover:bg-[#F9FAFB] disabled:opacity-50">{saving?'Saving…':'Save draft'}</button>
         <button type="button" onClick={()=>setReviewOpen(true)}
           className="min-h-10 rounded-xl bg-[#F97316] px-4 text-[12px] font-bold text-white hover:bg-[#EA580C]">
-          {sender?'Review to send':'Connect to send'}
+          Preview &amp; review
         </button>
       </div>
     </header>
 
-    <div className="grid min-h-0 flex-1 grid-cols-1 overflow-y-auto xl:grid-cols-[minmax(230px,25fr)_minmax(0,50fr)_minmax(235px,25fr)] xl:overflow-hidden">
-      <aside aria-label="Sender and audience" className="order-2 min-w-0 space-y-6 border-r border-[#E5E7EB] bg-white p-4 sm:p-5 xl:order-1 xl:overflow-y-auto">
+    <div className="grid min-h-0 flex-1 grid-cols-1 overflow-y-auto xl:grid-cols-[minmax(230px,23fr)_minmax(0,53fr)_minmax(240px,24fr)] xl:overflow-hidden">
+      <aside aria-label="Content blocks and AI tools" className="order-2 min-w-0 space-y-5 border-r border-[#E5E7EB] bg-white p-4 sm:p-5 xl:order-1 xl:overflow-y-auto">
         <div>
-          <p className="text-[10px] font-extrabold uppercase tracking-[.13em] text-[#EA580C]">01 · Campaign Setup</p>
-          <h2 className="mt-1 text-[17px] font-extrabold">Sender & Audience</h2>
+          <p className="text-[10px] font-extrabold uppercase tracking-[.13em] text-[#EA580C]">01 · Content library</p>
+          <h2 className="mt-1 text-[17px] font-extrabold">Content blocks</h2>
         </div>
-        <div>
-          <label className={label}>Connected sender</label>
-          {sender?<div className="flex items-center gap-2 rounded-xl border border-[#D1FAE5] bg-[#F0FDF4] p-3">
-            <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-[#16A34A]"/>
-            <span className="min-w-0 truncate text-[11px] font-bold text-[#166534]">{sender.accountDisplayName}</span>
-          </div>:<Link href="/vendor/marketing-engine/connections"
-            className="flex min-h-11 items-center justify-center rounded-xl bg-[#111827] px-3 text-[11px] font-bold text-white">
-            Connect Gmail
-          </Link>}
-          <p className={muted+' mt-2'}>Use your authorized business account.</p>
-        </div>
-        <div className="rounded-xl border border-[#E5E7EB] p-3">
-          <p className={label}>Verified audience</p>
-          <strong className="block text-[24px] font-extrabold">{verifiedCount===undefined?'—':verifiedCount}</strong>
-          <p className={muted}>{verifiedCount===undefined?'Subscriber registry not available':'Confirmed subscribers'}</p>
-          <Link href="/vendor/leads" className="mt-3 inline-flex items-center gap-1 text-[11px] font-bold text-[#C65F12] hover:underline">
-            View Leads CRM {icon('arrow-right-2',14)}
-          </Link>
-        </div>
-        <div className="space-y-3">
-          <label className={label}>Email template</label>
-          <select value={campaign.layout} onChange={e=>switchLayout(e.target.value as EmailTemplateLayout)}
-            className={input}>
-            {EMAIL_TEMPLATE_LAYOUTS.map(item=><option key={item.id} value={item.id}>{item.label}</option>)}
-          </select>
-          <label className={label}>Language</label>
-          <select value={campaign.language} onChange={e=>updateCampaign({language:e.target.value as LocalEmailCampaign['language']})}
-            className={input}>
-            {EMAIL_LANGUAGES.map(item=><option key={item.value} value={item.value}>{item.label}</option>)}
-          </select>
-          <label className={label}>Campaign type</label>
-          <select value={campaign.kind} onChange={e=>updateCampaign({kind:e.target.value as LocalEmailCampaign['kind']})}
-            className={input}>
-            {EMAIL_CAMPAIGNS.map(item=><option key={item.value} value={item.value}>{item.label}</option>)}
-          </select>
-        </div>
-        <div className="rounded-xl border border-[#F3E1D2] bg-[#FFF9F5] p-3">
-          <p className={label}>Delivery plan</p>
-          <label className="flex min-h-9 items-center gap-2 text-[11px] font-medium">
-            <input type="radio" checked={deliveryChoice==='now'} onChange={()=>setDeliveryChoice('now')}
-              className="accent-[#F97316]"/>Review for immediate delivery
-          </label>
-          <label className="flex min-h-9 items-center gap-2 text-[11px] font-medium">
-            <input type="radio" checked={deliveryChoice==='later'} onChange={()=>setDeliveryChoice('later')}
-              className="accent-[#F97316]"/>Plan a date
-          </label>
-          {deliveryChoice==='later'&&<input aria-label="Planned date and time" type="datetime-local"
-            value={plannedAt} onChange={e=>setPlannedAt(e.target.value)} className={input}/>}
-          <p className={muted+' mt-2'}>Planning only. No message is scheduled without the approved delivery service.</p>
-        </div>
+        {emailAiEnabled&&<div className="rounded-xl border border-[#FDBA74] bg-[#FFF7ED] p-3">
+          <div className="flex items-center gap-2 text-[12px] font-bold text-[#9A3412]">{icon('magic-star')} Gemini Copywriter</div>
+          <p className={muted+' mt-2'}>Create a multilingual draft from your business facts. Review before saving.</p>
+          <button type="button" disabled={aiBusy} onClick={()=>void generateWithGemini()}
+            className="mt-3 min-h-10 w-full rounded-lg bg-[#F97316] px-2 text-[11px] font-bold text-white disabled:opacity-50">
+            {aiBusy?'Generating…':'✨ Rewrite email with Gemini'}
+          </button>
+        </div>}
+        {campaign.layout==='custom'?<div className="space-y-2">
+          <label className={label}>Custom HTML template</label>
+          <input className={input} aria-label="Saved template name" maxLength={70}
+            value={customName} onChange={e=>setCustomName(e.target.value)}/>
+          <textarea className={input+' min-h-[200px] font-mono'} value={customHtml} rows={8}
+            maxLength={12000} onChange={e=>setCustomHtml(e.target.value)}
+            aria-label="Custom HTML source"/>
+          <button type="button" onClick={saveCustom}
+            className="min-h-10 rounded-lg border border-[#D1D5DB] px-3 text-[11px] font-bold">Save HTML template locally</button>
+          <p className={muted}>HTML renders inside an isolated preview. It is not sent to recipients.</p>
+        </div>:<>
+          <div>
+            <p className={label}>Add a content block</p>
+            <div className="grid grid-cols-2 gap-2">
+              {EMAIL_BLOCK_TYPES.map(item=><button type="button" key={item.type}
+                disabled={campaign.blocks.length>=20} onClick={()=>insertBlock(item.type)}
+                title={item.description}
+                className="flex min-h-[76px] flex-col items-center justify-center gap-2 rounded-lg border border-[#E5E7EB] bg-white px-2 text-center text-xs font-semibold hover:border-[#FDBA74] hover:bg-[#FFF7ED] disabled:opacity-40">
+                <span className="text-[#EA580C]">{icon(item.type==='poster'?'image':item.type==='button'?'link':item.type==='offers'?'category':item.type==='divider'?'minus':'document',23)}</span>
+                {item.title}
+              </button>)}
+            </div>
+          </div>
+          <div className="border-t border-[#E5E7EB] pt-4">
+            <p className={label}>Reorder blocks</p>
+            <div className="mt-2 space-y-1.5">
+              {campaign.blocks.map((b,i)=><div key={b.id} className={'flex items-center gap-1 rounded-lg border px-2 py-1.5 '+
+                (selectedId===b.id?'border-[#FDBA74] bg-[#FFF7ED]':'border-[#F3F4F6]')}>
+                <button type="button" onClick={()=>setSelectedId(b.id)}
+                  className="min-w-0 flex-1 truncate text-left text-[11px] font-semibold capitalize">
+                  <span className="mr-2 text-[#9CA3AF]">≡</span>{b.type}
+                </button>
+                <button type="button" disabled={i===0} onClick={()=>reorder(b.id,-1)}
+                  aria-label={'Move '+b.type+' up'} className="p-1 disabled:opacity-25">{icon('arrow-up-2',14)}</button>
+                <button type="button" disabled={i===campaign.blocks.length-1} onClick={()=>reorder(b.id,1)}
+                  aria-label={'Move '+b.type+' down'} className="p-1 disabled:opacity-25">{icon('arrow-down-2',14)}</button>
+              </div>)}
+            </div>
+          </div>
+        </>}
       </aside>
 
       <main aria-label="Inline email design canvas"
@@ -462,64 +468,29 @@ export default function EmailCampaignCanvas({
             </footer>
           </div>
           <p className={'mt-3 text-center text-[10px] '+(darkCheck?'text-[#D1D5DB]':'text-[#9CA3AF]')}>
-            Click text to edit · Drag blocks to reorder · Dark mode is a visual check
+            Click text to edit · Drag to reorder · Dark is an inbox preview
           </p>
         </div>
       </main>
 
-      <aside aria-label="Blocks and AI tools" className="order-3 min-w-0 space-y-5 border-l border-[#E5E7EB] bg-white p-4 sm:p-5 xl:overflow-y-auto">
+      <aside aria-label="Block properties and campaign setup" className="order-3 min-w-0 space-y-5 border-l border-[#E5E7EB] bg-white p-4 sm:p-5 xl:order-3 xl:overflow-y-auto">
         <div>
-          <p className="text-[10px] font-extrabold uppercase tracking-[.13em] text-[#EA580C]">03 · Design Tools</p>
-          <h2 className="mt-1 text-[17px] font-extrabold">Blocks & AI</h2>
+          <p className="text-[10px] font-extrabold uppercase tracking-[.13em] text-[#EA580C]">03 · Inspector</p>
+          <h2 className="mt-1 text-[17px] font-extrabold">Properties</h2>
         </div>
-        {emailAiEnabled&&<div className="rounded-xl border border-[#FDBA74] bg-[#FFF7ED] p-3">
-          <div className="flex items-center gap-2 text-[12px] font-bold text-[#9A3412]">{icon('magic-star')} Gemini Copywriter</div>
-          <p className={muted+' mt-2'}>Create a multilingual draft from your business facts. Review before saving.</p>
-          <button type="button" disabled={aiBusy} onClick={()=>void generateWithGemini()}
-            className="mt-3 min-h-10 w-full rounded-lg bg-[#F97316] px-2 text-[11px] font-bold text-white disabled:opacity-50">
-            {aiBusy?'Generating…':'✨ Rewrite email with Gemini'}
-          </button>
-        </div>}
-        {campaign.layout==='custom'?<div className="space-y-2">
-          <label className={label}>Custom HTML template</label>
-          <input className={input} aria-label="Saved template name" maxLength={70}
-            value={customName} onChange={e=>setCustomName(e.target.value)}/>
-          <textarea className={input+' min-h-[200px] font-mono'} value={customHtml} rows={8}
-            maxLength={12000} onChange={e=>setCustomHtml(e.target.value)}
-            aria-label="Custom HTML source"/>
-          <button type="button" onClick={saveCustom}
-            className="min-h-10 rounded-lg border border-[#D1D5DB] px-3 text-[11px] font-bold">Save HTML template locally</button>
-          <p className={muted}>HTML renders inside an isolated preview. It is not sent to recipients.</p>
-        </div>:<>
-          <div>
-            <p className={label}>Add a content block</p>
-            <div className="grid grid-cols-2 gap-2">
-              {EMAIL_BLOCK_TYPES.map(item=><button type="button" key={item.type}
-                disabled={campaign.blocks.length>=20} onClick={()=>insertBlock(item.type)}
-                title={item.description}
-                className="flex min-h-12 items-center gap-2 rounded-xl border border-[#E5E7EB] bg-white px-2 text-left text-[11px] font-semibold hover:border-[#FDBA74] hover:bg-[#FFF7ED] disabled:opacity-40">
-                <span className="text-[#EA580C]">{icon(item.type==='poster'?'image':item.type==='button'?'link':'add',16)}</span>
-                {item.title}
-              </button>)}
-            </div>
-          </div>
-          <div className="border-t border-[#E5E7EB] pt-4">
-            <p className={label}>Reorder blocks</p>
-            <div className="mt-2 space-y-1.5">
-              {campaign.blocks.map((b,i)=><div key={b.id} className={'flex items-center gap-1 rounded-lg border px-2 py-1.5 '+
-                (selectedId===b.id?'border-[#FDBA74] bg-[#FFF7ED]':'border-[#F3F4F6]')}>
-                <button type="button" onClick={()=>setSelectedId(b.id)}
-                  className="min-w-0 flex-1 truncate text-left text-[11px] font-semibold capitalize">
-                  <span className="mr-2 text-[#9CA3AF]">≡</span>{b.type}
-                </button>
-                <button type="button" disabled={i===0} onClick={()=>reorder(b.id,-1)}
-                  aria-label={'Move '+b.type+' up'} className="p-1 disabled:opacity-25">{icon('arrow-up-2',14)}</button>
-                <button type="button" disabled={i===campaign.blocks.length-1} onClick={()=>reorder(b.id,1)}
-                  aria-label={'Move '+b.type+' down'} className="p-1 disabled:opacity-25">{icon('arrow-down-2',14)}</button>
-              </div>)}
-            </div>
-          </div>
-        </>}
+        <div data-testid="email-v7-properties" className="rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] p-3">
+          <p className="text-xs font-semibold text-[#6B7280]">Selected element</p>
+          <p className="mt-2 text-sm font-bold capitalize">{selected?.type||(selectedId==='brand'?'Brand header':'Email design')}</p>
+          {selected&&selected.type!=='poster'&&selected.type!=='divider'&&<label className={label+' mt-3'}>Content
+            <textarea aria-label="Selected block content" rows={4} value={selected.text} maxLength={selected.type==='body'?3000:selected.type==='offers'?400:selected.type==='headline'?200:90}
+              onChange={e=>updateBlock(selected.id,{text:e.target.value})} className={input+' resize-y'}/>
+          </label>}
+          {selected?.type==='offers'&&<label className={label+' mt-3'}>Second offer
+            <textarea aria-label="Second offer content" rows={3} value={selected.secondText||''} maxLength={400} onChange={e=>updateBlock(selected.id,{secondText:e.target.value})} className={input+' resize-y'}/>
+          </label>}
+          {selected&&<button type="button" disabled={campaign.blocks.length>=20} onClick={()=>duplicateBlock(selected.id)} className="mt-3 min-h-10 w-full rounded-lg border border-[#D1D5DB] bg-white text-xs font-semibold disabled:opacity-40">Duplicate selected block</button>}
+          {!selected&&<p className={muted+' mt-2'}>Select a block on the canvas to edit its content.</p>}
+        </div>
         <div className="border-t border-[#E5E7EB] pt-4">
           <p className={label}>Brand Kit styles</p>
           <div className="flex items-center gap-3">
@@ -546,7 +517,63 @@ export default function EmailCampaignCanvas({
         </label>}
         {notice&&<p role="status" className="rounded-lg bg-[#F0FDF4] p-3 text-[11px] text-[#166534]">{notice}</p>}
         {error&&<p role="alert" className="rounded-lg bg-[#FEF2F2] p-3 text-[11px] text-[#B91C1C]">{error}</p>}
+        <details className="rounded-lg border border-[#E5E7EB] p-3">
+          <summary className="cursor-pointer text-sm font-bold">Campaign setup &amp; audience</summary>
+          <div className="mt-4 space-y-4">
+        <div>
+          <label className={label}>Connected sender</label>
+          {sender?<div className="flex items-center gap-2 rounded-xl border border-[#D1FAE5] bg-[#F0FDF4] p-3">
+            <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-[#16A34A]"/>
+            <span className="min-w-0 truncate text-[11px] font-bold text-[#166534]">{sender.accountDisplayName}</span>
+          </div>:<Link href="/vendor/marketing-engine/connections"
+            className="flex min-h-11 items-center justify-center rounded-xl bg-[#111827] px-3 text-[11px] font-bold text-white">
+            Connect Gmail
+          </Link>}
+          <p className={muted+' mt-2'}>Use your authorized business account.</p>
+        </div>
+        <div className="rounded-xl border border-[#E5E7EB] p-3">
+          <p className={label}>Verified audience</p>
+          <strong className="block text-[24px] font-extrabold">{verifiedCount===undefined?'—':verifiedCount}</strong>
+          <p className={muted}>{verifiedCount===undefined?'Subscriber registry not available':'Confirmed subscribers'}</p>
+          <Link href="/vendor/leads" className="mt-3 inline-flex items-center gap-1 text-[11px] font-bold text-[#C65F12] hover:underline">
+            View Leads CRM {icon('arrow-right-2',14)}
+          </Link>
+        </div>
+        <div className="space-y-3">
+          <label className={label}>Email template</label>
+          <select value={campaign.layout} onChange={e=>switchLayout(e.target.value as EmailTemplateLayout)}
+            className={input}>
+            {EMAIL_TEMPLATE_LAYOUTS.map(item=><option key={item.id} value={item.id}>{item.label}</option>)}
+          </select>
+          <label className={label}>Language</label>
+          <select value={campaign.language} onChange={e=>updateCampaign({language:e.target.value as LocalEmailCampaign['language']})}
+            className={input}>
+            {EMAIL_LANGUAGES.map(item=><option key={item.value} value={item.value}>{item.label}</option>)}
+          </select>
+          <label className={label}>Campaign type</label>
+          <select value={campaign.kind} onChange={e=>updateCampaign({kind:e.target.value as LocalEmailCampaign['kind']})}
+            className={input}>
+            {EMAIL_CAMPAIGNS.map(item=><option key={item.value} value={item.value}>{item.label}</option>)}
+          </select>
+        </div>
+        <div className="rounded-xl border border-[#F3E1D2] bg-[#FFF9F5] p-3">
+          <p className={label}>Delivery plan</p>
+          <label className="flex min-h-9 items-center gap-2 text-[11px] font-medium">
+            <input type="radio" checked={deliveryChoice==='now'} onChange={()=>setDeliveryChoice('now')}
+              className="accent-[#F97316]"/>Review for immediate delivery
+          </label>
+          <label className="flex min-h-9 items-center gap-2 text-[11px] font-medium">
+            <input type="radio" checked={deliveryChoice==='later'} onChange={()=>setDeliveryChoice('later')}
+              className="accent-[#F97316]"/>Plan a date
+          </label>
+          {deliveryChoice==='later'&&<input aria-label="Planned date and time" type="datetime-local"
+            value={plannedAt} onChange={e=>setPlannedAt(e.target.value)} className={input}/>}
+          <p className={muted+' mt-2'}>Planning only. No message is scheduled without the approved delivery service.</p>
+        </div>
+          </div>
+        </details>
       </aside>
+
     </div>
     {posterPanel&&<div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 p-4" role="presentation"
       onMouseDown={e=>{if(e.target===e.currentTarget)setPosterPanel(false);}}>
