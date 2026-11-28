@@ -178,7 +178,11 @@ test('Audience plans persist as provider-free source and language, never recipie
  assert.match(sql,/REVOKE ALL ON SCHEMA slbi_audience_private FROM PUBLIC,anon,authenticated/);
  assert.match(sql,/FOR UPDATE SKIP LOCKED/);
  assert.match(sql,/LIMIT 250 FOR SHARE/);
- assert.match(sql,/network_count<20/);
+ assert.match(sql,/requested_count BETWEEN 1 AND 100/);
+ assert.match(sql,/slbi_audience_lists/);
+ assert.match(sql,/network_grants/);
+ assert.match(sql,/q\.owner_id=p_owner AND q\.status='approved'/);
+ assert.match(api,/slbi-audience-sharing-v2/);
  assert.match(sql,/deliveryEnabled',false/);
  assert.doesNotMatch(vendor,/\.from\('profiles'\)|\.select\('email'\)|recipients:/);
 });
