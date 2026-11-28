@@ -282,6 +282,8 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
+    let active = true;
+    if (sessionLoading) return;
     const fetchUserProfile = async () => {
       if (user) {
         const google = googleIdentityProfile(user);
@@ -292,6 +294,7 @@ export default function Navbar() {
             .eq("id", user.id)
             .single();
           if (error) throw error;
+          if (!active) return;
           setFullUserData({
             id: user.id,
             email: user.email,
@@ -300,17 +303,19 @@ export default function Navbar() {
             avatar_url: data.avatar_url?.trim() || google.avatar,
           } as UserProfile);
         } catch {
+          if (!active) return;
           setFullUserData({
             id: user.id, email: user.email,
             full_name: google.name, avatar_url: google.avatar,
           } as UserProfile);
         }
       } else {
-        setFullUserData(null);
+        if (active) setFullUserData(null);
       }
     };
-    fetchUserProfile();
-  }, [user]);
+    void fetchUserProfile();
+    return () => { active = false; };
+  }, [user?.id, sessionLoading]);
 
   const close = () => setMobileMenuOpen(false);
   const handleSignOut = async () => {
@@ -331,7 +336,7 @@ export default function Navbar() {
   /* profileData: merged profile — fullUserData when loaded, raw auth user
      as immediate fallback so the card renders the moment session resolves */
   const profileData: UserProfile | null =
-    fullUserData && fullUserData !== null
+    user && fullUserData?.id === user.id
       ? fullUserData
       : user
         ? {
@@ -348,7 +353,7 @@ export default function Navbar() {
     (profileData && profileData.role && profileData.role.toLowerCase() === "admin") ||
     (profileData && profileData.role && profileData.role.toLowerCase() === "ceo");
 
-  const showRegister = !user || !isVendorOrAdmin;
+  const showRegister = !sessionLoading && (!user || (fullUserData?.id === user.id && !isVendorOrAdmin));
 
   const slugify = (name: string) =>
     name
@@ -392,6 +397,7 @@ export default function Navbar() {
           {/* Mobile only: personalized two-line welcome. Keep the actual
               SLBI wordmark unchanged from tablet/desktop breakpoints onward. */}
           <MobileGreeting
+            loading={sessionLoading}
             username={profileData?.username}
             fullName={profileData?.full_name}
             email={profileData?.email}
@@ -438,7 +444,7 @@ export default function Navbar() {
             <NotificationBell />
             <HeaderThemeToggle />
             
-            <div className="hidden sm:block"><AuthButton user={fullUserData} /></div>
+            <div className="hidden sm:block"><AuthButton user={sessionLoading ? undefined : profileData} /></div>
              {showRegister && <Link href="/register-business" aria-label="List Your Business" title="List Your Business" className="hidden h-10 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-[#1B3430] px-3 text-xs font-semibold text-white shadow-md transition-all hover:bg-[#26483B] hover:shadow-lg lg:inline-flex min-[1600px]:px-4"><BrandIcon name="buildings-2" size={17} /> <span className="hidden min-[1600px]:inline">List Your Business</span><ArrowUpRight size={15} className="hidden min-[1600px]:block" /></Link>}
 
             {/* Mobile reference: profile-shaped menu control instead of a hamburger.
@@ -901,7 +907,7 @@ export default function Navbar() {
               {/* The sign-out action never scrolls behind the site bottom dock. */}
               <div className="shrink-0 border-t border-[#E5EAE7] bg-white px-4 pt-4 sm:hidden"
                 style={{ paddingBottom: "max(12px, env(safe-area-inset-bottom, 0px))" }}>
-                {user ? (
+                {sessionLoading ? <div aria-label="Loading account" className="h-11 animate-pulse rounded-full bg-neutral-200"/> : user ? (
                   <button type="button" onClick={handleSignOut} disabled={isSigningOut}
                     className="flex h-[49px] w-full items-center justify-center gap-2 rounded-full bg-[#FDF0EE] text-[14px] font-medium text-[#B33B42] transition-colors hover:bg-[#F9E6E4] active:bg-[#F5DEDB] disabled:opacity-60">
                     <BrandIcon name="logout" size={17} variant="linear" />
@@ -926,7 +932,7 @@ export default function Navbar() {
                   paddingBottom: "calc(env(safe-area-inset-bottom) + 1rem)",
                 }}
               >
-                {user ? (
+                {sessionLoading ? <div aria-label="Loading account" className="h-11 animate-pulse rounded-full bg-neutral-200"/> : user ? (
                   <button
                     onClick={handleSignOut}
                     disabled={isSigningOut}

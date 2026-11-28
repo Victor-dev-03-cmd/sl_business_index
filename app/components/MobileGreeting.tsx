@@ -4,11 +4,11 @@ import {useEffect,useState} from 'react';
 import {usePathname} from 'next/navigation';
 import {mobileDaypart} from '@/lib/ui/mobile-daypart';
 
-type Props={username?:string|null;fullName?:string|null;email?:string|null};
+type Props={loading?:boolean;username?:string|null;fullName?:string|null;email?:string|null};
 
 /** Public mobile header only; no extra account fetch or render-time clock
  * drift. React SSR and initial client output match before the first effect. */
-export default function MobileGreeting({username,fullName,email}:Props){
+export default function MobileGreeting({username,fullName,email,loading=false}:Props){
   const [greeting,setGreeting]=useState(()=>mobileDaypart(-1));
   const isMobileHome=usePathname()==='/';
   useEffect(()=>{
@@ -27,7 +27,7 @@ export default function MobileGreeting({username,fullName,email}:Props){
     aria-label="Welcome to SL Business Index">
     <span data-slbi-mobile-username="true" className="block truncate text-[15px] font-semibold leading-[1.3] tracking-[-.025em] text-[#172D27]"
       title={isMobileHome ? 'Welcome, '+name : 'Hello, '+name}>
-      {isMobileHome ? <>Welcome, {name}</> : <>Hello, {name}</>}
+      {loading ? <span aria-label="Loading account" className="inline-block h-4 w-28 animate-pulse rounded bg-neutral-200"/> : isMobileHome ? <>Welcome, {name}</> : <>Hello, {name}</>}
     </span>
     <span className="block text-[12px] font-medium leading-[1.4] text-[#6A766D]">
       {greeting.label} <span aria-hidden="true">{greeting.emoji}</span>

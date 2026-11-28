@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState, type FormEvent } from 'react';
+import { Suspense, useEffect, useState, useRef, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -44,6 +44,8 @@ function LoginExperience({ mode }: { mode: AuthMode }) {
   const [busy, setBusy] = useState<BusyAction>(null);
   const [error, setError] = useState<string | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const submitting = useRef(false);
+  const [captchaFailed,setCaptchaFailed]=useState(false);
   const [captchaVersion, setCaptchaVersion] = useState(0);
   const [canUseWebAuthn, setCanUseWebAuthn] = useState(true);
   const [passkeyHelp, setPasskeyHelp] = useState(false);
@@ -75,6 +77,7 @@ function LoginExperience({ mode }: { mode: AuthMode }) {
 
   const resetCaptcha = () => {
     setTurnstileToken(null);
+    setCaptchaFailed(false);
     setCaptchaVersion(value => value + 1);
   };
 
@@ -177,29 +180,30 @@ function LoginExperience({ mode }: { mode: AuthMode }) {
 
   async function handleEmail(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (busy) return;
+    if (busy || submitting.current || !turnstileToken) return;
     setError(null);
-    if (!turnstileToken) {
-      setError('Please complete the security verification.');
-      return;
-    }
-    if (!isLogin && !fullName.trim()) {
+    const fields=new FormData(event.currentTarget);
+    const submittedEmail=String(fields.get('email')||'').trim();
+    const submittedPassword=String(fields.get('password')||'');
+    const submittedName=String(fields.get('name')||'').trim();
+    if (!isLogin && !submittedName) {
       setError('Please enter your name.');
       return;
     }
+    submitting.current=true;
     setBusy('email');
     try {
       if (!isLogin) {
         const { error: signUpError } = await supabase.auth.signUp({
-          email: email.trim(),
-          password,
+          email: submittedEmail,
+          password: submittedPassword,
           options: {
-            data: { username: fullName.trim(), full_name: fullName.trim() },
+            data: { username: submittedName, full_name: submittedName },
             captchaToken: turnstileToken,
           },
         });
         if (signUpError) throw signUpError;
-        router.push('/auth/confirm-otp?email=' + encodeURIComponent(email.trim()));
+        router.push('/auth/confirm-otp?email=' + encodeURIComponent(submittedEmail));
         return;
       }
 
@@ -208,7 +212,7 @@ function LoginExperience({ mode }: { mode: AuthMode }) {
         credentials: 'same-origin',
         cache: 'no-store',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), password, turnstileToken }),
+        body: JSON.stringify({ email: submittedEmail, password: submittedPassword, turnstileToken }),
       });
       const result: { authenticated?: boolean; browserSessionRequired?: boolean; error?: string } =
         await response.json();
@@ -218,7 +222,7 @@ function LoginExperience({ mode }: { mode: AuthMode }) {
       if (result.browserSessionRequired) {
         // The protected routes require server-readable cookies, not only local state.
         const { data, error: browserError } = await supabase.auth.signInWithPassword({
-          email: email.trim(), password,
+          email: submittedEmail, password: submittedPassword,
         });
         if (browserError || !data.session) {
           throw new Error('Sign-in succeeded, but the browser could not save the session.');
@@ -229,6 +233,7 @@ function LoginExperience({ mode }: { mode: AuthMode }) {
       setError(cause instanceof Error ? cause.message : 'Unable to complete authentication.');
       resetCaptcha();
     } finally {
+      submitting.current=false;
       setBusy(null);
     }
   }
@@ -311,7 +316,7 @@ function LoginExperience({ mode }: { mode: AuthMode }) {
               </div>
             ) : (
               <div>
-                <button type="button" className="mb-5 inline-flex items-center gap-2 text-[13px] font-semibold text-[#427A62] hover:text-[#15372C]" onClick={() => { setEmailMode(false); setError(null); }}>
+                <button type="button" className="mb-5 inline-flex items-center gap-2 text-[13px] font-semibold text-[#427A62] hover:text-[#15372C]" onClick={() => { setEmailMode(false); setError(null); resetCaptcha(); }}>
                   <ArrowLeft size={16} /> All sign-in options
                 </button>
                 <form onSubmit={handleEmail} className="space-y-4">
@@ -336,11 +341,12 @@ function LoginExperience({ mode }: { mode: AuthMode }) {
                     </span>
                   </label>
                   <div className="min-h-[66px] overflow-hidden rounded-lg">
-                    <Turnstile key={captchaVersion} siteKey={process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY!} onSuccess={setTurnstileToken} onError={() => setTurnstileToken(null)} onExpire={() => setTurnstileToken(null)} options={{ theme: 'light', size: 'flexible' }}/>
+                    <Turnstile key={captchaVersion} siteKey={process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY!} onSuccess={token=>{setTurnstileToken(token);setCaptchaFailed(false)}} onError={()=>{setTurnstileToken(null);setCaptchaFailed(true)}} onExpire={()=>setTurnstileToken(null)} options={{ theme: 'light', size: 'flexible' }}/>
                   </div>
-                  <button type="submit" disabled={busy !== null} className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-[#183A31] px-4 text-[14px] font-semibold text-white shadow-[0_8px_18px_rgba(24,58,49,0.16)] transition hover:bg-[#245844] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#287A5C]/25 disabled:opacity-60">
+                  {!turnstileToken&&<p role="status" className="text-xs text-neutral-500">{captchaFailed?"Security check unavailable.":"Verifying your browser…" } {captchaFailed&&<button type="button" onClick={resetCaptcha} className="underline">Retry</button>}</p>}
+                  <button type="submit" disabled={busy !== null || !turnstileToken} className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-[#183A31] px-4 text-[14px] font-semibold text-white shadow-[0_8px_18px_rgba(24,58,49,0.16)] transition hover:bg-[#245844] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#287A5C]/25 disabled:opacity-60">
                     {busy === 'email' ? <LoaderCircle className="animate-spin" size={18} /> : null}
-                    {isLogin ? 'Sign In' : 'Create Account'}
+                    {!turnstileToken&&!busy?'Verifying…':isLogin ? 'Sign In' : 'Create Account'}
                     {busy !== 'email' && <ArrowRight size={17}/>}
                   </button>
                 </form>

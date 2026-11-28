@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, ReactNode, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, ReactNode, useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { Session, User } from '@supabase/supabase-js';
 import {clearLocalPush,refreshPush} from '@/lib/push/client';
@@ -19,29 +19,33 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const authRevision = useRef(0);
   const getSession = useCallback(async () => {
+    const revision = authRevision.current;
     try {
       const { data, error } = await supabase.auth.getSession();
       if (error) throw error;
+      if (revision !== authRevision.current) return;
       setSession(data.session);
       setUser(data.session?.user || null);
     } catch (error) {
       console.error('Error fetching session:', error);
     } finally {
-      setLoading(false);
+      if (revision === authRevision.current) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    getSession();
-
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      authRevision.current++;
       setSession(session);
       setUser(session?.user || null);
       setLoading(false);
     });
 
+    // Supabase emits INITIAL_SESSION after storage hydration; avoid a second competing read.
     return () => {
+      authRevision.current++;
       authListener.subscription.unsubscribe();
     };
   }, [getSession]);

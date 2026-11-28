@@ -74,3 +74,17 @@ test('profile inline controls and main notification refresh retain consent and a
  assert.match(route,/auth.getUser\(\)/);assert.match(route,/session_id/);
  assert.match(inbox,/slbi-push-received/);assert.match(inbox,/user_id=eq\./);
 });
+
+test('unknown account and membership never render a guest or follow action',()=>{
+ const nav=read('app/components/Navbar.tsx'),session=read('app/components/SessionContext.tsx'),control=read('app/components/audience/BusinessAudienceControls.tsx');
+ assert.match(nav,/AuthButton user=\{sessionLoading \? undefined : profileData\}/);
+ assert.match(nav,/fullUserData\?\.id === user.id/);
+ assert.match(nav,/if \(sessionLoading\) return/);
+ assert.match(nav,/return \(\) => \{ active = false; \}/);
+ assert.match(session,/authRevision.current\+\+/);
+ assert.match(session,/if \(revision !== authRevision.current\) return/);
+ assert.match(control,/if\(!active\|\|sessionLoading\)return/);
+ assert.match(control,/if\(sessionLoading\|\|resolvedAccount!==scope\|\|!state\)return/);
+ assert.match(control,/data.signedIn!==Boolean\(user\)/);
+ assert.match(control,/Unable to load status · Retry/);
+});

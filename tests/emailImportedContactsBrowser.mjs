@@ -32,14 +32,14 @@ const executable=process.env.CHROME_BIN||['google-chrome','chromium','chromium-b
 assert.ok(executable,'Chrome/Chromium is required for real Excel browser acceptance');
 const dir=mkdtempSync(join(tmpdir(),'slbi-import-browser-'));
 const profile=join(dir,'profile');
-const chrome=spawn(executable,['--headless','--no-sandbox','--disable-dev-shm-usage','--disable-gpu','--no-first-run','--remote-debugging-port=0','--user-data-dir='+profile,'about:blank'],{stdio:'ignore'});
-let ws;
+const chrome=spawn(executable,['--headless','--no-sandbox','--disable-dev-shm-usage','--disable-gpu','--no-first-run','--remote-debugging-port=0','--user-data-dir='+profile,'about:blank'],{stdio:['ignore','ignore','pipe']});
+let ws;let diagnostics='';chrome.stderr.on('data',c=>{diagnostics=(diagnostics+c.toString()).slice(-4000)});
 try{
  let port;
- for(let i=0;i<100&&!port;i++){
+ for(let i=0;i<300&&!port;i++){
    try{port=Number(readFileSync(join(profile,'DevToolsActivePort'),'utf8').split('\n')[0]);}catch{await delay(100);}
  }
- assert.ok(port,'Browser DevTools did not start');
+ assert.ok(port,'Browser DevTools did not start: '+diagnostics);
  const targets=await (await fetch('http://127.0.0.1:'+port+'/json/list',{signal:AbortSignal.timeout(5000)})).json();
  const target=targets.find(t=>t.type==='page');assert.ok(target?.webSocketDebuggerUrl);
  ws=new WebSocket(target.webSocketDebuggerUrl);
