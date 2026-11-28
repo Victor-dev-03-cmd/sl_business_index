@@ -37,19 +37,40 @@ export default function NotificationBell(){
   const [error,setError]=useState('');
   const [loading,setLoading]=useState(true);
   const [loadedFor,setLoadedFor]=useState<string|null>(null);
-  const load=useCallback(async()=>{
+  const currentUid=useRef(uid);
+  currentUid.current=uid;
+  const opened=useRef(false);
+  const generation=useRef(0);
+  const request=useRef(0);
+  const load=useCallback(async(full=opened.current)=>{
     if(!uid)return;
-    const [rows,total]=await Promise.all([
-      supabase.from('notifications').select('id,title,message,type,created_at,is_read').eq('user_id',uid).order('created_at',{ascending:false}).limit(40),
-      supabase.from('notifications').select('id',{count:'exact',head:true}).eq('user_id',uid).eq('is_read',false),
-    ]);
-    if(rows.error||total.error){setError('Could not load updates. Please retry.');setLoading(false);return;}
-    setItems((rows.data||[]) as Item[]);setUnread(total.count||0);setLoadedFor(uid);setError('');setLoading(false);
+    const epoch=generation.current;
+    const version=++request.current;
+    const valid=()=>currentUid.current===uid&&generation.current===epoch&&request.current===version;
+    if(full)setLoading(true);
+    try{
+      const [rows,total]=await Promise.all([
+        full?supabase.from('notifications').select('id,title,message,type,created_at,is_read').eq('user_id',uid).order('created_at',{ascending:false}).limit(40):Promise.resolve(null),
+        supabase.from('notifications').select('id',{count:'exact',head:true}).eq('user_id',uid).eq('is_read',false),
+      ]);
+      if(!valid())return;
+      if(rows?.error||total.error)throw new Error('Notification query failed');
+      setUnread(total.count||0);setLoadedFor(uid);
+      if(rows)setItems((rows.data||[]) as Item[]);
+      setError('');
+    }catch{
+      if(valid())setError('Could not load updates. Please retry.');
+    }finally{
+      if(valid()&&full)setLoading(false);
+    }
   },[uid]);
+
   useEffect(()=>{
-    setItems([]);setUnread(0);setLoadedFor(null);setError('');setLoading(!!uid);
+    generation.current++;
+    opened.current=false;setOpen(false);setBusy(false);
+    setItems([]);setUnread(0);setLoadedFor(null);setError('');setLoading(true);
     if(!uid)return;
-    void load();
+    void load(false);
     const channel=supabase.channel('notification-bell:'+uid)
       .on('postgres_changes',{event:'INSERT',schema:'public',table:'notifications',filter:'user_id=eq.'+uid},()=>void load())
       .on('postgres_changes',{event:'UPDATE',schema:'public',table:'notifications',filter:'user_id=eq.'+uid},()=>void load())
@@ -57,23 +78,25 @@ export default function NotificationBell(){
     const refresh=()=>{if(document.visibilityState==='visible')void load()};
     document.addEventListener('visibilitychange',refresh);
     window.addEventListener('slbi-push-received',refresh);
-    return()=>{document.removeEventListener('visibilitychange',refresh);window.removeEventListener('slbi-push-received',refresh);void supabase.removeChannel(channel)};
+    return()=>{generation.current++;document.removeEventListener('visibilitychange',refresh);window.removeEventListener('slbi-push-received',refresh);void supabase.removeChannel(channel)};
   },[uid,load]);
   const count=loadedFor===uid?unread:0;
   const safeItems=loadedFor===uid?items:[];
   async function mark(id?:string){
     if(!uid||busy)return;
+    const epoch=generation.current;
     setBusy(true);
     let query=supabase.from('notifications').update({is_read:true}).eq('user_id',uid).eq('is_read',false);
     if(id)query=query.eq('id',id);
     const {error:writeError}=await query;
+    if(currentUid.current!==uid||generation.current!==epoch)return;
     if(writeError)setError('Could not mark as read. Please retry.');
     else await load();
     setBusy(false);
   }
   const visible=filter==='all'?safeItems:safeItems.filter(n=>!n.is_read);
   if(!uid&&!sessionLoading)return <Link href="/notifications" aria-label="Notifications" className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-[#244238] hover:bg-stone-100"><Bell size={20} strokeWidth={1.7}/></Link>;
-  return <Dialog.Root open={open} onOpenChange={value=>{if(value){reposition();void load()}setOpen(value)}} modal={false}>
+  return <Dialog.Root open={open} onOpenChange={value=>{opened.current=value;if(value){reposition();void load(true)}setOpen(value)}} modal={false}>
     <Dialog.Trigger asChild>
       <button ref={trigger} type="button" aria-label={'Notifications'+(count?' ('+count+' unread)':'')} className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full text-[#234238] transition hover:bg-stone-100 focus-visible:ring-2 focus-visible:ring-emerald-600">
         <Bell size={21} strokeWidth={1.7}/>
@@ -97,7 +120,7 @@ export default function NotificationBell(){
         </div>
         {error&&<div role="alert" className="flex items-center justify-between gap-2 px-4 py-3 text-xs text-red-700">{error}<button type="button" aria-label="Retry" onClick={()=>void load()}><RefreshCw size={16}/></button></div>}
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-          {loading||sessionLoading?<p className="p-6 text-center text-xs text-stone-500">Loading notifications…</p>:visible.length?visible.map(n=>{
+          {loading||sessionLoading||loadedFor!==uid?<p className="p-6 text-center text-xs text-stone-500">Loading notifications…</p>:visible.length?visible.map(n=>{
             const Icon=n.type==='success'?Check:n.type==='warning'||n.type==='error'?AlertTriangle:Info;
             return <button type="button" key={n.id} onClick={()=>void mark(n.id)} disabled={busy||n.is_read} className={'flex w-full items-start gap-3 border-b border-stone-100 px-4 py-3.5 text-left last:border-0 hover:bg-stone-50 disabled:cursor-default sm:px-5 '+(n.is_read?'bg-white':'bg-[#F2F8F3]')}>
               <span className={'mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-xl '+(n.type==='error'?'bg-red-100 text-red-600':n.type==='warning'?'bg-amber-100 text-amber-700':'bg-[#E5F0E8] text-[#3A785B]')}><Icon size={17}/></span>
