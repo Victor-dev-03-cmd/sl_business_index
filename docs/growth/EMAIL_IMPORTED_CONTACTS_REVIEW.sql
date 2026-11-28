@@ -20,6 +20,12 @@ ALTER TABLE slbi_email_import_private.lists ENABLE ROW LEVEL SECURITY;
 ALTER TABLE slbi_email_import_private.contacts ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON ALL TABLES IN SCHEMA slbi_email_import_private FROM PUBLIC,anon,authenticated;
 -- Never expose imported addresses to the platform audience or other owners.
+CREATE FUNCTION slbi_email_import_private.is_suppressed(p_business uuid,p_email text)
+RETURNS boolean LANGUAGE sql STABLE SET search_path='' AS $$
+ SELECT EXISTS(SELECT 1 FROM public.marketing_email_suppressions s WHERE s.business_id=p_business AND lower(trim(s.email))=p_email)
+ OR EXISTS(SELECT 1 FROM slbi_audience_private.business_email_blocks b JOIN auth.users u ON u.id=b.user_id WHERE b.business_id=p_business AND lower(trim(u.email))=p_email)
+$$;
+REVOKE ALL ON FUNCTION slbi_email_import_private.is_suppressed(uuid,text) FROM PUBLIC,anon,authenticated;
 CREATE FUNCTION public.slbi_email_import_lists(p_owner uuid,p_business uuid,p_list uuid DEFAULT NULL,p_offset integer DEFAULT 0)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE lists jsonb; contacts jsonb;
@@ -27,13 +33,13 @@ BEGIN
  IF p_offset IS NULL OR p_offset NOT BETWEEN 0 AND 5000 OR NOT EXISTS(SELECT 1 FROM public.businesses WHERE id=p_business AND owner_id=p_owner AND status='approved') THEN RETURN NULL; END IF;
  SELECT coalesce(jsonb_agg(to_jsonb(x) ORDER BY x.created_at DESC),'[]'::jsonb) INTO lists FROM (
  SELECT l.id,l.name,l.source,l.created_at,count(c.email) AS total,
- count(c.email) FILTER(WHERE NOT EXISTS(SELECT 1 FROM public.marketing_email_suppressions s WHERE s.business_id=p_business AND lower(trim(s.email))=c.email)) AS eligible
+ count(c.email) FILTER(WHERE NOT slbi_email_import_private.is_suppressed(p_business,c.email)) AS eligible
  FROM slbi_email_import_private.lists l LEFT JOIN slbi_email_import_private.contacts c ON c.list_id=l.id
  WHERE l.owner_id=p_owner AND l.business_id=p_business GROUP BY l.id ORDER BY l.created_at DESC LIMIT 20) x;
  IF p_list IS NOT NULL THEN
   IF NOT EXISTS(SELECT 1 FROM slbi_email_import_private.lists l WHERE l.id=p_list AND l.owner_id=p_owner AND l.business_id=p_business) THEN RETURN NULL; END IF;
   SELECT coalesce(jsonb_agg(to_jsonb(x) ORDER BY x.email),'[]'::jsonb) INTO contacts FROM (
-   SELECT c.email,EXISTS(SELECT 1 FROM public.marketing_email_suppressions s WHERE s.business_id=p_business AND lower(trim(s.email))=c.email) AS suppressed
+   SELECT c.email,slbi_email_import_private.is_suppressed(p_business,c.email) AS suppressed
    FROM slbi_email_import_private.contacts c WHERE c.list_id=p_list ORDER BY c.email OFFSET p_offset LIMIT 100) x;
  END IF;
  RETURN jsonb_build_object('lists',lists,'contacts',coalesce(contacts,'[]'::jsonb));
