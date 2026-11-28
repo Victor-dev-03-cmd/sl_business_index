@@ -12,6 +12,7 @@ import {
 } from '@/lib/marketing/email-hub-contract';
 import type {EmailStudioBusiness,EmailStudioConnection} from './EmailMarketingWorkbench';
 import EmailCampaignCanvas from './EmailCampaignCanvas';
+import {normalizeSuppressionEmail} from '@/lib/marketing/email-suppression-contract';
 
 type HubTab='campaigns'|'audience'|'templates'|'automations';
 const TABS:{id:HubTab;title:string;icon:string}[]=[
@@ -66,6 +67,12 @@ export default function EmailMarketingHub({
   const [csvReport,setCsvReport]=useState<{valid:number;invalid:number;declaredOptIn:number}|null>(null);
   const [pasteReport,setPasteReport]=useState<{valid:number;invalid:number}|null>(null);
   const [paste,setPaste]=useState('');
+  const [excludeEmail,setExcludeEmail]=useState('');
+  const [exclusions,setExclusions]=useState<Array<{email:string;reason:string;createdAt:string}>>([]);
+  const [exclusionCount,setExclusionCount]=useState<number|null>(null);
+  const [exclusionState,setExclusionState]=useState<'idle'|'loading'|'ready'|'unavailable'>('idle');
+  const [exclusionSaving,setExclusionSaving]=useState(false);
+  const [exclusionNotice,setExclusionNotice]=useState('');
   const [error,setError]=useState('');
   const [notice,setNotice]=useState('');
   const fileRef=useRef<HTMLInputElement|null>(null);
@@ -186,6 +193,63 @@ export default function EmailMarketingHub({
     .filter(d=>!search.trim()||[d.title,d.subject].some(x=>x.toLowerCase().includes(search.trim().toLowerCase())))
     .filter(d=>filter==='all'||d.status==='local_draft')
     .sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt)),[drafts,businessId,search,filter]);
+  useEffect(()=>{
+    if(tab!=='audience'||!businessId){return;}
+    let live=true;
+    setExclusionState('loading');setExclusionCount(null);setExclusions([]);
+    setExclusionNotice('');
+    void (async()=>{
+      try{
+        const response=await fetch('/api/marketing/email/suppressions?businessId='+encodeURIComponent(businessId),{
+          credentials:'same-origin',cache:'no-store',
+        });
+        if(!response.ok)throw Error('Registry unavailable');
+        const body:unknown=await response.json();
+        if(!body||typeof body!=='object'||Array.isArray(body))throw Error('Invalid response');
+        const record=body as {count?:unknown;items?:unknown};
+        if(typeof record.count!=='number'||!Array.isArray(record.items))throw Error('Invalid registry');
+        if(!live)return;
+        setExclusionCount(record.count);
+        setExclusions(record.items.flatMap(item=>{
+          if(!item||typeof item!=='object'||Array.isArray(item))return [];
+          const row=item as Record<string,unknown>;
+          const email=normalizeSuppressionEmail(row.email);
+          return email&&row.reason==='manual'&&typeof row.createdAt==='string'?
+            [{email,reason:'manual',createdAt:row.createdAt}]:[];
+        }));
+        setExclusionState('ready');
+      }catch{
+        if(live){setExclusionState('unavailable');setExclusionCount(null);setExclusions([]);}
+      }
+    })();
+    return()=>{live=false;};
+  },[businessId,tab]);
+  const excludeAddress=async()=>{
+    const email=normalizeSuppressionEmail(excludeEmail);
+    if(!email){setExclusionNotice('Enter one valid email address.');return;}
+    if(!businessId||exclusionState!=='ready'||exclusionSaving)return;
+    if(!window.confirm('Block this address from future marketing emails for this business? This exclusion cannot be removed from the Studio.'))return;
+    setExclusionSaving(true);setExclusionNotice('');
+    try{
+      const response=await fetch('/api/marketing/email/suppressions',{
+        method:'POST',credentials:'same-origin',cache:'no-store',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({businessId,email}),
+      });
+      const body:unknown=await response.json();
+      const data=body&&typeof body==='object'&&!Array.isArray(body)?
+        body as {saved?:boolean;alreadyExcluded?:boolean;error?:string}:{};
+      if(!response.ok||!data.saved)throw Error(typeof data.error==='string'?data.error:'Could not save exclusion.');
+      if(!data.alreadyExcluded){
+        setExclusions(old=>[{email,reason:'manual',createdAt:new Date().toISOString()},
+          ...old.filter(x=>x.email!==email)].slice(0,100));
+        setExclusionCount(old=>old===null?null:old+1);
+      }
+      setExcludeEmail('');
+      setExclusionNotice(data.alreadyExcluded?'Address is already excluded.':'Address added to the do-not-email registry.');
+    }catch(e){setExclusionNotice(e instanceof Error?e.message:'Could not save exclusion.');}
+    finally{setExclusionSaving(false);}
+  };
   const inspectCsv=async(file:File|null)=>{
     if(!file)return;setError('');setCsvReport(null);
     try{
@@ -370,9 +434,9 @@ export default function EmailMarketingHub({
             <p className="mt-2 text-[27px] font-extrabold">{verifiedCount===undefined?'—':verifiedCount}</p>
           </div>
           <div className="rounded-xl bg-[#F9FAFB] p-4">
-            <p className="text-[11px] font-bold text-[#6B7280]">Unsubscribed</p>
-            <p className="mt-2 text-[27px] font-extrabold">—</p>
-            <p className="text-[10px] text-[#9CA3AF]">Registry not yet connected</p>
+            <p className="text-[11px] font-bold text-[#6B7280]">Do-not-email entries</p>
+            <p className="mt-2 text-[27px] font-extrabold">{exclusionCount===null?'—':exclusionCount}</p>
+            <p className="text-[10px] text-[#9CA3AF]">{exclusionState==='ready'?'Manual exclusions only':'Registry unavailable · no sends allowed'}</p>
           </div>
         </div>
         <div className="rounded-xl border border-[#E5E7EB] p-4">
@@ -395,6 +459,44 @@ export default function EmailMarketingHub({
         </details>}
       </div>
       <div className={panel+' space-y-5 p-5 sm:p-7'}>
+        <div className="rounded-xl border border-[#FED7AA] bg-[#FFFBF5] p-4" data-testid="email-v6-suppressions">
+          <div className="flex items-center gap-2 text-[#9A3412]">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FFEDD5]">{icon('shield-tick',17)}</span>
+            <h3 className="text-[13px] font-extrabold">Do-not-email registry</h3>
+          </div>
+          <p className="mt-2 text-[11px] leading-5 text-[#92400E]">
+            Manually exclude customers who must never receive marketing campaigns. This is not a subscriber list.
+            Entries are business-specific and cannot be cleared from this Studio.
+          </p>
+          <form className="mt-3 flex flex-col gap-2 sm:flex-row" onSubmit={e=>{e.preventDefault();void excludeAddress();}}>
+            <label className="min-w-0 flex-1">
+              <span className="sr-only">Email address to exclude</span>
+              <input type="email" autoComplete="off" inputMode="email" value={excludeEmail}
+                onChange={e=>setExcludeEmail(e.target.value)} maxLength={254}
+                placeholder="customer@example.com"
+                className="min-h-10 w-full min-w-0 rounded-xl border border-[#E5E7EB] bg-white px-3 text-[12px] outline-none focus:border-[#F97316]"
+                disabled={exclusionState!=='ready'||exclusionSaving}/>
+            </label>
+            <button type="submit" disabled={exclusionState!=='ready'||exclusionSaving||!excludeEmail.trim()}
+              className="min-h-10 rounded-xl bg-[#111827] px-4 text-[11px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-40">
+              {exclusionSaving?'Saving…':'Block address'}
+            </button>
+          </form>
+          {exclusionNotice&&<p role="status" className="mt-2 text-[11px] text-[#9A3412]">{exclusionNotice}</p>}
+          {exclusionState==='loading'&&<p className="mt-3 text-[11px] text-[#6B7280]">Checking your private registry…</p>}
+          {exclusionState==='unavailable'&&<p className="mt-3 text-[11px] font-semibold text-[#9A3412]">
+            Registry is not yet activated. Blocking is disabled until secured database setup is complete.
+          </p>}
+          {exclusionState==='ready'&&<div className="mt-3 max-h-44 space-y-1 overflow-y-auto">
+            {exclusions.length===0?<p className="py-2 text-[11px] text-[#6B7280]">No manual exclusions recorded for this business.</p>:
+              exclusions.slice(0,25).map(item=><div key={item.email}
+                className="flex items-center justify-between gap-2 rounded-lg border border-[#F3E8D8] bg-white px-3 py-2">
+                <span className="min-w-0 truncate text-[11px] font-semibold text-[#374151]">{item.email}</span>
+                <span className="shrink-0 text-[10px] text-[#9A3412]">Blocked</span>
+              </div>)}
+            {(exclusionCount||0)>25&&<p className="pt-1 text-[10px] text-[#92400E]">Showing latest 25 of {exclusionCount} exclusions.</p>}
+          </div>}
+        </div>
         <div><h2 className="text-[17px] font-extrabold">Prepare an audience</h2>
           <p className={secondary+' mt-2'}>Check your contact list before importing it into an approved subscriber system.</p></div>
         <div className="rounded-xl border border-[#E5E7EB] p-4">
