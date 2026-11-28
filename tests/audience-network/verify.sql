@@ -64,12 +64,14 @@ DO $$ BEGIN
 END $$;
 INSERT INTO public.marketing_email_suppressions VALUES('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','non-follower@example.invalid');
 DO $$ BEGIN
- ASSERT public.slbi_audience_owner_summary('11111111-1111-4111-8111-111111111111','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')->>'subscribers'='1';
+ ASSERT public.slbi_audience_owner_summary('11111111-1111-4111-8111-111111111111','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')->>'subscribers'='2';
+ ASSERT slbi_audience_private.business_eligible_count('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')=1;
 END $$;
 UPDATE auth.users SET email='new-address@example.invalid' WHERE id='33333333-3333-4333-8333-333333333333';
 DO $$ BEGIN
  ASSERT public.slbi_audience_read('33333333-3333-4333-8333-333333333333','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')->>'emailEligible'='false';
- ASSERT public.slbi_audience_owner_summary('11111111-1111-4111-8111-111111111111','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')->>'subscribers'='0';
+ ASSERT public.slbi_audience_owner_summary('11111111-1111-4111-8111-111111111111','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')->>'subscribers'='1';
+ ASSERT slbi_audience_private.business_eligible_count('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')=0;
  ASSERT public.slbi_audience_read('33333333-3333-4333-8333-333333333333',NULL)->>'networkEligible'='false';
 END $$;
 SET ROLE service_role;
