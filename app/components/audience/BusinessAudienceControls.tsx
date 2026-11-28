@@ -2,7 +2,7 @@
 import {useEffect,useState} from 'react';
 import Link from 'next/link';
 import IconsaxIcon from '@/app/vendor/components/IconsaxIcon';
-export type BusinessAudienceState={following:boolean;news:boolean;push:boolean;email:boolean;followers?:number;approved?:boolean};
+export type BusinessAudienceState={following:boolean;news:boolean;push:boolean;email:boolean;emailEligible?:boolean;followers?:number;approved?:boolean};
 export default function BusinessAudienceControls({businessId,businessName,initial,onChanged}:{businessId:string;businessName:string;initial?:BusinessAudienceState;onChanged?:()=>void}){
  const [state,setState]=useState<BusinessAudienceState|null>(initial||null);
  const [signedIn,setSignedIn]=useState(Boolean(initial));
@@ -10,7 +10,7 @@ export default function BusinessAudienceControls({businessId,businessName,initia
  const [error,setError]=useState('');
  const [expanded,setExpanded]=useState(Boolean(initial));
  useEffect(()=>{
-   if(initial)return;
+   if(initial){setState(initial);setSignedIn(true);return;}
    const ctrl=new AbortController();
    setState(null);setError('');
    void fetch('/api/audience?businessId='+encodeURIComponent(businessId),{signal:ctrl.signal,cache:'no-store'}).then(async res=>{
@@ -35,7 +35,7 @@ export default function BusinessAudienceControls({businessId,businessName,initia
    <div className="flex flex-wrap items-center justify-between gap-2">
      <div className="min-w-0"><p className="text-sm font-semibold">Stay connected</p><p className="text-xs text-neutral-500">{typeof state?.followers==='number'?state.followers+' followers':'Business updates'}</p></div>
      <div className="flex items-center gap-2">
-       {!signedIn&&state?<Link href="/login" className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-[#EA580C] px-3 text-xs font-semibold text-white">{icon('people')} Follow</Link>:<button type="button" disabled={!state||busy||state.approved===false&&!state.following} aria-pressed={Boolean(state?.following)} onClick={()=>void change(state?.following?'unfollow':'follow')} className={'inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-3 text-xs font-semibold disabled:opacity-40 '+(state?.following?'border-neutral-200 text-neutral-800':'border-[#EA580C] bg-[#EA580C] text-white')}>{icon(state?.following?'tick-circle':'people')}{state?.following?'Following · Unfollow':'Follow'}</button>}
+       {!signedIn&&state?<Link href={'/login?next='+encodeURIComponent('/business/'+businessId)} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-[#EA580C] px-3 text-xs font-semibold text-white">{icon('people')} Follow</Link>:<button type="button" disabled={!state||busy||state.approved===false&&!state.following} aria-pressed={Boolean(state?.following)} onClick={()=>void change(state?.following?'unfollow':'follow')} className={'inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-3 text-xs font-semibold disabled:opacity-40 '+(state?.following?'border-neutral-200 text-neutral-800':'border-[#EA580C] bg-[#EA580C] text-white')}>{icon(state?.following?'tick-circle':'people')}{state?.following?'Following · Unfollow':'Follow'}</button>}
        <button type="button" aria-expanded={expanded} aria-label="Update preferences" onClick={()=>setExpanded(x=>!x)} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-neutral-200 px-3 text-xs font-medium">{icon('setting-2')} Updates</button>
      </div>
    </div>
@@ -44,6 +44,7 @@ export default function BusinessAudienceControls({businessId,businessName,initia
        <label className="flex items-center justify-between gap-3"><span>Business news in-app</span><input type="checkbox" checked={state.news} disabled={busy||!state.following||state.approved===false} onChange={e=>void change(e.target.checked?'news_on':'news_off')} className="accent-[#F97316]"/></label>
        <label className="flex items-center justify-between gap-3"><span>Device push for business news</span><input type="checkbox" checked={state.push} disabled={busy||!state.following||state.approved===false} onChange={e=>void change(e.target.checked?'push_on':'push_off')} className="accent-[#F97316]"/></label>
        <label className="flex items-start justify-between gap-3"><span>Receive promotional emails from {businessName} at my verified account email.<small className="mt-1 block text-neutral-500">Optional. Withdraw here at any time. Email delivery is not activated.</small></span><input type="checkbox" checked={state.email} disabled={busy||state.approved===false&&!state.email} onChange={e=>void change(e.target.checked?'subscribe':'unsubscribe')} className="mt-1 accent-[#F97316]"/></label>
+       {state.email&&state.emailEligible===false&&<div className="text-neutral-600">Account email changed. <button type="button" disabled={busy||state.approved===false} onClick={()=>void change('subscribe')} className="font-semibold text-[#C2410C] underline">Confirm subscription for the current verified email</button>.</div>}
        <Link href="/following" className="inline-flex font-semibold text-[#C2410C]">Manage all subscriptions</Link>
      </>}
    </div>}
