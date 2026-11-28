@@ -61,9 +61,8 @@ test('profile inline controls and main notification refresh retain consent and a
  assert.match(control,/state\?\.following&&<button/);
  assert.match(control,/await enablePush\(user.id\);await change\('push_on'\)/);
  assert.match(control,/slbi-bell-ring/);
- assert.match(control,/initial&&state&&signedIn/);
- assert.match(control,/consentVersion:'slbi-audience-sharing-v2'/);
- assert.match(control,/Subscribe email shares your verified email/);
+ assert.match(control,/consentVersion:'slbi-follow-email-v3'/);
+ assert.match(control,/Follow shares your verified email/);
  assert.match(session,/visibilitychange/);assert.match(session,/refreshPush\(uid\)/);
  assert.match(route,/expectedUid!==undefined&&expectedUid!==user.id/);
  assert.match(route,/auth.getUser\(\)/);assert.match(route,/session_id/);
