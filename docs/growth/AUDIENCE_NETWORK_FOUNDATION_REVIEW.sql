@@ -1,5 +1,5 @@
 -- REVIEW CANDIDATE: apply only after isolated migration/rollback and role tests.
--- No imported users, recipient export or email provider activation.
+-- No imported users, bulk export or email provider activation; scoped consented email lists only.
 BEGIN;
 CREATE SCHEMA IF NOT EXISTS slbi_audience_private;
 REVOKE ALL ON SCHEMA slbi_audience_private FROM PUBLIC,anon,authenticated;
@@ -103,7 +103,7 @@ BEGIN
   IF p_business IS NOT NULL THEN
     IF NOT EXISTS(SELECT 1 FROM public.businesses WHERE id=p_business AND status='approved') THEN RETURN NULL; END IF;
     SELECT jsonb_build_object('following',m.followed_at IS NOT NULL,'news',coalesce(m.news,false),
-      'push',coalesce(m.push,false),'email',m.email_consent_at IS NOT NULL,'emailEligible',coalesce(m.email_digest=extensions.digest(lower(trim(u.email)),'sha256') AND u.email_confirmed_at IS NOT NULL,false),
+      'push',coalesce(m.push,false),'email',m.email_consent_at IS NOT NULL,'emailEligible',coalesce(m.email_digest=extensions.digest(lower(trim(u.email)),'sha256') AND u.email_confirmed_at IS NOT NULL AND m.consent_owner_id=(SELECT owner_id FROM public.businesses WHERE id=m.business_id),false),
       'followers',(SELECT count(*) FROM slbi_audience_private.memberships x WHERE x.business_id=p_business AND x.followed_at IS NOT NULL))
     INTO result FROM (SELECT 1) dummy LEFT JOIN slbi_audience_private.memberships m ON m.user_id=p_user AND m.business_id=p_business
       LEFT JOIN auth.users u ON u.id=p_user;
@@ -113,7 +113,7 @@ BEGIN
   SELECT jsonb_build_object(
     'businesses',coalesce((SELECT jsonb_agg(jsonb_build_object('id',b.id,'name',b.name,'slug',b.slug,'approved',b.status='approved',
       'following',m.followed_at IS NOT NULL,'news',m.news,'push',m.push,
-      'email',m.email_consent_at IS NOT NULL,'emailEligible',coalesce(m.email_digest=extensions.digest(lower(trim(u.email)),'sha256') AND u.email_confirmed_at IS NOT NULL,false)) ORDER BY m.updated_at DESC)
+      'email',m.email_consent_at IS NOT NULL,'emailEligible',coalesce(m.email_digest=extensions.digest(lower(trim(u.email)),'sha256') AND u.email_confirmed_at IS NOT NULL AND m.consent_owner_id=(SELECT owner_id FROM public.businesses WHERE id=m.business_id),false)) ORDER BY m.updated_at DESC)
       FROM (SELECT * FROM slbi_audience_private.memberships WHERE user_id=p_user AND (followed_at IS NOT NULL OR email_consent_at IS NOT NULL) ORDER BY updated_at DESC LIMIT 200) m
       JOIN public.businesses b ON b.id=m.business_id JOIN auth.users u ON u.id=m.user_id),'[]'::jsonb),
     'network',coalesce((SELECT n.consent_at IS NOT NULL FROM slbi_audience_private.network_preferences n WHERE n.user_id=p_user),false),
@@ -274,7 +274,7 @@ BEGIN
    INSERT INTO slbi_audience_private.network_review_events(request_id,actor_id,decision) VALUES(q.id,p_actor,p_decision);
  END IF;
  SELECT jsonb_build_object('requests',coalesce(jsonb_agg(to_jsonb(x) ORDER BY x.created_at DESC),'[]'::jsonb),'deliveryEnabled',false) INTO result FROM (
- SELECT q.id,q.business_id,b.name AS business_name,q.requested_count,q.language,q.purpose,q.status,q.created_at,q.expires_at FROM slbi_audience_private.network_requests q JOIN public.businesses b ON b.id=q.business_id ORDER BY (q.status='pending') DESC,q.created_at DESC LIMIT 100) x;
+ SELECT req.id,req.business_id,b.name AS business_name,req.requested_count,req.language,req.purpose,req.status,req.created_at,req.expires_at FROM slbi_audience_private.network_requests req JOIN public.businesses b ON b.id=req.business_id ORDER BY (req.status='pending') DESC,req.created_at DESC LIMIT 100) x;
  RETURN result;
 END $$;
 REVOKE ALL ON FUNCTION public.slbi_audience_read(uuid,uuid),public.slbi_audience_change(uuid,uuid,text,text),public.slbi_audience_owner_summary(uuid,uuid,text),public.slbi_audience_owner_counts(uuid),public.slbi_audience_request(uuid,uuid,integer,text,text),public.slbi_audience_lists(uuid,uuid,integer),public.slbi_audience_admin_control(uuid,uuid,text) FROM PUBLIC,anon,authenticated;
