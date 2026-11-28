@@ -6,6 +6,7 @@ import MobileHomeExperience from "./MobileHomeExperience";
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { getBusinessDisplayAddress } from "@/lib/businessAddress";
 import Link from "next/link";
+import SmartPrefetchLink from "./components/SmartPrefetchLink";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
@@ -63,9 +64,8 @@ const FeaturedListingCard = React.memo(function FeaturedListingCard({
   business,
 }: { business: FeaturedBusiness }) {
   return (
-                <Link
+                <SmartPrefetchLink
                   href={`/business/${business.slug || business.id}`}
-                  prefetch={null}
                   aria-label={`View ${business.name} business profile`}
                   className="slbi-home-featured-card group relative block aspect-[9/16] [content-visibility:auto] [contain-intrinsic-size:237px_422px] w-[178px] shrink-0 snap-start overflow-hidden rounded-[22px] border border-[#E0EADB] bg-[#1B3430] shadow-[0_3px_12px_rgba(15,40,67,0.07)] transition-colors duration-150 hover:border-[#75AB8D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 sm:w-[207px] lg:w-[229px] xl:w-[237px]"
                 >
@@ -134,7 +134,7 @@ const FeaturedListingCard = React.memo(function FeaturedListingCard({
                       </span>
                     </div>
                   </div>
-                </Link>
+                </SmartPrefetchLink>
   );
 });
 
