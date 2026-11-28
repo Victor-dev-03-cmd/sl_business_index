@@ -84,8 +84,8 @@ test('Owner-scoped local drafts never import contact email lists, provider token
 });
 test('Current security-gated Gmail, approved business and optional QA Gemini survive architecture update',()=>{
  for(const s of [".eq('owner_id',user.id)",".eq('provider','google_mail')",
-   ".eq('status','connected')","marketing_email_optins",
-   ".eq('confirmation_status','confirmed')","emailAiAllowed=await isPosterInternalQAAccount",
+   ".eq('status','connected')","slbi_audience_owner_counts",
+   "p_owner:user.id","emailAiAllowed=await isPosterInternalQAAccount",
    'getGoogleConnectorConfig']){
    assert.ok(page.includes(s),s);
  }
