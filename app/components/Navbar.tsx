@@ -737,7 +737,6 @@ export default function Navbar() {
                     )}
                   </div>
                   <MobileDrawerLink href="/business-news" label="SL-News" iconName="note-2" onClick={close} />
-                  {user&&<MobileDrawerLink href="/following" label="Following & subscriptions" iconName="people" onClick={close}/> }
                   {showRegister && (
                     <MobileDrawerLink href="/register-business" label="Register Business" iconName="buildings-2" onClick={close} />
                   )}
@@ -794,7 +793,6 @@ export default function Navbar() {
                   variants={itemVariants}
                 />
 
-                {user&&<MobileNavLink href="/following" iconName="people" label="Following & subscriptions" onClick={close} variants={itemVariants}/>}
                 {/* FAQ */}
                 <MobileNavLink
                   href="/faq"
