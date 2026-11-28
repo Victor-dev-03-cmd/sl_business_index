@@ -1,6 +1,6 @@
 'use client';
 
-import {useEffect,useRef,useState} from 'react';
+import {useEffect,useRef,useState,type CSSProperties} from 'react';
 import {createPortal} from 'react-dom';
 import Link from 'next/link';
 import IconsaxIcon from '@/app/vendor/components/IconsaxIcon';
@@ -10,6 +10,8 @@ import {EMAIL_TEMPLATE_LAYOUTS,safeCustomPreviewDocument,type EmailTemplateLayou
   from '@/lib/marketing/email-template-contract';
 import {
   EMAIL_BLOCK_TYPES,newEmailBlock,moveEmailBlock,briefFromBlocks,
+  EMAIL_FONT_FAMILIES,emailBlockTypography,emailTypographyStyle,defaultEmailTypography,
+  type EmailTypography,type EmailFontFamily,
   type EmailVisualBlock,type EmailBlockType,type LocalEmailCampaign,
 } from '@/lib/marketing/email-hub-contract';
 
@@ -22,14 +24,14 @@ type Props={
 const input='min-h-10 w-full min-w-0 rounded-xl border border-[#E5E7EB] bg-white px-3 py-2 text-[12px] text-[#111827] outline-none focus:border-[#F97316] focus:ring-2 focus:ring-[#F97316]/10';
 const label='mb-1 block text-[11px] font-bold text-[#374151]';
 const muted='text-[11px] leading-5 text-[#6B7280]';
-const icon=(name:string,size=16)=><IconsaxIcon name={name} size={size}/>;
+const icon=(name:string,size=16)=><IconsaxIcon name={name} size={size} variant="bulk"/>;
 type InlineProps={
   value:string;onChange:(next:string)=>void;label:string;max:number;
-  className:string;multiline?:boolean;
+  className:string;multiline?:boolean;style?:CSSProperties;
 };
 /** Plain-text contentEditable: the React state stays canonical, and paste
  * inserts text nodes only, never pasted HTML/scripts or external images. */
-function InlineText({value,onChange,label,max,className,multiline=false}:InlineProps){
+function InlineText({value,onChange,label,max,className,multiline=false,style}:InlineProps){
   const ref=useRef<HTMLDivElement|null>(null);
   useEffect(()=>{
     if(ref.current&&document.activeElement!==ref.current&&ref.current.innerText!==value)
@@ -38,6 +40,7 @@ function InlineText({value,onChange,label,max,className,multiline=false}:InlineP
   return <div ref={ref} contentEditable role="textbox" aria-label={label}
     aria-multiline={multiline} tabIndex={0} spellCheck
     data-inline-editable={label}
+    style={style}
     className={className+' cursor-text outline-none focus-visible:ring-2 focus-visible:ring-[#F97316] focus-visible:ring-offset-2'}
     onInput={e=>onChange(e.currentTarget.innerText.slice(0,max))}
     onKeyDown={e=>{if(!multiline&&e.key==='Enter')e.preventDefault();}}
@@ -86,6 +89,8 @@ export default function EmailCampaignCanvas({
   const [customName,setCustomName]=useState('My Brand Template');
   useEffect(()=>{campaignRef.current=campaign;},[campaign]);
   const selected=campaign.blocks.find(b=>b.id===selectedId)||null;
+  const typography=selected?emailBlockTypography(selected):null;
+  const canvasWidth=campaign.canvasWidth||600;
   const brandName=business.brandName||business.name;
   const profileUrl='https://www.slbusinessindex.com/business/'+
     (business.slug&&/^[a-z0-9-]+$/i.test(business.slug)?business.slug:business.id);
@@ -119,6 +124,10 @@ export default function EmailCampaignCanvas({
   const updateBlock=(id:string,patch:Partial<EmailVisualBlock>)=>{
     setCampaign(old=>({...old,blocks:old.blocks.map(block=>block.id===id?{...block,...patch}:block)}));
     setDirty(true);setNotice('');setError('');
+  };
+  const updateTypography=(patch:Partial<EmailTypography>)=>{
+    if(!selected)return;
+    updateBlock(selected.id,{typography:{...emailBlockTypography(selected),...patch}});
   };
   const insertBlock=(type:EmailBlockType)=>{
     const block=newEmailBlock(type);
@@ -280,20 +289,20 @@ export default function EmailCampaignCanvas({
       setDragId(null);
     }}
     onDragEnd={()=>setDragId(null)}
-    onClick={()=>setSelectedId(b.id)}
+    onClick={()=>setSelectedId(b.id)} onFocus={()=>setSelectedId(b.id)}
     className={'group relative min-w-0 rounded-lg p-2 '+selectionBorder+
       (selectedId===b.id?' !border-[#F97316]':'')+
       (dragId===b.id?' opacity-50':'')}>
     <span className="pointer-events-none absolute -left-2 top-1/2 z-10 hidden -translate-y-1/2 rounded bg-[#111827] px-1.5 py-1 text-[9px] font-bold text-white group-hover:block" aria-hidden="true">⋮⋮</span>
     {b.type==='headline'&&<InlineText value={b.text} label="Headline — edit directly"
-      max={200} onChange={next=>updateBlock(b.id,{text:next})}
+      max={200} style={emailTypographyStyle(b)} onChange={next=>updateBlock(b.id,{text:next})}
       className="min-h-9 break-words rounded p-1 text-[23px] font-bold leading-tight text-[#111827]"/>}
     {b.type==='body'&&<InlineText value={b.text} label="Email body — edit directly"
-      max={3000} multiline onChange={next=>updateBlock(b.id,{text:next})}
+      max={3000} multiline style={emailTypographyStyle(b)} onChange={next=>updateBlock(b.id,{text:next})}
       className="min-h-[80px] whitespace-pre-wrap break-words rounded p-1 text-[13px] leading-7 text-[#374151]"/>}
-    {b.type==='button'&&<div className="py-3 text-center">
+    {b.type==='button'&&<div className="py-3" style={{textAlign:emailBlockTypography(b).align==='justify'?'left':emailBlockTypography(b).align}}>
       <div style={{backgroundColor:buttonColor}} className="mx-auto inline-block max-w-full rounded-xl">
-        <InlineText value={b.text} label="CTA button label — edit directly" max={90}
+        <InlineText value={b.text} label="CTA button label — edit directly" max={90} style={emailTypographyStyle(b)}
           onChange={next=>updateBlock(b.id,{text:next})}
           className="inline-block min-h-11 max-w-full rounded-xl px-6 py-3 text-center text-[12px] font-bold text-white"/>
       </div>
@@ -312,7 +321,7 @@ export default function EmailCampaignCanvas({
       {[b.text,b.secondText||''].map((offer,i)=><div key={i}
         className="rounded-xl border border-[#F1DAC9] bg-[#FFF7ED] p-3">
         <span className="text-[10px] font-bold uppercase text-[#C16C2A]">Offer {i+1}</span>
-        <InlineText value={offer} label={'Offer '+(i+1)+' — edit directly'} max={400} multiline
+        <InlineText value={offer} label={'Offer '+(i+1)+' — edit directly'} max={400} multiline style={emailTypographyStyle(b)}
           onChange={next=>updateBlock(b.id,i===0?{text:next}:{secondText:next})}
           className="mt-2 min-h-16 whitespace-pre-wrap break-words rounded p-1 text-[12px] leading-5 text-[#292524]"/>
       </div>)}
@@ -421,7 +430,7 @@ export default function EmailCampaignCanvas({
       <main aria-label="Inline email design canvas"
         className={'order-1 min-w-0 overflow-y-visible px-3 py-6 sm:px-5 xl:order-2 xl:overflow-y-auto xl:py-8 '+
           (darkCheck?'bg-[#1F2937]':'bg-[#F3F4F6]')}>
-        <div className={'mx-auto w-full transition-[max-width] duration-200 '+(device==='mobile'?'max-w-[390px]':'max-w-[680px]')}>
+        <div className="mx-auto w-full" style={{maxWidth:device==='mobile'?Math.min(390,canvasWidth):canvasWidth}}>
           <div className={'mb-3 flex items-center gap-2 rounded-lg px-3 py-2 text-[10px] '+
             (darkCheck?'bg-[#111827] text-[#E5E7EB]':'bg-white text-[#6B7280]')}>
             <span className="h-6 w-6 rounded-full bg-[#EA4335] text-center text-sm font-bold leading-6 text-white">M</span>
@@ -488,8 +497,31 @@ export default function EmailCampaignCanvas({
           {selected?.type==='offers'&&<label className={label+' mt-3'}>Second offer
             <textarea aria-label="Second offer content" rows={3} value={selected.secondText||''} maxLength={400} onChange={e=>updateBlock(selected.id,{secondText:e.target.value})} className={input+' resize-y'}/>
           </label>}
+          {selected&&typography&&selected.type!=='poster'&&selected.type!=='divider'&&<section data-testid="email-v8-typography" aria-label="Typography controls" className="mt-4 space-y-3 border-t border-[#E5E7EB] pt-4">
+            <div className="flex items-center justify-between gap-2"><h3 className="text-sm font-bold">Typography</h3><button type="button" onClick={()=>updateBlock(selected.id,{typography:defaultEmailTypography(selected.type)})} className="inline-flex min-h-9 items-center gap-1 rounded-md px-2 text-xs font-semibold text-[#C2410C] hover:bg-[#FFF1E6]">{icon('refresh',14)} Reset</button></div>
+            <label className={label}>Font family<select aria-label="Block font family" value={typography.font} onChange={e=>updateTypography({font:e.target.value as EmailFontFamily})} className={input}>
+              {Object.keys(EMAIL_FONT_FAMILIES).map(font=><option key={font} value={font}>{({arial:'Arial',georgia:'Georgia',verdana:'Verdana',tahoma:'Tahoma',times:'Times New Roman',courier:'Courier New',unicode:'Multilingual fallback'})[font as EmailFontFamily]}</option>)}
+            </select></label>
+            <div className="grid grid-cols-2 gap-2"><label className={label}>Font size (px)<input type="number" min={10} max={64} step={1} aria-label="Block font size" value={typography.fontSize} onChange={e=>{const n=e.target.valueAsNumber;if(Number.isInteger(n)&&n>=10&&n<=64)updateTypography({fontSize:n});}} className={input}/></label>
+              <label className={label}>Text colour<input type="color" aria-label="Block text colour" value={typography.color} onChange={e=>updateTypography({color:e.target.value})} className="block h-10 w-full cursor-pointer rounded-lg border border-[#E5E7EB] bg-white p-1"/></label></div>
+            <input type="range" min={10} max={64} step={1} aria-label="Adjust font size" value={typography.fontSize} onChange={e=>updateTypography({fontSize:Number(e.target.value)})} className="w-full accent-[#F97316]"/>
+            <div><p className={label}>Text style</p><div className="grid grid-cols-3 gap-1 rounded-lg border border-[#E5E7EB] bg-white p-1">
+              {([{name:'Bold',iconName:'text-bold',active:typography.fontWeight===700,patch:{fontWeight:typography.fontWeight===700?400:700}},{name:'Italic',iconName:'text-italic',active:typography.italic,patch:{italic:!typography.italic}},{name:'Underline',iconName:'text-underline',active:typography.underline,patch:{underline:!typography.underline}}] satisfies {name:string;iconName:string;active:boolean;patch:Partial<EmailTypography>}[]).map(t=><button key={t.name} type="button" aria-label={t.name} aria-pressed={t.active} onClick={()=>updateTypography(t.patch)} className={'flex min-h-10 flex-col items-center justify-center gap-0.5 rounded-md text-[10px] font-semibold '+(t.active?'bg-[#FFF1E6] text-[#C2410C]':'text-[#374151] hover:bg-[#F3F4F6]')}>{icon(t.iconName,19)}{t.name}</button>)}
+            </div></div>
+            <div><p className={label}>Alignment</p><div className="grid grid-cols-4 gap-1 rounded-lg border border-[#E5E7EB] bg-white p-1">
+              {(['left','center','right','justify'] as const).map(a=><button key={a} type="button" aria-label={'Align '+a} title={'Align '+a} aria-pressed={typography.align===a} onClick={()=>updateTypography({align:a})} className={'flex min-h-10 items-center justify-center rounded-md '+(typography.align===a?'bg-[#FFF1E6] text-[#C2410C]':'text-[#374151] hover:bg-[#F3F4F6]')}>{icon(a==='justify'?'textalign-justifycenter':'textalign-'+a,20)}</button>)}
+            </div></div>
+            <label className={label}>Line height · {typography.lineHeight.toFixed(1)}<input type="range" aria-label="Line height" min={1} max={2.5} step={0.1} value={typography.lineHeight} onChange={e=>updateTypography({lineHeight:Number(e.target.value)})} className="block w-full accent-[#F97316]"/></label>
+            <label className={label}>Letter spacing · {typography.letterSpacing.toFixed(1)} px<input type="range" aria-label="Letter spacing" min={0} max={4} step={0.5} value={typography.letterSpacing} onChange={e=>updateTypography({letterSpacing:Number(e.target.value)})} className="block w-full accent-[#F97316]"/></label>
+          </section>}
           {selected&&<button type="button" disabled={campaign.blocks.length>=20} onClick={()=>duplicateBlock(selected.id)} className="mt-3 min-h-10 w-full rounded-lg border border-[#D1D5DB] bg-white text-xs font-semibold disabled:opacity-40">Duplicate selected block</button>}
           {!selected&&<p className={muted+' mt-2'}>Select a block on the canvas to edit its content.</p>}
+        </div>
+        <div data-testid="email-v8-canvas-settings" className="rounded-lg border border-[#E5E7EB] p-3">
+          <h3 className="text-sm font-bold">Canvas size</h3>
+          <label className={label+' mt-3'}>Desktop email width · {canvasWidth}px<input type="range" aria-label="Desktop canvas width" min={480} max={720} step={20} value={canvasWidth} onChange={e=>updateCampaign({canvasWidth:Number(e.target.value)})} className="block w-full accent-[#F97316]"/></label>
+          <div className="flex flex-wrap gap-1">{[480,600,720].map(width=><button type="button" key={width} aria-pressed={canvasWidth===width} onClick={()=>updateCampaign({canvasWidth:width})} className={'min-h-9 flex-1 rounded-md border px-2 text-xs font-semibold '+(canvasWidth===width?'border-[#FDBA74] bg-[#FFF1E6] text-[#C2410C]':'border-[#E5E7EB] bg-white text-[#374151]')}>{width}</button>)}</div>
+          <p className={muted+' mt-2'}>Mobile preview remains responsive. 600px is the recommended default.</p>
         </div>
         <div className="border-t border-[#E5E7EB] pt-4">
           <p className={label}>Brand Kit styles</p>
