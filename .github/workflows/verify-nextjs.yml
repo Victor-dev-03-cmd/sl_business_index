@@ -64,6 +64,8 @@ jobs:
         run: node --experimental-strip-types --test tests/emailStudioV3.test.mjs
       - name: Email V4 Campaign Hub, inline block editor and owner-scoped browser drafts
         run: node --experimental-strip-types --test tests/emailMarketingV4Hub.test.mjs
+      - name: Email V5 Server Campaigns, Owner RLS and Autosave
+        run: node --experimental-strip-types --test tests/emailMarketingV5Server.test.mjs
       - name: Low-memory mobile route feedback and streaming regressions
         run: node --test tests/mobileRoutePerformance.test.mjs
       - name: G5-02 follow-up and reputation guidance owner safety
