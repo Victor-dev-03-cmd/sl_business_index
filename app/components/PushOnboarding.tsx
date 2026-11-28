@@ -18,21 +18,24 @@ export default function PushOnboarding(){
    if(loading||!uid||!allowedRoute||!supportsPush()||isIosDevice())return;
    let alive=true;
    let available=false;
+   let recoveryFailed=false;
    const sync=()=>{
      if(!alive)return;
      let until=0;try{until=Number(localStorage.getItem('slbi-push-nudge-v1:'+uid)||0)}catch{}
-     setVisible(available&&Notification.permission==='default'&&!devicePushReady(uid)&&!devicePushOptedOut(uid)&&until<=Date.now());
+     setVisible(available&&(Notification.permission==='default'||Notification.permission==='granted'&&recoveryFailed)&&!devicePushReady(uid)&&!devicePushOptedOut(uid)&&until<=Date.now());
    };
    void fetch('/api/push/config',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(d=>{available=d?.enabled===true;sync()}).catch(()=>{});
+   const failed=(event:Event)=>{if((event as CustomEvent<string>).detail===uid){recoveryFailed=true;sync()}};
+   window.addEventListener('slbi-push-recovery-failed',failed);
    window.addEventListener('slbi-push-state',sync);window.addEventListener('focus',sync);
-   return()=>{alive=false;window.removeEventListener('slbi-push-state',sync);window.removeEventListener('focus',sync)};
+   return()=>{alive=false;window.removeEventListener('slbi-push-recovery-failed',failed);window.removeEventListener('slbi-push-state',sync);window.removeEventListener('focus',sync)};
  },[uid,loading,allowedRoute]);
  const dismiss=()=>{if(uid)try{localStorage.setItem('slbi-push-nudge-v1:'+uid,String(Date.now()+week))}catch{}setVisible(false)};
  const enable=async()=>{
    if(!uid||busy)return;
    setBusy(true);
    try{await enablePush(uid);setVisible(false);toast.success('Notifications enabled')}
-   catch(e){if(Notification.permission!=='default')setVisible(false);toast.error(e instanceof Error?e.message:'Unable to enable notifications.')}
+   catch(e){if(Notification.permission==='denied')setVisible(false);toast.error(e instanceof Error?e.message:'Unable to enable notifications.')}
    finally{setBusy(false)}
  };
  if(!visible||!uid||!allowedRoute)return null;
