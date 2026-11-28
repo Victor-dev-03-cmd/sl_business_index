@@ -6,6 +6,7 @@ test('one low-friction notification onboarding for authenticated Android and des
  const root=read('app/RootClientLayout.tsx'),nudge=read('app/components/PushOnboarding.tsx'),client=read('lib/push/client.ts');
  assert.match(root,/<PushOnboarding \/>/);
  assert.match(nudge,/Notification.permission==='default'/);
+ assert.match(nudge,/slbi-push-recovery-failed/);
  assert.match(nudge,/devicePushOptedOut\(uid\)/);
  assert.match(nudge,/isIosDevice\(\)/);
  assert.match(nudge,/await enablePush\(uid\)/);
