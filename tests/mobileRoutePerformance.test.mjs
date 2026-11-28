@@ -22,7 +22,9 @@ test('Fast route transitions give same-tap feedback for link and router.push, wi
   assert.match(indicator,/window.addEventListener\('slbi:navigation-start',onProgrammaticNavigation\)/);
   assert.match(hero,/window.dispatchEvent\(new Event\("slbi:navigation-start"\)\)/);
   assert.match(home,/window.dispatchEvent\(new Event\("slbi:navigation-start"\)\)/);
-  assert.match(dock,/prefetch=\{index===4&&vendorTab\?null:false\}/);
+  assert.match(dock,/prefetch=\{destination.href==='\/nearby'\|\|destination.href==='\/register-business'\?false:null\}/);
+  assert.match(home,/href=\{`\/business\/\$\{business.slug \|\| business.id\}`\}\s+prefetch=\{null\}/);
+  assert.match(read('app/MobileHomeExperience.tsx'),/className="slbi-native-card" prefetch=\{null\}/);
   assert.match(dock,/'\/business\/'\+encodeURIComponent/);
   assert.doesNotMatch(dock,/window.location.assign/);
 });
