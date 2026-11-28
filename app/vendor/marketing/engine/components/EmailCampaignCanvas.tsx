@@ -74,6 +74,9 @@ export default function EmailCampaignCanvas({
   const [selectedId,setSelectedId]=useState<string|null>(null);
   const [dragId,setDragId]=useState<string|null>(null);
   const [posterPanel,setPosterPanel]=useState(false);
+  const [imageBusy,setImageBusy]=useState(false);
+  const imageInput=useRef<HTMLInputElement|null>(null);
+  const imageTarget=useRef<string|null>(null);
   const [posters,setPosters]=useState<Array<{id:string;createdAt?:string}>>([]);
   const [posterBusy,setPosterBusy]=useState(false);
   const [posterError,setPosterError]=useState('');
@@ -129,10 +132,33 @@ export default function EmailCampaignCanvas({
     if(!selected)return;
     updateBlock(selected.id,{typography:{...emailBlockTypography(selected),...patch}});
   };
+  const chooseImage=(id:string)=>{
+    if(imageBusy)return;
+    imageTarget.current=id;
+    imageInput.current?.click();
+  };
+  const uploadImage=async(file:File|null)=>{
+    const target=imageTarget.current;
+    if(!file||!target||imageBusy)return;
+    if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>3_000_000){setError('Choose a JPG, PNG or WebP up to 3 MB.');return;}
+    setImageBusy(true);setError('');setNotice('');
+    try{
+      const res=await fetch('/api/marketing/email/images?businessId='+encodeURIComponent(business.id),{
+        method:'POST',credentials:'same-origin',headers:{'Content-Type':file.type},body:file,
+      });
+      const result=await res.json();
+      if(!res.ok||!result.saved||typeof result.assetId!=='string')throw Error(result.error||'Image upload failed.');
+      updateBlock(target,{imageId:result.assetId});
+      setNotice('Image saved to your private business library.');
+    }catch(e){setError(e instanceof Error?e.message:'Image upload failed.');}
+    finally{setImageBusy(false);if(imageInput.current)imageInput.current.value='';}
+  };
   const insertBlock=(type:EmailBlockType)=>{
     const block=newEmailBlock(type);
+    if(type==='link')block.linkUrl=campaign.ctaUrl;
     setCampaign(old=>({...old,blocks:[...old.blocks,block].slice(0,20)}));
     setSelectedId(block.id);setDirty(true);setNotice('');
+    if(type==='image')chooseImage(block.id);
   };
   const duplicateBlock=(id:string)=>{
     const source=campaign.blocks.find(b=>b.id===id);
@@ -308,6 +334,15 @@ export default function EmailCampaignCanvas({
       </div>
       <span className="sr-only">Button color can be changed in the Blocks and Brand panel.</span>
     </div>}
+    {b.type==='image'&&<div style={{textAlign:b.imageAlign||'center'}} className="py-2">
+      {b.imageId?<button type="button" aria-label="Replace uploaded image" disabled={imageBusy} onClick={e=>{e.stopPropagation();setSelectedId(b.id);chooseImage(b.id);}} className="inline-block max-w-full overflow-hidden rounded-md" style={{width:(b.imageWidth||100)+'%'}}>
+        <img src={'/api/marketing/email/images?businessId='+encodeURIComponent(business.id)+'&assetId='+encodeURIComponent(b.imageId)} alt={b.text||'Uploaded email image'} loading="lazy" decoding="async" className="block h-auto w-full"/>
+      </button>:<button type="button" disabled={imageBusy} onClick={e=>{e.stopPropagation();setSelectedId(b.id);chooseImage(b.id);}} className="flex min-h-32 w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#FDBA74] bg-[#FFF7ED] text-sm font-semibold text-[#C2410C]">{icon('image',28)}{imageBusy?'Uploading…':'Upload an image'}<span className="text-xs font-normal">JPG, PNG, WebP · up to 3 MB</span></button>}
+    </div>}
+    {b.type==='spacer'&&<div aria-label="Adjustable spacer" style={{height:b.spacing||24}} className="flex items-center justify-center rounded border border-dashed border-[#E5E7EB] text-[10px] text-[#9CA3AF]">{b.spacing||24}px</div>}
+    {b.type==='quote'&&<div className="border-l-4 border-[#F97316] bg-[#FFF7ED] px-3 py-2"><InlineText value={b.text} label="Quote — edit directly" max={3000} multiline style={emailTypographyStyle(b)} onChange={next=>updateBlock(b.id,{text:next})} className="min-h-12 whitespace-pre-wrap break-words rounded p-1"/></div>}
+    {b.type==='link'&&<InlineText value={b.text} label="Link text — edit directly" max={90} style={{...emailTypographyStyle(b),textDecoration:'underline'}} onChange={next=>updateBlock(b.id,{text:next})} className="min-h-8 break-words rounded p-1"/>}
+    {b.type==='columns'&&<div className="grid grid-cols-2 gap-2">{[b.text,b.secondText||''].map((value,i)=><div key={i} className="min-w-0 rounded-lg border border-dashed border-[#E5E7EB] p-2"><InlineText value={value} label={'Column '+(i+1)+' — edit directly'} max={400} multiline style={emailTypographyStyle(b)} onChange={next=>updateBlock(b.id,i===0?{text:next}:{secondText:next})} className="min-h-16 whitespace-pre-wrap break-words"/></div>)}</div>}
     {b.type==='divider'&&<hr className="my-4 border-[#E5E7EB]"/>}
     {b.type==='poster'&&<button type="button" onClick={e=>{e.stopPropagation();void loadPosters();}}
       className="block w-full overflow-hidden rounded-xl border border-dashed border-[#FED7AA] bg-[#FFF7ED]">
@@ -341,6 +376,7 @@ export default function EmailCampaignCanvas({
   const screen=<div role="dialog" aria-modal="true" aria-label="Email campaign visual editor"
     data-testid="email-v4-focus-builder" data-email-v7="designer" className="fixed inset-0 z-[9999] flex h-[100dvh] w-screen flex-col overflow-hidden bg-[#F8FAFC] text-[#111827]"
     style={{colorScheme:'light'}}>
+    <input ref={imageInput} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={e=>{const file=e.target.files?.[0]||null;e.target.value='';void uploadImage(file);}}/>
     <header className="flex min-h-[70px] shrink-0 flex-wrap items-center justify-between gap-3 border-b border-[#E5E7EB] bg-white px-3 py-3 shadow-[0_1px_5px_rgba(17,24,39,.03)] sm:px-6">
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <button type="button" onClick={close}
@@ -403,7 +439,7 @@ export default function EmailCampaignCanvas({
                 disabled={campaign.blocks.length>=20} onClick={()=>insertBlock(item.type)}
                 title={item.description}
                 className="flex min-h-[76px] flex-col items-center justify-center gap-2 rounded-lg border border-[#E5E7EB] bg-white px-2 text-center text-xs font-semibold hover:border-[#FDBA74] hover:bg-[#FFF7ED] disabled:opacity-40">
-                <span className="text-[#EA580C]">{icon(item.type==='poster'?'image':item.type==='button'?'link':item.type==='offers'?'category':item.type==='divider'?'minus':'document',23)}</span>
+                <span className="text-[#EA580C]">{icon(item.type==='poster'||item.type==='image'?'image':item.type==='button'||item.type==='link'?'link':item.type==='offers'||item.type==='columns'?'category':item.type==='divider'||item.type==='spacer'?'minus':item.type==='quote'?'message-text':'document',23)}</span>
                 {item.title}
               </button>)}
             </div>
@@ -490,14 +526,14 @@ export default function EmailCampaignCanvas({
         <div data-testid="email-v7-properties" className="rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] p-3">
           <p className="text-xs font-semibold text-[#6B7280]">Selected element</p>
           <p className="mt-2 text-sm font-bold capitalize">{selected?.type||(selectedId==='brand'?'Brand header':'Email design')}</p>
-          {selected&&selected.type!=='poster'&&selected.type!=='divider'&&<label className={label+' mt-3'}>Content
-            <textarea aria-label="Selected block content" rows={4} value={selected.text} maxLength={selected.type==='body'?3000:selected.type==='offers'?400:selected.type==='headline'?200:90}
+          {selected&&!['poster','divider','image','spacer'].includes(selected.type)&&<label className={label+' mt-3'}>Content
+            <textarea aria-label="Selected block content" rows={4} value={selected.text} maxLength={selected.type==='body'||selected.type==='quote'?3000:selected.type==='offers'||selected.type==='columns'?400:selected.type==='headline'?200:90}
               onChange={e=>updateBlock(selected.id,{text:e.target.value})} className={input+' resize-y'}/>
           </label>}
-          {selected?.type==='offers'&&<label className={label+' mt-3'}>Second offer
+          {(selected?.type==='offers'||selected?.type==='columns')&&<label className={label+' mt-3'}>{selected.type==='columns'?'Second column':'Second offer'}
             <textarea aria-label="Second offer content" rows={3} value={selected.secondText||''} maxLength={400} onChange={e=>updateBlock(selected.id,{secondText:e.target.value})} className={input+' resize-y'}/>
           </label>}
-          {selected&&typography&&selected.type!=='poster'&&selected.type!=='divider'&&<section data-testid="email-v8-typography" aria-label="Typography controls" className="mt-4 space-y-3 border-t border-[#E5E7EB] pt-4">
+          {selected&&typography&&!['poster','divider','image','spacer'].includes(selected.type)&&<section data-testid="email-v8-typography" aria-label="Typography controls" className="mt-4 space-y-3 border-t border-[#E5E7EB] pt-4">
             <div className="flex items-center justify-between gap-2"><h3 className="text-sm font-bold">Typography</h3><button type="button" onClick={()=>updateBlock(selected.id,{typography:defaultEmailTypography(selected.type)})} className="inline-flex min-h-9 items-center gap-1 rounded-md px-2 text-xs font-semibold text-[#C2410C] hover:bg-[#FFF1E6]">{icon('refresh',14)} Reset</button></div>
             <label className={label}>Font family<select aria-label="Block font family" value={typography.font} onChange={e=>updateTypography({font:e.target.value as EmailFontFamily})} className={input}>
               {Object.keys(EMAIL_FONT_FAMILIES).map(font=><option key={font} value={font}>{({arial:'Arial',georgia:'Georgia',verdana:'Verdana',tahoma:'Tahoma',times:'Times New Roman',courier:'Courier New',unicode:'Multilingual fallback'})[font as EmailFontFamily]}</option>)}
@@ -514,6 +550,15 @@ export default function EmailCampaignCanvas({
             <label className={label}>Line height · {typography.lineHeight.toFixed(1)}<input type="range" aria-label="Line height" min={1} max={2.5} step={0.1} value={typography.lineHeight} onChange={e=>updateTypography({lineHeight:Number(e.target.value)})} className="block w-full accent-[#F97316]"/></label>
             <label className={label}>Letter spacing · {typography.letterSpacing.toFixed(1)} px<input type="range" aria-label="Letter spacing" min={0} max={4} step={0.5} value={typography.letterSpacing} onChange={e=>updateTypography({letterSpacing:Number(e.target.value)})} className="block w-full accent-[#F97316]"/></label>
           </section>}
+          {selected?.type==='image'&&<section className="mt-3 space-y-3" aria-label="Uploaded image properties">
+            <button type="button" disabled={imageBusy} onClick={()=>chooseImage(selected.id)} className="min-h-11 w-full rounded-lg bg-[#F97316] px-3 text-xs font-bold text-white disabled:opacity-40">{icon('image',17)} {selected.imageId?'Replace image':'Upload image'}</button>
+            <label className={label}>Alt text<input aria-label="Image alt text" value={selected.text} maxLength={200} onChange={e=>updateBlock(selected.id,{text:e.target.value})} className={input}/></label>
+            <label className={label}>Image width · {selected.imageWidth||100}%<input aria-label="Image width" type="range" min={25} max={100} step={5} value={selected.imageWidth||100} onChange={e=>updateBlock(selected.id,{imageWidth:Number(e.target.value)})} className="block w-full accent-[#F97316]"/></label>
+            <label className={label}>Image alignment<select aria-label="Image alignment" value={selected.imageAlign||'center'} onChange={e=>updateBlock(selected.id,{imageAlign:e.target.value as 'left'|'center'|'right'})} className={input}><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select></label>
+            <p className={muted}>Private preview. Delivery assets require the future approved sending provider.</p>
+          </section>}
+          {selected?.type==='spacer'&&<label className={label+' mt-3'}>Height · {selected.spacing||24}px<input type="range" min={8} max={80} step={4} aria-label="Spacer height" value={selected.spacing||24} onChange={e=>updateBlock(selected.id,{spacing:Number(e.target.value)})} className="block w-full accent-[#F97316]"/></label>}
+          {selected?.type==='link'&&<label className={label+' mt-3'}>Link destination (HTTPS)<input key={selected.id} type="url" defaultValue={selected.linkUrl||campaign.ctaUrl} maxLength={600} aria-label="Text link URL" onBlur={e=>{const url=httpsLink(e.target.value);if(url)updateBlock(selected.id,{linkUrl:url});else{setError('Enter a valid HTTPS link.');e.target.value=selected.linkUrl||campaign.ctaUrl;}}} className={input}/></label>}
           {selected&&<button type="button" disabled={campaign.blocks.length>=20} onClick={()=>duplicateBlock(selected.id)} className="mt-3 min-h-10 w-full rounded-lg border border-[#D1D5DB] bg-white text-xs font-semibold disabled:opacity-40">Duplicate selected block</button>}
           {!selected&&<p className={muted+' mt-2'}>Select a block on the canvas to edit its content.</p>}
         </div>
