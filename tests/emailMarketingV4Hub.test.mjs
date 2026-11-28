@@ -102,3 +102,23 @@ test('Current security-gated Gmail, approved business and optional QA Gemini sur
  assert.match(canvas,/Connecting Gmail alone cannot activate bulk email sending/);
  assert.doesNotMatch(page,/select\('.*encrypted_refresh_token/);
 });
+
+test('V7 workspace overview, real draft controls and three-region designer',()=>{
+ assert.match(hub,/data-testid="email-v7-overview"/);
+ assert.match(hub,/useState<HubTab>\('overview'\)/);
+ assert.match(hub,/businessDrafts=useMemo\(\(\)=>drafts\.filter\(d=>d\.businessId===businessId\)/);
+ assert.match(hub,/cloudCount=businessDrafts\.filter/);
+ assert.match(hub,/aria-label="Sort campaigns"/);
+ assert.match(hub,/duplicateDraft\(d\)/);
+ assert.match(hub,/id:crypto\.randomUUID\(\),title:\('Copy of '/);
+ assert.match(canvas,/data-email-v7="designer"/);
+ const library=canvas.indexOf('aria-label="Content blocks and AI tools"');
+ const design=canvas.indexOf('aria-label="Inline email design canvas"');
+ const inspector=canvas.indexOf('aria-label="Block properties and campaign setup"');
+ assert.ok(library>=0&&library<design&&design<inspector);
+ assert.match(canvas,/data-testid="email-v7-properties"/);
+ assert.match(canvas,/aria-label="Selected block content"/);
+ assert.match(canvas,/duplicateBlock\(selected\.id\)/);
+ assert.match(canvas,/campaign\.blocks\.length<=1/);
+ assert.match(canvas,/Preview &amp; review/);
+});
