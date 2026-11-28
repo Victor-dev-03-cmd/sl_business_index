@@ -183,7 +183,7 @@ BEGIN
   RETURN jsonb_build_object('followers',followers,'subscribers',subscribers,'pushPreferences',pushes,'networkEnabled',network_enabled,'networkReach',network_count);
 END $$;
 CREATE FUNCTION public.slbi_audience_owner_counts(p_owner uuid)
-RETURNS jsonb LANGUAGE sql SECURITY DEFINER SET search_path='' AS $
+RETURNS jsonb LANGUAGE sql SECURITY DEFINER SET search_path='' AS $$
  SELECT coalesce(jsonb_object_agg(owned.id,owned.subscribers),'{}'::jsonb)
  FROM (
   SELECT b.id,count(m.user_id) FILTER(WHERE m.email_consent_at IS NOT NULL AND u.email_confirmed_at IS NOT NULL
@@ -192,20 +192,20 @@ RETURNS jsonb LANGUAGE sql SECURITY DEFINER SET search_path='' AS $
   FROM public.businesses b LEFT JOIN slbi_audience_private.memberships m ON m.business_id=b.id
   LEFT JOIN auth.users u ON u.id=m.user_id WHERE b.owner_id=p_owner AND b.status='approved' GROUP BY b.id
  ) owned
-$;
+$$;
 -- Internal, non-exposed eligibility primitive for future provider stage.
 -- Never expose its suppression-adjusted result or recipient identities to vendors.
 CREATE FUNCTION slbi_audience_private.business_eligible_count(p_business uuid)
-RETURNS bigint LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $
+RETURNS bigint LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
  SELECT count(*) FROM slbi_audience_private.memberships m JOIN auth.users u ON u.id=m.user_id
  WHERE m.business_id=p_business AND m.email_consent_at IS NOT NULL AND u.email_confirmed_at IS NOT NULL
  AND m.email_digest=extensions.digest(lower(trim(u.email)),'sha256')
  AND NOT EXISTS(SELECT 1 FROM public.marketing_email_suppressions s WHERE s.business_id=p_business AND s.email=lower(trim(u.email)))
  AND EXISTS(SELECT 1 FROM public.businesses b WHERE b.id=p_business AND b.status='approved')
-$;
+$$;
 REVOKE ALL ON FUNCTION slbi_audience_private.business_eligible_count(uuid) FROM PUBLIC,anon,authenticated;
 CREATE FUNCTION public.slbi_audience_admin_control(p_actor uuid,p_enabled boolean DEFAULT NULL)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE current_enabled boolean; total bigint;
 BEGIN
   -- Existing production role-escalation trigger protects the staff role; recheck here, not just UI.
@@ -219,7 +219,7 @@ BEGIN
   SELECT count(*) INTO total FROM slbi_audience_private.network_preferences n JOIN auth.users u ON u.id=n.user_id
     WHERE n.consent_at IS NOT NULL AND u.email_confirmed_at IS NOT NULL AND n.email_digest=extensions.digest(lower(trim(u.email)),'sha256');
   RETURN jsonb_build_object('enabled',current_enabled,'optIns',total,'deliveryEnabled',false);
-END $;
+END $$;
 REVOKE ALL ON FUNCTION public.slbi_audience_read(uuid,uuid),public.slbi_audience_change(uuid,uuid,text,text),public.slbi_audience_owner_summary(uuid,uuid,text),public.slbi_audience_owner_counts(uuid),public.slbi_audience_admin_control(uuid,boolean) FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.slbi_audience_read(uuid,uuid),public.slbi_audience_change(uuid,uuid,text,text),public.slbi_audience_owner_summary(uuid,uuid,text),public.slbi_audience_owner_counts(uuid),public.slbi_audience_admin_control(uuid,boolean) TO service_role;
 
