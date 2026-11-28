@@ -22,9 +22,10 @@ test('Fast route transitions give same-tap feedback for link and router.push, wi
   assert.match(indicator,/window.addEventListener\('slbi:navigation-start',onProgrammaticNavigation\)/);
   assert.match(hero,/window.dispatchEvent\(new Event\("slbi:navigation-start"\)\)/);
   assert.match(home,/window.dispatchEvent\(new Event\("slbi:navigation-start"\)\)/);
-  assert.match(dock,/prefetch=\{destination.href==='\/nearby'\|\|destination.href==='\/register-business'\?false:null\}/);
-  assert.match(home,/href=\{`\/business\/\$\{business.slug \|\| business.id\}`\}\s+prefetch=\{null\}/);
-  assert.match(read('app/MobileHomeExperience.tsx'),/className="slbi-native-card" prefetch=\{null\}/);
+  assert.match(dock,/SmartPrefetchLink/);
+  assert.match(dock,/prefetch:false/);
+  assert.match(home,/<SmartPrefetchLink/);
+  assert.match(read('app/MobileHomeExperience.tsx'),/<SmartPrefetchLink/);
   assert.match(dock,/'\/business\/'\+encodeURIComponent/);
   assert.doesNotMatch(dock,/window.location.assign/);
 });
@@ -78,4 +79,27 @@ test('Only a brief cold-open logo, and search suggestions use touch and keyboard
   assert.match(hero,/onClick=\{\(\)\s*=>\s*handleCategoryClick\(cat.name\)\}/);
   assert.match(hero,/onClick=\{\(\)\s*=>\s*\{\s*window.dispatchEvent\(/);
   assert.doesNotMatch(hero,/onMouseDown=\{\(\)=>router.push/);
+});
+
+test('P2 bounded prefetch respects network and route boundaries',async()=>{
+ const {canPrefetch,eligiblePublicRoute,createPrefetchBudget}=await import('../lib/navigation/prefetch-policy.ts');
+ assert.equal(canPrefetch({saveData:true}),false);
+ for(const effectiveType of ['slow-2g','2g','3g'])assert.equal(canPrefetch({effectiveType}),false);
+ assert.equal(canPrefetch({downlink:1}),false);
+ assert.equal(canPrefetch({},false),false);
+ assert.equal(canPrefetch({},true,false),false);
+ assert.equal(canPrefetch({effectiveType:'4g',downlink:5}),true);
+ for(const href of ['/admin/dashboard','/vendor/dashboard','/register-business','/nearby','/login','//evil.test','/business/a?preview=1','/business/../admin'])assert.equal(eligiblePublicRoute(href),false);
+ const reserve=createPrefetchBudget();
+ assert.equal(reserve('/business/a',0),true);
+ assert.equal(reserve('/business/a',1),false);
+ for(const href of ['/business/b','/category','/about'])assert.equal(reserve(href,1),true);
+ assert.equal(reserve('/business/c',2),false);
+ assert.equal(reserve('/business/c',30001),true);
+ assert.equal(reserve('/business/a',30001),false);
+ assert.equal(reserve('/business/a',60001),true);
+ const link=read('app/components/SmartPrefetchLink.tsx');
+ assert.match(link,/prefetch=\{false\}/);
+ assert.match(link,/observer.disconnect\(\)/);
+ assert.match(link,/canPrefetch\(net,navigator.onLine,document.visibilityState/);
 });

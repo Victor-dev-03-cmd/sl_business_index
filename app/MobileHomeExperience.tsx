@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import SmartPrefetchLink from "./components/SmartPrefetchLink";
 import Image from "next/image";
 import {
   ArrowRight, Building2, CarFront, Compass, Ellipsis, HeartPulse,
@@ -138,8 +139,8 @@ export default function MobileHomeExperience({
         ) : featuredBusinesses.length ? (
           <div className="slbi-native-listing-track" role="region" aria-label="Swipe featured business cards">
             {featuredBusinesses.map(business => (
-              <Link key={business.id} href={"/business/" + (business.slug || business.id)}
-                className="slbi-native-card" prefetch={null}
+              <SmartPrefetchLink key={business.id} href={"/business/" + (business.slug || business.id)}
+                className="slbi-native-card"
                 aria-label={"View " + business.name + " business profile"}>
                 <div className="slbi-native-card-photo">
                   {business.image_url ? (
@@ -177,7 +178,7 @@ export default function MobileHomeExperience({
                     <span>View business</span><ArrowRight size={15} strokeWidth={1.65} aria-hidden="true" />
                   </div>
                 </div>
-              </Link>
+              </SmartPrefetchLink>
             ))}
           </div>
         ) : (
