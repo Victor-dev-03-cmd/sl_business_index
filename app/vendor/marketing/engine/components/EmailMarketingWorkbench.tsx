@@ -21,7 +21,7 @@ export type EmailStudioBusiness={
 };
 export type EmailStudioConnection={
   id:string;businessId:string;accountDisplayName:string;provider:'google_mail';
-  status:'connected';
+  status:'connected';sendCapable?:boolean;
 };
 type AudienceMode='crm'|'csv'|'paste'|'self';
 type Asset={id:string;createdAt:string|null};
