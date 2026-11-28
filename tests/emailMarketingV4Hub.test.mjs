@@ -54,7 +54,7 @@ test('Inline WYSIWYG edits subject, preheader, body, offers and CTA with plain t
  assert.match(canvas,/reorder\(b\.id,1\)/);
  assert.match(canvas,/newEmailBlock\(type\)/);
  assert.deepEqual(EMAIL_BLOCK_TYPES.map(x=>x.type),
-   ['headline','body','poster','button','offers','divider']);
+   ['headline','body','poster','button','offers','divider','image','spacer','quote','link','columns']);
  const blocks=initialEmailBlocks('offers','Real service description');
  assert.deepEqual(blocks.map(x=>x.type),['headline','offers','body','button']);
  assert.deepEqual(moveEmailBlock(blocks,blocks[0].id,1).map(x=>x.type),['offers','headline','body','button']);
@@ -121,4 +121,21 @@ test('V7 workspace overview, real draft controls and three-region designer',()=>
  assert.match(canvas,/duplicateBlock\(selected\.id\)/);
  assert.match(canvas,/campaign\.blocks\.length<=1/);
  assert.match(canvas,/Preview &amp; review/);
+});
+
+test('V9 content library supports private uploaded images and advanced block types',()=>{
+  const image=newEmailBlock('image');assert.equal(image.imageWidth,100);
+  const columns=newEmailBlock('columns');assert.equal(columns.secondText,'Second column');
+  const spacer=newEmailBlock('spacer');assert.equal(spacer.spacing,24);
+  const d=draft();
+  const imageId='44444444-4444-4444-8444-444444444444';
+  const styled={...d,blocks:[{...image,imageId,imageWidth:75,imageAlign:'right',text:'Alt text'},columns,spacer,newEmailBlock('quote'),{...newEmailBlock('link'),linkUrl:'https://www.slbusinessindex.com'}]};
+  assert.deepEqual(normalizeLocalCampaign(styled,owner,[business])?.blocks,styled.blocks);
+  for(const bad of [{imageId:'../../evil'},{imageWidth:999},{imageAlign:'left;display:none'},{linkUrl:'javascript:alert(1)'}]){
+    assert.equal(normalizeLocalCampaign({...styled,blocks:[{...styled.blocks[0],...bad}]},owner,[business]),null);
+  }
+  const api=read('app/api/marketing/email/images/route.ts');
+  for(const token of ['auth.getUser()',"eq('owner_id',user.id)","eq('status','approved')",'isSameOrigin','getMarketingAccessForUser','email-assets/','limitInputPixels:16_000_000','resize({width:1200,height:1200','upsert:false','private, no-store','MAX_BYTES=3_000_000','reader.cancel()'])assert.ok(api.includes(token),token);
+  assert.doesNotMatch(api,/getPublicUrl|createSignedUrl/);
+  for(const token of ['Upload an image','Image alt text','Image width','Image alignment','Spacer height','Text link URL','image/jpeg,image/png,image/webp','/api/marketing/email/images?businessId=','Quote — edit directly'])assert.ok(canvas.includes(token),token);
 });
