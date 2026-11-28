@@ -16,7 +16,7 @@ import {
 type Props={
   campaign:LocalEmailCampaign;business:EmailStudioBusiness;
   sender:EmailStudioConnection|null;verifiedCount:number|undefined;
-  emailAiEnabled:boolean;
+  emailAiEnabled:boolean;testSendEnabled:boolean;
   onSave:(campaign:LocalEmailCampaign)=>Promise<'server'|'browser'|'failed'>;onClose:()=>void;
 };
 const input='min-h-10 w-full min-w-0 rounded-xl border border-[#E5E7EB] bg-white px-3 py-2 text-[12px] text-[#111827] outline-none focus:border-[#F97316] focus:ring-2 focus:ring-[#F97316]/10';
@@ -59,7 +59,7 @@ function InlineText({value,onChange,label,max,className,multiline=false}:InlineP
 const selectionBorder='border-2 border-transparent transition hover:border-[#FDBA74] focus-within:border-[#F97316]';
 
 export default function EmailCampaignCanvas({
-  campaign:initial,business,sender,verifiedCount,emailAiEnabled,onSave,onClose,
+  campaign:initial,business,sender,verifiedCount,emailAiEnabled,testSendEnabled,onSave,onClose,
 }:Props){
   const [campaign,setCampaign]=useState<LocalEmailCampaign>(initial);
   const [device,setDevice]=useState<'desktop'|'mobile'>('desktop');
@@ -77,6 +77,8 @@ export default function EmailCampaignCanvas({
   const [notice,setNotice]=useState('');
   const [error,setError]=useState('');
   const [aiBusy,setAiBusy]=useState(false);
+  const [testBusy,setTestBusy]=useState(false);
+  const [testMessage,setTestMessage]=useState('');
   const [reviewOpen,setReviewOpen]=useState(false);
   const [deliveryChoice,setDeliveryChoice]=useState<'now'|'later'>('now');
   const [plannedAt,setPlannedAt]=useState('');
@@ -223,6 +225,30 @@ export default function EmailCampaignCanvas({
       setNotice('AI draft created. Review every claim before using it.');
     }catch(e){setError(e instanceof Error?e.message:'Could not generate AI copy.');}
     finally{setAiBusy(false);}
+  };
+  const sendOneSelfTest=async()=>{
+    if(!sender?.sendCapable||!testSendEnabled||testBusy)return;
+    if(!window.confirm('Send exactly ONE test email to your connected Gmail account: '+
+      sender.accountDisplayName+'? No subscribers or customers will receive this message.'))return;
+    setTestBusy(true);setTestMessage('');setError('');
+    try{
+      const response=await fetch('/api/marketing/email/test-send',{
+        method:'POST',cache:'no-store',credentials:'same-origin',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          businessId:business.id,connectionId:sender.id,requestKey:crypto.randomUUID(),draft:campaign,
+        }),
+      });
+      const value:unknown=await response.json();
+      if(!value||typeof value!=='object'||Array.isArray(value))throw Error('Invalid Gmail response');
+      const data=value as {acceptedByGoogle?:unknown;recipient?:unknown;error?:unknown};
+      if(!response.ok||data.acceptedByGoogle!==true)
+        throw Error(typeof data.error==='string'?data.error:'Gmail did not confirm the test email.');
+      setTestMessage('Google accepted one test addressed to '+
+        String(data.recipient||sender.accountDisplayName)+'. Check Gmail Inbox/Spam.');
+      setError('');
+    }catch(e){setError(e instanceof Error?e.message:'Gmail self-test unavailable.');}
+    finally{setTestBusy(false);}
   };
   const saveCustom=()=>{
     try{
@@ -558,6 +584,18 @@ export default function EmailCampaignCanvas({
           <p className="flex items-center gap-2">{verifiedCount&&verifiedCount>0?'✓':'○'} Confirmed audience: {verifiedCount===undefined?'unavailable':verifiedCount}</p>
           <p>○ Unsubscribe handling and delivery provider — not active</p>
           <p>○ Verified send authorization and campaign queue — not active</p>
+          {testSendEnabled&&sender?.sendCapable&&<div className="space-y-2 rounded-xl border border-[#FED7AA] bg-[#FFF7ED] p-3">
+            <p className="text-[11px] font-bold text-[#9A3412]">Private delivery test</p>
+            <p className="break-words text-[11px] text-[#6B7280]">
+              One message addressed only to {sender.accountDisplayName}. No customer recipients.
+            </p>
+            <button type="button" disabled={testBusy||campaign.layout==='custom'}
+              onClick={()=>void sendOneSelfTest()}
+              className="min-h-10 w-full rounded-xl bg-[#F97316] px-3 text-[11px] font-bold text-white disabled:opacity-40">
+              {testBusy?'Sending single test…':'Send one test to my Gmail'}
+            </button>
+            {testMessage&&<p role="status" className="text-[11px] font-semibold text-[#166534]">{testMessage}</p>}
+          </div>}
         </div>
         <p className="mt-4 rounded-xl bg-[#FFF7ED] p-3 text-[11px] leading-5 text-[#9A3412]">
           Your design is editable and can be saved. Connecting Gmail alone cannot activate bulk email sending.
