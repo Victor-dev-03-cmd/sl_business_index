@@ -139,3 +139,20 @@ test('V9 content library supports private uploaded images and advanced block typ
   assert.doesNotMatch(api,/getPublicUrl|createSignedUrl/);
   for(const token of ['Upload an image','Image alt text','Image width','Image alignment','Spacer height','Text link URL','image/jpeg,image/png,image/webp','/api/marketing/email/images?businessId=','Quote — edit directly'])assert.ok(canvas.includes(token),token);
 });
+
+test('Compact editor uses precise input fields and small Bulk icon tools, not sliders',()=>{
+ assert.doesNotMatch(canvas,/type="range"/);
+ assert.match(canvas,/function CompactNumber/);
+ assert.match(canvas,/onBlur=\{commit\}/);
+ assert.match(canvas,/e\.key==='Enter'/);
+ assert.match(canvas,/data-testid="email-compact-block-library"/);
+ assert.match(canvas,/lg:grid-cols-\[232px_minmax\(0,1fr\)_280px\]/);
+ assert.match(canvas,/variant="bulk"/);
+ assert.match(canvas,/label="Desktop canvas width"/);
+ assert.match(canvas,/label="Brand logo size"/);
+ assert.match(canvas,/label="Block font size"/);
+ assert.match(canvas,/label="Image width"/);
+ assert.match(canvas,/title="Duplicate selected block"/);
+ assert.match(canvas,/title="Remove selected block"/);
+ assert.match(canvas,/initial\.blocks\.find\(b=>b\.type==='headline'\)/);
+});
