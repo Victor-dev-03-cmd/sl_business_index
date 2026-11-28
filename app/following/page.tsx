@@ -17,7 +17,7 @@ export default function FollowingPage(){
  useEffect(()=>{void load();},[load]);
  const network=async(enable:boolean)=>{
    setBusy(true);setError('');
-   try{const r=await fetch('/api/audience',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:enable?'network_subscribe':'network_unsubscribe',language})});const d=await r.json();if(!r.ok)throw Error(d.error||'Could not save.');setState(d.state);}
+   try{const r=await fetch('/api/audience',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:enable?'network_subscribe':'network_unsubscribe',language,consentVersion:'slbi-audience-sharing-v2'})});const d=await r.json();if(!r.ok)throw Error(d.error||'Could not save.');setState(d.state);}
    catch(e){setError(e instanceof Error?e.message:'Could not save.');}finally{setBusy(false);}
  };
  return <main className="mx-auto min-h-[70vh] max-w-4xl px-4 py-8 font-[family-name:var(--font-inter)]">
@@ -25,9 +25,9 @@ export default function FollowingPage(){
    {error&&<div role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error} <Link href="/login" className="underline">Sign in</Link></div>}
    {!state&&!error&&<p role="status" className="text-sm">Loading preferences…</p>}
    {state&&<><section className="mb-5 rounded-xl border border-neutral-200 bg-white p-4 text-neutral-900">
-     <h2 className="text-base font-semibold">SLBI Audience Network</h2><p className="mt-2 text-xs leading-5 text-neutral-600">Opt in separately to offers from participating businesses through SLBI. Your account email is not shared with vendors. You can withdraw at any time. Delivery is not active.</p>
+     <h2 className="text-base font-semibold">SLBI Audience Network</h2><p className="mt-2 text-xs leading-5 text-neutral-600">Optional: allow SLBI to share your verified email with approved participating businesses for their marketing campaigns. SLBI reviews each business request. You can withdraw to stop future access; copies already made cannot be recalled.</p>
      <label className="mt-3 flex items-center gap-3 text-sm">Preferred language <select value={language} disabled={busy} onChange={e=>setLanguage(e.target.value as State['language'])} className="rounded-md border border-neutral-200 px-2 py-1 text-sm"><option value="en">English</option><option value="ta">Tamil</option><option value="si">Sinhala</option></select></label>
-     <label className="mt-3 flex items-center justify-between gap-3 text-sm"><span>Receive SLBI partner marketing emails</span><input type="checkbox" checked={state.network} disabled={busy} onChange={e=>void network(e.target.checked)} className="accent-[#F97316]"/></label>
+     <label className="mt-3 flex items-center justify-between gap-3 text-sm"><span>Share my email for approved SLBI partner marketing</span><input type="checkbox" checked={state.network} disabled={busy} onChange={e=>void network(e.target.checked)} className="accent-[#F97316]"/></label>
      {state.network&&state.networkEligible===false&&<p className="mt-2 text-xs">Your account email changed. <button type="button" disabled={busy} onClick={()=>void network(true)} className="font-semibold text-[#C2410C] underline">Confirm again for the current verified email</button>.</p>}
      {state.network&&state.language!==language&&<button type="button" disabled={busy} onClick={()=>void network(true)} className="mt-2 rounded-md border px-3 py-1 text-xs font-medium">Save language</button>}
    </section>
