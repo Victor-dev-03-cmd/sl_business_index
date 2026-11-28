@@ -58,17 +58,13 @@ test('profile inline controls and main notification refresh retain consent and a
  const inbox=read('app/notifications/page.tsx');
  assert.match(profile,/<h1 id="business-profile-title"[^>]*>\{business.name\}<\/h1>\{business.status==="approved"&&<BusinessAudienceControls/);
  assert.doesNotMatch(control,/type="checkbox"|Stay connected|Update preferences/);
- assert.match(control,/state\?\.following&&<button/);
+ assert.match(control,/mobile\|\|state\?\.following/);
  // The disclosure must not participate in the mobile title/button width calculation.
- assert.match(profile,/grid-cols-\[minmax\(0,max-content\)_auto\]/);
- assert.match(profile,/data-slbi-mobile-profile-header className="grid grid-cols-\[auto_minmax\(0,1fr\)\]/);
- assert.match(profile,/data-slbi-profile-details className="min-w-0/);
- assert.match(profile,/data-slbi-business-actions="true"[^>]*className="col-span-2 grid/);
- assert.match(profile,/w-\[64px\].*min-\[350px\]:w-\[76px\].*sm:w-full/);
- assert.match(control,/contents text-neutral-900 sm:inline-flex/);
- assert.match(control,/col-start-2 row-start-1 flex shrink-0/);
- assert.match(control,/col-span-2 row-start-2 min-w-0/);
- assert.match(control,/px-2 text-\[11px\] sm:gap-1.5 sm:px-3 sm:text-xs/);
+ assert.match(profile,/data-slbi-mobile-profile-header className="grid grid-cols-2/);
+ assert.match(profile,/presentation="mobile"/);
+ assert.match(profile,/presentation="desktop"/);
+ assert.match(control,/grid grid-cols-2 items-start/);
+ assert.match(control,/disabled=\{busy\|\|!state\?\.following/);
  assert.match(control,/await enablePush\(user.id\);await change\('push_on'\)/);
  assert.match(control,/slbi-bell-ring/);
  assert.match(control,/consentVersion:'slbi-follow-email-v3'/);
