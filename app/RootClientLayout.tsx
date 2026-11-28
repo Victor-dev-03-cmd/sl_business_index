@@ -21,6 +21,7 @@ import MobilePublicDock from "./components/MobilePublicDock";
 import RouteNavigationFeedback from "./components/RouteNavigationFeedback";
 import MobileInstallPrompt from "./components/MobileInstallPrompt";
 import SiteToaster from "./components/SiteToaster";
+import PushOnboarding from "./components/PushOnboarding";
 import { AppearanceController } from "./components/PublicAppearance";
 
 export default function RootClientLayout({
@@ -71,6 +72,7 @@ export default function RootClientLayout({
                 <RouteNavigationFeedback />
                 <MobilePublicDock />
                 <MobileInstallPrompt />
+                <PushOnboarding />
                 <main>{children}</main>
                 <GlobalAnnouncement />
                 <FooterWrapper>
