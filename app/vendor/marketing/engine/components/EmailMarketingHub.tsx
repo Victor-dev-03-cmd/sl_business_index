@@ -501,5 +501,34 @@ export default function EmailMarketingHub({
         verifiedCount={verifiedCounts[editor.businessId]}
         emailAiEnabled={emailAiEnabled}
         onSave={saveDraft} onClose={()=>setEditor(null)}/>}
+    {historyId&&<div role="presentation"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4"
+      onMouseDown={e=>{if(e.target===e.currentTarget)setHistoryId(null);}}>
+      <section role="dialog" aria-modal="true" aria-label="Email campaign version history"
+        className="max-h-[85dvh] w-full max-w-[540px] overflow-y-auto rounded-2xl bg-white p-5 shadow-xl">
+        <div className="flex items-center justify-between gap-3">
+          <div><p className="text-[10px] font-bold uppercase text-[#EA580C]">Version history</p>
+            <h2 className="text-[18px] font-extrabold">Saved campaign versions</h2></div>
+          <button type="button" onClick={()=>setHistoryId(null)} aria-label="Close version history"
+            className="min-h-10 rounded-xl border border-[#E5E7EB] px-3">Close</button>
+        </div>
+        {historyBusy?<p className={secondary+' mt-5'}>Loading saved revisions…</p>:
+          !history.length?<p className={secondary+' mt-5'}>No server revisions to display.</p>:
+          <div className="mt-4 divide-y divide-[#E5E7EB]">
+            {history.map(h=><div key={h.revision} className="flex flex-wrap items-center justify-between gap-3 py-3">
+              <div className="min-w-0">
+                <p className="text-[12px] font-bold">Version {h.revision} · {short(h.draft.title,55)}</p>
+                <p className="mt-1 text-[11px] text-[#6B7280]">{niceDate(h.createdAt)}</p>
+              </div>
+              <button type="button" onClick={()=>{
+                setEditor({...h.draft,updatedAt:new Date().toISOString()});
+                setHistoryId(null);setNotice('Past version opened. Save to create a new revision.');
+              }} className="min-h-10 rounded-xl bg-[#FFF7ED] px-3 text-[11px] font-bold text-[#C2410C]">
+                Restore in editor
+              </button>
+            </div>)}
+          </div>}
+      </section>
+    </div>}
   </div>;
 }
