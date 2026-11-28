@@ -134,7 +134,6 @@ export default function AuthButton({ user }: { user?: AuthUser | null }) {
           </DropdownMenuItem>
 
           <DropdownMenuItem asChild className="cursor-pointer py-3">
-            <Link href="/following" className="flex items-center w-full min-h-[44px]"><span className="mr-3 opacity-70"><IconsaxIcon name="people" size={20} variant="bulk"/></span><span>Following &amp; subscriptions</span></Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild className="cursor-pointer py-3">
             <Link href="/auth/passkeys" className="flex items-center w-full min-h-[44px]">
