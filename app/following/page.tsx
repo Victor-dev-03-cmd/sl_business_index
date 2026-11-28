@@ -4,7 +4,7 @@ import Link from 'next/link';
 import BusinessAudienceControls,{type BusinessAudienceState} from '@/app/components/audience/BusinessAudienceControls';
 import IconsaxIcon from '@/app/vendor/components/IconsaxIcon';
 type Entry=BusinessAudienceState&{id:string;name:string;slug:string|null};
-type State={businesses:Entry[];network:boolean;language:'en'|'ta'|'si'};
+type State={businesses:Entry[];network:boolean;networkEligible?:boolean;language:'en'|'ta'|'si'};
 export default function FollowingPage(){
  const [state,setState]=useState<State|null>(null);
  const [error,setError]=useState('');
@@ -28,6 +28,7 @@ export default function FollowingPage(){
      <h2 className="text-base font-semibold">SLBI Audience Network</h2><p className="mt-2 text-xs leading-5 text-neutral-600">Opt in separately to offers from participating businesses through SLBI. Your account email is not shared with vendors. You can withdraw at any time. Delivery is not active.</p>
      <label className="mt-3 flex items-center gap-3 text-sm">Preferred language <select value={language} disabled={busy} onChange={e=>setLanguage(e.target.value as State['language'])} className="rounded-md border border-neutral-200 px-2 py-1 text-sm"><option value="en">English</option><option value="ta">Tamil</option><option value="si">Sinhala</option></select></label>
      <label className="mt-3 flex items-center justify-between gap-3 text-sm"><span>Receive SLBI partner marketing emails</span><input type="checkbox" checked={state.network} disabled={busy} onChange={e=>void network(e.target.checked)} className="accent-[#F97316]"/></label>
+     {state.network&&state.networkEligible===false&&<p className="mt-2 text-xs">Your account email changed. <button type="button" disabled={busy} onClick={()=>void network(true)} className="font-semibold text-[#C2410C] underline">Confirm again for the current verified email</button>.</p>}
      {state.network&&state.language!==language&&<button type="button" disabled={busy} onClick={()=>void network(true)} className="mt-2 rounded-md border px-3 py-1 text-xs font-medium">Save language</button>}
    </section>
    <section className="space-y-3"><h2 className="text-base font-semibold">Your businesses</h2>
