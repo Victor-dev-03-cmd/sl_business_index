@@ -44,6 +44,25 @@ CREATE TABLE slbi_audience_private.news_queue (
   completed_at timestamptz
 );
 CREATE INDEX audience_news_pending_idx ON slbi_audience_private.news_queue(published_at,news_id) WHERE completed_at IS NULL;
+CREATE TABLE slbi_audience_private.news_deliveries (
+  news_id uuid NOT NULL REFERENCES public.business_news(id) ON DELETE CASCADE,
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  business_id uuid NOT NULL REFERENCES public.businesses(id) ON DELETE CASCADE,
+  notification_id uuid NOT NULL UNIQUE REFERENCES public.notifications(id) ON DELETE CASCADE,
+  PRIMARY KEY(news_id,user_id)
+);
+CREATE INDEX audience_news_delivery_user_idx ON slbi_audience_private.news_deliveries(user_id,business_id);
+CREATE TABLE slbi_audience_private.action_limits (
+  user_id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  minute_bucket timestamptz NOT NULL,
+  used integer NOT NULL CHECK(used BETWEEN 1 AND 30)
+);
+CREATE TABLE slbi_audience_private.network_admin_events (
+  id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  actor_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  enabled boolean NOT NULL,
+  occurred_at timestamptz NOT NULL DEFAULT now()
+);
 CREATE TABLE slbi_audience_private.network_control (
   singleton boolean PRIMARY KEY DEFAULT true CHECK(singleton),
   enabled boolean NOT NULL DEFAULT false
@@ -54,6 +73,9 @@ ALTER TABLE slbi_audience_private.network_preferences ENABLE ROW LEVEL SECURITY;
 ALTER TABLE slbi_audience_private.consent_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE slbi_audience_private.news_queue ENABLE ROW LEVEL SECURITY;
 ALTER TABLE slbi_audience_private.network_control ENABLE ROW LEVEL SECURITY;
+ALTER TABLE slbi_audience_private.news_deliveries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE slbi_audience_private.action_limits ENABLE ROW LEVEL SECURITY;
+ALTER TABLE slbi_audience_private.network_admin_events ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON ALL TABLES IN SCHEMA slbi_audience_private FROM PUBLIC,anon,authenticated;
 -- Public RPC surface is service-role-only. The API authenticates via getUser.
 CREATE FUNCTION public.slbi_audience_read(p_user uuid,p_business uuid DEFAULT NULL)
@@ -63,7 +85,7 @@ BEGIN
   IF p_business IS NOT NULL THEN
     IF NOT EXISTS(SELECT 1 FROM public.businesses WHERE id=p_business AND status='approved') THEN RETURN NULL; END IF;
     SELECT jsonb_build_object('following',m.followed_at IS NOT NULL,'news',coalesce(m.news,false),
-      'push',coalesce(m.push,false),'email',coalesce(m.email_digest=extensions.digest(lower(trim(u.email)),'sha256') AND u.email_confirmed_at IS NOT NULL,false),
+      'push',coalesce(m.push,false),'email',m.email_consent_at IS NOT NULL,'emailEligible',coalesce(m.email_digest=extensions.digest(lower(trim(u.email)),'sha256') AND u.email_confirmed_at IS NOT NULL,false),
       'followers',(SELECT count(*) FROM slbi_audience_private.memberships x WHERE x.business_id=p_business AND x.followed_at IS NOT NULL))
     INTO result FROM (SELECT 1) dummy LEFT JOIN slbi_audience_private.memberships m ON m.user_id=p_user AND m.business_id=p_business
       LEFT JOIN auth.users u ON u.id=p_user;
@@ -73,10 +95,11 @@ BEGIN
   SELECT jsonb_build_object(
     'businesses',coalesce((SELECT jsonb_agg(jsonb_build_object('id',b.id,'name',b.name,'slug',b.slug,'approved',b.status='approved',
       'following',m.followed_at IS NOT NULL,'news',m.news,'push',m.push,
-      'email',coalesce(m.email_digest=extensions.digest(lower(trim(u.email)),'sha256') AND u.email_confirmed_at IS NOT NULL,false)) ORDER BY m.updated_at DESC)
+      'email',m.email_consent_at IS NOT NULL,'emailEligible',coalesce(m.email_digest=extensions.digest(lower(trim(u.email)),'sha256') AND u.email_confirmed_at IS NOT NULL,false)) ORDER BY m.updated_at DESC)
       FROM (SELECT * FROM slbi_audience_private.memberships WHERE user_id=p_user AND (followed_at IS NOT NULL OR email_consent_at IS NOT NULL) ORDER BY updated_at DESC LIMIT 200) m
       JOIN public.businesses b ON b.id=m.business_id JOIN auth.users u ON u.id=m.user_id),'[]'::jsonb),
-    'network',coalesce((SELECT n.email_digest=extensions.digest(lower(trim(u.email)),'sha256') AND u.email_confirmed_at IS NOT NULL
+    'network',coalesce((SELECT n.consent_at IS NOT NULL FROM slbi_audience_private.network_preferences n WHERE n.user_id=p_user),false),
+    'networkEligible',coalesce((SELECT n.email_digest=extensions.digest(lower(trim(u.email)),'sha256') AND u.email_confirmed_at IS NOT NULL
       FROM slbi_audience_private.network_preferences n JOIN auth.users u ON u.id=n.user_id WHERE n.user_id=p_user),false),
     'language',coalesce((SELECT language FROM slbi_audience_private.network_preferences WHERE user_id=p_user),'en')) INTO result;
   RETURN result;
@@ -93,6 +116,10 @@ BEGIN
   END IF;
   -- Serialize changes by account. Explicit withdrawal is always available.
   PERFORM pg_advisory_xact_lock(hashtextextended(p_user::text,92741));
+  INSERT INTO slbi_audience_private.action_limits(user_id,minute_bucket,used) VALUES(p_user,date_trunc('minute',now()),1)
+  ON CONFLICT(user_id) DO UPDATE SET minute_bucket=EXCLUDED.minute_bucket,used=CASE WHEN action_limits.minute_bucket=EXCLUDED.minute_bucket THEN action_limits.used+1 ELSE 1 END
+    WHERE action_limits.minute_bucket<>EXCLUDED.minute_bucket OR action_limits.used<30;
+  IF NOT FOUND THEN RAISE EXCEPTION 'PREFERENCE_RATE_LIMIT'; END IF;
   IF p_action IN ('network_subscribe','network_unsubscribe') THEN
     IF p_business IS NOT NULL OR p_language NOT IN ('en','ta','si') THEN RAISE EXCEPTION 'INVALID_REQUEST'; END IF;
     SELECT * INTO network_row FROM slbi_audience_private.network_preferences WHERE user_id=p_user;
@@ -108,6 +135,8 @@ BEGIN
   END IF;
   IF p_business IS NULL OR p_action NOT IN ('follow','unfollow','news_on','news_off','push_on','push_off','subscribe','unsubscribe') THEN RAISE EXCEPTION 'INVALID_REQUEST'; END IF;
   IF NOT EXISTS(SELECT 1 FROM public.businesses WHERE id=p_business AND (status='approved' OR p_action IN ('unfollow','unsubscribe','news_off','push_off'))) THEN RAISE EXCEPTION 'BUSINESS_UNAVAILABLE'; END IF;
+  IF p_action IN ('follow','subscribe') AND NOT EXISTS(SELECT 1 FROM slbi_audience_private.memberships WHERE user_id=p_user AND business_id=p_business)
+    AND (SELECT count(*) FROM slbi_audience_private.memberships WHERE user_id=p_user AND (followed_at IS NOT NULL OR email_consent_at IS NOT NULL))>=200 THEN RAISE EXCEPTION 'MEMBERSHIP_LIMIT'; END IF;
   INSERT INTO slbi_audience_private.memberships(user_id,business_id) VALUES(p_user,p_business) ON CONFLICT DO NOTHING;
   SELECT * INTO current_row FROM slbi_audience_private.memberships WHERE user_id=p_user AND business_id=p_business FOR UPDATE;
   IF p_action='follow' THEN UPDATE slbi_audience_private.memberships SET followed_at=coalesce(followed_at,now()),news=CASE WHEN followed_at IS NULL THEN true ELSE news END,updated_at=now() WHERE user_id=p_user AND business_id=p_business;
@@ -123,13 +152,19 @@ BEGIN
     UPDATE slbi_audience_private.memberships SET email_consent_at=NULL,email_digest=NULL,updated_at=now() WHERE user_id=p_user AND business_id=p_business AND email_consent_at IS NOT NULL;
     IF FOUND THEN INSERT INTO slbi_audience_private.consent_events(user_id,business_id,action) VALUES(p_user,p_business,p_action); END IF;
   END IF;
+  -- Cancel queued, not-yet-dispatched device pushes when a user withdraws the relevant preference.
+  IF p_action IN ('unfollow','news_off','push_off') THEN
+    DELETE FROM public.fcm_delivery_jobs j USING slbi_audience_private.news_deliveries d
+    WHERE j.notification_id=d.notification_id AND d.user_id=p_user AND d.business_id=p_business;
+  END IF;
+  DELETE FROM slbi_audience_private.memberships WHERE user_id=p_user AND business_id=p_business AND followed_at IS NULL AND email_consent_at IS NULL;
   RETURN coalesce(public.slbi_audience_read(p_user,p_business),'{}'::jsonb);
 END $$;
-CREATE FUNCTION public.slbi_audience_owner_summary(p_owner uuid,p_business uuid)
+CREATE FUNCTION public.slbi_audience_owner_summary(p_owner uuid,p_business uuid,p_language text DEFAULT 'all')
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE followers bigint; subscribers bigint; pushes bigint; network_count bigint; network_enabled boolean;
 BEGIN
-  IF NOT EXISTS(SELECT 1 FROM public.businesses WHERE id=p_business AND owner_id=p_owner AND status='approved') THEN RETURN NULL; END IF;
+  IF p_language NOT IN ('all','en','ta','si') OR NOT EXISTS(SELECT 1 FROM public.businesses WHERE id=p_business AND owner_id=p_owner AND status='approved') THEN RETURN NULL; END IF;
   SELECT count(*) FILTER(WHERE m.followed_at IS NOT NULL),count(*) FILTER(WHERE m.followed_at IS NOT NULL AND m.news AND m.push),
     count(*) FILTER(WHERE m.email_consent_at IS NOT NULL AND u.email_confirmed_at IS NOT NULL AND m.email_digest=extensions.digest(lower(trim(u.email)),'sha256')
       AND NOT EXISTS(SELECT 1 FROM public.marketing_email_suppressions s WHERE s.business_id=p_business AND s.email=lower(trim(u.email))))
@@ -137,14 +172,41 @@ BEGIN
   SELECT enabled INTO network_enabled FROM slbi_audience_private.network_control WHERE singleton;
   IF network_enabled THEN
     SELECT count(*) INTO network_count FROM slbi_audience_private.network_preferences n JOIN auth.users u ON u.id=n.user_id
-    WHERE n.consent_at IS NOT NULL AND u.email_confirmed_at IS NOT NULL AND n.email_digest=extensions.digest(lower(trim(u.email)),'sha256')
+    WHERE n.consent_at IS NOT NULL AND (p_language='all' OR n.language=p_language) AND u.email_confirmed_at IS NOT NULL AND n.email_digest=extensions.digest(lower(trim(u.email)),'sha256')
       AND NOT EXISTS(SELECT 1 FROM public.marketing_email_suppressions s WHERE s.business_id=p_business AND s.email=lower(trim(u.email)));
     network_count:=CASE WHEN network_count<20 THEN NULL ELSE (network_count/10)*10 END;
   END IF;
   RETURN jsonb_build_object('followers',followers,'subscribers',subscribers,'pushPreferences',pushes,'networkEnabled',network_enabled,'networkReach',network_count);
 END $$;
-REVOKE ALL ON FUNCTION public.slbi_audience_read(uuid,uuid),public.slbi_audience_change(uuid,uuid,text,text),public.slbi_audience_owner_summary(uuid,uuid) FROM PUBLIC,anon,authenticated;
-GRANT EXECUTE ON FUNCTION public.slbi_audience_read(uuid,uuid),public.slbi_audience_change(uuid,uuid,text,text),public.slbi_audience_owner_summary(uuid,uuid) TO service_role;
+CREATE FUNCTION public.slbi_audience_owner_counts(p_owner uuid)
+RETURNS jsonb LANGUAGE sql SECURITY DEFINER SET search_path='' AS $
+ SELECT coalesce(jsonb_object_agg(owned.id,owned.subscribers),'{}'::jsonb)
+ FROM (
+  SELECT b.id,count(m.user_id) FILTER(WHERE m.email_consent_at IS NOT NULL AND u.email_confirmed_at IS NOT NULL
+    AND m.email_digest=extensions.digest(lower(trim(u.email)),'sha256')
+    AND NOT EXISTS(SELECT 1 FROM public.marketing_email_suppressions s WHERE s.business_id=b.id AND s.email=lower(trim(u.email)))) AS subscribers
+  FROM public.businesses b LEFT JOIN slbi_audience_private.memberships m ON m.business_id=b.id
+  LEFT JOIN auth.users u ON u.id=m.user_id WHERE b.owner_id=p_owner AND b.status='approved' GROUP BY b.id
+ ) owned
+$;
+CREATE FUNCTION public.slbi_audience_admin_control(p_actor uuid,p_enabled boolean DEFAULT NULL)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $
+DECLARE current_enabled boolean; total bigint;
+BEGIN
+  -- Existing production role-escalation trigger protects the staff role; recheck here, not just UI.
+  IF NOT EXISTS(SELECT 1 FROM public.profiles p WHERE p.id=p_actor AND p.role::text IN ('admin','ceo')) THEN RETURN NULL; END IF;
+  SELECT enabled INTO current_enabled FROM slbi_audience_private.network_control WHERE singleton FOR UPDATE;
+  IF p_enabled IS NOT NULL AND p_enabled IS DISTINCT FROM current_enabled THEN
+    UPDATE slbi_audience_private.network_control SET enabled=p_enabled WHERE singleton;
+    INSERT INTO slbi_audience_private.network_admin_events(actor_id,enabled) VALUES(p_actor,p_enabled);
+    current_enabled:=p_enabled;
+  END IF;
+  SELECT count(*) INTO total FROM slbi_audience_private.network_preferences n JOIN auth.users u ON u.id=n.user_id
+    WHERE n.consent_at IS NOT NULL AND u.email_confirmed_at IS NOT NULL AND n.email_digest=extensions.digest(lower(trim(u.email)),'sha256');
+  RETURN jsonb_build_object('enabled',current_enabled,'optIns',total,'deliveryEnabled',false);
+END $;
+REVOKE ALL ON FUNCTION public.slbi_audience_read(uuid,uuid),public.slbi_audience_change(uuid,uuid,text,text),public.slbi_audience_owner_summary(uuid,uuid,text),public.slbi_audience_owner_counts(uuid),public.slbi_audience_admin_control(uuid,boolean) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.slbi_audience_read(uuid,uuid),public.slbi_audience_change(uuid,uuid,text,text),public.slbi_audience_owner_summary(uuid,uuid,text),public.slbi_audience_owner_counts(uuid),public.slbi_audience_admin_control(uuid,boolean) TO service_role;
 
 -- Preserve existing official announcements; replace all-profile vendor fan-out with a queue.
 CREATE OR REPLACE FUNCTION public.notify_all_on_business_news() RETURNS trigger
@@ -160,6 +222,9 @@ BEGIN
 END $$;
 REVOKE ALL ON FUNCTION public.notify_all_on_business_news() FROM PUBLIC,anon,authenticated;
 -- Keep existing FCM queue behavior for other notifications; honor silent follower preference.
+-- Prevent clients spoofing the new notification types under the legacy permissive INSERT policy.
+CREATE POLICY audience_news_server_only_insert ON public.notifications AS RESTRICTIVE FOR INSERT TO anon,authenticated WITH CHECK(type NOT IN ('business_follow_news','business_follow_news_silent'));
+CREATE POLICY audience_news_server_only_update ON public.notifications AS RESTRICTIVE FOR UPDATE TO anon,authenticated USING(true) WITH CHECK(type NOT IN ('business_follow_news','business_follow_news_silent') OR user_id=(SELECT auth.uid()));
 CREATE OR REPLACE FUNCTION public.slbi_enqueue_fcm_job() RETURNS trigger
 LANGUAGE plpgsql SET search_path='' AS $$
 BEGIN
@@ -171,7 +236,7 @@ BEGIN
   RETURN NEW;
 END $$;
 CREATE FUNCTION slbi_audience_private.process_news_batch() RETURNS integer LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
-DECLARE job slbi_audience_private.news_queue%ROWTYPE; recipient record; n integer:=0; last_id uuid; title_text text; message_text text;
+DECLARE job slbi_audience_private.news_queue%ROWTYPE; recipient record; n integer:=0; last_id uuid; notification uuid; title_text text; message_text text;
 BEGIN
   SELECT * INTO job FROM slbi_audience_private.news_queue WHERE completed_at IS NULL ORDER BY published_at,news_id LIMIT 1 FOR UPDATE SKIP LOCKED;
   IF NOT FOUND THEN RETURN 0; END IF;
@@ -182,7 +247,10 @@ BEGIN
     WHERE m.business_id=job.business_id AND m.followed_at<=job.published_at AND m.news AND (job.cursor_user IS NULL OR m.user_id>job.cursor_user)
     ORDER BY m.user_id LIMIT 250 FOR SHARE
   LOOP
-    INSERT INTO public.notifications(user_id,title,message,type) VALUES(recipient.user_id,title_text,message_text,CASE WHEN recipient.push THEN 'info' ELSE 'business_follow_news_silent' END);
+    IF NOT EXISTS(SELECT 1 FROM slbi_audience_private.news_deliveries WHERE news_id=job.news_id AND user_id=recipient.user_id) THEN
+      INSERT INTO public.notifications(user_id,title,message,type) VALUES(recipient.user_id,title_text,message_text,CASE WHEN recipient.push THEN 'business_follow_news' ELSE 'business_follow_news_silent' END) RETURNING id INTO notification;
+      INSERT INTO slbi_audience_private.news_deliveries(news_id,user_id,business_id,notification_id) VALUES(job.news_id,recipient.user_id,job.business_id,notification);
+    END IF;
     last_id:=recipient.user_id;n:=n+1;
   END LOOP;
   UPDATE slbi_audience_private.news_queue SET cursor_user=coalesce(last_id,cursor_user),completed_at=CASE WHEN n<250 THEN now() ELSE NULL END WHERE news_id=job.news_id;
