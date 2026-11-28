@@ -126,7 +126,7 @@ test('V8 typography persists in normalized drafts and matches email HTML',async(
   }
   assert.ok(normalizeLocalCampaign(draft,draft.ownerScope,[draft.businessId]));
   assert.ok(renderEmailMarkup(draft,brand,{mode:'self_test'}).html.includes('max-width:600px'));
-  for(const needle of ['email-v8-typography','Block font family','Block font size','Block text colour','Align ','Letter spacing','Line height','email-v8-canvas-settings','Desktop canvas width','variant="bulk"','style={emailTypographyStyle(b)}'])assert.ok(canvas.includes(needle),needle);
+  for(const needle of ['email-v8-typography','Block font family','Block font size','Block text colour','Align ','Letter spacing','Line height','email-v8-canvas-settings','Desktop canvas width','variant="bulk"','style={previewTypography(b)}'])assert.ok(canvas.includes(needle),needle);
 });
 
 test('V9 advanced content renders safely and uploaded image stays private until approved',()=>{
@@ -150,4 +150,25 @@ test('V9 advanced content renders safely and uploaded image stays private until 
   const delivery=renderEmailMarkup(advanced,brand,{mode:'marketing',unsubscribeUrl:'https://example.com/unsub',imagePublicUrls:{[imageId]:'https://example.com/image.png'}});
   assert.match(delivery.html,/https:\/\/example.com\/image.png/);
   assert.match(delivery.html,/alt="Product &lt;photo&gt;"/);
+});
+
+test('Editor offers five professional fonts and preserves legacy drafts',async()=>{
+ const {EMAIL_EDITOR_FONTS,defaultEmailTypography,normalizeLocalCampaign}=await import('../lib/marketing/email-hub-contract.ts');
+ assert.deepEqual(EMAIL_EDITOR_FONTS.map(f=>f.id),['arial','poppins','outfit','inter','monospace']);
+ for(const font of EMAIL_EDITOR_FONTS){
+   const styled={...draft,blocks:[{...draft.blocks[0],typography:{...defaultEmailTypography('headline'),font:font.id}}]};
+   const normalized=normalizeLocalCampaign(styled,draft.ownerScope,[draft.businessId]);assert.ok(normalized);
+   assert.equal(normalized.blocks[0].typography.font,font.id);
+   assert.match(renderEmailMarkup(normalized,brand,{mode:'self_test'}).html,/font-family:/);
+ }
+ assert.match(canvas,/EMAIL_EDITOR_FONTS\.map/);
+ assert.match(canvas,/Poppins\(\{weight:/);
+ assert.match(canvas,/Outfit\(\{weight:/);
+ assert.doesNotMatch(canvas,/type="color"/);
+ assert.match(canvas,/data-testid="email-viewport-colour-picker"/);
+ assert.match(canvas,/Math\.min\(anchor\.right-width,vw-width-8\)/);
+ assert.match(canvas,/Math\.min\(anchor\.bottom\+6,vh-maxHeight-8\)/);
+ assert.match(canvas,/const selectionBorder='border border-transparent/);
+ assert.match(canvas,/Quick sections/);
+ assert.match(canvas,/insertSection\(s\.types\)/);
 });
