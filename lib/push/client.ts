@@ -56,12 +56,14 @@ function waitActive(reg:ServiceWorkerRegistration){
 const optOutKey='slbi-fcm-disabled-v1';
 let registration:Promise<void>|null=null;
 let registeredFor:string|null=null;
+let lastSuccess=0;
 let generation=0;
 export function devicePushReady(uid:string){return registeredFor===uid&&readPushRegistration()?.uid===uid&&supportsPush()&&Notification.permission==='granted'}
 function optedOut(uid:string){try{return localStorage.getItem(optOutKey+':'+uid)==='1'}catch{return true}}
 function markOptOut(uid:string,disabled:boolean){try{if(disabled)localStorage.setItem(optOutKey+':'+uid,'1');else localStorage.removeItem(optOutKey+':'+uid)}catch{}}
 async function registerGranted(uid:string){
   if(registration){await registration.catch(()=>{});if(devicePushReady(uid))return;}
+  if(devicePushReady(uid)&&Date.now()-lastSuccess<300000)return;
   const current=generation;
   const task=(async()=>{
     if(!supportsPush()||Notification.permission!=='granted'||optedOut(uid))return;
@@ -76,9 +78,12 @@ async function registerGranted(uid:string){
     if(current!==generation||optedOut(uid))return;
     const response=await fetch('/api/push/device',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({token,expectedUid:uid})});
     if(!response.ok)throw new Error('Could not register this device. Try again.');
-    if(current!==generation||optedOut(uid))return;
+    if(current!==generation||optedOut(uid)){
+      if(optedOut(uid))await fetch('/api/push/device',{method:'DELETE',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({token,expectedUid:uid})}).catch(()=>undefined);
+      return;
+    }
     localStorage.setItem(key,JSON.stringify({token,uid}));
-    registeredFor=uid;
+    registeredFor=uid;lastSuccess=Date.now();
     window.dispatchEvent(new Event('slbi-push-state'));
   })();
   registration=task;
@@ -97,7 +102,7 @@ export async function enablePush(uid:string){
 export async function disablePush(uid?:string){
   const saved=readPushRegistration();const account=uid||saved?.uid;
   if(account)markOptOut(account,true);
-  generation++;registeredFor=null;
+  generation++;registeredFor=null;lastSuccess=0;
   if(registration)await registration.catch(()=>{});
   const current=readPushRegistration();
   if(current&&(!account||current.uid===account)){
