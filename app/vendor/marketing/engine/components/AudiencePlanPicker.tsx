@@ -10,7 +10,7 @@ export default function AudiencePlanPicker({businessId,plan,onChange}:{businessI
    <h3 className="font-semibold">Campaign audience plan</h3>
    <label className="block">Audience source<select aria-label="Campaign audience source" value={plan.source} onChange={e=>onChange({source:e.target.value as Plan['source'],language:'all'})} className="mt-1 min-h-8 w-full rounded-md border border-[#DDE1E6] px-2"><option value="business">Business email opt-ins</option><option value="network" disabled={!summary?.networkEnabled}>SLBI Audience Network</option></select></label>
    {plan.source==='network'&&<label className="block">Preferred language<select aria-label="Network audience language" value={plan.language} onChange={e=>onChange({...plan,language:e.target.value as Plan['language']})} className="mt-1 min-h-8 w-full rounded-md border border-[#DDE1E6] px-2"><option value="all">All languages</option><option value="en">English</option><option value="ta">Tamil</option><option value="si">Sinhala</option></select></label>}
-   <p className="text-[#6B7280]">{plan.source==='business'?(summary?'Verified-account opt-ins: '+summary.subscribers:'Audience unavailable'):(summary?.networkEnabled&&summary.networkReach!==null?'Approximate eligible reach: '+summary.networkReach:'Network disabled or reach withheld for privacy.')}</p>
-   <p className="text-[#6B7280]">Saved plan only. No addresses exposed, no delivery or scheduling.</p>
+   <p className="text-[#6B7280]">{plan.source==='business'?(summary?'Verified-account opt-ins: '+summary.subscribers:'Audience unavailable'):(summary?.networkEnabled&&summary.networkReach!==null?'Approximate opted-in reach: '+summary.networkReach:'Network disabled or reach withheld for privacy.')}</p>
+   <p className="text-[#6B7280]">Saved plan only. Counts precede delivery-time suppression checks. No addresses, delivery or scheduling.</p>
  </div>;
 }
