@@ -169,7 +169,7 @@ test('Audience plans persist as provider-free source and language, never recipie
  const admin=read('app/api/admin/audience-network/route.ts');
  const sql=read('docs/growth/AUDIENCE_NETWORK_FOUNDATION_REVIEW.sql');
  const profile=read('app/business/[slug]/BusinessDetailsClient.tsx');
- const centre=read('app/following/page.tsx');
+ const centre=read('app/components/audience/NetworkEmailPreferences.tsx');
  for(const token of ['auth.getUser()','isSameOrigin','p_user:user.id','slbi_audience_change','PREFERENCE_RATE_LIMIT'])assert.ok(api.includes(token),token);
  for(const token of ['auth.getUser()','getMarketingAccessForUser','p_owner:user.id','slbi_audience_owner_summary'])assert.ok(vendor.includes(token),token);
  for(const token of ['auth.getUser()',"['admin','ceo']", 'p_actor:user.id','isSameOrigin'])assert.ok(admin.includes(token),token);

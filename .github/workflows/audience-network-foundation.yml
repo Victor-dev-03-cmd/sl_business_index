@@ -41,3 +41,7 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f docs/growth/AUDIENCE_NETWORK_FOUNDATION_REVIEW.sql
       - name: Verify consent, tenant isolation, fanout, push, suppression and network gates
         run: psql -v ON_ERROR_STOP=1 -f tests/audience-network/verify.sql
+      - name: Apply unified follow migration after baseline tests
+        run: psql -v ON_ERROR_STOP=1 -f docs/growth/AUDIENCE_NETWORK_UNIFIED_FOLLOW_REVIEW.sql
+      - name: Verify atomic follow, unsubscribe and network exclusion
+        run: psql -v ON_ERROR_STOP=1 -f tests/audience-network/unified-follow.sql

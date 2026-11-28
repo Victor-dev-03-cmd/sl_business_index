@@ -1,7 +1,7 @@
 'use client';
 import {useEffect,useState} from 'react';
 import Link from 'next/link';
-import {Bell,BellRing,Check,Plus,Mail} from 'lucide-react';
+import {Bell,BellRing,Check,Plus} from 'lucide-react';
 import {useSession} from '@/app/components/SessionContext';
 import {enablePush,devicePushReady} from '@/lib/push/client';
 import {toast} from 'sonner';
@@ -28,7 +28,7 @@ export default function BusinessAudienceControls({businessId,businessName,initia
    if(busy)return;
    setBusy(true);setError('');
    try{
-     const res=await fetch('/api/audience',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({businessId,action,consentVersion:'slbi-audience-sharing-v2'})});
+     const res=await fetch('/api/audience',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({businessId,action,consentVersion:'slbi-follow-email-v3'})});
      const data=await res.json();if(!res.ok)throw Error(data.error||'Could not save.');
      if(typeof data.state?.following==='boolean')setState(data.state);
      else if(initial)setState({...initial,following:false,news:false,push:false,email:false});
@@ -48,12 +48,10 @@ export default function BusinessAudienceControls({businessId,businessName,initia
  const button='inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition-colors disabled:opacity-40 focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-[#EA580C]';
  return <div data-testid="business-audience-controls" className="inline-flex min-w-0 flex-col items-start gap-1 text-neutral-900">
    <div className="flex flex-wrap items-center gap-1.5">
-     {!signedIn&&state?<Link href={'/login?next='+encodeURIComponent('/business/'+businessId)} className={button+' border-[#EA580C] bg-[#EA580C] text-white'}><Plus size={15}/>Follow</Link>:<button type="button" disabled={!state||busy||state.approved===false&&!state.following} aria-pressed={Boolean(state?.following)} aria-label={state?.following?'Unfollow '+businessName:'Follow '+businessName} onClick={()=>void change(state?.following?'unfollow':'follow')} className={button+(state?.following?' border-neutral-200 bg-neutral-50 text-neutral-800':' border-[#EA580C] bg-[#EA580C] text-white')}>{state?.following?<Check size={15}/>:<Plus size={15}/>} {state?.following?'Following':'Follow'}</button>}
+     {!signedIn&&state?<Link href={'/login?next='+encodeURIComponent('/business/'+businessId)} aria-describedby={'follow-terms-'+businessId} className={button+' border-[#EA580C] bg-[#EA580C] text-white'}><Plus size={15}/>Follow</Link>:<button type="button" disabled={!state||busy||state.approved===false&&!state.following} aria-pressed={Boolean(state?.following)} aria-describedby={state&&!state.following?'follow-terms-'+businessId:undefined} aria-label={state?.following?'Unfollow '+businessName:'Follow '+businessName} onClick={()=>void change(state?.following?'unfollow':'follow')} className={button+(state?.following?' border-neutral-200 bg-neutral-50 text-neutral-800':' border-[#EA580C] bg-[#EA580C] text-white')}>{state?.following?<Check size={15}/>:<Plus size={15}/>} {state?.following?'Following':'Follow'}</button>}
      {state?.following&&<button type="button" disabled={busy||state.approved===false} aria-pressed={state.push} aria-label={state.push?'Turn off business push notifications':'Turn on all business notifications'} title={state.push?'All notifications on':'Enable all notifications'} onClick={()=>void toggleBell()} className={'grid h-9 w-9 shrink-0 place-items-center rounded-full border transition-colors focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#EA580C] '+(state.push?'border-orange-200 bg-orange-50 text-[#EA580C]':'border-neutral-200 bg-white text-neutral-600')}><span onAnimationEnd={()=>setRing(false)} className={ring?'motion-safe:animate-[slbi-bell-ring_.4s_ease-in-out_2]':''}>{state.push?<BellRing size={18}/>:<Bell size={18}/>}</span></button>}
-     {initial&&state&&signedIn&&<button type="button" disabled={busy||state.approved===false&&!state.email} onClick={()=>void change(state.email?'unsubscribe':'subscribe')} className={button+' border-neutral-200 bg-white text-neutral-700'}><Mail size={15}/>{state.email?'Unsubscribe email':'Subscribe email'}</button>}
    </div>
-   {initial&&state?.email&&state.emailEligible===false&&<button type="button" disabled={busy||state.approved===false} onClick={()=>void change('subscribe')} className="text-xs font-semibold text-[#C2410C] underline">Confirm current email for {businessName}</button>}
-   {initial&&state&&<p className="max-w-sm text-[11px] text-neutral-500">{state.email?'Email subscription is optional. Withdrawal stops future access; copies cannot be recalled.':'Subscribe email shares your verified email with '+businessName+' for its marketing. You can unsubscribe anytime.'}</p>}
+   {state&&!state.following&&<p id={'follow-terms-'+businessId} className="max-w-[300px] text-xs leading-tight text-neutral-500">Follow shares your verified email with {businessName} for marketing updates. Unfollow anytime.</p>}
    {error&&<span role="alert" className="text-[11px] text-red-700">{error}</span>}
    <style jsx global>{`@keyframes slbi-bell-ring {0%,100%{transform:rotate(0)}25%{transform:rotate(15deg)}75%{transform:rotate(-15deg)}}`}</style>
  </div>;
