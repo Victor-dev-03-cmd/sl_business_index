@@ -1,21 +1,19 @@
-# SLBI Audience Network — 2026-11-28
-Owner approved the first six workstreams together; two email providers will be supplied separately. Do not activate either provider or send real email yet.
+# SLBI Audience Network — simplified owner-approved model (2026-11-28)
 
-| Workstream | Candidate implementation | Release gate |
-|---|---|---|
-| 1. Subscriber DB/consent | Private memberships, hashed current verified email binding, separate business and platform opt-in, append-only versioned consent events, withdrawal independent of follow, 200 active businesses/account, 30 additions/minute | isolated PostgreSQL tests, production migration and ACL audit |
-| 2. Business details | Follow/unfollow, news, device push and email preference controls in approved business profile | signed-in browser tests |
-| 3. News notifications | Existing vendor all-profile fanout replaced by private event queue, bounded 250/fanout batch, dedupe, opt-out cancellation of queued FCM jobs; official announcements preserved | SQL tests, pg_cron activation, real notification acceptance |
-| 4. Following Centre | /following, phone/tablet/desktop profile entry points, independent withdrawal and email-change reconfirmation, preferred network language | browser tests |
-| 5. Vendor Audience Manager | Exact own-business aggregate opt-ins, followers, push preferences; campaign source/language persisted in existing validated draft JSON | API/ownership tests; no recipient identities |
-| 6. SLBI Audience Network | Optional separately consented platform audience, language-only fixed segments, rounded down by ten, threshold 20, staff-controlled planning access default OFF; audited toggles; no raw recipient export | owner/role/privacy tests; admin acceptance |
-| 7. Email providers | DEFERRED until owner supplies two approved providers | independent provider security, DOI, unsubscribe, suppression, rate limits, queue, bounce/complaint webhooks and analytics |
+Supersedes the earlier global admin planning toggle. The owner requires direct subscriptions automatically available to the subscribed business, and separate admin review only for additional platform audiences.
 
-Production baseline: PR #239 / 83a39a74f9ede9d51569fd1bdff465e323c095d7, Vercel READY exact www alias confirmed. Production audit: business_news, notifications, fcm_devices, fcm_delivery_jobs, marketing_email_suppressions exist; marketing_email_optins and business_followers absent. Legacy enquiry consent review SQL remains unapplied: do not activate its flag or treat old leads as consent. Current Business News trigger broadcasts all new posts to every profile, existing FCM cron runs each minute. The new private schema and functions are review candidates, not applied. Production data remains unchanged. Vendor exposed counts are pre-suppression consent counts, not send-ready audience; internal suppression-adjusted count is not exposed. No address export, marketing send, automatic import, provider credentials or automatic scheduling. Account-confirmed consent is not email campaign double opt-in; provider stage must independently enforce that requirement. District/interest targeting and verified imports are not implemented; start with language-only targeting to reduce re-identification risk. No new Node service/dependency; existing Next.js route adapters, Bun CI, PostgreSQL indexed processing.
+| Workstream | Candidate |
+|---|---|
+| 1. Consent | Verified account email, explicit v2 address-sharing disclosure, independent business/platform opt-in and withdrawal, business owner binding |
+| 2. Business profile | Follow/unfollow, news/push and email subscription controls; follow/review never grant email access |
+| 3. News | Indexed follower-only queue, batch 250, dedupe, cancellation of queued push on withdrawal; official announcements unchanged |
+| 4. Following Centre | Account menu entry, all business preferences, separate partner email-sharing consent, language |
+| 5. My Subscribers | Owner/Pro-only automatic paginated direct email list, current verified address, ownership, consent and suppression checks; no admin review |
+| 6. Extra SLBI audience | Vendor request for 1–100 consenting contacts with purpose/language, admin approve/reject/revoke, fixed allocation valid seven days, no global switch |
+| 7. Email providers | Deferred until owner supplies two approved providers; no delivery active |
 
-Release steps:
-1. Full exact-head CI and isolated PostgreSQL fixture PASS; check production baseline, backup/rollback readiness, schema and roles. 
-2. Apply reviewed foundation and pg_cron schedule only as approved migration together; verify grants, RLS, worker, existing FCM job and isolated negative checks without real notifications or recipients. No live synthetic user creation without owner approval.
-3. Commit actual applied migration version in same PR and re-run CI, merge, verify exact Vercel Production READY and domain. Leave network planning switch OFF by default until admin explicitly enables; delivery always OFF.
-4. Owner signed-in desktop/mobile follow/unfollow, opt-in/withdraw, vendor A/B, admin controls, real device in-app/push acceptance. No claims of completed production or visual acceptance before evidence.
-5. Rollback: use reviewed operational rollback SQL only if authorized; restores old news trigger and disables network planning, preserves consent. In-flight FCM cannot be recalled; physical push acceptance and queue performance must be measured. Additional retention, provider-stage policy wording/DOI, regional targeting and verified import work remain.
+The direct email list is for the named business only. Platform sharing consent explicitly states that verified email can be shared with approved participating businesses for marketing. No registered-account pool export, no inferred consent, no automatic import from reviews, enquiries or follows. Staff never override consent. Approval snapshots recipient IDs and consent; email is resolved only at authorized read and removed on withdrawal, expiry, revocation, address or ownership change. Already copied addresses cannot be recalled; vendor usage obligations and privacy terms need review before release. No CSV export. Caps and expiry are initial safeguards, not owner-selected commercial terms. Language-only segmentation. Provider-stage double opt-in, delivery-time consent checks, unsubscribe, bounce/complaint handling, quota and analytics remain deferred.
+
+Existing baseline: PR #239 deployed; production vendor news currently fans out to every profile. Candidate SQL is not applied. Existing FCM job remains unchanged; new worker activation and rollback SQL prepared. Earlier isolated fixture passed before the revised request model; all tests must rerun for exact new head. Previous head 16/17 passed; old V3 assertion corrected.
+
+Release gates: exact-head CI; verify database backup/rollback and privacy/consent terms; apply audited migration and cron; verify ACL/RLS and worker; record actual migration; re-CI and merge; Vercel READY exact www alias; signed-in vendor A/B and user, admin, device notification acceptance. No production migration, email release or send performed.
