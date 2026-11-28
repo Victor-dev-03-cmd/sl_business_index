@@ -7,6 +7,7 @@ import {isPosterInternalQAAccount} from '@/lib/marketing/poster-review-access-se
 import GoogleMailInboxPreview,{type GmailMailboxPreviewConnection} from '@/app/vendor/marketing/engine/components/GoogleMailInboxPreview';
 import {getGoogleConnectorConfig,GOOGLE_SEND_SCOPE} from '@/lib/marketing/oauth-runtime';
 import {createClient} from '@/lib/supabase/server';
+import {audienceService} from '@/lib/audience/server';
 import {normalizeLocalCampaign,type LocalEmailCampaign} from '@/lib/marketing/email-hub-contract';
 
 export const dynamic='force-dynamic';
@@ -60,17 +61,16 @@ export default async function MarketingEmail(){
           primaryColor:brand?.primary_color||null,accentColor:brand?.accent_color||null,
           tone:brand?.tone||null};
       });
-      // Exact verified recipient counts are shown only if the reviewed
-      // opt-in ledger actually exists and responds under authenticated RLS.
-      // Missing tables fail closed (no invented zero or subscriber total).
-      const optins=await client.from('marketing_email_optins')
-        .select('business_id').in('business_id',ids)
-        .eq('confirmation_status','confirmed').is('revoked_at',null).limit(5001);
-      if(!optins.error&&optins.data&&optins.data.length<5001){
-        verifiedCounts=Object.fromEntries(ids.map(id=>[id,0]));
-        for(const row of optins.data){
-          if(typeof row.business_id==='string'&&ids.includes(row.business_id))
-            verifiedCounts[row.business_id]=(verifiedCounts[row.business_id]||0)+1;
+      // Only exact verified-account consent aggregates, never addresses or user IDs.
+      // Missing reviewed audience schema fails closed.
+      const audience=audienceService();
+      if(audience){
+        const counts=await audience.rpc('slbi_audience_owner_counts',{p_owner:user.id});
+        if(!counts.error&&counts.data&&typeof counts.data==='object'){
+          for(const id of ids){
+            const count=counts.data[id];
+            if(typeof count==='number'&&Number.isSafeInteger(count)&&count>=0)verifiedCounts[id]=count;
+          }
         }
       }
       const stored=await client.from('marketing_email_campaign_drafts')
