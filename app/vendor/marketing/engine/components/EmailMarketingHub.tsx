@@ -7,7 +7,7 @@ import {EMAIL_CAMPAIGNS,EMAIL_LANGUAGES,defaultEmailDraft,hexColor,
   parseAudienceCsv,countPastedEmails,type EmailBrand,type EmailCampaignType} from '@/lib/marketing/email-studio';
 import {EMAIL_TEMPLATE_LAYOUTS,type EmailTemplateLayout} from '@/lib/marketing/email-template-contract';
 import {
-  LOCAL_EMAIL_CAMPAIGN_LIMIT,emailLocalStorageKey,initialEmailBlocks,readLocalEmailDrafts,
+  LOCAL_EMAIL_CAMPAIGN_LIMIT,emailLocalStorageKey,initialEmailBlocks,readLocalEmailDrafts,normalizeLocalCampaign,
   type LocalEmailCampaign,
 } from '@/lib/marketing/email-hub-contract';
 import type {EmailStudioBusiness,EmailStudioConnection} from './EmailMarketingWorkbench';
@@ -29,6 +29,8 @@ type Props={
   ownerScope:string;
   verifiedCounts?:Record<string,number>;
   emailAiEnabled?:boolean;
+  serverDrafts?:readonly {draft:LocalEmailCampaign;revision:number}[];
+  serverStorageReady?:boolean;
   inboxPreview?:React.ReactNode;
 };
 function brandOf(b:EmailStudioBusiness):EmailBrand{
@@ -45,12 +47,18 @@ const niceDate=(date:string)=>{
 };
 const short=(v:string,max=90)=>v.length>max?v.slice(0,max-1)+'…':v;
 export default function EmailMarketingHub({
-  businesses,connections,ownerScope,verifiedCounts={},emailAiEnabled=false,inboxPreview,
+  businesses,connections,ownerScope,verifiedCounts={},emailAiEnabled=false,
+  serverDrafts=[],serverStorageReady=false,inboxPreview,
 }:Props){
   const preferred=connections.find(c=>c.status==='connected'&&businesses.some(b=>b.id===c.businessId))?.businessId;
   const [businessId,setBusinessId]=useState(preferred||businesses[0]?.id||'');
   const [tab,setTab]=useState<HubTab>('campaigns');
   const [drafts,setDrafts]=useState<LocalEmailCampaign[]>([]);
+  const [serverVersions,setServerVersions]=useState<Record<string,number>>({});
+  const [syncBusy,setSyncBusy]=useState(false);
+  const [historyId,setHistoryId]=useState<string|null>(null);
+  const [history,setHistory]=useState<Array<{revision:number;draft:LocalEmailCampaign;createdAt:string}>>([]);
+  const [historyBusy,setHistoryBusy]=useState(false);
   const [editor,setEditor]=useState<LocalEmailCampaign|null>(null);
   const [ready,setReady]=useState(false);
   const [search,setSearch]=useState('');
@@ -70,10 +78,15 @@ export default function EmailMarketingHub({
   useEffect(()=>{
     if(!ownerScope){setDrafts([]);setReady(true);return;}
     const ids=ownerBusinesses.split('|').filter(Boolean);
-    const items=readLocalEmailDrafts(
+    const local=readLocalEmailDrafts(
       localStorage.getItem(emailLocalStorageKey(ownerScope)),ownerScope,ids);
-    setDrafts(items);setReady(true);
-  },[ownerScope,ownerBusinesses]);
+    const remote=serverDrafts.map(x=>x.draft);
+    const existing=new Set(remote.map(x=>x.id));
+    setDrafts([...remote,...local.filter(x=>!existing.has(x.id))]
+      .sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt)));
+    setServerVersions(Object.fromEntries(serverDrafts.map(x=>[x.draft.id,x.revision])));
+    setReady(true);
+  },[ownerScope,ownerBusinesses,serverDrafts]);
 
   const persist=(next:LocalEmailCampaign[])=>{
     const items=next.slice(0,LOCAL_EMAIL_CAMPAIGN_LIMIT);
@@ -82,11 +95,58 @@ export default function EmailMarketingHub({
       setDrafts(items);return true;
     }catch{setError('Could not save to this browser. Try freeing browser storage.');return false;}
   };
-  const saveDraft=(campaign:LocalEmailCampaign)=>{
+  const saveDraft=async(campaign:LocalEmailCampaign):Promise<'server'|'browser'|'failed'>=>{
     if(!ownerScope||campaign.ownerScope!==ownerScope||!businesses.some(b=>b.id===campaign.businessId))
-      return;
-    const next=[campaign,...drafts.filter(d=>d.id!==campaign.id)].sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt));
-    if(persist(next))setNotice('Campaign saved on this browser.');
+      return 'failed';
+    const next=[campaign,...drafts.filter(d=>d.id!==campaign.id)]
+      .sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt));
+    if(!persist(next))return 'failed';
+    if(!serverStorageReady){
+      setNotice('Saved on this browser. Server campaign sync is unavailable.');
+      return 'browser';
+    }
+    setSyncBusy(true);
+    try{
+      const response=await fetch('/api/marketing/email/campaigns',{
+        method:'POST',credentials:'same-origin',cache:'no-store',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({draft:campaign,expectedRevision:serverVersions[campaign.id]||0}),
+      });
+      const body:unknown=await response.json();
+      if(!body||typeof body!=='object'||Array.isArray(body))throw Error('Unexpected campaign server response');
+      const result=body as {revision?:unknown;error?:unknown};
+      if(!response.ok||!Number.isInteger(result.revision)){
+        const message=typeof result.error==='string'?result.error:'Server campaign save failed.';
+        throw Error(message);
+      }
+      setServerVersions(prev=>({...prev,[campaign.id]:Number(result.revision)}));
+      setNotice('Campaign saved securely to your SLBI account.');
+      setError('');return 'server';
+    }catch(e){
+      const message=e instanceof Error?e.message:'Server unavailable.';
+      setError(message+' Your browser backup is preserved.');
+      return 'browser';
+    }finally{setSyncBusy(false);}
+  };
+  const openHistory=async(id:string)=>{
+    if(!serverVersions[id])return;
+    setHistoryId(id);setHistory([]);setHistoryBusy(true);setError('');
+    try{
+      const response=await fetch('/api/marketing/email/campaigns/'+encodeURIComponent(id),{
+        credentials:'same-origin',cache:'no-store'});
+      const body:unknown=await response.json();
+      if(!response.ok||!body||typeof body!=='object'||Array.isArray(body))throw Error('Could not load history.');
+      const value=body as {history?:unknown};
+      const businessIds=businesses.map(b=>b.id);
+      if(!Array.isArray(value.history))throw Error('History unavailable.');
+      setHistory(value.history.flatMap(x=>{
+        const y=x as {revision?:number;draft?:unknown;createdAt?:string};
+        const validated=normalizeLocalCampaign(y.draft,ownerScope,businessIds);
+        return validated&&typeof y.revision==='number'&&typeof y.createdAt==='string'?
+          [{revision:y.revision,draft:validated,createdAt:y.createdAt}]:[];
+      }));
+    }catch(e){setError(e instanceof Error?e.message:'Could not load history.');}
+    finally{setHistoryBusy(false);}
   };
   const start=(layout:EmailTemplateLayout='minimal',kind:EmailCampaignType='offer')=>{
     if(!business||!ownerScope)return;
@@ -107,9 +167,20 @@ export default function EmailMarketingHub({
     });
     setNotice('');setError('');
   };
-  const removeDraft=(id:string)=>{
-    if(!window.confirm('Remove this draft from this browser?'))return;
-    if(persist(drafts.filter(d=>d.id!==id)))setNotice('Local draft removed.');
+  const removeDraft=async(id:string)=>{
+    if(!window.confirm('Permanently remove this campaign and its server revision history?'))return;
+    if(serverVersions[id]){
+      setSyncBusy(true);
+      try{
+        const response=await fetch('/api/marketing/email/campaigns/'+encodeURIComponent(id),{
+          method:'DELETE',credentials:'same-origin',cache:'no-store',
+        });
+        if(!response.ok)throw Error('Could not delete the server draft.');
+      }catch(e){setError(e instanceof Error?e.message:'Delete failed.');setSyncBusy(false);return;}
+      setSyncBusy(false);
+      setServerVersions(prev=>{const next={...prev};delete next[id];return next;});
+    }
+    if(persist(drafts.filter(d=>d.id!==id)))setNotice('Campaign draft removed.');
   };
   const shown=useMemo(()=>drafts.filter(d=>d.businessId===businessId)
     .filter(d=>!search.trim()||[d.title,d.subject].some(x=>x.toLowerCase().includes(search.trim().toLowerCase())))
@@ -143,6 +214,10 @@ export default function EmailMarketingHub({
           <p className="text-[10px] font-extrabold uppercase tracking-[.18em] text-[#EA580C]">GrowthOS · Marketing Suite</p>
           <h1 className="mt-1 text-[25px] font-extrabold tracking-[-.04em] text-[#111827] sm:text-[31px]">Email Marketing Studio</h1>
           <p className={secondary+' mt-1'}>Design campaigns. Build your audience. Grow customer relationships.</p>
+          <p className="mt-2 inline-flex items-center gap-2 text-[10px] font-semibold text-[#6B7280]">
+            <span className={'h-2 w-2 rounded-full '+(serverStorageReady?'bg-[#22C55E]':'bg-[#D97706]')}/>
+            {serverStorageReady?'Account-synced drafts with version history':'Browser draft backup · cloud sync not active'}
+          </p>
         </div>
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           {businesses.length>1&&<select aria-label="Choose your business" value={businessId}
@@ -250,7 +325,9 @@ export default function EmailMarketingHub({
                 <p className="mt-1 truncate text-[11px] text-[#6B7280]">{short(d.subject,140)}</p>
               </div>
               <div className="text-[10px] text-[#6B7280] sm:w-32">
-                <span className="rounded-full border border-[#E5E7EB] bg-[#F9FAFB] px-2 py-1 font-bold">Browser draft</span>
+                <span className="rounded-full border border-[#E5E7EB] bg-[#F9FAFB] px-2 py-1 font-bold">
+                  {serverVersions[d.id]?'Cloud draft · v'+serverVersions[d.id]:'Browser draft'}
+                </span>
                 <p className="mt-2">Edited {niceDate(d.updatedAt)}</p>
               </div>
               <div className="flex items-center gap-2">
@@ -258,13 +335,25 @@ export default function EmailMarketingHub({
                   className="inline-flex min-h-10 items-center gap-1 rounded-lg border border-[#FDBA74] bg-[#FFF7ED] px-3 text-[11px] font-bold text-[#C2410C]">
                   Continue editing {icon('arrow-right-2',14)}
                 </button>
-                <button type="button" onClick={()=>removeDraft(d.id)} aria-label={'Delete '+d.title}
+                {!serverVersions[d.id]&&serverStorageReady&&<button type="button" disabled={syncBusy}
+                  onClick={()=>void saveDraft(d)}
+                  className="min-h-10 rounded-lg border border-[#E5E7EB] px-3 text-[11px] font-semibold text-[#EA580C] disabled:opacity-40">
+                  Sync
+                </button>}
+                {Boolean(serverVersions[d.id])&&<button type="button" onClick={()=>void openHistory(d.id)}
+                  className="min-h-10 rounded-lg border border-[#E5E7EB] px-3 text-[11px] font-semibold text-[#6B7280]">
+                  History
+                </button>}
+                <button type="button" onClick={()=>void removeDraft(d.id)} aria-label={'Delete '+d.title}
                   className="min-h-10 rounded-lg border border-[#E5E7EB] px-3 text-[11px] font-bold text-[#6B7280]">Delete</button>
               </div>
             </div>)}
           </div>}
         <div className="border-t border-[#F3F4F6] bg-[#FAFAFB] px-6 py-3 text-[10px] text-[#6B7280]">
-          Drafts here are saved on this browser only. Sent, opened and clicked figures appear only when verified delivery reporting is available.
+          {serverStorageReady?
+            'Cloud drafts sync to your SLBI account; offline browser backups remain available.':
+            'Drafts are saved in this browser until cloud sync is available.'}
+          {' '}Sent, opened and clicked figures appear only when verified delivery reporting is available.
         </div>
       </div>
     </section>}
@@ -412,5 +501,34 @@ export default function EmailMarketingHub({
         verifiedCount={verifiedCounts[editor.businessId]}
         emailAiEnabled={emailAiEnabled}
         onSave={saveDraft} onClose={()=>setEditor(null)}/>}
+    {historyId&&<div role="presentation"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4"
+      onMouseDown={e=>{if(e.target===e.currentTarget)setHistoryId(null);}}>
+      <section role="dialog" aria-modal="true" aria-label="Email campaign version history"
+        className="max-h-[85dvh] w-full max-w-[540px] overflow-y-auto rounded-2xl bg-white p-5 shadow-xl">
+        <div className="flex items-center justify-between gap-3">
+          <div><p className="text-[10px] font-bold uppercase text-[#EA580C]">Version history</p>
+            <h2 className="text-[18px] font-extrabold">Saved campaign versions</h2></div>
+          <button type="button" onClick={()=>setHistoryId(null)} aria-label="Close version history"
+            className="min-h-10 rounded-xl border border-[#E5E7EB] px-3">Close</button>
+        </div>
+        {historyBusy?<p className={secondary+' mt-5'}>Loading saved revisions…</p>:
+          !history.length?<p className={secondary+' mt-5'}>No server revisions to display.</p>:
+          <div className="mt-4 divide-y divide-[#E5E7EB]">
+            {history.map(h=><div key={h.revision} className="flex flex-wrap items-center justify-between gap-3 py-3">
+              <div className="min-w-0">
+                <p className="text-[12px] font-bold">Version {h.revision} · {short(h.draft.title,55)}</p>
+                <p className="mt-1 text-[11px] text-[#6B7280]">{niceDate(h.createdAt)}</p>
+              </div>
+              <button type="button" onClick={()=>{
+                setEditor({...h.draft,updatedAt:new Date().toISOString()});
+                setHistoryId(null);setNotice('Past version opened. Save to create a new revision.');
+              }} className="min-h-10 rounded-xl bg-[#FFF7ED] px-3 text-[11px] font-bold text-[#C2410C]">
+                Restore in editor
+              </button>
+            </div>)}
+          </div>}
+      </section>
+    </div>}
   </div>;
 }
