@@ -162,8 +162,11 @@ test('Editor offers five professional fonts and preserves legacy drafts',async()
    assert.match(renderEmailMarkup(normalized,brand,{mode:'self_test'}).html,/font-family:/);
  }
  assert.match(canvas,/EMAIL_EDITOR_FONTS\.map/);
- assert.match(canvas,/Poppins\(\{weight:/);
- assert.match(canvas,/Outfit\(\{weight:/);
+ const fonts=read('app/vendor/marketing/engine/components/email-editor-fonts.ts');
+ assert.match(fonts,/const poppins = Poppins\(\{/);
+ assert.match(fonts,/const outfit = Outfit\(\{/);
+ assert.match(fonts,/preload: false/);
+ assert.match(canvas,/emailEditorFontClasses/);
  assert.doesNotMatch(canvas,/type="color"/);
  assert.match(canvas,/data-testid="email-viewport-colour-picker"/);
  assert.match(canvas,/Math\.min\(anchor\.right-width,vw-width-8\)/);
