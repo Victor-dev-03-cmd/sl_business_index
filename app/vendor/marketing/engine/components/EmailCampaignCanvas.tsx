@@ -748,7 +748,7 @@ export default function EmailCampaignCanvas({
         </div>
         <div className="mt-5 space-y-3 text-[12px]">
           <p className="flex items-center gap-2">{sender?'✓':'○'} Connected sender: {sender?.accountDisplayName||'Not connected'}</p>
-          <p className="flex items-center gap-2">○ Audience plan: {campaign.audiencePlan?.source==='network'?'SLBI Audience Network · '+campaign.audiencePlan.language:'Business email opt-ins'}</p>
+          <p className="flex items-center gap-2">○ Audience plan: {campaign.audiencePlan?.source==='network'?'SLBI Audience Network · '+campaign.audiencePlan.language:campaign.audiencePlan?.source==='imported'?'Imported contact list':'Business email opt-ins'}</p>
           <p>Business account-verified opt-ins: {verifiedCount===undefined?'unavailable':verifiedCount}. No send-ready recipient list.</p>
           <p>○ Unsubscribe handling and delivery provider — not active</p>
           <p>○ Verified send authorization and campaign queue — not active</p>
