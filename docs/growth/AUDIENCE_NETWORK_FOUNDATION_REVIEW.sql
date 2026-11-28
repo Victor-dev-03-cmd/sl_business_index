@@ -223,8 +223,7 @@ END $$;
 REVOKE ALL ON FUNCTION public.notify_all_on_business_news() FROM PUBLIC,anon,authenticated;
 -- Keep existing FCM queue behavior for other notifications; honor silent follower preference.
 -- Prevent clients spoofing the new notification types under the legacy permissive INSERT policy.
-CREATE POLICY audience_news_server_only_insert ON public.notifications AS RESTRICTIVE FOR INSERT TO anon,authenticated WITH CHECK(type NOT IN ('business_follow_news','business_follow_news_silent'));
-CREATE POLICY audience_news_server_only_update ON public.notifications AS RESTRICTIVE FOR UPDATE TO anon,authenticated USING(true) WITH CHECK(type NOT IN ('business_follow_news','business_follow_news_silent') OR user_id=(SELECT auth.uid()));
+CREATE POLICY audience_news_server_only_insert ON public.notifications AS RESTRICTIVE FOR INSERT TO anon,authenticated WITH CHECK(coalesce(type,'') NOT IN ('business_follow_news','business_follow_news_silent'));
 CREATE OR REPLACE FUNCTION public.slbi_enqueue_fcm_job() RETURNS trigger
 LANGUAGE plpgsql SET search_path='' AS $$
 BEGIN
